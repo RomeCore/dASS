@@ -1,9 +1,8 @@
-﻿using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.LLM.Services;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 {
-	// TODO: Not ready yet
-	// [ChatService(typeof(PromptContextNativeProvider))]
+	[ChatService(typeof(PromptContextNativeProvider))]
 	public class IdentitySectionProvider : PromptContextNativeProvider
 	{
 		public IdentitySectionProvider(IServiceProvider services)

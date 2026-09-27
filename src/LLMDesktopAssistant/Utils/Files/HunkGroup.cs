@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace LLMDesktopAssistant.Utils.Files
 {
@@ -42,6 +42,25 @@ namespace LLMDesktopAssistant.Utils.Files
 					sb.Append(line.ToString());
 				else
 					sb.AppendLine(line.ToString());
+			}
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Returns the lines of this group without the hunk header (@@ ... @@),
+		/// suitable for a "clean" diff rendering.
+		/// </summary>
+		public string ToCleanString()
+		{
+			if (Lines is null || Lines.Count == 0)
+				return string.Empty;
+
+			var sb = new StringBuilder();
+			for (int i = 0; i < Lines.Count; i++)
+			{
+				sb.Append(Lines[i].ToString());
+				if (i < Lines.Count - 1)
+					sb.AppendLine();
 			}
 			return sb.ToString();
 		}

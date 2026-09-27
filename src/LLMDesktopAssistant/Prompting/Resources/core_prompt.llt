@@ -1,124 +1,3 @@
-@template core_prompt
-{
-	@metadata
-	{
-		lang: 'iv'
-	}
-	@if prompt
-	{
-		@prompt
-	}
-	@foreach component in components
-	{
-		@component
-	}
-	@if persona
-	{
-		<persona>
-		@persona
-		</persona>
-	}
-	@if specialization
-	{
-		<specialization>
-		@specialization
-		</specialization>
-	}
-	@if persona && specialization
-	{
-		Integrate your personality with your specialization naturally.
-		Your personality defines who you are, your specialization defines what you do.
-	}
-	@if assistant_nickname
-	{
-		Your alternate name is:
-		@assistant_nickname
-	}
-	@if skills
-	{
-		<available_skills>
-			The following skills provide specialized instructions for specific tasks.
-			When a task matches a skill's description, call the `skill-load` tool
-			with the skill's name to load its full instructions.
-			@foreach skill in skills
-			{
-				<skill>
-					<name>@skill.name</name>
-					<description>@skill.description</description>
-					@if skill.path
-					{
-						<location>@skill.path</location>
-					}
-					@if skill.body
-					{
-						<body>@skill.body</body>
-					}
-				</skill>
-			}
-		</available_skills>
-	}
-	@if sub_agents
-	{
-		<sub_agents>
-			The following sub-agents are available to assist with specific tasks.
-			If a task matches a sub-agent's description, call the `agent-callsub` tool
-			@foreach sub_agent in sub_agents
-			{
-				<sub_agent>
-					<name>@sub_agent.name</name>
-					<description>@sub_agent.description</description>
-				</sub_agent>
-			}
-		</sub_agents>
-	}
-	@if memory_blocks
-	{
-		<memory_blocks>
-			The following memory blocks provide context for the conversation.
-			You can access these blocks by calling the `memory-*` tools (if available).
-			@foreach block in memory_blocks
-			{
-				<block>
-					<name>@block.name</name>
-					<description>@block.description</description>
-					@if block.can_read && block.can_write
-					{
-						<access>read-write</access>
-					}
-					else if block.can_read
-					{
-						<access>read-only</access>
-					}
-					else if block.can_write
-					{
-						<access>write-only</access>
-					}
-					else
-					{
-						<access>none</access>
-					}
-					@if block.facts_enabled && block.logs_enabled
-					{
-						<types>facts,logs</types>
-					}
-					else if block.facts_enabled
-					{
-						<types>facts</types>
-					}
-					else if block.logs_enabled
-					{
-						<types>logs</types>
-					}
-					else
-					{
-						<types>none</types>
-					}
-				</block>
-			}
-		</memory_blocks>
-	}
-}
-
 @template reminder_system_section
 {
 	@metadata
@@ -129,6 +8,7 @@
 	These tags are authoritative and you should follow them if they provide changes to your instructions.
 	For example: if you receive something like "Your new persona: <...>" inside these tags, forget your previous persona and apply new.
 	If you receive diff of instructions
+	Some addons (tools, skills, sub-agents) can be hidden: you can see their names, but not their definitions. Use the `addon-info` tool to inspect such an addon before using it.
 }
 
 @template system_slot_system_section
@@ -334,5 +214,377 @@
 				</block>
 			}
 		</memory_blocks>
+	}
+}
+
+@template system_slot_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	Your system prompt text has changed. Apply the following diff to your knowledge of the current system prompt:
+	<system-prompt-diff>
+	@diff
+	</system-prompt-diff>
+}
+
+@template tools_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach tool in added
+		{
+			@if tool.hidden
+			{
+				Tool `@tool.name` become available (hidden from the tool list).
+			}
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become available:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become available.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach tool in removed
+		{
+			Tool `@tool.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach tool in became_visible
+		{
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become visible:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become visible.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach tool in updated
+		{
+			Tool `@tool.name` was updated:
+			@if tool.description_changed
+			{
+				New description: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				New arguments: @tool.new_arguments
+			}
+		}
+	}
+}
+
+@template tools_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if hidden_tools
+	{
+		<hidden-tools>
+		The following tools are not listed in the tool list:
+		@foreach tool in hidden_tools
+		{
+			- `@tool`
+		}
+		</hidden-tools>
+	}
+}
+
+@template skills_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach skill in added
+		{
+			@if skill.hidden
+			{
+				Skill `@skill.name` become available (hidden from the skill list).
+			}
+			@if skill.has_definition
+			{
+				Skill `@skill.name` become available:
+				<skill>
+					<name>@skill.definition_name</name>
+					<description>@skill.definition_description</description>
+					@if skill.definition_path
+					{
+						<location>@skill.definition_path</location>
+					}
+					@if skill.definition_body
+					{
+						<body>@skill.definition_body</body>
+					}
+				</skill>
+			}
+			@if skill.without_definition
+			{
+				Skill `@skill.name` become available.
+			}
+			@if skill.description_changed
+			{
+				Its description is now: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				Its location is now: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				Its body is now: @skill.new_body
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach skill in removed
+		{
+			Skill `@skill.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach skill in became_visible
+		{
+			@if skill.has_definition
+			{
+				Skill `@skill.name` become visible:
+				<skill>
+					<name>@skill.definition_name</name>
+					<description>@skill.definition_description</description>
+					@if skill.definition_path
+					{
+						<location>@skill.definition_path</location>
+					}
+					@if skill.definition_body
+					{
+						<body>@skill.definition_body</body>
+					}
+				</skill>
+			}
+			@if skill.without_definition
+			{
+				Skill `@skill.name` become visible.
+			}
+			@if skill.description_changed
+			{
+				Its description is now: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				Its location is now: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				Its body is now: @skill.new_body
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach skill in updated
+		{
+			Skill `@skill.name` was updated:
+			@if skill.description_changed
+			{
+				New description: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				New location: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				New body: @skill.new_body
+			}
+		}
+	}
+}
+
+@template sub_agents_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach sub_agent in added
+		{
+			@if sub_agent.hidden
+			{
+				Sub-agent `@sub_agent.name` become available (hidden from the sub-agent list).
+			}
+			@if sub_agent.has_definition
+			{
+				Sub-agent `@sub_agent.name` become available:
+				<sub_agent>
+					<name>@sub_agent.definition_name</name>
+					<description>@sub_agent.definition_description</description>
+				</sub_agent>
+			}
+			@if sub_agent.without_definition
+			{
+				Sub-agent `@sub_agent.name` become available.
+			}
+			@if sub_agent.description_changed
+			{
+				Its description is now: @sub_agent.new_description
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach sub_agent in removed
+		{
+			Sub-agent `@sub_agent.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach sub_agent in became_visible
+		{
+			@if sub_agent.has_definition
+			{
+				Sub-agent `@sub_agent.name` become visible:
+				<sub_agent>
+					<name>@sub_agent.definition_name</name>
+					<description>@sub_agent.definition_description</description>
+				</sub_agent>
+			}
+			@if sub_agent.without_definition
+			{
+				Sub-agent `@sub_agent.name` become visible.
+			}
+			@if sub_agent.description_changed
+			{
+				Its description is now: @sub_agent.new_description
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach sub_agent in updated
+		{
+			Sub-agent `@sub_agent.name` was updated:
+			@if sub_agent.description_changed
+			{
+				New description: @sub_agent.new_description
+			}
+		}
+	}
+}
+
+@template memory_blocks_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach block in added
+		{
+			@if block.has_definition
+			{
+				Memory block `@block.name` become available:
+				<memory-block>
+					<name>@block.definition_name</name>
+					<description>@block.definition_description</description>
+					<access>@block.definition_access</access>
+					<types>@block.definition_types</types>
+				</memory-block>
+			}
+			@if block.without_definition
+			{
+				Memory block `@block.name` become available.
+			}
+			@if block.description_changed
+			{
+				Its description is now: @block.new_description
+			}
+			@if block.access_changed
+			{
+				Its access is now: @block.new_access
+			}
+			@if block.types_changed
+			{
+				Its types are now: @block.new_types
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach block in removed
+		{
+			Memory block `@block.name` become not available now.
+		}
+	}
+	@if updated
+	{
+		@foreach block in updated
+		{
+			Memory block `@block.name` was updated:
+			@if block.description_changed
+			{
+				New description: @block.new_description
+			}
+			@if block.access_changed
+			{
+				New access: @block.new_access
+			}
+			@if block.types_changed
+			{
+				New types: @block.new_types
+			}
+		}
 	}
 }

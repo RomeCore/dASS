@@ -54,6 +54,38 @@ namespace LLMDesktopAssistant.Utils.Files
 		}
 
 		/// <summary>
+		/// Returns the concatenated strings of <see cref="Groups"/> without the hunk headers,
+		/// with the groups delimited by the specified separator (an ellipsis line by default).
+		/// The output format (clean diff):
+		/// <code>
+		///  Some line before change...
+		/// -Removed line
+		/// +Added line
+		/// ...
+		/// -Another removed line
+		/// +Another added line
+		/// </code>
+		/// </summary>
+		public string ToCleanString(string hunkSeparator = "...")
+		{
+			if (Groups is null || Groups.Count == 0)
+				return string.Empty;
+			if (Groups.Count == 1)
+				return Groups[0].ToCleanString();
+
+			var sb = new StringBuilder();
+			for (int i = 0; i < Groups.Count; i++)
+			{
+				if (i > 0)
+					sb.AppendLine(hunkSeparator);
+				sb.Append(Groups[i].ToCleanString());
+				if (i < Groups.Count - 1)
+					sb.AppendLine();
+			}
+			return sb.ToString();
+		}
+
+		/// <summary>
 		/// Applies this diff to the original text and returns the modified text.
 		/// Only changes from the included groups are applied; context lines are preserved.
 		/// The diff groups must be in order and non-overlapping (as produced by <see cref="UnifiedDiff.Compute"/>).
