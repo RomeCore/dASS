@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Prompting;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
@@ -9,9 +10,12 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	public interface IChatMessageQuoteRenderer
 	{
 		/// <summary>
-		/// Renders the quote of the given message.
+		/// Renders the given message.
 		/// </summary>
 		/// <param name="message">The branched message to render.</param>
-		string RenderQuote(BranchedMessage message);
+		MessageRenderingResult Render(BranchedMessage message,
+			MessagePartsFacet parts = MessagePartsFacet.Default,
+			MessageAuthorIdentity identity = MessageAuthorIdentity.Default,
+			ContextCheckpointKind appliedCheckpoints = ContextCheckpointKind.None);
 	}
 }

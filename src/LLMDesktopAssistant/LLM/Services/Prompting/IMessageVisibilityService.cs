@@ -10,19 +10,11 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	public interface IMessageVisibilityService
 	{
 		/// <summary>
-		/// Determines whether the specified user message is visible to the given agent.
+		/// Determines whether the specified message is visible to the given agent.
 		/// </summary>
-		/// <param name="message">The branched user message to check.</param>
+		/// <param name="message">The branched message to check.</param>
 		/// <param name="agent">The agent to check visibility for.</param>
-		/// <returns><see langword="true"/> if the message is visible to the agent; otherwise, <see langword="false"/>.</returns>
-		bool IsUserMessageVisibleToAgent(BranchedMessage message, ChatAgentDescriptor agent);
-
-		/// <summary>
-		/// Determines whether the specified assistant message is visible to the given agent.
-		/// </summary>
-		/// <param name="message">The branched assistant message to check.</param>
-		/// <param name="agent">The agent to check visibility for.</param>
-		/// <returns><see langword="true"/> if the message is visible to the agent; otherwise, <see langword="false"/>.</returns>
-		bool IsAssistantMessageVisibleToAgent(BranchedMessage message, ChatAgentDescriptor agent);
+		/// <returns>The visibility result.</returns>
+		MessageVisibilityResult CheckVisibility(BranchedMessage message, ChatAgentDescriptor agent);
 	}
 }

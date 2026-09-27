@@ -8,7 +8,7 @@
 		public bool SpecializationChanged { get; init; }
 		public string? NewSpecialization { get; init; }
 
-		public bool NicknameChanged { get; init; }
+		public bool AssistantNicknameChanged { get; init; }
 		public string? NewAssistantNickname { get; init; }
 	}
 }

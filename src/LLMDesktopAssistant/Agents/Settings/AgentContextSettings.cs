@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.SourceGenerators;
 

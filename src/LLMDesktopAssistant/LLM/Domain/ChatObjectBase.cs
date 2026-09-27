@@ -1,4 +1,5 @@
 ﻿using LLMDesktopAssistant.LLM.MVVM.Additional;
+using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -20,6 +21,12 @@ namespace LLMDesktopAssistant.LLM.Domain
 		{
 			get => field ??= [];
 			set => (field ??= []).Reset(value);
+		}
+
+		public IEnumerable<IAttachment> GetNativeAttachments()
+		{
+			return [.. AdditionalData.OfType<NativeAttachmentMessagePart>()
+				.Select(a => a.NativeAttachment!).Where(a => a is not null)];
 		}
 	}
 }

@@ -399,3 +399,57 @@ sub_agents.links.skill_not_found: Навык «{0}» не найден
 sub_agents.links.sub_agent_not_found: Суб-агент «{0}» не найден
 sub_agents.links.memory_block_not_found: Блок памяти «{0}» не найден
 
+
+agent.read.half: Что читает этот агент
+agent.read.half.desc: Какие сообщения агент видит в своём контексте. Сообщение доходит до агента, только если его разрешают оба фильтра: этот фильтр чтения и фильтр отдачи автора сообщения. Строка «Пользователи» покрывает сообщения пользователей и агентов, представляющихся пользователями, строка «Агенты» — сообщения остальных агентов.
+agent.read.restriction: Ограничение на чтение
+agent.read.matrix: От отдельных агентов
+agent.share.half: Что читают у этого агента
+agent.share.half.desc: Что другие читатели могут прочитать в сообщениях этого агента. Сообщение доходит до читателя, только если его разрешают оба фильтра: этот фильтр отдачи и фильтр чтения самого читателя. Строка «Пользователи» покрывает читателей, представляющихся пользователями, строка «Агенты» — остальных.
+agent.share.default: По умолчанию для всех
+agent.share.matrix: Для отдельных агентов
+agent.matrix.empty: В этом чате нет других агентов
+agent.row.users: Пользователи
+agent.row.agents: Агенты
+agent.facet.visible: Видимость
+agent.facet.visible.hint: Показывать ли сообщения этой стороне вообще.
+agent.facet.messages_with_tool_calls: Сообщения с вызовами инструментов
+agent.facet.messages_with_tool_calls.hint: Включать только сообщения, содержащие вызовы инструментов.
+agent.facet.messages_without_tool_calls: Сообщения без вызовов инструментов
+agent.facet.messages_without_tool_calls.hint: Включать только сообщения без вызовов инструментов.
+agent.facet.brief_reasoning: Краткое рассуждение
+agent.facet.brief_reasoning.hint: Показывать только первые символы рассуждений.
+agent.facet.reasoning: Полное рассуждение
+agent.facet.reasoning.hint: Показывать рассуждения целиком (подразумевает краткие).
+agent.facet.content: Содержимое
+agent.facet.content.hint: Показывать основное содержимое сообщения.
+agent.facet.native_attachments: Нативные вложения
+agent.facet.native_attachments.hint: Передавать вложения сообщения модели нативно.
+agent.facet.attachments: Вложения
+agent.facet.attachments.hint: Показывать вложения как ссылки на файлы (через инъекцию в промпт).
+agent.facet.tool_call_facts: Факты вызовов инструментов
+agent.facet.tool_call_facts.hint: Показывать только имена вызовов инструментов.
+agent.facet.brief_tool_call_arguments: Краткие аргументы вызовов
+agent.facet.brief_tool_call_arguments.hint: Показывать первые символы аргументов вызовов инструментов.
+agent.facet.brief_tool_call_results: Краткие результаты вызовов
+agent.facet.brief_tool_call_results.hint: Показывать первые символы результатов вызовов инструментов.
+agent.facet.tool_call_arguments: Полные аргументы вызовов
+agent.facet.tool_call_arguments.hint: Показывать аргументы вызовов целиком (подразумевает факты).
+agent.facet.tool_call_results: Полные результаты вызовов
+agent.facet.tool_call_results.hint: Показывать результаты вызовов целиком (подразумевает факты).
+agent.facet.tool_call_native_attachments: Нативные вложения вызовов
+agent.facet.tool_call_native_attachments.hint: Передавать вложения вызовов инструментов модели нативно.
+agent.facet.identity: Личность автора
+agent.facet.identity.hint: Как автор сообщения представляется читателю. Клик — следующая личность.
+agent.state.on: Вкл
+agent.state.off: Выкл
+agent.state.auto_prefix: Авто
+agent.state.overridden_prefix: Переопределено
+agent.state.inherited_prefix: По умолчанию
+agent.state.blocked: Заблокировано ограничением на чтение
+agent.identity.default: По умолчанию
+agent.identity.anon: Аноним
+agent.identity.unnamed_user: Безымянный пользователь
+agent.identity.unnamed_agent: Безымянный агент
+agent.identity.named_user: Именованный пользователь
+agent.identity.named_agent: Именованный агент

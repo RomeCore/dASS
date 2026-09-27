@@ -399,3 +399,57 @@ sub_agents.links.skill_not_found: Skill '{0}' not found
 sub_agents.links.sub_agent_not_found: Sub-agent '{0}' not found
 sub_agents.links.memory_block_not_found: Memory block '{0}' not found
 
+
+agent.read.half: What this agent reads
+agent.read.half.desc: Which messages this agent sees in its context. A message reaches the agent only when both filters allow it: this read filter and the author's share filter. The "Users" row covers users and agents that identify as users, the "Agents" row covers all other agents.
+agent.read.restriction: Reading restriction
+agent.read.matrix: From individual agents
+agent.share.half: What others read from this agent
+agent.share.half.desc: What other readers can read from this agent's messages. A message reaches a reader only when both filters allow it: this share filter and the reader's own read filter. The "Users" row covers readers that identify as users, the "Agents" row covers all other agents.
+agent.share.default: Default for everyone
+agent.share.matrix: For individual agents
+agent.matrix.empty: No other agents in this chat
+agent.row.users: Users
+agent.row.agents: Agents
+agent.facet.visible: Visible
+agent.facet.visible.hint: Whether messages are shown to this side at all.
+agent.facet.messages_with_tool_calls: Messages with tool calls
+agent.facet.messages_with_tool_calls.hint: Include only messages that contain tool calls.
+agent.facet.messages_without_tool_calls: Messages without tool calls
+agent.facet.messages_without_tool_calls.hint: Include only messages without tool calls.
+agent.facet.brief_reasoning: Brief reasoning
+agent.facet.brief_reasoning.hint: Show only the first characters of the reasoning content.
+agent.facet.reasoning: Full reasoning
+agent.facet.reasoning.hint: Show the entire reasoning content (implies brief reasoning).
+agent.facet.content: Content
+agent.facet.content.hint: Show the main content of the message.
+agent.facet.native_attachments: Native attachments
+agent.facet.native_attachments.hint: Pass message attachments to the model natively.
+agent.facet.attachments: Attachments
+agent.facet.attachments.hint: Show attachments as file references injected into the prompt.
+agent.facet.tool_call_facts: Tool call facts
+agent.facet.tool_call_facts.hint: Show tool call names only.
+agent.facet.brief_tool_call_arguments: Brief tool arguments
+agent.facet.brief_tool_call_arguments.hint: Show the first characters of tool call arguments.
+agent.facet.brief_tool_call_results: Brief tool results
+agent.facet.brief_tool_call_results.hint: Show the first characters of tool call results.
+agent.facet.tool_call_arguments: Full tool arguments
+agent.facet.tool_call_arguments.hint: Show the entire tool call arguments (implies tool call facts).
+agent.facet.tool_call_results: Full tool results
+agent.facet.tool_call_results.hint: Show the entire tool call results (implies tool call facts).
+agent.facet.tool_call_native_attachments: Tool call native attachments
+agent.facet.tool_call_native_attachments.hint: Pass tool call attachments to the model natively.
+agent.facet.identity: Author identity
+agent.facet.identity.hint: How the message author is presented to the reader. Click to cycle through the identities.
+agent.state.on: On
+agent.state.off: Off
+agent.state.auto_prefix: Auto
+agent.state.overridden_prefix: Overridden
+agent.state.inherited_prefix: Inherited
+agent.state.blocked: Blocked by the reading restriction
+agent.identity.default: Default
+agent.identity.anon: Anonymous
+agent.identity.unnamed_user: Unnamed user
+agent.identity.unnamed_agent: Unnamed agent
+agent.identity.named_user: Named user
+agent.identity.named_agent: Named agent

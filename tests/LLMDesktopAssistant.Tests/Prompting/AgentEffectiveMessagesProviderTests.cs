@@ -1,4 +1,3 @@
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting;
@@ -32,7 +31,7 @@ public class AgentEffectiveMessagesProviderTests
 		var effective = provider.GetEffectiveMessages(agent);
 
 		Assert.Equal(4, effective.Messages.Count);
-		Assert.Equal(["u0", "a1", "u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u0", "a1", "u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		Assert.Empty(effective.Checkpoints);
 		Assert.Equal(-1, effective.LastCutIndex);
 	}
@@ -51,7 +50,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 	}
 
 	[Fact]
@@ -86,7 +85,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["a1", "u2", "a3"], effective.Messages.Select(m => m.Message.Content));
+		Assert.Equal(["a1", "u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content));
 	}
 
 	[Fact]
@@ -103,7 +102,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(shield, carried.Checkpoint);
 		Assert.Equal(-1, carried.Index);
@@ -144,7 +143,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(summary, carried.Checkpoint);
 		Assert.Equal(-1, carried.Index);
@@ -164,7 +163,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u0", "a2"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u0", "a2"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(summary, carried.Checkpoint);
 		// The cut carrier (a1) is invisible to the agent, so the checkpoint borrows the index
@@ -191,7 +190,7 @@ public class AgentEffectiveMessagesProviderTests
 		var effective = provider.GetEffectiveMessages(agent);
 
 		// The summary is applied even though its carrier is invisible: everything older than u1 is cut.
-		Assert.Equal(["a2", "u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["a2", "u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(summary, carried.Checkpoint);
 	}
@@ -232,7 +231,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u0", "u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u0", "u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(compaction, carried.Checkpoint);
 		Assert.Equal(0, carried.Index); // u1 is invisible; the nearest preceding visible message is u0
@@ -271,7 +270,7 @@ public class AgentEffectiveMessagesProviderTests
 
 		var effective = provider.GetEffectiveMessages(agent);
 
-		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.Message.Content).ToArray());
+		Assert.Equal(["u2", "a3"], effective.Messages.Select(m => m.BranchedMessage.Message.Content).ToArray());
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(checkpoint, carried.Checkpoint);
 		Assert.Equal(-1, effective.LastCutIndex);

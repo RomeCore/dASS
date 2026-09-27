@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 	/// Captures the core prompt state by rendering the section template
 	/// (the old system_prompt.llt monolith as its own render).
 	/// </summary>
-	[ChatService(typeof(IPromptSectionStateProvider<CorePromptSectionState>))]
+	[ChatService(typeof(IPromptSectionStateProvider<IdentitySectionState>))]
 	public class IdentityStateProvider(
 		IChatSettingsService chatSettings,
 		IPromptSlotElementManager slotElementManager,

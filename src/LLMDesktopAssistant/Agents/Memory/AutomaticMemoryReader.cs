@@ -144,11 +144,11 @@ namespace LLMDesktopAssistant.Agents.Memory
 				{
 					switch (branched.Message)
 					{
-						case UserMessage userMessage when messageVisibility.IsUserMessageVisibleToAgent(branched, context.Agent):
+						case UserMessage userMessage when messageVisibility.CheckVisibility(branched, context.Agent).EffectiveVisible:
 							sb.Append("User: ").AppendLine(userMessage.Content);
 							break;
 						case AssistantMessage assistantMessage when !string.IsNullOrEmpty(assistantMessage.Content)
-							&& messageVisibility.IsAssistantMessageVisibleToAgent(branched, context.Agent):
+							&& messageVisibility.CheckVisibility(branched, context.Agent).EffectiveVisible:
 							sb.Append("Assistant: ").AppendLine(assistantMessage.Content);
 							break;
 					}

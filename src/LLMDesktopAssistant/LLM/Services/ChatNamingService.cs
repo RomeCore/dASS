@@ -145,7 +145,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				foreach (var branched in round)
 				{
-					var rendered = quoteRenderer.RenderQuote(branched.Message);
+					var rendered = quoteRenderer.Render(branched.Message).Content;
 					if (!string.IsNullOrWhiteSpace(rendered))
 					{
 						sb.AppendLine(rendered);

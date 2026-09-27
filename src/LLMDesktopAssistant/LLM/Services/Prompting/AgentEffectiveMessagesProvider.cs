@@ -1,5 +1,4 @@
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Prompting;
 
@@ -34,11 +33,12 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			for (int i = 0; i < messagesToProcess.Count; i++)
 				chatIndices[messagesToProcess[i]] = i;
 
-			List<BranchedMessage> result = [];
+			List<EffectiveMessage> result = [];
 			List<(BranchedMessage Carrier, ContextCheckpoint Checkpoint)> candidates = [];
 
 			bool hasSummary = false;
 			bool encounteredUserMessage = false;
+			var currentCheckpointKinds = ContextCheckpointKind.None;
 
 			for (int i = messagesToProcess.Count - 1; i >= 0; i--)
 			{
@@ -50,6 +50,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				if (message.AdditionalData.TryGet<ContextCheckpoint>(out var checkpoint) && checkpoint.IsCompletedAndEnabled)
 				{
 					var activeKind = checkpoint.Kind & ~disabledCheckpoints;
+					currentCheckpointKinds |= activeKind;
 					if (activeKind != ContextCheckpointKind.None)
 					{
 						candidates.Add((branchedMessage, checkpoint));
@@ -66,34 +67,29 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					}
 				}
 
-				if (message is UserMessage)
-				{
-					if (!messageVisibility.IsUserMessageVisibleToAgent(branchedMessage, agent))
-						continue;
-				}
-				else if (message is AssistantMessage assistantMessage)
-				{
-					if (assistantMessage.IsCompleted && !messageVisibility.IsAssistantMessageVisibleToAgent(branchedMessage, agent))
-						continue;
-				}
+				var visibilityResult = messageVisibility.CheckVisibility(branchedMessage, agent);
+				if (!visibilityResult.EffectiveVisible)
+					continue;
 
 				if (message is UserMessage || message is AssistantMessage { IsUserLike: true })
 				{
 					encounteredUserMessage = true;
 					if (hasSummary)
 					{
-						result.Insert(0, branchedMessage);
+						result.Insert(0, new EffectiveMessage(branchedMessage,
+							visibilityResult.VisibleParts, currentCheckpointKinds, visibilityResult.VisibleIdentity));
 						break;
 					}
 				}
 
 				if (!hasSummary)
-					result.Insert(0, branchedMessage);
+					result.Insert(0, new EffectiveMessage(branchedMessage,
+						visibilityResult.VisibleParts, currentCheckpointKinds, visibilityResult.VisibleIdentity));
 			}
 
 			var resultIndices = new Dictionary<BranchedMessage, int>(result.Count);
 			for (int i = 0; i < result.Count; i++)
-				resultIndices[result[i]] = i;
+				resultIndices[result[i].BranchedMessage] = i;
 
 			var checkpoints = new List<EffectiveCheckpoint>(candidates.Count);
 			int lastCutIndex = -1;
@@ -116,14 +112,22 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				checkpoints.Add(new EffectiveCheckpoint(candidate, index));
 			}
 
-			return new EffectiveChatContext(result, checkpoints, effectiveMessagesStart, lastCutIndex, lastCheckpointIndex);
+			return new EffectiveChatContext
+			{
+				Agent = agent,
+				Messages = result,
+				Checkpoints = checkpoints,
+				EffectiveMessagesStartIndex = effectiveMessagesStart,
+				LastCutIndex = lastCutIndex,
+				LastCheckpointIndex = lastCheckpointIndex,
+			};
 		}
 
 		/// <summary>
 		/// Effective index of a carrier: its own index when it is in the effective set,
 		/// otherwise the index of the nearest preceding visible message, otherwise -1.
 		/// </summary>
-		private static int GetRelativeIndex(BranchedMessage carrier, List<BranchedMessage> result,
+		private static int GetRelativeIndex(BranchedMessage carrier, List<EffectiveMessage> result,
 			Dictionary<BranchedMessage, int> resultIndices, Dictionary<BranchedMessage, int> chatIndices)
 		{
 			if (resultIndices.TryGetValue(carrier, out int ownIndex))
@@ -132,7 +136,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			int carrierPosition = chatIndices[carrier];
 			for (int i = result.Count - 1; i >= 0; i--)
 			{
-				if (chatIndices[result[i]] < carrierPosition)
+				if (chatIndices[result[i].BranchedMessage] < carrierPosition)
 					return i;
 			}
 

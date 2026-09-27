@@ -2,7 +2,7 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -10,197 +10,303 @@
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentReadSettingsView"
 			 x:DataType="local:AgentReadSettingsViewModel">
 
-	<StackPanel Orientation="Vertical"
-							Margin="8" Spacing="8">
+	<UserControl.Styles>
 
-		<!-- ===================== Read Permissions ===================== -->
-		<Grid ColumnDefinitions="*,Auto">
-			<TextBlock Grid.Column="0"
-								 Text="{loc:Loc settings.agent.read_permissions}"
-								 FontWeight="Bold"
-								 FontSize="{DynamicResource FontSizeL}"
-								 VerticalAlignment="Center"
-								 Margin="0,5,0,0"/>
+		<!-- Facet toggle: a small colored icon button; soft accent fill when on, transparent when off. -->
+		<Style Selector="ToggleButton.FacetToggle">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Width" Value="20"/>
+			<Setter Property="Height" Value="20"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="CornerRadius" Value="4"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Style Selector="^ > ico|MaterialIcon">
+				<Setter Property="Width" Value="14"/>
+				<Setter Property="Height" Value="14"/>
+			</Style>
+		</Style>
 
-			<ComboBox Grid.Column="1"
-								ItemsSource="{x:Static set:InheritanceLevelItem.AllAgent}"
-								SelectedItem="{Binding SelectedReadPermissionsInheritance}"
-								VerticalAlignment="Center"
-								Margin="8,5,0,0"
-								MinWidth="120">
+		<Style Selector="ToggleButton.FacetToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#22FFFFFF"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
 
-				<ComboBox.ItemTemplate>
-					<DataTemplate x:DataType="set:InheritanceLevelItem">
-						<TextBlock Text="{Binding DisplayName}"/>
-					</DataTemplate>
-				</ComboBox.ItemTemplate>
+		<Style Selector="ToggleButton.FacetToggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+			<!-- #596C5CE7 = PrimaryAccent (#6C5CE7) at ~35% alpha -->
+			<Setter Property="Background" Value="#596C5CE7"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
 
-			</ComboBox>
-		</Grid>
+		<Style Selector="ToggleButton.FacetToggle:unchecked /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
 
-		<TextBlock Text="{loc:Loc settings.agent.read_permissions.hint}"
-							 Opacity="0.6"
-							 TextWrapping="Wrap"/>
+		<!-- Blocked: the read restriction forbids this facet, the toggle cannot change anything. -->
+		<Style Selector="ToggleButton.FacetToggle:disabled /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Opacity" Value="0.45"/>
+		</Style>
 
-		<ItemsControl ItemsSource="{Binding ReadPermissionItems}">
-			<ItemsControl.ItemTemplate>
-				<DataTemplate x:DataType="local:ReadPermissionItem">
-					<StackPanel Orientation="Vertical" Margin="0,2">
-						<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-											Content="{Binding DisplayName}"/>
-						<TextBlock Text="{Binding Description}"
-											 Opacity="0.5"
-											 FontSize="11"
-											 Margin="24,0,0,4"
-											 TextWrapping="Wrap"/>
-					</StackPanel>
-				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-		</ItemsControl>
+		<!-- Identity: a cyclic button, no on/off state. -->
+		<Style Selector="Button.CycleButton">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Width" Value="20"/>
+			<Setter Property="Height" Value="20"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="CornerRadius" Value="4"/>
+			<Setter Property="HorizontalContentAlignment" Value="Center"/>
+			<Setter Property="VerticalContentAlignment" Value="Center"/>
+			<Style Selector="^ > ico|MaterialIcon">
+				<Setter Property="Width" Value="14"/>
+				<Setter Property="Height" Value="14"/>
+			</Style>
+		</Style>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
+		<Style Selector="Button.CycleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#22FFFFFF"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
 
-		<!-- ===================== Exposure Mode ===================== -->
-		<Grid ColumnDefinitions="*,Auto">
-			<TextBlock Grid.Column="0"
-								 Text="{loc:Loc settings.agent.exposure_mode}"
-								 FontWeight="Bold"
-								 FontSize="{DynamicResource FontSizeL}"
-								 VerticalAlignment="Center"
-								 Margin="0,5,0,0"/>
+		<!-- Per-element override marker: a thin accent strip; click resets the element override. -->
+		<Style Selector="Button.OverrideStrip">
+			<Setter Property="Width" Value="3"/>
+			<Setter Property="MinWidth" Value="3"/>
+			<Setter Property="Height" Value="18"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="CornerRadius" Value="1"/>
+			<Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+			<Setter Property="VerticalAlignment" Value="Center"/>
+			<Setter Property="Margin" Value="1,0"/>
+		</Style>
 
-			<ComboBox Grid.Column="1"
-								ItemsSource="{x:Static set:InheritanceLevelItem.AllAgent}"
-								SelectedItem="{Binding SelectedExposureModeInheritance}"
-								VerticalAlignment="Center"
-								Margin="8,5,0,0"
-								MinWidth="120">
+		<Style Selector="Button.OverrideStrip:disabled">
+			<Setter Property="Opacity" Value="0.2"/>
+		</Style>
 
-				<ComboBox.ItemTemplate>
-					<DataTemplate x:DataType="set:InheritanceLevelItem">
-						<TextBlock Text="{Binding DisplayName}"/>
-					</DataTemplate>
-				</ComboBox.ItemTemplate>
+	</UserControl.Styles>
 
-			</ComboBox>
-		</Grid>
+	<UserControl.Resources>
 
-		<TextBlock Text="{loc:Loc settings.agent.exposure_mode.hint}"
-							 Opacity="0.6"
-							 TextWrapping="Wrap"/>
+		<!-- A single facet cell: [override strip][toggle]. -->
+		<DataTemplate x:Key="FacetCellTemplate" x:DataType="local:AgentVisibilityCellViewModel">
+			<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+				<Border Width="1" Height="16" Margin="2,0"
+						VerticalAlignment="Center"
+						IsVisible="{Binding IsGroupStart}"
+						Background="{DynamicResource DefaultForeground}"
+						Opacity="0.25"/>
+				<Button Classes="OverrideStrip"
+						IsVisible="{Binding CanOverride}"
+						IsEnabled="{Binding IsOverridden}"
+						Command="{Binding ResetCommand}"
+						ToolTip.Tip="{loc:Loc common.reset}"/>
+				<ToggleButton Classes="FacetToggle"
+							  IsEnabled="{Binding !IsBlocked}"
+							  IsChecked="{Binding IsOn, Mode=TwoWay}"
+							  ToolTip.ShowOnDisabled="True">
+					<ico:MaterialIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
+					<ToolTip.Tip>
+						<StackPanel Orientation="Vertical" Spacing="4" MaxWidth="340">
+							<TextBlock Text="{loc:Loc {Binding DisplayName}}"
+									   FontSize="{DynamicResource FontSizeM}"
+									   FontWeight="SemiBold"/>
+							<TextBlock Text="{loc:Loc {Binding Description}}" TextWrapping="Wrap"/>
+							<TextBlock Text="{Binding StateText}"
+									   Foreground="{Binding StateColor}"
+									   FontSize="11"/>
+						</StackPanel>
+					</ToolTip.Tip>
+				</ToggleButton>
+			</StackPanel>
+		</DataTemplate>
 
-		<ItemsControl ItemsSource="{Binding ExposureModeItems}">
-			<ItemsControl.ItemTemplate>
-				<DataTemplate x:DataType="local:ExposureModeItem">
-					<StackPanel Orientation="Vertical" Margin="0,2">
-						<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-											Content="{Binding DisplayName}"/>
-						<TextBlock Text="{Binding Description}"
-											 Opacity="0.5"
-											 FontSize="11"
-											 Margin="24,0,0,4"
-											 TextWrapping="Wrap"/>
-					</StackPanel>
-				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-		</ItemsControl>
-
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
-
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
-
-		<!-- ===================== Agent Filter ===================== -->
-		<TextBlock Text="{loc:Loc settings.agent.read_filter}"
-							 FontWeight="Bold"
-							 FontSize="{DynamicResource FontSizeL}"
-							 Margin="0,5,0,0"/>
-
-		<TextBlock Text="{loc:Loc settings.agent.read_filter.hint}"
-							 Opacity="0.6"
-							 TextWrapping="Wrap"/>
-
-		<DockPanel>
-				
-			<!-- Filter mode selector -->
-			<Grid DockPanel.Dock="Right" HorizontalAlignment="Right">
-				<Grid.ColumnDefinitions>
-					<ColumnDefinition Width="Auto"/>
-					<ColumnDefinition Width="*"/>
-				</Grid.ColumnDefinitions>
-
-				<TextBlock Grid.Column="0"
-									 Text="{loc:Loc settings.agent.filter.mode}"
-									 VerticalAlignment="Center"
-									 Margin="0,0,8,0"/>
-
-				<ComboBox Grid.Column="1"
-									SelectedIndex="{Binding FilterModeIndex, Mode=TwoWay}"
-									Width="160"
-									HorizontalAlignment="Left">
-					<ComboBox.Items>
-						<ComboBoxItem Content="{loc:Loc settings.agent.filter.whitelist}"/>
-						<ComboBoxItem Content="{loc:Loc settings.agent.filter.blacklist}"/>
-					</ComboBox.Items>
-				</ComboBox>
-			</Grid>
-				
-			<!-- Select / Deselect all buttons -->
-			<StackPanel Orientation="Horizontal" Spacing="4" HorizontalAlignment="Left" DockPanel.Dock="Left">
-				<Button Command="{Binding SelectAllAgentsCommand}"
-								Classes="IconButton"
-								ToolTip.Tip="{loc:Loc settings.agent.filter.select_all}">
-					<ico:MaterialIcon Kind="CheckAll"/>
-				</Button>
-				<Button Command="{Binding DeselectAllAgentsCommand}"
-								Classes="IconButton"
-								ToolTip.Tip="{loc:Loc settings.agent.filter.deselect_all}">
-					<ico:MaterialIcon Kind="CloseBoxMultiple"/>
+		<!-- The identity cell: [override strip][cyclic button]. -->
+		<DataTemplate x:Key="IdentityCellTemplate" x:DataType="local:AgentIdentityCellViewModel">
+			<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+				<Border Width="1" Height="16" Margin="2,0"
+						VerticalAlignment="Center"
+						Background="{DynamicResource DefaultForeground}"
+						Opacity="0.25"/>
+				<Button Classes="OverrideStrip"
+						IsVisible="{Binding CanOverride}"
+						IsEnabled="{Binding IsOverridden}"
+						Command="{Binding ResetCommand}"
+						ToolTip.Tip="{loc:Loc common.reset}"/>
+				<Button Classes="CycleButton" Command="{Binding CycleCommand}">
+					<ico:MaterialIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
+					<ToolTip.Tip>
+						<StackPanel Orientation="Vertical" Spacing="4" MaxWidth="340">
+							<TextBlock Text="{loc:Loc {Binding DisplayName}}"
+									   FontSize="{DynamicResource FontSizeM}"
+									   FontWeight="SemiBold"/>
+							<TextBlock Text="{loc:Loc {Binding Description}}" TextWrapping="Wrap"/>
+							<TextBlock Text="{Binding StateText}"
+									   Foreground="{Binding StateColor}"
+									   FontSize="11"/>
+						</StackPanel>
+					</ToolTip.Tip>
 				</Button>
 			</StackPanel>
+		</DataTemplate>
 
-		</DockPanel>
+		<!-- A matrix row: [label + badge][row reset][cells + identity]. -->
+		<DataTemplate x:Key="VisibilityRowTemplate" x:DataType="local:AgentVisibilityRowViewModel">
+			<Grid ColumnDefinitions="130,*,Auto" ColumnSpacing="6" Margin="0,2"
+						HorizontalAlignment="Left">
+				<StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+										ClipToBounds="True">
+					<TextBlock Text="{Binding Header}"
+							   VerticalAlignment="Center"
+							   TextTrimming="CharacterEllipsis"
+							   MaxWidth="110"/>
+					<Border IsVisible="{Binding ShowGlobalBadge}"
+							Background="{DynamicResource PrimaryAccentBrush}"
+							Opacity="0.4"
+							CornerRadius="4"
+							Padding="4,1"
+							VerticalAlignment="Center">
+						<TextBlock Text="{loc:Loc settings.agent.global}" FontSize="10"/>
+					</Border>
+				</StackPanel>
 
-		<!-- Agent filter list -->
-		<Border BorderBrush="{DynamicResource DefaultForeground}"
-						BorderThickness="1"
-						CornerRadius="4"
-						Padding="6"
-						MaxHeight="250">
-			<ScrollViewer VerticalScrollBarVisibility="Auto">
-				<ItemsControl ItemsSource="{Binding AgentFilterItems}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate x:DataType="local:AgentFilterItem">
-							<StackPanel Orientation="Horizontal" Spacing="6" Margin="0,2">
-								<CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}"
-											VerticalAlignment="Center"/>
-								<TextBlock Text="{Binding DisplayName}"
-											  VerticalAlignment="Center"/>
-								<Border IsVisible="{Binding IsGlobal}"
-										Background="{DynamicResource PrimaryAccentBrush}"
-										Opacity="0.4"
-										CornerRadius="4"
-										Padding="4,1"
+				<StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2"
 										VerticalAlignment="Center">
-									<TextBlock Text="{loc:Loc settings.agent.global}" FontSize="10"/>
-								</Border>
-							</StackPanel>
+					<ItemsControl ItemsSource="{Binding Cells}"
+								  ItemTemplate="{StaticResource FacetCellTemplate}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Horizontal" Spacing="2"/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+					</ItemsControl>
+					<ContentControl Content="{Binding IdentityCell}"
+									ContentTemplate="{StaticResource IdentityCellTemplate}"
+									VerticalAlignment="Center"/>
+				</StackPanel>
+			
+				<Button Grid.Column="2"
+						Classes="MiniIconButton"
+						IsVisible="{Binding ShowRowReset}"
+						IsEnabled="{Binding HasOverrides}"
+						Command="{Binding ResetRowCommand}"
+						HorizontalAlignment="Left"
+						ToolTip.Tip="{loc:Loc common.reset}">
+					<ico:MaterialIcon Kind="Refresh"/>
+				</Button>
+</Grid>
+		</DataTemplate>
+
+	</UserControl.Resources>
+
+	<StackPanel Orientation="Vertical" Margin="8" Spacing="12">
+
+		<!-- ===================== What I read ===================== -->
+		<StackPanel Orientation="Vertical" Spacing="6">
+
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0"
+						   Text="{loc:Loc settings.agent.read.half}"
+						   FontWeight="Bold"
+						   FontSize="{DynamicResource FontSizeL}"
+						   VerticalAlignment="Center"/>
+				<ComboBox Grid.Column="1"
+						  ItemsSource="{x:Static set:InheritanceLevelItem.AllAgent}"
+						  SelectedItem="{Binding SelectedReadFiltersInheritance}"
+						  VerticalAlignment="Center"
+						  MinWidth="120">
+					<ComboBox.ItemTemplate>
+						<DataTemplate x:DataType="set:InheritanceLevelItem">
+							<TextBlock Text="{Binding DisplayName}"/>
 						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
-			</ScrollViewer>
-		</Border>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+			</Grid>
+
+			<TextBlock Text="{loc:Loc settings.agent.read.half.desc}"
+					   TextWrapping="Wrap"
+					   Opacity="0.7"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.read.restriction}"
+					   FontWeight="SemiBold"
+					   Opacity="0.85"
+					   Margin="0,2,0,0"/>
+
+			<ItemsControl ItemsSource="{Binding ReadDefaultRows}"
+						  ItemTemplate="{StaticResource VisibilityRowTemplate}"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.read.matrix}"
+					   FontWeight="SemiBold"
+					   Opacity="0.85"
+					   Margin="0,6,0,0"/>
+
+			<ItemsControl ItemsSource="{Binding ReadAgentRows}"
+						  ItemTemplate="{StaticResource VisibilityRowTemplate}"
+						  IsVisible="{Binding HasReadAgentRows}"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.matrix.empty}"
+					   Opacity="0.5"
+					   IsVisible="{Binding !HasReadAgentRows}"/>
+
+		</StackPanel>
+
+		<!-- ===================== Big split between the halves ===================== -->
+		<Rectangle Height="1"
+				   Fill="{DynamicResource DefaultForeground}"
+				   Opacity="0.25"
+				   Margin="0,8,0,4"/>
+
+		<!-- ===================== What others read from me ===================== -->
+		<StackPanel Orientation="Vertical" Spacing="6">
+
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock Grid.Column="0"
+						   Text="{loc:Loc settings.agent.share.half}"
+						   FontWeight="Bold"
+						   FontSize="{DynamicResource FontSizeL}"
+						   VerticalAlignment="Center"/>
+				<ComboBox Grid.Column="1"
+						  ItemsSource="{x:Static set:InheritanceLevelItem.AllAgent}"
+						  SelectedItem="{Binding SelectedDefaultShareFiltersInheritance}"
+						  VerticalAlignment="Center"
+						  MinWidth="120">
+					<ComboBox.ItemTemplate>
+						<DataTemplate x:DataType="set:InheritanceLevelItem">
+							<TextBlock Text="{Binding DisplayName}"/>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+			</Grid>
+
+			<TextBlock Text="{loc:Loc settings.agent.share.half.desc}"
+					   TextWrapping="Wrap"
+					   Opacity="0.7"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.share.default}"
+					   FontWeight="SemiBold"
+					   Opacity="0.85"
+					   Margin="0,2,0,0"/>
+
+			<ItemsControl ItemsSource="{Binding ShareDefaultRows}"
+						  ItemTemplate="{StaticResource VisibilityRowTemplate}"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.share.matrix}"
+					   FontWeight="SemiBold"
+					   Opacity="0.85"
+					   Margin="0,6,0,0"/>
+
+			<ItemsControl ItemsSource="{Binding ShareAgentRows}"
+						  ItemTemplate="{StaticResource VisibilityRowTemplate}"
+						  IsVisible="{Binding HasShareAgentRows}"/>
+
+			<TextBlock Text="{loc:Loc settings.agent.matrix.empty}"
+					   Opacity="0.5"
+					   IsVisible="{Binding !HasShareAgentRows}"/>
+
+		</StackPanel>
 
 	</StackPanel>
 

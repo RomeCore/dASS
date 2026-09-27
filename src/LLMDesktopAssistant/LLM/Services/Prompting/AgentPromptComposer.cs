@@ -1,3 +1,4 @@
+using System.Net.Mail;
 using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
@@ -25,14 +26,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	public class AgentPromptComposer(
 		Chat chat,
 		IChatSettingsService chatSettings,
-		ITemplateLibraryAccessor templates,
-		IAgentManagementService agentManager,
-		IMessageVisibilityService messageVisibility,
+		IChatMessageQuoteRenderer messageQuoteRenderer,
 		IAgentEffectiveMessagesProvider effectiveMessagesProvider,
-		IUserManagementService userManager,
 		IEnumerable<IPromptBuildingHook> promptBuildingHooks,
-		IEnumerable<IPromptMessageContextExpander> promptMessageContextExpanders,
-		IEnumerable<IPromptTemplatePlugin> promptTemplatePlugins,
 		IToolsetCacheService toolsetCache,
 		IPromptAnchoredSectionProcessor promptAnchoredSectionProcessor,
 		IPromptSupersedeContextProcessor promptSupersedeContextProcessor,
@@ -53,7 +49,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			var effectiveContext = effectiveMessagesProvider.GetEffectiveMessages(agent);
 
 			var hooks = promptBuildingHooks.OrderBy(h => h.Order).ToList();
-			var functions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
 
 			List<IMessage> result = [];
 			var disabledCheckpoints = agent.Context.GetEffectiveDisabledFlags(chatSettings.Settings);
@@ -128,8 +123,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			for (int i = 0; i < effectiveContext.Messages.Count; i++)
 			{
-				var branchedMessage = effectiveContext.Messages[i];
-				var compaction = MessageCompaction.ForMessage(effectiveContext.Checkpoints, i, disabledCheckpoints);
+				var effectiveMessage = effectiveContext.Messages[i];
+				var branchedMessage = effectiveMessage.BranchedMessage;
 
 				IEnumerable<IMessage> messages;
 				bool isPendingAssistant = false;
@@ -140,7 +135,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				}
 				else
 				{
-					messages = ConvertMessageForAgent(branchedMessage, agent, functions, compaction);
+					messages = ConvertMessageForAgent(effectiveMessage, agent);
 				}
 
 				foreach (var hook in hooks)
@@ -153,7 +148,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				if (branchedMessage.Message is Domain.AssistantMessage)
 				{
 					var systemReminderSb = new StringBuilder();
-					systemReminderSb.AppendLine($"<{systemReminderTag}>");
+					systemReminderSb.Append($"<{systemReminderTag}>").Append('\n');
 					int dataCounter = 0;
 
 					// Process SCM anchor deltas.
@@ -161,7 +156,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					{
 						if (deltas.AnchorId == anchor.Id && !string.IsNullOrWhiteSpace(deltas.Snapshot))
 						{
-							systemReminderSb.AppendLine(deltas.Snapshot);
+							systemReminderSb.Append(deltas.Snapshot).Append('\n');
 							dataCounter++;
 						}
 					}
@@ -175,7 +170,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							.OrderBy(s => s.MsgId)
 							.ThenBy(s => s.Order))
 						{
-							systemReminderSb.AppendLine(stamp.Snapshot);
+							systemReminderSb.Append(stamp.Snapshot).Append('\n');
 							dataCounter++;
 						}
 						seenStamps = null;
@@ -184,7 +179,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					{
 						foreach (var stamp in stamps.Stamps)
 						{
-							systemReminderSb.AppendLine(stamp.Snapshot);
+							systemReminderSb.Append(stamp.Snapshot).Append('\n');
 							dataCounter++;
 						}
 					}
@@ -201,7 +196,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 								var liveContext = provider.Provide(effectiveContext);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{
-									systemReminderSb.AppendLine(liveContext);
+									systemReminderSb.Append(liveContext).Append('\n');
 									dataCounter++;
 								}
 							}
@@ -235,21 +230,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				result.AddRange(messages);
 			}
 
-			List<FunctionTool> tools;
-			if (promptMode == PromptContextMode.Dynamic)
-			{
-				tools = toolsetCache.ValidTools.Values
-					.Where(t => !(t.Hidden ?? false))
-					.Select(t => t.NativeTool)
-					.OrderBy(t => t.Name)
-					.ToList();
-			}
-			else
-			{
-				tools = header.Tools
-					.Select(t => t.ToFunctionTool())
-					.ToList();
-			}
+			List<FunctionTool> tools = [.. header.Tools.Select(t => t.ToFunctionTool())];
 
 			if (PromptDumpService.IsEnabled)
 				promptDumpService.Dump(result, tools, $"mode={promptMode}; header={headerSource}");
@@ -257,210 +238,66 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			return new AgentPromptBundle(result, tools);
 		}
 
-		/// <summary>
-		/// Gets the attachment parts stored in the additional view models of a chat object (message or tool call).
-		/// </summary>
-		private static IEnumerable<AttachmentMessagePart> GetAttachmentParts(ChatObjectBase chatObject) =>
-			chatObject.AdditionalData.GetAll<AttachmentMessagePart>();
-
-		/// <summary>
-		/// Gets the attachment parts stored in the additional view models of a chat object (message or tool call).
-		/// </summary>
-		private static IEnumerable<IAttachment> GetNativeAttachments(ChatObjectBase chatObject) =>
-			chatObject.AdditionalData.GetAll<NativeAttachmentMessagePart>().Select(a => a.NativeAttachment!).Where(a => a != null);
-
-		private RCLargeLanguageModels.Messages.UserMessage BuildUserMessageForAgent(BranchedMessage message,
-			ChatAgentDescriptor agent, TemplateFunctionSet functions)
+		private List<IMessage> ConvertMessageForAgent(EffectiveMessage effectiveMessage,
+			ChatAgentDescriptor agent)
 		{
-			var userMessage = message.AsUserMessage();
-			var template = templates.GetTextTemplate("user_message_prompt");
+			var branchedMessage = effectiveMessage.BranchedMessage;
+			var affectedCheckpoints = effectiveMessage.AffectedCheckpoints;
+			var message = branchedMessage.Message;
 
-			var context = new Dictionary<string, object?>();
-			foreach (var expander in promptMessageContextExpanders)
-				expander.ExpandPromptContext(message, agent, context);
+			if (message is Domain.AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
+			{
+				List<IToolCall> toolCalls = [];
+				List<IMessage> messages = [];
 
-			string userName = userManager.FindByLogin(userMessage.SenderLogin)?.GetAgentShownName() ?? userMessage.SenderLogin;
-			context["user_name"] = userName;
-			context["time_sent"] = FormatSentTime(userMessage.CreatedAt);
-			context["content"] = userMessage.Content;
-			context["attachments"] = GetAttachmentParts(userMessage);
-			context["can_read_content"] = true;
-			bool canReadAttachments = agent.Read.GetEffectiveReadPermissions(chatSettings.Settings).HasFlag(AgentReadPermissions.UserAttachments);
-			context["can_read_attachments"] = canReadAttachments;
+				foreach (var toolCall in assistantMessage.ToolCalls)
+				{
+					toolCalls.Add(new FunctionToolCall(toolCall.ToolCallId, toolCall.ToolName, toolCall.Arguments ?? string.Empty));
+					var status = ConvertToolStatus(toolCall.Status);
+					bool toolCompacted = affectedCheckpoints.HasFlag(ContextCheckpointKind.ForcedToolCompaction)
+						|| (toolCall.CanBeCompacted && affectedCheckpoints.HasFlag(ContextCheckpointKind.ToolCompaction));
+					var resultContent = toolCompacted
+						? GetCompactedToolResultContent(toolCall.Status)
+						: toolCall.ResultContent ?? string.Empty;
+					var toolResult = new ToolResult(status, resultContent,
+						toolCompacted ? [] : toolCall.GetNativeAttachments());
+					messages.Add(new ToolMessage(toolResult, toolCall.ToolCallId, toolCall.ToolName));
+				}
 
-			var result = template.Render(context, functions);
-			IEnumerable<IAttachment> attachments = [];
-			if (canReadAttachments)
-				attachments = GetNativeAttachments(userMessage);
-			return new RCLargeLanguageModels.Messages.UserMessage(userName, result, attachments);
+				bool reasoningCompacted = affectedCheckpoints.HasFlag(ContextCheckpointKind.ReasoningCompaction);
+				var result = new RCLargeLanguageModels.Messages.AssistantMessage(
+					assistantMessage.Content ?? string.Empty,
+					reasoningCompacted ? string.Empty : assistantMessage.ReasoningContent ?? string.Empty,
+					toolCalls: toolCalls,
+					attachments: assistantMessage.GetNativeAttachments());
+				messages.Insert(0, result);
+
+				return messages;
+			}
+
+			var renderedQuote = messageQuoteRenderer.Render(branchedMessage,
+				effectiveMessage.Facets, effectiveMessage.Identity, effectiveMessage.AffectedCheckpoints);
+			return [new RCLargeLanguageModels.Messages.UserMessage(Senders.User,
+				renderedQuote.Content, renderedQuote.NativeAttachments)];
 		}
 
-		private RCLargeLanguageModels.Messages.UserMessage BuildForeignAgentMessageText(BranchedMessage message,
-			ChatAgentDescriptor agent, TemplateFunctionSet functions, MessageCompaction compaction)
+		private static ToolResultStatus ConvertToolStatus(ToolStatus status) => status switch
 		{
-			var assistantMessage = message.AsAssistantMessage();
-			var senderDescriptor = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
-			var agentName = senderDescriptor.Info.Name ?? senderDescriptor.Id.ToString()[..8];
-			var exposure = senderDescriptor.Read.GetEffectiveExposureMode(chatSettings.Settings); // What sender agent exposes
-			var permissions = agent.Read.GetEffectiveReadPermissions(chatSettings.Settings); // What current agent can see
+			ToolStatus.None => ToolResultStatus.NoResult,
+			ToolStatus.WaitingForApproval => ToolResultStatus.NoResult,
+			ToolStatus.Executing => ToolResultStatus.NoResult,
+			ToolStatus.Success => ToolResultStatus.Success,
+			ToolStatus.Error => ToolResultStatus.Error,
+			ToolStatus.Cancelled => ToolResultStatus.Cancelled,
+			_ => ToolResultStatus.NoResult
+		};
 
-			if (assistantMessage.IsUserLike || permissions.HasFlag(AgentReadPermissions.IdentifyAgentsAsUsers))
-			{
-				var template = templates.GetTextTemplate("user_message_prompt");
-
-				var context = new Dictionary<string, object?>();
-				foreach (var expander in promptMessageContextExpanders)
-					expander.ExpandPromptContext(message, agent, context);
-
-				context["user_name"] = agentName;
-				context["time_sent"] = FormatSentTime(assistantMessage.CreatedAt);
-				context["content"] = assistantMessage.Content;
-				context["attachments"] = GetAttachmentParts(assistantMessage);
-				// User-like messages are already gated by user read permissions and their content is always readable
-				context["can_read_content"] = assistantMessage.IsUserLike ||
-					(permissions.HasFlag(AgentReadPermissions.OtherAgentContent) &&
-					exposure.HasFlag(AgentExposureMode.Content));
-				bool canReadAttachments = assistantMessage.IsUserLike
-					? permissions.HasFlag(AgentReadPermissions.UserAttachments)
-					: permissions.HasFlag(AgentReadPermissions.OtherAgentAttachments) && exposure.HasFlag(AgentExposureMode.Attachments);
-				context["can_read_attachments"] = canReadAttachments;
-
-				var result = template.Render(context, functions);
-				IEnumerable<IAttachment> attachments = [];
-				if (canReadAttachments)
-					attachments = GetNativeAttachments(assistantMessage);
-				return new RCLargeLanguageModels.Messages.UserMessage(agentName, result, attachments);
-			}
-			else
-			{
-				var template = templates.GetTextTemplate("foreign_assistant_prompt");
-
-				var context = new Dictionary<string, object?>();
-				foreach (var expander in promptMessageContextExpanders)
-					expander.ExpandPromptContext(message, agent, context);
-
-				context["agent_name"] = agentName;
-				context["time_sent"] = FormatSentTime(assistantMessage.CreatedAt);
-				context["reasoning_content"] = compaction.CompactReasoning ? null : assistantMessage.ReasoningContent;
-				context["content"] = assistantMessage.Content;
-				context["attachments"] = GetAttachmentParts(assistantMessage);
-				context["tool_calls"] = assistantMessage.ToolCalls.Select(tc => new
-					{
-						name = tc.ToolName,
-						arguments = tc.Arguments,
-						result_content = compaction.ShouldCompactToolCall(tc.CanBeCompacted)
-							? MessageCompaction.GetCompactedToolResultContent(tc.Status)
-							: tc.ResultContent,
-					}).ToArray();
-
-				context["can_read_reasoning"] =
-					!compaction.CompactReasoning &&
-					permissions.HasFlag(AgentReadPermissions.OtherAgentReasoning) &&
-					exposure.HasFlag(AgentExposureMode.Reasoning);
-				context["can_read_content"] =
-					permissions.HasFlag(AgentReadPermissions.OtherAgentContent) &&
-					exposure.HasFlag(AgentExposureMode.Content);
-				bool canReadAttachments =
-					permissions.HasFlag(AgentReadPermissions.OtherAgentAttachments) && exposure.HasFlag(AgentExposureMode.Attachments);
-				context["can_read_attachments"] = canReadAttachments;
-				context["can_read_tool_calls"] =
-					permissions.HasFlag(AgentReadPermissions.OtherAgentToolCalls) && exposure.HasFlag(AgentExposureMode.ToolCalls);
-
-				var result = template.Render(context, functions);
-				IEnumerable<IAttachment> attachments = [];
-				if (canReadAttachments)
-					attachments = GetNativeAttachments(assistantMessage);
-				return new RCLargeLanguageModels.Messages.UserMessage(agentName, result, attachments);
-			}
-		}
-
-		/// <summary>
-		/// Formats a message timestamp with the local time zone offset, e.g. "2026-09-09 21:32:45 (UTC+03:00)".
-		/// The <see cref="DateTime"/> value itself does not carry the offset, so it is appended from the local time zone.
-		/// </summary>
-		private static string FormatSentTime(DateTime time)
+		private static string GetCompactedToolResultContent(ToolStatus status) => status switch
 		{
-			if (time.Kind == DateTimeKind.Utc)
-				time = time.ToLocalTime();
-			var offset = TimeZoneInfo.Local.GetUtcOffset(time);
-			var sign = offset < TimeSpan.Zero ? "-" : "+";
-			return $"{time:yyyy-MM-dd HH:mm:ss} (UTC{sign}{offset.Duration():hh\\:mm})";
-		}
-
-		private IEnumerable<IMessage> ConvertMessageForAgent(BranchedMessage message,
-			ChatAgentDescriptor agent, TemplateFunctionSet functions, MessageCompaction compaction)
-		{
-			if (message.Message is Domain.UserMessage)
-			{
-				if (!messageVisibility.IsUserMessageVisibleToAgent(message, agent))
-					return [];
-
-				return [BuildUserMessageForAgent(message, agent, functions)];
-			}
-			else if (message.Message is Domain.AssistantMessage assistantMessage)
-			{
-				if (!messageVisibility.IsAssistantMessageVisibleToAgent(message, agent))
-					return [];
-
-				// Own assistant message — full fidelity with tool calls
-				if (assistantMessage.SenderAgentId == agent.Id)
-					return BuildOwnAssistantMessageAsMessages(assistantMessage, compaction);
-
-				// Foreign assistant message — merged as quoted user message
-				return [BuildForeignAgentMessageText(message, agent, functions, compaction)];
-			}
-			else if (message.Message is RawUserMessage rawUserMessage)
-			{
-				var attachments = GetAttachmentParts(rawUserMessage).Select(a => a.NativeAttachment).Where(a => a != null);
-				var userMessage = new RCLargeLanguageModels.Messages.UserMessage(Senders.User, rawUserMessage.Content, attachments!);
-				return [userMessage];
-			}
-			else
-			{
-				throw new InvalidOperationException($"Unsupported message type: {message.GetType()}.");
-			}
-		}
-
-		private IEnumerable<IMessage> BuildOwnAssistantMessageAsMessages(Domain.AssistantMessage assistantMessage,
-			MessageCompaction compaction)
-		{
-			List<IToolCall> toolCalls = [];
-			List<IMessage> messages = [];
-
-			foreach (var toolCall in assistantMessage.ToolCalls)
-			{
-				toolCalls.Add(new FunctionToolCall(toolCall.ToolCallId, toolCall.ToolName, toolCall.Arguments ?? string.Empty));
-				var status = ConvertToolStatus(toolCall.Status);
-				var resultContent = compaction.ShouldCompactToolCall(toolCall.CanBeCompacted)
-					? MessageCompaction.GetCompactedToolResultContent(toolCall.Status)
-					: toolCall.ResultContent ?? string.Empty;
-				var toolResult = new ToolResult(status, resultContent,
-					GetNativeAttachments(toolCall));
-				messages.Add(new ToolMessage(toolResult, toolCall.ToolCallId, toolCall.ToolName));
-			}
-
-			var result = new RCLargeLanguageModels.Messages.AssistantMessage(
-				assistantMessage.Content ?? string.Empty,
-				compaction.CompactReasoning ? string.Empty : assistantMessage.ReasoningContent ?? string.Empty,
-				toolCalls: toolCalls,
-				attachments: GetNativeAttachments(assistantMessage));
-			messages.Insert(0, result);
-			
-			return messages;
-		}
-
-		private static ToolResultStatus ConvertToolStatus(ToolStatus status)
-		{
-			return status switch
-			{
-				ToolStatus.None => ToolResultStatus.NoResult,
-				ToolStatus.WaitingForApproval => ToolResultStatus.NoResult,
-				ToolStatus.Executing => ToolResultStatus.NoResult,
-				ToolStatus.Success => ToolResultStatus.Success,
-				ToolStatus.Error => ToolResultStatus.Error,
-				ToolStatus.Cancelled => ToolResultStatus.Cancelled,
-				_ => ToolResultStatus.NoResult
-			};
-		}
+			ToolStatus.Success => "[TOOL RESULT WAS COMPACTED, SUCCESSFUL BEFORE]",
+			ToolStatus.Error => "[TOOL RESULT WAS COMPACTED, FAULTED BEFORE]",
+			ToolStatus.Cancelled => "[TOOL RESULT WAS COMPACTED, CANCELLED BEFORE]",
+			_ => "[TOOL RESULT WAS COMPACTED]"
+		};
 	}
 }

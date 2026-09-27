@@ -1,0 +1,84 @@
+﻿@template message_quote_prompt
+{
+	@metadata
+	{
+		lang: 'en-US'
+	}
+	@if ?author_identity
+	{
+		@if author_identity == 'anon'
+		{
+			[MESSAGE FROM ANONYMOUS]:
+		}
+		else if author_identity == 'anon-user'
+		{
+			[MESSAGE FROM ANONYMOUS USER]:
+		}
+		else if author_identity == 'user'
+		{
+			[MESSAGE FROM USER '@author_name']:
+		}
+		else if author_identity == 'anon-agent'
+		{
+			[MESSAGE FROM ANONYMOUS AGENT]:
+		}
+		else if author_identity == 'agent'
+		{
+			[MESSAGE FROM AGENT '@author_name']:
+		}
+	}
+	@if ?time_sent
+	{
+		[MESSAGE SENT AT: @time_sent]
+	}
+	@if ?reasoning_content
+	{
+		[REASONING]:
+		@reasoning_content
+	}
+	@if ?content
+	{
+		[CONTENT]:
+		@content
+	}
+	@if ?attachments
+	{
+		[ATTACHMENTS]:
+		@foreach attachment in attachments
+		{
+			- attachment:
+			  File: @attachment.local_path
+			  Size: @attachment.display_size
+		}
+		[END OF ATTACHMENTS]
+		Note that attachments also can be accessed via various tools, like python, shell or filesystem.
+		Look at the preview or full content to understand the structure of the attachments (if it's available).
+	}
+	@if ?tool_calls
+	{
+		@if tool_calls
+		{
+			[TOOL CALLS]:
+			@foreach tool_call in tool_calls
+			{
+				@if tool_call?.arguments || tool_call?.result_content
+				{
+					- @tool_call.name:
+					@if tool_call.arguments
+					{
+						  [ARGUMENTS: @tool_call.arguments]
+					}
+					@if tool_call.result_content
+					{
+						  [RESULT]:
+						  @tool_call.result_content
+					}
+				}
+				else
+				{
+					- @tool_call.name
+				}
+			}
+		}
+	}
+}

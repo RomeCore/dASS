@@ -122,7 +122,7 @@ namespace LLMDesktopAssistant.Agents.Memory
 				switch (branched.Message)
 				{
 					case UserMessage userMessage when !string.IsNullOrWhiteSpace(userMessage.Content)
-						&& messageVisibility.IsUserMessageVisibleToAgent(branched, context.Agent):
+						&& messageVisibility.CheckVisibility(branched, context.Agent).EffectiveVisible:
 						sb.Append("User: ").AppendLine(userMessage.Content);
 						break;
 					case AssistantMessage assistantMessage when !string.IsNullOrWhiteSpace(assistantMessage.Content)

@@ -177,6 +177,59 @@
 	}
 }
 
+@template identity_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if persona_changed
+	{
+		@if persona
+		{
+			Your new persona is:
+			<persona>
+			@persona
+			</persona>
+		}
+		else
+		{
+			<persona>
+			None
+			</persona>
+			Forget your previous persona.
+		}
+	}
+	@if specialization_changed
+	{
+		@if specialization
+		{
+			Your new specialization is:
+			<specialization>
+			@specialization
+			</specialization>
+		}
+		else
+		{
+			<specialization>
+			None
+			</specialization>
+			Forget your previous specialization.
+		}
+	}
+	@if assistant_nickname_changed
+	{
+		@if assistant_nickname
+		{
+			Your new nickname is: @assistant_nickname
+		}
+		else
+		{
+			Forget your previous nickname.
+		}
+	}
+}
+
 @template skills_system_section
 {
 	@metadata

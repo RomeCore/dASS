@@ -149,7 +149,7 @@ namespace LLMDesktopAssistant.Agents.ExecutionStages
 			{
 				foreach (var message in round)
 				{
-					sb.AppendLine(quoteRenderer.RenderQuote(message.Message));
+					sb.AppendLine(quoteRenderer.Render(message.Message).Content);
 				}
 			}
 

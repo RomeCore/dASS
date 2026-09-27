@@ -1,13 +1,13 @@
-using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.ContextExpanders;
-using LLMDesktopAssistant.Prompting.Hooks;
 using LLMDesktopAssistant.Prompting.Plugins;
 using LLMDesktopAssistant.Users;
+using LLMDesktopAssistant.Utils.Files;
 using LLTSharp;
+using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
@@ -22,68 +22,149 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		IEnumerable<IPromptTemplatePlugin> promptTemplatePlugins
 		) : IChatMessageQuoteRenderer
 	{
-		/// <inheritdoc/>
-		public string RenderQuote(BranchedMessage message)
-		{
-			var functions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
+		private const int briefReasoningCharacters = 250;
+		private const int briefTcArgumentsCharacters = 200;
+		private const int briefTcResultCharacters = 250;
 
-			switch (message.Message)
+		/// <inheritdoc/>
+		public MessageRenderingResult Render(BranchedMessage branchedMessage,
+			MessagePartsFacet parts = MessagePartsFacet.Default,
+			MessageAuthorIdentity identity = MessageAuthorIdentity.Default,
+			ContextCheckpointKind appliedCheckpoints = ContextCheckpointKind.None)
+		{
+			var message = branchedMessage.Message;
+			var functions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
+			string name;
+			bool isUserLike;
+
+			switch (message)
 			{
 				case RawUserMessage rawUserMessage:
-					return rawUserMessage.Content;
+					return new MessageRenderingResult(rawUserMessage.Content, NativeAttachments: []);
 
-				case Domain.UserMessage userMessage:
-					{
-						var name = userManager.FindByLogin(userMessage.SenderLogin)?.GetAgentShownName() ?? userMessage.SenderLogin;
-						return RenderUserStyleQuote(message, name, userMessage.CreatedAt, userMessage.Content, functions);
-					}
+				case UserMessage userMessage:
+					name = userManager.FindByLogin(userMessage.SenderLogin)?.GetAgentShownName() ?? userMessage.SenderLogin;
+					isUserLike = true;
+					break;
 
-				case Domain.AssistantMessage assistantMessage:
-					{
-						var senderDescriptor = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
-						var name = senderDescriptor.Info.Name ?? senderDescriptor.Id.ToString()[..8];
-						return RenderUserStyleQuote(message, name, assistantMessage.CreatedAt, assistantMessage.Content ?? string.Empty, functions);
-					}
+				case AssistantMessage assistantMessage:
+					var senderDescriptor = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
+					name = senderDescriptor.Info.Name ?? senderDescriptor.Id.ToString()[..8];
+					isUserLike = assistantMessage.IsUserLike;
+					break;
 
 				default:
 					throw new InvalidOperationException($"Unsupported message type: {message.GetType()}.");
 			}
-		}
 
-		/// <summary>
-		/// Renders any message as a neutral user-style content quote.
-		/// </summary>
-		private string RenderUserStyleQuote(BranchedMessage message, string name, DateTime time, string content,
-			TemplateFunctionSet functions)
-		{
-			var template = templates.GetTextTemplate("user_message_prompt");
+			var template = templates.GetTextTemplate("message_quote_prompt");
 
 			var context = new Dictionary<string, object?>();
 			foreach (var expander in promptSystemContextExpanders)
 				expander.ExpandPromptContext(context);
 			foreach (var expander in promptMessageContextExpanders)
-				expander.ExpandPromptContext(message, null, context);
+				expander.ExpandPromptContext(branchedMessage, null, context);
 
-			context["user_name"] = name;
-			context["time_sent"] = FormatSentTime(time);
-			context["content"] = content;
-			context["attachments"] = message.Message.AdditionalData.GetAll<AttachmentMessagePart>();
-			context["can_read_content"] = true;
-			context["can_read_attachments"] = true;
+			context["author_identity"] = identity switch
+			{
+				MessageAuthorIdentity.Anon => "anon",
+				MessageAuthorIdentity.UnnamedUser => "anon-user",
+				MessageAuthorIdentity.UnnamedAgent => "anon-agent",
+				MessageAuthorIdentity.NamedUser => "user",
+				MessageAuthorIdentity.NamedAgent => "agent",
+				_ => isUserLike ? "user" : "agent"
+			};
+			context["author_name"] = name;
+			context["time_sent"] = FormatSentTime(message.CreatedAt);
 
-			return template.Render(context, functions).ToString();
+			bool reasoningVisible = !appliedCheckpoints.HasFlag(ContextCheckpointKind.ReasoningCompaction)
+				&& (parts.HasFlag(MessagePartsFacet.BriefReasoning) || parts.HasFlag(MessagePartsFacet.Reasoning));
+			string? reasoningContent = (message as AssistantMessage)?.ReasoningContent;
+			context["reasoning_content"] = reasoningVisible
+				? (parts.HasFlag(MessagePartsFacet.Reasoning)
+					? reasoningContent
+					: reasoningContent?[..Math.Min(reasoningContent.Length, briefReasoningCharacters)])
+				: null;
+
+			context["content"] = parts.HasFlag(MessagePartsFacet.Content) ? message.Content : null;
+
+			List<IAttachment> nativeAttachments = [.. message.GetNativeAttachments()];
+			context["attachments"] = parts.HasFlag(MessagePartsFacet.Attachments)
+				? message.AdditionalData.OfType<AttachmentMessagePart>().Select(ConvertAttachment).ToArray()
+				: null;
+
+			bool showToolCallFacts = parts.HasFlag(MessagePartsFacet.ToolCallFacts);
+			bool showFullToolCallArguments = parts.HasFlag(MessagePartsFacet.ToolCallArguments);
+			bool showBriefToolCallArguments = parts.HasFlag(MessagePartsFacet.BriefToolCallArguments);
+			bool showFullToolCallResults = parts.HasFlag(MessagePartsFacet.ToolCallResults);
+			bool showBriefToolCallResults = parts.HasFlag(MessagePartsFacet.BriefToolCallResults);
+			bool showToolCallNativeAttachments = parts.HasFlag(MessagePartsFacet.ToolCallNativeAttachments);
+
+			// Tool calls are listed when their facts are requested, or when any part of them is requested.
+			bool showToolCalls = showToolCallFacts
+				|| showFullToolCallArguments || showBriefToolCallArguments
+				|| showFullToolCallResults || showBriefToolCallResults
+				|| showToolCallNativeAttachments;
+
+			bool forcedToolCompaction = appliedCheckpoints.HasFlag(ContextCheckpointKind.ForcedToolCompaction);
+			bool toolCompactionAllowed = forcedToolCompaction || appliedCheckpoints.HasFlag(ContextCheckpointKind.ToolCompaction);
+
+			context["tool_calls"] = showToolCalls ? message.ToolCalls.Select(tc =>
+			{
+				string? arguments = showFullToolCallArguments
+					? tc.Arguments
+					: showBriefToolCallArguments ? Brief(tc.Arguments, briefTcArgumentsCharacters) : null;
+
+				// Compaction only ever replaces a result that would have been shown otherwise.
+				string? resultContent = null;
+				if (showFullToolCallResults || showBriefToolCallResults)
+				{
+					bool toolCompacted = forcedToolCompaction || (tc.CanBeCompacted && toolCompactionAllowed);
+					resultContent = toolCompacted
+						? GetCompactedToolResultContent(tc.Status)
+						: showFullToolCallResults ? tc.ResultContent : Brief(tc.ResultContent, briefTcResultCharacters);
+				}
+
+				if (showToolCallNativeAttachments)
+					nativeAttachments.AddRange(tc.GetNativeAttachments());
+
+				return new
+				{
+					name = tc.ToolName,
+					arguments,
+					result_content = resultContent,
+				};
+			}).ToArray() : null;
+
+			return new MessageRenderingResult(template.Render(context, functions),
+				nativeAttachments);
 		}
 
-		/// <summary>
-		/// Formats a message timestamp with the local time zone offset, e.g. "2026-09-09 21:32:45 (UTC+03:00)".
-		/// </summary>
+		private static string? Brief(string? value, int maxCharacters)
+			=> value is { Length: > 0 } text && text.Length > maxCharacters
+				? text[..maxCharacters]
+				: value;
+
+		private static string GetCompactedToolResultContent(ToolStatus status) => status switch
+		{
+			ToolStatus.Success => "[TOOL RESULT WAS COMPACTED, SUCCESSFUL BEFORE]",
+			ToolStatus.Error => "[TOOL RESULT WAS COMPACTED, FAULTED BEFORE]",
+			ToolStatus.Cancelled => "[TOOL RESULT WAS COMPACTED, CANCELLED BEFORE]",
+			_ => "[TOOL RESULT WAS COMPACTED]"
+		};
+
 		private static string FormatSentTime(DateTime time)
 		{
-			if (time.Kind == DateTimeKind.Utc)
-				time = time.ToLocalTime();
-			var offset = TimeZoneInfo.Local.GetUtcOffset(time);
-			var sign = offset < TimeSpan.Zero ? "-" : "+";
-			return $"{time:yyyy-MM-dd HH:mm:ss} (UTC{sign}{offset.Duration():hh\\:mm})";
+			return $"{time:yyyy-MM-dd HH:mm:ss}";
+		}
+
+		private static object ConvertAttachment(AttachmentMessagePart attachment)
+		{
+			return new
+			{
+				local_path = attachment.LocalPath,
+				display_size = FileUtils.BytesToDisplaySize(attachment.Size)
+			};
 		}
 	}
 }

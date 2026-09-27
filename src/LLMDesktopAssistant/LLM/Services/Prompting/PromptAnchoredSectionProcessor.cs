@@ -1,6 +1,5 @@
 using System.Text;
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Prompting.Context;
 using Serilog;
@@ -22,7 +21,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				return null;
 
 			if (effectiveContext.Messages.Count == 0 ||
-				effectiveContext.Messages[^1].Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
+				effectiveContext.Messages[^1].BranchedMessage.Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
 				throw new InvalidOperationException("Expected a pending assistant message, but none was found.");
 
 			PromptStateAnchorMessageData? anchor = null;
@@ -33,7 +32,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			for (int i = effectiveContext.Messages.Count - 1; i > effectiveContext.LastCheckpointIndex; i--)
 			{
 				var branchedMessage = effectiveContext.Messages[i];
-				foreach (var candidate in branchedMessage.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>())
+				foreach (var candidate in branchedMessage.BranchedMessage.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>())
 				{
 					if (candidate.AgentId != agent.Id)
 						continue;
@@ -55,9 +54,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					for (int i = messageWithAnchor + 1; i < effectiveContext.Messages.Count; i++)
 					{
 						var branchedMessage = effectiveContext.Messages[i];
-						if (branchedMessage.Message is AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
+						if (branchedMessage.BranchedMessage.Message is AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
 						{
-							foreach (var deltaData in branchedMessage.Message.AdditionalData.OfType<PromptStateDeltaMessageData>())
+							foreach (var deltaData in branchedMessage.BranchedMessage.Message.AdditionalData.OfType<PromptStateDeltaMessageData>())
 							{
 								if (deltaData.AnchorId != anchor.Id)
 									continue;
@@ -86,7 +85,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							newDelta.Discriminator = section.Discriminator;
 							deltas.Add(newDelta);
 							var rendered = section.RenderDelta(newDelta);
-							sb.AppendLine(rendered);
+							sb.Append(rendered).Append('\n');
 						}
 					}
 
@@ -128,9 +127,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				Snapshot = snapshot
 			};
 
-			target.Message.AdditionalData.Add(anchor);
+			target.BranchedMessage.Message.AdditionalData.Add(anchor);
 			Log.Information("Created prompt state anchor #{AnchorId} for agent {AgentId} on message {MessageId} (effective index {Index}).",
-				anchor.Id, agent.Id, target.MessageId, targetIndex);
+				anchor.Id, agent.Id, target.BranchedMessage.MessageId, targetIndex);
 			return anchor;
 		}
 

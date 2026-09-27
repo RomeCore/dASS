@@ -1,5 +1,8 @@
 using LLMDesktopAssistant.Agents.Tasks;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Utils;
+using LLTSharp;
+using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {

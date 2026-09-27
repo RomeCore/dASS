@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Agents.Settings;
+using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.SourceGenerators;
 using LLMDesktopAssistant.Utils;
 
@@ -11,63 +12,42 @@ namespace LLMDesktopAssistant.Agents
 	[SettingsRoute(nameof(ChatAgentDescriptor.Read))]
 	public partial class AgentReadSettings : AgentSettingsCategoryBase
 	{
-		private AgentReadPermissions _readPermissions =
-			AgentReadPermissions.UserMessages |
-			AgentReadPermissions.UserAttachments |
-			AgentReadPermissions.OwnMessages |
-			AgentReadPermissions.OtherAgentMessages |
-			AgentReadPermissions.OtherAgentContent |
-			AgentReadPermissions.OtherAgentToolCalls |
-			AgentReadPermissions.OtherAgentAttachments |
-			AgentReadPermissions.MessagesWithToolCalls;
+		/// <summary>
+		/// The final read permissions that determine what the agent can read.
+		/// Contains the facets of the messages and their parts and author's identity.
+		/// Applies with the AND operator. Visible property is ignored here.
+		/// </summary>
+		[InheritedChatAgentSetting]
+		public AgentReadDefaultRows ReadFilters
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = new()
+		{
+			User = new()
+			{
+				VisibleParts = MessagePartsFacet.Content | MessagePartsFacet.NativeAttachments
+					| MessagePartsFacet.Attachments | MessagePartsFacet.ToolCallFacts
+			}
+		};
+
 		/// <summary>
 		/// The permissions that determine what the agent can read.
 		/// </summary>
 		[InheritedChatAgentSetting]
-		public AgentReadPermissions ReadPermissions
+		public AgentReadDefaultRows DefaultShareFilters
 		{
-			get => _readPermissions;
-			set => SetProperty(ref _readPermissions, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = new();
 
-		private AgentExposureMode _exposureMode =
-			AgentExposureMode.Reasoning |
-			AgentExposureMode.Content |
-			AgentExposureMode.ToolCalls |
-			AgentExposureMode.Attachments |
-			AgentExposureMode.MessagesWithToolCalls;
 		/// <summary>
-		/// The exposure mode that determines what parts of this agent's messages
-		/// are visible to other agents.
+		/// The per-participant share filters, where key is the user login or agent ID.
 		/// </summary>
-		[InheritedChatAgentSetting]
-		public AgentExposureMode ExposureMode
+		public ObservableDictionary<Guid, AgentReadOverrideRow> ParticipantsShareFilters
 		{
-			get => _exposureMode;
-			set => SetProperty(ref _exposureMode, value);
-		}
-
-		private readonly RangeObservableCollection<Guid> _agentIdsReadFilter = [];
-		/// <summary>
-		/// The list of agent IDs that the agent can read.
-		/// The behaviour of filter is controlled by <see cref="IsFilterWhiteList"/>.
-		/// If empty, all agents are readable.
-		/// </summary>
-		public ICollection<Guid> AgentIdsReadFilter
-		{
-			get => _agentIdsReadFilter;
-			set => _agentIdsReadFilter.Reset(value);
-		}
-
-		private bool _isFilterWhiteList = false;
-		/// <summary>
-		/// Whether the filter is a white list or black list.
-		/// If true, only agents in the <see cref="AgentIdsReadFilter"/> can be read. If false, all agents except those in the filter can be read.
-		/// </summary>
-		public bool IsFilterWhiteList
-		{
-			get => _isFilterWhiteList;
-			set => SetProperty(ref _isFilterWhiteList, value);
+			get => field ??= [];
+			set => (field ??= []).Reset(value);
 		}
 	}
 }

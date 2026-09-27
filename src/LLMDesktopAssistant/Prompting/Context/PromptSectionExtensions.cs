@@ -72,7 +72,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 
 				var snapshot = section.RenderState(state);
 				if (!string.IsNullOrWhiteSpace(snapshot.Text))
-					sb.AppendLine(snapshot.Text);
+					sb.Append(snapshot.Text).Append('\n');
 				if (snapshot.Tools.Count > 0)
 					tools.AddRange(snapshot.Tools);
 			}

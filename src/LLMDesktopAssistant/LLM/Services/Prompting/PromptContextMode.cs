@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.Agents.Settings
+﻿namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
 	public enum PromptContextMode
 	{

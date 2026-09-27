@@ -270,7 +270,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.read"),
 						MaterialIconKind.Eye,
 						() => new AgentReadSettingsViewModel(
-							descriptor.Read, Settings.Agents.ChatAgents, descriptor.Id, Settings)),
+							descriptor.Read, Settings.Agents.ChatAgents, descriptor, Settings)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.context"),
 						MaterialIconKind.Layers,

@@ -208,7 +208,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					encounteredUserMessage = true;
 					if (latestSummary != null)
 					{
-						parts.Insert(0, quoteRenderer.RenderQuote(message));
+						parts.Insert(0, quoteRenderer.Render(message).Content);
 						break;
 					}
 				}
@@ -225,7 +225,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 				if (latestSummary == null)
 				{
-					parts.Insert(0, quoteRenderer.RenderQuote(message));
+					parts.Insert(0, quoteRenderer.Render(message).Content);
 				}
 			}
 

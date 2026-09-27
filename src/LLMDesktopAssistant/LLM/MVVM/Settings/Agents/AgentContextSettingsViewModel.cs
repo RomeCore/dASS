@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
+using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.MVVM;

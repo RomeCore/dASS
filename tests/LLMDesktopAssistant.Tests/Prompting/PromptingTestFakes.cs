@@ -1,5 +1,4 @@
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Prompting;
@@ -23,9 +22,16 @@ internal sealed class FakeMessageVisibilityService : IMessageVisibilityService
 	public Func<BranchedMessage, bool> IsUserVisible { get; set; } = _ => true;
 	public Func<BranchedMessage, bool> IsAssistantVisible { get; set; } = _ => true;
 
-	public bool IsUserMessageVisibleToAgent(BranchedMessage message, ChatAgentDescriptor agent) => IsUserVisible(message);
+	public MessageVisibilityResult CheckVisibility(BranchedMessage message, ChatAgentDescriptor agent)
+	{
+		bool visible = message.Message is AssistantMessage
+			? IsAssistantVisible(message)
+			: IsUserVisible(message);
 
-	public bool IsAssistantMessageVisibleToAgent(BranchedMessage message, ChatAgentDescriptor agent) => IsAssistantVisible(message);
+		return visible
+			? new MessageVisibilityResult(true, false, MessagePartsFacet.All, MessageAuthorIdentity.Default)
+			: new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+	}
 }
 
 internal sealed class FakeSectionState : PromptSectionStateBase

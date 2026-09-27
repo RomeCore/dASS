@@ -1,5 +1,4 @@
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting;
@@ -31,7 +30,18 @@ public class PromptStateStageTests
 	/// Creates an effective context of the given messages with no cuts and no checkpoints.
 	/// </summary>
 	private static EffectiveChatContext CreateEffectiveContext(params BranchedMessage[] messages)
-		=> new(messages, [], 0, -1, -1);
+		=> new()
+		{
+			Agent = new ChatAgentDescriptor(),
+			Messages = [.. messages.Select(ToEffective)],
+			Checkpoints = [],
+			EffectiveMessagesStartIndex = 0,
+			LastCutIndex = -1,
+			LastCheckpointIndex = -1,
+		};
+
+	private static EffectiveMessage ToEffective(BranchedMessage message)
+		=> new(message, MessagePartsFacet.All, ContextCheckpointKind.None, MessageAuthorIdentity.Default);
 
 	[Fact]
 	public void CreatesAnchor_OnFirstHybridPrep()
@@ -94,8 +104,15 @@ public class PromptStateStageTests
 		// The cut checkpoint is carried by the first message of the effective set (index 0),
 		// so the anchor pinned to it is now before the cut and must be rebaselined.
 		var cut = new ContextCheckpoint { Kind = ContextCheckpointKind.Shield };
-		var effectiveAfterCut = new EffectiveChatContext([u0, u1, pending],
-			[new EffectiveCheckpoint(cut, 0)], 0, 0, 0);
+		var effectiveAfterCut = new EffectiveChatContext
+		{
+			Agent = new ChatAgentDescriptor(),
+			Messages = [.. new[] { u0, u1, pending }.Select(ToEffective)],
+			Checkpoints = [new EffectiveCheckpoint(cut, 0)],
+			EffectiveMessagesStartIndex = 0,
+			LastCutIndex = 0,
+			LastCheckpointIndex = 0,
+		};
 
 		var second = stage.Process(agent, effectiveAfterCut, sections);
 
