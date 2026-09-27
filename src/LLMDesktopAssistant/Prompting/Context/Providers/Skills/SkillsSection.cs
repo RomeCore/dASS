@@ -120,7 +120,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Skills
 						path = s.Path,
 						body = s.Body
 					}).ToArray()
-					: null
+					: null,
+				hidden_skills = state.HiddenNames.Count > 0 ? state.HiddenNames.ToArray() : null
 			});
 		}
 	}

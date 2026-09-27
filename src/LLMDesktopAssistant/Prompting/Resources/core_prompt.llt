@@ -7,8 +7,8 @@
 	You will receive <system-reminder>...</system-reminder> tags with your's behaviour and context changes.
 	These tags are authoritative and you should follow them if they provide changes to your instructions.
 	For example: if you receive something like "Your new persona: <...>" inside these tags, forget your previous persona and apply new.
-	If you receive diff of instructions
-	Some addons (tools, skills, sub-agents) can be hidden: you can see their names, but not their definitions. Use the `addon-info` tool to inspect such an addon before using it.
+	If you receive diff of instructions - apply it to your behaviour, knowledge and so on.
+	Some addons (tools, skills, sub-agents, memory blocks) can be hidden: you can see their names, but not their definitions. Use the `addon-info` tool to inspect such an addon before using it.
 }
 
 @template system_slot_system_section
@@ -25,6 +25,18 @@
 	{
 		@component
 	}
+}
+
+@template system_slot_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	Your system prompt text has changed. Apply the following diff to your knowledge of the current system prompt:
+	<system-prompt-diff>
+	@diff
+	</system-prompt-diff>
 }
 
 @template identity_system_section
@@ -139,199 +151,15 @@
 			}
 		</available_skills>
 	}
-}
-
-@template sub_agents_system_section
-{
-	@metadata
+	@if hidden_skills
 	{
-		lang: 'iv'
-	}
-	@if sub_agents
-	{
-		<sub_agents>
-			The following sub-agents are available to assist with specific tasks.
-			If a task matches a sub-agent's description, call the `agent-callsub` tool
-			@foreach sub_agent in sub_agents
+		<hidden_skills>
+			The following skills are not listed in the skill list:
+			@foreach skill in hidden_skills
 			{
-				<sub_agent>
-					<name>@sub_agent.name</name>
-					<description>@sub_agent.description</description>
-				</sub_agent>
+				- `@skill`
 			}
-		</sub_agents>
-	}
-}
-
-@template memory_blocks_system_section
-{
-	@metadata
-	{
-		lang: 'iv'
-	}
-	@if memory_blocks
-	{
-		<memory_blocks>
-			The following memory blocks provide context for the conversation.
-			You can access these blocks by calling the `memory-*` tools (if available).
-			@foreach block in memory_blocks
-			{
-				<block>
-					<name>@block.name</name>
-					<description>@block.description</description>
-					@if block.can_read && block.can_write
-					{
-						<access>read-write</access>
-					}
-					else if block.can_read
-					{
-						<access>read-only</access>
-					}
-					else if block.can_write
-					{
-						<access>write-only</access>
-					}
-					else
-					{
-						<access>none</access>
-					}
-					@if block.facts_enabled && block.logs_enabled
-					{
-						<types>facts,logs</types>
-					}
-					else if block.facts_enabled
-					{
-						<types>facts</types>
-					}
-					else if block.logs_enabled
-					{
-						<types>logs</types>
-					}
-					else
-					{
-						<types>none</types>
-					}
-				</block>
-			}
-		</memory_blocks>
-	}
-}
-
-@template system_slot_system_section_delta
-{
-	@metadata
-	{
-		lang: 'iv'
-	}
-	Your system prompt text has changed. Apply the following diff to your knowledge of the current system prompt:
-	<system-prompt-diff>
-	@diff
-	</system-prompt-diff>
-}
-
-@template tools_system_section_delta
-{
-	@metadata
-	{
-		lang: 'iv'
-	}
-	@if added
-	{
-		@foreach tool in added
-		{
-			@if tool.hidden
-			{
-				Tool `@tool.name` become available (hidden from the tool list).
-			}
-			@if tool.has_definition
-			{
-				Tool `@tool.name` become available:
-				<tool-definition>
-					<name>@tool.definition_name</name>
-					<description>@tool.definition_description</description>
-					<arguments>@tool.definition_arguments</arguments>
-				</tool-definition>
-			}
-			@if tool.without_definition
-			{
-				Tool `@tool.name` become available.
-			}
-			@if tool.description_changed
-			{
-				Its description is now: @tool.new_description
-			}
-			@if tool.arguments_changed
-			{
-				Its arguments are now: @tool.new_arguments
-			}
-		}
-	}
-	@if removed
-	{
-		@foreach tool in removed
-		{
-			Tool `@tool.name` become not available now.
-		}
-	}
-	@if became_visible
-	{
-		@foreach tool in became_visible
-		{
-			@if tool.has_definition
-			{
-				Tool `@tool.name` become visible:
-				<tool-definition>
-					<name>@tool.definition_name</name>
-					<description>@tool.definition_description</description>
-					<arguments>@tool.definition_arguments</arguments>
-				</tool-definition>
-			}
-			@if tool.without_definition
-			{
-				Tool `@tool.name` become visible.
-			}
-			@if tool.description_changed
-			{
-				Its description is now: @tool.new_description
-			}
-			@if tool.arguments_changed
-			{
-				Its arguments are now: @tool.new_arguments
-			}
-		}
-	}
-	@if updated
-	{
-		@foreach tool in updated
-		{
-			Tool `@tool.name` was updated:
-			@if tool.description_changed
-			{
-				New description: @tool.new_description
-			}
-			@if tool.arguments_changed
-			{
-				New arguments: @tool.new_arguments
-			}
-		}
-	}
-}
-
-@template tools_system_section
-{
-	@metadata
-	{
-		lang: 'iv'
-	}
-	@if hidden_tools
-	{
-		<hidden-tools>
-		The following tools are not listed in the tool list:
-		@foreach tool in hidden_tools
-		{
-			- `@tool`
-		}
-		</hidden-tools>
+		</hidden_skills>
 	}
 }
 
@@ -449,6 +277,38 @@
 	}
 }
 
+@template sub_agents_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if sub_agents
+	{
+		<sub_agents>
+			The following sub-agents are available to assist with specific tasks.
+			If a task matches a sub-agent's description, call the `agent-callsub` tool
+			@foreach sub_agent in sub_agents
+			{
+				<sub_agent>
+					<name>@sub_agent.name</name>
+					<description>@sub_agent.description</description>
+				</sub_agent>
+			}
+		</sub_agents>
+	}
+	@if hidden_sub_agents
+	{
+		<hidden_sub_agents>
+			The following sub-agents are not listed in the sub-agent list:
+			@foreach sub_agent in hidden_sub_agents
+			{
+				- `@sub_agent`
+			}
+		</hidden_sub_agents>
+	}
+}
+
 @template sub_agents_system_section_delta
 {
 	@metadata
@@ -523,6 +383,70 @@
 	}
 }
 
+@template memory_blocks_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if memory_blocks
+	{
+		<memory_blocks>
+			The following memory blocks provide context for the conversation.
+			You can access these blocks by calling the `memory-*` tools (if available).
+			@foreach block in memory_blocks
+			{
+				<block>
+					<name>@block.name</name>
+					<description>@block.description</description>
+					@if block.can_read && block.can_write
+					{
+						<access>read-write</access>
+					}
+					else if block.can_read
+					{
+						<access>read-only</access>
+					}
+					else if block.can_write
+					{
+						<access>write-only</access>
+					}
+					else
+					{
+						<access>none</access>
+					}
+					@if block.facts_enabled && block.logs_enabled
+					{
+						<types>facts,logs</types>
+					}
+					else if block.facts_enabled
+					{
+						<types>facts</types>
+					}
+					else if block.logs_enabled
+					{
+						<types>logs</types>
+					}
+					else
+					{
+						<types>none</types>
+					}
+				</block>
+			}
+		</memory_blocks>
+	}
+	@if hidden_memory_blocks
+	{
+		<hidden_memory_blocks>
+			The following memory blocks are not listed in the memory block list:
+			@foreach memory_block in hidden_memory_blocks
+			{
+				- `@memory_block`
+			}
+		</hidden_memory_blocks>
+	}
+}
+
 @template memory_blocks_system_section_delta
 {
 	@metadata
@@ -584,6 +508,112 @@
 			@if block.types_changed
 			{
 				New types: @block.new_types
+			}
+		}
+	}
+}
+
+@template tools_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if hidden_tools
+	{
+		<hidden-tools>
+			The following tools are not listed in the tool list:
+			@foreach tool in hidden_tools
+			{
+				- `@tool`
+			}
+		</hidden-tools>
+	}
+}
+
+@template tools_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach tool in added
+		{
+			@if tool.hidden
+			{
+				Tool `@tool.name` become available (hidden from the tool list).
+			}
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become available:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become available.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach tool in removed
+		{
+			Tool `@tool.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach tool in became_visible
+		{
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become visible:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become visible.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach tool in updated
+		{
+			Tool `@tool.name` was updated:
+			@if tool.description_changed
+			{
+				New description: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				New arguments: @tool.new_arguments
 			}
 		}
 	}

@@ -97,7 +97,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SubAgents
 						name = s.Name,
 						description = s.Description
 					}).ToArray()
-					: null
+					: null,
+				hidden_sub_agents = state.HiddenNames.Count > 0 ? state.HiddenNames.ToArray() : null
 			});
 		}
 	}

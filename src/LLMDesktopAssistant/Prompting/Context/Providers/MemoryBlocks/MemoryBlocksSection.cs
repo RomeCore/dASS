@@ -152,7 +152,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.MemoryBlocks
 						facts_enabled = b.FactsEnabled,
 						logs_enabled = b.LogsEnabled
 					}).ToArray()
-					: null
+					: null,
+				hidden_memory_blocks = state.HiddenNames.Count > 0 ? state.HiddenNames.ToArray() : null
 			});
 		}
 	}
