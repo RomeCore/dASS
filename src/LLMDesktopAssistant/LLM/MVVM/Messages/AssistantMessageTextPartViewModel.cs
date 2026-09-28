@@ -2,7 +2,7 @@
 using Avalonia.Threading;
 using LLMDesktopAssistant.LLM.Domain;
 
-namespace LLMDesktopAssistant.LLM.Messages
+namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(AssistantMessageTextPartView))]
 	public class AssistantMessageTextPartViewModel : AssistantMessagePartViewModel

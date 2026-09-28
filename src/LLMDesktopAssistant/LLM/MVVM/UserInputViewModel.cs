@@ -7,7 +7,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using LLMDesktopAssistant.Controls.Dialogs;
 using Material.Icons;
-using LLMDesktopAssistant.LLM.Attachments;
+using LLMDesktopAssistant.LLM.MVVM.Attachments;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;

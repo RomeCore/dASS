@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 
-namespace LLMDesktopAssistant.LLM.Attachments
+namespace LLMDesktopAssistant.LLM.MVVM.Attachments
 {
 	[ViewModelFor(typeof(AttachmentView))]
 	public class AttachmentViewModel : ViewModelBase

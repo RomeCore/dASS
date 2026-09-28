@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.Json.Nodes;
 using Avalonia.Data.Converters;
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Converters

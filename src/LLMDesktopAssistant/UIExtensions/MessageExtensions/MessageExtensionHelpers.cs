@@ -1,4 +1,4 @@
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 using LLMDesktopAssistant.Prompting;
 
 namespace LLMDesktopAssistant.UIExtensions.MessageExtensions

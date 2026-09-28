@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace LLMDesktopAssistant.LLM.Messages;
+namespace LLMDesktopAssistant.LLM.MVVM.Messages;
 
 public partial class AssistantMessageToolPartView : UserControl
 {

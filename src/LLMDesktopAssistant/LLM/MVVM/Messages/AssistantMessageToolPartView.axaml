@@ -3,11 +3,11 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.Messages"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:Material.Icons.Avalonia"
-			 x:Class="LLMDesktopAssistant.LLM.Messages.AssistantMessageToolPartView"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.AssistantMessageToolPartView"
 			 x:DataType="local:AssistantMessageToolPartViewModel">
 	
 	<ItemsControl ItemsSource="{Binding ToolCalls}">

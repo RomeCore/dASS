@@ -1,5 +1,5 @@
 ﻿using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.UIExtensions.MessageExtensions

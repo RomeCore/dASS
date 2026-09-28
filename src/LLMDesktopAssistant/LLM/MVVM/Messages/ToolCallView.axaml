@@ -3,7 +3,7 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-						 xmlns:local="using:LLMDesktopAssistant.LLM.Messages"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 						 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -11,7 +11,7 @@
 						 xmlns:flui="using:FluentAvalonia.UI.Controls"
 						 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
 						 xmlns:settings="using:LLMDesktopAssistant.LLM.MVVM.Settings"
-						 x:Class="LLMDesktopAssistant.LLM.Messages.ToolCallView"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallView"
 						 x:DataType="local:ToolCallViewModel">
 	
 	<UserControl.Styles>

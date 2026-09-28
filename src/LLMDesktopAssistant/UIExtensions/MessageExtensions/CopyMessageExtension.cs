@@ -1,6 +1,6 @@
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.UIExtensions.MessageExtensions

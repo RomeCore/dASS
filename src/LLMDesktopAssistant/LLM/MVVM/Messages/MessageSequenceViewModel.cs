@@ -3,7 +3,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.Utils;
 
-namespace LLMDesktopAssistant.LLM.Messages
+namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(MessageSequenceView))]
 	public class MessageSequenceViewModel : ViewModelBase

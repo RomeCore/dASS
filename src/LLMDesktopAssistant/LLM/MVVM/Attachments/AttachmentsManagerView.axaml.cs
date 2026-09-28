@@ -2,7 +2,7 @@ using AngleSharp.Dom;
 using Avalonia.Controls;
 using Avalonia.Input;
 
-namespace LLMDesktopAssistant.LLM.Attachments;
+namespace LLMDesktopAssistant.LLM.MVVM.Attachments;
 
 public partial class AttachmentsManagerView : UserControl
 {

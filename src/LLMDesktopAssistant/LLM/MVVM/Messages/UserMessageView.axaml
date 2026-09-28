@@ -3,11 +3,11 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.Messages"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:Material.Icons.Avalonia"
 			 xmlns:ctrl="clr-namespace:LLMDesktopAssistant.Controls"
-			 x:Class="LLMDesktopAssistant.LLM.Messages.UserMessageView"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.UserMessageView"
 			 x:DataType="local:UserMessageViewModel">
 
 	<StackPanel Orientation="Vertical"
@@ -79,7 +79,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate>
-					<ContentControl	Content="{Binding}" IsVisible="{Binding IsVisible}" />
+					<ContentControl	Content="{Binding}" IsVisible="{Binding IsVisible}" HorizontalAlignment="Right" />
 				</DataTemplate>
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>

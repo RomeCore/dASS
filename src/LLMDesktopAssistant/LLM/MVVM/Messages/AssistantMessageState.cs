@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.LLM.Messages
+﻿namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	/// <summary>
 	/// Enumerates the possible states of an <see cref="AssistantMessageViewModel"/>.

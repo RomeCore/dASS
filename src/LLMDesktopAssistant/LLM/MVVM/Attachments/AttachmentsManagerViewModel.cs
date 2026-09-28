@@ -10,7 +10,7 @@ using LLMDesktopAssistant.LLM.Services.Attachments;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Utils;
 
-namespace LLMDesktopAssistant.LLM.Attachments
+namespace LLMDesktopAssistant.LLM.MVVM.Attachments
 {
 	public class AttachmentDraftViewModel : ViewModelBase
 	{

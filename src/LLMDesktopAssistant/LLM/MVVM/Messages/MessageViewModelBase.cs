@@ -1,9 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.Services;
 
-namespace LLMDesktopAssistant.LLM.Messages
+namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	public class MessageViewModelBase : ViewModelBase
 	{

@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.LLM.Messages
+﻿namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	public abstract class AssistantMessagePartViewModel : ViewModelBase
 	{

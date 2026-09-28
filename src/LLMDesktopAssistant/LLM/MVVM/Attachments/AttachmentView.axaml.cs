@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 
-namespace LLMDesktopAssistant.LLM.Attachments;
+namespace LLMDesktopAssistant.LLM.MVVM.Attachments;
 
 public partial class AttachmentView : UserControl
 {

@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 using Avalonia.Data.Converters;
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 
 namespace LLMDesktopAssistant.Converters
 {

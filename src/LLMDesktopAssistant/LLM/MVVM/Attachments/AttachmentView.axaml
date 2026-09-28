@@ -3,12 +3,12 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.Attachments"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Attachments"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:Material.Icons.Avalonia"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:flui="using:FluentAvalonia.UI"
-			 x:Class="LLMDesktopAssistant.LLM.Attachments.AttachmentView"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Attachments.AttachmentView"
 			 x:DataType="local:AttachmentViewModel">
 
 	<Border>

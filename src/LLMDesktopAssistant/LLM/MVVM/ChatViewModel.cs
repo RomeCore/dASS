@@ -1,6 +1,6 @@
 using LLMDesktopAssistant.Agents.Tasks.MVVM;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Messages;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM

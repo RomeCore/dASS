@@ -7,7 +7,7 @@ using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
 
-namespace LLMDesktopAssistant.LLM.Messages
+namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(AssistantMessageView))]
 	public class AssistantMessageViewModel : MessageViewModelBase

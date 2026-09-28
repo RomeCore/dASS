@@ -2,13 +2,12 @@ using System.Collections.Specialized;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
 using LLMDesktopAssistant.Users;
 using LLMDesktopAssistant.Utils;
 
-namespace LLMDesktopAssistant.LLM.Messages
+namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(UserMessageView))]
 	public class UserMessageViewModel : MessageViewModelBase

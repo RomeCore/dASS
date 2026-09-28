@@ -1,8 +1,8 @@
 using Avalonia.Layout;
 using LLMDesktopAssistant.Agents.Tasks.MVVM;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Messages;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.LLM.MVVM.Messages;
 
 namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 {

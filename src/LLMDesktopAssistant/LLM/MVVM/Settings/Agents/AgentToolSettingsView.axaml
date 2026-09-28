@@ -7,7 +7,7 @@
 			 xmlns:sett="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:appset="using:LLMDesktopAssistant.Settings"
-			 xmlns:llmsg="using:LLMDesktopAssistant.LLM.Messages"
+			 xmlns:llmsg="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:Material.Icons.Avalonia"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
