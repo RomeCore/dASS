@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Agents
 		/// <summary>
 		/// The final read permissions that determine what the agent can read.
 		/// Contains the facets of the messages and their parts and author's identity.
-		/// Applies with the AND operator. Visible property is ignored here.
+		/// Applies with the AND operator.
 		/// </summary>
 		[InheritedChatAgentSetting]
 		public AgentReadDefaultRows ReadFilters

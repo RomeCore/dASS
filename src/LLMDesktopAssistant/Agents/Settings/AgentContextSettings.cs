@@ -11,6 +11,15 @@ namespace LLMDesktopAssistant.Agents.Settings
 	public partial class AgentContextSettings : AgentSettingsCategoryBase
 	{
 		/// <summary>
+		/// The prompt context mode that defines how the system prompt is assembled and cached.
+		/// </summary>
+		public PromptContextMode PromptMode
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = PromptContextMode.Hybrid;
+
+		/// <summary>
 		/// The maximum number of rounds that the agent can see in its context. If zero, there is no limit.
 		/// </summary>
 		[InheritedChatAgentSetting]
@@ -29,15 +38,6 @@ namespace LLMDesktopAssistant.Agents.Settings
 			get => field;
 			set => SetProperty(ref field, value);
 		} = ContextCheckpointKind.None;
-
-		/// <summary>
-		/// The prompt context mode that defines how the system prompt is assembled and cached.
-		/// </summary>
-		public PromptContextMode PromptMode
-		{
-			get => field;
-			set => SetProperty(ref field, value);
-		} = PromptContextMode.Hybrid;
 
 		/// <summary>
 		/// The frozen system prompt snapshot (static prompt mode). Not inherited: per-agent only.

@@ -50,20 +50,20 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				var defaultShare = agent.Info.IdentifyAsUser ? defaultShares.User : defaultShares.Agent;
 				var share = senderAgent.Read.ParticipantsShareFilters.GetValueOrDefault(agent.Id);
 
+				bool shareVisible = share is { OverrideVisible: true } ? share.Visible : defaultShare.Visible;
+				if (!shareVisible || !readFilter.Visible)
+					return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+
 				var compoundVisibility = defaultShare.VisibleMessages;
 				if (share != null)
 					compoundVisibility = (compoundVisibility & ~share.OverridenVisibleMessages)
 						| (share.VisibleMessages & share.OverridenVisibleMessages);
 				compoundVisibility &= readFilter.VisibleMessages;
 
-				bool shareVisible = share is { OverrideVisible: true } ? share.Visible : defaultShare.Visible;
-
 				bool visibilityResult =
-					shareVisible && readFilter.Visible &&
-					((compoundVisibility is MessageVisibilityFacet.Unknown) ||
+					(compoundVisibility is MessageVisibilityFacet.Unknown) ||
 					(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithToolCalls) && assistantMessage.ToolCalls.Count > 0) ||
-					(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithoutToolCalls) && assistantMessage.ToolCalls.Count == 0));
-
+					(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithoutToolCalls) && assistantMessage.ToolCalls.Count == 0);
 				if (!visibilityResult)
 					return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
 
