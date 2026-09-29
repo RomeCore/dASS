@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.Skills
 {
@@ -11,7 +12,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Skills
 			{
 				Name = "skills",
 				Order = 20,
-				Description = string.Empty,
+				Description = "The skills available to the agent, with the description, location and body of every skill.",
+				NameKey = Locale.GetKey("prompt.context.name.skills"),
+				DescriptionKey = Locale.GetKey("prompt.context.description.skills"),
 				IsFixed = true,
 				Provider = new SkillsSection(services)
 			});

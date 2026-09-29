@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.Reminder
 {
@@ -11,7 +12,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Reminder
 			{
 				Name = "system-reminder",
 				Order = int.MaxValue,
-				Description = string.Empty,
+				Description = "Explains the <system-reminder> tags: how changes of the prompt and of the context are announced to the agent.",
+				NameKey = Locale.GetKey("prompt.context.name.system-reminder"),
+				DescriptionKey = Locale.GetKey("prompt.context.description.system-reminder"),
 				IsFixed = true,
 				Provider = new SystemReminderSection(services)
 			});

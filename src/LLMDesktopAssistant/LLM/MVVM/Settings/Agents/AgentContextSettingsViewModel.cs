@@ -3,6 +3,9 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Addons.MVVM;
+using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Services.Prompting;
@@ -52,13 +55,42 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 
 		public AgentContextSettings Settings { get; }
 
+		/// <summary>
+		/// Gets the addon list of the prompt contexts: every card edits the enabled override
+		/// of the effective context set of the agent.
+		/// </summary>
+		public AddonListViewModel List { get; }
+
+		/// <summary>
+		/// Gets the context set resolved by the current inheritance level.
+		/// </summary>
+		public ContextSetSettings EffectiveContextSet => Settings.GetEffectiveContextSet(_chatSettings);
+
 		public AgentContextSettingsViewModel(AgentContextSettings settings, ChatSettings chatSettings,
-			ChatAgentDescriptor agent, IAddonSetCollector<PromptContextInfo> promptContextCollector)
+			ChatAgentDescriptor agent, IAddonSetCollector<PromptContextInfo> promptContextCollector,
+			IAddonCardFactory<PromptContextInfo, PromptContextChange> cardFactory,
+			IAddonManagerInvalidator addonInvalidator,
+			IAddonSearchService<PromptContextInfo> searchService)
 		{
 			Settings = settings;
 			_chatSettings = chatSettings;
 			_agent = agent;
 			_promptContextCollector = promptContextCollector;
+
+			List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(promptContextCollector, cardFactory,
+				addonInvalidator, AddonKind.PromptContext, searchService,
+				(list, addon) => new AddonCardContext<PromptContextInfo, PromptContextChange>
+				{
+					Addon = addon,
+					SetConfig = EffectiveContextSet,
+					TagClickCommand = list.TagClickCommand,
+					OnDeleted = list.Update
+				})
+			{
+				SearchPlaceholderKey = Locale.GetKey("settings.prompt_contexts.search.placeholder"),
+				EmptyTextKey = Locale.GetKey("settings.prompt_contexts.empty")
+			};
+			List.Update();
 
 			RefreshSnapshotCommand = new RelayCommand(RefreshSnapshot);
 
@@ -187,6 +219,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 					RaisePropertyChanged(nameof(MaxVisibleRounds));
 					break;
 
+				case nameof(AgentContextSettings.ContextSetInheritance):
+					RaisePropertyChanged(nameof(EffectiveContextSet));
+					List.Update();
+					break;
+
 				case nameof(AgentContextSettings.DisabledFlagsInheritance):
 					_selectedDisabledFlagsInheritance = InheritanceLevelItem.AllAgent.First(i => i.Value == Settings.DisabledFlagsInheritance);
 					RaisePropertyChanged(nameof(SelectedDisabledFlagsInheritance));
@@ -200,7 +237,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			base.Dispose(disposing);
 
 			if (disposing)
+			{
 				Settings.PropertyChanged -= Settings_PropertyChanged;
+				List.Dispose();
+			}
 		}
 	}
 }

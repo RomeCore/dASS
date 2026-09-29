@@ -1,0 +1,28 @@
+// Names, descriptions and variability labels of the prompt contexts (the sections the system prompt is assembled from)
+
+%locale:
+%namespace: prompt.context
+
+name.system-slot: System slot
+name.identity: Identity
+name.skills: Skills
+name.sub-agents: Sub-agents
+name.memory-blocks: Memory blocks
+name.tools: Tools
+name.system-reminder: System reminder
+name.working-directories: Working directories
+
+description.system-slot: The base system prompt of the agent: the free-form prompt text and the enabled system prompt components.
+description.identity: The identity of the agent: the persona, the specialization and the assistant nickname.
+description.skills: The skills available to the agent, with the description, location and body of every skill.
+description.sub-agents: The sub-agents the agent can call, with their descriptions and the tools they may use.
+description.memory-blocks: The memory blocks the agent can read and write through the memory tools.
+description.tools: The tools the agent may call, with their names, descriptions and argument schemas.
+description.system-reminder: Explains the <system-reminder> tags: how changes of the prompt and of the context are announced to the agent.
+description.working-directories: The folders the agent is allowed to work in and which of them is the active root for relative paths, including the shell, Python, Lua, the addon environment and some templates.
+
+variability.configdriven: Config-driven
+variability.rare: Rare
+variability.frequent: Frequent
+variability.perrequest: Per request
+variability.hint: How often the content of this prompt context changes.

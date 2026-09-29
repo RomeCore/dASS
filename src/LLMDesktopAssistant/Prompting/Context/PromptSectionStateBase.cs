@@ -1,8 +1,10 @@
-﻿namespace LLMDesktopAssistant.Prompting.Context
+﻿using LiteDB;
+
+namespace LLMDesktopAssistant.Prompting.Context
 {
 	public class PromptSectionStateBase : NotifyPropertyChanged
 	{
-		internal string Discriminator
+		public string Discriminator
 		{
 			get;
 			set => SetProperty(ref field, value);

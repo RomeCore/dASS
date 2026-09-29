@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.MemoryBlocks
 {
@@ -11,7 +12,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.MemoryBlocks
 			{
 				Name = "memory-blocks",
 				Order = 40,
-				Description = string.Empty,
+				Description = "The memory blocks the agent can read and write through the memory tools.",
+				NameKey = Locale.GetKey("prompt.context.name.memory-blocks"),
+				DescriptionKey = Locale.GetKey("prompt.context.description.memory-blocks"),
 				IsFixed = true,
 				Provider = new MemoryBlocksSection(services)
 			});

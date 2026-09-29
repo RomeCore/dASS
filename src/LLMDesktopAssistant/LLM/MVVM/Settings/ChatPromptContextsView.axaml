@@ -1,0 +1,41 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
+			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatPromptContextsView"
+			 x:DataType="local:ChatPromptContextsSettingsViewModel"
+			 x:Name="VMRoot">
+
+	<StackPanel Margin="8" Spacing="8">
+
+		<!-- Available prompt contexts header -->
+		<Grid ColumnDefinitions="*,Auto">
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.prompt_contexts.available}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
+					   VerticalAlignment="Center"/>
+
+			<Button Grid.Column="1"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.prompt_contexts.refresh}">
+				<ico:MaterialIcon Kind="Refresh"/>
+			</Button>
+		</Grid>
+
+		<TextBlock Text="{loc:Loc settings.prompt_contexts.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
+
+		<!-- Search + list -->
+		<cards:AddonListView DataContext="{Binding List}"/>
+
+	</StackPanel>
+
+</UserControl>

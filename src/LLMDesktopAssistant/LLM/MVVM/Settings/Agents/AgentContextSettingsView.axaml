@@ -4,6 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
+			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentContextSettingsView"
@@ -11,6 +12,27 @@
 
 	<StackPanel Orientation="Vertical"
 							Margin="8" Spacing="8">
+
+		<!-- ===================== Static snapshot ===================== -->
+		<TextBlock Text="{loc:Loc settings.agent.snapshot.title}"
+							 FontWeight="Bold"
+							 FontSize="{DynamicResource FontSizeL}"
+							 Margin="0,5,0,0"/>
+
+		<TextBlock Text="{loc:Loc settings.agent.snapshot.hint}"
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
+
+		<Button Content="{loc:Loc settings.agent.snapshot.refresh}"
+						Command="{Binding RefreshSnapshotCommand}"
+						IsEnabled="{Binding IsStaticMode}"
+						HorizontalAlignment="Left"/>
+
+		<!-- Separator -->
+		<Rectangle Height="1"
+							 Fill="{DynamicResource DefaultForeground}"
+							 Opacity="0.2"
+							 Margin="0,10"/>
 
 		<!-- ===================== Prompt mode ===================== -->
 		<TextBlock Text="{loc:Loc settings.agent.prompt_mode}"
@@ -134,20 +156,26 @@
 							 Opacity="0.2"
 							 Margin="0,10"/>
 
-		<!-- ===================== Static snapshot ===================== -->
-		<TextBlock Text="{loc:Loc settings.agent.snapshot.title}"
+		<!-- ===================== Prompt contexts ===================== -->
+		<TextBlock Text="{loc:Loc settings.agent.prompt_contexts}"
 							 FontWeight="Bold"
 							 FontSize="{DynamicResource FontSizeL}"
 							 Margin="0,5,0,0"/>
 
-		<TextBlock Text="{loc:Loc settings.agent.snapshot.hint}"
+		<TextBlock Text="{loc:Loc settings.agent.prompt_contexts.hint}"
 							 Opacity="0.6"
 							 TextWrapping="Wrap"/>
 
-		<Button Content="{loc:Loc settings.agent.snapshot.refresh}"
-						Command="{Binding RefreshSnapshotCommand}"
-						IsEnabled="{Binding IsStaticMode}"
-						HorizontalAlignment="Left"/>
+		<CheckBox Content="{loc:Loc settings.prompt_contexts.enabled_by_default}"
+							IsChecked="{Binding EffectiveContextSet.EnabledByDefault, Mode=TwoWay}"/>
+
+		<TextBlock Text="{loc:Loc settings.prompt_contexts.enabled_by_default.hint}"
+							 Opacity="0.5"
+							 FontSize="11"
+							 Margin="24,0,0,4"
+							 TextWrapping="Wrap"/>
+
+		<cards:AddonListView DataContext="{Binding List}"/>
 
 	</StackPanel>
 

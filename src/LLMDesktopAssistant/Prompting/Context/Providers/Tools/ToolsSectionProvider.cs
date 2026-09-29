@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 {
@@ -11,7 +12,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 			{
 				Name = "tools",
 				Order = 100,
-				Description = string.Empty,
+				Description = "The tools the agent may call, with their names, descriptions and argument schemas.",
+				NameKey = Locale.GetKey("prompt.context.name.tools"),
+				DescriptionKey = Locale.GetKey("prompt.context.description.tools"),
 				IsFixed = true,
 				Provider = new ToolsSection(services)
 			});

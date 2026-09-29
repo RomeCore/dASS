@@ -453,3 +453,16 @@ agent.identity.unnamed_user: Unnamed user
 agent.identity.unnamed_agent: Unnamed agent
 agent.identity.named_user: Named user
 agent.identity.named_agent: Named agent
+
+// Prompt contexts (the sections the system prompt is assembled from)
+
+prompt_contexts.available: Available prompt contexts
+prompt_contexts.available.hint: The prompt contexts are the sections the system prompt of an agent is assembled from. Fixed contexts are always enabled; the modifiable ones can be switched on and off per agent.
+prompt_contexts.refresh: Refresh the list
+prompt_contexts.search.placeholder: Search prompt contexts...
+prompt_contexts.empty: No prompt contexts found
+prompt_contexts.enabled_by_default: Enable prompt contexts by default
+prompt_contexts.enabled_by_default.hint: Used for the prompt contexts that have no per-agent override.
+chat.prompt_contexts: Prompt contexts
+agent.prompt_contexts: Prompt contexts
+agent.prompt_contexts.hint: The sections the system prompt is assembled from, in the order they are listed. A switched off context disappears from the system prompt; a context switched on after the prompt was frozen is announced to the agent as a change.

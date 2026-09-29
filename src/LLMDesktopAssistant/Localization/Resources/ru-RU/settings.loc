@@ -453,3 +453,16 @@ agent.identity.unnamed_user: Безымянный пользователь
 agent.identity.unnamed_agent: Безымянный агент
 agent.identity.named_user: Именованный пользователь
 agent.identity.named_agent: Именованный агент
+
+// Промпт-контексты (секции, из которых собирается системный промпт)
+
+prompt_contexts.available: Доступные промпт-контексты
+prompt_contexts.available.hint: Промпт-контексты — это секции, из которых собирается системный промпт агента. Фиксированные контексты включены всегда; изменяемые можно включать и выключать для каждого агента отдельно.
+prompt_contexts.refresh: Обновить список
+prompt_contexts.search.placeholder: Поиск промпт-контекстов...
+prompt_contexts.empty: Промпт-контексты не найдены
+prompt_contexts.enabled_by_default: Включать промпт-контексты по умолчанию
+prompt_contexts.enabled_by_default.hint: Применяется к промпт-контекстам, для которых нет переопределения на уровне агента.
+chat.prompt_contexts: Промпт-контексты
+agent.prompt_contexts: Промпт-контексты
+agent.prompt_contexts.hint: Секции, из которых собирается системный промпт, в порядке их вывода. Выключенный контекст исчезает из системного промпта; контекст, включённый после заморозки промпта, сообщается агенту как изменение.

@@ -186,6 +186,14 @@ namespace LLMDesktopAssistant.LLM.Settings
 				Locale.Get("addon.settings.title"),
 				MaterialIconKind.PuzzleOutline,
 				[
+					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompt_contexts"),
+						MaterialIconKind.LayersOutline,
+						() => new ChatPromptContextsSettingsViewModel(
+							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
+							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
+							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
+							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
+
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.tools"),
 						MaterialIconKind.Wrench,
 						() => new ChatToolsSettingsViewModel(
@@ -278,7 +286,10 @@ namespace LLMDesktopAssistant.LLM.Settings
 							descriptor.Context,
 							Settings,
 							descriptor,
-							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>())),
+							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
+							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
+							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
+							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompts"),
 						MaterialIconKind.Text,

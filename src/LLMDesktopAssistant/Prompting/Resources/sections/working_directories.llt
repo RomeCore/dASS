@@ -1,0 +1,59 @@
+@template working_directories_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if lines
+	{
+		<working_directories>
+			Your working directories are the folders you are allowed to work in. One of them is ACTIVE: it is the root for every relative path.
+			@foreach line in lines
+			{
+			- @line
+			}
+			@if active_is_default
+			{
+				The ACTIVE directory is the assistant's own service directory, not the user's project.
+			}
+			The shell, Python, Lua, the addon environment and some templates start in the ACTIVE directory.
+			If you have the `wd-switch` tool available, you can use it to change the working directory, and by that the starting point for the shell, Python, Lua, the addon environment and some templates.
+		</working_directories>
+	}
+}
+
+@template working_directories_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if lines
+	{
+		Your working directories are now available to you:
+		@foreach line in lines
+		{
+		- @line
+		}
+	}
+	@if added
+	{
+		You have working directories that you did not know about before:
+		@foreach line in added
+		{
+		- @line
+		}
+	}
+	@if removed
+	{
+		The following working directories are no longer available to you:
+		@foreach path in removed
+		{
+		- `@path`
+		}
+	}
+	@if active_changed
+	{
+		Your ACTIVE working directory changed from `@old_active` to `@new_active`. Relative paths are now resolved against the new one.
+	}
+}
