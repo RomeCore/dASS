@@ -10,7 +10,7 @@
 			Your working directories are the folders you are allowed to work in. One of them is ACTIVE: it is the root for every relative path.
 			@foreach line in lines
 			{
-			- @line
+				- @line
 			}
 			@if active_is_default
 			{
@@ -33,7 +33,7 @@
 		Your working directories are now available to you:
 		@foreach line in lines
 		{
-		- @line
+			- @line
 		}
 	}
 	@if added
@@ -41,7 +41,7 @@
 		You have working directories that you did not know about before:
 		@foreach line in added
 		{
-		- @line
+			- @line
 		}
 	}
 	@if removed
@@ -49,7 +49,7 @@
 		The following working directories are no longer available to you:
 		@foreach path in removed
 		{
-		- `@path`
+			- `@path`
 		}
 	}
 	@if active_changed
