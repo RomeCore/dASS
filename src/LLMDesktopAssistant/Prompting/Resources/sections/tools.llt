@@ -1,0 +1,105 @@
+@template tools_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if hidden_tools
+	{
+		<hidden-tools>
+			The following tools are not listed in the tool list:
+			@foreach tool in hidden_tools
+			{
+				- `@tool`
+			}
+		</hidden-tools>
+	}
+}
+
+@template tools_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach tool in added
+		{
+			@if tool.hidden
+			{
+				Tool `@tool.name` become available (hidden from the tool list).
+			}
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become available:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become available.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach tool in removed
+		{
+			Tool `@tool.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach tool in became_visible
+		{
+			@if tool.has_definition
+			{
+				Tool `@tool.name` become visible:
+				<tool-definition>
+					<name>@tool.definition_name</name>
+					<description>@tool.definition_description</description>
+					<arguments>@tool.definition_arguments</arguments>
+				</tool-definition>
+			}
+			@if tool.without_definition
+			{
+				Tool `@tool.name` become visible.
+			}
+			@if tool.description_changed
+			{
+				Its description is now: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				Its arguments are now: @tool.new_arguments
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach tool in updated
+		{
+			Tool `@tool.name` was updated:
+			@if tool.description_changed
+			{
+				New description: @tool.new_description
+			}
+			@if tool.arguments_changed
+			{
+				New arguments: @tool.new_arguments
+			}
+		}
+	}
+}

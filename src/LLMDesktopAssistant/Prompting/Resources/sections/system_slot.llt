@@ -1,0 +1,27 @@
+@template system_slot_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if prompt
+	{
+		@prompt
+	}
+	@foreach component in components
+	{
+		@component
+	}
+}
+
+@template system_slot_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	Your system prompt text has changed. Apply the following diff to your knowledge of the current system prompt:
+	<system-prompt-diff>
+	@diff
+	</system-prompt-diff>
+}

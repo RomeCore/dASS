@@ -1,0 +1,129 @@
+@template memory_blocks_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if memory_blocks
+	{
+		<memory_blocks>
+			The following memory blocks provide context for the conversation.
+			You can access these blocks by calling the `memory-*` tools (if available).
+			@foreach block in memory_blocks
+			{
+				<block>
+					<name>@block.name</name>
+					<description>@block.description</description>
+					@if block.can_read && block.can_write
+					{
+						<access>read-write</access>
+					}
+					else if block.can_read
+					{
+						<access>read-only</access>
+					}
+					else if block.can_write
+					{
+						<access>write-only</access>
+					}
+					else
+					{
+						<access>none</access>
+					}
+					@if block.facts_enabled && block.logs_enabled
+					{
+						<types>facts,logs</types>
+					}
+					else if block.facts_enabled
+					{
+						<types>facts</types>
+					}
+					else if block.logs_enabled
+					{
+						<types>logs</types>
+					}
+					else
+					{
+						<types>none</types>
+					}
+				</block>
+			}
+		</memory_blocks>
+	}
+	@if hidden_memory_blocks
+	{
+		<hidden_memory_blocks>
+			The following memory blocks are not listed in the memory block list:
+			@foreach memory_block in hidden_memory_blocks
+			{
+				- `@memory_block`
+			}
+		</hidden_memory_blocks>
+	}
+}
+
+@template memory_blocks_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach block in added
+		{
+			@if block.has_definition
+			{
+				Memory block `@block.name` become available:
+				<memory-block>
+					<name>@block.definition_name</name>
+					<description>@block.definition_description</description>
+					<access>@block.definition_access</access>
+					<types>@block.definition_types</types>
+				</memory-block>
+			}
+			@if block.without_definition
+			{
+				Memory block `@block.name` become available.
+			}
+			@if block.description_changed
+			{
+				Its description is now: @block.new_description
+			}
+			@if block.access_changed
+			{
+				Its access is now: @block.new_access
+			}
+			@if block.types_changed
+			{
+				Its types are now: @block.new_types
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach block in removed
+		{
+			Memory block `@block.name` become not available now.
+		}
+	}
+	@if updated
+	{
+		@foreach block in updated
+		{
+			Memory block `@block.name` was updated:
+			@if block.description_changed
+			{
+				New description: @block.new_description
+			}
+			@if block.access_changed
+			{
+				New access: @block.new_access
+			}
+			@if block.types_changed
+			{
+				New types: @block.new_types
+			}
+		}
+	}
+}

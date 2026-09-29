@@ -1,0 +1,105 @@
+@template sub_agents_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if sub_agents
+	{
+		<sub_agents>
+			The following sub-agents are available to assist with specific tasks.
+			If a task matches a sub-agent's description, call the `agent-callsub` tool
+			@foreach sub_agent in sub_agents
+			{
+				<sub_agent>
+					<name>@sub_agent.name</name>
+					<description>@sub_agent.description</description>
+				</sub_agent>
+			}
+		</sub_agents>
+	}
+	@if hidden_sub_agents
+	{
+		<hidden_sub_agents>
+			The following sub-agents are not listed in the sub-agent list:
+			@foreach sub_agent in hidden_sub_agents
+			{
+				- `@sub_agent`
+			}
+		</hidden_sub_agents>
+	}
+}
+
+@template sub_agents_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach sub_agent in added
+		{
+			@if sub_agent.hidden
+			{
+				Sub-agent `@sub_agent.name` become available (hidden from the sub-agent list).
+			}
+			@if sub_agent.has_definition
+			{
+				Sub-agent `@sub_agent.name` become available:
+				<sub_agent>
+					<name>@sub_agent.definition_name</name>
+					<description>@sub_agent.definition_description</description>
+				</sub_agent>
+			}
+			@if sub_agent.without_definition
+			{
+				Sub-agent `@sub_agent.name` become available.
+			}
+			@if sub_agent.description_changed
+			{
+				Its description is now: @sub_agent.new_description
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach sub_agent in removed
+		{
+			Sub-agent `@sub_agent.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach sub_agent in became_visible
+		{
+			@if sub_agent.has_definition
+			{
+				Sub-agent `@sub_agent.name` become visible:
+				<sub_agent>
+					<name>@sub_agent.definition_name</name>
+					<description>@sub_agent.definition_description</description>
+				</sub_agent>
+			}
+			@if sub_agent.without_definition
+			{
+				Sub-agent `@sub_agent.name` become visible.
+			}
+			@if sub_agent.description_changed
+			{
+				Its description is now: @sub_agent.new_description
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach sub_agent in updated
+		{
+			Sub-agent `@sub_agent.name` was updated:
+			@if sub_agent.description_changed
+			{
+				New description: @sub_agent.new_description
+			}
+		}
+	}
+}

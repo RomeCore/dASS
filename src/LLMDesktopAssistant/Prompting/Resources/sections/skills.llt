@@ -1,0 +1,154 @@
+@template skills_system_section
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if skills
+	{
+		<available_skills>
+			The following skills provide specialized instructions for specific tasks.
+			When a task matches a skill's description, call the `skill-load` tool
+			with the skill's name to load its full instructions.
+			@foreach skill in skills
+			{
+				<skill>
+					<name>@skill.name</name>
+					<description>@skill.description</description>
+					@if skill.path
+					{
+						<location>@skill.path</location>
+					}
+					@if skill.body
+					{
+						<body>@skill.body</body>
+					}
+				</skill>
+			}
+		</available_skills>
+	}
+	@if hidden_skills
+	{
+		<hidden_skills>
+			The following skills are not listed in the skill list:
+			@foreach skill in hidden_skills
+			{
+				- `@skill`
+			}
+		</hidden_skills>
+	}
+}
+
+@template skills_system_section_delta
+{
+	@metadata
+	{
+		lang: 'iv'
+	}
+	@if added
+	{
+		@foreach skill in added
+		{
+			@if skill.hidden
+			{
+				Skill `@skill.name` become available (hidden from the skill list).
+			}
+			@if skill.has_definition
+			{
+				Skill `@skill.name` become available:
+				<skill>
+					<name>@skill.definition_name</name>
+					<description>@skill.definition_description</description>
+					@if skill.definition_path
+					{
+						<location>@skill.definition_path</location>
+					}
+					@if skill.definition_body
+					{
+						<body>@skill.definition_body</body>
+					}
+				</skill>
+			}
+			@if skill.without_definition
+			{
+				Skill `@skill.name` become available.
+			}
+			@if skill.description_changed
+			{
+				Its description is now: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				Its location is now: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				Its body is now: @skill.new_body
+			}
+		}
+	}
+	@if removed
+	{
+		@foreach skill in removed
+		{
+			Skill `@skill.name` become not available now.
+		}
+	}
+	@if became_visible
+	{
+		@foreach skill in became_visible
+		{
+			@if skill.has_definition
+			{
+				Skill `@skill.name` become visible:
+				<skill>
+					<name>@skill.definition_name</name>
+					<description>@skill.definition_description</description>
+					@if skill.definition_path
+					{
+						<location>@skill.definition_path</location>
+					}
+					@if skill.definition_body
+					{
+						<body>@skill.definition_body</body>
+					}
+				</skill>
+			}
+			@if skill.without_definition
+			{
+				Skill `@skill.name` become visible.
+			}
+			@if skill.description_changed
+			{
+				Its description is now: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				Its location is now: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				Its body is now: @skill.new_body
+			}
+		}
+	}
+	@if updated
+	{
+		@foreach skill in updated
+		{
+			Skill `@skill.name` was updated:
+			@if skill.description_changed
+			{
+				New description: @skill.new_description
+			}
+			@if skill.path_changed
+			{
+				New location: @skill.new_path
+			}
+			@if skill.body_changed
+			{
+				New body: @skill.new_body
+			}
+		}
+	}
+}
