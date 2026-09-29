@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.Scripting.CSX
 			category: general
 			approval-level: policy-based
 			behaviours:
-			  - file_read
+			  - file-read
 			argument-schema: |
 			  {
 			    "type": "object",

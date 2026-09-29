@@ -55,8 +55,6 @@ nunit-*.xml
 
 .integrai/
 .llmassist/
-.agents/
-.claude/
 proj-references/
 .vs/
 /.vs/

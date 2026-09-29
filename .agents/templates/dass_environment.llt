@@ -1,0 +1,30 @@
+@/ ============================================================
+@/ Component: dASS environment awareness
+@/
+@/ Tells the model that it runs inside dASS and that dASS itself
+@/ is the project sitting in the working directory.
+@/
+@/ Type: component (renders into the system prompt section).
+@/ Enable it per agent/chat in the settings.
+@/ ============================================================
+
+@template dass_environment
+{
+	@metadata
+	{
+		guid: '05e05b5e-c2c8-4b19-9cd5-d648df8e299d',
+		lang: 'en-US',
+		type: 'component',
+		title: 'dASS environment',
+		category: 'environment',
+		description: 'States that the model runs inside dASS and that dASS itself is the project in the working directory.'
+	}
+	You are running inside dASS (Desktop Assistant) - the application that hosts you - and the same dASS is also the project located in your working directory: `@(working_directory ?? 'the current working directory')`.
+
+	That means the code in your working directory is not some random codebase: it is the source code of the very application you are running in.
+
+	Keep this in mind while you work:
+	- Files you read and edit are the sources of your own host application: changes in this project require a rebuild to take effect. They do not affect the currently running instance.
+	- The project owns its conventions and domain context: check the working directory for `AGENTS.md`, `CONTEXT.md` and similar files before making assumptions.
+	- Do not confuse the two roles: dASS is both your runtime environment and the subject of the work.
+}
