@@ -62,12 +62,26 @@ namespace LLMDesktopAssistant.Addons
 		public virtual IEnumerable<TAddon> GetAddonsForChat()
 		{
 			Log.Warning("GetAddons* not implemented for {0}! Returning all addons. Override if necessary.", GetType());
-			return GetAvailableAddons();
+			return GetAvailableAddons().Where(a =>
+			{
+				if (a.Diagnostic?.IsFatal is true)
+					return false;
+				if (a.ChatAvailablePredicate is null)
+					return true;
+				return a.ChatAvailablePredicate.Invoke(a, _services);
+			});
 		}
 
 		public virtual IEnumerable<TAddon> GetAddonsForAgent(ChatAgentDescriptor agent)
 		{
-			return GetAddonsForChat();
+			return GetAddonsForChat().Where(a =>
+			{
+				if (a.Diagnostic?.IsFatal is true)
+					return false;
+				if (a.AgentAvailablePredicate is null)
+					return true;
+				return a.AgentAvailablePredicate.Invoke(a, _services, agent);
+			});
 		}
 
 		protected IEnumerable<TAddon> GetAddonsWithChanges(AddonSetConfigurationBase<TChange> setConfig,
@@ -78,7 +92,14 @@ namespace LLMDesktopAssistant.Addons
 
 			foreach (var addon in addons)
 			{
-				if (addon.Diagnostic?.IsFatal == true)
+				if (addon.Diagnostic?.IsFatal is true)
+					continue;
+
+				if (addon.ChatAvailablePredicate is not null && !addon.ChatAvailablePredicate.Invoke(addon, _services))
+					continue;
+
+				if (agent is not null && addon.AgentAvailablePredicate is not null &&
+					!addon.AgentAvailablePredicate.Invoke(addon, _services, agent))
 					continue;
 
 				if (setConfig.Changes.TryGetValue(addon.Name, out var change))

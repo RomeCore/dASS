@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using LiteDB;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.StructuredValues.Parameterization;
 using YamlDotNet.Serialization;
 
@@ -56,9 +57,38 @@ namespace LLMDesktopAssistant.Addons
 		} = null;
 
 		/// <summary>
+		/// Defines a predicate used for detemining that addon is currently available at this time at chat-level.
+		/// Note that this predicate ignores <see cref="IsFixed"/>.
+		/// </summary>
+		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
+		public Func<Self, IServiceProvider, bool>? ChatAvailablePredicate
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = null;
+
+		/// <summary>
+		/// Defines a predicate used for detemining that addon is currently available at this time at agent-level.
+		/// Note that this predicate ignores <see cref="IsFixed"/> and also <see cref="ChatAvailablePredicate"/>
+		/// will be checked before trying this predicate.
+		/// </summary>
+		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
+		public Func<Self, IServiceProvider, ChatAgentDescriptor, bool>? AgentAvailablePredicate
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = null;
+
+		/// <summary>
 		/// The change confiuration object that been used to make some changes to this addon instance.
 		/// </summary>
 		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
 		public TChange? Change
 		{
 			get;
