@@ -103,10 +103,10 @@
 						
 						<!-- Empty state -->
 						<TextBlock Text="{loc:Loc prompt.empty}"
-										   Opacity="0.5"
+											 Opacity="0.5"
 											 Margin="12"
-										   TextWrapping="Wrap"
-										   IsVisible="{Binding IsSearchEmpty}"/>
+											 TextWrapping="Wrap"
+											 IsVisible="{Binding IsSearchEmpty}"/>
 
 						<ItemsControl ItemsSource="{Binding SearchResults}">
 							<ItemsControl.ItemsPanel>

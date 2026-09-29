@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.LLM.Services;
@@ -24,7 +25,8 @@ namespace LLMDesktopAssistant.Tools
 		private static readonly JsonSerializerOptions _argSchemaSerializationOptions = new()
 		{
 			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-			WriteIndented = true
+			WriteIndented = true,
+			TypeInfoResolver = new DefaultJsonTypeInfoResolver()
 		};
 
 		/// <inheritdoc/>
@@ -34,7 +36,8 @@ namespace LLMDesktopAssistant.Tools
 		public override string Title => "Tools";
 
 		/// <inheritdoc/>
-		public override string UsageHint => "call by name (aliases work too) or pass to `agent-call` via `allowedTools`";
+		public override string UsageHint => "call it DIRECTLY by name (same as you call normal tools, " +
+			"regardless of your tool list in the system prompt) or pass to `agent-call` via `allowedTools`";
 
 		/// <inheritdoc/>
 		protected override void AppendAddon(StringBuilder builder, ToolInfo tool, bool detailed)

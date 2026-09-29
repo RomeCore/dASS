@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -91,7 +92,7 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 						}
 						catch (Exception ex)
 						{
-							Log.Debug(ex, "Error analyzing arguments: {ErrorMessage}", ex.Message);
+							Log.Debug(ex, "Error analyzing arguments: {Error}", ex);
 						}
 					}
 				}
@@ -189,7 +190,7 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 					}
 					catch (Exception ex)
 					{
-						Log.Debug(ex, "Error during preview execution of tool '{ToolName}': {ExceptionMessage}", toolCall.ToolName, ex.Message);
+						Log.Debug(ex, "Error during preview execution of tool '{ToolName}': {Error}", toolCall.ToolName, ex);
 					}
 				}
 
@@ -419,11 +420,13 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 			}
 			catch (Exception ex)
 			{
+				Log.Debug(ex, "Unhandled error during execution of tool '{ToolName}': {Error}", toolCall.ToolName, ex);
 				toolCall.Status = ToolStatus.Error;
+				string errMsg = DebugHelper.IsDebug ? ex.ToString() : ex.Message;
 				if (string.IsNullOrEmpty(toolCall.ResultContent))
-					toolCall.ResultContent = "Tool execution failed with error: " + ex.Message;
+					toolCall.ResultContent = "Tool execution failed with error: " + errMsg;
 				else
-					toolCall.ResultContent += "\nTool execution was interrupted with error: " + ex.Message;
+					toolCall.ResultContent += "\nTool execution was interrupted with error: " + errMsg;
 			}
 			finally
 			{

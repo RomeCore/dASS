@@ -233,7 +233,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ReactiveToolResult GetAddonInfo(
-			[Description("The exact addon name, for example 'addon-search' or 'script-tool-editing'.")]
+			[Description("The exact addon name, it can be a tool name or skill name.")]
 			string name,
 			ToolExecutionContext ctx)
 		{
@@ -252,7 +252,6 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (builder.Length > 0)
 					builder.AppendLine();
-
 				builder.Append("**").Append(provider.Title).Append("** — ")
 					.Append(provider.UsageHint).AppendLine(":");
 				builder.AppendLine(body);

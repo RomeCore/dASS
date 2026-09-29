@@ -1,5 +1,6 @@
 ﻿using System.Collections.Specialized;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.StructuredValues.Parameterization;
 using LLMDesktopAssistant.Utils;

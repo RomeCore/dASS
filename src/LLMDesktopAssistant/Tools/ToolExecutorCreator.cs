@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Services;
 using RCLargeLanguageModels.Json;
 using RCLargeLanguageModels.Json.Schema;
 using RCLargeLanguageModels.Tools;
+using Serilog;
 
 namespace LLMDesktopAssistant.Tools
 {
@@ -191,6 +192,7 @@ namespace LLMDesktopAssistant.Tools
 						}
 						catch (Exception ex)
 						{
+							Log.Error(ex, "Unhandled exception during tool execution: {Error}", ex);
 							if (string.IsNullOrEmpty(preparedResult.ResultContent))
 								preparedResult.ResultContent = "An error occurred during tool execution: " + ex.Message;
 							preparedResult.TryCompleteWithError();
