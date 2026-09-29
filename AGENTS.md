@@ -10,11 +10,23 @@ The project has **2** separate agentic execution systems:
 2. *Agentic tasks* - agents that runs once for doing specific tasks
     - Internal system tasks, such as chat naming, automatic memory recording/retrieval, etc.
     - Explicit invokation via `agent-call` tool or via `dass.agent.call` Lua API
-    - Predefined *sub-agents* that live in `.agents/agents/`-like directories
+    - Predefined *sub-agents* - markdown addons (`agents/<name>.md` / `agents/<name>/AGENT.md`) loaded from addon packs, see **Addons**
 
 ### Directories
 
 ```
+src/LLMDesktopAssistant/Addons/
+    AddonBase.cs - base of every agentic addon (name, order, aliases, description/body, paths, diagnostics)
+    AddonKind.cs - [Flags] kinds: Pack, Skill, SubAgent, Tool, PromptContext, Template, LuaScript (+ MemoryBlock, Command - reserved)
+    IAddonTypeDescriptor.cs - per-kind descriptor marked with [AddonTypeDescriptor]
+    AddonSetCollectorBase.cs - merges addons across packs, applies per-agent changes, freezes clones
+    Loading/ - AddonFileLocatorBase<T>, pack locators (App/Chat/Combined), AddonPackSearchFoldersProvider
+    Management/ - addon managers, invalidators, settings watchers
+    Parsers/ - FrontmatterBasedAddonParser + YAML-frontmatter property parsers
+    Search/ - BM25 search over the addons available to an agent
+    MVVM/ - addon list/card UI (AddonListView, AddonCardView, card factory)
+    ... per-kind models and parsers live in their own domain folders, not here (see **Addons**)
+
 src/LLMDesktopAssistant/Agents/
     ChatAgentDescriptor.cs - the descriptor/configuration object for the chat agent
     ChatAgentInstance.cs - the agent reference (by agent's GUID) used in execution stages ONLY
@@ -28,7 +40,7 @@ src/LLMDesktopAssistant/Agents/
         IMemoryFactStore.cs
         IMemoryLogStore.cs
         ...
-    SubAgents/ - predefined agentic tasks-related files, contains parser, loader, etc.
+    SubAgents/ - the sub-agent addon kind: info object, parser, loader, file locator, type descriptor
         SubAgentInfo.cs - the main sub-agent information object, contains name, description, metadata, used tools, skill, memory blocks, inner sub-agents
         ...
     Tasks/
@@ -37,6 +49,15 @@ src/LLMDesktopAssistant/Agents/
         AgentTool.cs - abstract definition of tool, used by agent inside task
         ChatAgentTool.cs - wrapper for chat's ToolInfo that inherits AgentTool
         ...
+
+src/LLMDesktopAssistant/Prompting/
+    Context/ - SCM: anchors, deltas, sections, checkpoint kinds (see **Prompting & SCM**)
+        Providers/<Name>/ - one folder per section (state/delta provider and renderer quartets)
+    Management/ - LLT template importers and prompt part managers (personas, specializations, slots, skills, sub-agents)
+    Resources/ - built-in *.llt templates (core_prompt, components, sliders, message_prompt, naming, router, summarizer)
+    LLT/ - LLT editor control, tokenizer, diagnostics
+    Skills/ - the skill addon kind (SkillInfo, parser, locator, type descriptor)
+    ContextCheckpoint.cs, ContextCheckpointKind.cs, SystemPromptSnapshot.cs
 
 src/LLMDesktopAssistant/LLM/
     Domain/
@@ -51,7 +72,11 @@ src/LLMDesktopAssistant/LLM/
             AgentOrderingService.cs - service for getting next chat agent for execution
             ...
         Prompting/
-            ChatPromptBuilder.cs - cental service for chat-related prompting, used to build message seqeunce for each chat agent
+            AgentPromptComposer.cs - **central** per-agent prompt entry point: builds the (messages + tools) bundle, owns header mode and toolset-cache invalidation
+            AgentEffectiveMessagesProvider.cs - effective message set for an agent plus its active checkpoints
+            PromptAnchoredSectionProcessor.cs - SCM anchor lifecycle and delta emission
+            MessageVisibilityService.cs - per-agent message visibility
+            ChatMessageQuoteRenderer.cs - neutral content quote of a message (naming, summarizer, router)
             ...
         Tools/
             ToolExecutionService.cs - service for chat-related tool execution
@@ -59,6 +84,45 @@ src/LLMDesktopAssistant/LLM/
             ...
 
 ```
+
+## Addons
+
+Skills, sub-agents, tools, prompt contexts, templates and Lua scripts are all *addons*, discovered from *addon packs* on disk. Infra lives in `src/LLMDesktopAssistant/Addons/`; each kind's model, parser and locator live in that kind's domain folder.
+
+A pack is a directory scanned for one folder per kind:
+
+| Kind | Folder in pack | Layout |
+|---|---|---|
+| `Skill` | `skills/` | `skills/<name>/SKILL.md` or `skills/<name>.md` (`.md`, `.mdx`) |
+| `SubAgent` | `agents/` | `agents/<name>/AGENT.md` or `agents/<name>.md` |
+| `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`, `.csx`) |
+| `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
+| `Template` | `templates/` | LLT template extensions |
+| `PromptContext` | `context/` | extensions not implemented yet |
+
+Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`. `AddonPackSearchFoldersProvider` also scans other agent runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, `.windsurf`, `.opencode`, `.cline`, `.roocode`, `.lmstudio`, `.junie`, `.everywhere`, ...), so third-party skills and sub-agents are picked up as-is - expect addons you did not create.
+
+Adding a kind = `<X>Info : AddonBase<X>` + parser + `IAddonFileLocator<X>` (`Folders`, `Extensions` ordered by priority, `AllowShortFormat`, `FullFormatName`) + `IAddonTypeDescriptor` marked `[AddonTypeDescriptor]` + `AddonSetCollectorBase<X, TChange>`, plus an optional card factory and search provider. `MemoryBlock` and `Command` kinds are declared but reserved.
+
+Addons are **frozen after collection** - `addon.Clone()` returns an unfrozen copy to mutate.
+
+## Prompting & SCM
+
+`ChatPromptBuilder` is gone; the per-agent pipeline is `AgentPromptComposer` (messages + tools bundle, header mode, toolset-cache invalidation) -> `AgentEffectiveMessagesProvider` (effective messages plus active `ContextCheckpoint`s) -> `PromptAnchoredSectionProcessor` (SCM stage) -> message conversion and hooks. Visibility lives in `MessageVisibilityService`, neutral message quoting in `ChatMessageQuoteRenderer`.
+
+SCM (Sequential Context Management) keeps the prompt prefix **byte-stable** and reports state changes as **events in the message stream** instead of silently rewriting the prompt. Mode is per-agent: `ChatAgentDescriptor.Context.PromptMode` (`AgentContextSettings`), default `Hybrid`.
+
+| Mode | System prompt source | Change tracking |
+|---|---|---|
+| `Dynamic` | rebuilt on every request | none |
+| `Static` | frozen in agent config until manual refresh | none |
+| `Hybrid` | bytes blitted from a `PromptStateAnchorMessageData` in the history | anchors + deltas + rebaseline |
+
+In `Hybrid` a live anchor pins rendered bytes and section states to a message; on change, the delta is attached to the agent's own pending assistant message; any `ContextCheckpoint` cut newer than the anchor forces a rebaseline. History is append-only - dead anchors stay inert and are never deleted - and everything is per-agent (`AgentId`). `MaxVisibleRounds` is deliberately ignored in `Hybrid`, since a round window would evict the anchor.
+
+A *section* is one tracked unit of prompt state (identity, system slot, system reminder, tools, skills, sub-agents, memory blocks), implemented as a `state provider + state renderer + delta provider + delta renderer` quartet under `Prompting/Context/Providers/<Name>/`. Addon-backed sections share `AddonSectionDeltaEngine`: a new item is announced in full, an unchanged one by name, a changed one field-by-field, and hiding an item is silent.
+
+Checkpoints are `ContextCheckpoint` carrying the `[Flags]` kind `ContextCheckpointKind` (`Shield`, `Summary`, `ToolCompaction`, `ForcedToolCompaction`, `ReasoningCompaction`). `AgentContextSettings` carries `PromptMode`, `MaxVisibleRounds`, `DisabledFlags`, `Snapshot` and `ContextSet`.
 
 ## Dependency Injection
 
