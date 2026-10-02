@@ -30,3 +30,14 @@ highlight_textbox.placeholder: Попробуй: /help text, /unknown cmd, "quot
 addon_cards.title: Карточки аддонов
 addon_cards.reset_all: Сбросить всё
 addon_cards.hint: Переключай контролы в шапке, кликай по тегам, разворачивай блоки и детали — карточка живая.
+
+dynamic_viewmodel.title: Динамические VM
+dynamic_viewmodel.load: Загрузить AXAML
+dynamic_viewmodel.reset: Сбросить пример
+dynamic_viewmodel.set: Задать член
+dynamic_viewmodel.randomize: Рандомизировать
+dynamic_viewmodel.add_late: Добавить поздний ключ
+dynamic_viewmodel.clear_late: Очистить поздний ключ
+dynamic_viewmodel.clear_log: Очистить лог
+dynamic_viewmodel.log.label: Уведомления об изменениях
+dynamic_viewmodel.error.not_control: Загруженный объект не является Control.

@@ -30,3 +30,14 @@ highlight_textbox.placeholder: Try: /help text, /unknown cmd, "quotes"
 addon_cards.title: Addon cards
 addon_cards.reset_all: Reset all
 addon_cards.hint: Toggle the header controls, click the tags, expand the blocks and details to see the card react.
+
+dynamic_viewmodel.title: Dynamic view models
+dynamic_viewmodel.load: Load AXAML
+dynamic_viewmodel.reset: Reset sample
+dynamic_viewmodel.set: Set member
+dynamic_viewmodel.randomize: Randomize
+dynamic_viewmodel.add_late: Add late key
+dynamic_viewmodel.clear_late: Clear late key
+dynamic_viewmodel.clear_log: Clear log
+dynamic_viewmodel.log.label: Change notifications
+dynamic_viewmodel.error.not_control: The loaded object is not a Control.

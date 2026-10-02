@@ -1,0 +1,107 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+			 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:sys="using:System"
+			 x:Class="LLMDesktopAssistant.MVVM.Debug.DynamicViewModelDebugPageView"
+			 x:DataType="local:DynamicViewModelDebugPageViewModel">
+
+	<Grid ColumnDefinitions="*,10,480" Margin="8">
+
+		<!-- AXAML editor -->
+		<DockPanel>
+			<StackPanel DockPanel.Dock="Top"
+						Orientation="Horizontal"
+						Spacing="8"
+						Margin="0,0,0,6">
+				<Button Content="{loc:Loc debug.dynamic_viewmodel.load}"
+						Command="{Binding LoadCommand}"/>
+				<Button Content="{loc:Loc debug.dynamic_viewmodel.reset}"
+						Command="{Binding ResetXamlCommand}"/>
+			</StackPanel>
+			<TextBox Text="{Binding Xaml, Mode=TwoWay}"
+					 AcceptsReturn="True"
+					 TextWrapping="NoWrap"
+					 FontFamily="Consolas, monospace"
+					 FontSize="12"/>
+		</DockPanel>
+
+		<GridSplitter Grid.Column="1"
+					  Width="4"
+					  ResizeDirection="Columns"
+					  HorizontalAlignment="Stretch"/>
+
+		<!-- Preview + drivers + notification log -->
+		<Grid Grid.Column="2" RowDefinitions="*,Auto,Auto,180" RowSpacing="8">
+
+			<Border Grid.Row="0"
+					BorderBrush="{DynamicResource CardBorderBrush}"
+					BorderThickness="1"
+					CornerRadius="6"
+					Padding="10">
+				<ScrollViewer HorizontalScrollBarVisibility="Auto"
+							  VerticalScrollBarVisibility="Auto">
+					<ContentControl Content="{Binding Preview}"
+									HorizontalContentAlignment="Stretch"/>
+				</ScrollViewer>
+			</Border>
+
+			<TextBlock Grid.Row="1"
+					   Text="{Binding LoadError}"
+					   Foreground="IndianRed"
+					   FontFamily="Consolas, monospace"
+					   FontSize="11"
+					   TextWrapping="Wrap"
+					   IsVisible="{Binding LoadError, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+
+			<StackPanel Grid.Row="2" Spacing="6">
+				<StackPanel Orientation="Horizontal" Spacing="6">
+					<TextBox Text="{Binding Key, Mode=TwoWay}" PlaceholderText="key" Width="130"/>
+					<TextBox Text="{Binding Value, Mode=TwoWay}" PlaceholderText="value" Width="130"/>
+					<Button Content="{loc:Loc debug.dynamic_viewmodel.set}"
+							Command="{Binding SetCommand}"/>
+				</StackPanel>
+				<StackPanel Orientation="Horizontal" Spacing="6">
+					<Button Content="{loc:Loc debug.dynamic_viewmodel.randomize}"
+							Command="{Binding RandomizeCommand}"/>
+					<Button Content="{loc:Loc debug.dynamic_viewmodel.add_late}"
+							Command="{Binding AddLateKeyCommand}"/>
+					<Button Content="{loc:Loc debug.dynamic_viewmodel.clear_late}"
+							Command="{Binding ClearLateKeyCommand}"/>
+					<Button Content="{loc:Loc debug.dynamic_viewmodel.clear_log}"
+							Command="{Binding ClearLogCommand}"/>
+				</StackPanel>
+			</StackPanel>
+
+			<Border Grid.Row="3"
+					BorderBrush="{DynamicResource CardBorderBrush}"
+					BorderThickness="1"
+					CornerRadius="6"
+					Padding="6">
+				<DockPanel>
+					<TextBlock DockPanel.Dock="Top"
+							   Text="{loc:Loc debug.dynamic_viewmodel.log.label}"
+							   FontWeight="Bold"
+							   Margin="0,0,0,4"/>
+					<ScrollViewer VerticalScrollBarVisibility="Auto">
+						<ItemsControl ItemsSource="{Binding Log}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="sys:String">
+									<TextBlock Text="{Binding}"
+											   FontFamily="Consolas, monospace"
+											   FontSize="11"/>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</ScrollViewer>
+				</DockPanel>
+			</Border>
+
+		</Grid>
+
+	</Grid>
+
+</UserControl>

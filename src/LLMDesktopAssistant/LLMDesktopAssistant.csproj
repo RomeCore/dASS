@@ -41,6 +41,7 @@
 		<PackageReference Include="AsyncLua" Version="0.5.0" />
 		<PackageReference Include="Avalonia" Version="12.1.0" />
 		<PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+		<PackageReference Include="Avalonia.Markup.Xaml.Loader" Version="12.1.0" />
 		<PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.0" />
 		<PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.0" />
 		<PackageReference Include="AvaloniaEdit.TextMate" Version="12.0.0" />

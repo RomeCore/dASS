@@ -74,7 +74,7 @@ Keys go **without quotes**, string values in single quotes. Expressions and vari
 
 | Construct | Syntax |
 |---|---|
-| Condition | `@if cond { … } else if cond { … } else { … }` (`@` before `else` is optional) |
+| Condition | `@if cond { … } else if cond { … } else { … }` |
 | Loop | `@foreach item in items { … }` (the loop variable does not leak outside) |
 | While loop | `@while cond { … }` |
 | Local variable | `@let x = expr` (lexical scope) |
