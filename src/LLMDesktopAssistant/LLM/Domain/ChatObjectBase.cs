@@ -28,5 +28,16 @@ namespace LLMDesktopAssistant.LLM.Domain
 			return [.. AdditionalData.OfType<NativeAttachmentMessagePart>()
 				.Select(a => a.NativeAttachment!).Where(a => a is not null)];
 		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				foreach (var viewModel in AdditionalData)
+					viewModel.Dispose();
+			}
+		}
 	}
 }

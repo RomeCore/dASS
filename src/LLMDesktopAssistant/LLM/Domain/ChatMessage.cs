@@ -45,8 +45,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 
 			if (disposing)
 			{
-				foreach (var viewModel in AdditionalData)
-					viewModel.Dispose();
 				foreach (var toolCall in ToolCalls)
 					toolCall.Dispose();
 			}
