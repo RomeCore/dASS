@@ -46,9 +46,13 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 		/// <returns>
 		/// The reactive node value, or <see langword="null"/> if <paramref name="value"/> is <see langword="null"/>.
 		/// </returns>
-		public static ReactiveNodeValue? ToReactiveNodeValue(this LuaValue? value)
+		/// <param name="tolerant">
+		/// When <see langword="true"/>, unsupported values (functions, userdata, threads, etc.) are
+		/// dropped instead of throwing. Containers keep the entries that are representable.
+		/// </param>
+		public static ReactiveNodeValue? ToReactiveNodeValue(this LuaValue? value, bool tolerant = false)
 		{
-			return value is null ? null : ConvertToReactive(value);
+			return value is null ? null : ConvertToReactive(value, tolerant);
 		}
 
 		private static LuaValue ConvertToLua(INodeValue value) => value switch
@@ -115,7 +119,7 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 			}
 		}
 
-		private static ReactiveNodeValue ConvertToReactive(LuaValue value)
+		private static ReactiveNodeValue? ConvertToReactive(LuaValue value, bool tolerant)
 		{
 			switch (value)
 			{
@@ -133,7 +137,11 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 					{
 						var array = new ReactiveNodeArrayValue();
 						for (int i = 1; i <= table.Length; i++)
-							array.Items.Add(ConvertToReactive(table.Get(i)));
+						{
+							var item = ConvertToReactive(table.Get(i), tolerant);
+							if (item is not null)
+								array.Items.Add(item);
+						}
 						return array;
 					}
 					else
@@ -142,13 +150,18 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 						foreach (var kvp in table.Entries)
 						{
 							var key = KeyToString(kvp.Key);
-							if (key is not null)
-								dictionary.Items.Add(key, ConvertToReactive(kvp.Value));
+							if (key is null)
+								continue;
+							var item = ConvertToReactive(kvp.Value, tolerant);
+							if (item is not null)
+								dictionary.Items.Add(key, item);
 						}
 						return dictionary;
 					}
 				}
 				default:
+					if (tolerant)
+						return null;
 					throw new ArgumentException($"Unsupported Lua value type '{value.GetType().FullName}'.", nameof(value));
 			}
 		}

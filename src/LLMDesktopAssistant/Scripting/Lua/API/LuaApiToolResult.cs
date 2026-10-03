@@ -1,5 +1,6 @@
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using Material.Icons;
 
@@ -83,6 +84,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - data: table — structured data to return alongside text content
 
+			--- dass.tool.result.append_data(...)
+			  Appends custom UI to the tool result. Each argument must be a 'uicontrol' UserData
+			  created by dass.ui.create_control(). One UI element is appended per argument, in order.
+			  Appending the same control more than once is allowed.
+			  Parameters:
+				- ...uicontrol — one or more control handles
+			  Returns: nil
+			  No-op if not in a tool execution context.
+
 			--- dass.tool.result.use_markdown(enabled)
 			  Sets whether the result content should be rendered as Markdown.
 			  Parameters:
@@ -149,6 +159,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["get_progress"] = new LuaCallbackFunction(GetProgress);
 			ns["set_status"] = new LuaCallbackFunction(SetStatus);
 			ns["set_structured"] = new LuaCallbackFunction(SetStructured);
+			ns["append_data"] = new LuaCallbackFunction(AppendData);
 			ns["use_markdown"] = new LuaCallbackFunction(UseMarkdown);
 			ns["complete"] = new LuaCallbackFunction(Complete);
 			ns["complete_with_success"] = new LuaCallbackFunction(CompleteWithSuccess);
@@ -305,6 +316,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					var jsonNode = StructuredLuaConverter.LuaValueToJsonNode(data);
 					result.StructuredResult = jsonNode;
 				}
+			}
+
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple AppendData(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var result = GetResult(ctx);
+			if (result == null)
+				return new LuaTuple(LuaNil.Instance);
+
+			foreach (var arg in args)
+			{
+				if (arg is not LuaUserData { Target: LuaUiControl uiControl })
+					throw new LuaRuntimeException("dass.tool.result.append_data(...): arguments must be 'uicontrol' userdata created by dass.ui.create_control().");
+
+				result.AdditionalData.Add(new DynamicAxamlControlAdditionalData(uiControl.Xaml, uiControl.ViewModel));
 			}
 
 			return new LuaTuple(LuaNil.Instance);

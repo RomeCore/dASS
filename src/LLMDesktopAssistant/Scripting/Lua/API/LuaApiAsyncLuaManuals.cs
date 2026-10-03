@@ -111,6 +111,42 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		  print(result[1], result[2], result[3], result[4])  -- prints: 2, 4, 6, 8
 		
 		───────────────────────────────────────────────────────────────
+		CREATE (TaskCompletionSource-like handle)
+		───────────────────────────────────────────────────────────────
+
+		`task.create()` — creates a pending task that behaves like a TaskCompletionSource:
+		it can be completed later with result values or with an error, and it is awaitable.
+		There is no cancellation.
+
+		Complete it with results:
+
+		  local t = task.create()
+		  t:set_result(42, 'done')
+		  local number, text = await t
+		  print(number, text)  -- 42	done
+
+		Complete it with an error (awaiting will throw):
+
+		  local t = task.create()
+		  t:set_error('something went wrong')
+		  try
+			  await t
+		  catch e do
+			  print(e)  -- "something went wrong"
+		  end
+
+		The handle is a normal awaitable task, so it can also be stored and completed
+		elsewhere (e.g. from a UI callback), then awaited:
+
+		  local t = task.create()
+		  _G.pending = t          -- hand the handle to some async producer
+		  local value = await t   -- suspends until set_result / set_error is called
+
+		METHODS:
+		  - t:set_result(...)      — completes the task with the given values (multiple results allowed)
+		  - t:set_error([message]) — completes the task with an error (default message: "Task failed.")
+
+		───────────────────────────────────────────────────────────────
 		IS_ASYNC
 		───────────────────────────────────────────────────────────────
 		

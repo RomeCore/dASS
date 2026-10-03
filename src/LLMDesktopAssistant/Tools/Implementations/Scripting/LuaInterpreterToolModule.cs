@@ -2,6 +2,7 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting.Lua;
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Scripting
@@ -149,13 +150,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 				}
 				catch (LuaRuntimeException srex)
 				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + srex.Message);
+					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? srex.ToString() : srex.Message));
 					reactiveResult.ResultContentLines.Add("Remember to read the manuals for API");
 					reactiveResult.TryCompleteWithError();
 				}
 				catch (Exception ex)
 				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + ex.Message);
+					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
 					reactiveResult.ResultContentLines.Add("Remember to read the manuals for API");
 					reactiveResult.TryCompleteWithError();
 				}

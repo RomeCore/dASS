@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="120"
+             xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+             xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+             x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.DynamicAxamlControlAdditionalDataView"
+             x:Name="Root"
+             x:CompileBindings="False">
+
+    <!-- The panel takes the dynamic view model as its DataContext, so the rendered AXAML inherits it.
+         The AXAML source itself is bound from the additional data (the UserControl's DataContext). -->
+    <Panel DataContext="{Binding ViewModel}">
+        <ctrl:DynamicAxamlControl Axaml="{Binding #Root.DataContext.Axaml}"/>
+    </Panel>
+
+</UserControl>

@@ -28,5 +28,15 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 
 			RaisePropertyChangedFor(name);
 		}
+
+		/// <summary>
+		/// Returns a shallow snapshot of the current members.
+		/// </summary>
+		/// <returns>A new dictionary containing the current member values.</returns>
+		public IReadOnlyDictionary<string, object?> GetSnapshot()
+		{
+			lock (_lock)
+				return new Dictionary<string, object?>(_store, StringComparer.Ordinal);
+		}
 	}
 }

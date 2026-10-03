@@ -168,7 +168,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 				}
 				catch (Exception ex)
 				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + ex.Message);
+					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
 					reactiveResult.TryCompleteWithError();
 				}
 			}, CancellationToken.None);
