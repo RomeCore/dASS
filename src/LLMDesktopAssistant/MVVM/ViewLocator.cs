@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls;
+using System.Collections.Concurrent;
+using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using LLMDesktopAssistant.Utils;
 using Serilog;
@@ -8,10 +9,15 @@ namespace LLMDesktopAssistant.MVVM
 	/// <summary>
 	/// Represents a view locator for mapping view models to views.
 	/// </summary>
+	/// <remarks>
+	/// Resolution is forward-only (view model → view). When no exact mapping is found,
+	/// the locator walks up the view model's base type chain (nearest ancestor first),
+	/// trying each level's exact mapping and then its generic type definition.
+	/// </remarks>
 	public sealed class ViewLocator : IDataTemplate
 	{
 		private static readonly Dictionary<Type, Type> _ViewModel_to_View_map;
-		private static readonly Dictionary<Type, Type> _View_to_ViewModel_map;
+		private static readonly ConcurrentDictionary<Type, Type?> _resolvedTypesCache = new();
 
 		static ViewLocator()
 		{
@@ -33,18 +39,22 @@ namespace LLMDesktopAssistant.MVVM
 			{
 			}
 
-			// Validate mappings for correctness (1-to-1 correspondence between view models and views).
-
-			var viewModelToView = mappings.ToLookup(t => t.ViewModelType, t => t.ViewType);
-			var viewToViewModel = mappings.ToLookup(t => t.ViewType, t => t.ViewModelType);
+			// Validate mappings for correctness.
 
 			var errors = new List<string>();
 
-			foreach (var group in viewModelToView.Where(g => g.Count() > 1))
+			foreach (var group in mappings.ToLookup(t => t.ViewModelType).Where(g => g.Count() > 1))
 				errors.Add($"Multiple views found for view model type {group.Key}.");
 
-			foreach (var group in viewToViewModel.Where(g => g.Count() > 1))
-				errors.Add($"Multiple view models found for view type {group.Key}.");
+			foreach (var (viewModelType, viewType) in mappings)
+			{
+				if (viewType.IsAbstract || viewType.IsInterface)
+					errors.Add($"View type {viewType} (for view model {viewModelType}) is abstract and cannot be instantiated.");
+				else if (viewType.IsGenericTypeDefinition)
+					errors.Add($"View type {viewType} (for view model {viewModelType}) is an open generic type and cannot be instantiated.");
+				else if (viewType.GetConstructor(Type.EmptyTypes) is null)
+					errors.Add($"View type {viewType} (for view model {viewModelType}) has no public parameterless constructor.");
+			}
 
 			if (errors.Count > 0)
 			{
@@ -54,7 +64,6 @@ namespace LLMDesktopAssistant.MVVM
 			}
 
 			_ViewModel_to_View_map = mappings.ToDictionary(t => t.ViewModelType, t => t.ViewType);
-			_View_to_ViewModel_map = mappings.ToDictionary(t => t.ViewType, t => t.ViewModelType);
 		}
 
 		/// <summary>
@@ -64,6 +73,7 @@ namespace LLMDesktopAssistant.MVVM
 
 		/// <summary>
 		/// Resolves the view type for a given view model type.
+		/// Walks up the base type chain (nearest ancestor first) when no exact mapping exists.
 		/// </summary>
 		/// <param name="viewModelType">The type of the view model.</param>
 		/// <returns>The type of the view, or null if no mapping is found.</returns>
@@ -72,17 +82,43 @@ namespace LLMDesktopAssistant.MVVM
 			if (viewModelType == null)
 				return null;
 
-			if (_ViewModel_to_View_map.TryGetValue(viewModelType, out var viewType))
-				return viewType;
+			if (_resolvedTypesCache.TryGetValue(viewModelType, out var cachedViewType))
+				return cachedViewType;
 
-			if (viewModelType.IsGenericType)
+			var viewType = ResolveViewTypeCore(viewModelType);
+			_resolvedTypesCache.TryAdd(viewModelType, viewType);
+			return viewType;
+		}
+
+		private static Type? ResolveViewTypeCore(Type viewModelType)
+		{
+			// Nearest-first: the type itself, then its ancestors, until we hit object.
+			for (var type = viewModelType; type is not null && type != typeof(object); type = type.BaseType)
 			{
-				viewModelType = viewModelType.GetGenericTypeDefinition();
-				if (_ViewModel_to_View_map.TryGetValue(viewModelType, out viewType))
+				if (TryMap(type, out var viewType))
 					return viewType;
 			}
 
 			return null;
+		}
+
+		private static bool TryMap(Type viewModelType, out Type? viewType)
+		{
+			if (_ViewModel_to_View_map.TryGetValue(viewModelType, out var mapped))
+			{
+				viewType = mapped;
+				return true;
+			}
+
+			if (viewModelType.IsGenericType &&
+				_ViewModel_to_View_map.TryGetValue(viewModelType.GetGenericTypeDefinition(), out mapped))
+			{
+				viewType = mapped;
+				return true;
+			}
+
+			viewType = null;
+			return false;
 		}
 
 		/// <summary>
@@ -98,78 +134,6 @@ namespace LLMDesktopAssistant.MVVM
 				if (view is Control fe)
 					fe.DataContext = viewModel;
 				return view;
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Sets the data context of a view to its corresponding view model.
-		/// </summary>
-		/// <param name="view">The view to set the data context (view model) for.</param>
-		/// <returns>The data context (view model) for the specified view.</returns>
-		public static object? SetViewModelTo(Control? view)
-		{
-			if (view != null && _View_to_ViewModel_map.TryGetValue(view.GetType(), out var viewModelType))
-			{
-				var viewModel = Activator.CreateInstance(viewModelType);
-				view.DataContext = viewModel;
-				return viewModel;
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Gets the view model type for a specified view.
-		/// </summary>
-		/// <param name="view">The view to get the view model type for.</param>
-		/// <returns>The view model type for the specified view.</returns>
-		public static Type? GetViewModelTypeFor(Control view)
-		{
-			if (view != null && _View_to_ViewModel_map.TryGetValue(view.GetType(), out var viewModelType))
-				return viewModelType;
-			return null;
-		}
-
-		/// <summary>
-		/// Gets the view model type for a specified view type.
-		/// </summary>
-		/// <param name="viewType">The type of view to get the view model type for.</param>
-		/// <returns>The view model type for the specified view type.</returns>
-		public static Type? GetViewModelTypeFor(Type viewType)
-		{
-			if (viewType != null && _View_to_ViewModel_map.TryGetValue(viewType, out var viewModelType))
-			{
-				return viewModelType;
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Gets the view model for a specified view.
-		/// </summary>
-		/// <param name="view">The view to get the view model for.</param>
-		/// <returns>The view model for the specified view.</returns>
-		public static object? GetViewModelFor(Control view)
-		{
-			if (view != null && _View_to_ViewModel_map.TryGetValue(view.GetType(), out var viewModelType))
-			{
-				var viewModel = Activator.CreateInstance(viewModelType);
-				return viewModel;
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Gets the view model for a specified view type.
-		/// </summary>
-		/// <param name="viewType">The type of view to get the view model for.</param>
-		/// <returns>The view model for the specified view type.</returns>
-		public static object? GetViewModelFor(Type viewType)
-		{
-			if (viewType != null && _View_to_ViewModel_map.TryGetValue(viewType, out var viewModelType))
-			{
-				var viewModel = Activator.CreateInstance(viewModelType);
-				return viewModel;
 			}
 			return null;
 		}
