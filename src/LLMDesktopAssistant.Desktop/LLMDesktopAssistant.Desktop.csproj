@@ -17,8 +17,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="Avalonia.Desktop" Version="12.1.0" />
-		<PackageReference Include="LiveMarkdown.Avalonia.Math" Version="2.2.2" />
-		<PackageReference Include="LiveMarkdown.Avalonia.Mermaid" Version="2.2.2" />
+		<PackageReference Include="LiveMarkdown.Avalonia.Math" Version="2.4.3" />
+		<PackageReference Include="LiveMarkdown.Avalonia.Mermaid" Version="2.4.3" />
 		<PackageReference Include="Tmds.DBus.Protocol" Version="0.94.2" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
 		<PackageReference Include="NAudio" Version="2.3.0" />

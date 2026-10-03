@@ -211,7 +211,7 @@
 		</Button>
 
 		<!-- Additional data of the tool call -->
-		<ContentControl Content="{Binding AdditionalData}" Margin="28,2,0,0"/>
+		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
 
 	</StackPanel>
 
