@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -10,7 +11,7 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 	/// commands. Nested view models are cached per key so that repeated binding reads return the
 	/// same instance.
 	/// </summary>
-	public abstract class StructuredDynamicViewModel : DynamicViewModel, IDisposable
+	public abstract class StructuredDynamicViewModel : DynamicViewModel, IDisposable, IList
 	{
 		private static readonly IReadOnlySet<string> NoHiddenKeys = new HashSet<string>(StringComparer.Ordinal);
 
@@ -112,6 +113,51 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 
 		/// <summary>Gets a live view over the array part, suitable as <c>ItemsControl.ItemsSource</c>.</summary>
 		public DynamicArrayView Items => _items ??= new DynamicArrayView(GetArrayLength, GetArrayItem);
+
+		#region IList (read-only adapter over the array part)
+
+		// Avalonia's ItemsSourceView rejects an INotifyCollectionChanged source that does not also
+		// implement IList ("Collection implements INotifyCollectionChanged but not IList.").
+		// Implementing IList here lets a container member be used directly as ItemsControl.ItemsSource
+		// - e.g. {Binding messages} instead of the less obvious {Binding messages.Items} - while every
+		// read keeps delegating to the Items view over the array part. All writes throw: the array
+		// part is mutated through SetDynamicMember, never through the list interface.
+
+		bool IList.IsFixedSize => false;
+
+		bool IList.IsReadOnly => true;
+
+		bool ICollection.IsSynchronized => false;
+
+		object ICollection.SyncRoot => this;
+
+		int ICollection.Count => Items.Count;
+
+		void ICollection.CopyTo(Array array, int index) => ((ICollection)Items).CopyTo(array, index);
+
+		object? IList.this[int index]
+		{
+			get => Items[index];
+			set => throw new NotSupportedException("Collection is read-only.");
+		}
+
+		int IList.Add(object? value) => throw new NotSupportedException("Collection is read-only.");
+
+		void IList.Clear() => throw new NotSupportedException("Collection is read-only.");
+
+		bool IList.Contains(object? value) => ((IList)Items).Contains(value);
+
+		int IList.IndexOf(object? value) => ((IList)Items).IndexOf(value);
+
+		void IList.Insert(int index, object? value) => throw new NotSupportedException("Collection is read-only.");
+
+		void IList.Remove(object? value) => throw new NotSupportedException("Collection is read-only.");
+
+		void IList.RemoveAt(int index) => throw new NotSupportedException("Collection is read-only.");
+
+		IEnumerator IEnumerable.GetEnumerator() => Items.GetEnumerator();
+
+		#endregion
 
 		/// <inheritdoc/>
 		public override object? GetDynamicMember(string name)
