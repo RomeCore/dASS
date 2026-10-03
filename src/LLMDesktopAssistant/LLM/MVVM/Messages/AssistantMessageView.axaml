@@ -9,20 +9,20 @@
 			 xmlns:ico="using:Material.Icons.Avalonia"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.AssistantMessageView"
 			 x:DataType="local:AssistantMessageViewModel">
-	
+
 	<StackPanel Orientation="Vertical"
 							VerticalAlignment="Top"
 							Margin="40,8">
 
 		<StackPanel Orientation="Horizontal" IsVisible="{Binding ShowAvatar}">
-			
+
 			<Panel>
-				
+
 				<Border IsVisible="{Binding SenderAvatar, Converter={StaticResource NotnullToBooleanConverter}}"
 								Width="32" Height="32" CornerRadius="4" ClipToBounds="True" Margin="4">
 					<Image Source="{Binding SenderAvatar}" Width="32" Height="32"/>
 				</Border>
-				
+
 				<ico:MaterialIcon Kind="Robot" Width="32" Height="32" Margin="4"
 													IsVisible="{Binding SenderAvatar, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
 
@@ -38,23 +38,13 @@
 
 		<ContentControl Content="{Binding ReasoningPart}"/>
 		<ContentControl Content="{Binding TextPart}"/>
-		<ContentControl Content="{Binding ToolPart}"/>
+		<ContentControl Content="{Binding ToolCalls}"/>
+
 		<Label Content="{Binding Error}"
 					 Foreground="Red"
 					 IsVisible="{Binding Error, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
 
-		<ItemsControl ItemsSource="{Binding AssistantMessage.AdditionalData}">
-			<ItemsControl.ItemsPanel>
-				<ItemsPanelTemplate>
-					<StackPanel Orientation="Vertical" />
-				</ItemsPanelTemplate>
-			</ItemsControl.ItemsPanel>
-			<ItemsControl.ItemTemplate>
-				<DataTemplate>
-					<ContentControl	Content="{Binding}" IsVisible="{Binding IsVisible}" />
-				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-		</ItemsControl>
+		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
 
 		<StackPanel Orientation="Horizontal"
 								HorizontalAlignment="Left"
@@ -80,14 +70,14 @@
 							ToolTip.Tip="{loc:Loc message.resend}">
 				<ico:MaterialIcon Kind="ChevronDoubleDown"/>
 			</Button>
-			
+
 			<Button Command="{Binding DeleteCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc message.delete}">
 
 				<ico:MaterialIcon Kind="Delete"/>
 			</Button>
-			
+
 			<StackPanel Orientation="Horizontal"
 									IsVisible="{Binding BranchSelectionAvailable}"
 									Spacing="4">
@@ -110,7 +100,13 @@
 				</Button>
 
 			</StackPanel>
-			
+
+			<ToggleButton Classes="IconButton"
+							IsChecked="{Binding RenderMarkdown, Mode=TwoWay}"
+							ToolTip.Tip="{loc:Loc message.render_markdown}">
+				<ico:MaterialIcon Kind="LanguageMarkdown"/>
+			</ToggleButton>
+
 			<ItemsControl ItemsSource="{Binding Extensions}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
@@ -119,12 +115,12 @@
 				</ItemsControl.ItemsPanel>
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
-						
+
 						<Panel IsVisible="{Binding IsVisible}" Margin="0,0,4,0">
-							
+
 							<ContentControl Content="{Binding ViewModel}"
 															IsVisible="{Binding ViewModel, Converter={StaticResource NotnullToBooleanConverter}}"/>
-							
+
 							<Button Command="{Binding Command}"
 											Classes="IconButton"
 											IsVisible="{Binding ViewModel, Converter={StaticResource NotnullToBooleanConverterInverted}}"
@@ -133,7 +129,7 @@
 							</Button>
 
 						</Panel>
-						
+
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>

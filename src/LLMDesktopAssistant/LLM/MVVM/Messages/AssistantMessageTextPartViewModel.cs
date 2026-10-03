@@ -1,11 +1,11 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Avalonia.Threading;
 using LLMDesktopAssistant.LLM.Domain;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(AssistantMessageTextPartView))]
-	public class AssistantMessageTextPartViewModel : AssistantMessagePartViewModel
+	public class AssistantMessageTextPartViewModel : MessagePartViewModel
 	{
 		private DispatcherOperation? _currentUpdateOperation;
 
@@ -24,13 +24,21 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		}
 		public bool NotCompleted => !_completed;
 
-		public AssistantMessageTextPartViewModel()
+		private bool _renderMarkdown = true;
+		/// <summary>
+		/// Gets or sets a value indicating whether the text is rendered as Markdown
+		/// (otherwise it is rendered as plaintext).
+		/// </summary>
+		public bool RenderMarkdown
 		{
+			get => _renderMarkdown;
+			set => SetProperty(ref _renderMarkdown, value);
 		}
 
 		public AssistantMessageTextPartViewModel(AssistantMessage message)
 		{
 			Text = message.Content ?? string.Empty;
+			UpdateVisibility();
 
 			if (!message.IsCompleted)
 			{
@@ -42,6 +50,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					{
 						_currentUpdateOperation?.Abort();
 						Text = message.Content ?? string.Empty;
+						UpdateVisibility();
 					});
 				}
 
@@ -54,6 +63,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 						_currentUpdateOperation = null;
 						Completed = true;
 						RaisePropertyChanged(nameof(NotCompleted));
+						UpdateVisibility();
 					});
 
 					message.PropertyChanged -= PropertyChangedHandler;
@@ -64,5 +74,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				Completed = true;
 			}
 		}
+
+		private void UpdateVisibility() => IsVisible = !string.IsNullOrEmpty(Text);
 	}
 }

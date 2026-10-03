@@ -1,8 +1,8 @@
 using System.ComponentModel;
-using Avalonia.Input.Platform;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.MVVM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
@@ -17,20 +17,24 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	{
 		private readonly ToolCall toolCall;
 
+		public ToolCall ToolCall => toolCall;
+
 		public string ToolName { get; }
 
 		public LocaleKeyBase ToolTitle { get; }
 
 		public string ToolCallId { get; }
 
-		private string _arguments = string.Empty;
-		public string Arguments
-		{
-			get => _arguments;
-			set => SetProperty(ref _arguments, value);
-		}
+		/// <summary>
+		/// The additional data of the tool call (chips + everything else). Always created.
+		/// </summary>
+		public AdditionalChatDataCollectionViewModel AdditionalData { get; }
 
-
+		private ToolCallFlyoutViewModel? _flyout;
+		/// <summary>
+		/// Gets the lazily-created view model backing the tool call flyout.
+		/// </summary>
+		public ToolCallFlyoutViewModel Flyout => _flyout ??= new ToolCallFlyoutViewModel(this);
 
 		private ToolStatus _status = ToolStatus.None;
 		public ToolStatus Status
@@ -113,22 +117,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _statusTitle, value);
 		}
 
-		private string? _result = string.Empty;
-		public string? Result
-		{
-			get => _result;
-			set => SetProperty(ref _result, value);
-		}
-
-		private bool _useMarkdown = false;
-		public bool UseMarkdown
-		{
-			get => _useMarkdown;
-			set => SetProperty(ref _useMarkdown, value);
-		}
-		
-
-
 		public MaterialIconKind ToolIcon =>
 			Status switch
 			{
@@ -205,26 +193,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				toolCall.UserConfirmationSource?.TrySetResult(consentResult);
 		}
 
-		public ICommand CopyArgumentsCommand { get; }
-		public void CopyArguments()
-		{
-			if (!string.IsNullOrEmpty(toolCall.Arguments))
-			{
-				App.MainTopLevel.Clipboard?.SetTextAsync(toolCall.Arguments);
-			}
-		}
-
-		public ICommand CopyResultCommand { get; }
-		public void CopyResult()
-		{
-			if (!string.IsNullOrEmpty(Result))
-			{
-				App.MainTopLevel.Clipboard?.SetTextAsync(Result);
-			}
-		}
-
-
-
 		public ToolCallViewModel(ToolCall toolCall, Chat chat)
 		{
 			this.toolCall = toolCall;
@@ -232,15 +200,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			ToolName = toolCall.ToolName;
 			ToolTitle = toolCall.Title ?? new ConstLocaleKey(toolCall.ToolName);
 			ToolCallId = toolCall.ToolCallId;
-			try
-			{
-				var parsedArgs = TolerantJsonParser.Parse(toolCall.Arguments);
-				Arguments = ToolCallArgumentFormatter.FormatToMarkdown(parsedArgs);
-			}
-			catch
-			{
-				Arguments = "```json\n" + toolCall.Arguments + "\n```";
-			}
 
 			Status = toolCall.Status;
 			Progress = toolCall.ReactiveToolResult?.Progress;
@@ -251,12 +210,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			StatusTitle = toolCall.StatusTitle;
 			ExpectedBehaviour = toolCall.ExpectedBehaviour;
 
-			Result = toolCall.ResultContent;
-			UseMarkdown = toolCall.UseMarkdown;
+			AdditionalData = new AdditionalChatDataCollectionViewModel(toolCall.AdditionalData);
 
 			ConsentCommand = new RelayCommand<ToolConsentResult>(ResolveConsent);
-			CopyArgumentsCommand = new RelayCommand(CopyArguments);
-			CopyResultCommand = new RelayCommand(CopyResult);
 
 			if (!toolCall.IsCompleted)
 			{
@@ -267,24 +223,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					{
 						switch (e.PropertyName)
 						{
-							case nameof(ToolCall.Arguments):
-								try
-								{
-									var parsedArgs = TolerantJsonParser.Parse(toolCall.Arguments);
-									Arguments = ToolCallArgumentFormatter.FormatToMarkdown(parsedArgs);
-								}
-								catch
-								{
-									Arguments = "```json\n" + toolCall.Arguments + "\n```";
-								}
-								break;
-
 							case nameof(ToolCall.Status): Status = toolCall.Status; break;
 							case nameof(ToolCall.StatusIcon): StatusIcon = toolCall.StatusIcon; break;
 							case nameof(ToolCall.StatusTitle): StatusTitle = toolCall.StatusTitle; break;
 							case nameof(ToolCall.ExpectedBehaviour): ExpectedBehaviour = toolCall.ExpectedBehaviour; break;
-							case nameof(ToolCall.ResultContent): Result = toolCall.ResultContent; break;
-							case nameof(ToolCall.UseMarkdown): UseMarkdown = toolCall.UseMarkdown; break;
 
 							case nameof(ToolCall.ReactiveToolResult):
 								reactiveToolResult?.PropertyChanged -= OnReactiveToolResultPropertyChanged;
@@ -321,7 +263,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
-				
+				_flyout?.Dispose();
+				_flyout = null;
+				AdditionalData.Dispose();
 			}
 		}
 	}

@@ -1,23 +1,16 @@
-using Avalonia.Collections;
+using System.ComponentModel;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using CommunityToolkit.Mvvm.Input;
-using System.Collections.Specialized;
-using System.ComponentModel;
 using LLMDesktopAssistant.Controls.Dialogs;
-using Material.Icons;
-using LLMDesktopAssistant.LLM.MVVM.Attachments;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.LLM.MVVM.Attachments;
 using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.LLM.Settings;
-using LLMDesktopAssistant.Settings;
-using LLMDesktopAssistant.Tools.Consents;
-using LLMDesktopAssistant.Users;
-using LLMDesktopAssistant.Utils;
-using Serilog;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Utils;
+using Material.Icons;
+using Serilog;
 
 namespace LLMDesktopAssistant.LLM.MVVM
 {
@@ -28,6 +21,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public required MaterialIconKind Icon { get; init; }
 	}
 
+	/// <summary>
+	/// The chat user input.
+	/// <para/>
+	/// The persisted <see cref="UserInputState"/> always holds the draft for a NEW message
+	/// (text + parts). Entering edit mode displaces this draft from the <em>view</em> only:
+	/// the edited message is loaded into an in-memory buffer, and the draft stays untouched
+	/// in <see cref="UserInputState"/> (and thus in the database), ready to be restored.
+	/// </summary>
 	[ViewModelFor(typeof(UserInputView))]
 	public class UserInputViewModel : ViewModelBase
 	{
@@ -138,204 +139,31 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-
-
 		/// <summary>
 		/// Gets the current chat instance.
 		/// </summary>
 		public Chat Chat { get; }
 
-		private readonly IChatSettingsService _settingsService;
-
-		private static readonly SettingsCategory<ChatSettings> chatSettingsCategory = SettingsManager.GetCategory<ChatSettings>();
-
-		private SettingsIdItemViewModel _selectedSettingsId;
-		public SettingsIdItemViewModel SelectedSettingsId
-		{
-			get => _selectedSettingsId;
-			set
-			{
-				if (SetProperty(ref _selectedSettingsId, value))
-					_settingsService.SetSettings(chatSettingsCategory.Get(value.Id));
-			}
-		}
-
 		/// <summary>
-		/// Gets a list of settings IDs for the current chat.
-		/// </summary>
-		public RangeObservableCollection<SettingsIdItemViewModel> SettingsIds { get; }
-
-		/// <summary>
-		/// Gets or sets the chat model selected in the input bar.
-		/// The value is routed through the effective (inherited) model selection of the chat.
-		/// </summary>
-		public string ChatModel
-		{
-			get => _settingsService.Settings.Models.GetEffectiveSelection().ChatModel;
-			set
-			{
-				var selection = _settingsService.Settings.Models.GetEffectiveSelection();
-				if (selection.ChatModel != value)
-					selection.ChatModel = value;
-			}
-		}
-
-		private EventHandler? _settingsChangedHandler;
-		private EventHandler? _usersSettingsChangedHandler;
-		private IDisposable? _modelsSubscription;
-		private ModelSelectionSettings? _trackedSelection;
-
-		/// <summary>
-		/// Subscribes to the model settings of the current chat and raises
-		/// <see cref="ChatModel"/> change notifications when the effective value changes.
-		/// </summary>
-		private void TrackModelSelection()
-		{
-			_modelsSubscription?.Dispose();
-			_settingsService.Settings.SubscribeChanged(nameof(ChatSettings.Models), _ =>
-			{
-				_settingsService.Settings.Models.PropertyChanged -= Models_PropertyChanged;
-				_settingsService.Settings.Models.PropertyChanged += Models_PropertyChanged;
-				TrackEffectiveSelection();
-				RaisePropertyChanged(nameof(ChatModel));
-			}, out _modelsSubscription);
-
-			_settingsService.Settings.Models.PropertyChanged -= Models_PropertyChanged;
-			_settingsService.Settings.Models.PropertyChanged += Models_PropertyChanged;
-			TrackEffectiveSelection();
-			RaisePropertyChanged(nameof(ChatModel));
-		}
-
-		private void Models_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName != nameof(ChatSettings.Models.Selection))
-				return;
-
-			TrackEffectiveSelection();
-			RaisePropertyChanged(nameof(ChatModel));
-		}
-
-		/// <summary>
-		/// Tracks the currently effective model selection object so that changes of its
-		/// <see cref="ModelSelectionSettings.ChatModel"/> are reflected in the input bar.
-		/// </summary>
-		private void TrackEffectiveSelection()
-		{
-			var selection = _settingsService.Settings.Models.GetEffectiveSelection();
-			if (ReferenceEquals(_trackedSelection, selection))
-				return;
-
-			if (_trackedSelection is not null)
-				_trackedSelection.PropertyChanged -= EffectiveSelection_PropertyChanged;
-			_trackedSelection = selection;
-			_trackedSelection.PropertyChanged += EffectiveSelection_PropertyChanged;
-		}
-
-		private void EffectiveSelection_PropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			if (e.PropertyName == nameof(ModelSelectionSettings.ChatModel))
-				RaisePropertyChanged(nameof(ChatModel));
-		}
-
-		/// <summary>
-		/// Subscribes to the local users of the current chat and refreshes
-		/// <see cref="Users"/> when the settings or the user list change.
-		/// </summary>
-		private void TrackUsers()
-		{
-			_settingsService.Settings.Users.Users.CollectionChanged -= Users_CollectionChanged;
-			_settingsService.Settings.Users.Users.CollectionChanged += Users_CollectionChanged;
-			RefreshUsers();
-		}
-
-		private void Users_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-		{
-			RefreshUsers();
-		}
-
-		private void RefreshUsers()
-		{
-			var currentLogin = SelectedUser?.Login;
-			Users.Reset(_settingsService.Settings.Users.Users);
-
-			SelectedUser = Users.FirstOrDefault(u => u.Login == currentLogin) ?? Users.FirstOrDefault();
-			RaisePropertyChanged(nameof(HasMultipleUsers));
-		}
-
-		/// <summary>
-		/// Gets the chat view model that holds this user input manager.
+		/// Gets the chat view model that holds this user input.
 		/// </summary>
 		public ChatViewModel ChatViewModel { get; }
 
 		/// <summary>
-		/// Command to open settings.
+		/// Gets the persisted user input state (the NEW-message draft: text, parts, sender and visibility).
 		/// </summary>
-		public ICommand OpenSettingsCommand { get; }
+		public UserInputState UserInputState => Chat.UserInputState;
+
+		// The draft parts are owned by the persisted UserInputState; the edit parts live only in memory.
+		private readonly AdditionalChatDataCollectionViewModel _draftData;
+		private readonly AdditionalChatDataCollection _editParts = new();
+		private readonly AdditionalChatDataCollectionViewModel _editData;
 
 		/// <summary>
-		/// Command to open the consent memorization manager dialog.
+		/// Gets the message parts currently shown in the input: the edited message parts while editing,
+		/// otherwise the persisted draft parts. Always in editing mode (with remove overlays).
 		/// </summary>
-		public ICommand OpenConsentMemorizationCommand { get; }
-
-		/// <summary>
-		/// Command to open attachments manager.
-		/// </summary>
-		public ICommand OpenAttachmentsManagerCommand { get; }
-
-		/// <summary>
-		/// Command to open Blazor Web UI hosting dialog.
-		/// </summary>
-		public ICommand OpenBlazorWebUICommand { get; }
-
-
-
-		/// <summary>
-		/// Command to send a message.
-		/// </summary>
-		public ICommand SendMessageCommand { get; }
-
-		/// <summary>
-		/// Command to send a message.
-		/// </summary>
-		public ICommand SendGenerateMessageCommand { get; }
-
-		/// <summary>
-		/// Command to cancel edit of the current message.
-		/// </summary>
-		public ICommand CancelEditCommand { get; }
-
-		/// <summary>
-		/// Command to cancel the current generation.
-		/// </summary>
-		public ICommand CancelGenerationCommand { get; }
-
-
-
-		private string _text = string.Empty;
-		private string _prevText = string.Empty;
-		/// <summary>
-		/// Gets or sets the user input to be sent in the next conversation turn.
-		/// </summary>
-		public string Text
-		{
-			get => _text;
-			set => SetProperty(ref _text, value);
-		}
-
-		private readonly AvaloniaList<AttachmentViewModel> _attachments = [];
-		private ImmutableList<AttachmentMessagePart> _prevAttachments = [];
-		/// <summary>
-		/// Gets or sets the attachments or additional buttons to be displayed with the current message.
-		/// </summary>
-		public ICollection<AttachmentViewModel> Attachments
-		{
-			get => _attachments;
-			set
-			{
-				_attachments.Clear();
-				_attachments.AddRange(value);
-			}
-		}
+		public AdditionalChatDataCollectionViewModel AdditionalData => EditingMessage != null ? _editData : _draftData;
 
 		private BranchedMessage? _editingMessage = null;
 		/// <summary>
@@ -344,7 +172,38 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public BranchedMessage? EditingMessage
 		{
 			get => _editingMessage;
-			private set => SetProperty(ref _editingMessage, value);
+			private set
+			{
+				if (SetProperty(ref _editingMessage, value))
+				{
+					RaisePropertyChanged(nameof(AdditionalData));
+					RaisePropertyChanged(nameof(Text));
+				}
+			}
+		}
+
+		private string _editText = string.Empty;
+
+		/// <summary>
+		/// Gets or sets the text shown in the input.
+		/// While editing it is the edited message content (in memory); otherwise it is the persisted draft text.
+		/// </summary>
+		public string Text
+		{
+			get => EditingMessage != null ? _editText : UserInputState.Text;
+			set
+			{
+				if (EditingMessage != null)
+				{
+					if (_editText != value)
+					{
+						_editText = value;
+						RaisePropertyChanged(nameof(Text));
+					}
+				}
+				else if (UserInputState.Text != value)
+					UserInputState.Text = value;
+			}
 		}
 
 		private bool _isGenerating = false;
@@ -359,101 +218,38 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private IDisposable? _generationCtsSubscription;
 
-		public ImmutableList<UserMessageVisibilityItemModel> Visibilities { get; } = [
-			new UserMessageVisibilityItemModel { Visibility = MessageVisibility.Always, Title = Locale.GetKey("message.visibility.always"), Icon = MaterialIconKind.Eye },
-			new UserMessageVisibilityItemModel { Visibility = MessageVisibility.RevealAfterSend, Title = Locale.GetKey("message.visibility.reveal_after_send"), Icon = MaterialIconKind.Clock },
-			new UserMessageVisibilityItemModel { Visibility = MessageVisibility.OnlyUsers, Title = Locale.GetKey("message.visibility.only_users"), Icon = MaterialIconKind.Account },
-			new UserMessageVisibilityItemModel { Visibility = MessageVisibility.OnlyAgents, Title = Locale.GetKey("message.visibility.only_agents"), Icon = MaterialIconKind.Robot }
-		];
-
-		private UserMessageVisibilityItemModel _selectedVisibility;
 		/// <summary>
-		/// Gets or sets the visibility of the next user message.
+		/// Command to send a message (without generation).
 		/// </summary>
-		public UserMessageVisibilityItemModel SelectedVisibility
-		{
-			get => _selectedVisibility;
-			set => SetProperty(ref _selectedVisibility, value);
-		}
+		public ICommand SendMessageCommand { get; }
 
 		/// <summary>
-		/// Gets the list of local users that can send messages in this chat.
+		/// Command to send a message and start generation.
 		/// </summary>
-		public RangeObservableCollection<UserInformation> Users { get; } = [];
-
-		private UserInformation? _selectedUser;
-		/// <summary>
-		/// Gets or sets the user that sends the next message.
-		/// </summary>
-		public UserInformation? SelectedUser
-		{
-			get => _selectedUser;
-			set => SetProperty(ref _selectedUser, value);
-		}
+		public ICommand SendGenerateMessageCommand { get; }
 
 		/// <summary>
-		/// Gets a value indicating whether more than one local user is available.
+		/// Command to cancel editing of the current message.
 		/// </summary>
-		public bool HasMultipleUsers => Users.Count > 1;
+		public ICommand CancelEditCommand { get; }
+
+		/// <summary>
+		/// Command to cancel the current generation.
+		/// </summary>
+		public ICommand CancelGenerationCommand { get; }
 
 		public UserInputViewModel(ChatViewModel chatVM)
 		{
 			Chat = chatVM.Chat;
 			ChatViewModel = chatVM;
-			_settingsService = Chat.Services.GetRequiredService<IChatSettingsService>();
 
-			chatSettingsCategory.Ids.CollectionChanged += SettingsIds_CollectionChanged;
-			SettingsIds = [ .. chatSettingsCategory.Ids
-				.Where(c => c != SettingsObject.DefaultId)
-				.Select(c => new SettingsIdItemViewModel { Id = c })
-				.Prepend(SettingsIdItemViewModel.Default) ];
-			_selectedSettingsId = SettingsIds.First(id => id.Id == _settingsService.Settings.Id);
+			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
+			_draftData.Parts.IsEditing = true;
 
-			_settingsChangedHandler = (_, _) =>
-			{
-				TrackModelSelection();
-				SelectedSettingsId = SettingsIds.First(id => id.Id == _settingsService.Settings.Id);
-			};
-			_settingsService.SettingsChanged += _settingsChangedHandler;
-			TrackModelSelection();
+			_editData = new AdditionalChatDataCollectionViewModel(_editParts);
+			_editData.Parts.IsEditing = true;
 
-			_usersSettingsChangedHandler = (_, _) => TrackUsers();
-			_settingsService.SettingsChanged += _usersSettingsChangedHandler;
-			TrackUsers();
-
-			OpenSettingsCommand = new AsyncRelayCommand(async () =>
-			{
-				var viewModel = new SettingsCategoryViewModel<ChatSettings>(cs => new ChatSettingsViewModel(cs, Chat),
-					true, newSettings => _settingsService.SetSettings(newSettings), _settingsService.Settings.Id);
-				try
-				{
-					await DialogManager.ShowDialogAsync(viewModel);
-				}
-				finally
-				{
-					viewModel.Dispose();
-				}
-			});
-
-			OpenConsentMemorizationCommand = new AsyncRelayCommand(async () =>
-			{
-				var viewModel = new ConsentMemorizationViewModel(Chat);
-				await DialogManager.ShowDialogAsync(viewModel);
-			});
-
-			OpenAttachmentsManagerCommand = new AsyncRelayCommand(async () =>
-			{
-				var viewModel = new AttachmentsManagerViewModel(this);
-				await DialogManager.ShowDialogAsync(viewModel);
-			});
-
-			OpenBlazorWebUICommand = new AsyncRelayCommand(async () =>
-			{
-				var viewModel = new BlazorHostViewModel(Chat.Services);
-				await DialogManager.ShowDialogAsync(viewModel);
-			});
-
-
+			UserInputState.PropertyChanged += OnUserInputStatePropertyChanged;
 
 			SendMessageCommand = new SendMessageCommandObject(this, generate: false);
 			SendGenerateMessageCommand = new SendMessageCommandObject(this, generate: true);
@@ -468,70 +264,97 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					IsGenerating = Chat.GenerationCts != null;
 				});
 			}, out _generationCtsSubscription);
-
-			_selectedVisibility = Visibilities[0];
 		}
 
-		private void SettingsIds_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		private void OnUserInputStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.OldItems != null)
-				foreach (string id in e.OldItems)
-					SettingsIds.Remove(SettingsIds.First(s => s.Id == id));
-
-			if (e.NewItems != null)
-				foreach (string id in e.NewItems)
-					SettingsIds.Add(new SettingsIdItemViewModel { Id = id });
+			if (e.PropertyName == nameof(UserInputState.Text) && EditingMessage == null)
+				RaisePropertyChanged(nameof(Text));
 		}
+
+		/// <summary>
+		/// Gets a value indicating whether there is nothing to send.
+		/// </summary>
+		public bool IsEmpty =>
+			EditingMessage != null
+				? string.IsNullOrWhiteSpace(_editText) && _editParts.Count == 0
+				: UserInputState.IsEmpty;
 
 		public UserInput? GetCurrentUserInput()
 		{
-			if (IsEmpty)
-				return null;
+			if (EditingMessage != null)
+			{
+				if (string.IsNullOrWhiteSpace(_editText) && _editParts.Count == 0)
+					return null;
 
-			var userManager = Chat.Services.GetRequiredService<IUserManagementService>();
+				return new UserInput
+				{
+					Content = _editText,
+					SenderLogin = UserInputState.SenderLogin,
+					Parts = [.. _editParts],
+					Visibility = UserInputState.Visibility,
+				};
+			}
+
+			if (UserInputState.IsEmpty)
+				return null;
 
 			return new UserInput
 			{
-				Content = _text,
-				SenderLogin = SelectedUser?.Login ?? userManager.GetLocalUsers().FirstOrDefault()?.Login ?? "user",
-				Parts = _attachments.Select(a => (AdditionalChatData)a.Attachment).ToImmutableList(),
-				Visibility = _selectedVisibility.Visibility,
+				Content = UserInputState.Text,
+				SenderLogin = UserInputState.SenderLogin,
+				Parts = [.. UserInputState.Parts],
+				Visibility = UserInputState.Visibility,
 			};
 		}
 
+		/// <summary>
+		/// Loads a message into the edit buffer. The persisted draft (<see cref="UserInputState"/>)
+		/// is not modified and remains available in the database.
+		/// </summary>
 		public void EditMessage(BranchedMessage branchedMessage)
 		{
 			if (branchedMessage.Message is not UserMessage userMessage)
 				throw new ArgumentException("The branched message does not contain a user message.");
 
-			if (EditingMessage != null)
-			{
-				_prevText = _text;
-				_prevAttachments = _attachments.Select(am => am.Attachment).ToImmutableList();
-			}
+			_editParts.Clear();
+			foreach (var part in userMessage.AdditionalData.OfType<AttachmentMessagePart>())
+				_editParts.Add(part.Clone());
+
+			_editText = userMessage.Content ?? string.Empty;
 			EditingMessage = branchedMessage;
-			Text = userMessage.Content;
-			Attachments = userMessage.AdditionalData.GetAll<AttachmentMessagePart>()
-				.Select(a => new AttachmentViewModel(this, a)).ToList();
 		}
 
 		public void Clear()
 		{
-			Text = string.Empty;
-			Attachments = [];
-			EditingMessage = null;
+			EndEditing();
+			UserInputState.Text = string.Empty;
+			UserInputState.Parts.Clear();
 		}
 
+		/// <summary>
+		/// Adds a message part to the input: to the edit buffer while editing, otherwise to the persisted draft.
+		/// </summary>
+		public void AddPart(AdditionalChatData part)
+		{
+			if (EditingMessage != null)
+				_editParts.Add(part);
+			else
+				UserInputState.Parts.Add(part);
+		}
+
+		/// <summary>
+		/// Discards the edit buffer and returns to the persisted draft.
+		/// </summary>
 		public void EndEditing()
 		{
-			Text = _prevText;
-			Attachments = _prevAttachments.Select(a => new AttachmentViewModel(this, a)).ToList();
-			_prevText = string.Empty;
-			_prevAttachments = [];
-			EditingMessage = null;
-		}
+			if (EditingMessage == null && _editParts.Count == 0 && string.IsNullOrEmpty(_editText))
+				return;
 
-		public bool IsEmpty => string.IsNullOrWhiteSpace(_text) && Attachments.Count == 0;
+			EditingMessage = null;
+			_editText = string.Empty;
+			_editParts.Clear();
+		}
 
 		public async Task AcceptDropAsync(DragEventArgs args)
 		{
@@ -554,19 +377,28 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			await DialogManager.ShowDialogAsync(viewModel);
 		}
 
-
-
 		/// <summary>
 		/// Sends a message to the LLM and updates the conversation turns.
 		/// </summary>
+		/// <param name="generate">Whether to start generation after sending.</param>
 		/// <param name="cts">The cancellation token to monitor for cancellation requests.</param>
-		/// <returns>A task that represents the asynchronous operation.</returns>
 		public Task SendCurrentUserInputAsync(bool generate, CancellationToken cts = default)
 		{
-			var userInput = GetCurrentUserInput();
 			var editingMessage = EditingMessage;
+			var userInput = GetCurrentUserInput();
 
-			EndEditing();
+			if (editingMessage != null)
+			{
+				// Editing: drop the in-memory edit buffer, the persisted draft was never touched.
+				EndEditing();
+			}
+			else
+			{
+				// Sending a new message: clear the just-sent draft.
+				UserInputState.Text = string.Empty;
+				UserInputState.Parts.Clear();
+			}
+
 			if (userInput != null)
 			{
 				var chatOperator = Chat.Services.GetRequiredService<IChatOperationService>();
@@ -578,33 +410,20 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			return Task.CompletedTask;
 		}
 
-		/// <inheritdoc/>
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
 
 			if (disposing)
 			{
-				SettingsManager.GetCategory<ChatSettings>().Ids.CollectionChanged -= SettingsIds_CollectionChanged;
-
-				if (_settingsChangedHandler is not null)
-					_settingsService.SettingsChanged -= _settingsChangedHandler;
-				if (_usersSettingsChangedHandler is not null)
-					_settingsService.SettingsChanged -= _usersSettingsChangedHandler;
-				_settingsChangedHandler = null;
-				_usersSettingsChangedHandler = null;
-
-				_modelsSubscription?.Dispose();
-				_modelsSubscription = null;
-				_settingsService.Settings.Users.Users.CollectionChanged -= Users_CollectionChanged;
-
-				_settingsService.Settings.Models.PropertyChanged -= Models_PropertyChanged;
-				if (_trackedSelection is not null)
-					_trackedSelection.PropertyChanged -= EffectiveSelection_PropertyChanged;
-				_trackedSelection = null;
+				UserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
 
 				_generationCtsSubscription?.Dispose();
 				_generationCtsSubscription = null;
+
+				_draftData.Dispose();
+				_editData.Dispose();
+				_editParts.Dispose();
 			}
 		}
 	}

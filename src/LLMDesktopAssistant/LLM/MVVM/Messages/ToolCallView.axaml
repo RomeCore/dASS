@@ -8,12 +8,9 @@
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:ico="using:Material.Icons.Avalonia"
-						 xmlns:flui="using:FluentAvalonia.UI.Controls"
-						 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
-						 xmlns:settings="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 						 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallView"
 						 x:DataType="local:ToolCallViewModel">
-	
+
 	<UserControl.Styles>
 		<Style Selector="FlyoutPresenter">
 			<Setter Property="Padding" Value="0"/>
@@ -25,346 +22,197 @@
 		</Style>
 	</UserControl.Styles>
 
-	<!-- Main tool call button -->
-	<Button Padding="2"
-					Margin="0,0,0,4">
+	<StackPanel Orientation="Vertical" Margin="0,0,0,4">
 
-		<Button.Flyout>
-			
-			<Flyout Placement="BottomEdgeAlignedLeft"
-							ShowMode="Standard">
+		<!-- Main tool call button -->
+		<Button Padding="2">
 
-				<Border BorderThickness="1"
-								MinWidth="500"
-								MaxWidth="750"
-								MinHeight="300"
-								MaxHeight="650"
-								CornerRadius="8"
-								Padding="8">
+			<Button.Flyout>
 
-					<Grid RowDefinitions="Auto,*,Auto">
+				<Flyout Placement="BottomEdgeAlignedLeft"
+								ShowMode="Standard">
 
-						<Border Grid.Row="0"
-										Background="{DynamicResource WindowBackground}"
-										CornerRadius="8,8,0,0"
-										Padding="16,12,8,12">
+					<ContentControl Content="{Binding Flyout}"/>
 
-							<Grid ColumnDefinitions="*,*,Auto,Auto">
+				</Flyout>
 
-								<!-- Tool Name: localized + raw -->
-								<StackPanel Orientation="Vertical" Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+			</Button.Flyout>
 
-									<TextBlock Text="{loc:Loc {Binding ToolTitle}}"
-															FontSize="16"
-															FontWeight="Bold"
-															HorizontalAlignment="Left"/>
+			<WrapPanel Orientation="Horizontal"
+								 ItemSpacing="4">
 
-									<TextBlock Text="{Binding ToolName}"
-															FontSize="13"
-															Opacity="0.45"
-															HorizontalAlignment="Left"/>
-									
-									<ItemsControl ItemsSource="{Binding BehaviourFlags}"
-												  Margin="0,4,0,0">
-										<ItemsControl.ItemsPanel>
-											<ItemsPanelTemplate>
-												<WrapPanel ItemSpacing="4"/>
-											</ItemsPanelTemplate>
-										</ItemsControl.ItemsPanel>
-										<ItemsControl.ItemTemplate>
-											<DataTemplate x:DataType="settings:ToolBehaviourFlagInfo">
-												<Panel>
-													<ToolTip.Tip>
-														<StackPanel Orientation="Vertical" Spacing="4">
-															<TextBlock Text="{loc:Loc {Binding DisplayName}}"
-															           FontSize="{DynamicResource FontSizeM}"
-															           FontWeight="SemiBold"/>
-															<TextBlock Text="{loc:Loc {Binding Description}}"/>
-														</StackPanel>
-													</ToolTip.Tip>
-													<ico:MaterialIcon Kind="{Binding Icon}"
-																	  Foreground="{Binding Color}"
-																	  Width="14" Height="14"/>
-												</Panel>
-											</DataTemplate>
-										</ItemsControl.ItemTemplate>
-									</ItemsControl>
+				<Panel Width="28" Height="28">
 
-								</StackPanel>
+					<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverter}}">
 
-								<!-- Tool Call ID -->
-								<TextBlock Grid.Column="1"
-														Text="{Binding ToolCallId}"
-														FontSize="11"
-														Opacity="0.35"
-														VerticalAlignment="Center"
-														HorizontalAlignment="Right"
-														Margin="0,0,8,0"/>
+						<ico:MaterialIcon Kind="{Binding StatusIcon}"
+															Classes="MidIcon"
+															HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
-								<!-- Copy Arguments button -->
-								<Button Grid.Column="2"
-												Classes="IconButton"
-												Command="{Binding CopyArgumentsCommand}"
-												IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-												ToolTip.Tip="{loc:Loc tool.copy_arguments}"
-												Margin="3,0,0,0">
+						<Border Width="16" Height="16" CornerRadius="6"
+										HorizontalAlignment="Right"
+										VerticalAlignment="Bottom"
+										IsVisible="{Binding DisplayMiniIcon}"
+										Background="#ac000000"
+										BoxShadow="0 0 3 0 #ac000000">
 
-									<ico:MaterialIcon Kind="CodeBraces"/>
+							<Panel>
 
-								</Button>
+								<Panel IsVisible="{Binding ToolIconVisible}">
 
-								<!-- Copy Result button -->
-								<Button Grid.Column="3"
-												Classes="IconButton"
-												Command="{Binding CopyResultCommand}"
-												IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-												ToolTip.Tip="{loc:Loc tool.copy_result}"
-												Margin="3,0,0,0">
+									<ico:MaterialIcon Kind="{Binding ToolIcon}"
+																		Foreground="{Binding ToolIconBrush}"
+																		Width="16" Height="16"
+																		IsVisible="{Binding IsBlinking}">
 
-									<ico:MaterialIcon Kind="ContentCopy"/>
+										<ico:MaterialIcon.Styles>
+											<Style Selector="ico|MaterialIcon">
+												<Style.Animations>
+													<Animation Duration="0:0:1"
+																			IterationCount="INFINITE"
+																			PlaybackDirection="Alternate"
+																			Easing="SineEaseInOut">
+														<KeyFrame Cue="0%">
+															<Setter Property="Opacity" Value="1.0"/>
+														</KeyFrame>
+														<KeyFrame Cue="100%">
+															<Setter Property="Opacity" Value="0.3"/>
+														</KeyFrame>
+													</Animation>
+												</Style.Animations>
+											</Style>
+										</ico:MaterialIcon.Styles>
 
-								</Button>
+									</ico:MaterialIcon>
 
-							</Grid>
+									<ico:MaterialIcon Kind="{Binding ToolIcon}"
+																		Foreground="{Binding ToolIconBrush}"
+																		Width="16" Height="16"
+																		IsVisible="{Binding !IsBlinking}"/>
+
+								</Panel>
+
+								<ctrl:ProgressRing IsVisible="{Binding InProgress}"
+																	 Foreground="{Binding ToolIconBrush}"
+																	 Width="16" Height="16"
+																	 StrokeThickness="4"
+																	 Minimum="{Binding MinProgress}" Maximum="{Binding MaxProgress}"
+																	 Value="{Binding Progress}"
+																	 IsIndeterminate="{Binding Progress, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
+
+							</Panel>
 
 						</Border>
 
-						<!-- Separator -->
-						<Rectangle Grid.Row="1" Grid.RowSpan="2"
-												Fill="{DynamicResource PrimaryAccentBrush}"
-												Height="1"
-												VerticalAlignment="Top"/>
+					</Panel>
 
-						<ScrollViewer Grid.Row="1"
-													VerticalScrollBarVisibility="Auto"
-													HorizontalScrollBarVisibility="Auto"
-													beh:ScrollViewerBehavior.AutoScrollEnabled="True">
+					<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverterInverted}}">
 
-							<StackPanel Orientation="Vertical"
-													Spacing="20"
-													Margin="16,16,32,32"
-													MaxWidth="650">
+						<Panel IsVisible="{Binding ToolIconVisible}">
 
-								<!-- Arguments Section -->
-								<StackPanel Orientation="Vertical"
-														Spacing="8"
-														IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
-										
-									<Border DockPanel.Dock="Top"
-													BorderBrush="{DynamicResource DefaultForeground}"
-													BorderThickness="0,0,0,1"
-													Padding="8,6">
-										<TextBlock Text="{loc:Loc tool.arguments}"
-																FontSize="18"
-																FontWeight="Bold"/>
-									</Border>
-										
-									<ctrl:MarkdownControl MarkdownText="{Binding Arguments}"
-																				Background="Transparent"/>
+							<ico:MaterialIcon Kind="{Binding ToolIcon}"
+																Foreground="{Binding ToolIconBrush}"
+																Width="28" Height="28"
+																IsVisible="{Binding IsBlinking}">
 
-								</StackPanel>
+								<ico:MaterialIcon.Styles>
+									<Style Selector="ico|MaterialIcon">
+										<Style.Animations>
+											<Animation Duration="0:0:1"
+																	IterationCount="INFINITE"
+																	PlaybackDirection="Alternate"
+																	Easing="SineEaseInOut">
+												<KeyFrame Cue="0%">
+													<Setter Property="Opacity" Value="1.0"/>
+												</KeyFrame>
+												<KeyFrame Cue="100%">
+													<Setter Property="Opacity" Value="0.3"/>
+												</KeyFrame>
+											</Animation>
+										</Style.Animations>
+									</Style>
+								</ico:MaterialIcon.Styles>
 
-								<!-- Result Section -->
-								<StackPanel Orientation="Vertical"
-														Spacing="8"
-														IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
-										
-									<Border DockPanel.Dock="Top"
-													BorderBrush="{DynamicResource DefaultForeground}"
-													BorderThickness="0,0,0,1"
-													Padding="8,6">
-										<TextBlock Text="{loc:Loc tool.result}"
-																FontSize="18"
-																FontWeight="Bold"/>
-									</Border>
-										
-									<ctrl:MarkdownControl MarkdownText="{Binding Result}"
-																				UsePlaintext="{Binding !UseMarkdown}"
-																				Background="Transparent"/>
+							</ico:MaterialIcon>
 
-								</StackPanel>
+							<ico:MaterialIcon Kind="{Binding ToolIcon}"
+																Foreground="{Binding ToolIconBrush}"
+																Width="28" Height="28"
+																IsVisible="{Binding !IsBlinking}"/>
 
-							</StackPanel>
-
-						</ScrollViewer>
-
-					</Grid>
-
-				</Border>
-
-			</Flyout>
-		</Button.Flyout>
-
-		<WrapPanel Orientation="Horizontal"
-							 ItemSpacing="4">
-				
-			<Panel Width="28" Height="28">
-					
-				<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverter}}">
-					
-					<ico:MaterialIcon Kind="{Binding StatusIcon}"
-														Classes="MidIcon"
-														HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-
-					<Border Width="16" Height="16" CornerRadius="6"
-									HorizontalAlignment="Right"
-									VerticalAlignment="Bottom"
-									IsVisible="{Binding DisplayMiniIcon}"
-									Background="#ac000000"
-									BoxShadow="0 0 3 0 #ac000000">
-							
-						<Panel>
-							
-							<Panel IsVisible="{Binding ToolIconVisible}">
-						
-								<ico:MaterialIcon Kind="{Binding ToolIcon}"
-																	Foreground="{Binding ToolIconBrush}"
-																	Width="16" Height="16"
-																	IsVisible="{Binding IsBlinking}">
-				
-									<ico:MaterialIcon.Styles>
-										<Style Selector="ico|MaterialIcon">
-											<Style.Animations>
-												<Animation Duration="0:0:1"
-																		IterationCount="INFINITE"
-																		PlaybackDirection="Alternate"
-																		Easing="SineEaseInOut">
-													<KeyFrame Cue="0%">
-														<Setter Property="Opacity" Value="1.0"/>
-													</KeyFrame>
-													<KeyFrame Cue="100%">
-														<Setter Property="Opacity" Value="0.3"/>
-													</KeyFrame>
-												</Animation>
-											</Style.Animations>
-										</Style>
-									</ico:MaterialIcon.Styles>
-				
-								</ico:MaterialIcon>
-					
-								<ico:MaterialIcon Kind="{Binding ToolIcon}"
-																	Foreground="{Binding ToolIconBrush}"
-																	Width="16" Height="16"
-																	IsVisible="{Binding !IsBlinking}"/>
-
-							</Panel>
-
-							<ctrl:ProgressRing IsVisible="{Binding InProgress}"
-																 Foreground="{Binding ToolIconBrush}"
-																 Width="16" Height="16"
-																 StrokeThickness="4"
-																 Minimum="{Binding MinProgress}" Maximum="{Binding MaxProgress}"
-																 Value="{Binding Progress}"
-																 IsIndeterminate="{Binding Progress, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
-								
 						</Panel>
 
-					</Border>
-
-				</Panel>
-					
-				<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverterInverted}}">
-					
-					<Panel IsVisible="{Binding ToolIconVisible}">
-						
-						<ico:MaterialIcon Kind="{Binding ToolIcon}"
-															Foreground="{Binding ToolIconBrush}"
-															Width="28" Height="28"
-															IsVisible="{Binding IsBlinking}">
-				
-							<ico:MaterialIcon.Styles>
-								<Style Selector="ico|MaterialIcon">
-									<Style.Animations>
-										<Animation Duration="0:0:1"
-																IterationCount="INFINITE"
-																PlaybackDirection="Alternate"
-																Easing="SineEaseInOut">
-											<KeyFrame Cue="0%">
-												<Setter Property="Opacity" Value="1.0"/>
-											</KeyFrame>
-											<KeyFrame Cue="100%">
-												<Setter Property="Opacity" Value="0.3"/>
-											</KeyFrame>
-										</Animation>
-									</Style.Animations>
-								</Style>
-							</ico:MaterialIcon.Styles>
-				
-						</ico:MaterialIcon>
-					
-						<ico:MaterialIcon Kind="{Binding ToolIcon}"
-															Foreground="{Binding ToolIconBrush}"
-															Width="28" Height="28"
-															IsVisible="{Binding !IsBlinking}"/>
+						<ctrl:ProgressRing IsVisible="{Binding InProgress}"
+															 Foreground="{Binding ToolIconBrush}"
+															 Width="28" Height="28"
+															 Minimum="{Binding MinProgress}" Maximum="{Binding MaxProgress}"
+															 Value="{Binding Progress}"
+															 IsIndeterminate="{Binding Progress, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
 
 					</Panel>
 
-					<ctrl:ProgressRing IsVisible="{Binding InProgress}"
-														 Foreground="{Binding ToolIconBrush}"
-														 Width="28" Height="28"
-														 Minimum="{Binding MinProgress}" Maximum="{Binding MaxProgress}"
-														 Value="{Binding Progress}"
-														 IsIndeterminate="{Binding Progress, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
-
 				</Panel>
-				
-			</Panel>
 
-			<StackPanel Orientation="Vertical"
-									VerticalAlignment="Center">
-				
-				<TextBlock Text="{loc:Loc {Binding ToolTitle}}"
-									 FontSize="{DynamicResource FontSizeM}"
-									 FontWeight="Medium"/>
-				
-				<ItemsControl ItemsSource="{Binding BehaviourFlags}"
-											IsVisible="{Binding ExpectedBehaviour, Converter={StaticResource NotnullToBooleanConverter}}">
+				<StackPanel Orientation="Vertical"
+										VerticalAlignment="Center">
 
-					<ItemsControl.ItemsPanel>
-						<ItemsPanelTemplate>
-							<StackPanel Spacing="2" Orientation="Horizontal"/>
-						</ItemsPanelTemplate>
-					</ItemsControl.ItemsPanel>
+					<TextBlock Text="{loc:Loc {Binding ToolTitle}}"
+										 FontSize="{DynamicResource FontSizeM}"
+										 FontWeight="Medium"/>
 
-					<ItemsControl.ItemTemplate>
-						<DataTemplate>
-							<Panel>
-								<ToolTip.Tip>
-									<StackPanel Orientation="Vertical" Spacing="4">
-										<TextBlock Text="{Binding DisplayName}"
-										           FontSize="{DynamicResource FontSizeM}"
-										           FontWeight="SemiBold"/>
-										<TextBlock Text="{Binding Description}"/>
-									</StackPanel>
-								</ToolTip.Tip>
-								<ico:MaterialIcon Kind="{Binding Icon}"
-																	Foreground="{Binding Color}"
-																	Background="Transparent"
-																	Width="12" Height="12"/>
-							</Panel>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
+					<ItemsControl ItemsSource="{Binding BehaviourFlags}"
+												IsVisible="{Binding ExpectedBehaviour, Converter={StaticResource NotnullToBooleanConverter}}">
 
-				</ItemsControl>
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Spacing="2" Orientation="Horizontal"/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
 
-			</StackPanel>
-			
-			<GridSplitter Width="2" MinWidth="2" ResizeDirection="Columns" IsEnabled="False"
-										IsVisible="{Binding StatusTitle, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
-				
-			<ctrl:MarkdownControl MarkdownText="{Binding StatusTitle}"
-														Margin="2,3"
-														VerticalAlignment="Bottom"
-														IsVisible="{Binding StatusTitle, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
-			
-			<GridSplitter Width="2" MinWidth="2" ResizeDirection="Columns" IsEnabled="False"
-										IsVisible="{Binding UserAsked}"/>
-			
-			<consents:ToolConsentPanel IsVisible="{Binding UserAsked}"
-																 ResolveConsentCommand="{Binding ConsentCommand}"/>
-				
-		</WrapPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Panel>
+									<ToolTip.Tip>
+										<StackPanel Orientation="Vertical" Spacing="4">
+											<TextBlock Text="{Binding DisplayName}"
+											           FontSize="{DynamicResource FontSizeM}"
+											           FontWeight="SemiBold"/>
+											<TextBlock Text="{Binding Description}"/>
+										</StackPanel>
+									</ToolTip.Tip>
+									<ico:MaterialIcon Kind="{Binding Icon}"
+																		Foreground="{Binding Color}"
+																		Background="Transparent"
+																		Width="12" Height="12"/>
+								</Panel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
 
-	</Button>
+					</ItemsControl>
+
+				</StackPanel>
+
+				<GridSplitter Width="2" MinWidth="2" ResizeDirection="Columns" IsEnabled="False"
+											IsVisible="{Binding StatusTitle, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+
+				<ctrl:MarkdownControl MarkdownText="{Binding StatusTitle}"
+															Margin="2,3"
+															VerticalAlignment="Bottom"
+															IsVisible="{Binding StatusTitle, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+
+				<GridSplitter Width="2" MinWidth="2" ResizeDirection="Columns" IsEnabled="False"
+											IsVisible="{Binding UserAsked}"/>
+
+				<consents:ToolConsentPanel IsVisible="{Binding UserAsked}"
+																	 ResolveConsentCommand="{Binding ConsentCommand}"/>
+
+			</WrapPanel>
+
+		</Button>
+
+		<!-- Additional data of the tool call -->
+		<ContentControl Content="{Binding AdditionalData}" Margin="28,2,0,0"/>
+
+	</StackPanel>
 
 </UserControl>

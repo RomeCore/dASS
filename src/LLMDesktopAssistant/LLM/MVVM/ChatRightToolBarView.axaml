@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatRightToolBarView"
+			 x:DataType="local:ChatRightToolBarViewModel">
+
+	<StackPanel Orientation="Horizontal"
+							HorizontalAlignment="Right"
+							Spacing="5">
+
+		<!-- Active user selector -->
+		<ComboBox ItemsSource="{Binding Users}"
+							SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
+							MinWidth="110"
+							MaxWidth="250"
+							VerticalAlignment="Center"
+							IsVisible="{Binding HasMultipleUsers}"
+							ToolTip.Tip="{loc:Loc chat.user.active.hint}">
+
+			<ComboBox.ItemTemplate>
+				<DataTemplate>
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<ico:MaterialIcon Kind="AccountCircle"
+															Width="14" Height="14"
+															VerticalAlignment="Center"
+															Opacity="0.7"/>
+						<TextBlock Text="{Binding Name}"
+											 FontWeight="Medium"
+											 VerticalAlignment="Center"
+											 TextTrimming="CharacterEllipsis"/>
+					</StackPanel>
+				</DataTemplate>
+			</ComboBox.ItemTemplate>
+
+		</ComboBox>
+
+		<!-- Visibility selector -->
+		<ComboBox ItemsSource="{Binding Visibilities}"
+					SelectedItem="{Binding SelectedVisibility}"
+					MinWidth="120"
+					Margin="4,0"
+					ToolTip.Tip="{loc:Loc chat.visibility.hint}">
+
+			<ComboBox.ItemTemplate>
+				<DataTemplate>
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<ico:MaterialIcon Kind="{Binding Icon}"
+															Width="14" Height="14"
+															VerticalAlignment="Center"
+															Opacity="0.7"/>
+						<TextBlock Text="{loc:Loc {Binding Title}}"
+											 VerticalAlignment="Center"/>
+					</StackPanel>
+				</DataTemplate>
+			</ComboBox.ItemTemplate>
+		</ComboBox>
+
+		<!-- Cancel edit -->
+		<Button Classes="IconButton"
+						Command="{Binding UserInput.CancelEditCommand}"
+						ToolTip.Tip="{loc:Loc chat.input.cancel_edit.hint}">
+
+			<ico:MaterialIcon Kind="EditOff"/>
+		</Button>
+
+		<!-- Send -->
+		<Button Classes="IconButton"
+						Command="{Binding UserInput.SendMessageCommand}"
+						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
+
+			<ico:MaterialIcon Kind="SendClock"/>
+		</Button>
+
+		<!-- Send with generation -->
+		<Button Classes="IconButton"
+						Command="{Binding UserInput.SendGenerateMessageCommand}"
+						IsVisible="{Binding UserInput.IsGenerating, Converter={StaticResource InverseBooleanConverter}}"
+						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
+
+			<ico:MaterialIcon Kind="Send"/>
+		</Button>
+
+		<!-- Stop -->
+		<Button Classes="IconButton"
+						Command="{Binding UserInput.CancelGenerationCommand}"
+						IsVisible="{Binding UserInput.IsGenerating}"
+						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}">
+
+			<ico:MaterialIcon Kind="Stop"/>
+		</Button>
+
+	</StackPanel>
+
+</UserControl>

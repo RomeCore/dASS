@@ -1,0 +1,146 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
+			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallFlyoutView"
+			 x:DataType="local:ToolCallFlyoutViewModel">
+
+	<Border BorderThickness="1"
+					MinWidth="500"
+					MaxWidth="750"
+					MinHeight="300"
+					MaxHeight="650"
+					CornerRadius="8"
+					Padding="8">
+
+		<Grid RowDefinitions="Auto,*,Auto">
+
+			<Border Grid.Row="0"
+							Background="{DynamicResource WindowBackground}"
+							CornerRadius="8,8,0,0"
+							Padding="16,12,8,12">
+
+				<Grid ColumnDefinitions="*,*,Auto,Auto">
+
+					<!-- Tool Name: localized + raw -->
+					<StackPanel Orientation="Vertical" Grid.Column="0" Spacing="1" VerticalAlignment="Center">
+
+						<TextBlock Text="{loc:Loc {Binding ToolTitle}}"
+												FontSize="16"
+												FontWeight="Bold"
+												HorizontalAlignment="Left"/>
+
+						<TextBlock Text="{Binding ToolName}"
+												FontSize="13"
+												Opacity="0.45"
+												HorizontalAlignment="Left"/>
+
+					</StackPanel>
+
+					<!-- Tool Call ID -->
+					<TextBlock Grid.Column="1"
+											Text="{Binding ToolCallId}"
+											FontSize="11"
+											Opacity="0.35"
+											VerticalAlignment="Center"
+											HorizontalAlignment="Right"
+											Margin="0,0,8,0"/>
+
+					<!-- Copy Arguments button -->
+					<Button Grid.Column="2"
+									Classes="IconButton"
+									Command="{Binding CopyArgumentsCommand}"
+									IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+									ToolTip.Tip="{loc:Loc tool.copy_arguments}"
+									Margin="3,0,0,0">
+
+						<ico:MaterialIcon Kind="CodeBraces"/>
+
+					</Button>
+
+					<!-- Copy Result button -->
+					<Button Grid.Column="3"
+									Classes="IconButton"
+									Command="{Binding CopyResultCommand}"
+									IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+									ToolTip.Tip="{loc:Loc tool.copy_result}"
+									Margin="3,0,0,0">
+
+						<ico:MaterialIcon Kind="ContentCopy"/>
+
+					</Button>
+
+				</Grid>
+
+			</Border>
+
+			<!-- Separator -->
+			<Rectangle Grid.Row="1" Grid.RowSpan="2"
+									Fill="{DynamicResource PrimaryAccentBrush}"
+									Height="1"
+									VerticalAlignment="Top"/>
+
+			<ScrollViewer Grid.Row="1"
+										VerticalScrollBarVisibility="Auto"
+										HorizontalScrollBarVisibility="Auto"
+										beh:ScrollViewerBehavior.AutoScrollEnabled="True">
+
+				<StackPanel Orientation="Vertical"
+										Spacing="20"
+										Margin="16,16,32,32"
+										MaxWidth="650">
+
+					<!-- Arguments Section -->
+					<StackPanel Orientation="Vertical"
+											Spacing="8"
+											IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
+
+						<Border DockPanel.Dock="Top"
+										BorderBrush="{DynamicResource DefaultForeground}"
+										BorderThickness="0,0,0,1"
+										Padding="8,6">
+							<TextBlock Text="{loc:Loc tool.arguments}"
+													FontSize="18"
+													FontWeight="Bold"/>
+						</Border>
+
+						<ctrl:MarkdownControl MarkdownText="{Binding Arguments}"
+																	Background="Transparent"/>
+
+					</StackPanel>
+
+					<!-- Result Section -->
+					<StackPanel Orientation="Vertical"
+											Spacing="8"
+											IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
+
+						<Border DockPanel.Dock="Top"
+										BorderBrush="{DynamicResource DefaultForeground}"
+										BorderThickness="0,0,0,1"
+										Padding="8,6">
+							<TextBlock Text="{loc:Loc tool.result}"
+													FontSize="18"
+													FontWeight="Bold"/>
+						</Border>
+
+						<ctrl:MarkdownControl MarkdownText="{Binding Result}"
+																	UsePlaintext="{Binding !UseMarkdown}"
+																	Background="Transparent"/>
+
+					</StackPanel>
+
+				</StackPanel>
+
+			</ScrollViewer>
+
+		</Grid>
+
+	</Border>
+
+</UserControl>

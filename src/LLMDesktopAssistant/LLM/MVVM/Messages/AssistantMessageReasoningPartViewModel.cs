@@ -6,7 +6,7 @@ using LLMDesktopAssistant.LLM.Domain;
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(AssistantMessageReasoningPartView))]
-	public class AssistantMessageReasoningPartViewModel : AssistantMessagePartViewModel
+	public class AssistantMessageReasoningPartViewModel : MessagePartViewModel
 	{
 		private DispatcherOperation? _currentUpdateOperation;
 
@@ -24,13 +24,21 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _completed, value);
 		}
 
-		public AssistantMessageReasoningPartViewModel()
+		private bool _renderMarkdown = true;
+		/// <summary>
+		/// Gets or sets a value indicating whether the reasoning is rendered as Markdown
+		/// (otherwise it is rendered as plaintext).
+		/// </summary>
+		public bool RenderMarkdown
 		{
+			get => _renderMarkdown;
+			set => SetProperty(ref _renderMarkdown, value);
 		}
 
 		public AssistantMessageReasoningPartViewModel(AssistantMessage message)
 		{
 			ReasoningText = message.ReasoningContent ?? string.Empty;
+			UpdateVisibility();
 
 			Completed = message.IsCompleted;
 			if (message.IsCompleted) return;
@@ -49,6 +57,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				_currentUpdateOperation = InvokeUIAsync(() =>
 				{
 					ReasoningText = message.ReasoningContent ?? string.Empty;
+					UpdateVisibility();
 				});
 			}
 
@@ -61,11 +70,14 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					_currentUpdateOperation?.Abort();
 					_currentUpdateOperation = null;
 					Completed = true;
+					UpdateVisibility();
 				});
 
 				message.ToolCalls.CollectionChanged -= ToolCallsChanged;
 				message.PropertyChanged -= PropertyChangedHandler;
 			});
 		}
+
+		private void UpdateVisibility() => IsVisible = !string.IsNullOrEmpty(ReasoningText);
 	}
 }

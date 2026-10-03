@@ -197,7 +197,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return;
 				}
 
-				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, cancellationToken);
+				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, result, cancellationToken);
 				string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
 					? string.Empty
 					: $"""

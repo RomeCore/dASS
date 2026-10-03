@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="40"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartsView"
+			 x:DataType="local:AdditionalMessagePartsViewModel"
+			 x:Name="VMRoot">
+
+	<ItemsControl ItemsSource="{Binding Parts}">
+
+		<ItemsControl.ItemsPanel>
+			<ItemsPanelTemplate>
+				<WrapPanel Orientation="Horizontal" ItemSpacing="4"/>
+			</ItemsPanelTemplate>
+		</ItemsControl.ItemsPanel>
+
+		<ItemsControl.ItemTemplate>
+			<DataTemplate>
+				<Grid ColumnDefinitions="*,Auto"
+							Margin="0,0,2,2">
+
+					<ContentControl Grid.Column="0"
+													Content="{Binding}"
+													IsVisible="{Binding IsVisible}"/>
+
+					<Button Grid.Column="1"
+									Classes="SmallIconButton"
+									HorizontalAlignment="Right"
+									VerticalAlignment="Top"
+									Margin="2,0,0,0"
+									IsVisible="{Binding #VMRoot.DataContext.IsEditing}"
+									Command="{Binding #VMRoot.DataContext.RemoveCommand}"
+									CommandParameter="{Binding}">
+						<ico:MaterialIcon Kind="Close"/>
+					</Button>
+
+				</Grid>
+			</DataTemplate>
+		</ItemsControl.ItemTemplate>
+
+	</ItemsControl>
+
+</UserControl>

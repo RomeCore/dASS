@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
+			 x:DataType="local:AdditionalMessagePart">
+
+	<Border Background="{DynamicResource MessageBackground}"
+			BorderBrush="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}}"
+			BorderThickness="1"
+			CornerRadius="8"
+			Padding="6,3">
+
+		<StackPanel Orientation="Horizontal" Spacing="4">
+
+			<ico:MaterialIcon Kind="{Binding ChipIcon}"
+							  Foreground="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}}"
+							  Width="14" Height="14"
+							  VerticalAlignment="Center"/>
+
+			<TextBlock Text="{Binding ChipTitle}"
+					   VerticalAlignment="Center"/>
+
+		</StackPanel>
+
+	</Border>
+
+</UserControl>

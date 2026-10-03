@@ -62,7 +62,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Attachments
 		private async Task ApplyAsync()
 		{
 			var attachment = await Manager.ApplicationService.ApplyAttachmentAsync(Parameters);
-			Manager.UserInput.Attachments.Add(new AttachmentViewModel(Manager.UserInput, attachment));
+			Manager.UserInput.AddPart(attachment);
 			Manager.Drafts.Remove(this);
 		}
 

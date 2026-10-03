@@ -100,7 +100,7 @@
 						BorderBrush="{DynamicResource PrimaryAccentBrush}"
 						BorderThickness="0,1,0,0">
 
-			<ContentControl Content="{Binding UserInput}"/>
+			<ContentControl Content="{Binding ChatBottomPanel}"/>
 		</Border>
 	</Grid>
 	

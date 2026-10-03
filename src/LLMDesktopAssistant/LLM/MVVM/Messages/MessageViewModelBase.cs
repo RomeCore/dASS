@@ -1,5 +1,7 @@
-﻿using CommunityToolkit.Mvvm.Input;
+using System.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
@@ -18,6 +20,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public ICommand ResendCommand { get; }
 		public ICommand DeleteCommand { get; }
 		public ICommand SwitchBranchCommand { get; }
+		public ICommand ToggleRenderMarkdownCommand { get; }
 
 		public IEnumerable<int> BranchIndices =>
 			Enumerable.Range(1, branchedMessage.AvailableBranchesCount);
@@ -34,11 +37,53 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public ChatViewModel ChatViewModel { get; }
 
+		/// <summary>
+		/// The tool-call list part of the message. Always created; visibility is managed internally.
+		/// </summary>
+		public ToolCallListViewModel ToolCalls { get; }
+
+		/// <summary>
+		/// The additional data of the message (chips + everything else). Always created.
+		/// </summary>
+		public AdditionalChatDataCollectionViewModel AdditionalData { get; }
+
+		/// <summary>
+		/// Gets the default markdown rendering mode of the message, overridden by the message type.
+		/// </summary>
+		protected virtual bool DefaultRenderMarkdown => true;
+
+		private bool _renderMarkdown;
+		/// <summary>
+		/// Gets or sets a value indicating whether the textual parts of the message are rendered as Markdown.
+		/// This is a runtime-only preference (not persisted).
+		/// </summary>
+		public bool RenderMarkdown
+		{
+			get => _renderMarkdown;
+			set
+			{
+				if (SetProperty(ref _renderMarkdown, value))
+					OnRenderMarkdownChanged();
+			}
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether the message contains tool calls.
+		/// </summary>
+		public bool ContainsToolCalls => ToolCalls.HasToolCalls;
+
 		public MessageViewModelBase(BranchedMessage branchedMessage, ChatViewModel chatVM)
 		{
 			this.branchedMessage = branchedMessage;
 			ChatViewModel = chatVM;
 			chatOperator = chatVM.Chat.Services.GetRequiredService<IChatOperationService>();
+
+			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat);
+			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData);
+
+			_renderMarkdown = DefaultRenderMarkdown;
+
+			ToolCalls.PropertyChanged += OnToolCallsPropertyChanged;
 
 			RegenerateCommand = new RelayCommand(() =>
 			{
@@ -60,6 +105,33 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				chatOperator.SwitchBranch(branchedMessage.MessageIndex, branchIndex - 1);
 			},
 				branchIndex => branchIndex - 1 >= 0 && branchIndex - 1 < branchedMessage.AvailableBranchesCount);
+
+			ToggleRenderMarkdownCommand = new RelayCommand(() => RenderMarkdown = !RenderMarkdown);
+		}
+
+		private void OnToolCallsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ToolCallListViewModel.HasToolCalls))
+				RaisePropertyChanged(nameof(ContainsToolCalls));
+		}
+
+		/// <summary>
+		/// Called when <see cref="RenderMarkdown"/> changes; used to propagate the mode to the textual parts.
+		/// </summary>
+		protected virtual void OnRenderMarkdownChanged()
+		{
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				ToolCalls.PropertyChanged -= OnToolCallsPropertyChanged;
+				ToolCalls.Dispose();
+				AdditionalData.Dispose();
+			}
 		}
 	}
 }

@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		}
 
 		protected async Task<DiffPostProcessResult> PostProcessDiffAsync(string filename, string oldContent, string newContent,
-			ToolExecutionContext ctx, CancellationToken cancellationToken)
+			ToolExecutionContext ctx, ReactiveToolResult result, CancellationToken cancellationToken)
 		{
 			var diff = UnifiedDiff.Compute(oldContent, newContent, contextLines: 3);
 
@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					ConsentContext = ctx.ConsentContext
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				ctx.Message.AdditionalData.Add(diffVM);
+				result.AdditionalData.Add(diffVM);
 
 				using var reg = cancellationToken.Register(() =>
 				{
@@ -87,7 +87,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					IsReadOnly = true
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				ctx.Message.AdditionalData.Add(diffVM);
+				result.AdditionalData.Add(diffVM);
 				return new DiffPostProcessResult
 				{
 					Diff = diff,

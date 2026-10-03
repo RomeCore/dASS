@@ -3,20 +3,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	/// <summary>
 	/// Represents a file (or URL) attached to a message, tool call result or the input state.
 	/// The file can be copied to the working directory so tools can access it by <see cref="LocalPath"/>,
-	/// and can provide a native attachment (<see cref="NativeAttachment"/>) that is sent to the LLM API.
+	/// and can provide a native attachment (<see cref="NativeAttachmentMessagePart.NativeAttachment"/>) that is sent to the LLM API.
 	/// </summary>
 	public class AttachmentMessagePart : NativeAttachmentMessagePart
 	{
-		private string? _title;
-		/// <summary>
-		/// Gets or sets the display title of the attachment (usually the file name).
-		/// </summary>
-		public string? Title
-		{
-			get => _title;
-			set => SetProperty(ref _title, value);
-		}
-
 		private string? _sourceUrl;
 		/// <summary>
 		/// Gets or sets the source URL of the attachment.

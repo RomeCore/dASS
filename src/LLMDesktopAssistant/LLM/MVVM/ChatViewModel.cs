@@ -24,9 +24,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public Chat Chat { get; }
 
 		/// <summary>
-		/// Gets the user input to be sent in the next conversation turn.
+		/// Gets the bottom panel of the chat (user input + toolbars).
 		/// </summary>
-		public UserInputViewModel UserInput { get; }
+		public ChatBottomPanelViewModel ChatBottomPanel { get; }
 
 		private AgentTaskListViewModel? _agentTaskList;
 		/// <summary>
@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public ChatViewModel(Chat chat)
 		{
 			Chat = chat;
-			UserInput = new UserInputViewModel(this);
+			ChatBottomPanel = new ChatBottomPanelViewModel(this);
 			ChatStatus = new ChatStatusViewModel(chat);
 			MessageSequence = new MessageSequenceViewModel(this);
 
@@ -115,7 +115,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					AgentTaskList.PropertyChanged -= OnAgentTaskListPropertyChanged;
 
 				MessageSequence.Dispose();
-				UserInput.Dispose();
+				ChatBottomPanel.Dispose();
 				ChatStatus.Dispose();
 				AgentTaskList?.Dispose();
 			}

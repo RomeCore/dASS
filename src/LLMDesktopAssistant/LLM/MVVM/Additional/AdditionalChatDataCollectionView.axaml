@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="80"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalChatDataCollectionView"
+			 x:DataType="local:AdditionalChatDataCollectionViewModel">
+
+	<StackPanel Orientation="Vertical">
+
+		<!-- Message parts: chips in a WrapPanel -->
+		<ContentControl Content="{Binding Parts}"/>
+
+		<!-- Everything else: vertical stack, each rendered through the ViewLocator -->
+		<ItemsControl ItemsSource="{Binding Others}">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<ContentControl Content="{Binding}" IsVisible="{Binding IsVisible}"/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+
+	</StackPanel>
+
+</UserControl>

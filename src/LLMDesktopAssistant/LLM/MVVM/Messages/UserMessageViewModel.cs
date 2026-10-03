@@ -1,11 +1,8 @@
-using System.Collections.Specialized;
 using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
 using LLMDesktopAssistant.Users;
-using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
@@ -26,25 +23,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _text, value);
 		}
 
-		private readonly RangeObservableCollection<AttachmentMessagePart> _attachments = [];
-		/// <summary>
-		/// The attachment parts of the user message, taken from <see cref="UserMessage.AdditionalViewModels"/>.
-		/// </summary>
-		public ICollection<AttachmentMessagePart> Attachments => _attachments;
-
-		private void RefreshAttachments()
-		{
-			_attachments.Reset(UserMessage.AdditionalData.GetAll<AttachmentMessagePart>());
-		}
-
 		public ImmutableList<MessageExtension> Extensions { get; }
 
 		public ICommand EditCommand { get; }
 
+		protected override bool DefaultRenderMarkdown => false;
+
 		public UserMessageViewModel(BranchedMessage branchedMessage, ChatViewModel chatVM) : base(branchedMessage, chatVM)
 		{
 			if (branchedMessage.Message is not UserMessage userMessage)
-				throw new InvalidOperationException("Invalid message type. Expected IUserMessage.");
+				throw new InvalidOperationException("Invalid message type. Expected UserMessage.");
 			_userMessage = userMessage;
 
 			// Determine that we can apply avatar
@@ -74,19 +62,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			}
 
 			Text = userMessage.Content ?? string.Empty;
-			RefreshAttachments();
-			userMessage.AdditionalData.CollectionChanged += AdditionalViewModels_CollectionChanged;
 			Extensions = MessageExtensionManager.CreateExtensions(this, chatVM.Chat);
 
 			EditCommand = new RelayCommand(() =>
 			{
-				chatVM.UserInput.EditMessage(branchedMessage);
+				chatVM.ChatBottomPanel.UserInput.EditMessage(branchedMessage);
 			});
-		}
-
-		private void AdditionalViewModels_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-		{
-			RefreshAttachments();
 		}
 
 		protected override void Dispose(bool disposing)
@@ -95,7 +76,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
-				_userMessage.AdditionalData.CollectionChanged -= AdditionalViewModels_CollectionChanged;
 				foreach (var extension in Extensions)
 					extension.Dispose();
 			}

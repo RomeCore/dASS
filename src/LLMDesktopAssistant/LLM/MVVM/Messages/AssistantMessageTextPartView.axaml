@@ -9,8 +9,10 @@
 			 xmlns:ico="using:Material.Icons.Avalonia"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.AssistantMessageTextPartView"
 			 x:DataType="local:AssistantMessageTextPartViewModel">
-	
+
 	<ctrl:MarkdownControl MarkdownText="{Binding Text}"
+											  UsePlaintext="{Binding !RenderMarkdown}"
+											  IsVisible="{Binding IsVisible}"
 											  Margin="0,5"/>
 
 </UserControl>

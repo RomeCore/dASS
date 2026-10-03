@@ -1,5 +1,3 @@
-﻿using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using Avalonia.Media.Imaging;
 using LLMDesktopAssistant.LLM.Domain;
@@ -26,26 +24,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			private set => SetProperty(ref _isCompleted, value);
 		}
 
-		private AssistantMessageReasoningPartViewModel? _reasoningPart;
-		public AssistantMessageReasoningPartViewModel? ReasoningPart
-		{
-			get => _reasoningPart;
-			private set => SetProperty(ref _reasoningPart, value);
-		}
+		/// <summary>
+		/// The reasoning part of the message. Always created; visibility is managed internally.
+		/// </summary>
+		public AssistantMessageReasoningPartViewModel ReasoningPart { get; }
 
-		private AssistantMessageTextPartViewModel? _textPart;
-		public AssistantMessageTextPartViewModel? TextPart
-		{
-			get => _textPart;
-			private set => SetProperty(ref _textPart, value);
-		}
-
-		private AssistantMessageToolPartViewModel? _toolPart;
-		public AssistantMessageToolPartViewModel? ToolPart
-		{
-			get => _toolPart;
-			private set => SetProperty(ref _toolPart, value);
-		}
+		/// <summary>
+		/// The textual part of the message. Always created; visibility is managed internally.
+		/// </summary>
+		public AssistantMessageTextPartViewModel TextPart { get; }
 
 		private string? _error;
 		public string? Error
@@ -56,12 +43,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public ImmutableList<MessageExtension> Extensions { get; }
 
-		public bool ContainsToolCalls => _assistantMessage.ToolCalls.Count > 0;
+		protected override bool DefaultRenderMarkdown => true;
 
 		public AssistantMessageViewModel(BranchedMessage branchedMessage, ChatViewModel chatVM) : base(branchedMessage, chatVM)
 		{
 			if (branchedMessage.Message is not AssistantMessage assistantMessage)
-				throw new InvalidOperationException("Invalid message type. Expected IAssistantMessage.");
+				throw new InvalidOperationException("Invalid message type. Expected AssistantMessage.");
 			_assistantMessage = assistantMessage;
 
 			// Determine that we can apply avatar
@@ -90,26 +77,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				ShowAvatar = true;
 			}
 
-			if (!string.IsNullOrEmpty(assistantMessage.ReasoningContent))
-			{
-				ReasoningPart ??= new AssistantMessageReasoningPartViewModel(assistantMessage);
-			}
-			if (!string.IsNullOrEmpty(assistantMessage.Content))
-			{
-				TextPart ??= new AssistantMessageTextPartViewModel(assistantMessage);
-			}
-			if (assistantMessage.ToolCalls.Count > 0)
-			{
-				ToolPart ??= new AssistantMessageToolPartViewModel
-				{
-					ToolCalls = new ObservableCollection<ToolCallViewModel>(
-						assistantMessage.ToolCalls.Select(t => new ToolCallViewModel(t, chatVM.Chat)))
-				};
-			}
+			ReasoningPart = new AssistantMessageReasoningPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
+			TextPart = new AssistantMessageTextPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
 			Error = assistantMessage.Error;
 			Extensions = MessageExtensionManager.CreateExtensions(this, chatVM.Chat);
 
 			SubscribeToAssistantMessageEvents();
+		}
+
+		protected override void OnRenderMarkdownChanged()
+		{
+			ReasoningPart.RenderMarkdown = RenderMarkdown;
+			TextPart.RenderMarkdown = RenderMarkdown;
 		}
 
 		private void SubscribeToAssistantMessageEvents()
@@ -119,56 +98,14 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			void OnMessagePropertyChanged(object? s, PropertyChangedEventArgs e)
 			{
-				InvokeUI(() =>
-				{
-					switch (e.PropertyName)
-					{
-						case nameof(AssistantMessage.ReasoningContent):
-
-							if (ReasoningPart == null && !string.IsNullOrEmpty(_assistantMessage.ReasoningContent))
-							{
-								ReasoningPart = new AssistantMessageReasoningPartViewModel(_assistantMessage);
-							}
-							break;
-
-						case nameof(AssistantMessage.Content):
-
-							if (TextPart == null && !string.IsNullOrEmpty(_assistantMessage.Content))
-							{
-								TextPart = new AssistantMessageTextPartViewModel(_assistantMessage);
-							}
-							break;
-					}
-
-
-					Error = _assistantMessage.Error;
-				});
-			}
-
-			void OnToolCallsChanged(object? sender, NotifyCollectionChangedEventArgs e)
-			{
-				if (e.NewItems != null)
-				{
-					InvokeUI(() =>
-					{
-						ToolPart ??= new AssistantMessageToolPartViewModel();
-						foreach (ToolCall toolCall in e.NewItems)
-						{
-							ToolPart.ToolCalls.Add(new ToolCallViewModel(toolCall, ChatViewModel.Chat));
-						}
-
-						RaisePropertyChanged(nameof(ContainsToolCalls));
-					});
-				}
+				InvokeUI(() => Error = _assistantMessage.Error);
 			}
 
 			_assistantMessage.PropertyChanged += OnMessagePropertyChanged;
-			_assistantMessage.ToolCalls.CollectionChanged += OnToolCallsChanged;
 
 			_assistantMessage.CompletionToken.OnCompleted(() =>
 			{
 				_assistantMessage.PropertyChanged -= OnMessagePropertyChanged;
-				_assistantMessage.ToolCalls.CollectionChanged -= OnToolCallsChanged;
 				IsCompleted = true;
 			});
 		}
@@ -179,12 +116,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
-				ReasoningPart?.Dispose();
-				ReasoningPart = null;
-				TextPart?.Dispose();
-				TextPart = null;
-				ToolPart?.Dispose();
-				ToolPart = null;
+				ReasoningPart.Dispose();
+				TextPart.Dispose();
 
 				foreach (var extension in Extensions)
 					extension.Dispose();

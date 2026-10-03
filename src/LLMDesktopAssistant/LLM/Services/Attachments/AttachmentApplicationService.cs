@@ -155,9 +155,14 @@ namespace LLMDesktopAssistant.LLM.Services.Attachments
 				}
 			}
 
+			var fileName = Path.GetFileName(sourceUri.LocalPath);
+			var visuals = AttachmentChipVisuals.ForPath(fileName);
+
 			return new AttachmentMessagePart
 			{
-				Title = Path.GetFileName(sourceUri.LocalPath),
+				ChipIcon = visuals.Icon,
+				ChipTitle = fileName,
+				ChipColor = visuals.Color,
 				SourceUrl = sourceUri.AbsoluteUri,
 				LocalPath = localPath,
 				Size = metrics.Size,

@@ -170,7 +170,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (fileExisted)
 				{
-					var postProcessResult = await PostProcessDiffAsync(fullPath, oldContent, content, ctx, cancellationToken);
+					var postProcessResult = await PostProcessDiffAsync(fullPath, oldContent, content, ctx, result, cancellationToken);
 					string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
 						? string.Empty
 						: $"""

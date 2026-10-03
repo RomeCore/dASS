@@ -78,11 +78,13 @@ public partial class MarkdownControl : UserControl
 		if (usePlaintext)
 		{
 			_markdownBuilder.Clear();
+			MarkdownTextBlock.IsVisible = true;
 			MarkdownTextBlock.Inlines = [new Run(newText)];
 		}
 		else
 		{
-			MarkdownTextBlock.Inlines?.Clear();
+			MarkdownTextBlock.IsVisible = false;
+			MarkdownTextBlock.Inlines = null;
 			var oldText = _markdownBuilder.ToString();
 			if (!newText.StartsWith(oldText))
 				_markdownBuilder.Clear();

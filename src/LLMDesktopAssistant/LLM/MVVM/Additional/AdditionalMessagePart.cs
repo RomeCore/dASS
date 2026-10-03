@@ -5,38 +5,40 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
 	/// <summary>
 	/// The base class for message parts - small additional view models that are rendered
-	/// as compact chips in a WrapPanel at the bottom of a message or a tool call.
+	/// as compact chips (see <see cref="AdditionalMessagePartView"/>) in a WrapPanel
+	/// at the bottom of a message or a tool call.
 	/// </summary>
+	[ViewModelFor(typeof(AdditionalMessagePartView))]
 	public abstract class AdditionalMessagePart : AdditionalChatData
 	{
-		private MaterialIconKind? _badgeIcon;
+		private MaterialIconKind? _chipIcon;
 		/// <summary>
-		/// Gets or sets the icon of the badge shown on the part chip.
+		/// Gets or sets the icon shown on the part chip.
 		/// </summary>
-		public MaterialIconKind? BadgeIcon
+		public MaterialIconKind? ChipIcon
 		{
-			get => _badgeIcon;
-			set => SetProperty(ref _badgeIcon, value);
+			get => _chipIcon;
+			set => SetProperty(ref _chipIcon, value);
 		}
 
-		private string? _badgeTitle;
+		private string? _chipTitle;
 		/// <summary>
-		/// Gets or sets the title of the badge shown on the part chip.
+		/// Gets or sets the title shown on the part chip.
 		/// </summary>
-		public string? BadgeTitle
+		public string? ChipTitle
 		{
-			get => _badgeTitle;
-			set => SetProperty(ref _badgeTitle, value);
+			get => _chipTitle;
+			set => SetProperty(ref _chipTitle, value);
 		}
 
-		private Color? _badgeColor;
+		private Color? _chipColor;
 		/// <summary>
-		/// Gets or sets the color of the badge shown on the part chip.
+		/// Gets or sets the accent color of the part chip (tints the icon and the chip border).
 		/// </summary>
-		public Color? BadgeColor
+		public Color? ChipColor
 		{
-			get => _badgeColor;
-			set => SetProperty(ref _badgeColor, value);
+			get => _chipColor;
+			set => SetProperty(ref _chipColor, value);
 		}
 
 		/// <summary>

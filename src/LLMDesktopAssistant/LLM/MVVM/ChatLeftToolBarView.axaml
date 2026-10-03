@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+			 xmlns:sett="using:LLMDesktopAssistant.Settings"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatLeftToolBarView"
+			 x:DataType="local:ChatLeftToolBarViewModel">
+
+	<StackPanel Orientation="Horizontal"
+							HorizontalAlignment="Left"
+							Spacing="5">
+
+		<!-- Settings -->
+		<StackPanel Orientation="Horizontal" Spacing="0">
+
+			<ComboBox SelectedItem="{Binding SelectedSettingsId}"
+								ItemsSource="{Binding SettingsIds}"
+								CornerRadius="8,0,0,8">
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="sett:SettingsIdItemViewModel">
+						<TextBlock Text="{Binding DisplayId}"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+			</ComboBox>
+
+			<Button Classes="IconButton"
+							Command="{Binding OpenSettingsCommand}"
+							ToolTip.Tip="{loc:Loc common.settings}"
+							CornerRadius="0,8,8,0">
+				<ico:MaterialIcon Kind="Cog"/>
+			</Button>
+
+		</StackPanel>
+
+		<!-- Model selector -->
+		<ctrl:ModelSelectorControl SelectedModel="{Binding ChatModel, Mode=TwoWay}"/>
+
+		<!-- Memorized tool decisions -->
+		<Button Classes="IconButton"
+						Command="{Binding OpenConsentMemorizationCommand}"
+						ToolTip.Tip="{loc:Loc tool.call.remember.manager.hint}">
+			<ico:MaterialIcon Kind="BookmarkMultipleOutline"/>
+		</Button>
+
+		<!-- Attach -->
+		<Button Classes="IconButton"
+						Command="{Binding OpenAttachmentsManagerCommand}"
+						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}">
+
+			<ico:MaterialIcon Kind="Paperclip"/>
+		</Button>
+
+		<!-- Blazor Web UI Host -->
+		<Button Classes="IconButton"
+						Command="{Binding OpenBlazorWebUICommand}"
+						ToolTip.Tip="{loc:Loc webui.host.title}">
+
+			<ico:MaterialIcon Kind="Web"/>
+		</Button>
+
+	</StackPanel>
+
+</UserControl>
