@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Utils;
 using Serilog;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
@@ -81,8 +82,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 				if (parameters.Wait)
 				{
 					int exitCode;
+					IDisposable? syncSub = null;
 					try
 					{
+						// Stream only when we are not running in a terminal, so user can see the
+						// streaming output progress in the tool call details.
+						if (!parameters.ProcessParameters.RunInTerminal)
+							syncSub = result.ResultContentLines.SyncFrom(descriptor.PlainOutput!.Output);
 						exitCode = await descriptor.ExitCodeTask.WaitAsync(cancellationToken);
 					}
 					catch (OperationCanceledException)
@@ -91,6 +97,10 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 						result.ResultContent = descriptor.Output;
 						result.CompleteWithError();
 						return;
+					}
+					finally
+					{
+						syncSub?.Dispose();
 					}
 
 					viewModel?.Complete(exitCode);
