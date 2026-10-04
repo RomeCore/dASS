@@ -12,6 +12,7 @@
 
 	<ctrl:MarkdownControl MarkdownText="{Binding Text}"
 											  UsePlaintext="{Binding !RenderMarkdown}"
+											  AnimateBlocks="{Binding !Completed}"
 											  IsVisible="{Binding IsVisible}"
 											  Margin="0,5"/>
 

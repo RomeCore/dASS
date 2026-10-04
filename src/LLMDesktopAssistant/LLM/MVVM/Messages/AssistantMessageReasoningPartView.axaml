@@ -156,6 +156,7 @@
 		<!-- Content -->
 		<ctrl:MarkdownControl MarkdownText="{Binding ReasoningText}"
 													UsePlaintext="{Binding !RenderMarkdown}"
+													AnimateBlocks="{Binding !Completed}"
 													Opacity="0.6"
 													Margin="0,0,0,8"/>
 
