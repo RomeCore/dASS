@@ -1,4 +1,4 @@
-﻿using System.Collections.Specialized;
+using System.Collections.Specialized;
 
 namespace LLMDesktopAssistant.Utils
 {
@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.Utils
 		}
 
 		[Obsolete("MoveRange method is not supported because collection should be sorted.")]
-		public override void MoveRange(int oldIndex, int count, int newIndex, bool decrement = true)
+		public override void MoveRange(int oldIndex, int count, int newIndex)
 		{
 			// Do nothing
 		}

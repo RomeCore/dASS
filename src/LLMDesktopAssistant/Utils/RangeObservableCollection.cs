@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
@@ -417,7 +417,7 @@ namespace LLMDesktopAssistant.Utils
 				throw new ArgumentOutOfRangeException(nameof(oldIndex));
 
 			if (newIndex < 0 || newIndex >= _count)
-				throw new ArgumentOutOfRangeException(nameof(oldIndex));
+				throw new ArgumentOutOfRangeException(nameof(newIndex));
 
 			if (newIndex == oldIndex)
 				return;
@@ -435,37 +435,32 @@ namespace LLMDesktopAssistant.Utils
 		}
 
 		/// <summary>
-		/// Moves a range of items from the specified index to a new index.
+		/// Moves a range of items so that the first moved item ends up at <paramref name="newIndex"/>.
 		/// </summary>
 		/// <param name="oldIndex">The zero-based index at which the first item to move should be located.</param>
 		/// <param name="count">The number of items to move.</param>
-		/// <param name="newIndex">The zero-based index to which the first item should be moved.</param>
-		/// <param name="decrement">Indicates whether to decrement the <paramref name="newIndex"/> if it is greater than or equal to the <paramref name="oldIndex"/>.</param>
-		/// <exception cref="ArgumentOutOfRangeException">The specified <paramref name="oldIndex"/> or <paramref name="newIndex"/> is out of range.</exception>
-		public virtual void MoveRange(int oldIndex, int count, int newIndex, bool decrement = true)
+		/// <param name="newIndex">The zero-based index that the first moved item will occupy after the move (its final position), in the resulting collection.</param>
+		/// <exception cref="ArgumentOutOfRangeException">The specified <paramref name="oldIndex"/>, <paramref name="count"/> or <paramref name="newIndex"/> is out of range.</exception>
+		public virtual void MoveRange(int oldIndex, int count, int newIndex)
 		{
 			if (oldIndex < 0 || oldIndex >= _count)
 				throw new ArgumentOutOfRangeException(nameof(oldIndex));
 			if (count < 0 || oldIndex + count > _count)
 				throw new ArgumentOutOfRangeException(nameof(count));
-			if (newIndex < 0 || newIndex >= _count)
+			if (newIndex < 0 || newIndex > _count - count)
 				throw new ArgumentOutOfRangeException(nameof(newIndex));
 
 			// Determine if move operation will take no effect
-			if (count == 0 || newIndex == oldIndex || (decrement && newIndex > oldIndex && newIndex <= oldIndex + count))
+			if (count == 0 || newIndex == oldIndex)
 				return;
 
 			List<T> movedItems;
-
-			int insertIndex = newIndex;
-			if (decrement && insertIndex >= oldIndex + count)
-				insertIndex -= count;
 
 			lock (_lock)
 			{
 				movedItems = _items.GetRange(oldIndex, count);
 				_items.RemoveRange(oldIndex, count);
-				_items.InsertRange(insertIndex, movedItems);
+				_items.InsertRange(newIndex, movedItems);
 			}
 
 			if (PreferResetForRangeOperations && count > 1)
