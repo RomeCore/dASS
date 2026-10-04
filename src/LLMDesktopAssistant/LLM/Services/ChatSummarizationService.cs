@@ -118,17 +118,24 @@ namespace LLMDesktopAssistant.LLM.Services
 			return rounds;
 		}
 
-		public async Task SummarizeMessageWithPreviousMessagesAsync(ChatMessage message, CancellationToken cancellationToken = default)
+		public async Task<SummarizationOutcome> SummarizeMessageWithPreviousMessagesAsync(ChatMessage message, CancellationToken cancellationToken = default)
 		{
 			var effectiveOptions = chatSettings.Settings.Memory.GetEffectiveSummarization();
 			var summarizationLLM = modelManager.TryGetModel(effectiveOptions.SummarizerModel);
 
+			// If the summarization LLM is not available, do not summarize
+			if (summarizationLLM == null)
+				return SummarizationOutcome.ModelUnavailable;
+
+			// Capture the checkpoint state so it can be restored if the generation fails.
+			var checkpoint = message.AdditionalData.TryGet<ContextCheckpoint>();
+			bool createdCheckpoint = false;
+			var previousKind = checkpoint?.Kind ?? ContextCheckpointKind.None;
+			var previousContext = checkpoint?.Context;
+			var previousEnabled = checkpoint?.IsCompletedAndEnabled ?? true;
+
 			try
 			{
-				// If the summarization LLM is not available, do not summarize
-				if (summarizationLLM == null)
-					return;
-
 				Log.Information("Started summarization process.");
 
 				var summarizerTemplate = templates.GetTextTemplate("summarization_prompt");
@@ -146,11 +153,11 @@ namespace LLMDesktopAssistant.LLM.Services
 					]
 				}, cancellationToken);
 
-				var checkpoint = message.AdditionalData.TryGet<ContextCheckpoint>();
 				if (checkpoint == null)
 				{
 					checkpoint = new ContextCheckpoint();
 					message.AdditionalData.Add(checkpoint);
+					createdCheckpoint = true;
 				}
 
 				// Cut kinds are mutually exclusive: the summary replaces any shield on this message.
@@ -167,14 +174,51 @@ namespace LLMDesktopAssistant.LLM.Services
 				};
 				summarizationTask.PropertyChanged += summaryChanged;
 
-				await summarizationTask;
-				summarizationTask.PropertyChanged -= summaryChanged;
+				try
+				{
+					await summarizationTask;
+				}
+				finally
+				{
+					summarizationTask.PropertyChanged -= summaryChanged;
+				}
+
 				checkpoint.IsCompletedAndEnabled = true;
+
+				return SummarizationOutcome.Success;
 			}
 			catch (Exception ex)
 			{
 				Log.Error(ex, "Failed to summarize chat: {Error}", ex.Message);
+				RestoreCheckpoint(message, checkpoint, createdCheckpoint, previousKind, previousContext, previousEnabled);
+				return SummarizationOutcome.Failed;
 			}
+		}
+
+		/// <summary>
+		/// Restores the checkpoint to the state it had before a failed summarization attempt.
+		/// If the checkpoint was created by the failed attempt, it is removed entirely.
+		/// </summary>
+		private static void RestoreCheckpoint(
+			ChatMessage message,
+			ContextCheckpoint? checkpoint,
+			bool createdCheckpoint,
+			ContextCheckpointKind previousKind,
+			string? previousContext,
+			bool previousEnabled)
+		{
+			if (checkpoint == null)
+				return;
+
+			if (createdCheckpoint)
+			{
+				message.AdditionalData.Remove(checkpoint);
+				return;
+			}
+
+			checkpoint.Kind = previousKind;
+			checkpoint.Context = previousContext;
+			checkpoint.IsCompletedAndEnabled = previousEnabled;
 		}
 
 		private string BuildSummarizerInput(ChatMessage targetMessage)

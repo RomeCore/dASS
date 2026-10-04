@@ -37,3 +37,8 @@ reasoning: Мышление
 regenerate: Сгенерировать заново
 resend: Отправить заново
 render_markdown: Рендерить Markdown
+summarization.in_progress: Идёт суммаризация…
+summarization.unavailable.title: Суммаризация недоступна
+summarization.unavailable.description: Модель-суммаризатор не выбрана или не найдена
+summarization.failed.title: Не удалось суммаризировать
+summarization.failed.description: Во время генерации суммаризации произошла ошибка

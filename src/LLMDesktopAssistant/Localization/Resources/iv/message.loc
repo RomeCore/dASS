@@ -37,3 +37,8 @@ reasoning: Reasoning process
 regenerate: Regenerate
 resend: Resend
 render_markdown: Render Markdown
+summarization.in_progress: Summarization in progress…
+summarization.unavailable.title: Summarization unavailable
+summarization.unavailable.description: No summarizer model is selected or found
+summarization.failed.title: Summarization failed
+summarization.failed.description: An error occurred while generating the summary

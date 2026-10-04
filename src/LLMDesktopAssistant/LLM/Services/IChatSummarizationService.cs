@@ -17,7 +17,28 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// Places summary into this message as <see cref="ContextCheckpoint"/>.
 		/// </summary>
 		/// <param name="message">The message to summarize. This will be updated with the summary if successful.</param>
-		/// <returns>True if the summary was successfully generated and placed into the message; otherwise, false.</returns>
-		Task SummarizeMessageWithPreviousMessagesAsync(ChatMessage message, CancellationToken cancellationToken = default);
+		/// <returns>The outcome of the summarization attempt.</returns>
+		Task<SummarizationOutcome> SummarizeMessageWithPreviousMessagesAsync(ChatMessage message, CancellationToken cancellationToken = default);
+	}
+
+	/// <summary>
+	/// The outcome of a <see cref="IChatSummarizationService.SummarizeMessageWithPreviousMessagesAsync"/> call.
+	/// </summary>
+	public enum SummarizationOutcome
+	{
+		/// <summary>
+		/// The summary was successfully generated and placed into the message.
+		/// </summary>
+		Success,
+
+		/// <summary>
+		/// The summarizer model is not configured or could not be found.
+		/// </summary>
+		ModelUnavailable,
+
+		/// <summary>
+		/// The summary generation was started but failed.
+		/// </summary>
+		Failed
 	}
 }

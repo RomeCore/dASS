@@ -84,17 +84,19 @@
 				<Button Command="{Binding SwitchBranchCommand}"
 								Classes="IconButton"
 								CommandParameter="{Binding PreviousBranchIndex}"
+								CornerRadius="8,0,0,8"
 								ToolTip.Tip="{loc:Loc message.previous_branch}">
 					<ico:MaterialIcon Kind="ChevronLeft"/>
 				</Button>
 
 				<ComboBox ItemsSource="{Binding BranchIndices}"
-									SelectedItem="{Binding SelectedBranchIndex}"
-									Foreground="{DynamicResource MaterialDesignBody}"/>
+									CornerRadius="0"
+									SelectedItem="{Binding SelectedBranchIndex}"/>
 
 				<Button Command="{Binding SwitchBranchCommand}"
 								Classes="IconButton"
 								CommandParameter="{Binding NextBranchIndex}"
+								CornerRadius="0,8,8,0"
 								ToolTip.Tip="{loc:Loc message.next_branch}">
 					<ico:MaterialIcon Kind="ChevronRight"/>
 				</Button>

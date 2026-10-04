@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="40"
+			 xmlns:local="using:LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:Material.Icons.Avalonia"
+			 x:Class="LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction.ContextCompactionView"
+			 x:DataType="local:ContextCompactionViewModel">
+
+	<ItemsControl ItemsSource="{Binding Toggles}">
+
+		<ItemsControl.ItemsPanel>
+			<ItemsPanelTemplate>
+				<StackPanel Orientation="Horizontal" Spacing="0"/>
+			</ItemsPanelTemplate>
+		</ItemsControl.ItemsPanel>
+
+		<ItemsControl.ItemTemplate>
+			<DataTemplate x:DataType="local:ContextCompactionToggleViewModel">
+
+				<ToggleButton Classes="IconButton"
+							  Command="{Binding Command}"
+							  IsChecked="{Binding IsChecked, Mode=OneWay}"
+							  IsEnabled="{Binding IsEnabled}"
+							  CornerRadius="{Binding CornerRadius}"
+							  ToolTip.Tip="{loc:Loc {Binding Tooltip}}">
+					<ico:MaterialIcon Kind="{Binding Icon}"/>
+				</ToggleButton>
+
+			</DataTemplate>
+		</ItemsControl.ItemTemplate>
+
+	</ItemsControl>
+
+</UserControl>
