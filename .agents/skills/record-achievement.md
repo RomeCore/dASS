@@ -118,8 +118,3 @@ A verbatim quote of the user's reaction, if there was one. No quote - drop the s
 - [ ] There are no secrets or personal data.
 - [ ] `INDEX.md` is updated (or created).
 - [ ] The user was shown the path and a short summary.
-
-## Reference
-
-`2026-09-29_ACH-0001_cisco-air-lap1042n-docs-harvest.md` - the first entry, and this format was derived from it.
-If you are unsure about style, open it and follow its structure.
