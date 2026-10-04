@@ -1,6 +1,6 @@
 --[[
 title: Full Git Diff
-description: Shows the full git diff of a repository - changes in tracked files plus the complete content of untracked files with no line truncation - and renders a summary statistics panel in the UI where untracked file line counts are added to the git diff stats. Use it before committing to review every local change, including new files, in a single call.
+description: Shows the full git diff of a repository - changes in tracked files plus the complete content of untracked files with no line truncation - together with the recent commit history (`git log --oneline -30`), and renders a summary statistics panel in the UI where untracked file line counts are added to the git diff stats. Use it before committing to review every local change, including new files, and to see recent commit scopes - it replaces a separate `git log`, `git status` or `git diff` call.
 category: Git
 behaviours:
   - execute-external-process
@@ -139,6 +139,29 @@ local br = await git("rev-parse", "--abbrev-ref", "HEAD")
 local branch = "?"
 if br.exit_code == 0 and trim(br.stdout) ~= "" then branch = trim(br.stdout) end
 
+-- The header badge shows the repository's own folder name, not the raw path
+-- argument (which may be "." or a long absolute path).
+local repo_name = repo
+local top = await git("rev-parse", "--show-toplevel")
+if top.exit_code == 0 then
+	local root = (norm(trim(top.stdout)):gsub("/+$", ""))
+	if root ~= "" then
+		local base = regex.match("([^/]+)$", root)
+		if base then repo_name = base.groups[1].value else repo_name = root end
+	end
+end
+
+-- ============================ recent log ==============================
+-- Pulled automatically so the caller never needs a separate `git log`.
+local log_res = await git("log", "--oneline", "-30")
+local recent_commits = {}
+if log_res.exit_code == 0 then
+	for _, line in ipairs(split_lines(log_res.stdout)) do
+		local t = trim(line)
+		if t ~= "" then table.insert(recent_commits, t) end
+	end
+end
+
 -- =============================== totals ===============================
 local total_add = tracked_add + untracked_lines
 local total_del = tracked_del
@@ -203,7 +226,7 @@ end
 
 local vm = {
 	title = "Git Diff Summary",
-	pathLabel = repo,
+	pathLabel = repo_name,
 	branchLabel = "⎇ " .. branch,
 	filesLabel = files_changed .. " files",
 	insertions = "+" .. total_add,
@@ -246,6 +269,19 @@ end
 add(string.format("| **Total** | **%d** | **%d** |", total_add, total_del))
 add("")
 
+add("## Recent commits (`git log --oneline -30`)")
+add("")
+if #recent_commits == 0 then
+	add("_No commits._")
+else
+	local body = table.concat(recent_commits, "\n")
+	local f = fence_for(body)
+	add(f)
+	add(body)
+	add(f)
+end
+add("")
+
 add("## Diff of tracked files")
 add("")
 if trim(diff_res.stdout) == "" then
@@ -286,6 +322,7 @@ res.set_structured({
 	insertions = total_add,
 	deletions = total_del,
 	untrackedLines = untracked_lines,
+	recentCommits = recent_commits,
 })
 
 -- ================================== UI ================================
@@ -297,8 +334,8 @@ res.append_data(dass.ui.create_control([[
 
     <StackPanel Orientation="Horizontal" Spacing="10">
       <TextBlock Text="{Binding title}" FontSize="15" FontWeight="Bold" Foreground="#E6EDF3"/>
-      <Border Background="#21262D" CornerRadius="4" Padding="6,1">
-        <TextBlock Text="{Binding pathLabel}" FontFamily="Consolas" FontSize="12" Foreground="#8B949E"/>
+      <Border Background="#21262D" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+        <TextBlock Text="{Binding pathLabel}" FontFamily="Consolas" FontSize="12" Foreground="#8B949E" VerticalAlignment="Center"/>
       </Border>
     </StackPanel>
 
