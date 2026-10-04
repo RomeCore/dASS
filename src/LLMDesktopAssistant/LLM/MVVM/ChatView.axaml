@@ -75,7 +75,9 @@
 										VerticalScrollBarVisibility="Visible"
 										AllowAutoHide="False"
 										BringIntoViewOnFocusChange="False"
-										beh:ScrollViewerBehavior.AutoScrollEnabled="True">
+										beh:ScrollViewerBehavior.AutoScrollEnabled="True"
+										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
+										beh:SmoothScrollBehavior.Step="75">
 
 				<StackPanel>
 					<ContentControl Content="{Binding MessageSequence}"/>
