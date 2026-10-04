@@ -423,6 +423,13 @@ dotnet build 'src/LLMDesktopAssistant/LLMDesktopAssistant.csproj'
 dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath='$env:TEMP\dass-temp-build\'
 ```
 
+**NEVER pipe the build output through `Select-Object` (`| Select-Object -Last 40`, `| Select`, `| select`, etc.)!**
+Do not filter, truncate or post-process the build output in any way - run the command bare and let it stream.
+Reasons:
+- it breaks the output encoding (the Russian text in the build log turns into mojibake);
+- it kills the streaming/animation of the shell tool, which makes `runTerminal: true` essentially useless (no live progress, output appears only when the command finishes).
+If the output is too long - just read the part you need from the streamed result, never by piping it.
+
 ## Project memory
 
 Use specified memory block to store completed work inside the epizodic logs after the completed session. You also can get last 5-10 logs to view the actual state of the project.
