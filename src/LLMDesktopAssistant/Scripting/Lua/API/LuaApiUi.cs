@@ -39,10 +39,20 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  Returns: uicontrol (UserData) — pass it to dass.tool.result.append_data().
 
+			METHODS (on the returned uicontrol):
+
+			--- ui:set_xaml(xaml)
+			  Replaces the AXAML markup of this handle and re-renders every control that was appended
+			  from it (the whole visual tree is rebuilt). Equivalent to `ui.xaml = xaml`.
+			  The dynamic view model stays the same, so the new markup is bound to the same data.
+			  Parameters:
+				- xaml: string — the new AXAML markup (reflection bindings, as in create_control).
+
 			NOTES:
 			  - The handle is reusable: the same uicontrol may be appended multiple times.
+			  - The AXAML source is mutable (ui:set_xaml); the view model is fixed at creation.
 			  - Commands (Lua functions) survive only for the live session; after a chat reload the
-			    UI is restored from persisted data, but functions are lost.
+				UI is restored from persisted data, but functions are lost.
 
 			EXAMPLES:
 
@@ -55,14 +65,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    end
 			  }
 			  local ui = dass.ui.create_control([[
-			    <StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
-			      <TextBlock Text="{Binding title}" FontWeight="Bold"/>
-			      <TextBlock Text="{Binding temperature}"/>
-			      <Button Content="Refresh" Command="{Binding refresh}"/>
-			    </StackPanel>
+				<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+				  <TextBlock Text="{Binding title}" FontWeight="Bold"/>
+				  <TextBlock Text="{Binding temperature}"/>
+				  <Button Content="Refresh" Command="{Binding refresh}"/>
+				</StackPanel>
 			  ]], vm)
 
 			  dass.tool.result.append_data(ui)
+
+			  -- Later: swap the markup in place (same view model).
+			  ui:set_xaml([[
+				<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+				  <TextBlock Text="{Binding title}" FontStyle="Italic"/>
+				</StackPanel>
+			  ]])
 			""";
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -91,7 +108,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			var control = new LuaUiControl(xaml.Value, viewModel);
-			return new LuaTuple(new LuaUserData(control, "uicontrol"));
+			var userData = new LuaUserData(control, "uicontrol")
+			{
+				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaUiControl)),
+			};
+			return new LuaTuple(userData);
 		}
 	}
 }

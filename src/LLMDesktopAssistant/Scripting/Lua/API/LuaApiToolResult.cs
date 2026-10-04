@@ -332,7 +332,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				if (arg is not LuaUserData { Target: LuaUiControl uiControl })
 					throw new LuaRuntimeException("dass.tool.result.append_data(...): arguments must be 'uicontrol' userdata created by dass.ui.create_control().");
 
-				result.AdditionalData.Add(new DynamicAxamlControlAdditionalData(uiControl.Xaml, uiControl.ViewModel));
+				var additional = new DynamicAxamlControlAdditionalData(uiControl.Xaml, uiControl.ViewModel);
+
+				// Follow the handle: ui:set_xaml(xaml) re-renders every control appended from it.
+				void OnXamlChanged(object? _, EventArgs __) => additional.Axaml = uiControl.Xaml;
+				uiControl.XamlChanged += OnXamlChanged;
+				additional.OnDispose += (_, _) => uiControl.XamlChanged -= OnXamlChanged;
+
+				result.AdditionalData.Add(additional);
 			}
 
 			return new LuaTuple(LuaNil.Instance);
