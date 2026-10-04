@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.StructuredValues.Const;
 using LLMDesktopAssistant.Utils;
+using Material.Icons;
 using YamlDotNet.Serialization;
 
 namespace LLMDesktopAssistant.Addons
@@ -105,6 +106,15 @@ namespace LLMDesktopAssistant.Addons
 					RaisePropertyChanged();
 				}
 			}
+		}
+
+		/// <summary>
+		/// The icon for the addon. Used by the UI to display the addon card.
+		/// </summary>
+		public MaterialIconKind? Icon
+		{
+			get;
+			set => SetProperty(ref field, value);
 		}
 
 		/// <summary>

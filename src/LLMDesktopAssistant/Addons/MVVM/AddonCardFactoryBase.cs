@@ -80,13 +80,13 @@ namespace LLMDesktopAssistant.Addons.MVVM
 
 			return new AddonCardViewModel(elements)
 			{
-				Icon = TypeIcon,
+				Icon = context.Addon.Icon ?? TypeIcon,
 				Name = context.Addon.NameKey,
 				NamePrefix = namePrefix,
 				NamePrefixBrush = namePrefixBrush,
 				Subtitle = GetSubtitle(context),
 				Description = context.Addon.DescriptionKey,
-				ResetCommand = new RelayCommand(() => context.Reset())
+				ResetCommand = new RelayCommand(context.Reset)
 			};
 		}
 
