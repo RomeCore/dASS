@@ -75,7 +75,7 @@
 										VerticalScrollBarVisibility="Visible"
 										AllowAutoHide="False"
 										BringIntoViewOnFocusChange="False"
-										beh:ScrollViewerBehavior.AutoScrollEnabled="True"
+										beh:SmoothScrollBehavior.FollowEndEnabled="True"
 										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
 										beh:SmoothScrollBehavior.Step="75">
 

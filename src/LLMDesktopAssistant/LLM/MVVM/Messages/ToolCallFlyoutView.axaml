@@ -89,7 +89,9 @@
 			<ScrollViewer Grid.Row="1"
 										VerticalScrollBarVisibility="Auto"
 										HorizontalScrollBarVisibility="Auto"
-										beh:ScrollViewerBehavior.AutoScrollEnabled="True">
+										beh:ScrollViewerBehavior.AutoScrollEnabled="True"
+										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
+										beh:SmoothScrollBehavior.Step="75">
 
 				<StackPanel Orientation="Vertical"
 										Spacing="20"

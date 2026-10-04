@@ -109,7 +109,8 @@
 			</Border>
 
 			<!-- Content area -->
-			<ScrollViewer VerticalScrollBarVisibility="Auto">
+			<ScrollViewer VerticalScrollBarVisibility="Auto"
+										beh:SmoothScrollBehavior.SmoothScrollEnabled="True">
 				<ContentControl Content="{Binding SelectedNode.ViewModel}"
 												HorizontalContentAlignment="Stretch"
 												VerticalContentAlignment="Stretch"/>
