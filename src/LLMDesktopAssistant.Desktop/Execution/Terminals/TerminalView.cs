@@ -606,9 +606,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 				if (ReferenceEquals(_ptyConnection, value))
 					return;
 
-				if (_ptyConnection != null)
-					_ptyConnection.ProcessExited -= OnPtyProcessExited;
-
+				_ptyConnection?.ProcessExited -= OnPtyProcessExited;
 				_ptyConnection = value;
 
 				if (_ptyConnection != null)
@@ -1626,6 +1624,9 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnPtyProcessExited(object? sender, PtyExitedEventArgs e)
 		{
+			_ptyConnection?.ProcessExited -= OnPtyProcessExited;
+			_ptyConnection = null;
+
 			Interlocked.Exchange(ref _processExitHandled, 1);
 
 			Dispatcher.UIThread.InvokeAsync(() =>

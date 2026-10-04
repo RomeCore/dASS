@@ -67,7 +67,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
 				SpecifierParameters = ["runTerminal", "wait"],
 			});
-
 		}
 
 		private StreamingToolArgumentsAnalysisResult ExecuteBashStreaming(string bash)

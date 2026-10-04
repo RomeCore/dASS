@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
+using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.ToolModules;
 using LLMDesktopAssistant.LLM.Services;
@@ -9,6 +10,7 @@ using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Specifiers;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Desktop.Tests.ToolModules;
 
@@ -26,6 +28,10 @@ public class ShellExecutionToolModuleTests
 
 		public event EventHandler? SettingsChanged;
 
+		public void LoadFromProfile(string profileName = "-default")
+		{
+		}
+
 		public void SetSettings(ChatSettings settings)
 		{
 			Settings = settings;
@@ -33,15 +39,30 @@ public class ShellExecutionToolModuleTests
 		}
 	}
 
-	private sealed class StubSkillLocator : IAddonFileLocator
+	private sealed class StubSkillAccessor : IAddonAccessor<SkillInfo>
 	{
-		public IEnumerable<SkillFileInfo> LocateSkillFiles() => [];
+		public ReadOnlyObservableCollection<SkillInfo> Addons => new(new List<SkillInfo>());
+	}
+
+	private sealed class StubAddonInvalidator : IAddonManagerInvalidator
+	{
+		public void Invalidate(AddonKind kinds)
+		{
+		}
+
+		public void Reload(AddonKind kinds)
+		{
+		}
+
+		public void ReloadIfInvalid(AddonKind kinds)
+		{
+		}
 	}
 
 	private static ShellExecutionToolModule CreateModule()
 	{
-		var wdAccess = new WorkingDirectoryAccessService(new StubChatSettingsService(), new StubSkillLocator());
-		return new ShellExecutionToolModule(wdAccess, new StubProcessLauncher());
+		var wdAccess = new WorkingDirectoryAccessService(new StubChatSettingsService(), new StubSkillAccessor());
+		return new ShellExecutionToolModule(wdAccess, new StubProcessLauncher(), new StubAddonInvalidator());
 	}
 
 	private static string MainArgumentName(string toolName) => toolName switch

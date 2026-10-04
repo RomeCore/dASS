@@ -160,10 +160,14 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				Cols = terminal.Cols,
 				Rows = terminal.Rows,
 				Cwd = parameters.WorkingDirectory,
-				VerbatimCommandLine = parameters.VerbatimArguments
+				// Porta.Pty's own escaping (VerbatimCommandLine = false) only implements cmd.exe-style
+				// quoting, which corrupts embedded quotes, drops empty arguments and mangles trailing
+				// backslashes for regular CRT-parsed processes. We therefore always build the command line
+				// ourselves and hand it over verbatim; see BuildTerminalArguments.
+				VerbatimCommandLine = true
 			};
 			if (parameters.Arguments.Count > 0)
-				ptyOptions.CommandLine = [.. parameters.Arguments];
+				ptyOptions.CommandLine = BuildTerminalArguments(parameters);
 			if (parameters.EnvironmentVariables.Count > 0)
 			{
 				var environment = new Dictionary<string, string>();
@@ -338,6 +342,23 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			}, CancellationToken.None);
 
 			return descriptor;
+		}
+
+		/// <summary>
+		/// Builds the raw <see cref="PtyOptions.CommandLine"/> array for the terminal path.
+		/// On Windows the array is joined by Porta.Pty into a single CreateProcess command line, so
+		/// ordinary (non-verbatim) arguments must be escaped first. On Unix the array is passed straight
+		/// to execvp, so the arguments must stay untouched regardless of the flag.
+		/// </summary>
+		private static string[] BuildTerminalArguments(ProcessLaunchParameters parameters)
+		{
+			if (parameters.VerbatimArguments || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				return [.. parameters.Arguments];
+
+			var escaped = new string[parameters.Arguments.Count];
+			for (var i = 0; i < escaped.Length; i++)
+				escaped[i] = CommandLineEscaping.EscapeArgument(parameters.Arguments[i]);
+			return escaped;
 		}
 	}
 }
