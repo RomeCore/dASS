@@ -79,7 +79,7 @@
 
 			<StackPanel Orientation="Horizontal"
 									IsVisible="{Binding BranchSelectionAvailable}"
-									Spacing="4">
+									Spacing="0">
 
 				<Button Command="{Binding SwitchBranchCommand}"
 								Classes="IconButton"
