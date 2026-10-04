@@ -27,28 +27,6 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 	{
 		private readonly ConcurrentDictionary<string, SemaphoreSlim> _synchronizationGroups = [];
 
-		/// <summary>
-		/// Mirrors the <paramref name="source"/> collection into the <paramref name="target"/> collection:
-		/// removes items that are not present in the source and adds items that are missing from the target.
-		/// Used to copy additional data of a tool result into the executing tool call.
-		/// </summary>
-		private static void SyncAdditionalData(AdditionalChatDataCollection target, IEnumerable<AdditionalChatData> source)
-		{
-			var sourceList = source.ToList();
-
-			foreach (var existing in target)
-			{
-				if (!sourceList.Contains(existing))
-					target.Remove(existing);
-			}
-
-			foreach (var item in sourceList)
-			{
-				if (!target.Contains(item))
-					target.Add(item);
-			}
-		}
-
 		public async Task ExecuteAsync(PartialFunctionToolCall? partialFunctionToolCall,
 			AssistantMessage message, ToolCall toolCall, ToolInfo? toolInfo, CancellationToken cancellationToken = default)
 		{
@@ -348,13 +326,8 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				{
 					toolCall.ResultContent = reactiveResult.ResultContent;
 				}
-				void OnReactiveResultAdditionalDataChanged(object? sender, object? e)
-				{
-					SyncAdditionalData(toolCall.AdditionalData, reactiveResult.AdditionalData);
-				}
 				reactiveResult.PropertyChanged += OnReactiveResultChanged;
 				reactiveResult.ResultContentLines.CollectionChanged += OnReactiveResultContentChanged;
-				reactiveResult.AdditionalData.CollectionChanged += OnReactiveResultAdditionalDataChanged;
 
 				toolCall.ReactiveToolResult = reactiveResult;
 				toolCall.StatusIcon = reactiveResult.StatusIcon ?? toolCall.StatusIcon;
@@ -362,7 +335,7 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				toolCall.StructuredResult = reactiveResult.StructuredResult;
 				toolCall.UseMarkdown = reactiveResult.UseMarkdown;
 				toolCall.ResultContent = reactiveResult.ResultContent;
-				toolCall.AdditionalData.Reset(reactiveResult.AdditionalData);
+				var addDataSyncSub = toolCall.AdditionalData.SyncFrom(reactiveResult.AdditionalData);
 
 				bool success = false;
 				try
@@ -373,7 +346,7 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				{
 					reactiveResult.PropertyChanged -= OnReactiveResultChanged;
 					reactiveResult.ResultContentLines.CollectionChanged -= OnReactiveResultContentChanged;
-					reactiveResult.AdditionalData.CollectionChanged -= OnReactiveResultAdditionalDataChanged;
+					addDataSyncSub.Dispose();
 
 					toolCall.ReactiveToolResult = null;
 
