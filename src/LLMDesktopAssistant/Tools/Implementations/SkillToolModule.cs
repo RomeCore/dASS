@@ -36,8 +36,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			[Description("The name of the skill to load.")] string name,
 			ToolExecutionContext ctx)
 		{
-			var senderAgent = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
-			var skills = _skillsetBuilder.GetAddonsForAgent(senderAgent);
+			var senderAgent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var skills = senderAgent is not null ?
+				_skillsetBuilder.GetAddonsForAgent(senderAgent) :
+				_skillsetBuilder.GetAvailableAddons();
 			var foundSkill = skills.FirstOrDefault(s => s.Name == name);
 
 			if (foundSkill == null)

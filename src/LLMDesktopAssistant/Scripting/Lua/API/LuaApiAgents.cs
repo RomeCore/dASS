@@ -670,7 +670,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (memoryBlocksOption is LuaTable memoryBlocksOptionTable)
 			{
 				var tec = ctx.TryGetToolExecutionContext();
-				var senderAgent = tec != null ? _agentManager.TryGetAgentDescriptor(tec.Message.SenderAgentId) : null;
+				var senderAgent = tec != null && tec.Message is AssistantMessage am ?
+					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
 				var available = tec != null && senderAgent != null
 					? TaskMemoryBlock.ResolveBlocks(tec.Chat, senderAgent)
 					: [];
@@ -694,7 +695,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			async Task<LuaTable> ExecuteAgent()
 			{
 				var tec = ctx.TryGetToolExecutionContext();
-				var agentToolSettings = tec != null ? _agentManager.TryGetAgentDescriptor(tec.Message.SenderAgentId)?.Tools : null;
+				var senderAgent = tec != null && tec.Message is AssistantMessage am ?
+					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
+				var agentToolSettings = senderAgent?.Tools;
 
 				var policy = agentToolSettings?.GetEffectivePolicy(_chatSettings.Settings)
 					?? _chatSettings.Settings.InheritedAgentSettings.Tools.GetEffectivePolicy(_chatSettings.Settings);

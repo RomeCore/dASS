@@ -695,7 +695,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		private static void MemorizeAlwaysInToolset(AgentTask task, string toolName, bool approved)
 		{
 			var chat = task.LaunchParameters.TriggeredChat;
-			var senderAgentId = task.LaunchParameters.TriggeredMessage?.SenderAgentId;
+			var senderAgentId = (task.LaunchParameters.TriggeredMessage as LLM.Domain.AssistantMessage)?.SenderAgentId;
 			if (chat == null || senderAgentId == null)
 				return;
 

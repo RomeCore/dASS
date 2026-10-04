@@ -19,14 +19,14 @@ namespace LLMDesktopAssistant.Tools
 		public required Chat Chat { get; init; }
 
 		/// <summary>
-		/// The assistant message that contains tool call that being executed.
+		/// The message that contains tool call that being executed.
 		/// </summary>
-		public required AssistantMessage Message { get; init; }
+		public required ChatMessage Message { get; init; }
 
 		/// <summary>
-		/// Finds the message id of the assistant message that contains tool call. If not found, returns 0.
+		/// Finds the message id of the message that contains tool call. If not found, returns 0.
 		/// </summary>
-		/// <returns>The message id of the assistant message.</returns>
+		/// <returns>The message id of the message.</returns>
 		public int FindMessageId() => Chat.Messages.FirstOrDefault(m => m.Message == Message)?.MessageId ?? 0;
 
 		/// <summary>

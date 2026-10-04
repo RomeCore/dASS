@@ -132,14 +132,17 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				return;
 			}
 
-			var agentDescriptor = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			// Returns null if tool initiator is user
+			var agentDescriptor = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
 
 			var errorSb = new StringBuilder();
 
 			var tools = ImmutableList.CreateBuilder<AgentTool>();
 			if (allowedTools.Length > 0)
 			{
-				var toolMap = _toolsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name);
+				var toolMap = agentDescriptor is not null ?
+					_toolsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
+					_toolsetBuildingService.GetAvailableAddons().ToDictionary(t => t.Name);
 
 				int notFound = 0;
 				foreach (var allowedTool in allowedTools.Distinct())
@@ -162,7 +165,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var skills = ImmutableList.CreateBuilder<AgentSkill>();
 			if (allowedSkills.Length > 0)
 			{
-				var skillMap = _skillsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(s => s.Name);
+				var skillMap = agentDescriptor is not null ?
+					_skillsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
+					_skillsetBuildingService.GetAvailableAddons().ToDictionary(t => t.Name);
 
 				int notFound = 0;
 				foreach (var allowedSkill in allowedSkills.Distinct())
@@ -185,7 +190,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var subAgents = ImmutableList.CreateBuilder<TaskSubAgentDescriptor>();
 			if (allowedSubAgents.Length > 0)
 			{
-				var subAgentMap = _subAgentsetCollector.GetAddonsForAgent(agentDescriptor).ToDictionary(s => s.Name);
+				var subAgentMap = agentDescriptor is not null ?
+					_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
+					_subAgentsetCollector.GetAvailableAddons().ToDictionary(t => t.Name);
 
 				int notFound = 0;
 				foreach (var allowedSubAgent in allowedSubAgents.Distinct())
@@ -241,7 +248,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				return;
 			}
 
-			var policy = agentDescriptor.Tools.GetEffectivePolicy(_chatSettings.Settings);
+			var policy = agentDescriptor?.Tools.GetEffectivePolicy(_chatSettings.Settings) ?? default;
 			ToolBehaviour autoApproveBehaviours = policy.AutoApproveBehaviours,
 				disallowedBehaviours = policy.DisallowedBehaviours;
 
@@ -305,9 +312,11 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				""")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
-			var agentDescriptor = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			var agentDescriptor = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
 
-			var subAgent = _subAgentsetCollector.GetAddonsForAgent(agentDescriptor).FirstOrDefault(a => a.Name == agentName);
+			var subAgent = agentDescriptor is not null ?
+				_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).FirstOrDefault(a => a.Name == agentName) :
+				_subAgentsetCollector.GetAvailableAddons().FirstOrDefault(a => a.Name == agentName);
 			if (subAgent is null)
 			{
 				result.StatusIcon = MaterialIconKind.RobotDead;
@@ -316,7 +325,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				return;
 			}
 
-			var policy = agentDescriptor.Tools.GetEffectivePolicy(_chatSettings.Settings);
+			var policy = agentDescriptor?.Tools.GetEffectivePolicy(_chatSettings.Settings) ?? default;
 			ToolBehaviour autoApproveBehaviours = policy.AutoApproveBehaviours,
 				disallowedBehaviours = policy.DisallowedBehaviours;
 

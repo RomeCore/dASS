@@ -8,7 +8,7 @@ using RCLargeLanguageModels.Tasks;
 namespace LLMDesktopAssistant.LLM.Domain
 {
 	/// <summary>
-	/// Represents a tool call within an assistant message.
+	/// Represents a tool call within a chat message.
 	/// </summary>
 	public class ToolCall : ChatObjectBase
 	{

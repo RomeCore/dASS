@@ -46,25 +46,25 @@ namespace LLMDesktopAssistant.Addons.Search
 		/// as a markdown body (without the group header).
 		/// </summary>
 		/// <param name="query">The free-form search query.</param>
-		/// <param name="agent">The agent the addons are resolved for.</param>
+		/// <param name="agent">The agent the addons are resolved for. Use <see langword="null"/> to disable agent-specific filters.</param>
 		/// <param name="maxResults">The maximum number of matches to render.</param>
 		/// <param name="detailed">Whether to render the detailed representation of every match.</param>
 		/// <returns>The markdown body with the matches, or <see langword="null"/> when nothing matched.</returns>
-		string? Search(string query, ChatAgentDescriptor agent, int maxResults, bool detailed);
+		string? Search(string query, ChatAgentDescriptor? agent, int maxResults, bool detailed);
 
-        /// <summary>
-        /// Renders the names of every addon of this kind available to the specified agent as a markdown
-        /// list body (without the group header), or <see langword="null"/> when there are no addons.
-        /// </summary>
-        /// <param name="agent">The agent the addons are resolved for.</param>
-        string? List(ChatAgentDescriptor agent);
+		/// <summary>
+		/// Renders the names of every addon of this kind available to the specified agent as a markdown
+		/// list body (without the group header), or <see langword="null"/> when there are no addons.
+		/// </summary>
+		/// <param name="agent">The agent the addons are resolved for. Use <see langword="null"/> to disable agent-specific filters.</param>
+		string? List(ChatAgentDescriptor? agent);
 
-        /// <summary>
-        /// Renders the detailed representation of the addon with the exact specified name as a markdown
-        /// body (without the group header), or <see langword="null"/> when no addon of this kind has such name.
-        /// </summary>
-        /// <param name="name">The exact name of the addon.</param>
-        /// <param name="agent">The agent the addons are resolved for.</param>
-        string? Info(string name, ChatAgentDescriptor agent);
+		/// <summary>
+		/// Renders the detailed representation of the addon with the exact specified name as a markdown
+		/// body (without the group header), or <see langword="null"/> when no addon of this kind has such name.
+		/// </summary>
+		/// <param name="name">The exact name of the addon.</param>
+		/// <param name="agent">The agent the addons are resolved for. Use <see langword="null"/> to disable agent-specific filters.</param>
+		string? Info(string name, ChatAgentDescriptor? agent);
     }
 }

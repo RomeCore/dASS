@@ -53,10 +53,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <param name="chat">The chat providing the memory settings.</param>
 		/// <param name="agent">The agent whose memory attachments should be resolved.</param>
 		/// <returns>The resolved immutable list of snapshots.</returns>
-		public static ImmutableList<TaskMemoryBlock> ResolveBlocks(Chat chat, ChatAgentDescriptor agent)
+		public static ImmutableList<TaskMemoryBlock> ResolveBlocks(Chat chat, ChatAgentDescriptor? agent)
 		{
+			// TODO: This thing will be removed when memory blocks become addons
 			var memoryOptions = chat.Services.GetRequiredService<IChatSettingsService>().Settings.Memory.GetEffectiveMemoryOptions();
-			if (!memoryOptions.EnableMemory || !memoryOptions.ManualControlEnabled || !agent.Memory.EnableMemory)
+			if (!memoryOptions.EnableMemory || !memoryOptions.ManualControlEnabled || agent is null || !agent.Memory.EnableMemory)
 				return [];
 
 			return agent.Memory.GetEnabledBlocks(chat.Services.GetRequiredService<IChatSettingsService>().Settings)

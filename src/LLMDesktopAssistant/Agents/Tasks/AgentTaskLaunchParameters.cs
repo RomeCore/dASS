@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// This could be a message containing the tool call that triggered this task
 		/// (via <see cref="AgenticToolModule"/> or <see cref="LuaApiAgents"/>).
 		/// </summary>
-		public AssistantMessage? TriggeredMessage { get; init; }
+		public ChatMessage? TriggeredMessage { get; init; }
 
 		/// <summary>
 		/// The chat that this task is associated with.

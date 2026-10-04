@@ -43,9 +43,9 @@ namespace LLMDesktopAssistant.Addons.Search
 		/// Gets the candidate addons for the specified agent. Defaults to the effective addon set of the
 		/// agent (including hidden addons — the same set the agent can actually load and use).
 		/// </summary>
-		protected virtual IEnumerable<TAddon> GetCandidates(ChatAgentDescriptor agent)
+		protected virtual IEnumerable<TAddon> GetCandidates(ChatAgentDescriptor? agent)
 		{
-			return _collector.GetAddonsForAgent(agent);
+			return agent is not null ? _collector.GetAddonsForAgent(agent) : _collector.GetAvailableAddons();
 		}
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace LLMDesktopAssistant.Addons.Search
 		protected abstract void AppendAddon(StringBuilder builder, TAddon addon, bool detailed);
 
 		/// <inheritdoc/>
-		public string? List(ChatAgentDescriptor agent)
+		public string? List(ChatAgentDescriptor? agent)
 		{
 			var builder = new StringBuilder();
 			foreach (var addon in GetCandidates(agent).Where(Include))
@@ -73,7 +73,7 @@ namespace LLMDesktopAssistant.Addons.Search
 		}
 
 		/// <inheritdoc/>
-		public string? Info(string name, ChatAgentDescriptor agent)
+		public string? Info(string name, ChatAgentDescriptor? agent)
 		{
 			if (string.IsNullOrWhiteSpace(name))
 				return null;
@@ -91,7 +91,7 @@ namespace LLMDesktopAssistant.Addons.Search
 		}
 
 		/// <inheritdoc/>
-		public string? Search(string query, ChatAgentDescriptor agent, int maxResults, bool detailed)
+		public string? Search(string query, ChatAgentDescriptor? agent, int maxResults, bool detailed)
 		{
 			var matches = _searchService.Search(query, GetCandidates(agent).Where(Include), maxResults);
 			if (matches.Count == 0)

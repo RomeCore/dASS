@@ -132,7 +132,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 		protected MemoryBlockResolution GetBlocks(ToolExecutionContext ctx, string[]? names,
 			bool requireReading, bool requireWriting, bool requireFacts = false, bool requireLogs = false)
 		{
-			var agent = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			if (agent is null)
+				return new MemoryBlockResolution([], new Dictionary<string, string>());
+
 			var attachments = agent.Memory.GetEffectiveBlocks(_chatSettings.Settings);
 
 			var blocks = new List<MemoryBlock>();

@@ -142,7 +142,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			maxResults = Math.Clamp(maxResults <= 0 ? DefaultMaxResults : maxResults, 1, MaxResultsLimit);
 
-			var agent = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
@@ -192,7 +192,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			if (kindsError is not null)
 				return CreateError(kindsError, MaterialIconKind.FormatListBulleted);
 
-			var agent = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
@@ -241,7 +241,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				return CreateError("The addon name must not be empty.", MaterialIconKind.Information);
 
 			name = name.Trim();
-			var agent = _agentManager.GetAgentDescriptor(ctx.Message.SenderAgentId);
+			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
