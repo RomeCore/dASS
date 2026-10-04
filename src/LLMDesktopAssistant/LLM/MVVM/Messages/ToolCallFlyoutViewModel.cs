@@ -16,6 +16,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	{
 		private readonly ToolCall _toolCall;
 
+		public ToolCallViewModel Parent { get; }
 		public LocaleKeyBase ToolTitle { get; }
 		public string ToolName { get; }
 		public string ToolCallId { get; }
@@ -46,6 +47,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public ToolCallFlyoutViewModel(ToolCallViewModel parent)
 		{
+			Parent = parent;
 			_toolCall = parent.ToolCall;
 			ToolTitle = parent.ToolTitle;
 			ToolName = parent.ToolName;

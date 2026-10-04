@@ -89,7 +89,7 @@
 			<ScrollViewer Grid.Row="1"
 										VerticalScrollBarVisibility="Auto"
 										HorizontalScrollBarVisibility="Auto"
-										beh:ScrollViewerBehavior.AutoScrollEnabled="True"
+										beh:SmoothScrollBehavior.FollowEndEnabled="True"
 										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
 										beh:SmoothScrollBehavior.Step="75">
 
@@ -133,6 +133,7 @@
 
 						<ctrl:MarkdownControl MarkdownText="{Binding Result}"
 																	UsePlaintext="{Binding !UseMarkdown}"
+																	AnimateBlocks="{Binding Parent.InProgress}"
 																	Background="Transparent"/>
 
 					</StackPanel>
