@@ -162,7 +162,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				{
 					cmdArgs = new string[argsTable.Entries.Count()];
 					int i = 0;
-					foreach (var kv in argsTable.Entries)
+					foreach (var kv in argsTable.Entries.OrderBy(kv => kv.Key.TryToNumber()))
 					{
 						if (kv.Value is LuaString s)
 							cmdArgs[i++] = s.Value;
