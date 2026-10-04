@@ -2,6 +2,7 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
+using LLMDesktopAssistant.Utils.Files;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -40,6 +41,20 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - path: string — path relative to working directory
 			  Returns: table — array of integers
+			
+			--- fs.is_text(path)
+			  Checks whether a file is text-only (non-binary).
+			  Parameters:
+			    - path: string — path relative to working directory
+			  Returns: boolean — true when the file is non-binary;
+			           false when it is binary, missing or outside the working directory
+			
+			--- fs.is_binary(path)
+			  Checks whether a file is binary (contains non-text characters).
+			  Parameters:
+			    - path: string — path relative to working directory
+			  Returns: boolean — true when the file looks binary;
+			           false when it is text, missing or outside the working directory
 
 			--- fs.write(path, content)
 			  Writes text content to a file (overwrites if exists).
@@ -96,6 +111,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - path: string — absolute path
 			    - is_file: boolean
 			    - is_dir: boolean
+			    - is_binary: boolean - true when the file is binary
+				- line_count: number — number of lines (only for text files)
 			    - size: number — file size in bytes (0 for directories)
 			    - created: string — creation time (ISO format)
 			    - modified: string — last write time (ISO format)
@@ -202,6 +219,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["read"] = new LuaCallbackFunction(Read);
 			ns["read_lines"] = new LuaCallbackFunction(ReadLines);
 			ns["read_binary"] = new LuaCallbackFunction(ReadBinary);
+			ns["is_text"] = new LuaCallbackFunction(IsText);
+			ns["is_binary"] = new LuaCallbackFunction(IsBinary);
 			ns["write"] = new LuaCallbackFunction(Write);
 			ns["write_binary"] = new LuaCallbackFunction(WriteBinary);
 			ns["append"] = new LuaCallbackFunction(Append);
@@ -254,6 +273,34 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			for (int i = 0; i < bytes.Length; i++)
 				result[i + 1] = new LuaNumber(bytes[i]);
 			return new LuaTuple(result);
+		}
+
+		private LuaTuple IsText(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("fs.is_text(path): at least 1 argument expected.");
+			if (args[0] is not LuaString pathVal)
+				throw new LuaRuntimeException("fs.is_text(): first argument must be a string.");
+
+			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
+			if (fullPath == null || !File.Exists(fullPath))
+				return new LuaTuple(LuaBoolean.FromBoolean(false));
+
+			return new LuaTuple(LuaBoolean.FromBoolean(!FileUtils.IsBinaryFile(fullPath)));
+		}
+
+		private LuaTuple IsBinary(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("fs.is_binary(path): at least 1 argument expected.");
+			if (args[0] is not LuaString pathVal)
+				throw new LuaRuntimeException("fs.is_binary(): first argument must be a string.");
+
+			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
+			if (fullPath == null || !File.Exists(fullPath))
+				return new LuaTuple(LuaBoolean.FromBoolean(false));
+
+			return new LuaTuple(LuaBoolean.FromBoolean(FileUtils.IsBinaryFile(fullPath)));
 		}
 
 		private LuaTuple Write(LuaCallingContext ctx, LuaValue[] args)
@@ -365,6 +412,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				var info = new FileInfo(fullPath);
 				if (info.Exists)
 				{
+					var fileMetrics = FileUtils.GetFileMetrics(fullPath);
+					t["is_binary"] = LuaBoolean.FromBoolean(fileMetrics.IsBinary);
+					t["line_count"] = new LuaNumber(fileMetrics.LineCount ?? 0);
 					t["size"] = new LuaNumber(info.Length);
 					t["created"] = new LuaString(info.CreationTimeUtc.ToString("O"));
 					t["modified"] = new LuaString(info.LastWriteTimeUtc.ToString("O"));
