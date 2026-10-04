@@ -44,8 +44,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 			ArgumentNullException.ThrowIfNull(parameters);
 			ArgumentNullException.ThrowIfNull(context);
 
-			var message = context.Message;
-
 			var result = new ReactiveToolResult
 			{
 				StatusIcon = parameters.StatusIcon,
@@ -77,7 +75,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 						IsRunning = true
 					};
 					viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
-					message.AdditionalData.Add(viewModel);
+					result.AdditionalData.Add(viewModel);
 				}
 
 				if (parameters.Wait)
