@@ -1,7 +1,6 @@
 using System.Text;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
-using LLMDesktopAssistant.Controls;
 using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.Utils;
 

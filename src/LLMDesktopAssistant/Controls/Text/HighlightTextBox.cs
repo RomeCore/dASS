@@ -2,9 +2,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using LLMDesktopAssistant.Controls.Text;
 
-namespace LLMDesktopAssistant.Controls;
+namespace LLMDesktopAssistant.Controls.Text;
 
 /// <summary>
 /// TextBox with support for text range highlighting and text transformation (for ghost text).
