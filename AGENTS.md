@@ -433,3 +433,17 @@ If the output is too long - just read the part you need from the streamed result
 ## Project memory
 
 Use specified memory block to store completed work inside the epizodic logs after the completed session. You also can get last 5-10 logs to view the actual state of the project.
+
+## Agent skills
+
+### Issue tracker
+
+Local markdown tracker under `docs/issues/` (not GitHub Issues). See `docs/issues/README.md`.
+
+### Triage labels
+
+Default canonical roles, used verbatim as the `Status:` string (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/issues/README.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` at the repo root, ADRs in `docs/adr/`. See `docs/issues/README.md`.
