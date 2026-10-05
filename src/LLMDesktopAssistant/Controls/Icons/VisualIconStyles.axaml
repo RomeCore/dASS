@@ -1,0 +1,14 @@
+<Styles xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:icons="using:LLMDesktopAssistant.Controls.Icons">
+
+	<!--
+		Include point that replaces Material.Icons' MaterialIconStyles in App.axaml.
+
+		VisualIcon has no control template: it sizes itself from FontSize (default 16) or an
+		explicit Width/Height, and paints with the inherited Foreground. Nothing needs to be
+		set here by default; the file exists so the migration swap is a one-line change and so
+		any future global icon styling has an obvious home.
+	-->
+
+</Styles>

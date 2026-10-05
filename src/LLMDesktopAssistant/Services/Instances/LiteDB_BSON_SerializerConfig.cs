@@ -1,4 +1,5 @@
 using LiteDB;
+using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Services.Instances
@@ -46,6 +47,8 @@ namespace LLMDesktopAssistant.Services.Instances
 						return LocaleKey.GetOrCreate(key);
 				}
 			});
+
+			VisualIconKindBsonSerializer.Register(BsonMapper.Global);
 		}
 	}
 }
