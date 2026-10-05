@@ -1,4 +1,7 @@
+using System.Text.Json.Serialization;
+using LiteDB;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using YamlDotNet.Serialization;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -39,7 +42,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _visibility, value);
 		}
 
-		private readonly AdditionalChatDataCollection _parts = new();
+		private readonly AdditionalChatDataCollection _parts = [];
 		/// <summary>
 		/// Gets or sets the reactive collection of message parts attached to the composed message.
 		/// </summary>
@@ -52,6 +55,9 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// <summary>
 		/// Gets a value indicating whether the input state is empty (nothing to send).
 		/// </summary>
+		[BsonIgnore]
+		[JsonIgnore]
+		[YamlIgnore]
 		public bool IsEmpty => string.IsNullOrWhiteSpace(Text) && Parts.Count == 0;
 
 		/// <summary>
