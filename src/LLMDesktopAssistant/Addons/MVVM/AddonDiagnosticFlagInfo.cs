@@ -29,7 +29,7 @@ public class AddonDiagnosticFlagInfo
 	/// <summary>
 	/// Icon to display for this flag.
 	/// </summary>
-	public MaterialIconKind Icon { get; }
+	public VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Color associated with this flag's severity/category.
@@ -37,7 +37,7 @@ public class AddonDiagnosticFlagInfo
 	public IBrush Color { get; }
 
 	public AddonDiagnosticFlagInfo(AddonDiagnosticCode flag, string displayName, string description,
-		MaterialIconKind icon, IBrush color)
+		VisualIconKind icon, IBrush color)
 	{
 		Flag = flag;
 		DisplayName = displayName;
@@ -102,7 +102,7 @@ public class AddonDiagnosticFlagInfo
 		return flags;
 	}
 
-	private static MaterialIconKind GetIcon(AddonDiagnosticCode flag) => flag switch
+	private static VisualIconKind GetIcon(AddonDiagnosticCode flag) => flag switch
 	{
 		AddonDiagnosticCode.None => MaterialIconKind.CheckCircle,
 

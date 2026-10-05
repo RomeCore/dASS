@@ -6,7 +6,7 @@
 						 xmlns:vm="using:LLMDesktopAssistant.Tools.MVVM.Elements"
 						 xmlns:ag="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.Tools.MVVM.Elements.AddonCardToolSpecifiersView"
 						 x:DataType="vm:AddonCardToolSpecifiersViewModel">
 
@@ -110,7 +110,7 @@
 										VerticalAlignment="Center"
 										ToolTip.Tip="{loc:Loc common.delete}">
 
-							<ico:MaterialIcon Kind="Close"/>
+							<ico:VisualIcon Kind="Close"/>
 						</Button>
 
 					</Grid>
@@ -124,7 +124,7 @@
 						HorizontalAlignment="Left"
 						ToolTip.Tip="{loc:Loc tool.specifier.add}">
 
-			<ico:MaterialIcon Kind="Plus"/>
+			<ico:VisualIcon Kind="Plus"/>
 		</Button>
 
 	</StackPanel>

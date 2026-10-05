@@ -16,25 +16,25 @@
 		@switch (ToolCall.Status)
 		{
 			case ToolStatus.Pending:
-				<MaterialIconComponent Kind="@MaterialIconKind.Wrench" Size="16" />
+				<VisualIconComponent Kind="@MaterialIconKind.Wrench" Size="16" />
 				break;
 			case ToolStatus.Executing:
-				<MaterialIconComponent Kind="@MaterialIconKind.Wrench" Size="16" Color="#0078d4" />
+				<VisualIconComponent Kind="@MaterialIconKind.Wrench" Size="16" Color="#0078d4" />
 				break;
 			case ToolStatus.ExecutionInterrupted:
-				<MaterialIconComponent Kind="@MaterialIconKind.Wrench" Size="16" Color="#1976d2" />
+				<VisualIconComponent Kind="@MaterialIconKind.Wrench" Size="16" Color="#1976d2" />
 				break;
 			case ToolStatus.Success:
-				<MaterialIconComponent Kind="@MaterialIconKind.CheckCircle" Size="16" Color="#388e3c" />
+				<VisualIconComponent Kind="@MaterialIconKind.CheckCircle" Size="16" Color="#388e3c" />
 				break;
 			case ToolStatus.Error:
-				<MaterialIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" />
+				<VisualIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" />
 				break;
 			case ToolStatus.Cancelled:
-				<MaterialIconComponent Kind="@MaterialIconKind.CancelCircle" Size="16" Color="#d32f2f" />
+				<VisualIconComponent Kind="@MaterialIconKind.CancelCircle" Size="16" Color="#d32f2f" />
 				break;
 			default:
-				<MaterialIconComponent Kind="@MaterialIconKind.Wrench" Size="16" />
+				<VisualIconComponent Kind="@MaterialIconKind.Wrench" Size="16" />
 				break;
 		}
 	</span>
@@ -43,7 +43,7 @@
 	{
 		@if (ToolCall.StatusIcon.HasValue)
 		{
-			<MaterialIconComponent Kind="@ToolCall.StatusIcon.Value" />
+			<VisualIconComponent Kind="@ToolCall.StatusIcon" />
 		}
 		<span class="toolcall-status">
 			<MarkdownComponent MarkdownText="@ToolCall.StatusTitle" />
@@ -61,7 +61,7 @@
 	{
 		<details class="toolcall-result-details">
 			<summary class="toolcall-result-summary">
-				<MaterialIconComponent Kind="@MaterialIconKind.CodeBraces" Size="14" Color="rgba(0,0,0,0.5)" AdditionalStyle="margin-right: 4px;" />
+				<VisualIconComponent Kind="@MaterialIconKind.CodeBraces" Size="14" Color="rgba(0,0,0,0.5)" AdditionalStyle="margin-right: 4px;" />
 				@LocalizationManager.LocalizeStatic("webui.result")
 			</summary>
 			<div class="toolcall-result-content">

@@ -74,9 +74,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		static LuaApiIcons()
 		{
-			_iconMap = Enum.GetValues<MaterialIconKind>()
-				.DistinctBy(k => k.ToString().ToLowerInvariant())
-				.ToDictionary(k => k.ToString(), StringComparer.OrdinalIgnoreCase);
+			// Enumerate field names rather than values: several members share a value (aliases, e.g.
+			// "Bulb" == "Idea"), and Enum.GetValues()/ToString() only ever yields the first name.
+			_iconMap = new Dictionary<string, MaterialIconKind>(StringComparer.OrdinalIgnoreCase);
+			foreach (var name in Enum.GetNames<MaterialIconKind>())
+			{
+				if (Enum.TryParse<MaterialIconKind>(name, out var kind))
+					_iconMap.TryAdd(name, kind);
+			}
+
 			_allIconNames = _iconMap.Keys.ToArray();
 
 			Array.Sort(_allIconNames, StringComparer.OrdinalIgnoreCase);

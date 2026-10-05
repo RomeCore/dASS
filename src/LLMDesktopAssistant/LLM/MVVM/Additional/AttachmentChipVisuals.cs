@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		/// <summary>
 		/// Resolves the chip icon and color for a file path (or file name).
 		/// </summary>
-		public static (MaterialIconKind Icon, Color Color) ForPath(string? path)
+		public static (VisualIconKind Icon, Color Color) ForPath(string? path)
 		{
 			var extension = Path.GetExtension(path ?? string.Empty).ToLowerInvariant();
 

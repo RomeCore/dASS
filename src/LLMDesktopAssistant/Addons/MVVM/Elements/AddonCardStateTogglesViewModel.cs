@@ -92,7 +92,7 @@ namespace LLMDesktopAssistant.Addons.MVVM.Elements
 		/// <summary>
 		/// Gets the icon that represents the current state.
 		/// </summary>
-		public MaterialIconKind Icon => _kind == AddonCardStateToggleKind.Enabled
+		public VisualIconKind Icon => _kind == AddonCardStateToggleKind.Enabled
 			? IsOn switch
 			{
 				true => MaterialIconKind.Check,

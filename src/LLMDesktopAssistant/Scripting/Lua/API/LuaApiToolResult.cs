@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.tool.result.set_status(icon, title)
 			  Sets the status icon and title shown in the UI next to the tool name.
 			  Parameters:
-			    - icon: string — MaterialIconKind name (e.g. "File", "Web", "Check", "Download")
+			    - icon: string — VisualIconKind name (e.g. "File", "Web", "Check", "Download")
 			      Pass empty string or nil to keep current icon.
 			    - title: string — status title text (e.g. "Downloading file...")
 			      Pass empty string or nil to keep current title.
@@ -287,8 +287,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			{
 				try
 				{
-					var icon = Enum.Parse<MaterialIconKind>(iconArg.Value, ignoreCase: true);
-					result.StatusIcon = icon;
+					var icon = VisualIconKind.Parse(iconArg.Value);
+					result.StatusIcon = VisualIconDataHandler.Resolve(icon).IsOk ? icon : null;
 				}
 				catch
 				{

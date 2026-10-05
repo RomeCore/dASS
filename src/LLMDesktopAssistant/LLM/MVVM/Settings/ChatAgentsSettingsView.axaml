@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatAgentsSettingsView"
 			 x:Name="AgentsView"
@@ -20,11 +20,11 @@
 			<StackPanel Orientation="Horizontal" Spacing="4">
 				<Button Command="{Binding AddAgentCommand}" Classes="IconButton"
 						ToolTip.Tip="{loc:Loc settings.agent.add}">
-					<ico:MaterialIcon Kind="Plus"/>
+					<ico:VisualIcon Kind="Plus"/>
 				</Button>
 				<Button Command="{Binding RemoveAgentCommand}" Classes="IconButton"
 						ToolTip.Tip="{loc:Loc settings.agent.remove}">
-					<ico:MaterialIcon Kind="Close"/>
+					<ico:VisualIcon Kind="Close"/>
 				</Button>
 			</StackPanel>
 		</Border>
@@ -60,7 +60,7 @@
 									Classes="IconButton"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.agent.promote_global}">
-								<ico:MaterialIcon Kind="CloudUpload"/>
+								<ico:VisualIcon Kind="CloudUpload"/>
 							</Button>
 
 							<!-- Copy to local -->
@@ -71,7 +71,7 @@
 									Classes="IconButton"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.agent.copy_to_local}">
-								<ico:MaterialIcon Kind="CloudDownload"/>
+								<ico:VisualIcon Kind="CloudDownload"/>
 							</Button>
 
 						</Grid>

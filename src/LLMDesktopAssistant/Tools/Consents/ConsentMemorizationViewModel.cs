@@ -69,7 +69,7 @@ public class MemorizedConsentItemViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the decision icon.
 	/// </summary>
-	public MaterialIconKind DecisionIcon => Approved ? MaterialIconKind.CheckCircle : MaterialIconKind.CloseCircle;
+	public VisualIconKind DecisionIcon => Approved ? MaterialIconKind.CheckCircle : MaterialIconKind.CloseCircle;
 
 	/// <summary>
 	/// Gets the brush used to colorize the decision icon.
@@ -137,7 +137,7 @@ public class MemorizedAlwaysItemViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the decision icon.
 	/// </summary>
-	public MaterialIconKind DecisionIcon => Approved ? MaterialIconKind.CheckCircle : MaterialIconKind.CloseCircle;
+	public VisualIconKind DecisionIcon => Approved ? MaterialIconKind.CheckCircle : MaterialIconKind.CloseCircle;
 
 	/// <summary>
 	/// Gets the brush used to colorize the decision icon.

@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentReadSettingsView"
 			 x:DataType="local:AgentReadSettingsViewModel">
 
@@ -22,7 +22,7 @@
 			<Setter Property="CornerRadius" Value="4"/>
 			<Setter Property="HorizontalContentAlignment" Value="Center"/>
 			<Setter Property="VerticalContentAlignment" Value="Center"/>
-			<Style Selector="^ > ico|MaterialIcon">
+			<Style Selector="^ > ico|VisualIcon">
 				<Setter Property="Width" Value="14"/>
 				<Setter Property="Height" Value="14"/>
 			</Style>
@@ -59,7 +59,7 @@
 			<Setter Property="CornerRadius" Value="4"/>
 			<Setter Property="HorizontalContentAlignment" Value="Center"/>
 			<Setter Property="VerticalContentAlignment" Value="Center"/>
-			<Style Selector="^ > ico|MaterialIcon">
+			<Style Selector="^ > ico|VisualIcon">
 				<Setter Property="Width" Value="14"/>
 				<Setter Property="Height" Value="14"/>
 			</Style>
@@ -108,7 +108,7 @@
 							  IsEnabled="{Binding !IsBlocked}"
 							  IsChecked="{Binding IsOn, Mode=TwoWay}"
 							  ToolTip.ShowOnDisabled="True">
-					<ico:MaterialIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
+					<ico:VisualIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
 					<ToolTip.Tip>
 						<StackPanel Orientation="Vertical" Spacing="4" MaxWidth="340">
 							<TextBlock Text="{loc:Loc {Binding DisplayName}}"
@@ -137,7 +137,7 @@
 						Command="{Binding ResetCommand}"
 						ToolTip.Tip="{loc:Loc common.reset}"/>
 				<Button Classes="CycleButton" Command="{Binding CycleCommand}">
-					<ico:MaterialIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
+					<ico:VisualIcon Kind="{Binding Icon}" Foreground="{Binding Color}"/>
 					<ToolTip.Tip>
 						<StackPanel Orientation="Vertical" Spacing="4" MaxWidth="340">
 							<TextBlock Text="{loc:Loc {Binding DisplayName}}"
@@ -195,7 +195,7 @@
 						Command="{Binding ResetRowCommand}"
 						HorizontalAlignment="Left"
 						ToolTip.Tip="{loc:Loc common.reset}">
-					<ico:MaterialIcon Kind="Refresh"/>
+					<ico:VisualIcon Kind="Refresh"/>
 				</Button>
 </Grid>
 		</DataTemplate>

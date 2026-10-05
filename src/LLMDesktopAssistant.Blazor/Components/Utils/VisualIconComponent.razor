@@ -1,0 +1,55 @@
+@using LLMDesktopAssistant.Controls.Icons
+@using Material.Icons
+
+@if (Status != VisualIconStatus.None && SvgPath != null)
+{
+	<span class="visual-icon-component" style="display: inline-flex; align-items: center; justify-content: center; width: @(Size)px; height: @(Size)px; @(AdditionalStyle)">
+		<svg viewBox="0 0 24 24" style="width: @(Size)px; height: @(Size)px; fill: @ResolvedColor;">
+			<path d="@SvgPath" />
+		</svg>
+	</span>
+}
+
+@code {
+	/// <summary>The icon to render. Mirrors <c>VisualIcon.Kind</c> on the Avalonia side.</summary>
+	[Parameter]
+	public VisualIconKind? Kind { get; set; }
+
+	/// <summary>Explicit shortcut for a material icon; equivalent to <c>Kind="material:&lt;kind&gt;"</c>.</summary>
+	[Parameter]
+	public MaterialIconKind? Material { get; set; }
+
+	/// <summary>Explicit shortcut for raw SVG path data; equivalent to <c>Kind="path:&lt;path&gt;"</c>.</summary>
+	[Parameter]
+	public string? Path { get; set; }
+
+	[Parameter]
+	public int Size { get; set; } = 20;
+
+	[Parameter]
+	public string Color { get; set; } = "currentColor";
+
+	[Parameter]
+	public string AdditionalStyle { get; set; } = string.Empty;
+
+	private VisualIconStatus Status { get; set; } = VisualIconStatus.None;
+
+	private string? SvgPath { get; set; }
+
+	private string ResolvedColor => Status == VisualIconStatus.Ok ? Color : "#d32f2f";
+
+	protected override void OnParametersSet()
+	{
+		base.OnParametersSet();
+
+		VisualIconKind? kind = Kind;
+		if (kind is null && Material.HasValue)
+			kind = Material.Value;
+		if (kind is null && Path is not null)
+			kind = VisualIconKind.FromPath(Path);
+
+		var data = VisualIconDataHandler.Resolve(kind);
+		Status = data.Status;
+		SvgPath = data.SvgPath;
+	}
+}

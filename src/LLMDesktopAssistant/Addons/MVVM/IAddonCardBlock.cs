@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// The icon of the toggle button that expands this block.
 		/// Only used by <see cref="AddonCardBlockVisibility.Collapsible"/> blocks.
 		/// </summary>
-		MaterialIconKind? ToggleIcon { get; }
+		VisualIconKind? ToggleIcon { get; }
 
 		/// <summary>
 		/// The tooltip of the toggle button that expands this block.

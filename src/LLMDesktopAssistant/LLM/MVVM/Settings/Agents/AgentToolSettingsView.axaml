@@ -9,7 +9,7 @@
 			 xmlns:appset="using:LLMDesktopAssistant.Settings"
 			 xmlns:llmsg="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						  xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:flui="using:FluentAvalonia.UI"
@@ -24,7 +24,7 @@
 			<Setter Property="Height" Value="32"/>
 			<Setter Property="Padding" Value="0"/>
 			<Setter Property="CornerRadius" Value="4"/>
-			<Style Selector="^ > ico|MaterialIcon">
+			<Style Selector="^ > ico|VisualIcon">
 				<Setter Property="Width" Value="24"/>
 				<Setter Property="Height" Value="24"/>
 			</Style>
@@ -133,7 +133,7 @@
 																		 FontSize="11"/>
 												</StackPanel>
 											</ToolTip.Tip>
-											<ico:MaterialIcon Kind="{Binding Icon}"
+											<ico:VisualIcon Kind="{Binding Icon}"
 																				Foreground="{Binding Color}"/>
 										</ToggleButton>
 									</DataTemplate>
@@ -221,21 +221,21 @@
 								Classes="IconButton"
 								ToolTip.Tip="{loc:Loc toolset.create}">
 
-					<ico:MaterialIcon Kind="Plus"/>
+					<ico:VisualIcon Kind="Plus"/>
 				</Button>
 
 				<Button Command="{Binding RenameIdCommand}"
 								Classes="IconButton"
 								ToolTip.Tip="{loc:Loc toolset.rename}">
 
-					<ico:MaterialIcon Kind="Edit"/>
+					<ico:VisualIcon Kind="Edit"/>
 				</Button>
 
 				<Button Command="{Binding RemoveIdCommand}"
 								Classes="IconButton"
 								ToolTip.Tip="{loc:Loc toolset.remove}">
 
-					<ico:MaterialIcon Kind="Remove"/>
+					<ico:VisualIcon Kind="Remove"/>
 				</Button>
 
 			</StackPanel>
@@ -251,13 +251,13 @@
 				<Button Command="{Binding ConfirmEditIdCommand}"
 								Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Check"/>
+					<ico:VisualIcon Kind="Check"/>
 				</Button>
 
 				<Button Command="{Binding CancelEditIdCommand}"
 								Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Cancel"/>
+					<ico:VisualIcon Kind="Cancel"/>
 				</Button>
 
 			</StackPanel>

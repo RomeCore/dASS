@@ -360,7 +360,7 @@ public class AddonCardsDebugPageViewModel : ViewModelBase
 
 	#region Helpers
 
-	private static readonly MaterialIconKind[] ActionIcons =
+	private static readonly VisualIconKind[] ActionIcons =
 	[
 		MaterialIconKind.Pencil,
 		MaterialIconKind.FolderOpen,

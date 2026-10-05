@@ -47,11 +47,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _status, value);
 		}
 
-		private MaterialIconKind? _statusIcon;
+		private VisualIconKind? _statusIcon;
 		/// <summary>
 		/// The status icon to be displayed. This will be shown next to the main title (that contains tool name).
 		/// </summary>
-		public MaterialIconKind? StatusIcon
+		public VisualIconKind? StatusIcon
 		{
 			get => _statusIcon;
 			set => SetProperty(ref _statusIcon, value);

@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
 			 xmlns:local="using:LLMDesktopAssistant.Tools.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Tools.MVVM.FormsChoiceView"
 			 x:DataType="local:FormsChoiceViewModel"
 			 x:Name="Form">
@@ -74,7 +74,7 @@
 
 			<StackPanel Orientation="Horizontal" Spacing="4"
 						IsVisible="{Binding IsResultSet}">
-				<ico:MaterialIcon Kind="CheckCircle"
+				<ico:VisualIcon Kind="CheckCircle"
 								  Width="20" Height="20"
 								  Foreground="{DynamicResource SuccessColor}"/>
 				<TextBlock Text="{loc:Loc forms.choice.selection.confirmed}" FontSize="13" Opacity="0.7"/>

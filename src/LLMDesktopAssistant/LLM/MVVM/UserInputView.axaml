@@ -6,7 +6,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:sett="using:LLMDesktopAssistant.Settings"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 mc:Ignorable="d" d:DesignWidth="800"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.UserInputView"
 			 x:DataType="local:UserInputViewModel">

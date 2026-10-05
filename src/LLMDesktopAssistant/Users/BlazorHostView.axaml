@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="520"
 			 xmlns:local="using:LLMDesktopAssistant.Users"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Users.BlazorHostView"
 			 x:DataType="local:BlazorHostViewModel">
 
@@ -15,7 +15,7 @@
 		<DockPanel Grid.Row="0"
 							 Margin="0,0,0,10">
 
-			<ico:MaterialIcon Kind="Web" FontSize="28"/>
+			<ico:VisualIcon Kind="Web" FontSize="28"/>
 
 			<TextBlock Text="{loc:Loc webui.host.title}"
 								 Margin="8,0,0,0"
@@ -30,7 +30,7 @@
 							HorizontalAlignment="Right"
 							Command="{Binding CloseDialogCommand}">
 			
-				<ico:MaterialIcon Kind="Close"/>
+				<ico:VisualIcon Kind="Close"/>
 
 			</Button>
 
@@ -78,13 +78,13 @@
 						<Button Classes="IconButton"
 								Command="{Binding CopyUrlCommand}"
 								ToolTip.Tip="{loc:Loc webui.host.copy_url}">
-							<ico:MaterialIcon Kind="ContentCopy"/>
+							<ico:VisualIcon Kind="ContentCopy"/>
 						</Button>
 
 						<Button Classes="IconButton"
 								Command="{Binding OpenInBrowserCommand}"
 								ToolTip.Tip="{loc:Loc webui.host.open_browser}">
-							<ico:MaterialIcon Kind="OpenInNew"/>
+							<ico:VisualIcon Kind="OpenInNew"/>
 						</Button>
 
 					</StackPanel>

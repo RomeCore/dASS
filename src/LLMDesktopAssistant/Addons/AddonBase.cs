@@ -111,7 +111,7 @@ namespace LLMDesktopAssistant.Addons
 		/// <summary>
 		/// The icon for the addon. Used by the UI to display the addon card.
 		/// </summary>
-		public MaterialIconKind? Icon
+		public VisualIconKind? Icon
 		{
 			get;
 			set => SetProperty(ref field, value);

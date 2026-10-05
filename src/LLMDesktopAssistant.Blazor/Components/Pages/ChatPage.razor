@@ -25,12 +25,12 @@
 
 	<div class="chat-topbar">
 		<div class="chat-topbar-left">
-			<MaterialIconComponent Kind="@MaterialIconKind.ShieldAccount" Size="20" Color="#0078d4" />
+			<VisualIconComponent Kind="@MaterialIconKind.ShieldAccount" Size="20" Color="#0078d4" />
 			<span class="chat-topbar-user">@(UserState.GetCurrentUser()?.Name ?? LocalizationManager.LocalizeStatic("webui.anonymous"))</span>
 		</div>
 		<div class="chat-topbar-right">
 			<button class="chat-topbar-profile-btn" @onclick="ToggleProfileOverlay" title="@LocalizationManager.LocalizeStatic("webui.profile.title")">
-				<MaterialIconComponent Kind="@MaterialIconKind.AccountSettings" Size="18" Color="#666" />
+				<VisualIconComponent Kind="@MaterialIconKind.AccountSettings" Size="18" Color="#666" />
 				<span>@LocalizationManager.LocalizeStatic("webui.profile.button")</span>
 			</button>
 		</div>
@@ -53,14 +53,14 @@
 			<button class="chat-send-btn"
 					@onclick="SendMessageWithoutGeneration"
 					disabled="@(string.IsNullOrWhiteSpace(_inputText) || _isGenerating)">
-				<MaterialIconComponent Kind="@MaterialIconKind.SendClock" Size="18" Color="white" />
+				<VisualIconComponent Kind="@MaterialIconKind.SendClock" Size="18" Color="white" />
 			</button>
 
 			@if (_isGenerating)
 			{
 				@* Stop / Cancel generation *@
 				<button class="chat-stop-btn" title="@LocalizationManager.LocalizeStatic("webui.generation.stop")" @onclick="StopGeneration">
-					<MaterialIconComponent Kind="@MaterialIconKind.Stop" Size="20" Color="white" />
+					<VisualIconComponent Kind="@MaterialIconKind.Stop" Size="20" Color="white" />
 				</button>
 			}
 			else
@@ -69,7 +69,7 @@
 				<button class="chat-send-btn"
 						@onclick="SendMessageWithGeneration"
 						disabled="@string.IsNullOrWhiteSpace(_inputText)">
-					<MaterialIconComponent Kind="@MaterialIconKind.Send" Size="18" Color="white" />
+					<VisualIconComponent Kind="@MaterialIconKind.Send" Size="18" Color="white" />
 				</button>
 			}
 		</div>

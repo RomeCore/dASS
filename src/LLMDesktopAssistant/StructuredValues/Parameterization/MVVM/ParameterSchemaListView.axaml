@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
 			 xmlns:local="using:LLMDesktopAssistant.StructuredValues.Parameterization.MVVM"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 x:Class="LLMDesktopAssistant.StructuredValues.Parameterization.MVVM.ParameterSchemaListView"
 			 x:DataType="local:ParameterSchemaListViewModel">
@@ -28,7 +28,7 @@
 										CommandParameter="{Binding}"
 										VerticalAlignment="Center"
 										ToolTip.Tip="{loc:Loc parameterization.list.remove}">
-							<ico:MaterialIcon Kind="Delete"/>
+							<ico:VisualIcon Kind="Delete"/>
 						</Button>
 					</Grid>
 				</DataTemplate>
@@ -40,7 +40,7 @@
 						Padding="2"
 						HorizontalAlignment="Left">
 			<StackPanel Orientation="Horizontal" Spacing="4">
-				<ico:MaterialIcon Kind="Plus"
+				<ico:VisualIcon Kind="Plus"
 													Width="24" Height="24" />
 				<TextBlock Text="{loc:Loc parameterization.list.add}"
 									 VerticalAlignment="Center"/>

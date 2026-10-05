@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 /// </summary>
 public class ToolBehaviourFlagInfo(ToolBehaviour flag,
 	LocaleKeyBase displayName, LocaleKeyBase description,
-	MaterialIconKind icon, IBrush color)
+	VisualIconKind icon, IBrush color)
 {
 	/// <summary>
 	/// The ToolBehaviour flag.
@@ -31,7 +31,7 @@ public class ToolBehaviourFlagInfo(ToolBehaviour flag,
 	/// <summary>
 	/// Icon to display for this flag.
 	/// </summary>
-	public MaterialIconKind Icon { get; } = icon;
+	public VisualIconKind Icon { get; } = icon;
 
 	/// <summary>
 	/// Color associated with this flag's severity/category.
@@ -70,7 +70,7 @@ public class ToolBehaviourFlagInfo(ToolBehaviour flag,
 	/// <summary>
 	/// Determines the icon for a behaviour flag.
 	/// </summary>
-	private static MaterialIconKind GetIcon(ToolBehaviour flag) => flag switch
+	private static VisualIconKind GetIcon(ToolBehaviour flag) => flag switch
 	{
 		ToolBehaviour.None => MaterialIconKind.ShieldCheck,
 		ToolBehaviour.FileDirectoryCreate => MaterialIconKind.FolderPlus,

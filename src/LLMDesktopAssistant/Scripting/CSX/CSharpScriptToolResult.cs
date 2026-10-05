@@ -112,16 +112,14 @@ namespace LLMDesktopAssistant.Scripting.CSX
 		/// <summary>
 		/// Sets the status icon and title shown in the UI next to the tool name.
 		/// </summary>
-		/// <param name="iconName">The MaterialIconKind name (e.g. "File", "Web", "Check", "Download"). Pass <see langword="null"/> or empty string to keep the current icon.</param>
+		/// <param name="iconName">The icon name, either a bare material name (e.g. "File", "Web", "Check") or a full pack-prefixed name (e.g. "material:Check", "path:M0 0 L24 24"). Pass <see langword="null"/> or empty string to keep the current icon.</param>
 		/// <param name="title">The status title text. Pass <see langword="null"/> or empty string to keep the current title.</param>
 		public void SetStatus(string? iconName, string? title)
 		{
 			if (!string.IsNullOrEmpty(iconName))
 			{
-				if (Enum.TryParse<MaterialIconKind>(iconName, ignoreCase: true, out var icon))
-					_result.StatusIcon = icon;
-				else
-					_result.StatusIcon = null;
+				var icon = VisualIconKind.Parse(iconName);
+				_result.StatusIcon = VisualIconDataHandler.Resolve(icon).IsOk ? icon : null;
 			}
 
 			if (!string.IsNullOrEmpty(title))

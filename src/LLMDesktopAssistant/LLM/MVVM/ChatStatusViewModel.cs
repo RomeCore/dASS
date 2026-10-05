@@ -22,7 +22,7 @@ public class ChatStatusViewModel : ViewModelBase
 	/// <summary>
 	/// The icon to display based on the current chat status.
 	/// </summary>
-	public MaterialIconKind IconKind => _statusService.Icon;
+	public VisualIconKind IconKind => _statusService.Icon;
 
 	/// <summary>
 	/// The current status text directly from the chat status service.

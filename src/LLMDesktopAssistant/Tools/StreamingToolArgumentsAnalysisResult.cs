@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Tools
 		/// <summary>
 		/// The status icon to be displayed. This will be shown next to the main title (that contains tool name).
 		/// </summary>
-		public MaterialIconKind? StatusIcon { get; init; }
+		public VisualIconKind? StatusIcon { get; init; }
 
 		/// <summary>
 		/// The title of the status that will be shown next to the main title (that contains tool name).

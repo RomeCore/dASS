@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// The icon to display on the chip. If null, no icon will be displayed.
 		/// </summary>
-		MaterialIconKind? Icon { get; }
+		VisualIconKind? Icon { get; }
 
 		/// <summary>
 		/// The label to display on the chip after the icon. If null, no label will be displayed.

@@ -12,11 +12,11 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 		/// </summary>
 		public virtual int Order => 0;
 
-		private MaterialIconKind _icon;
+		private VisualIconKind _icon;
 		/// <summary>
 		/// The icon for button associated with this extension.
 		/// </summary>
-		public MaterialIconKind Icon
+		public VisualIconKind Icon
 		{
 			get => _icon;
 			set => SetProperty(ref _icon, value);

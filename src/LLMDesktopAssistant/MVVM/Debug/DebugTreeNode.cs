@@ -29,7 +29,7 @@ public abstract class DebugTreeNode : ViewModelBase
 	/// <summary>
 	/// Gets the icon shown next to the node.
 	/// </summary>
-	public abstract MaterialIconKind Icon { get; }
+	public abstract VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Gets the child nodes, or <see langword="null"/> for leaf nodes.
@@ -82,7 +82,7 @@ public class DebugParentNode : DebugTreeNode
 	/// <summary>
 	/// Gets the icon shown next to the node.
 	/// </summary>
-	public override MaterialIconKind Icon { get; }
+	public override VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Gets the child nodes.
@@ -96,7 +96,7 @@ public class DebugParentNode : DebugTreeNode
 	/// <param name="icon">The icon shown next to the node.</param>
 	/// <param name="children">The child nodes.</param>
 	/// <param name="pageFactory">The factory that creates the page view model shown when this node is selected.</param>
-	public DebugParentNode(string name, MaterialIconKind icon,
+	public DebugParentNode(string name, VisualIconKind icon,
 		List<DebugTreeNode> children, Func<object?> pageFactory)
 		: base(pageFactory)
 	{
@@ -119,7 +119,7 @@ public class DebugLeafNode : DebugTreeNode
 	/// <summary>
 	/// Gets the icon shown next to the node.
 	/// </summary>
-	public override MaterialIconKind Icon { get; }
+	public override VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Gets <see langword="null"/> because leaf nodes do not have children.
@@ -132,7 +132,7 @@ public class DebugLeafNode : DebugTreeNode
 	/// <param name="name">The display name of the node.</param>
 	/// <param name="icon">The icon shown next to the node.</param>
 	/// <param name="pageFactory">The factory that creates the page view model shown when this node is selected.</param>
-	public DebugLeafNode(string name, MaterialIconKind icon, Func<object?> pageFactory)
+	public DebugLeafNode(string name, VisualIconKind icon, Func<object?> pageFactory)
 		: base(pageFactory)
 	{
 		DisplayName = name;

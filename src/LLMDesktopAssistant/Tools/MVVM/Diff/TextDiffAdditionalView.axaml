@@ -6,7 +6,7 @@
 			 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:utils="using:LLMDesktopAssistant.Utils.Files"
-			 xmlns:material="using:Material.Icons.Avalonia"
+			 xmlns:material="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="LLMDesktopAssistant.Tools.MVVM.Diff.TextDiffAdditionalView"
@@ -31,7 +31,7 @@
 				<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
 
 					<!-- Icon -->
-					<material:MaterialIcon Kind="FileDocumentEditOutline"
+					<material:VisualIcon Kind="FileDocumentEditOutline"
 															   Grid.Row="0" Grid.Column="0"
 															   Width="18" Height="18"
 															   Opacity="0.6"
@@ -213,7 +213,7 @@
 									Classes="IconButton"
 									IsVisible="{Binding IsPending}"
 									ToolTip.Tip="{loc:Loc 'tool.status.fs-diff.enable_all'}">
-						<material:MaterialIcon Kind="CheckboxMarked"/>
+						<material:VisualIcon Kind="CheckboxMarked"/>
 					</Button>
 
 					<!-- Disable All -->
@@ -221,7 +221,7 @@
 									Classes="IconButton"
 									IsVisible="{Binding IsPending}"
 									ToolTip.Tip="{loc:Loc 'tool.status.fs-diff.disable_all'}">
-						<material:MaterialIcon Kind="CheckboxBlankOutline"/>
+						<material:VisualIcon Kind="CheckboxBlankOutline"/>
 					</Button>
 
 					<!-- Consent panel (reject/approve + remember) -->
@@ -232,7 +232,7 @@
 					<Border Background="#1B8B3A40" CornerRadius="3" Padding="8,2"
 							IsVisible="{Binding IsAccepted}">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<material:MaterialIcon Kind="CheckCircle"
+							<material:VisualIcon Kind="CheckCircle"
 																	   Width="14" Height="14"
 																	   Foreground="#4CAF50"/>
 							<TextBlock Text="{loc:Loc 'tool.status.fs-diff.accepted'}"
@@ -246,7 +246,7 @@
 					<Border Background="#8B1A1A40" CornerRadius="3" Padding="8,2"
 							IsVisible="{Binding IsDeclined}">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<material:MaterialIcon Kind="CloseCircle"
+							<material:VisualIcon Kind="CloseCircle"
 																	   Width="14" Height="14"
 																	   Foreground="#F44336"/>
 							<TextBlock Text="{loc:Loc 'tool.status.fs-diff.declined'}"

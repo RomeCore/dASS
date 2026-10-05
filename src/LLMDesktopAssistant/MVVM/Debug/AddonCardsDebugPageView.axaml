@@ -5,7 +5,7 @@
 						 mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
 						 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.MVVM.Debug.AddonCardsDebugPageView"
 						 x:DataType="local:AddonCardsDebugPageViewModel">
 
@@ -18,7 +18,7 @@
 						Margin="0,0,0,8">
 			<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
 
-				<ico:MaterialIcon Grid.Column="0"
+				<ico:VisualIcon Grid.Column="0"
 												  Kind="Cards"
 												  Width="18" Height="18"
 												  VerticalAlignment="Center"/>
@@ -32,7 +32,7 @@
 								Command="{Binding ResetAllCommand}"
 								VerticalAlignment="Center">
 					<StackPanel Orientation="Horizontal" Spacing="6">
-						<ico:MaterialIcon Kind="Refresh" Width="16" Height="16" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="Refresh" Width="16" Height="16" VerticalAlignment="Center"/>
 						<TextBlock Text="{loc:Loc debug.addon_cards.reset_all}" VerticalAlignment="Center"/>
 					</StackPanel>
 				</Button>

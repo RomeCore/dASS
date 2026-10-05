@@ -47,7 +47,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		public static LocaleKeyBase GetDescription(AgentVisibilityFacet facet)
 			=> Locale.GetKey($"settings.agent.facet.{Slug(facet)}.hint");
 
-		public static MaterialIconKind GetIcon(AgentVisibilityFacet facet, bool isOn) => facet switch
+		public static VisualIconKind GetIcon(AgentVisibilityFacet facet, bool isOn) => facet switch
 		{
 			AgentVisibilityFacet.Visible => isOn ? MaterialIconKind.Eye : MaterialIconKind.EyeOff,
 			AgentVisibilityFacet.MessagesWithToolCalls => MaterialIconKind.Wrench,
@@ -98,7 +98,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			_ => Brushes.Gray,
 		};
 
-		public static MaterialIconKind GetIdentityIcon(MessageAuthorIdentity identity) => identity switch
+		public static VisualIconKind GetIdentityIcon(MessageAuthorIdentity identity) => identity switch
 		{
 			MessageAuthorIdentity.Default => MaterialIconKind.AccountQuestion,
 			MessageAuthorIdentity.Anon => MaterialIconKind.Incognito,
@@ -160,7 +160,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		public AgentVisibilityFacet Facet { get; }
 		public LocaleKeyBase DisplayName { get; }
 		public LocaleKeyBase Description { get; }
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 		public IBrush Color { get; }
 		public string StateText { get; }
 		public IBrush StateColor { get; }
@@ -231,7 +231,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		public LocaleKeyBase DisplayName { get; }
 		public LocaleKeyBase Description { get; }
 		public MessageAuthorIdentity Identity { get; }
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 		public IBrush Color { get; }
 		public string StateText { get; }
 		public IBrush StateColor { get; }

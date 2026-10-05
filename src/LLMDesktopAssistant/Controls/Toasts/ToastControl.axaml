@@ -3,7 +3,7 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Controls.Toasts"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:conv="using:LLMDesktopAssistant.Converters"
 						 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="600"
@@ -49,7 +49,7 @@
 										CornerRadius="8,0,0,8"
 										Background="{DynamicResource PrimaryAccentBrush}">
 
-							<ico:MaterialIcon Name="PART_ToastIcon"
+							<ico:VisualIcon Name="PART_ToastIcon"
 																Width="24"
 																Height="24"
 																Foreground="White"
@@ -90,7 +90,7 @@
 										CommandParameter="{Binding Id}"
 										Background="Transparent"
 										Focusable="False">
-							<ico:MaterialIcon Kind="Close"
+							<ico:VisualIcon Kind="Close"
 																Width="16"
 																Height="16" />
 						</Button>

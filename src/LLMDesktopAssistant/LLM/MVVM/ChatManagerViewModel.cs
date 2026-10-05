@@ -302,7 +302,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>
 		/// The status icon to display on the chat tab based on the current chat status.
 		/// </summary>
-		public MaterialIconKind StatusIcon => _executionStatusService?.Status switch
+		public VisualIconKind StatusIcon => _executionStatusService?.Status switch
 		{
 			ChatStatus.Executing => MaterialIconKind.TimerSand,
 			ChatStatus.Confirming => MaterialIconKind.QuestionMarkCircle,

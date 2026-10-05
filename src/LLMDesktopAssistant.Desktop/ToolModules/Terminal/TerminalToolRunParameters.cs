@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Controls.Icons;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
@@ -12,7 +13,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 		/// <summary>
 		/// The status icon to set into <see cref="ReactiveToolResult"/>.
 		/// </summary>
-		public MaterialIconKind? StatusIcon { get; init; }
+		public VisualIconKind? StatusIcon { get; init; }
 
 		/// <summary>
 		/// The status title to set into <see cref="ReactiveToolResult"/>.

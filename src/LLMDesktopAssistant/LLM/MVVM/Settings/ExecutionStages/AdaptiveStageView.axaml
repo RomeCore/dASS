@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.ExecutionStages"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ExecutionStages.AdaptiveStageView"
 			 x:DataType="local:AdaptiveStageViewModel"
 			 x:Name="VMRoot">
@@ -130,7 +130,7 @@
 									Classes="IconButton"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.stage.remove_agent}">
-								<ico:MaterialIcon Kind="Close"/>
+								<ico:VisualIcon Kind="Close"/>
 							</Button>
 						</Grid>
 					</Border>
@@ -144,7 +144,7 @@
 				HorizontalAlignment="Left"
 				ToolTip.Tip="{loc:Loc settings.stage.add_agent}">
 			<StackPanel Orientation="Horizontal" Spacing="4">
-				<ico:MaterialIcon Kind="Plus"/>
+				<ico:VisualIcon Kind="Plus"/>
 				<TextBlock Text="{loc:Loc settings.stage.add_agent}"/>
 			</StackPanel>
 		</Button>

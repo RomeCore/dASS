@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentMemorySettingsView"
 			 x:DataType="local:AgentMemorySettingsViewModel"
 			 x:Name="VMRoot">
@@ -145,7 +145,7 @@
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc settings.agent.memory.edit}">
 
-								<ico:MaterialIcon Kind="Edit"/>
+								<ico:VisualIcon Kind="Edit"/>
 							</Button>
 
 							<Button Grid.Row="0" Grid.Column="4"
@@ -154,7 +154,7 @@
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc settings.agent.memory.remove}">
 
-								<ico:MaterialIcon Kind="Delete"/>
+								<ico:VisualIcon Kind="Delete"/>
 							</Button>
 
 							<!-- Row 1: Description -->

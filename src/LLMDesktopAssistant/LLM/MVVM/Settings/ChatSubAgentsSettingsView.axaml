@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatSubAgentsSettingsView"
 			 x:DataType="local:ChatSubAgentsSettingsViewModel"
 			 x:Name="VMRoot">
@@ -26,14 +26,14 @@
 					Classes="IconButton"
 					Margin="0,0,4,0"
 					ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
-				<ico:MaterialIcon Kind="FilePlusOutline"/>
+				<ico:VisualIcon Kind="FilePlusOutline"/>
 			</Button>
 
 			<Button Grid.Column="2"
 					Command="{Binding List.RefreshCommand}"
 					Classes="IconButton"
 					ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
-				<ico:MaterialIcon Kind="Refresh"/>
+				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 		</Grid>
 

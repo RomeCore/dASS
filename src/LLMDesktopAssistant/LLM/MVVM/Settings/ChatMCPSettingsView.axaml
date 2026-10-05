@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:set="using:LLMDesktopAssistant.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:flui="using:FluentAvalonia.UI"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatMCPSettingsView"
@@ -72,7 +72,7 @@
 							<!-- Row 0: Icon + Name + Enabled toggle -->
 							<Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 
-								<ico:MaterialIcon Grid.Column="0"
+								<ico:VisualIcon Grid.Column="0"
 												  Kind="Lan"
 												  Foreground="{DynamicResource PrimaryAccentBrush}"
 												  Width="20" Height="20"

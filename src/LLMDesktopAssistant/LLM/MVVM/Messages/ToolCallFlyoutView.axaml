@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallFlyoutView"
 			 x:DataType="local:ToolCallFlyoutViewModel">
@@ -60,7 +60,7 @@
 									ToolTip.Tip="{loc:Loc tool.copy_arguments}"
 									Margin="3,0,0,0">
 
-						<ico:MaterialIcon Kind="CodeBraces"/>
+						<ico:VisualIcon Kind="CodeBraces"/>
 
 					</Button>
 
@@ -72,7 +72,7 @@
 									ToolTip.Tip="{loc:Loc tool.copy_result}"
 									Margin="3,0,0,0">
 
-						<ico:MaterialIcon Kind="ContentCopy"/>
+						<ico:VisualIcon Kind="ContentCopy"/>
 
 					</Button>
 

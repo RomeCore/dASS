@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.Settings"
 			 xmlns:set="using:LLMDesktopAssistant.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:flui="using:FluentAvalonia.UI"
 			 x:Class="LLMDesktopAssistant.Settings.SettingsCategoryView"
@@ -32,7 +32,7 @@
 							HorizontalAlignment="Right"
 							Command="{Binding CloseDialogCommand}">
 			
-				<ico:MaterialIcon Kind="Close"/>
+				<ico:VisualIcon Kind="Close"/>
 
 			</Button>
 
@@ -74,7 +74,7 @@
 						Command="{Binding CreateNewIdCommand}"
 						Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Plus"/>
+					<ico:VisualIcon Kind="Plus"/>
 
 				</Button>
 
@@ -82,7 +82,7 @@
 						Command="{Binding RenameIdCommand}"
 						Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Edit"/>
+					<ico:VisualIcon Kind="Edit"/>
 
 				</Button>
 
@@ -90,7 +90,7 @@
 						Command="{Binding RemoveIdCommand}"
 						Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Remove"/>
+					<ico:VisualIcon Kind="Remove"/>
 
 				</Button>
 
@@ -109,7 +109,7 @@
 						Command="{Binding ConfirmEditIdCommand}"
 						Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Check"/>
+					<ico:VisualIcon Kind="Check"/>
 
 				</Button>
 
@@ -117,7 +117,7 @@
 						Command="{Binding CancelEditIdCommand}"
 						Classes="IconButton">
 
-					<ico:MaterialIcon Kind="Cancel"/>
+					<ico:VisualIcon Kind="Cancel"/>
 
 				</Button>
 

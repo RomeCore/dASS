@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:stages="using:LLMDesktopAssistant.LLM.MVVM.Settings.ExecutionStages"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatExecutionStagesSettingsView"
 			 x:DataType="local:ChatExecutionStagesSettingsViewModel">
 
@@ -19,7 +19,7 @@
 			<StackPanel Orientation="Horizontal" Spacing="4">
 				<Button Command="{Binding AddStageCommand}" Classes="IconButton"
 						ToolTip.Tip="{loc:Loc settings.stage.add}">
-					<ico:MaterialIcon Kind="Plus"/>
+					<ico:VisualIcon Kind="Plus"/>
 				</Button>
 			</StackPanel>
 		</Border>
@@ -65,7 +65,7 @@
 													Classes="IconButton"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.move_up}">
-										<ico:MaterialIcon Kind="ChevronUp"/>
+										<ico:VisualIcon Kind="ChevronUp"/>
 									</Button>
 
 									<!-- Move down -->
@@ -74,7 +74,7 @@
 													Classes="IconButton"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.move_down}">
-										<ico:MaterialIcon Kind="ChevronDown"/>
+										<ico:VisualIcon Kind="ChevronDown"/>
 									</Button>
 
 									<!-- Clone -->
@@ -83,7 +83,7 @@
 													Classes="IconButton"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.clone}">
-										<ico:MaterialIcon Kind="ContentCopy"/>
+										<ico:VisualIcon Kind="ContentCopy"/>
 									</Button>
 
 									<!-- Delete -->
@@ -92,7 +92,7 @@
 													Classes="IconButton"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.remove}">
-										<ico:MaterialIcon Kind="Delete"/>
+										<ico:VisualIcon Kind="Delete"/>
 									</Button>
 								</Grid>
 							</Border>

@@ -62,7 +62,8 @@ public class CSharpScriptMetaEngineTests
 
 		Assert.True(success);
 		Assert.Contains(reactiveResult.ResultContentLines, line => line == "City: New York");
-		Assert.Equal("Map", reactiveResult.StatusIcon?.ToString());
+		// Icon kinds are canonicalized to "<pack>:<data>" (a bare "Map" means the material pack).
+		Assert.Equal("material:Map", reactiveResult.StatusIcon?.ToString());
 		Assert.Equal("Looking up...", reactiveResult.StatusTitle);
 		Assert.Equal(true, reactiveResult.StructuredResult?["ok"]?.GetValue<bool>());
 		Assert.Equal("New York", reactiveResult.StructuredResult?["city"]?.GetValue<string>());

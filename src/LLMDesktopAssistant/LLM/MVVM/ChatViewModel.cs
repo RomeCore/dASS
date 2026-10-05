@@ -58,11 +58,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			private set => SetProperty(ref _hasRunningTasks, value);
 		}
 
-		private MaterialIconKind _agentTaskIcon = MaterialIconKind.TimerSand;
+		private VisualIconKind _agentTaskIcon = MaterialIconKind.TimerSand;
 		/// <summary>
 		/// The icon for the agent tasks button, reflecting whether tasks are running.
 		/// </summary>
-		public MaterialIconKind AgentTaskIcon
+		public VisualIconKind AgentTaskIcon
 		{
 			get => _agentTaskIcon;
 			private set => SetProperty(ref _agentTaskIcon, value);

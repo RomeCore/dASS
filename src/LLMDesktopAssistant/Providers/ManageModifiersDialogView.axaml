@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="using:LLMDesktopAssistant.Providers"
              xmlns:loc="using:LLMDesktopAssistant.Localization"
-             xmlns:ico="using:Material.Icons.Avalonia"
+             xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
              mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="400"
              x:Class="LLMDesktopAssistant.Providers.ManageModifiersDialogView"
              x:DataType="local:ManageModifiersDialogViewModel"
@@ -14,7 +14,7 @@
 
     <!-- Header -->
     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
-      <ico:MaterialIcon Kind="Tune" Width="20" Height="20"
+      <ico:VisualIcon Kind="Tune" Width="20" Height="20"
                         VerticalAlignment="Center"
                         Foreground="{DynamicResource PrimaryAccentBrush}"/>
       <TextBlock Text="{loc:Loc model.modifier.manage.title}"
@@ -29,7 +29,7 @@
       <Button Command="{Binding AddCommand}"
               Classes="Primary">
         <StackPanel Orientation="Horizontal" Spacing="4">
-          <ico:MaterialIcon Kind="AddCircle" Width="14" Height="14"/>
+          <ico:VisualIcon Kind="AddCircle" Width="14" Height="14"/>
           <TextBlock Text="{loc:Loc model.modifier.add}"/>
         </StackPanel>
       </Button>
@@ -37,7 +37,7 @@
       <Button Command="{Binding EditCommand}"
               IsEnabled="{Binding IsModifierSelected}">
         <StackPanel Orientation="Horizontal" Spacing="4">
-          <ico:MaterialIcon Kind="Edit" Width="14" Height="14"/>
+          <ico:VisualIcon Kind="Edit" Width="14" Height="14"/>
           <TextBlock Text="{loc:Loc model.modifier.edit}"/>
         </StackPanel>
       </Button>
@@ -46,7 +46,7 @@
               IsEnabled="{Binding IsModifierSelected}"
               Classes="Danger">
         <StackPanel Orientation="Horizontal" Spacing="4">
-          <ico:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+          <ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
           <TextBlock Text="{loc:Loc model.modifier.delete}"/>
         </StackPanel>
       </Button>
@@ -59,7 +59,7 @@
       <ListBox.DataTemplates>
         <DataTemplate x:DataType="local:ModelModifier">
           <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto" Margin="4,3" ColumnSpacing="4">
-            <ico:MaterialIcon Kind="Tune"
+            <ico:VisualIcon Kind="Tune"
                               Width="18" Height="18"
                               VerticalAlignment="Center"
                               Opacity="0.7"/>
@@ -77,14 +77,14 @@
                     Command="{Binding #VMRoot.DataContext.MoveUpCommand}"
                     CommandParameter="{Binding}"
                     ToolTip.Tip="{loc:Loc model.modifier.move_up}">
-              <ico:MaterialIcon Kind="ArrowUp"/>
+              <ico:VisualIcon Kind="ArrowUp"/>
             </Button>
             <Button Grid.Column="5"
                     Classes="IconButton"
                     Command="{Binding #VMRoot.DataContext.MoveDownCommand}"
                     CommandParameter="{Binding}"
                     ToolTip.Tip="{loc:Loc model.modifier.move_down}">
-              <ico:MaterialIcon Kind="ArrowDown"/>
+              <ico:VisualIcon Kind="ArrowDown"/>
             </Button>
           </Grid>
         </DataTemplate>

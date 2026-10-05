@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Icon to be displayed on the action button.
 		/// </summary>
-		MaterialIconKind Icon { get; }
+		VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Command that will be executed when the action button is clicked.

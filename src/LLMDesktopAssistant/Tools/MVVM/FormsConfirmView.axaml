@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
 			 xmlns:local="using:LLMDesktopAssistant.Tools.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Tools.MVVM.FormsConfirmView"
 			 x:DataType="local:FormsConfirmViewModel">
 
@@ -70,7 +70,7 @@
 					<StackPanel Orientation="Horizontal" Spacing="4"
 											IsVisible="{Binding IsConfirmed}">
 
-						<ico:MaterialIcon Kind="CheckCircle"
+						<ico:VisualIcon Kind="CheckCircle"
 											Width="20" Height="20"
 											Foreground="{DynamicResource SuccessColor}"/>
 
@@ -81,7 +81,7 @@
 					<StackPanel Orientation="Horizontal" Spacing="4"
 											IsVisible="{Binding IsConfirmed, Converter={StaticResource InverseBooleanConverter}}">
 
-						<ico:MaterialIcon Kind="Cancel"
+						<ico:VisualIcon Kind="Cancel"
 											Width="20" Height="20"
 											Foreground="{DynamicResource CancelColor}"/>
 

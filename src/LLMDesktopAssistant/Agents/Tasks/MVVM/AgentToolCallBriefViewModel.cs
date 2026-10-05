@@ -65,11 +65,11 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			private set => SetProperty(ref _hasResult, value);
 		}
 
-		private MaterialIconKind _statusIcon = MaterialIconKind.HelpCircle;
+		private VisualIconKind _statusIcon = MaterialIconKind.HelpCircle;
 		/// <summary>
 		/// The icon representing the current status of the tool call.
 		/// </summary>
-		public MaterialIconKind StatusIcon
+		public VisualIconKind StatusIcon
 		{
 			get => _statusIcon;
 			private set => SetProperty(ref _statusIcon, value);

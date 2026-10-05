@@ -1,6 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:ico="using:Material.Icons.Avalonia">
+		xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
 	<Design.PreviewWith>
 		<Border Padding="20">
@@ -16,7 +16,7 @@
 		<Setter Property="Height" Value="32"/>
 	</Style>
 	
-	<Style Selector="Button.IconButton > ico|MaterialIcon">
+	<Style Selector="Button.IconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="24"/>
 		<Setter Property="Height" Value="24"/>
 	</Style>
@@ -27,7 +27,7 @@
 		<Setter Property="Height" Value="32"/>
 	</Style>
 	
-	<Style Selector="ToggleButton.IconButton > ico|MaterialIcon">
+	<Style Selector="ToggleButton.IconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="24"/>
 		<Setter Property="Height" Value="24"/>
 	</Style>
@@ -40,7 +40,7 @@
 		<Setter Property="Height" Value="28"/>
 	</Style>
 	
-	<Style Selector="Button.MidIconButton > ico|MaterialIcon">
+	<Style Selector="Button.MidIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="22"/>
 		<Setter Property="Height" Value="22"/>
 	</Style>
@@ -51,7 +51,7 @@
 		<Setter Property="Height" Value="28"/>
 	</Style>
 	
-	<Style Selector="ToggleButton.MidIconButton > ico|MaterialIcon">
+	<Style Selector="ToggleButton.MidIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="22"/>
 		<Setter Property="Height" Value="22"/>
 	</Style>
@@ -64,7 +64,7 @@
 		<Setter Property="Height" Value="18"/>
 	</Style>
 	
-	<Style Selector="Button.MiniIconButton > ico|MaterialIcon">
+	<Style Selector="Button.MiniIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="16"/>
 		<Setter Property="Height" Value="16"/>
 	</Style>
@@ -75,7 +75,7 @@
 		<Setter Property="Height" Value="18"/>
 	</Style>
 	
-	<Style Selector="ToggleButton.MiniIconButton > ico|MaterialIcon">
+	<Style Selector="ToggleButton.MiniIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="16"/>
 		<Setter Property="Height" Value="16"/>
 	</Style>
@@ -88,7 +88,7 @@
 		<Setter Property="Height" Value="24"/>
 	</Style>
 	
-	<Style Selector="Button.SmallIconButton > ico|MaterialIcon">
+	<Style Selector="Button.SmallIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="16"/>
 		<Setter Property="Height" Value="16"/>
 	</Style>
@@ -99,7 +99,7 @@
 		<Setter Property="Height" Value="24"/>
 	</Style>
 	
-	<Style Selector="ToggleButton.SmallIconButton > ico|MaterialIcon">
+	<Style Selector="ToggleButton.SmallIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="24"/>
 		<Setter Property="Height" Value="24"/>
 	</Style>
@@ -112,7 +112,7 @@
 		<Setter Property="Height" Value="40"/>
 	</Style>
 	
-	<Style Selector="Button.BigIconButton > ico|MaterialIcon">
+	<Style Selector="Button.BigIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="32"/>
 		<Setter Property="Height" Value="32"/>
 	</Style>
@@ -123,34 +123,34 @@
 		<Setter Property="Height" Value="40"/>
 	</Style>
 	
-	<Style Selector="ToggleButton.BigIconButton > ico|MaterialIcon">
+	<Style Selector="ToggleButton.BigIconButton > ico|VisualIcon">
 		<Setter Property="Width" Value="32"/>
 		<Setter Property="Height" Value="32"/>
 	</Style>
 
 
 	
-	<Style Selector="ico|MaterialIcon.Icon">
+	<Style Selector="ico|VisualIcon.Icon">
 		<Setter Property="Width" Value="32"/>
 		<Setter Property="Height" Value="32"/>
 	</Style>
 	
-	<Style Selector="ico|MaterialIcon.MidIcon">
+	<Style Selector="ico|VisualIcon.MidIcon">
 		<Setter Property="Width" Value="28"/>
 		<Setter Property="Height" Value="28"/>
 	</Style>
 	
-	<Style Selector="ico|MaterialIcon.MiniIcon">
+	<Style Selector="ico|VisualIcon.MiniIcon">
 		<Setter Property="Width" Value="16"/>
 		<Setter Property="Height" Value="16"/>
 	</Style>
 	
-	<Style Selector="ico|MaterialIcon.SmallIcon">
+	<Style Selector="ico|VisualIcon.SmallIcon">
 		<Setter Property="Width" Value="24"/>
 		<Setter Property="Height" Value="24"/>
 	</Style>
 	
-	<Style Selector="ico|MaterialIcon.BigIcon">
+	<Style Selector="ico|VisualIcon.BigIcon">
 		<Setter Property="Width" Value="40"/>
 		<Setter Property="Height" Value="40"/>
 	</Style>

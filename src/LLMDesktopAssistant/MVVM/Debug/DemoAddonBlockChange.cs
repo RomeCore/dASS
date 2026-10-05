@@ -61,7 +61,7 @@ public class DemoAddonBlockChange : ViewModelBase, IAddonCardBlockChange
 	public ImmutableList<IAddonCardChip>? Chips { get; set; }
 
 	/// <inheritdoc/>
-	public MaterialIconKind? ToggleIcon { get; set; }
+	public VisualIconKind? ToggleIcon { get; set; }
 
 	/// <inheritdoc/>
 	public LocaleKeyBase? ToggleToolTip { get; set; }

@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="360"
 			 xmlns:local="using:LLMDesktopAssistant.Agents.Memory.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Agents.Memory.MVVM.MemoryBlockFactsView"
 			 x:DataType="local:MemoryBlockFactsViewModel">
 
@@ -85,7 +85,7 @@
 											Classes="IconButton"
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc settings.memory.fact.supersede.tooltip}">
-										<ico:MaterialIcon Kind="SwapHorizontal"/>
+										<ico:VisualIcon Kind="SwapHorizontal"/>
 									</Button>
 
 									<Button Grid.Column="2"
@@ -93,7 +93,7 @@
 											Classes="IconButton"
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc settings.memory.fact.delete.action}">
-										<ico:MaterialIcon Kind="Delete"/>
+										<ico:VisualIcon Kind="Delete"/>
 									</Button>
 
 								</Grid>

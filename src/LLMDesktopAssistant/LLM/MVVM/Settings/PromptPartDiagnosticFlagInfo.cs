@@ -29,7 +29,7 @@ public class PromptPartDiagnosticFlagInfo
 	/// <summary>
 	/// Icon to display for this flag.
 	/// </summary>
-	public MaterialIconKind Icon { get; }
+	public VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Color associated with this flag's severity/category.
@@ -37,7 +37,7 @@ public class PromptPartDiagnosticFlagInfo
 	public IBrush Color { get; }
 
 	public PromptPartDiagnosticFlagInfo(PromptPartDiagnosticCode flag, LocaleKeyBase displayNameKey, LocaleKeyBase descriptionKey,
-		MaterialIconKind icon, IBrush color)
+		VisualIconKind icon, IBrush color)
 	{
 		Flag = flag;
 		DisplayNameKey = displayNameKey;
@@ -97,7 +97,7 @@ public class PromptPartDiagnosticFlagInfo
 		return flags;
 	}
 
-	private static MaterialIconKind GetIcon(PromptPartDiagnosticCode flag) => flag switch
+	private static VisualIconKind GetIcon(PromptPartDiagnosticCode flag) => flag switch
 	{
 		PromptPartDiagnosticCode.None => MaterialIconKind.CheckCircle,
 

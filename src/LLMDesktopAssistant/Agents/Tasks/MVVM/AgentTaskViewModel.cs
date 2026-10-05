@@ -27,11 +27,11 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		/// </summary>
 		public string? TaskName => _task.LaunchParameters.TaskName;
 
-		private MaterialIconKind _statusIcon = MaterialIconKind.ClockOutline;
+		private VisualIconKind _statusIcon = MaterialIconKind.ClockOutline;
 		/// <summary>
 		/// The icon representing the current status of the task.
 		/// </summary>
-		public MaterialIconKind StatusIcon
+		public VisualIconKind StatusIcon
 		{
 			get => _statusIcon;
 			private set => SetProperty(ref _statusIcon, value);

@@ -28,7 +28,7 @@ public class ToolBehaviourMaskItem : NotifyPropertyChanged
 	/// <summary>
 	/// Gets the icon associated with this behaviour flag.
 	/// </summary>
-	public MaterialIconKind Icon { get; }
+	public VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Localized display name of the behaviour.

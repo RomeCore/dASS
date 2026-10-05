@@ -3,7 +3,7 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Agents.Tasks.MVVM"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -44,7 +44,7 @@
 														 StrokeThickness="3"
 														 Foreground="{DynamicResource PrimaryAccentBrush}"/>
 
-					<ico:MaterialIcon Kind="{Binding StatusIcon}"
+					<ico:VisualIcon Kind="{Binding StatusIcon}"
 														Width="20" Height="20"
 														IsVisible="{Binding !IsRunning}"/>
 
@@ -89,7 +89,7 @@
 						<Button Classes="MiniIconButton"
 										DockPanel.Dock="Left">
 
-							<ico:MaterialIcon Kind="Info"/>
+							<ico:VisualIcon Kind="Info"/>
 			
 							<Button.Flyout>
 								<Flyout>
@@ -127,14 +127,14 @@
 									Command="{Binding CancelCommand}"
 									IsVisible="{Binding IsRunning}"
 									ToolTip.Tip="{loc:Loc task.cancel}">
-						<ico:MaterialIcon Kind="Stop" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Stop" Width="14" Height="14"/>
 					</Button>
 
 					<ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}"
 												IsVisible="{Binding SubTaskViewModels.Any}"
 												Classes="SmallIconButton"
 												ToolTip.Tip="{loc:Loc task.toggle_subtasks}">
-						<ico:MaterialIcon Kind="ChevronDown" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="ChevronDown" Width="14" Height="14"/>
 					</ToggleButton>
 
 				</StackPanel>

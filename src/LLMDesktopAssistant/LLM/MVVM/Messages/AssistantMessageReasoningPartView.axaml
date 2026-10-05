@@ -6,7 +6,7 @@
 			 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.AssistantMessageReasoningPartView"
 			 x:DataType="local:AssistantMessageReasoningPartViewModel">
 
@@ -17,15 +17,15 @@
 				<ControlTemplate>
 					<StackPanel Orientation="Horizontal">
 
-						<ico:MaterialIcon Name="Chevron"
+						<ico:VisualIcon Name="Chevron"
 															Kind="ChevronRight"
 															Width="16" Height="16"
 															HorizontalAlignment="Center"
 															VerticalAlignment="Center">
-							<ico:MaterialIcon.RenderTransform>
+							<ico:VisualIcon.RenderTransform>
 								<RotateTransform />
-							</ico:MaterialIcon.RenderTransform>
-						</ico:MaterialIcon>
+							</ico:VisualIcon.RenderTransform>
+						</ico:VisualIcon>
 
 						<ContentPresenter Content="{TemplateBinding Content}"
 															ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -39,7 +39,7 @@
 			<Setter Property="Margin" Value="0"/>
 			<Setter Property="Padding" Value="0"/>
 
-			<Style Selector="^ /template/ ico|MaterialIcon#Chevron">
+			<Style Selector="^ /template/ ico|VisualIcon#Chevron">
 				<Setter Property="Transitions">
 					<Transitions>
 						<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15"/>
@@ -47,11 +47,11 @@
 				</Setter>
 			</Style>
 			
-			<Style Selector="^[Tag=collapsed] /template/ ico|MaterialIcon#Chevron">
+			<Style Selector="^[Tag=collapsed] /template/ ico|VisualIcon#Chevron">
 				<Setter Property="RenderTransform" Value="rotate(0deg)"/>
 			</Style>
 			
-			<Style Selector="^[Tag=expanded] /template/ ico|MaterialIcon#Chevron">
+			<Style Selector="^[Tag=expanded] /template/ ico|VisualIcon#Chevron">
 				<Setter Property="RenderTransform" Value="rotate(90deg)"/>
 			</Style>
 			
@@ -112,7 +112,7 @@
 			<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Height="16">
 				
 				<!-- Reasoning icon -->
-				<ico:MaterialIcon Kind="Bulb"
+				<ico:VisualIcon Kind="Bulb"
 													Width="16" Height="16"
 													Margin="0,0,2,0"
 													HorizontalAlignment="Center"

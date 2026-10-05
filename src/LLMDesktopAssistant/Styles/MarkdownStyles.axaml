@@ -4,7 +4,7 @@
 				xmlns:loc="using:LLMDesktopAssistant.Localization"
 				xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
 				xmlns:nodes="using:LLMDesktopAssistant.Markdown.UINodes"
-				xmlns:ico="using:Material.Icons.Avalonia">
+				xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 	
 	<Design.PreviewWith>
 		<Border Padding="20">
@@ -49,7 +49,7 @@
 															Classes="IconButton"
 															IsChecked="{TemplateBinding IsCodeWrapped, Mode=TwoWay}">
 
-									<ico:MaterialIcon Kind="Wrap"/>
+									<ico:VisualIcon Kind="Wrap"/>
 								</ToggleButton>
 
 								<ItemsControl ItemsSource="{TemplateBinding (beh:MarkdownCodeBlockBehaviour.CodeBlockExtensions)}"
@@ -69,7 +69,7 @@
 															ToolTip.Tip="{loc:Loc {Binding Tooltip}}"
 															IsVisible="{Binding IsButtonVisible}">
 
-												<ico:MaterialIcon Kind="{Binding Icon}"/>
+												<ico:VisualIcon Kind="{Binding Icon}"/>
 											</Button>
 										</DataTemplate>
 									</ItemsControl.ItemTemplate>
@@ -125,7 +125,7 @@
 				<StackPanel Orientation="Horizontal"
 										Spacing="2">
 
-					<ico:MaterialIcon Kind="ArrowRightBottom"
+					<ico:VisualIcon Kind="ArrowRightBottom"
 														Width="16"
 														Height="16"
 														Margin="0"/>
@@ -198,7 +198,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertNoteBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertNoteBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockNote ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockNote ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertNoteColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockNote TextBlock.AlertBlockTitle">
@@ -210,7 +210,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertTipBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertTipBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockTip ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockTip ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertTipColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockTip TextBlock.AlertBlockTitle">
@@ -222,7 +222,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertImportantBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertImportantBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockImportant ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockImportant ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertImportantColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockImportant TextBlock.AlertBlockTitle">
@@ -234,7 +234,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertWarningBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertWarningBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockWarning ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockWarning ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertWarningColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockWarning TextBlock.AlertBlockTitle">
@@ -246,7 +246,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertCautionBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertCautionBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockCaution ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockCaution ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertCautionColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockCaution TextBlock.AlertBlockTitle">
@@ -258,7 +258,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertSuccessBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertSuccessBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockSuccess ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockSuccess ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertSuccessColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockSuccess TextBlock.AlertBlockTitle">
@@ -270,7 +270,7 @@
 		<Setter Property="Background" Value="{DynamicResource AlertErrorBackgroundBrush}"/>
 		<Setter Property="BorderBrush" Value="{DynamicResource AlertErrorBorderBrush}"/>
 	</Style>
-	<Style Selector="Border.AlertBlock.AlertBlockError ico|MaterialIcon">
+	<Style Selector="Border.AlertBlock.AlertBlockError ico|VisualIcon">
 		<Setter Property="Foreground" Value="{DynamicResource AlertErrorColor}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockError TextBlock.AlertBlockTitle">

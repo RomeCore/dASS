@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="40"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartsView"
 			 x:DataType="local:AdditionalMessagePartsViewModel"
 			 x:Name="VMRoot">
@@ -34,7 +34,7 @@
 									IsVisible="{Binding #VMRoot.DataContext.IsEditing}"
 									Command="{Binding #VMRoot.DataContext.RemoveCommand}"
 									CommandParameter="{Binding}">
-						<ico:MaterialIcon Kind="Close"/>
+						<ico:VisualIcon Kind="Close"/>
 					</Button>
 
 				</Grid>

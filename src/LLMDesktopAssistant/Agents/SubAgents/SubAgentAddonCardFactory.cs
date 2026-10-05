@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 		}
 
 		/// <inheritdoc/>
-		protected override MaterialIconKind TypeIcon => MaterialIconKind.RobotHappy;
+		protected override VisualIconKind TypeIcon => MaterialIconKind.RobotHappy;
 
 		/// <inheritdoc/>
 		protected override void AddHeaderElements(AddonCardContext<SubAgentInfo, SubAgentChange> context, List<IAddonCardElement> elements)
@@ -128,7 +128,7 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 			}
 		}
 
-		private static void AddCountChip(List<IAddonCardElement> elements, int order, MaterialIconKind icon, string key, int count)
+		private static void AddCountChip(List<IAddonCardElement> elements, int order, VisualIconKind icon, string key, int count)
 		{
 			if (count == 0)
 				return;

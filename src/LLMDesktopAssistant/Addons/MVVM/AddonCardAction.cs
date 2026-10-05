@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 	public class AddonCardAction : AddonCardElementBase, IAddonCardAction
 	{
 		/// <inheritdoc/>
-		public required MaterialIconKind Icon { get; init; }
+		public required VisualIconKind Icon { get; init; }
 
 		/// <inheritdoc/>
 		public required ICommand Command { get; init; }

@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
 			 x:DataType="local:AdditionalMessagePart">
 
@@ -16,7 +16,7 @@
 
 		<StackPanel Orientation="Horizontal" Spacing="4">
 
-			<ico:MaterialIcon Kind="{Binding ChipIcon}"
+			<ico:VisualIcon Kind="{Binding ChipIcon}"
 							  Foreground="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}}"
 							  Width="14" Height="14"
 							  VerticalAlignment="Center"/>

@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatDatabaseSettingsView"
 			 x:DataType="local:ChatDatabaseSettingsViewModel"
@@ -40,7 +40,7 @@
 					Command="{Binding AddDatabaseConnectionCommand}"
 					Classes="IconButton"
 					ToolTip.Tip="{loc:Loc db.add_connection}">
-				<ico:MaterialIcon Kind="Plus"/>
+				<ico:VisualIcon Kind="Plus"/>
 			</Button>
 		</Grid>
 
@@ -67,7 +67,7 @@
 							Command="{Binding DisconnectAllCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc db.disconnect_all}">
-						<ico:MaterialIcon Kind="LanDisconnect"/>
+						<ico:VisualIcon Kind="LanDisconnect"/>
 					</Button>
 				</Grid>
 
@@ -85,7 +85,7 @@
 						<DataTemplate DataType="local:DatabaseConnectionManagerItem">
 							<Grid ColumnDefinitions="Auto,*,Auto">
 
-								<ico:MaterialIcon Grid.Column="0"
+								<ico:VisualIcon Grid.Column="0"
 												  Kind="LanConnect"
 												  Foreground="#4CAF50"
 												  VerticalAlignment="Center"/>
@@ -108,7 +108,7 @@
 										CommandParameter="{Binding}"
 										Classes="IconButton"
 										ToolTip.Tip="{loc:Loc db.disconnect}">
-									<ico:MaterialIcon Kind="LanDisconnect"/>
+									<ico:VisualIcon Kind="LanDisconnect"/>
 								</Button>
 							</Grid>
 						</DataTemplate>
@@ -157,7 +157,7 @@
 							Classes="IconButton"
 							IsEnabled="{Binding IsCustomTesting, Converter={StaticResource InverseBooleanConverter}}"
 							ToolTip.Tip="{loc:Loc db.connect}">
-						<ico:MaterialIcon Kind="Play"/>
+						<ico:VisualIcon Kind="Play"/>
 					</Button>
 
 					<Button Grid.Column="2"
@@ -165,7 +165,7 @@
 							Classes="IconButton"
 							IsEnabled="{Binding IsCustomTesting, Converter={StaticResource InverseBooleanConverter}}"
 							ToolTip.Tip="{loc:Loc db.test_connection}">
-						<ico:MaterialIcon Kind="LanConnect"/>
+						<ico:VisualIcon Kind="LanConnect"/>
 					</Button>
 				</Grid>
 
@@ -230,7 +230,7 @@
 										Classes="IconButton"
 										Margin="2,0"
 										ToolTip.Tip="{loc:Loc env.move_up}">
-									<ico:MaterialIcon Kind="ChevronUp"/>
+									<ico:VisualIcon Kind="ChevronUp"/>
 								</Button>
 
 								<Button Grid.Column="5"
@@ -239,7 +239,7 @@
 										Classes="IconButton"
 										Margin="2,0"
 										ToolTip.Tip="{loc:Loc env.move_down}">
-									<ico:MaterialIcon Kind="ChevronDown"/>
+									<ico:VisualIcon Kind="ChevronDown"/>
 								</Button>
 
 								<Button Grid.Column="6"
@@ -248,7 +248,7 @@
 										Classes="IconButton"
 										Margin="2,0"
 										ToolTip.Tip="{loc:Loc env.remove}">
-									<ico:MaterialIcon Kind="Delete"/>
+									<ico:VisualIcon Kind="Delete"/>
 								</Button>
 							</Grid>
 
@@ -271,7 +271,7 @@
 										CommandParameter="{Binding}"
 										Classes="IconButton"
 										ToolTip.Tip="{loc:Loc db.browse_sqlite_file}">
-									<ico:MaterialIcon Kind="FolderOpen"/>
+									<ico:VisualIcon Kind="FolderOpen"/>
 								</Button>
 							</Grid>
 
@@ -284,7 +284,7 @@
 											  Margin="0,0,6,0"
 											  VerticalAlignment="Center"
 											  ToolTip.Tip="{loc:Loc db.use_encrypted_connection_string}">
-									<ico:MaterialIcon Kind="Lock"/>
+									<ico:VisualIcon Kind="Lock"/>
 								</ToggleButton>
 
 								<TextBox Grid.Column="1"
@@ -305,7 +305,7 @@
 										IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBooleanConverter}}"
 										ToolTip.Tip="{loc:Loc db.connect}"
 										Margin="0,0,4,0">
-									<ico:MaterialIcon Kind="Play"/>
+									<ico:VisualIcon Kind="Play"/>
 								</Button>
 
 								<Button Grid.Column="3"
@@ -313,7 +313,7 @@
 										Classes="IconButton"
 										IsEnabled="{Binding IsTesting, Converter={StaticResource InverseBooleanConverter}}"
 										ToolTip.Tip="{loc:Loc db.test_connection}">
-									<ico:MaterialIcon Kind="LanConnect"/>
+									<ico:VisualIcon Kind="LanConnect"/>
 								</Button>
 							</Grid>
 

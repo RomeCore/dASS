@@ -12,7 +12,7 @@
 	<div class="auth-card">
 		<div class="auth-header">
 			<div class="auth-icon">
-				<MaterialIconComponent Kind="@MaterialIconKind.AccountPlus" Size="48" Color="#0078d4" />
+				<VisualIconComponent Kind="@MaterialIconKind.AccountPlus" Size="48" Color="#0078d4" />
 			</div>
 			<h1 class="auth-title">@LocalizationManager.LocalizeStatic("webui.register.title")</h1>
 			<p class="auth-subtitle">@LocalizationManager.LocalizeStatic("webui.register.subtitle")</p>
@@ -21,7 +21,7 @@
 		@if (_errorMessage != null)
 		{
 			<div class="auth-error">
-				<MaterialIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" />
+				<VisualIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" />
 				<span>@_errorMessage</span>
 			</div>
 		}
@@ -29,7 +29,7 @@
 		@if (_successMessage != null)
 		{
 			<div class="auth-success">
-				<MaterialIconComponent Kind="@MaterialIconKind.CheckCircle" Size="16" Color="#2e7d32" />
+				<VisualIconComponent Kind="@MaterialIconKind.CheckCircle" Size="16" Color="#2e7d32" />
 				<span>@_successMessage</span>
 			</div>
 		}
@@ -88,7 +88,7 @@
 				}
 				else
 				{
-					<MaterialIconComponent Kind="@MaterialIconKind.AccountPlus" Size="18" Color="white" />
+					<VisualIconComponent Kind="@MaterialIconKind.AccountPlus" Size="18" Color="white" />
 					<span>@LocalizationManager.LocalizeStatic("webui.register.button")</span>
 				}
 			</button>

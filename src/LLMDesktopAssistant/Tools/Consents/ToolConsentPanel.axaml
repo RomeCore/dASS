@@ -5,7 +5,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="40"
 			 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 Background="Transparent"
 			 x:Name="Root">
@@ -15,13 +15,13 @@
 		<Button Click="ApproveButton_Click"
 						Classes="IconButton"
 						ToolTip.Tip="{loc:Loc tool.call.action.approve}">
-			<ico:MaterialIcon Kind="Check" Foreground="Green"/>
+			<ico:VisualIcon Kind="Check" Foreground="Green"/>
 		</Button>
 
 		<Button Click="RejectButton_Click"
 						Classes="IconButton"
 						ToolTip.Tip="{loc:Loc tool.call.action.reject}">
-			<ico:MaterialIcon Kind="Close" Foreground="Red"/>
+			<ico:VisualIcon Kind="Close" Foreground="Red"/>
 		</Button>
 
 		<ComboBox x:Name="NoteComboBox"

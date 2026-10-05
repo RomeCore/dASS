@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
@@ -8,6 +8,11 @@
 		<LangVersion>latest</LangVersion>
 		<RootNamespace>LLMDesktopAssistant</RootNamespace>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- The icon abstraction is used pervasively across the codebase (models, view-models, tools). -->
+		<Using Include="LLMDesktopAssistant.Controls.Icons" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <AvaloniaXaml Remove="Styles\Avalonia.Themes.Fluent\**" />

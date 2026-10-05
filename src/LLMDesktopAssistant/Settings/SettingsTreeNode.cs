@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.Settings
 		/// <summary>
 		/// Gets the icon shown next to the node.
 		/// </summary>
-		public abstract MaterialIconKind Icon { get; }
+		public abstract VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets the child nodes, or <see langword="null"/> for leaf nodes.
@@ -93,7 +93,7 @@ namespace LLMDesktopAssistant.Settings
 		/// <summary>
 		/// Gets the icon shown next to the node.
 		/// </summary>
-		public override MaterialIconKind Icon { get; }
+		public override VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets the child nodes.
@@ -107,7 +107,7 @@ namespace LLMDesktopAssistant.Settings
 		/// <param name="icon">The icon shown next to the node.</param>
 		/// <param name="children">The child nodes.</param>
 		/// <param name="viewModelFactory">The factory that creates the view model shown when this node is selected.</param>
-		public SettingsParentNode(string name, MaterialIconKind icon,
+		public SettingsParentNode(string name, VisualIconKind icon,
 			List<SettingsTreeNode> children, Func<object?> viewModelFactory)
 			: base(viewModelFactory)
 		{
@@ -130,7 +130,7 @@ namespace LLMDesktopAssistant.Settings
 		/// <summary>
 		/// Gets the icon shown next to the node.
 		/// </summary>
-		public override MaterialIconKind Icon { get; }
+		public override VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets <see langword="null"/> because leaf nodes do not have children.
@@ -143,7 +143,7 @@ namespace LLMDesktopAssistant.Settings
 		/// <param name="name">The display name of the node.</param>
 		/// <param name="icon">The icon shown next to the node.</param>
 		/// <param name="viewModelFactory">The factory that creates the view model shown when this node is selected.</param>
-		public SettingsLeafNode(string name, MaterialIconKind icon, Func<object?> viewModelFactory)
+		public SettingsLeafNode(string name, VisualIconKind icon, Func<object?> viewModelFactory)
 			: base(viewModelFactory)
 		{
 			DisplayName = name;

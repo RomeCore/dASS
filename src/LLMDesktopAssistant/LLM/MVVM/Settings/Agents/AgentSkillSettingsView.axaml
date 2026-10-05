@@ -7,7 +7,7 @@
 			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:settings="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentSkillSettingsView"
 			 x:DataType="local:AgentSkillSettingsViewModel">
 

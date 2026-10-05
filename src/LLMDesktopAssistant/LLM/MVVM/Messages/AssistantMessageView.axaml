@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Messages"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.AssistantMessageView"
 			 x:DataType="local:AssistantMessageViewModel">
 
@@ -23,7 +23,7 @@
 					<Image Source="{Binding SenderAvatar}" Width="32" Height="32"/>
 				</Border>
 
-				<ico:MaterialIcon Kind="Robot" Width="32" Height="32" Margin="4"
+				<ico:VisualIcon Kind="Robot" Width="32" Height="32" Margin="4"
 													IsVisible="{Binding SenderAvatar, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
 
 			</Panel>
@@ -54,28 +54,28 @@
 			<Button Command="{Binding RegenerateCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc message.regenerate}">
-				<ico:MaterialIcon Kind="Refresh"/>
+				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 
 			<Button Command="{Binding ResendCommand}"
 							Classes="IconButton"
 							IsVisible="{Binding ContainsToolCalls}"
 							ToolTip.Tip="{loc:Loc message.resend}">
-				<ico:MaterialIcon Kind="ArrowUDownLeft"/>
+				<ico:VisualIcon Kind="ArrowUDownLeft"/>
 			</Button>
 
 			<Button Command="{Binding ResendCommand}"
 							Classes="IconButton"
 							IsVisible="{Binding ContainsToolCalls, Converter={StaticResource InverseBooleanConverter}}"
 							ToolTip.Tip="{loc:Loc message.resend}">
-				<ico:MaterialIcon Kind="ChevronDoubleDown"/>
+				<ico:VisualIcon Kind="ChevronDoubleDown"/>
 			</Button>
 
 			<Button Command="{Binding DeleteCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc message.delete}">
 
-				<ico:MaterialIcon Kind="Delete"/>
+				<ico:VisualIcon Kind="Delete"/>
 			</Button>
 
 			<StackPanel Orientation="Horizontal"
@@ -87,7 +87,7 @@
 								CommandParameter="{Binding PreviousBranchIndex}"
 								CornerRadius="8,0,0,8"
 								ToolTip.Tip="{loc:Loc message.previous_branch}">
-					<ico:MaterialIcon Kind="ChevronLeft"/>
+					<ico:VisualIcon Kind="ChevronLeft"/>
 				</Button>
 
 				<ComboBox ItemsSource="{Binding BranchIndices}"
@@ -99,7 +99,7 @@
 								CommandParameter="{Binding NextBranchIndex}"
 								CornerRadius="0,8,8,0"
 								ToolTip.Tip="{loc:Loc message.next_branch}">
-					<ico:MaterialIcon Kind="ChevronRight"/>
+					<ico:VisualIcon Kind="ChevronRight"/>
 				</Button>
 
 			</StackPanel>
@@ -107,7 +107,7 @@
 			<ToggleButton Classes="IconButton"
 							IsChecked="{Binding RenderMarkdown, Mode=TwoWay}"
 							ToolTip.Tip="{loc:Loc message.render_markdown}">
-				<ico:MaterialIcon Kind="LanguageMarkdown"/>
+				<ico:VisualIcon Kind="LanguageMarkdown"/>
 			</ToggleButton>
 
 			<ItemsControl ItemsSource="{Binding Extensions}">
@@ -128,7 +128,7 @@
 											Classes="IconButton"
 											IsVisible="{Binding ViewModel, Converter={StaticResource NotnullToBooleanConverterInverted}}"
 											ToolTip.Tip="{loc:Loc {Binding Tooltip}}">
-								<ico:MaterialIcon Kind="{Binding Icon}"/>
+								<ico:VisualIcon Kind="{Binding Icon}"/>
 							</Button>
 
 						</Panel>

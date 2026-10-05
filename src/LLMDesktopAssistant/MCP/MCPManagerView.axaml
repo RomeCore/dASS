@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.MCP"
 			 xmlns:set="using:LLMDesktopAssistant.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:flui="using:FluentAvalonia.UI"
 			 x:Class="LLMDesktopAssistant.MCP.MCPManagerView"
@@ -36,7 +36,7 @@
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc common.add}">
 				
-						<ico:MaterialIcon Kind="Plus"/>
+						<ico:VisualIcon Kind="Plus"/>
 					</Button>
 
 					<Button Command="{Binding RemoveCommand}"
@@ -44,7 +44,7 @@
 							Margin="5,0,0,0"
 							ToolTip.Tip="{loc:Loc common.remove}">
 				
-						<ico:MaterialIcon Kind="Delete"/>
+						<ico:VisualIcon Kind="Delete"/>
 					</Button>
 				
 				</StackPanel>
@@ -54,7 +54,7 @@
 					<ListBox.ItemTemplate>
 						<DataTemplate>
 							<StackPanel Orientation="Horizontal">
-								<ico:MaterialIcon Kind="LanConnect"
+								<ico:VisualIcon Kind="LanConnect"
 												  Width="16"
 												  Margin="0,0,5,0"/>
 

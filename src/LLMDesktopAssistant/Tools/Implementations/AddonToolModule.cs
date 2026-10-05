@@ -338,11 +338,11 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return type.Replace('\\', '/').Trim().Trim('/');
 		}
 
-		private static ReactiveToolResult CreateError(string message, MaterialIconKind icon = MaterialIconKind.Search)
+		private static ReactiveToolResult CreateError(string message, VisualIconKind? icon = null)
 		{
 			return new ReactiveToolResult
 			{
-				StatusIcon = icon,
+				StatusIcon = icon ?? (VisualIconKind)MaterialIconKind.Search,
 				ResultContent = message,
 				UseMarkdown = true
 			}.CompleteWithError();

@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="clr-namespace:LLMDesktopAssistant.Controls"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatModelSettingsView"
 			 x:DataType="local:ChatModelSettingsViewModel">

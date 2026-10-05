@@ -125,7 +125,7 @@ public class PromptPartCardViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the icon of the slot kind.
 	/// </summary>
-	public MaterialIconKind KindIcon => Kind switch
+	public VisualIconKind KindIcon => Kind switch
 	{
 		PromptSlotKind.System => MaterialIconKind.CogOutline,
 		PromptSlotKind.Persona => MaterialIconKind.AccountOutline,
@@ -141,7 +141,7 @@ public class PromptPartCardViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the icon of the source.
 	/// </summary>
-	public MaterialIconKind SourceIcon => Part.Source switch
+	public VisualIconKind SourceIcon => Part.Source switch
 	{
 		PromptPartSource.BuiltInTemplate => MaterialIconKind.Box,
 		PromptPartSource.UserTemplate => MaterialIconKind.AccountCircle,
@@ -218,7 +218,7 @@ public class PromptPartCardViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the selection icon of the card (radio mode).
 	/// </summary>
-	public MaterialIconKind SelectionIcon => IsSelected ? MaterialIconKind.RadioboxMarked : MaterialIconKind.RadioboxBlank;
+	public VisualIconKind SelectionIcon => IsSelected ? MaterialIconKind.RadioboxMarked : MaterialIconKind.RadioboxBlank;
 
 	/// <summary>
 	/// Gets a value indicating whether the parameter UI can be shown for this part.

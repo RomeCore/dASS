@@ -103,8 +103,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			}
 		}
 
-		private MaterialIconKind? _statusIcon;
-		public MaterialIconKind? StatusIcon
+		private VisualIconKind? _statusIcon;
+		public VisualIconKind? StatusIcon
 		{
 			get => _statusIcon;
 			set => SetProperty(ref _statusIcon, value);
@@ -117,7 +117,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _statusTitle, value);
 		}
 
-		public MaterialIconKind ToolIcon =>
+		public VisualIconKind ToolIcon =>
 			Status switch
 			{
 				ToolStatus.Pending => MaterialIconKind.Edit,

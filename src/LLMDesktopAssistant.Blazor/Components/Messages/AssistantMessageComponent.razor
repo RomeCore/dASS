@@ -22,7 +22,7 @@
 				else
 				{
 					<span class="avatar-placeholder">
-						<MaterialIconComponent Kind="@MaterialIconKind.Robot" Size="20" />
+						<VisualIconComponent Kind="@MaterialIconKind.Robot" Size="20" />
 					</span>
 				}
 			</div>
@@ -35,7 +35,7 @@
 		<div class="reasoning-container">
 			<details class="reasoning-details" open="@(!Message.IsCompleted)">
 				<summary class="reasoning-summary">
-					<MaterialIconComponent Kind="@MaterialIconKind.Brain" Size="16" Color="rgba(0,0,0,0.5)" AdditionalStyle="margin-right: 4px;" />
+					<VisualIconComponent Kind="@MaterialIconKind.Brain" Size="16" Color="rgba(0,0,0,0.5)" AdditionalStyle="margin-right: 4px;" />
 					@LocalizationManager.LocalizeStatic("webui.reasoning")
 				</summary>
 				<div class="reasoning-text">
@@ -65,7 +65,7 @@
 	@if (!string.IsNullOrWhiteSpace(Message.Error))
 	{
 		<div class="message-error">
-			<MaterialIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" AdditionalStyle="margin-right: 4px;" />
+			<VisualIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" AdditionalStyle="margin-right: 4px;" />
 			@Message.Error
 		</div>
 	}
@@ -75,39 +75,39 @@
 		<div class="message-actions">
 			@* Regenerate *@
 			<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.regenerate")" @onclick="RegenerateMessage">
-				<MaterialIconComponent Kind="@MaterialIconKind.Refresh" Size="18" />
+				<VisualIconComponent Kind="@MaterialIconKind.Refresh" Size="18" />
 			</button>
 
 			@* Resend *@
 			@if (Message.ToolCalls.Count > 0)
 			{
 				<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.resend")" @onclick="ResendMessage">
-					<MaterialIconComponent Kind="@MaterialIconKind.ArrowUDownLeft" Size="18" />
+					<VisualIconComponent Kind="@MaterialIconKind.ArrowUDownLeft" Size="18" />
 				</button>
 			}
 			else
 			{
 				<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.resend")" @onclick="ResendMessage">
-					<MaterialIconComponent Kind="@MaterialIconKind.ChevronDoubleDown" Size="18" />
+					<VisualIconComponent Kind="@MaterialIconKind.ChevronDoubleDown" Size="18" />
 				</button>
 			}
 
 			@* Delete *@
 			<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.delete")" @onclick="DeleteMessage">
-				<MaterialIconComponent Kind="@MaterialIconKind.Delete" Size="18" />
+				<VisualIconComponent Kind="@MaterialIconKind.Delete" Size="18" />
 			</button>
 
 			@* Branching *@
 			@if (BranchedMessage.AvailableBranchesCount > 1)
 			{
 				<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.branch.previous")" @onclick="PreviousBranch" disabled="@(BranchedMessage.SelectedBranchIndex <= 0)">
-					<MaterialIconComponent Kind="@MaterialIconKind.ChevronLeft" Size="18" />
+					<VisualIconComponent Kind="@MaterialIconKind.ChevronLeft" Size="18" />
 				</button>
 
 				<span class="branch-indicator">@(BranchedMessage.SelectedBranchIndex + 1) / @BranchedMessage.AvailableBranchesCount</span>
 
 				<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.branch.next")" @onclick="NextBranch" disabled="@(BranchedMessage.SelectedBranchIndex >= BranchedMessage.AvailableBranchesCount - 1)">
-					<MaterialIconComponent Kind="@MaterialIconKind.ChevronRight" Size="18" />
+					<VisualIconComponent Kind="@MaterialIconKind.ChevronRight" Size="18" />
 				</button>
 			}
 		</div>

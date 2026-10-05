@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:users="using:LLMDesktopAssistant.Users"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatUserSettingsView"
 			 x:DataType="local:ChatUserSettingsViewModel"
 			 x:Name="VMRoot">
@@ -28,7 +28,7 @@
 					Command="{Binding AddCommand}"
 					Classes="Primary">
 				<StackPanel Orientation="Horizontal" Spacing="4">
-					<ico:MaterialIcon Kind="AddCircle" Width="14" Height="14"/>
+					<ico:VisualIcon Kind="AddCircle" Width="14" Height="14"/>
 					<TextBlock Text="{loc:Loc common.add}"/>
 				</StackPanel>
 			</Button>
@@ -55,7 +55,7 @@
 							  ColumnSpacing="6">
 
 							<!-- Row 0: Avatar icon | Name + Login | Edit | Delete -->
-							<ico:MaterialIcon Grid.Row="0" Grid.Column="0"
+							<ico:VisualIcon Grid.Row="0" Grid.Column="0"
 											  Kind="AccountCircle"
 											  Foreground="{DynamicResource PrimaryAccentBrush}"
 											  Width="22" Height="22"
@@ -80,7 +80,7 @@
 									Classes="IconButton"
 									VerticalAlignment="Center"
 									ToolTip.Tip="{loc:Loc common.edit}">
-								<ico:MaterialIcon Kind="Edit"/>
+								<ico:VisualIcon Kind="Edit"/>
 							</Button>
 
 							<Button Grid.Row="0" Grid.Column="3"
@@ -89,7 +89,7 @@
 									Classes="IconButton"
 									VerticalAlignment="Center"
 									ToolTip.Tip="{loc:Loc common.delete}">
-								<ico:MaterialIcon Kind="Delete"/>
+								<ico:VisualIcon Kind="Delete"/>
 							</Button>
 
 							<!-- Row 1: Description -->

@@ -7,7 +7,7 @@
 			 xmlns:group="using:LLMDesktopAssistant.Addons.MVVM.Grouping"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Addons.MVVM.AddonListView"
 			 x:DataType="cards:AddonListViewModel">
 
@@ -26,7 +26,7 @@
 				<ComboBox.ItemTemplate>
 					<DataTemplate x:DataType="group:GroupingMode">
 						<StackPanel Orientation="Horizontal" Spacing="6">
-							<ico:MaterialIcon Kind="{Binding Icon}"
+							<ico:VisualIcon Kind="{Binding Icon}"
 											  IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
 											  Width="14" Height="14"
 											  VerticalAlignment="Center"/>
@@ -41,7 +41,7 @@
 					 PlaceholderText="{loc:Loc {Binding SearchPlaceholderKey}}"
 					 VerticalAlignment="Center">
 				<TextBox.InnerLeftContent>
-					<ico:MaterialIcon Kind="TextBoxSearch" Width="16" Height="16" Margin="6,0" VerticalAlignment="Center" Opacity="0.5"/>
+					<ico:VisualIcon Kind="TextBoxSearch" Width="16" Height="16" Margin="6,0" VerticalAlignment="Center" Opacity="0.5"/>
 				</TextBox.InnerLeftContent>
 			</TextBox>
 		</Grid>

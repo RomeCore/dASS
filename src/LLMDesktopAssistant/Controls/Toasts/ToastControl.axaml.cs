@@ -8,7 +8,6 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using Material.Icons;
-using Material.Icons.Avalonia;
 
 namespace LLMDesktopAssistant.Controls.Toasts;
 
@@ -189,7 +188,7 @@ public partial class ToastControl : UserControl
 		// Почему NameScope не работают и мне приходится вручную искать элементы? А? Блять!
 		var cc = container.FindDescendantOfType<Border>()!;
 		var iconBorder = cc.FindDescendantOfType<Border>(false, d => d.Name == "PART_IconBorder");
-		var icon = cc.FindDescendantOfType<MaterialIcon>(false, d => d.Name == "PART_ToastIcon");
+		var icon = cc.FindDescendantOfType<VisualIcon>(false, d => d.Name == "PART_ToastIcon");
 
 		if (icon == null) return;
 

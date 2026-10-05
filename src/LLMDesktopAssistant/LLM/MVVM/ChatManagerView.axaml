@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatManagerView"
@@ -65,14 +65,14 @@
 														IsEnabled="{Binding !IsTemporary}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.open_in_new_tab}">
-											<ico:MaterialIcon Kind="TabPlus"/>
+											<ico:VisualIcon Kind="TabPlus"/>
 										</Button>
 										
 										<Button Command="{Binding DeleteCommand}"
 														IsEnabled="{Binding !IsTemporary}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc common.delete}">
-											<ico:MaterialIcon Kind="Delete"/>
+											<ico:VisualIcon Kind="Delete"/>
 										</Button>
 										
 									</StackPanel>
@@ -142,18 +142,18 @@
 					<Button Command="{Binding CreateChatCommand}"
 									Classes="IconButton"
 									ToolTip.Tip="{loc:Loc chat.new}">
-						<ico:MaterialIcon Kind="MessagePlus"/>
+						<ico:VisualIcon Kind="MessagePlus"/>
 					</Button>
 					
 					<Button Command="{Binding CreateTemporaryChatCommand}"
 									Classes="IconButton"
 									ToolTip.Tip="{loc:Loc chat.new_temporary}">
-						<ico:MaterialIcon Kind="MessageFlash"/>
+						<ico:VisualIcon Kind="MessageFlash"/>
 					</Button>
 					
 					<ToggleButton IsChecked="{Binding #ChatSplitView.IsPaneOpen}"
 											  Classes="IconButton">
-						<ico:MaterialIcon Kind="Forum"/>
+						<ico:VisualIcon Kind="Forum"/>
 					</ToggleButton>
 
 				</StackPanel>
@@ -197,7 +197,7 @@
 											<StackPanel Orientation="Horizontal"
 																	Spacing="4">
 												
-												<ico:MaterialIcon Kind="{Binding StatusIcon}"
+												<ico:VisualIcon Kind="{Binding StatusIcon}"
 																					Width="14" Height="14"
 																					VerticalAlignment="Center"
 																					IsVisible="{Binding HasStatus}"/>
@@ -241,13 +241,13 @@
 										<Button Command="{Binding RenameWithAICommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.rename_with_ai}">
-											<ico:MaterialIcon Kind="AutoFix"/>
+											<ico:VisualIcon Kind="AutoFix"/>
 										</Button>
 										
 										<Button Command="{Binding CloseChatCommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc common.close}">
-											<ico:MaterialIcon Kind="Close"/>
+											<ico:VisualIcon Kind="Close"/>
 										</Button>
 
 									</StackPanel>
@@ -266,13 +266,13 @@
 										<Button Command="{Binding CommitEditTitleCommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.rename.save}">
-											<ico:MaterialIcon Kind="Check"/>
+											<ico:VisualIcon Kind="Check"/>
 										</Button>
 										
 										<Button Command="{Binding CancelEditTitleCommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.rename.cancel}">
-											<ico:MaterialIcon Kind="Close"/>
+											<ico:VisualIcon Kind="Close"/>
 										</Button>
 									</StackPanel>
 									
@@ -290,13 +290,13 @@
 										<Button Command="{Binding CommitEditTopicCommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.rename.save}">
-											<ico:MaterialIcon Kind="Check"/>
+											<ico:VisualIcon Kind="Check"/>
 										</Button>
 										
 										<Button Command="{Binding CancelEditTopicCommand}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.rename.cancel}">
-											<ico:MaterialIcon Kind="Close"/>
+											<ico:VisualIcon Kind="Close"/>
 										</Button>
 									</StackPanel>
 

@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.Tools.MVVM
 		}
 
 		/// <inheritdoc/>
-		protected override MaterialIconKind TypeIcon => MaterialIconKind.Wrench;
+		protected override VisualIconKind TypeIcon => MaterialIconKind.Wrench;
 
 		/// <inheritdoc/>
 		protected override (LocaleKeyBase? Prefix, IBrush? Brush) GetNamePrefix(AddonCardContext<ToolInfo, ToolChange> context) =>

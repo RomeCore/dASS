@@ -52,7 +52,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 		/// <summary>
 		/// Gets the icon shown next to the node.
 		/// </summary>
-		public override MaterialIconKind Icon { get; }
+		public override VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets the child nodes.

@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
 			 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.MVVM.Debug.DebugPagesView"
 			 x:DataType="local:DebugPagesViewModel">
 
@@ -21,7 +21,7 @@
 				<TreeDataTemplate DataType="local:DebugParentNode"
 													ItemsSource="{Binding Children}">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="18" Height="18"
 															VerticalAlignment="Center"/>
 						<TextBlock Text="{Binding DisplayName}"
@@ -32,7 +32,7 @@
 
 				<DataTemplate DataType="local:DebugLeafNode">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="16" Height="16"
 															VerticalAlignment="Center"
 															Opacity="0.8"/>

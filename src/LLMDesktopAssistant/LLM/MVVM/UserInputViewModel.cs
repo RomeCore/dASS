@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	{
 		public required MessageVisibility Visibility { get; init; }
 		public required LocaleKeyBase Title { get; init; }
-		public required MaterialIconKind Icon { get; init; }
+		public required VisualIconKind Icon { get; init; }
 	}
 
 	/// <summary>

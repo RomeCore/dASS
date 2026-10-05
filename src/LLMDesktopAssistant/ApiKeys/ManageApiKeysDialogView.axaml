@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:local="using:LLMDesktopAssistant.ApiKeys"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="400"
 			 x:Class="LLMDesktopAssistant.ApiKeys.ManageApiKeysDialogView"
 			 x:DataType="local:ManageApiKeysDialogViewModel">
@@ -13,7 +13,7 @@
 
 		<!-- Header -->
 		<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
-			<ico:MaterialIcon Kind="KeyVariant" Width="20" Height="20" 
+			<ico:VisualIcon Kind="KeyVariant" Width="20" Height="20" 
 							  VerticalAlignment="Center"
 							  Foreground="{DynamicResource PrimaryAccentBrush}"/>
 			<TextBlock Text="{loc:Loc settings.api.manage.title}"
@@ -28,7 +28,7 @@
 							Classes="Primary">
 				<Button.Content>
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="AddCircle" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="AddCircle" Width="14" Height="14"/>
 						<TextBlock Text="{loc:Loc settings.api.add}"/>
 					</StackPanel>
 				</Button.Content>
@@ -38,7 +38,7 @@
 							IsEnabled="{Binding IsKeySelected}">
 				<Button.Content>
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="Edit" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Edit" Width="14" Height="14"/>
 						<TextBlock Text="{loc:Loc common.edit}"/>
 					</StackPanel>
 				</Button.Content>
@@ -49,7 +49,7 @@
 							Classes="Danger">
 				<Button.Content>
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
 						<TextBlock Text="{loc:Loc common.delete}"/>
 					</StackPanel>
 				</Button.Content>
@@ -63,7 +63,7 @@
 			<ListBox.DataTemplates>
 				<DataTemplate x:DataType="local:ApiKeyDisplayItem">
 					<StackPanel Orientation="Horizontal" Spacing="8" Margin="4,3">
-						<ico:MaterialIcon Kind="Key" 
+						<ico:VisualIcon Kind="Key" 
 										  Width="14" Height="14"
 										  VerticalAlignment="Center"
 										  Opacity="0.7"/>

@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction
 		/// <summary>
 		/// Gets the icon of the segment.
 		/// </summary>
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets or sets the localization key of the segment tooltip.
@@ -61,7 +61,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction
 
 		public ContextCompactionToggleViewModel(
 			ContextCheckpointKind kind,
-			MaterialIconKind icon,
+			VisualIconKind icon,
 			string tooltip,
 			CornerRadius cornerRadius,
 			ICommand command)

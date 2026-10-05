@@ -1,6 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:icons="using:LLMDesktopAssistant.Controls.Icons">
+		xmlns:icons="using:LLMDesktopAssistant.Controls.Icons"
+		x:Class="LLMDesktopAssistant.Controls.Icons.VisualIconStyles">
 
 	<!--
 		Include point that replaces Material.Icons' MaterialIconStyles in App.axaml.

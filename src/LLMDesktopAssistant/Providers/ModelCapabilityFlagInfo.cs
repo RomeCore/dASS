@@ -23,14 +23,14 @@ namespace LLMDesktopAssistant.Providers
 		/// <summary>
 		/// The icon to display.
 		/// </summary>
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// The color associated with this modality.
 		/// </summary>
 		public IBrush Color { get; }
 
-		public ModelModalityFlagInfo(LLMModalities modality, string displayName, MaterialIconKind icon, IBrush color)
+		public ModelModalityFlagInfo(LLMModalities modality, string displayName, VisualIconKind icon, IBrush color)
 		{
 			Modality = modality;
 			DisplayName = displayName;
@@ -81,14 +81,14 @@ namespace LLMDesktopAssistant.Providers
 		/// <summary>
 		/// The icon to display.
 		/// </summary>
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// The color associated with this capability.
 		/// </summary>
 		public IBrush Color { get; }
 
-		public ModelCapabilityFlagInfo(LLMCapabilities capability, string displayName, MaterialIconKind icon, IBrush color)
+		public ModelCapabilityFlagInfo(LLMCapabilities capability, string displayName, VisualIconKind icon, IBrush color)
 		{
 			Capability = capability;
 			DisplayName = displayName;

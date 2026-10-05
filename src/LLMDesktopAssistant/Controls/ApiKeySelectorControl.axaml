@@ -4,7 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:local="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="40"
 			 x:Class="LLMDesktopAssistant.Controls.ApiKeySelectorControl">
 
@@ -17,7 +17,7 @@
 			<ComboBox.DataTemplates>
 				<DataTemplate x:DataType="local:ApiKeyWrapperItemModel">
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="Key" 
+						<ico:VisualIcon Kind="Key" 
 										  Width="14" Height="14"
 										  VerticalAlignment="Center"
 										  Opacity="0.7"/>
@@ -34,7 +34,7 @@
 				Padding="0"
 				VerticalAlignment="Center"
 				Click="AddButton_Click">
-			<ico:MaterialIcon Kind="AddCircle" 
+			<ico:VisualIcon Kind="AddCircle" 
 							  Width="16" Height="16"/>
 		</Button>
 
@@ -44,7 +44,7 @@
 				Padding="0"
 				VerticalAlignment="Center"
 				Click="ManageButton_Click">
-			<ico:MaterialIcon Kind="Settings" 
+			<ico:VisualIcon Kind="Settings" 
 							  Width="16" Height="16"/>
 		</Button>
 

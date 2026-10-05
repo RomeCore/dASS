@@ -6,7 +6,7 @@
 		<div class="user-profile-header">
 			<h3>@LocalizationManager.LocalizeStatic("webui.profile.title")</h3>
 			<button class="user-profile-close-btn" @onclick="Close" title="@LocalizationManager.LocalizeStatic("webui.profile.close")">
-				<MaterialIconComponent Kind="@MaterialIconKind.Close" Size="20" Color="#666" />
+				<VisualIconComponent Kind="@MaterialIconKind.Close" Size="20" Color="#666" />
 			</button>
 		</div>
 
@@ -22,7 +22,7 @@
 				else
 				{
 					<div class="user-profile-avatar user-profile-avatar-placeholder">
-						<MaterialIconComponent Kind="@MaterialIconKind.AccountCircle" Size="64" Color="#888" />
+						<VisualIconComponent Kind="@MaterialIconKind.AccountCircle" Size="64" Color="#888" />
 					</div>
 				}
 				<div class="user-profile-avatar-actions">
@@ -30,7 +30,7 @@
 							@onclick="SelectImage"
 							disabled="@_isUploading"
 							title="Upload avatar">
-						<MaterialIconComponent Kind="@MaterialIconKind.Camera" Size="16" Color="white" />
+						<VisualIconComponent Kind="@MaterialIconKind.Camera" Size="16" Color="white" />
 					</button>
 					@if (!string.IsNullOrEmpty(_user?.Base64ProfileImage))
 					{
@@ -38,7 +38,7 @@
 								@onclick="DeleteAvatar"
 								disabled="@_isUploading"
 								title="@LocalizationManager.LocalizeStatic("webui.profile.avatar.delete.title")">
-							<MaterialIconComponent Kind="@MaterialIconKind.Delete" Size="16" Color="#d32f2f" />
+							<VisualIconComponent Kind="@MaterialIconKind.Delete" Size="16" Color="#d32f2f" />
 						</button>
 					}
 				</div>
@@ -71,7 +71,7 @@
 		<div class="user-profile-footer">
 			<div class="user-profile-footer-left">
 				<button class="user-profile-logout-btn" @onclick="Logout">
-					<MaterialIconComponent Kind="@MaterialIconKind.Logout" Size="16" Color="#d32f2f" />
+					<VisualIconComponent Kind="@MaterialIconKind.Logout" Size="16" Color="#d32f2f" />
 					<span>@LocalizationManager.LocalizeStatic("webui.profile.logout")</span>
 				</button>
 			</div>

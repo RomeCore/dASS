@@ -11,11 +11,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	[ViewModelFor(typeof(AdditionalMessagePartView))]
 	public abstract class AdditionalMessagePart : AdditionalChatData
 	{
-		private MaterialIconKind? _chipIcon;
+		private VisualIconKind? _chipIcon;
 		/// <summary>
 		/// Gets or sets the icon shown on the part chip.
 		/// </summary>
-		public MaterialIconKind? ChipIcon
+		public VisualIconKind? ChipIcon
 		{
 			get => _chipIcon;
 			set => SetProperty(ref _chipIcon, value);

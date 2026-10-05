@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		public double Opacity { get; init; } = 1;
 
 		/// <inheritdoc/>
-		public MaterialIconKind? Icon { get; init; }
+		public VisualIconKind? Icon { get; init; }
 
 		/// <inheritdoc/>
 		public LocaleKeyBase? Label { get; init; }

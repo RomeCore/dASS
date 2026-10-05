@@ -32,7 +32,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		}
 
 		/// <inheritdoc/>
-		protected override MaterialIconKind TypeIcon => MaterialIconKind.ScriptTextOutline;
+		protected override VisualIconKind TypeIcon => MaterialIconKind.ScriptTextOutline;
 
 		/// <inheritdoc/>
 		protected override void AddHeaderChanges(AddonCardContext<LuaScriptInfo, LuaScriptChange> context, List<IAddonCardElement> elements)

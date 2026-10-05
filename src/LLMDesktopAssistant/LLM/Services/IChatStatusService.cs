@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <summary>
 		/// Gets or sets the icon kind to display in the status bar of the chat window.
 		/// </summary>
-		MaterialIconKind Icon { get; set; }
+		VisualIconKind Icon { get; set; }
 
 		/// <summary>
 		/// Gets or sets the text to display in the status bar of the chat window.

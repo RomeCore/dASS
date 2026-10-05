@@ -7,7 +7,7 @@
 <div class="chat-status-bar @(_animating ? "chat-status-animating" : "")" 
 	 style="display: @(_isActive ? "flex" : "none")">
 	
-	<MaterialIconComponent Kind="@statusService.Icon" Size="16" Color="#0078d4" />
+	<VisualIconComponent Kind="@statusService.Icon" Size="16" Color="#0078d4" />
 	
 	<span class="chat-status-text">@statusService.Text</span>
 	<span class="chat-status-dots">@_animatedDots</span>

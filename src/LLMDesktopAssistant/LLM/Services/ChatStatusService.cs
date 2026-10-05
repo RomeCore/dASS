@@ -8,9 +8,9 @@ namespace LLMDesktopAssistant.LLM.Services
 	[ChatService(typeof(IChatStatusService))]
 	public class ChatStatusService : NotifyPropertyChanged, IChatStatusService
 	{
-		private MaterialIconKind _icon;
+		private VisualIconKind _icon;
 		/// <inheritdoc/>
-		public MaterialIconKind Icon
+		public VisualIconKind Icon
 		{
 			get => _icon;
 			set => SetProperty(ref _icon, value);

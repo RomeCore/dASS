@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		public ImmutableList<IAddonCardChip>? Chips { get; init; }
 
 		/// <inheritdoc/>
-		public MaterialIconKind? ToggleIcon { get; init; }
+		public VisualIconKind? ToggleIcon { get; init; }
 
 		/// <inheritdoc/>
 		public LocaleKeyBase? ToggleToolTip { get; init; }

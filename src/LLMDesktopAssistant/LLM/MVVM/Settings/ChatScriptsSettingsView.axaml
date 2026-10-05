@@ -7,7 +7,7 @@
 			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatScriptsSettingsView"
 			 x:DataType="local:ChatScriptsSettingsViewModel"
 			 x:Name="VMRoot">
@@ -26,7 +26,7 @@
 					Command="{Binding List.RefreshCommand}"
 					Classes="IconButton"
 					ToolTip.Tip="{loc:Loc settings.scripts.refresh}">
-				<ico:MaterialIcon Kind="Refresh"/>
+				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 		</Grid>
 

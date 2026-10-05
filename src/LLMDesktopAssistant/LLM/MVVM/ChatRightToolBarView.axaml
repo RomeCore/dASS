@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatRightToolBarView"
 			 x:DataType="local:ChatRightToolBarViewModel">
 
@@ -25,7 +25,7 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate>
 					<StackPanel Orientation="Horizontal" Spacing="6">
-						<ico:MaterialIcon Kind="AccountCircle"
+						<ico:VisualIcon Kind="AccountCircle"
 															Width="14" Height="14"
 															VerticalAlignment="Center"
 															Opacity="0.7"/>
@@ -49,7 +49,7 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate>
 					<StackPanel Orientation="Horizontal" Spacing="6">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="14" Height="14"
 															VerticalAlignment="Center"
 															Opacity="0.7"/>
@@ -65,7 +65,7 @@
 						Command="{Binding UserInput.CancelEditCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.cancel_edit.hint}">
 
-			<ico:MaterialIcon Kind="EditOff"/>
+			<ico:VisualIcon Kind="EditOff"/>
 		</Button>
 
 		<!-- Send -->
@@ -73,7 +73,7 @@
 						Command="{Binding UserInput.SendMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
 
-			<ico:MaterialIcon Kind="SendClock"/>
+			<ico:VisualIcon Kind="SendClock"/>
 		</Button>
 
 		<!-- Send with generation -->
@@ -82,7 +82,7 @@
 						IsVisible="{Binding UserInput.IsGenerating, Converter={StaticResource InverseBooleanConverter}}"
 						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
 
-			<ico:MaterialIcon Kind="Send"/>
+			<ico:VisualIcon Kind="Send"/>
 		</Button>
 
 		<!-- Stop -->
@@ -91,7 +91,7 @@
 						IsVisible="{Binding UserInput.IsGenerating}"
 						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}">
 
-			<ico:MaterialIcon Kind="Stop"/>
+			<ico:VisualIcon Kind="Stop"/>
 		</Button>
 
 	</StackPanel>

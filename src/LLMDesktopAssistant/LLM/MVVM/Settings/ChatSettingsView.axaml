@@ -8,7 +8,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:conv="using:LLMDesktopAssistant.Converters"
 			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatSettingsView"
 			 x:DataType="local:ChatSettingsViewModel"
 			 beh:DialogLayoutBehaviour.DialogMargin="50">
@@ -33,7 +33,7 @@
 				<TreeDataTemplate DataType="set:SettingsParentNode"
 													ItemsSource="{Binding Children}">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="18" Height="18"
 															VerticalAlignment="Center"/>
 						<TextBlock Text="{Binding DisplayName}"
@@ -49,7 +49,7 @@
 						
 						<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3"
 												IsVisible="{Binding IsGlobal}">
-							<ico:MaterialIcon Kind="{Binding Icon}"
+							<ico:VisualIcon Kind="{Binding Icon}"
 																Width="18" Height="18"
 																VerticalAlignment="Center"
 																Foreground="{DynamicResource PrimaryAccentBrush}"/>
@@ -61,7 +61,7 @@
 						
 						<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3"
 												IsVisible="{Binding IsGlobal, Converter={StaticResource InverseBooleanConverter}}">
-							<ico:MaterialIcon Kind="{Binding Icon}"
+							<ico:VisualIcon Kind="{Binding Icon}"
 																Width="18" Height="18"
 																VerticalAlignment="Center"/>
 							<TextBlock Text="{Binding Info.Name}"
@@ -76,7 +76,7 @@
 
 				<DataTemplate DataType="set:SettingsLeafNode">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="16" Height="16"
 															VerticalAlignment="Center"
 															Opacity="0.8"/>

@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.Addons.MVVM.Grouping
 		/// <summary>
 		/// Gets the icon of the group.
 		/// </summary>
-		public MaterialIconKind? Icon { get; init; }
+		public VisualIconKind? Icon { get; init; }
 
 		/// <summary>
 		/// Gets the brush of the group name prefix, if any.

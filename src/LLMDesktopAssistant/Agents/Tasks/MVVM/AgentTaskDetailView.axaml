@@ -3,7 +3,7 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Agents.Tasks.MVVM"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -59,7 +59,7 @@
 													 Width="36" Height="36"
 													 StrokeThickness="4"
 													 Foreground="{DynamicResource PrimaryAccentBrush}"/>
-				<ico:MaterialIcon Kind="{Binding TaskViewModel.StatusIcon}"
+				<ico:VisualIcon Kind="{Binding TaskViewModel.StatusIcon}"
 													Width="36" Height="36"
 													IsVisible="{Binding !TaskViewModel.IsRunning}"/>
 			</Panel>
@@ -81,7 +81,7 @@
 											Classes="SmallIconButton"
 											Margin="0,0,8,0"
 											ToolTip.Tip="{loc:Loc task.cancel}">
-				<ico:MaterialIcon Kind="Stop" Width="20" Height="20"/>
+				<ico:VisualIcon Kind="Stop" Width="20" Height="20"/>
 			</Button>
 
 			<!-- Close button -->
@@ -89,7 +89,7 @@
 							Command="{Binding CloseCommand}"
 							Classes="SmallIconButton"
 							ToolTip.Tip="{loc:Loc common.close}">
-				<ico:MaterialIcon Kind="Close" Width="20" Height="20"/>
+				<ico:VisualIcon Kind="Close" Width="20" Height="20"/>
 			</Button>
 
 		</Grid>
@@ -100,13 +100,13 @@
 							 Orientation="Horizontal" ItemSpacing="8">
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="Clock" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="Clock" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Text="{Binding ExecutionTimeFormatted}" Classes="ValueText"/>
 				</StackPanel>
 			</Border>
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="ArrowUp" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="ArrowUp" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Classes="ValueText">
 						<Run Text="{Binding Task.UsageStatistics.InputTokens}"/>
 						<Run Text=" "/>
@@ -116,7 +116,7 @@
 			</Border>
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="Database" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="Database" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Classes="ValueText">
 						<Run Text="{Binding Task.UsageStatistics.InputCacheHitTokens}"/>
 						<Run Text=" "/>
@@ -126,7 +126,7 @@
 			</Border>
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="ArrowDown" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="ArrowDown" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Classes="ValueText">
 						<Run Text="{Binding Task.UsageStatistics.OutputTokens}"/>
 						<Run Text=" "/>
@@ -136,7 +136,7 @@
 			</Border>
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="Timer" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="Timer" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Classes="ValueText">
 						<Run Text="{loc:Loc task.detail.time_to_first_token}"/>
 						<Run Text=" "/>
@@ -146,7 +146,7 @@
 			</Border>
 			<Border Classes="StatsBlock">
 				<StackPanel Orientation="Horizontal" Spacing="6">
-					<ico:MaterialIcon Kind="LightningBolt" Width="14" Height="14" Opacity="0.5"/>
+					<ico:VisualIcon Kind="LightningBolt" Width="14" Height="14" Opacity="0.5"/>
 					<TextBlock Classes="ValueText">
 						<Run Text="{loc:Loc task.detail.inference_time}"/>
 						<Run Text=" "/>
@@ -206,7 +206,7 @@
 						Classes="ErrorBlock" IsVisible="{Binding Task.Exception, Converter={StaticResource NotnullToBooleanConverter}}">
 			<StackPanel>
 				<StackPanel Orientation="Horizontal" Spacing="8">
-					<ico:MaterialIcon Kind="AlertCircle" Width="20" Height="20"
+					<ico:VisualIcon Kind="AlertCircle" Width="20" Height="20"
 														Foreground="#F44336"/>
 					<TextBlock Text="{loc:Loc task.detail.error}"
 										 FontSize="14" FontWeight="SemiBold"
@@ -252,7 +252,7 @@
 							<!-- Message header: role + icon -->
 							<StackPanel Orientation="Horizontal" Spacing="6"
 													Margin="0,0,0,6">
-								<ico:MaterialIcon Kind="Cog"
+								<ico:VisualIcon Kind="Cog"
 																	Width="22" Height="22"/>
 								<TextBlock Text="{loc:Loc task.role.system}"
 													 FontSize="16" FontWeight="SemiBold"/>
@@ -274,7 +274,7 @@
 							<!-- Message header: role + icon -->
 							<StackPanel Orientation="Horizontal" Spacing="6"
 													Margin="0,0,0,6">
-								<ico:MaterialIcon Kind="Account"
+								<ico:VisualIcon Kind="Account"
 																	Width="22" Height="22"/>
 								<TextBlock Text="{loc:Loc task.role.user}"
 													 FontSize="16" FontWeight="SemiBold"/>
@@ -292,7 +292,7 @@
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="tsk:AgentAttachment">
 										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
-											<ico:MaterialIcon Kind="Paperclip"
+											<ico:VisualIcon Kind="Paperclip"
 																				Width="12" Height="12"
 																				Opacity="0.5"/>
 											<TextBlock Text="{Binding Url}"
@@ -315,7 +315,7 @@
 							<!-- Message header: role + icon -->
 							<StackPanel Orientation="Horizontal" Spacing="6"
 													Margin="0,0,0,8">
-								<ico:MaterialIcon Kind="Robot"
+								<ico:VisualIcon Kind="Robot"
 																	Width="22" Height="22"/>
 								<TextBlock Text="{loc:Loc task.role.assistant}"
 													 FontSize="18" FontWeight="SemiBold"/>
@@ -363,7 +363,7 @@
 									<DataTemplate x:DataType="tsk:AgentAttachment">
 										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2"
 																HorizontalAlignment="Left">
-											<ico:MaterialIcon Kind="Paperclip"
+											<ico:VisualIcon Kind="Paperclip"
 																				Width="12" Height="12"
 																				Opacity="0.7"/>
 											<TextBlock Text="{Binding Url}"

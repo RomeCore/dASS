@@ -44,7 +44,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Gets the icon shown in the header of the cards of the addon type.
 		/// </summary>
-		protected abstract MaterialIconKind TypeIcon { get; }
+		protected abstract VisualIconKind TypeIcon { get; }
 
 		private readonly IExplorerOpener? _explorerOpener;
 		private readonly IToastService? _toastService;
@@ -345,7 +345,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Adds a details block with one chip per label. Does nothing when there are no labels.
 		/// </summary>
-		protected static void AddChipsBlock(List<IAddonCardElement> elements, LocaleKeyBase title, MaterialIconKind? icon,
+		protected static void AddChipsBlock(List<IAddonCardElement> elements, LocaleKeyBase title, VisualIconKind? icon,
 			IEnumerable<string> labels, int order = BlockOrder + 20)
 		{
 			ImmutableList<IAddonCardChip>.Builder chips = ImmutableList.CreateBuilder<IAddonCardChip>();
@@ -547,7 +547,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Gets the icon that represents the source the addon was loaded from.
 		/// </summary>
-		protected static MaterialIconKind GetSourceIcon(TAddon addon) => addon.AddonSource switch
+		protected static VisualIconKind GetSourceIcon(TAddon addon) => addon.AddonSource switch
 		{
 			AddonSource.Pack => addon.SourcePack?.Source is AddonPackSource.AgentsHome or AddonPackSource.UserAgentsHome
 				? MaterialIconKind.Folder
@@ -562,7 +562,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		protected static LocaleKeyBase GetSourceLabel(TAddon addon) =>
 			Locale.GetKey($"card.source.{addon.AddonSource.ToString().ToLowerInvariant()}");
 
-		private static MaterialIconKind GetMetadataIcon(AddonMetadataType type) => type switch
+		private static VisualIconKind GetMetadataIcon(AddonMetadataType type) => type switch
 		{
 			AddonMetadataType.Author => MaterialIconKind.Account,
 			AddonMetadataType.License => MaterialIconKind.CardText,

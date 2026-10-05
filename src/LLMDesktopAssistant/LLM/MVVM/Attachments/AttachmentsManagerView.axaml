@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Attachments"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:flui="using:FluentAvalonia.UI"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Attachments.AttachmentsManagerView"
@@ -20,7 +20,7 @@
 		<DockPanel Grid.Row="0"
 							 Margin="0,0,0,10">
 
-			<ico:MaterialIcon Kind="Paperclip" FontSize="28"/>
+			<ico:VisualIcon Kind="Paperclip" FontSize="28"/>
 
 			<TextBlock Text="{loc:Loc attachment.manager.title}"
 								 Margin="8,0,0,0"
@@ -35,7 +35,7 @@
 							HorizontalAlignment="Right"
 							Command="{Binding CloseDialogCommand}">
 			
-				<ico:MaterialIcon Kind="Close"/>
+				<ico:VisualIcon Kind="Close"/>
 
 			</Button>
 
@@ -59,7 +59,7 @@
 							Classes="BigIconButton"
 							ToolTip.Tip="{loc:Loc attachment.add_url.hint}">
 
-				<ico:MaterialIcon Kind="Link" />
+				<ico:VisualIcon Kind="Link" />
 			</Button>
 
 			<Button Grid.Column="2"
@@ -68,7 +68,7 @@
 							Classes="BigIconButton"
 							ToolTip.Tip="{loc:Loc attachment.attach_files.hint}">
 
-				<ico:MaterialIcon Kind="FolderOpen" />
+				<ico:VisualIcon Kind="FolderOpen" />
 			</Button>
 		</Grid>
 

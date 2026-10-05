@@ -5,7 +5,6 @@ using Avalonia.Media;
 using LiveMarkdown.Avalonia;
 using Markdig.Extensions.Alerts;
 using Material.Icons;
-using Material.Icons.Avalonia;
 
 namespace LLMDesktopAssistant.Markdown.UINodes;
 
@@ -36,7 +35,7 @@ public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
 	};
 
 	private readonly Border _border;
-	private readonly MaterialIcon _icon;
+	private readonly VisualIcon _icon;
 	private readonly TextBlock _titleText;
 	private string? _currentTypeClass;
 
@@ -50,7 +49,7 @@ public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
 	/// </summary>
 	public AlertBlockUiNode()
 	{
-		_icon = new MaterialIcon
+		_icon = new VisualIcon
 		{
 			Width = 18,
 			Height = 18,
@@ -115,7 +114,7 @@ public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
 		}
 		_border.ClearValue(Border.BackgroundProperty);
 		_border.ClearValue(Border.BorderBrushProperty);
-		_icon.ClearValue(TextBlock.ForegroundProperty);
+		_icon.ClearValue(VisualIcon.ForegroundProperty);
 		_titleText.ClearValue(TextBlock.ForegroundProperty);
 		_titleText.ClearValue(TextBlock.TextProperty);
 
@@ -240,7 +239,7 @@ public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
 		return AlertClass + pascal;
 	}
 
-	private static MaterialIconKind GetIcon(string kind) => kind.ToUpperInvariant() switch
+	private static VisualIconKind GetIcon(string kind) => kind.ToUpperInvariant() switch
 	{
 		"TIP" => MaterialIconKind.LightbulbOnOutline,
 		"IMPORTANT" => MaterialIconKind.AlertOutline,

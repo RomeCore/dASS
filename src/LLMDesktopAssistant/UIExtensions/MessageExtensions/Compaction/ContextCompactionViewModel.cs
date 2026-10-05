@@ -69,7 +69,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction
 		}
 
 		private ContextCompactionToggleViewModel CreateToggle(
-			ContextCheckpointKind kind, MaterialIconKind icon, string tooltip, CornerRadius cornerRadius)
+			ContextCheckpointKind kind, VisualIconKind icon, string tooltip, CornerRadius cornerRadius)
 		{
 			ICommand command = kind == ContextCheckpointKind.Summary
 				? new AsyncRelayCommand(ToggleSummaryAsync)

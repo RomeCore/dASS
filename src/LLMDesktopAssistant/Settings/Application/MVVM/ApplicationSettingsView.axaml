@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.Settings.Application.MVVM"
 			 xmlns:set="using:LLMDesktopAssistant.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Settings.Application.MVVM.ApplicationSettingsView"
 			 x:DataType="local:ApplicationSettingsViewModel">
 
@@ -22,7 +22,7 @@
 				<TreeDataTemplate DataType="set:SettingsParentNode"
 													ItemsSource="{Binding Children}">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="18" Height="18"
 															VerticalAlignment="Center"/>
 						<TextBlock Text="{Binding DisplayName}"
@@ -33,7 +33,7 @@
 
 				<DataTemplate DataType="set:SettingsLeafNode">
 					<StackPanel Orientation="Horizontal" Spacing="6" Margin="4,3">
-						<ico:MaterialIcon Kind="{Binding Icon}"
+						<ico:VisualIcon Kind="{Binding Icon}"
 															Width="16" Height="16"
 															VerticalAlignment="Center"
 															Opacity="0.8"/>

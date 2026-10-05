@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="40"
 			 xmlns:local="using:LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction.ContextCompactionView"
 			 x:DataType="local:ContextCompactionViewModel">
 
@@ -26,7 +26,7 @@
 							  IsEnabled="{Binding IsEnabled}"
 							  CornerRadius="{Binding CornerRadius}"
 							  ToolTip.Tip="{loc:Loc {Binding Tooltip}}">
-					<ico:MaterialIcon Kind="{Binding Icon}"/>
+					<ico:VisualIcon Kind="{Binding Icon}"/>
 				</ToggleButton>
 
 			</DataTemplate>

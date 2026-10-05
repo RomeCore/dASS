@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="420"
 			 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Tools.Consents.ConsentMemorizationView"
 			 x:DataType="consents:ConsentMemorizationViewModel">
 
@@ -17,7 +17,7 @@
 		<!-- Header -->
 		<DockPanel Grid.Row="0" Margin="0,0,0,10">
 
-			<ico:MaterialIcon Kind="BookmarkMultipleOutline" FontSize="28" VerticalAlignment="Center"/>
+			<ico:VisualIcon Kind="BookmarkMultipleOutline" FontSize="28" VerticalAlignment="Center"/>
 
 			<TextBlock Text="{loc:Loc tool.call.remember.manager.title}"
 					   Margin="8,0,0,0"
@@ -31,7 +31,7 @@
 					HorizontalAlignment="Right"
 					Command="{Binding CloseCommand}">
 
-				<ico:MaterialIcon Kind="Close"/>
+				<ico:VisualIcon Kind="Close"/>
 
 			</Button>
 
@@ -63,7 +63,7 @@
 								Classes="SmallIconButton"
 								Command="{Binding ClearSessionCommand}"
 								ToolTip.Tip="{loc:Loc tool.call.remember.manager.forget_all}">
-							<ico:MaterialIcon Kind="DeleteSweepOutline"/>
+							<ico:VisualIcon Kind="DeleteSweepOutline"/>
 						</Button>
 
 					</Grid>
@@ -79,7 +79,7 @@
 								<Border Background="#14000000" CornerRadius="6" Padding="10,6">
 									<Grid ColumnDefinitions="Auto,*,Auto">
 
-										<ico:MaterialIcon Grid.Column="0"
+										<ico:VisualIcon Grid.Column="0"
 														  Kind="{Binding DecisionIcon}"
 														  Width="16" Height="16"
 														  VerticalAlignment="Center"
@@ -104,7 +104,7 @@
 												Command="{Binding ForgetCommand}"
 												ToolTip.Tip="{loc:Loc tool.call.remember.manager.forget}"
 												VerticalAlignment="Center">
-											<ico:MaterialIcon Kind="BookmarkRemoveOutline"/>
+											<ico:VisualIcon Kind="BookmarkRemoveOutline"/>
 										</Button>
 
 									</Grid>
@@ -133,7 +133,7 @@
 								<Border Background="#14000000" CornerRadius="6" Padding="10,6">
 									<Grid ColumnDefinitions="Auto,*,Auto">
 
-										<ico:MaterialIcon Grid.Column="0"
+										<ico:VisualIcon Grid.Column="0"
 														  Kind="{Binding DecisionIcon}"
 														  Width="16" Height="16"
 														  VerticalAlignment="Center"
@@ -157,7 +157,7 @@
 												Command="{Binding ForgetCommand}"
 												ToolTip.Tip="{loc:Loc tool.call.remember.manager.forget}"
 												VerticalAlignment="Center">
-											<ico:MaterialIcon Kind="BookmarkRemoveOutline"/>
+											<ico:VisualIcon Kind="BookmarkRemoveOutline"/>
 										</Button>
 
 									</Grid>

@@ -3,7 +3,7 @@
 			 x:Class="LLMDesktopAssistant.App"
 			 xmlns:mvvm="using:LLMDesktopAssistant.MVVM"
 			 xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
-			 xmlns:materialIcons="clr-namespace:Material.Icons.Avalonia;assembly=Material.Icons.Avalonia"
+			 xmlns:icons="using:LLMDesktopAssistant.Controls.Icons"
 			 RequestedThemeVariant="Dark">
 	
 	<Application.Resources>
@@ -25,7 +25,7 @@
 	<Application.Styles>
 		<FluentTheme />
 
-		<materialIcons:MaterialIconStyles />
+		<icons:VisualIconStyles />
 		<dialogHostAvalonia:DialogHostStyles />
 
 		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Theme/Theme.axaml"/>

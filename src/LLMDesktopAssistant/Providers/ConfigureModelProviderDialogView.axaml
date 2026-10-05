@@ -5,7 +5,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.Providers"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="600"
 			 x:Class="LLMDesktopAssistant.Providers.ConfigureModelProviderDialogView"
 			 x:DataType="local:ConfigureModelProviderDialogViewModel"
@@ -16,7 +16,7 @@
 
 			<!-- Header -->
 			<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
-				<ico:MaterialIcon Kind="Settings" Width="20" Height="20"
+				<ico:VisualIcon Kind="Settings" Width="20" Height="20"
 									VerticalAlignment="Center"
 									Foreground="{DynamicResource PrimaryAccentBrush}"/>
 				<TextBlock Text="{loc:Loc settings.provider.add.title}"
@@ -64,14 +64,14 @@
 				<Button Command="{Binding TestConnectionCommand}"
 						Classes="Primary">
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="Link" Width="16" Height="16"/>
+						<ico:VisualIcon Kind="Link" Width="16" Height="16"/>
 						<TextBlock Text="{loc:Loc settings.provider.test_connection}"/>
 					</StackPanel>
 				</Button>
 
 				<Button Command="{Binding LoadModelsCommand}">
 					<StackPanel Orientation="Horizontal" Spacing="4">
-						<ico:MaterialIcon Kind="Refresh" Width="16" Height="16"/>
+						<ico:VisualIcon Kind="Refresh" Width="16" Height="16"/>
 						<TextBlock Text="{loc:Loc model.selector.refresh}"/>
 					</StackPanel>
 				</Button>
@@ -96,13 +96,13 @@
 					<Button Command="{Binding SelectAllCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc model.selector.select_all}">
-						<ico:MaterialIcon Kind="SelectAll" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="SelectAll" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding DeselectAllCommand}"
 							Classes="IconButton"
 							ToolTip.Tip="{loc:Loc model.selector.deselect_all}">
-						<ico:MaterialIcon Kind="SelectOff" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="SelectOff" Width="14" Height="14"/>
 					</Button>
 				</StackPanel>
 
@@ -166,7 +166,7 @@
 														<DataTemplate x:DataType="local:ModelModalityFlagInfo">
 															<Panel ToolTip.Tip="{Binding DisplayName}"
 																		 Background="Transparent">
-																<ico:MaterialIcon Kind="{Binding Icon}"
+																<ico:VisualIcon Kind="{Binding Icon}"
 																									Foreground="{Binding Color}"
 																									Width="12" Height="12"/>
 															</Panel>
@@ -192,7 +192,7 @@
 														<DataTemplate x:DataType="local:ModelModalityFlagInfo">
 															<Panel ToolTip.Tip="{Binding DisplayName}"
 																		 Background="Transparent">
-																<ico:MaterialIcon Kind="{Binding Icon}"
+																<ico:VisualIcon Kind="{Binding Icon}"
 																									Foreground="{Binding Color}"
 																									Width="12" Height="12"/>
 															</Panel>
@@ -218,7 +218,7 @@
 														<DataTemplate x:DataType="local:ModelCapabilityFlagInfo">
 															<Panel ToolTip.Tip="{Binding DisplayName}"
 																		 Background="Transparent">
-																<ico:MaterialIcon Kind="{Binding Icon}"
+																<ico:VisualIcon Kind="{Binding Icon}"
 																									Foreground="{Binding Color}"
 																									Width="12" Height="12"/>
 															</Panel>
@@ -263,7 +263,7 @@
 							Classes="Primary"
 							VerticalAlignment="Stretch">
 						<StackPanel Orientation="Horizontal" Spacing="4">
-							<ico:MaterialIcon Kind="Add" Width="14" Height="14"/>
+							<ico:VisualIcon Kind="Add" Width="14" Height="14"/>
 							<TextBlock Text="{loc:Loc settings.provider.custom.add}"/>
 						</StackPanel>
 					</Button>
@@ -320,7 +320,7 @@
 													CommandParameter="{Binding}"
 													ToolTip.Tip="{loc:Loc settings.provider.custom.remove.tooltip}"
 													VerticalAlignment="Center">
-												<ico:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+												<ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
 											</Button>
 
 										</Grid>

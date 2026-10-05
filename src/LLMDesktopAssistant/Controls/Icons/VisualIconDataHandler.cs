@@ -65,26 +65,52 @@ namespace LLMDesktopAssistant.Controls.Icons
 
 		private static VisualIconData ResolvePath(string? data)
 		{
-			if (string.IsNullOrEmpty(data))
+			if (string.IsNullOrEmpty(data) || !IsValidPathData(data))
 				return new VisualIconData(VisualIconStatus.InvalidData, _fallbackPath);
 
-			try
+			return new VisualIconData(VisualIconStatus.Ok, data);
+		}
+
+		private const string PathCommandChars = "MmZzLlHhVvCcSsQqTtAa";
+		private const string PathNumberChars = "0123456789.,-+eE \t\r\n";
+
+		/// <summary>
+		/// Cheap, platform-independent syntax check for SVG path data. Parsing a path into a
+		/// <see cref="Geometry"/> requires a live Avalonia platform, so the authoritative parse is
+		/// left to the renderer (which falls back to an error glyph when it fails).
+		/// </summary>
+		private static bool IsValidPathData(string data)
+		{
+			var hasCommand = false;
+			foreach (var c in data)
 			{
-				// Path data has no known design box, so validation is "can it be parsed at all".
-				_ = Geometry.Parse(data);
-				return new VisualIconData(VisualIconStatus.Ok, data);
+				if (PathCommandChars.IndexOf(c) >= 0)
+				{
+					hasCommand = true;
+					continue;
+				}
+
+				if (PathNumberChars.IndexOf(c) >= 0)
+					continue;
+
+				return false;
 			}
-			catch
-			{
-				return new VisualIconData(VisualIconStatus.InvalidData, _fallbackPath);
-			}
+
+			return hasCommand;
 		}
 
 		private static Dictionary<string, MaterialIconKind> BuildMaterialNames()
 		{
 			var result = new Dictionary<string, MaterialIconKind>(StringComparer.OrdinalIgnoreCase);
-			foreach (var kind in Enum.GetValues<MaterialIconKind>())
-				result.TryAdd(kind.ToString(), kind);
+
+			// NOTE: Enum.GetValues() + ToString() only yields the *first* name of each value, so any
+			// aliased member (two names sharing one value, as Material.Icons has plenty of) would be
+			// missing. Enumerate the field names instead, which includes every alias.
+			foreach (var name in Enum.GetNames<MaterialIconKind>())
+			{
+				if (Enum.TryParse<MaterialIconKind>(name, out var kind))
+					result.TryAdd(name, kind);
+			}
 
 			return result;
 		}

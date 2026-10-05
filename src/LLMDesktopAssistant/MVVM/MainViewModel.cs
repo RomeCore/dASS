@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.MVVM
 {
 	public class MainViewModelSidebarItemViewModel : NotifyPropertyChanged
 	{
-		public required MaterialIconKind Icon { get; init; }
+		public required VisualIconKind Icon { get; init; }
 
 		public required LocaleKeyBase Title { get; init; }
 

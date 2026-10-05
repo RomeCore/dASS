@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Prompting.Context.MVVM
 	public class PromptContextAddonCardFactory : AddonCardFactoryBase<PromptContextInfo, PromptContextChange>
 	{
 		/// <inheritdoc/>
-		protected override MaterialIconKind TypeIcon => MaterialIconKind.Layers;
+		protected override VisualIconKind TypeIcon => MaterialIconKind.Layers;
 
 		/// <inheritdoc/>
 		protected override void AddHeaderChanges(AddonCardContext<PromptContextInfo, PromptContextChange> context,

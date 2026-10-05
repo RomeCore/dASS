@@ -4,7 +4,7 @@
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Agents.Tasks.MVVM"
 						 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:settings="using:LLMDesktopAssistant.LLM.MVVM.Settings"
@@ -24,7 +24,7 @@
 
 				<!-- Status icon -->
 				<Panel Width="18" Height="18" VerticalAlignment="Center">
-						<ico:MaterialIcon Kind="{Binding StatusIcon}"
+						<ico:VisualIcon Kind="{Binding StatusIcon}"
 															Width="18" Height="18"/>
 				</Panel>
 
@@ -60,7 +60,7 @@
 										<TextBlock Text="{loc:Loc {Binding Description}}"/>
 									</StackPanel>
 								</ToolTip.Tip>
-								<ico:MaterialIcon Kind="{Binding Icon}"
+								<ico:VisualIcon Kind="{Binding Icon}"
 								                  Foreground="{Binding Color}"
 								                  Width="12" Height="12"/>
 							</Panel>
@@ -77,7 +77,7 @@
 				<Button Classes="MiniIconButton"
 								DockPanel.Dock="Left">
 
-					<ico:MaterialIcon Kind="CodeBraces"/>
+					<ico:VisualIcon Kind="CodeBraces"/>
 					
 					<Button.Flyout>
 						<Flyout>
@@ -104,7 +104,7 @@
 				<Button Classes="MiniIconButton"
 								DockPanel.Dock="Left">
 
-					<ico:MaterialIcon Kind="CommentTextOutline"/>
+					<ico:VisualIcon Kind="CommentTextOutline"/>
 					
 					<Button.Flyout>
 						<Flyout>

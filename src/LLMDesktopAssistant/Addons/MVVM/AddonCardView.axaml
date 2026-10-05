@@ -5,7 +5,7 @@
 						 mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="220"
 						 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.Addons.MVVM.AddonCardView"
 						 x:DataType="cards:AddonCardViewModel"
 						 IsVisible="{Binding IsVisible}">
@@ -102,7 +102,7 @@
 				<ContentControl Content="{Binding Content}"
 												IsVisible="{Binding Content, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
-				<ico:MaterialIcon Kind="{Binding Icon}"
+				<ico:VisualIcon Kind="{Binding Icon}"
 												  IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
 												  Width="12" Height="12"
 												  VerticalAlignment="Center"
@@ -121,7 +121,7 @@
 										IsChecked="{Binding IsExpanded, Mode=TwoWay}"
 										ToolTip.Tip="{loc:Loc {Binding ToggleToolTip}}"
 										IsVisible="{Binding ToggleIcon, Converter={StaticResource NotnullToBooleanConverter}}">
-				<ico:MaterialIcon Kind="{Binding ToggleIcon}" Width="14" Height="14"/>
+				<ico:VisualIcon Kind="{Binding ToggleIcon}" Width="14" Height="14"/>
 			</ToggleButton>
 		</DataTemplate>
 
@@ -248,7 +248,7 @@
 							Command="{Binding Command}"
 							CommandParameter="{Binding CommandParameter}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
-				<ico:MaterialIcon Kind="{Binding Icon}"/>
+				<ico:VisualIcon Kind="{Binding Icon}"/>
 			</Button>
 		</DataTemplate>
 
@@ -274,9 +274,9 @@
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc card.group.expand}">
 					<Panel>
-						<ico:MaterialIcon Kind="ChevronRight" Width="16" Height="16"
+						<ico:VisualIcon Kind="ChevronRight" Width="16" Height="16"
 												  IsVisible="{Binding !IsChildrenExpanded}"/>
-						<ico:MaterialIcon Kind="ChevronDown" Width="16" Height="16"
+						<ico:VisualIcon Kind="ChevronDown" Width="16" Height="16"
 												  IsVisible="{Binding IsChildrenExpanded}"/>
 					</Panel>
 				</ToggleButton>
@@ -294,7 +294,7 @@
 
 				<!-- Name + optional subtitle -->
 				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-					<ico:MaterialIcon Kind="{Binding Icon}"
+					<ico:VisualIcon Kind="{Binding Icon}"
 													  Foreground="{DynamicResource PrimaryAccentBrush}"
 													  Width="20" Height="20"
 													  VerticalAlignment="Center"/>
@@ -335,7 +335,7 @@
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc common.reset}"
 								IsEnabled="{Binding HasChanges}">
-					<ico:MaterialIcon Kind="Refresh"/>
+					<ico:VisualIcon Kind="Refresh"/>
 				</Button>
 
 			</Grid>
@@ -413,7 +413,7 @@
 												IsVisible="{Binding HasDetails}"
 												IsChecked="{Binding IsDetailsVisible, Mode=TwoWay}"
 												ToolTip.Tip="{loc:Loc card.details}">
-						<ico:MaterialIcon Kind="CardAccountDetailsOutline" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="CardAccountDetailsOutline" Width="14" Height="14"/>
 					</ToggleButton>
 
 				</StackPanel>

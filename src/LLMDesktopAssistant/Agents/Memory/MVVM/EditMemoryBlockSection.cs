@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Agents.Memory.MVVM
 		/// <summary>
 		/// Gets the icon shown next to the section.
 		/// </summary>
-		public MaterialIconKind Icon { get; }
+		public VisualIconKind Icon { get; }
 
 		/// <summary>
 		/// Gets the view model of the section, creating it lazily on first access.
@@ -32,7 +32,7 @@ namespace LLMDesktopAssistant.Agents.Memory.MVVM
 		/// <param name="displayName">The display name of the section.</param>
 		/// <param name="icon">The icon shown next to the section.</param>
 		/// <param name="viewModelFactory">The factory that creates the view model of the section.</param>
-		public EditMemoryBlockSection(string displayName, MaterialIconKind icon, Func<object?> viewModelFactory)
+		public EditMemoryBlockSection(string displayName, VisualIconKind icon, Func<object?> viewModelFactory)
 		{
 			DisplayName = displayName;
 			Icon = icon;

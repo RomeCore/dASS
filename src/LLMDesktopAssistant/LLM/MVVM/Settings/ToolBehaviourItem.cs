@@ -23,7 +23,7 @@ public class ToolBehaviourItem : NotifyPropertyChanged
 	/// <summary>
 	/// Gets the icon associated with this behaviour flag.
 	/// </summary>
-	public MaterialIconKind Icon { get; }
+	public VisualIconKind Icon { get; }
 
 	/// <summary>
 	/// Gets the color associated with this behaviour flag.

@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Gets the icon of the card, usually taken from the addon type descriptor.
 		/// </summary>
-		public MaterialIconKind? Icon { get; init; }
+		public VisualIconKind? Icon { get; init; }
 
 		/// <summary>
 		/// Gets the brush used to paint the name prefix of the addon.

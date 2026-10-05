@@ -7,7 +7,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 			 xmlns:sett="using:LLMDesktopAssistant.Settings"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatLeftToolBarView"
 			 x:DataType="local:ChatLeftToolBarViewModel">
 
@@ -32,7 +32,7 @@
 							Command="{Binding OpenSettingsCommand}"
 							ToolTip.Tip="{loc:Loc common.settings}"
 							CornerRadius="0,8,8,0">
-				<ico:MaterialIcon Kind="Cog"/>
+				<ico:VisualIcon Kind="Cog"/>
 			</Button>
 
 		</StackPanel>
@@ -44,7 +44,7 @@
 		<Button Classes="IconButton"
 						Command="{Binding OpenConsentMemorizationCommand}"
 						ToolTip.Tip="{loc:Loc tool.call.remember.manager.hint}">
-			<ico:MaterialIcon Kind="BookmarkMultipleOutline"/>
+			<ico:VisualIcon Kind="BookmarkMultipleOutline"/>
 		</Button>
 
 		<!-- Attach -->
@@ -52,7 +52,7 @@
 						Command="{Binding OpenAttachmentsManagerCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}">
 
-			<ico:MaterialIcon Kind="Paperclip"/>
+			<ico:VisualIcon Kind="Paperclip"/>
 		</Button>
 
 		<!-- Blazor Web UI Host -->
@@ -60,7 +60,7 @@
 						Command="{Binding OpenBlazorWebUICommand}"
 						ToolTip.Tip="{loc:Loc webui.host.title}">
 
-			<ico:MaterialIcon Kind="Web"/>
+			<ico:VisualIcon Kind="Web"/>
 		</Button>
 
 	</StackPanel>

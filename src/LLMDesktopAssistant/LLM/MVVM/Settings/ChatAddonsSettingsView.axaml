@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:settings="using:LLMDesktopAssistant.LLM.Settings"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatAddonsSettingsView"
 			 x:DataType="local:ChatAddonsSettingsViewModel"
 			 x:Name="VMRoot">
@@ -65,7 +65,7 @@
 					Classes="IconButton"
 					VerticalAlignment="Center"
 					ToolTip.Tip="{loc:Loc common.add}">
-				<ico:MaterialIcon Kind="Plus"/>
+				<ico:VisualIcon Kind="Plus"/>
 			</Button>
 		</Grid>
 
@@ -89,7 +89,7 @@
 								Classes="IconButton"
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc common.remove}">
-							<ico:MaterialIcon Kind="Close"/>
+							<ico:VisualIcon Kind="Close"/>
 						</Button>
 					</Grid>
 				</DataTemplate>
@@ -183,7 +183,7 @@
 					Command="{Binding AddPackPathCommand}"
 					Classes="IconButton"
 					ToolTip.Tip="{loc:Loc common.add}">
-				<ico:MaterialIcon Kind="Plus"/>
+				<ico:VisualIcon Kind="Plus"/>
 			</Button>
 
 			<Button Grid.Column="2"
@@ -192,7 +192,7 @@
 					Classes="IconButton"
 					Margin="4,0,0,0"
 					ToolTip.Tip="{loc:Loc addon.settings.select_pack_folder}">
-				<ico:MaterialIcon Kind="FolderOpen"/>
+				<ico:VisualIcon Kind="FolderOpen"/>
 			</Button>
 		</Grid>
 
@@ -211,7 +211,7 @@
 								Classes="IconButton"
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc env.browse}">
-							<ico:MaterialIcon Kind="FolderOpen"/>
+							<ico:VisualIcon Kind="FolderOpen"/>
 						</Button>
 
 						<Button Grid.Column="2"
@@ -220,7 +220,7 @@
 								Classes="IconButton"
 								Margin="2,0"
 								ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-							<ico:MaterialIcon Kind="OpenInNew"/>
+							<ico:VisualIcon Kind="OpenInNew"/>
 						</Button>
 
 						<Button Grid.Column="3"
@@ -228,7 +228,7 @@
 								CommandParameter="{Binding}"
 								Classes="IconButton"
 								Margin="2,0,0,0">
-							<ico:MaterialIcon Kind="Close"/>
+							<ico:VisualIcon Kind="Close"/>
 						</Button>
 					</Grid>
 				</DataTemplate>
@@ -315,7 +315,7 @@
 										Classes="IconButton"
 										VerticalAlignment="Top"
 										ToolTip.Tip="{loc:Loc common.add}">
-									<ico:MaterialIcon Kind="Plus"/>
+									<ico:VisualIcon Kind="Plus"/>
 								</Button>
 
 								<Button Grid.Column="2"
@@ -325,7 +325,7 @@
 										VerticalAlignment="Top"
 										Margin="4,0,0,0"
 										ToolTip.Tip="{loc:Loc addon.settings.select_directory}">
-									<ico:MaterialIcon Kind="FolderPlus"/>
+									<ico:VisualIcon Kind="FolderPlus"/>
 								</Button>
 							</Grid>
 
@@ -344,7 +344,7 @@
 													Classes="IconButton"
 													Margin="4,0,0,0"
 													ToolTip.Tip="{loc:Loc env.browse}">
-												<ico:MaterialIcon Kind="FolderOpen"/>
+												<ico:VisualIcon Kind="FolderOpen"/>
 											</Button>
 
 											<Button Grid.Column="2"
@@ -353,7 +353,7 @@
 													Classes="IconButton"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-												<ico:MaterialIcon Kind="OpenInNew"/>
+												<ico:VisualIcon Kind="OpenInNew"/>
 											</Button>
 
 											<Button Grid.Column="3"
@@ -362,7 +362,7 @@
 													Classes="IconButton"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc common.remove}">
-												<ico:MaterialIcon Kind="Close"/>
+												<ico:VisualIcon Kind="Close"/>
 											</Button>
 										</Grid>
 									</DataTemplate>
@@ -386,7 +386,7 @@
 										Classes="IconButton"
 										VerticalAlignment="Top"
 										ToolTip.Tip="{loc:Loc common.add}">
-									<ico:MaterialIcon Kind="Plus"/>
+									<ico:VisualIcon Kind="Plus"/>
 								</Button>
 
 								<Button Grid.Column="2"
@@ -396,7 +396,7 @@
 										VerticalAlignment="Top"
 										Margin="4,0,0,0"
 										ToolTip.Tip="{loc:Loc addon.settings.select_file}">
-									<ico:MaterialIcon Kind="FilePlus"/>
+									<ico:VisualIcon Kind="FilePlus"/>
 								</Button>
 							</Grid>
 
@@ -415,7 +415,7 @@
 													Classes="IconButton"
 													Margin="4,0,0,0"
 													ToolTip.Tip="{loc:Loc env.browse}">
-												<ico:MaterialIcon Kind="FolderOpen"/>
+												<ico:VisualIcon Kind="FolderOpen"/>
 											</Button>
 
 											<Button Grid.Column="2"
@@ -424,7 +424,7 @@
 													Classes="IconButton"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-												<ico:MaterialIcon Kind="OpenInNew"/>
+												<ico:VisualIcon Kind="OpenInNew"/>
 											</Button>
 
 											<Button Grid.Column="3"
@@ -433,7 +433,7 @@
 													Classes="IconButton"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc common.remove}">
-												<ico:MaterialIcon Kind="Close"/>
+												<ico:VisualIcon Kind="Close"/>
 											</Button>
 										</Grid>
 									</DataTemplate>
@@ -492,7 +492,7 @@
 					Command="{Binding RefreshPacksCommand}"
 					Classes="IconButton"
 					ToolTip.Tip="{loc:Loc addon.settings.packs.refresh}">
-				<ico:MaterialIcon Kind="Refresh"/>
+				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 		</Grid>
 
@@ -548,7 +548,7 @@
 											Classes="MiniIconButton"
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-										<ico:MaterialIcon Kind="OpenInNew"/>
+										<ico:VisualIcon Kind="OpenInNew"/>
 									</Button>
 									<TextBlock Grid.Column="1"
 													   Text="{Binding Path}"

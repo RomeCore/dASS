@@ -6,7 +6,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
 			 xmlns:ctrls="using:LLMDesktopAssistant.Controls"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.PromptPartCardView"
 			 x:DataType="local:PromptPartCardViewModel">
 
@@ -86,13 +86,13 @@
 								ToolTip.Tip="{loc:Loc prompt.card.use}"
 								IsVisible="{Binding IsRadio}"
 								VerticalAlignment="Center">
-					<ico:MaterialIcon Kind="{Binding SelectionIcon}" Width="18" Height="18"/>
+					<ico:VisualIcon Kind="{Binding SelectionIcon}" Width="18" Height="18"/>
 				</Button>
 
 				<!-- Kind Chip -->
 				<Border Grid.Column="1" Classes="Chip" Margin="6,0,4,0" IsVisible="{Binding HasKind}">
 					<StackPanel Orientation="Horizontal" Spacing="3">
-						<ico:MaterialIcon Kind="{Binding KindIcon}" Width="12" Height="12" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="{Binding KindIcon}" Width="12" Height="12" VerticalAlignment="Center"/>
 						<TextBlock Classes="ChipText" Text="{loc:Loc {Binding KindNameKey}}"/>
 					</StackPanel>
 				</Border>
@@ -109,7 +109,7 @@
 				<Border Grid.Column="3" Classes="ChipGreen"
 								IsVisible="{Binding IsSelected}">
 					<StackPanel Orientation="Horizontal" Spacing="3">
-						<ico:MaterialIcon Kind="Check" Width="12" Height="12" Foreground="#4CAF50" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="Check" Width="12" Height="12" Foreground="#4CAF50" VerticalAlignment="Center"/>
 						<TextBlock Classes="ChipText" Text="{loc:Loc prompt.card.selected}" Foreground="#4CAF50"/>
 					</StackPanel>
 				</Border>
@@ -119,7 +119,7 @@
 								IsVisible="{Binding IsBroken}"
 								ToolTip.Tip="{Binding Error}">
 					<StackPanel Orientation="Horizontal" Spacing="3">
-						<ico:MaterialIcon Kind="AlertCircle" Width="12" Height="12" Foreground="#FF5252" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="AlertCircle" Width="12" Height="12" Foreground="#FF5252" VerticalAlignment="Center"/>
 						<TextBlock Classes="ChipText" Text="{loc:Loc prompt.card.broken}" Foreground="#FF5252"/>
 					</StackPanel>
 				</Border>
@@ -146,14 +146,14 @@
 								ToolTip.Tip="{loc:Loc prompt.search.placeholder}"
 								IsVisible="{Binding HasCategory}">
 					<StackPanel Orientation="Horizontal" Spacing="3">
-						<ico:MaterialIcon Kind="TagOutline" Width="12" Height="12" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="TagOutline" Width="12" Height="12" VerticalAlignment="Center"/>
 						<TextBlock Classes="ChipText" Text="{Binding Category}"/>
 					</StackPanel>
 				</Button>
 
 				<Border Classes="Chip" ToolTip.Tip="{loc:Loc prompt.metadata.language}">
 					<StackPanel Orientation="Horizontal" Spacing="3">
-						<ico:MaterialIcon Kind="Language" Width="12" Height="12" VerticalAlignment="Center"/>
+						<ico:VisualIcon Kind="Language" Width="12" Height="12" VerticalAlignment="Center"/>
 						<TextBlock Classes="ChipText" Text="{Binding LocalizedForName}"
 									   IsVisible="{Binding LocalizedForName, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
 						<TextBlock Classes="ChipText" Text="→"
@@ -164,7 +164,7 @@
 
 				<!-- Source indicator -->
 				<StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center" Margin="4,0,0,0">
-					<ico:MaterialIcon Kind="{Binding SourceIcon}" Width="12" Height="12" Opacity="0.5" VerticalAlignment="Center"/>
+					<ico:VisualIcon Kind="{Binding SourceIcon}" Width="12" Height="12" Opacity="0.5" VerticalAlignment="Center"/>
 					<TextBlock Text="{loc:Loc {Binding SourceNameKey}}" Opacity="0.5" FontSize="11" VerticalAlignment="Center"/>
 				</StackPanel>
 
@@ -185,7 +185,7 @@
 						<DataTemplate x:DataType="local:PromptPartDiagnosticFlagInfo">
 							<Border Classes="Chip" ToolTip.Tip="{loc:Loc {Binding DescriptionKey}}">
 								<StackPanel Orientation="Horizontal" Spacing="3">
-									<ico:MaterialIcon Kind="{Binding Icon}" Width="12" Height="12" VerticalAlignment="Center" Foreground="{Binding Color}"/>
+									<ico:VisualIcon Kind="{Binding Icon}" Width="12" Height="12" VerticalAlignment="Center" Foreground="{Binding Color}"/>
 									<TextBlock Classes="ChipText" Foreground="{Binding Color}" Text="{loc:Loc {Binding DisplayNameKey}}"/>
 								</StackPanel>
 							</Border>
@@ -207,31 +207,31 @@
 					<Button Command="{Binding EditCommand}"
 							ToolTip.Tip="{loc:Loc prompt.todo}"
 							Padding="4" IsEnabled="False">
-						<ico:MaterialIcon Kind="Pencil" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Pencil" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding OpenFileCommand}"
 							ToolTip.Tip="{loc:Loc prompt.todo}"
 							Padding="4" IsEnabled="False">
-						<ico:MaterialIcon Kind="OpenInNew" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="OpenInNew" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding ShowInExplorerCommand}"
 							ToolTip.Tip="{loc:Loc prompt.todo}"
 							Padding="4" IsEnabled="False">
-						<ico:MaterialIcon Kind="FolderOpen" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="FolderOpen" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding DuplicateCommand}"
 							ToolTip.Tip="{loc:Loc prompt.todo}"
 							Padding="4" IsEnabled="False">
-						<ico:MaterialIcon Kind="ContentCopy" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="ContentCopy" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding DeleteCommand}"
 							ToolTip.Tip="{loc:Loc prompt.todo}"
 							Padding="4" IsEnabled="False">
-						<ico:MaterialIcon Kind="Delete" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
 					</Button>
 
 					<ToggleButton Command="{Binding ToggleParametersCommand}"
@@ -239,14 +239,14 @@
 								  ToolTip.Tip="{loc:Loc prompt.card.parameters}"
 								  Padding="4"
 								  IsVisible="{Binding CanShowParameters}">
-						<ico:MaterialIcon Kind="Tune" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="Tune" Width="14" Height="14"/>
 					</ToggleButton>
 
 					<ToggleButton Command="{Binding ToggleDetailsCommand}"
 								  IsChecked="{Binding IsDetailsVisible, Mode=OneWay}"
 								  ToolTip.Tip="{loc:Loc prompt.card.details}"
 								  Padding="4">
-						<ico:MaterialIcon Kind="CardAccountDetailsOutline" Width="14" Height="14"/>
+						<ico:VisualIcon Kind="CardAccountDetailsOutline" Width="14" Height="14"/>
 					</ToggleButton>
 
 				</StackPanel>

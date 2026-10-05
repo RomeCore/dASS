@@ -5,7 +5,7 @@
 			 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
 			 xmlns:local="using:LLMDesktopAssistant.Tools.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:Material.Icons.Avalonia"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Tools.MVVM.FormsFilePickerView"
 			 x:DataType="local:FormsFilePickerViewModel">
 
@@ -38,7 +38,7 @@
 			<Button Command="{Binding PickCommand}"
 					IsVisible="{Binding IsResultSet, Converter={StaticResource InverseBooleanConverter}}">
 				<StackPanel Orientation="Horizontal" Spacing="8">
-					<ico:MaterialIcon Kind="File"/>
+					<ico:VisualIcon Kind="File"/>
 					<TextBlock Text="{loc:Loc forms.file_picker.select_file}"/>
 				</StackPanel>
 			</Button>
@@ -75,7 +75,7 @@
 									HorizontalAlignment="Left"
 									IsVisible="{Binding IsResultSet}">
 
-				<ico:MaterialIcon Kind="CheckCircle"
+				<ico:VisualIcon Kind="CheckCircle"
 													Width="20" Height="20"
 													Foreground="{DynamicResource SuccessColor}"/>
 

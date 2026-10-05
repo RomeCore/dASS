@@ -37,7 +37,7 @@ namespace LLMDesktopAssistant.Prompting.Skills
 		}
 
 		/// <inheritdoc/>
-		protected override MaterialIconKind TypeIcon => MaterialIconKind.Cards;
+		protected override VisualIconKind TypeIcon => MaterialIconKind.Cards;
 
 		/// <inheritdoc/>
 		protected override void AddHeaderElements(AddonCardContext<SkillInfo, SkillChange> context, List<IAddonCardElement> elements)

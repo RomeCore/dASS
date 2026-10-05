@@ -7,7 +7,7 @@
 						 xmlns:consents="using:LLMDesktopAssistant.Tools.Consents"
 						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallView"
 						 x:DataType="local:ToolCallViewModel">
 
@@ -45,7 +45,7 @@
 
 					<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverter}}">
 
-						<ico:MaterialIcon Kind="{Binding StatusIcon}"
+						<ico:VisualIcon Kind="{Binding StatusIcon}"
 															Classes="MidIcon"
 															HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
@@ -60,13 +60,13 @@
 
 								<Panel IsVisible="{Binding ToolIconVisible}">
 
-									<ico:MaterialIcon Kind="{Binding ToolIcon}"
+									<ico:VisualIcon Kind="{Binding ToolIcon}"
 																		Foreground="{Binding ToolIconBrush}"
 																		Width="16" Height="16"
 																		IsVisible="{Binding IsBlinking}">
 
-										<ico:MaterialIcon.Styles>
-											<Style Selector="ico|MaterialIcon">
+										<ico:VisualIcon.Styles>
+											<Style Selector="ico|VisualIcon">
 												<Style.Animations>
 													<Animation Duration="0:0:1"
 																			IterationCount="INFINITE"
@@ -81,11 +81,11 @@
 													</Animation>
 												</Style.Animations>
 											</Style>
-										</ico:MaterialIcon.Styles>
+										</ico:VisualIcon.Styles>
 
-									</ico:MaterialIcon>
+									</ico:VisualIcon>
 
-									<ico:MaterialIcon Kind="{Binding ToolIcon}"
+									<ico:VisualIcon Kind="{Binding ToolIcon}"
 																		Foreground="{Binding ToolIconBrush}"
 																		Width="16" Height="16"
 																		IsVisible="{Binding !IsBlinking}"/>
@@ -110,13 +110,13 @@
 
 						<Panel IsVisible="{Binding ToolIconVisible}">
 
-							<ico:MaterialIcon Kind="{Binding ToolIcon}"
+							<ico:VisualIcon Kind="{Binding ToolIcon}"
 																Foreground="{Binding ToolIconBrush}"
 																Width="28" Height="28"
 																IsVisible="{Binding IsBlinking}">
 
-								<ico:MaterialIcon.Styles>
-									<Style Selector="ico|MaterialIcon">
+								<ico:VisualIcon.Styles>
+									<Style Selector="ico|VisualIcon">
 										<Style.Animations>
 											<Animation Duration="0:0:1"
 																	IterationCount="INFINITE"
@@ -131,11 +131,11 @@
 											</Animation>
 										</Style.Animations>
 									</Style>
-								</ico:MaterialIcon.Styles>
+								</ico:VisualIcon.Styles>
 
-							</ico:MaterialIcon>
+							</ico:VisualIcon>
 
-							<ico:MaterialIcon Kind="{Binding ToolIcon}"
+							<ico:VisualIcon Kind="{Binding ToolIcon}"
 																Foreground="{Binding ToolIconBrush}"
 																Width="28" Height="28"
 																IsVisible="{Binding !IsBlinking}"/>
@@ -180,7 +180,7 @@
 											<TextBlock Text="{Binding Description}"/>
 										</StackPanel>
 									</ToolTip.Tip>
-									<ico:MaterialIcon Kind="{Binding Icon}"
+									<ico:VisualIcon Kind="{Binding Icon}"
 																		Foreground="{Binding Color}"
 																		Background="Transparent"
 																		Width="12" Height="12"/>

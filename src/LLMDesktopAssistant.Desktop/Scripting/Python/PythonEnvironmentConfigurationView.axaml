@@ -6,7 +6,7 @@
 						 xmlns:local="using:LLMDesktopAssistant.Desktop.Scripting.Python"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:util="using:LLMDesktopAssistant.Utils"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
              x:Class="LLMDesktopAssistant.Desktop.Scripting.Python.PythonEnvironmentConfigurationView"
 						 x:DataType="local:PythonEnvironmentConfigurationViewModel"
 						 x:Name="VMRoot">
@@ -47,7 +47,7 @@
 									Classes="IconButton"
 									Command="{Binding SelectPythonVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.select_script}">
-						<ico:MaterialIcon Kind="FolderOpen"/>
+						<ico:VisualIcon Kind="FolderOpen"/>
 					</Button>
 
 					<Button Grid.Column="2"
@@ -55,7 +55,7 @@
 									Classes="IconButton"
 									Command="{Binding OpenPythonVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-						<ico:MaterialIcon Kind="OpenInNew"/>
+						<ico:VisualIcon Kind="OpenInNew"/>
 					</Button>
 				</Grid>
 			</StackPanel>
@@ -83,7 +83,7 @@
 									Classes="IconButton"
 									Command="{Binding SelectPythonMetaVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.select_script}">
-						<ico:MaterialIcon Kind="FolderOpen"/>
+						<ico:VisualIcon Kind="FolderOpen"/>
 					</Button>
 
 					<Button Grid.Column="2"
@@ -91,7 +91,7 @@
 									Classes="IconButton"
 									Command="{Binding OpenPythonMetaVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
-						<ico:MaterialIcon Kind="OpenInNew"/>
+						<ico:VisualIcon Kind="OpenInNew"/>
 					</Button>
 				</Grid>
 			</StackPanel>

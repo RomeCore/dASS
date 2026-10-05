@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Addons.MVVM.Grouping
 		/// </summary>
 		/// <param name="title">The display name of the mode, shown in the mode selector.</param>
 		/// <param name="icon">The icon of the mode, shown in the mode selector.</param>
-		protected GroupingMode(LocaleKeyBase title, MaterialIconKind? icon = null)
+		protected GroupingMode(LocaleKeyBase title, VisualIconKind? icon = null)
 		{
 			Title = title;
 			Icon = icon;
@@ -33,7 +33,7 @@ namespace LLMDesktopAssistant.Addons.MVVM.Grouping
 		/// <summary>
 		/// Gets the icon of the mode, shown in the mode selector.
 		/// </summary>
-		public MaterialIconKind? Icon { get; }
+		public VisualIconKind? Icon { get; }
 	}
 
 	/// <summary>
@@ -48,7 +48,7 @@ namespace LLMDesktopAssistant.Addons.MVVM.Grouping
 		/// </summary>
 		/// <param name="title">The display name of the mode, shown in the mode selector.</param>
 		/// <param name="icon">The icon of the mode, shown in the mode selector.</param>
-		protected GroupingMode(LocaleKeyBase title, MaterialIconKind? icon = null)
+		protected GroupingMode(LocaleKeyBase title, VisualIconKind? icon = null)
 			: base(title, icon)
 		{
 		}

@@ -3,7 +3,7 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Controls"
-						 xmlns:ico="using:Material.Icons.Avalonia"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="40"
 						 x:Class="LLMDesktopAssistant.Controls.ModelSelectorControl">
@@ -98,7 +98,7 @@
 						Click="SettingsButton_Click"
 						ToolTip.Tip="{loc:Loc model.selector.manage.tooltip}"
 						CornerRadius="0,8,8,0">
-			<ico:MaterialIcon Kind="RobotExcited"/>
+			<ico:VisualIcon Kind="RobotExcited"/>
 		</Button>
 
 	</StackPanel>
