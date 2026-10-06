@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.Addons
+namespace LLMDesktopAssistant.Addons
 {
 	[Flags]
 	public enum AddonKind
@@ -9,9 +9,9 @@
 		None = 0,
 
 		/// <summary>
-		/// All kinds of addons, including packs, skills, sub-agents, tools, memory blocks, prompt contexts, commands, templates, and Lua scripts.
+		/// All kinds of addons, including packs, skills, sub-agents, tools, memory blocks, prompt contexts, slash commands, templates, and Lua scripts.
 		/// </summary>
-		All = Pack | Skill | SubAgent | Tool | MemoryBlock | PromptContext | Command | Template | LuaScript,
+		All = Pack | Skill | SubAgent | Tool | MemoryBlock | PromptContext | SlashCommand | Template | LuaScript,
 
 		/// <summary>
 		/// The addon pack itself, used in the invalidation methods to invalidate packs along with other addon types.
@@ -52,12 +52,11 @@
 		/// </summary>
 		PromptContext = 1 << 5,
 
-		// TODO: Reserved for future use
 		/// <summary>
 		/// The slash command that can be used by users to trigger specific actions within the system, manually calling
 		/// the skills, sub-agents, tools, or running scripts.
 		/// </summary>
-		Command = 1 << 6,
+		SlashCommand = 1 << 6,
 
 		/// <summary>
 		/// The template (usually LLT) that defines other addons, like skills and sub-agents, also provides the way to
