@@ -149,7 +149,7 @@ namespace LLMDesktopAssistant.LLM.Services
 							Chat = chat,
 							Agent = agent,
 							Responses = responsesBuilder.ToImmutable()
-						}, cancellationToken);
+						}, token);
 						break;
 					}
 				}
