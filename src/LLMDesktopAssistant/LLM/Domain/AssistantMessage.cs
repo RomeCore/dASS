@@ -48,16 +48,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _status, value);
 		}
 
-		private string? _error;
-		/// <summary>
-		/// Gets or sets the error message associated with the message. If no error occurred, this property is <see langword="null">.
-		/// </summary>
-		public string? Error
-		{
-			get => _error;
-			set => SetProperty(ref _error, value);
-		}
-
 		/// <summary>
 		/// Gets or sets the completion token associated with this message.
 		/// </summary>

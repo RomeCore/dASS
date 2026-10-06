@@ -16,6 +16,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public ChatMessage Message => branchedMessage.Message;
 
+		private string? _error;
+		/// <summary>
+		/// Gets the error message associated with the message, if any. Shared by every message type.
+		/// </summary>
+		public string? Error
+		{
+			get => _error;
+			private set => SetProperty(ref _error, value);
+		}
+
 		public ICommand RegenerateCommand { get; }
 		public ICommand ResendCommand { get; }
 		public ICommand DeleteCommand { get; }
@@ -81,6 +91,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat);
 			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData);
 
+			Error = Message.Error;
+			Message.PropertyChanged += OnMessagePropertyChanged;
+
 			_renderMarkdown = DefaultRenderMarkdown;
 
 			ToolCalls.PropertyChanged += OnToolCallsPropertyChanged;
@@ -115,6 +128,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				RaisePropertyChanged(nameof(ContainsToolCalls));
 		}
 
+		private void OnMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(ChatMessage.Error))
+				InvokeUI(() => Error = Message.Error);
+		}
+
 		/// <summary>
 		/// Called when <see cref="RenderMarkdown"/> changes; used to propagate the mode to the textual parts.
 		/// </summary>
@@ -128,6 +147,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
+				Message.PropertyChanged -= OnMessagePropertyChanged;
 				ToolCalls.PropertyChanged -= OnToolCallsPropertyChanged;
 				ToolCalls.Dispose();
 				AdditionalData.Dispose();

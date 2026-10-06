@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Avalonia.Media.Imaging;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM;
@@ -33,13 +32,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// The textual part of the message. Always created; visibility is managed internally.
 		/// </summary>
 		public AssistantMessageTextPartViewModel TextPart { get; }
-
-		private string? _error;
-		public string? Error
-		{
-			get => _error;
-			set => SetProperty(ref _error, value);
-		}
 
 		public ImmutableList<MessageExtension> Extensions { get; }
 
@@ -79,7 +71,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			ReasoningPart = new AssistantMessageReasoningPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
 			TextPart = new AssistantMessageTextPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
-			Error = assistantMessage.Error;
 			Extensions = MessageExtensionManager.CreateExtensions(this, chatVM.Chat);
 
 			SubscribeToAssistantMessageEvents();
@@ -96,18 +87,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			IsCompleted = _assistantMessage.IsCompleted;
 			if (_assistantMessage.IsCompleted) return;
 
-			void OnMessagePropertyChanged(object? s, PropertyChangedEventArgs e)
-			{
-				InvokeUI(() => Error = _assistantMessage.Error);
-			}
-
-			_assistantMessage.PropertyChanged += OnMessagePropertyChanged;
-
-			_assistantMessage.CompletionToken.OnCompleted(() =>
-			{
-				_assistantMessage.PropertyChanged -= OnMessagePropertyChanged;
-				IsCompleted = true;
-			});
+			_assistantMessage.CompletionToken.OnCompleted(() => IsCompleted = true);
 		}
 
 		protected override void Dispose(bool disposing)

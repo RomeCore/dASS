@@ -50,6 +50,11 @@
 
 		</Border>
 
+		<Label Content="{Binding Error}"
+					 HorizontalAlignment="Right"
+					 Foreground="Red"
+					 IsVisible="{Binding Error, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+
 		<ContentControl Content="{Binding ToolCalls}" HorizontalAlignment="Right"/>
 		<ContentControl Content="{Binding AdditionalData}" HorizontalAlignment="Right" Margin="0,2"/>
 

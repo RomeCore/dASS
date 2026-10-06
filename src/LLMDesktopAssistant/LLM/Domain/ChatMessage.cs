@@ -20,6 +20,17 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref field, value);
 		} = string.Empty;
 
+		private string? _error;
+		/// <summary>
+		/// Gets or sets the error message associated with the message, if any.
+		/// Runtime failures (generation, tools, commands) are attached here.
+		/// </summary>
+		public string? Error
+		{
+			get => _error;
+			set => SetProperty(ref _error, value);
+		}
+
 		// Yeah, even the user can call tools!
 		/// <summary>
 		/// The collection of tool calls associated with this message.
