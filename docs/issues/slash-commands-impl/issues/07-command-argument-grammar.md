@@ -26,22 +26,29 @@ Files live under `src/LLMDesktopAssistant/SlashCommands/Arguments/`.
 ```csharp
 public class SlashCommandArgumentSchema
 {
-    public ImmutableList<SlashCommandArgument> Positionals { get; set; } = [];
-    public ImmutableDictionary<string, SlashCommandArgument> Keyed { get; set; } = [];
-    public bool HasRestPositional { get; set; }   // the "big" argument: the remainder is delivered raw
+    public ImmutableList<SlashCommandArgument> Positionals { get; init; } = [];
+    public ImmutableDictionary<string, SlashCommandArgument> Keyed { get; init; } = [];
+    public bool HasRestPositional { get; init; }   // the "big" argument: the remainder is delivered raw
 }
 
 public class SlashCommandArgument
 {
-    public required LocaleKeyBase Name { get; set; }
-    public LocaleKeyBase? Description { get; set; }
-    public bool Required { get; set; }
-    public string? Default { get; set; }
-    public ISlashCommandArgumentFormatProvider? Format { get; set; }
+    public required LocaleKeyBase Name { get; init; }
+    public LocaleKeyBase? Description { get; init; }
+    public bool Required { get; init; }
+    public string? Default { get; init; }
+    public ISlashCommandArgumentFormatProvider? Format { get; init; }
 }
 ```
 
 No `ValueType`, no `Choices`.
+
+**Everything `init`-only, deliberately.** The schema is semantically atomic — it travels with the command definition
+and never changes while a command lives; a command is (re)defined by re-parsing its file or re-synthesising it in a
+provider, never by mutating an existing schema (the design ticket's `{ get; set; }` is widened by mistake).
+`ImmutableList<T>` / `ImmutableDictionary<,>` are only *shallowly* immutable, so the leaf `SlashCommandArgument` is
+`init`-only too — otherwise `schema.Keyed["x"].Default = …` would still leak into a shared schema.
+The addon's **reference** to the schema (`SlashCommandInfo.ArgumentSchema`) does stay settable — see ticket 08.
 
 ### Format-provider contract
 

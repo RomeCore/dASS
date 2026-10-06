@@ -62,8 +62,22 @@ public static class SlashCommandOrderTiers
 - **skill** (`/skill:<name> args…`) — the whole argument text is substituted into the body
   (`$ARGUMENTS` / named placeholders), so the schema is a single rest positional:
   `new SlashCommandArgumentSchema { HasRestPositional = true }`.
-- **agent** (`/agent:<name> input`) — the input is the rest positional and `wait` is an optional boolean key:
-  `new SlashCommandArgumentSchema { HasRestPositional = true, Keyed = { ["wait"] = new SlashCommandArgument { Name = ..., Required = false, Default = "false" } } }`.
+- **agent** (`/agent:<name> input`) — the input is the rest positional and `wait` is an optional boolean key.
+  The schema is `init`-only (ticket 07), so the keyed argument is built through a local builder (a collection
+  initializer on an `ImmutableDictionary` is invalid C# — it would call the `Add` overload that returns a new map):
+
+  ```csharp
+  var keyed = ImmutableDictionary.CreateBuilder<string, SlashCommandArgument>();
+  keyed["wait"] = new SlashCommandArgument
+  {
+      Name = Locale.GetKey("command.argument.wait"),
+      Description = Locale.GetKey("command.argument.wait.description"),
+      Required = false,
+      Default = "false"
+  };
+
+  var schema = new SlashCommandArgumentSchema { HasRestPositional = true, Keyed = keyed.ToImmutable() };
+  ```
 
 The concrete `wait=true|false` `ISlashCommandArgumentFormatProvider` is **out of scope** here: its validation lands with
 the `/agent` executor (Stage 3) and its completion is wired in Stage 5. Stage 1 only declares the schema.
@@ -80,6 +94,7 @@ the `/agent` executor (Stage 3) and its completion is wired in Stage 5. Stage 1 
 - [ ] The per-type argument schemas are unit-tested (skill = rest positional; agent = rest positional + optional `wait`
       with default `"false"`).
 - [ ] A command produced by a provider is frozen (mutating it throws).
+- [ ] Locale keys `command.argument.wait` / `command.argument.wait.description` exist in `iv` and `ru-RU`.
 - [ ] The solution builds; the full test suite stays green.
 
 ## Answer

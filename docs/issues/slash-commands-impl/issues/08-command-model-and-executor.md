@@ -37,6 +37,10 @@ public enum ModelFacingMode { Raw, Neutral, Hidden }                   // v1 use
 `Executor` is **not** nullable (mirrors `PromptContextInfo.Provider`), but there are no real executors until Stage 3, so
 its default is the temporary `StubCommandExecutor` scheduled for deletion.
 
+`ArgumentSchema` keeps `{ get; set; }` even though the schema itself is `init`-only (ticket 07): the addon model is
+mutable by design — `AddonBase.Clone()` copies every settable property of `SlashCommandInfo` into an unfrozen copy — so
+the addon may hold a *different* schema, while the schema instance it points at never changes.
+
 ### Executor contract
 
 ```csharp
