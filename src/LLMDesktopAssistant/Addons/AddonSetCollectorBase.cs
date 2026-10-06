@@ -1,4 +1,4 @@
-﻿using LLMDesktopAssistant.Agents;
+using LLMDesktopAssistant.Agents;
 using Serilog;
 
 namespace LLMDesktopAssistant.Addons
@@ -21,6 +21,17 @@ namespace LLMDesktopAssistant.Addons
 			return [];
 		}
 
+		/// <summary>
+		/// Gets the key used to deduplicate addons that represent the same logical addon.
+		/// Defaults to the addon name; override with any value that has meaningful equality
+		/// (a string, a tuple, a record ...) when a name alone is not unique
+		/// (for example, commands whose name can appear in several namespaces).
+		/// </summary>
+		protected virtual object GetDeduplicationKey(TAddon addon)
+		{
+			return addon.Name;
+		}
+
 		protected virtual void ApplyChange(TAddon target, TChange change, ChatAgentDescriptor? agent)
 		{
 		}
@@ -33,7 +44,7 @@ namespace LLMDesktopAssistant.Addons
 			addons.AddRange(GetAdditionalAddons());
 
 			return addons
-				.GroupBy(s => s.Name)
+				.GroupBy(GetDeduplicationKey)
 				.Select(g =>
 				{
 					ImmutableList<TAddon>.Builder? overridesBuilder = null;
