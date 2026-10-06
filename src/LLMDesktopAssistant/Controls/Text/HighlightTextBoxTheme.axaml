@@ -12,8 +12,8 @@
 		Border#PART_BorderElement.
 	-->
 
-	<ControlTheme x:Key="{x:Type ctrl:HighlightTextBox}"
-							  TargetType="ctrl:HighlightTextBox">
+	<ControlTheme x:Key="{x:Type txt:HighlightTextBox}"
+							  TargetType="txt:HighlightTextBox">
 
 		<Setter Property="Foreground" Value="{DynamicResource TextControlForeground}"/>
 		<Setter Property="Background" Value="{DynamicResource TextControlBackground}"/>

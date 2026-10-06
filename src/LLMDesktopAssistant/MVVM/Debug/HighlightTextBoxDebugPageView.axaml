@@ -4,6 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+			 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
 			 x:Class="LLMDesktopAssistant.MVVM.Debug.HighlightTextBoxDebugPageView"
@@ -11,19 +12,19 @@
 
 	<Grid ColumnDefinitions="*,320">
 
-		<ctrl:HighlightTextBox Grid.Column="0"
-												   x:Name="Editor"
-												   Margin="6"
-												   Text="{Binding Text, Mode=TwoWay}"
-												   HighlightTransformProvider="{Binding TransformProvider}"
-												   AcceptsReturn="True"
-												   TextWrapping="Wrap"
-												   FontFamily="Consolas"
-												   FontSize="15"
-												   MinHeight="220"
-												   PlaceholderText="{loc:Loc debug.highlight_textbox.placeholder}"
-												   ScrollViewer.VerticalScrollBarVisibility="Auto"
-												   VerticalAlignment="Stretch"/>
+		<txt:HighlightTextBox Grid.Column="0"
+												  x:Name="Editor"
+												  Margin="6"
+												  Text="{Binding Text, Mode=TwoWay}"
+												  HighlightTransformProvider="{Binding TransformProvider}"
+												  AcceptsReturn="True"
+												  TextWrapping="Wrap"
+												  FontFamily="Consolas"
+												  FontSize="15"
+												  MinHeight="220"
+												  PlaceholderText="{loc:Loc debug.highlight_textbox.placeholder}"
+												  ScrollViewer.VerticalScrollBarVisibility="Auto"
+												  VerticalAlignment="Stretch"/>
 
 		<DockPanel Grid.Column="1"
 				   Margin="6">
