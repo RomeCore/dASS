@@ -17,8 +17,10 @@ public static class AppSettingsLock
 		}
 		finally
 		{
-			_semaphore.Release();
+			// Reset the settings BEFORE releasing the lock: releasing first opens a window where the
+			// next locked test installs its own settings and this cleanup then clobbers them.
 			ApplicationSettingsAccessor.SetApplicationSettings(new());
+			_semaphore.Release();
 		}
 	}
 
@@ -33,8 +35,10 @@ public static class AppSettingsLock
 		}
 		finally
 		{
-			_semaphore.Release();
+			// Reset the settings BEFORE releasing the lock: releasing first opens a window where the
+			// next locked test installs its own settings and this cleanup then clobbers them.
 			ApplicationSettingsAccessor.SetApplicationSettings(new());
+			_semaphore.Release();
 		}
 	}
 
@@ -49,8 +53,10 @@ public static class AppSettingsLock
 		}
 		finally
 		{
-			_semaphore.Release();
+			// Reset the settings BEFORE releasing the lock: releasing first opens a window where the
+			// next locked test installs its own settings and this cleanup then clobbers them.
 			ApplicationSettingsAccessor.SetApplicationSettings(new());
+			_semaphore.Release();
 		}
 	}
 
@@ -65,8 +71,10 @@ public static class AppSettingsLock
 		}
 		finally
 		{
-			_semaphore.Release();
+			// Reset the settings BEFORE releasing the lock: releasing first opens a window where the
+			// next locked test installs its own settings and this cleanup then clobbers them.
 			ApplicationSettingsAccessor.SetApplicationSettings(new());
+			_semaphore.Release();
 		}
 	}
 }
