@@ -18,7 +18,9 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 - [x] [03 — `AdditionalMessagePart.IsRestorable`](./issues/03-additional-part-restorable.md)
 - [x] [04 — Move `Error` up to `ChatMessage`](./issues/04-message-error-base.md)
 - [x] [05 — Multi-level `IChatExecutionTokenService` (remove `Chat.GenerationCts`)](./issues/05-execution-token-service.md)
-- [ ] [06 — Chat-level sub-agent tool policy](./issues/06-chat-sub-agent-policy.md)
+- [x] [06 — Chat-level sub-agent tool policy](./issues/06-chat-sub-agent-policy.md)
+
+> **Stage 0 complete.** All architecture/prefactor tickets resolved.
 
 ## Stage 1 — Command engine core
 
