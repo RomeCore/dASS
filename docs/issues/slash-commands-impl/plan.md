@@ -17,7 +17,7 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 - [x] [02 — `AddonSetCollectorBase.GetDeduplicationKey`](./issues/02-addon-collector-dedup-key.md)
 - [x] [03 — `AdditionalMessagePart.IsRestorable`](./issues/03-additional-part-restorable.md)
 - [x] [04 — Move `Error` up to `ChatMessage`](./issues/04-message-error-base.md)
-- [ ] [05 — Multi-level `IChatExecutionTokenService` (remove `Chat.GenerationCts`)](./issues/05-execution-token-service.md)
+- [x] [05 — Multi-level `IChatExecutionTokenService` (remove `Chat.GenerationCts`)](./issues/05-execution-token-service.md)
 - [ ] [06 — Chat-level sub-agent tool policy](./issues/06-chat-sub-agent-policy.md)
 
 ## Stage 1 — Command engine core

@@ -1,6 +1,6 @@
 # 05: Multi-level `IChatExecutionTokenService` (remove `Chat.GenerationCts`)
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by:
 
@@ -40,12 +40,27 @@ Rules:
 
 ## Acceptance criteria
 
-- [ ] `IChatExecutionTokenService` + `ChatExecutionLevel` exist, registered as a chat-scoped service.
-- [ ] `ChatOperationService` takes `Operation` for its mutating paths (send / edit / regenerate / resend / switch branch / edit / delete)
+- [x] `IChatExecutionTokenService` + `ChatExecutionLevel` exist, registered as a chat-scoped service.
+- [x] `ChatOperationService` takes `Operation` for its mutating paths (send / edit / regenerate / resend / switch branch / edit / delete)
       and passes the resulting token into `ChatExecutionService.GenerateResponseAsync(ct)`.
-- [ ] `Chat.GenerationCts` is deleted; no code reads or writes it.
-- [ ] `UserInputViewModel` and the Blazor `GenerationReadinessService` use `ExecutionCancellationToken != null` for "is executing"
-      and `ExecutionCancellationToken.Cancel()` / the changed event for cancel/refresh.
-- [ ] Unit tests cover: level cancels/replaces deeper levels; skipping a level works; `Dispose` cascades inward;
+- [x] `Chat.GenerationCts` is deleted; no code reads or writes it.
+- [x] `UserInputViewModel`, Blazor `GenerationReadinessService` and `ChatPage.razor` use `ExecutionCancellationToken != null` for
+      "is executing" and `ExecutionCancellationToken.Cancel()` / the changed event for cancel/refresh.
+- [x] Unit tests cover: level cancels/replaces deeper levels; skipping a level works; `Dispose` cascades inward;
       the shared token is created/released lazily; `TryCancel` returns whether the level was active.
-- [ ] The solution builds; sending, cancelling and branch switching work in the app.
+- [x] The solution builds; sending, cancelling and branch switching work in the app.
+
+## Answer
+
+- Added `ChatExecutionLevel`, `IChatExecutionTokenService` and `ChatExecutionTokenService` (`[ChatService]`), implementing the
+  agreed semantics: `Operation` is the widest level; taking a level replaces it and cascades into narrower levels; levels may
+  be skipped; each level links the caller's `inputCt` and the nearest live wider level; `Dispose` cascades inward; the shared
+  `ExecutionCancellationToken` is created lazily with the first level and released with the last; cancelling it kills all
+  levels; a cancelled shared token is discarded on the next `WithToken` so a fresh level gets a fresh token.
+- `ChatOperationService` now takes `Operation` for every mutating path and forwards the token to `GenerateResponseAsync`;
+  `Chat.GenerationCts` is removed and every reader (`UserInputViewModel`, Blazor `GenerationReadinessService`, Blazor
+  `ChatPage.razor`) now reads `ExecutionCancellationToken` / subscribes to `ExecutionCancellationTokenChanged`.
+- `ChatExecutionService` was left untouched (reworked separately by the maintainer, as agreed).
+
+Tests: `tests/LLMDesktopAssistant.Tests/Services/ChatExecutionTokenServiceTests.cs` (11 cases). Full suite: 801 passed,
+1 skipped; main + desktop builds green.
