@@ -14,6 +14,7 @@
 @inject IUserStateService UserState
 @inject Chat chat
 @inject IChatOperationService chatOperation
+@inject IChatExecutionTokenService ExecutionTokens
 @inject IUserManagementService userManager
 @inject IJSRuntime JS
 
@@ -118,8 +119,8 @@
 		await base.OnInitializedAsync();
 
 		chat.Messages.CollectionChanged += MessagesChanged;
-		chat.PropertyChanged += ChatPropertyChanged;
-		_isGenerating = chat.GenerationCts != null;
+		ExecutionTokens.ExecutionCancellationTokenChanged += ExecutionStateChanged;
+		_isGenerating = ExecutionTokens.ExecutionCancellationToken != null;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -147,25 +148,22 @@
 		// No need to call JS interop here for every change.
 	}
 
-	private void ChatPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+	private void ExecutionStateChanged()
 	{
-		if (e.PropertyName == nameof(Chat.GenerationCts))
+		InvokeAsync(() =>
 		{
-			InvokeAsync(() =>
-			{
-				_isGenerating = chat.GenerationCts != null;
-				StateHasChanged();
+			_isGenerating = ExecutionTokens.ExecutionCancellationToken != null;
+			StateHasChanged();
 
-				if (_isGenerating)
-				{
-					StartAutoScroll();
-				}
-				else
-				{
-					StopAutoScroll();
-				}
-			});
-		}
+			if (_isGenerating)
+			{
+				StartAutoScroll();
+			}
+			else
+			{
+				StopAutoScroll();
+			}
+		});
 	}
 
 	private void StartAutoScroll()
@@ -230,7 +228,7 @@
 	{
 		try
 		{
-			chat.GenerationCts?.Cancel();
+			ExecutionTokens.ExecutionCancellationToken?.Cancel();
 		}
 		catch (Exception ex)
 		{
@@ -253,6 +251,7 @@
 	public void Dispose()
 	{
 		chat.Messages.CollectionChanged -= MessagesChanged;
+		ExecutionTokens.ExecutionCancellationTokenChanged -= ExecutionStateChanged;
 		_ = JS.InvokeVoidAsync("ChatScroll.destroy");
 	}
 }

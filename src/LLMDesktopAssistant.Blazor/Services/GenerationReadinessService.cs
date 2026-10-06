@@ -1,7 +1,8 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Blazor.Services
 {
@@ -12,6 +13,7 @@ namespace LLMDesktopAssistant.Blazor.Services
 		private readonly IOnlineStateService _onlineState;
 		private readonly Chat _chat;
 		private readonly IChatOperationService _chatOperator;
+		private readonly IChatExecutionTokenService _executionTokens;
 
 		private int _totalCount;
 		public int TotalCount
@@ -32,6 +34,7 @@ namespace LLMDesktopAssistant.Blazor.Services
 			_onlineState = onlineState ?? throw new ArgumentNullException(nameof(onlineState));
 			_chat = chat ?? throw new ArgumentNullException(nameof(chat));
 			_chatOperator = chatOperator ?? throw new ArgumentNullException(nameof(chatOperator));
+			_executionTokens = _chat.Services.GetRequiredService<IChatExecutionTokenService>();
 
 			_chat.Messages.CollectionChanged += ChatMessagesCollectionChanged;
 			OnlineUsers_CollectionChanged(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, _onlineState.OnlineUsers));
@@ -96,7 +99,7 @@ namespace LLMDesktopAssistant.Blazor.Services
 
 		private void TryGenerate()
 		{
-			if (_chat.GenerationCts != null || _chat.Messages.Count == 0 || _chat.Messages[^1].Message is AssistantMessage)
+			if (_executionTokens.ExecutionCancellationToken != null || _chat.Messages.Count == 0 || _chat.Messages[^1].Message is AssistantMessage)
 				return;
 			if (ReadyCount < TotalCount || TotalCount == 0)
 				return;

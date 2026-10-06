@@ -59,17 +59,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _userInputState, value);
 		}
 
-		private CancellationTokenSource? _generationCts;
-		/// <summary>
-		/// Gets or sets the current message generation <see cref="CancellationTokenSource"/>.
-		/// Use this to cancel the current message generation (inference) task.
-		/// </summary>
-		public CancellationTokenSource? GenerationCts
-		{
-			get => _generationCts;
-			set => SetProperty(ref _generationCts, value);
-		}
-
 		/// <summary>
 		/// Gets the collection of agent tasks associated with this chat session.
 		/// </summary>

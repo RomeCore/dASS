@@ -6,95 +6,24 @@ namespace LLMDesktopAssistant.LLM.Services
 	public class ChatOperationService(
 		Chat chat,
 		IChatStorageService storage,
-		IChatExecutionService executor
+		IChatExecutionService executor,
+		IChatExecutionTokenService tokens
 		) : IChatOperationService
 	{
-		private CancellationTokenSource? _cts = null;
-
-		private void ClearCTS()
-		{
-			try
-			{
-				chat.GenerationCts?.Cancel();
-				chat.GenerationCts?.Dispose();
-			}
-			catch { }
-			chat.GenerationCts = null;
-			try
-			{
-				_cts?.Cancel();
-				_cts?.Dispose();
-			}
-			catch { }
-			_cts = null;
-		}
-
-		private CancellationToken UpdateCTS(CancellationToken cancellationToken = default)
-		{
-			chat.GenerationCts?.Cancel();
-			chat.GenerationCts?.Dispose();
-			chat.GenerationCts = new CancellationTokenSource();
-			_cts?.Cancel();
-			_cts?.Dispose();
-			_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken,
-				chat.GenerationCts.Token);
-			return _cts.Token;
-		}
-
 		public async Task ContinueGenerationAsync(CancellationToken cancellationToken = default)
 		{
-			cancellationToken = UpdateCTS(cancellationToken);
-			try
-			{
-				await executor.GenerateResponseAsync(cancellationToken);
-			}
-			finally
-			{
-				ClearCTS();
-			}
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
+			await executor.GenerateResponseAsync(token);
 		}
 
 		public async Task SendUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default)
 		{
-			if (generate)
-			{
-				cancellationToken = UpdateCTS(cancellationToken);
-				try
-				{
-					var userMessage = new UserMessage
-					{
-						CreatedAt = DateTime.Now,
-						Content = userInput.Content,
-						SenderLogin = userInput.SenderLogin,
-						Visibility = userInput.Visibility,
-						VisibleTo = userInput.VisibleTo,
-						IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
-					};
-					userMessage.AdditionalData.Reset(userInput.Parts);
-					storage.AppendMessage(userMessage);
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
-					await executor.GenerateResponseAsync(cancellationToken);
-				}
-				finally
-				{
-					ClearCTS();
-				}
-			}
-			else
-			{
-				ClearCTS();
-				var userMessage = new UserMessage
-				{
-					CreatedAt = DateTime.Now,
-					Content = userInput.Content,
-					SenderLogin = userInput.SenderLogin,
-					Visibility = userInput.Visibility,
-					VisibleTo = userInput.VisibleTo,
-					IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
-				};
-				userMessage.AdditionalData.Reset(userInput.Parts);
-				storage.AppendMessage(userMessage);
-			}
+			storage.AppendMessage(CreateUserMessage(userInput));
+
+			if (generate)
+				await executor.GenerateResponseAsync(token);
 		}
 
 		public async Task SendEditedUserInputAsync(int messageIndex, UserInput userInput, bool generate, CancellationToken cancellationToken = default)
@@ -102,45 +31,12 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
-			if (generate)
-			{
-				cancellationToken = UpdateCTS(cancellationToken);
-				try
-				{
-					var userMessage = new UserMessage
-					{
-						CreatedAt = DateTime.Now,
-						Content = userInput.Content,
-						SenderLogin = userInput.SenderLogin,
-						Visibility = userInput.Visibility,
-						VisibleTo = userInput.VisibleTo,
-						IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
-					};
-					userMessage.AdditionalData.Reset(userInput.Parts);
-					storage.EditMessage(messageIndex, userMessage);
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
-					await executor.GenerateResponseAsync(cancellationToken);
-				}
-				finally
-				{
-					ClearCTS();
-				}
-			}
-			else
-			{
-				ClearCTS();
-				var userMessage = new UserMessage
-				{
-					CreatedAt = DateTime.Now,
-					Content = userInput.Content,
-					SenderLogin = userInput.SenderLogin,
-					Visibility = userInput.Visibility,
-					VisibleTo = userInput.VisibleTo,
-					IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
-				};
-				userMessage.AdditionalData.Reset(userInput.Parts);
-				storage.EditMessage(messageIndex, userMessage);
-			}
+			storage.EditMessage(messageIndex, CreateUserMessage(userInput));
+
+			if (generate)
+				await executor.GenerateResponseAsync(token);
 		}
 
 		public async Task RegenerateMessageAsync(int messageIndex, CancellationToken cancellationToken = default)
@@ -148,29 +44,23 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
-			cancellationToken = UpdateCTS(cancellationToken);
-			try
-			{
-				var targetMessage = chat.Messages[messageIndex].Message;
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
-				if (targetMessage is UserMessage)
-				{
-					throw new InvalidOperationException("Cannot regenerate a user message.");
-				}
-				else if (targetMessage is AssistantMessage)
-				{
-					if (messageIndex < chat.Messages.Count)
-						storage.PlaceNewBranch(messageIndex);
-					await executor.GenerateResponseAsync(cancellationToken);
-				}
-				else
-				{
-					throw new InvalidOperationException("Invalid message type.");
-				}
-			}
-			finally
+			var targetMessage = chat.Messages[messageIndex].Message;
+
+			if (targetMessage is UserMessage)
 			{
-				ClearCTS();
+				throw new InvalidOperationException("Cannot regenerate a user message.");
+			}
+			else if (targetMessage is AssistantMessage)
+			{
+				if (messageIndex < chat.Messages.Count)
+					storage.PlaceNewBranch(messageIndex);
+				await executor.GenerateResponseAsync(token);
+			}
+			else
+			{
+				throw new InvalidOperationException("Invalid message type.");
 			}
 		}
 
@@ -179,20 +69,12 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
-			cancellationToken = UpdateCTS(cancellationToken);
-			try
-			{
-				var targetMessage = chat.Messages[messageIndex].Message;
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
-				var nextMessageIndex = messageIndex + 1;
-				if (nextMessageIndex < chat.Messages.Count)
-					storage.PlaceNewBranch(nextMessageIndex);
-				await executor.GenerateResponseAsync(cancellationToken);
-			}
-			finally
-			{
-				ClearCTS();
-			}
+			var nextMessageIndex = messageIndex + 1;
+			if (nextMessageIndex < chat.Messages.Count)
+				storage.PlaceNewBranch(nextMessageIndex);
+			await executor.GenerateResponseAsync(token);
 		}
 
 		public void SwitchBranch(int messageIndex, int branchIndex)
@@ -202,7 +84,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (branchIndex < 0 || branchIndex >= chat.Messages[messageIndex].AvailableBranchesCount)
 				throw new ArgumentOutOfRangeException(nameof(branchIndex));
 
-			ClearCTS();
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, default, out _);
 			storage.SwitchBranch(messageIndex, branchIndex);
 		}
 
@@ -211,7 +93,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
-			ClearCTS();
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, default, out _);
 			storage.EditMessage(messageIndex, newMessage);
 		}
 
@@ -220,8 +102,23 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
-			ClearCTS();
+			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, default, out _);
 			storage.DeleteMessageWithDescendants(messageIndex);
+		}
+
+		private static UserMessage CreateUserMessage(UserInput userInput)
+		{
+			var userMessage = new UserMessage
+			{
+				CreatedAt = DateTime.Now,
+				Content = userInput.Content,
+				SenderLogin = userInput.SenderLogin,
+				Visibility = userInput.Visibility,
+				VisibleTo = userInput.VisibleTo,
+				IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
+			};
+			userMessage.AdditionalData.Reset(userInput.Parts);
+			return userMessage;
 		}
 	}
 }

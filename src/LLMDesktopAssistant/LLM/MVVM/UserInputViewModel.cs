@@ -42,18 +42,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				_vm = vm;
 				_generate = generate;
-				_vm.Chat.SubscribeChanged(nameof(Chat.GenerationCts), _ =>
-				{
-					InvokeUI(() =>
-					{
-						CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-					});
-				});
+				_vm._executionTokens.ExecutionCancellationTokenChanged += OnExecutionStateChanged;
+			}
+
+			private void OnExecutionStateChanged()
+			{
+				InvokeUI(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
 			}
 
 			public bool CanExecute(object? parameter)
 			{
-				return _vm.Chat.GenerationCts == null;
+				return _vm._executionTokens.ExecutionCancellationToken == null;
 			}
 
 			public async void Execute(object? parameter)
@@ -112,25 +111,24 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			public CancelGenerationCommandObject(UserInputViewModel vm)
 			{
 				_vm = vm;
-				_vm.Chat.SubscribeChanged(nameof(Chat.GenerationCts), _ =>
-				{
-					InvokeUI(() =>
-					{
-						CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-					});
-				});
+				_vm._executionTokens.ExecutionCancellationTokenChanged += OnExecutionStateChanged;
+			}
+
+			private void OnExecutionStateChanged()
+			{
+				InvokeUI(() => CanExecuteChanged?.Invoke(this, EventArgs.Empty));
 			}
 
 			public bool CanExecute(object? parameter)
 			{
-				return _vm.Chat.GenerationCts != null;
+				return _vm._executionTokens.ExecutionCancellationToken != null;
 			}
 
 			public void Execute(object? parameter)
 			{
 				try
 				{
-					_vm.Chat.GenerationCts?.Cancel();
+					_vm._executionTokens.ExecutionCancellationToken?.Cancel();
 				}
 				catch (Exception ex)
 				{
@@ -216,7 +214,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			private set => SetProperty(ref _isGenerating, value);
 		}
 
-		private IDisposable? _generationCtsSubscription;
+		private readonly IChatExecutionTokenService _executionTokens;
 
 		/// <summary>
 		/// Command to send a message (without generation).
@@ -242,6 +240,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		{
 			Chat = chatVM.Chat;
 			ChatViewModel = chatVM;
+			_executionTokens = Chat.Services.GetRequiredService<IChatExecutionTokenService>();
 
 			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
 			_draftData.Parts.IsEditing = true;
@@ -256,14 +255,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			CancelEditCommand = new CancelEditCommandObject(this);
 			CancelGenerationCommand = new CancelGenerationCommandObject(this);
 
-			IsGenerating = Chat.GenerationCts != null;
-			Chat.SubscribeChanged(nameof(Chat.GenerationCts), _ =>
-			{
-				InvokeUI(() =>
-				{
-					IsGenerating = Chat.GenerationCts != null;
-				});
-			}, out _generationCtsSubscription);
+			IsGenerating = _executionTokens.ExecutionCancellationToken != null;
+			_executionTokens.ExecutionCancellationTokenChanged += OnExecutionStateChanged;
+		}
+
+		private void OnExecutionStateChanged()
+		{
+			InvokeUI(() => IsGenerating = _executionTokens.ExecutionCancellationToken != null);
 		}
 
 		private void OnUserInputStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -417,9 +415,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			if (disposing)
 			{
 				UserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
-
-				_generationCtsSubscription?.Dispose();
-				_generationCtsSubscription = null;
+				_executionTokens.ExecutionCancellationTokenChanged -= OnExecutionStateChanged;
 
 				_draftData.Dispose();
 				_editData.Dispose();
