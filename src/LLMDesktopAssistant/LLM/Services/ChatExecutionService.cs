@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Controls.Toasts;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.LLM.Domain;
@@ -30,6 +31,7 @@ namespace LLMDesktopAssistant.LLM.Services
 	public class ChatExecutionService(
 		Chat chat,
 		IChatSettingsService chatSettings,
+		IChatExecutionTokenService tokens,
 		IAddonManagerInvalidator addonInvalidator,
 		IAgentOrderingService agentOrderer,
 		IAgentManagementService agentManager,
@@ -48,8 +50,9 @@ namespace LLMDesktopAssistant.LLM.Services
 		IPromptDumpService promptDumpService
 	) : IChatExecutionService
 	{
+		private const bool EnablePrefixCompletions = false;
+
 		private readonly List<IChatExecutionHook> _executionHooks = executionHooks.OrderBy(h => h.Order).ToList();
-		private CancellationTokenSource? _cts = null;
 
 		public async Task GenerateResponseAsync(CancellationToken cancellationToken = default)
 		{
@@ -58,10 +61,11 @@ namespace LLMDesktopAssistant.LLM.Services
 			try
 			{
 				int cycles = 0;
+				using var scope = tokens.WithToken(ChatExecutionLevel.AgentSequence, cancellationToken, out var token);
 
 				while (true)
 				{
-					cancellationToken.ThrowIfCancellationRequested();
+					token.ThrowIfCancellationRequested();
 
 					var lastAssistantMessage = chat.Messages.LastOrDefault()?.Message as Domain.AssistantMessage;
 					Guid? nextAgentId = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0
@@ -76,7 +80,7 @@ namespace LLMDesktopAssistant.LLM.Services
 						statusService.Icon = MaterialIconKind.RobotConfused;
 						statusService.Text = LocalizationManager.LocalizeStatic("chat.status.selecting_agent");
 
-						var agentTuple = await agentOrderer.GetNextAgentAsync(cancellationToken);
+						var agentTuple = await agentOrderer.GetNextAgentAsync(token);
 						nextAgentId = agentTuple?.Item1;
 						agentStageId = agentTuple?.Item2;
 					}
@@ -87,12 +91,12 @@ namespace LLMDesktopAssistant.LLM.Services
 							toastService.ShowWarning(LocalizationManager.LocalizeStatic("chat.toast.agent_selection_failed.title"),
 								LocalizationManager.LocalizeStatic("chat.toast.agent_selection_failed.description"));
 						else
-							await RunExecutionFinishedHooksAsync(cancellationToken);
+							await RunExecutionFinishedHooksAsync(token);
 						return;
 					}
 
-					cancellationToken.ThrowIfCancellationRequested();
-					await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, cancellationToken);
+					token.ThrowIfCancellationRequested();
+					await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, token);
 					cycles++;
 				}
 			}
@@ -124,16 +128,55 @@ namespace LLMDesktopAssistant.LLM.Services
 		{
 			try
 			{
-				_cts?.Cancel();
-				_cts?.Dispose();
-
-				_cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-				cancellationToken = _cts.Token;
-
-				addonInvalidator.ReloadIfInvalid(AddonKind.All);
-
+				using var scope = tokens.WithToken(ChatExecutionLevel.Agent, cancellationToken, out var token);
 				var agent = agentManager.GetAgentDescriptor(agentId);
 				toolMemorizer.PushTaskAsyncScope();
+
+				var responsesBuilder = ImmutableList.CreateBuilder<Domain.AssistantMessage>();
+				int cycles = 0;
+
+				while (true)
+				{
+					var response = await GenerateMessageResponseAsync(agentId, agentStageId, agent, cycles, token);
+					cycles++;
+					responsesBuilder.Add(response);
+
+					// Invoke execution-finished hooks (e.g. auto-naming) fire-and-forget
+					if (response.ToolCalls.Count == 0)
+					{
+						await RunAgentExecutionFinishedHooksAsync(new ChatAgentExecutionHookContext
+						{
+							Chat = chat,
+							Agent = agent,
+							Responses = responsesBuilder.ToImmutable()
+						}, cancellationToken);
+						break;
+					}
+				}
+			}
+			catch (OperationCanceledException)
+			{
+				throw;
+			}
+			catch (Exception ex)
+			{
+				Log.Error(ex, "An error occurred while generating the response using agent: {ErrorMessage}", ex.Message);
+				throw;
+			}
+			finally
+			{
+				statusService.Icon = MaterialIconKind.ChatProcessing;
+				statusService.Text = null;
+			}
+		}
+
+		private async Task<Domain.AssistantMessage> GenerateMessageResponseAsync(Guid agentId, Guid agentStageId,
+			ChatAgentDescriptor agent, int cycle, CancellationToken cancellationToken = default)
+		{
+			try
+			{
+				using var scope = tokens.WithToken(ChatExecutionLevel.Message, cancellationToken, out var token);
+				addonInvalidator.ReloadIfInvalid(AddonKind.All);
 
 				var modelName = !string.IsNullOrEmpty(agent.Info.CustomModel)
 					? agent.Info.CustomModel
@@ -156,11 +199,10 @@ namespace LLMDesktopAssistant.LLM.Services
 					statusService.Icon = MaterialIconKind.Connection;
 					statusService.Text = LocalizationManager.LocalizeStatic("chat.status.waiting_for_mcp_connections");
 
-					await mcpManager.EnsureCurrentMCPConnectionsAsync(cancellationToken);
+					await mcpManager.EnsureCurrentMCPConnectionsAsync(token);
 				}
 
 				var completionSource = new CompletionSource();
-				var responsesBuilder = ImmutableList.CreateBuilder<Domain.AssistantMessage>();
 				var domainResponseMessage = new Domain.AssistantMessage
 				{
 					CreatedAt = DateTime.Now,
@@ -170,14 +212,12 @@ namespace LLMDesktopAssistant.LLM.Services
 					IsUserLike = agent.Info.IdentifyAsUser,
 					CompletionToken = completionSource.Token
 				};
-				responsesBuilder.Add(domainResponseMessage);
-				int cycle = 0;
 
 				string prefixReasoningContent = string.Empty;
 				string prefixContent = string.Empty;
 
-				if (chat.Messages[^1].Message is Domain.AssistantMessage lastAssistantMessage
-					&& lastAssistantMessage.ToolCalls.Count == 0 && false)
+				if (EnablePrefixCompletions && chat.Messages[^1].Message is Domain.AssistantMessage lastAssistantMessage
+					&& lastAssistantMessage.SenderAgentId == agentId && lastAssistantMessage.ToolCalls.Count == 0)
 				{
 					prefixReasoningContent = lastAssistantMessage.ReasoningContent ?? string.Empty;
 					prefixContent = lastAssistantMessage.Content ?? string.Empty;
@@ -198,7 +238,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					Agent = agent,
 					Response = domainResponseMessage,
 					Cycle = cycle
-				}, cancellationToken);
+				}, token);
 
 				var promptBundle = promptComposer.Build(agent);
 				var inputMessages = promptBundle.Messages;
@@ -207,259 +247,205 @@ namespace LLMDesktopAssistant.LLM.Services
 				statusService.Icon = MaterialIconKind.ChatProcessing;
 				statusService.Text = LocalizationManager.LocalizeStatic("chat.status.waiting_for_first_response");
 
-				var response = await llm.ChatStreamingAsync(inputMessages, tools: toolset, cancellationToken: cancellationToken);
+				var response = await llm.ChatStreamingAsync(inputMessages, tools: toolset, cancellationToken: token);
 				var responseMessage = response.Message;
 
 				List<Task> toolExecutionTasks = [];
 				var lockObj = new object();
 
-				while (true)
+				void ProcessToolCall(IToolCall toolCall)
 				{
-					toolExecutionTasks.Clear();
+					if (toolCall is not IFunctionToolCall funtionCall)
+						throw new InvalidOperationException($"Unsupported tool call type: {toolCall.GetType()}.");
 
-					void ProcessToolCall(IToolCall toolCall)
+					if (toolsetCache.ValidAliasedTools.TryGetValue(toolCall.ToolName, out var toolInfo))
 					{
-						if (toolCall is not IFunctionToolCall funtionCall)
-							throw new InvalidOperationException($"Unsupported tool call type: {toolCall.GetType()}.");
-
-						if (toolsetCache.ValidAliasedTools.TryGetValue(toolCall.ToolName, out var toolInfo))
+						if (toolInfo.Name != toolCall.ToolName)
 						{
-							if (toolInfo.Name != toolCall.ToolName)
-							{
-								Log.Information($"Tool call '{toolCall.ToolName}' is aliased as '{toolInfo.Name}'. Using the alias.");
-							}
+							Log.Information($"Tool call '{toolCall.ToolName}' is aliased as '{toolInfo.Name}'. Using the alias.");
 						}
-
-						var toolCallCompletionSource = new CompletionSource();
-						var domainToolCall = new Domain.ToolCall
-						{
-							Status = ToolStatus.None,
-							ToolCallId = toolCall.Id,
-							ToolName = toolInfo?.Name ?? toolCall.ToolName,
-							Title = toolInfo?.NameKey,
-							Arguments = funtionCall.Args,
-							CompletionToken = toolCallCompletionSource.Token
-						};
-						domainResponseMessage.ToolCalls.Add(domainToolCall);
-
-						async Task WrapToolExecutionTask()
-						{
-							try
-							{
-								await toolExecutor.ExecuteAsync(funtionCall as PartialFunctionToolCall,
-									domainResponseMessage, domainToolCall, toolInfo, cancellationToken);
-							}
-							finally
-							{
-								toolCallCompletionSource.Complete();
-							}
-						}
-
-						var toolExecTask = WrapToolExecutionTask();
-						lock (lockObj)
-							toolExecutionTasks.Add(toolExecTask);
 					}
 
-					void PartHandler(object? s, AssistantMessageDelta delta)
+					var toolCallCompletionSource = new CompletionSource();
+					var domainToolCall = new Domain.ToolCall
 					{
-						if (timeFirstToken == null)
-						{
-							timeFirstToken ??= DateTime.Now;
+						Status = ToolStatus.None,
+						ToolCallId = toolCall.Id,
+						ToolName = toolInfo?.Name ?? toolCall.ToolName,
+						Title = toolInfo?.NameKey,
+						Arguments = funtionCall.Args,
+						CompletionToken = toolCallCompletionSource.Token
+					};
+					domainResponseMessage.ToolCalls.Add(domainToolCall);
 
-							statusService.Icon = MaterialIconKind.ChatProcessing;
-							statusService.Text = null;
-						}
-
-						domainResponseMessage.Status = AssistantMessageStatus.Streaming;
-
-						if (!string.IsNullOrEmpty(delta.DeltaReasoningContent))
-							domainResponseMessage.ReasoningContent = prefixReasoningContent + responseMessage.ReasoningContent;
-						if (!string.IsNullOrEmpty(delta.DeltaContent))
-							domainResponseMessage.Content = prefixContent + responseMessage.Content;
-
-						foreach (var toolCall in delta.NewToolCalls ?? [])
-							ProcessToolCall(toolCall);
-					}
-
-					domainResponseMessage.ReasoningContent = prefixReasoningContent + responseMessage.ReasoningContent;
-					domainResponseMessage.Content = prefixContent + responseMessage.Content;
-					foreach (var toolCall in responseMessage.ToolCalls)
-						ProcessToolCall(toolCall);
-
-					responseMessage.PartAdded += PartHandler;
-					try
+					async Task WrapToolExecutionTask()
 					{
 						try
 						{
-							await response;
+							await toolExecutor.ExecuteAsync(funtionCall as PartialFunctionToolCall,
+								domainResponseMessage, domainToolCall, toolInfo, token);
+						}
+						finally
+						{
+							toolCallCompletionSource.Complete();
+						}
+					}
 
-							timeFirstToken ??= DateTime.Now;
-							var timeReponseFinished = DateTime.Now;
+					var toolExecTask = WrapToolExecutionTask();
+					lock (lockObj)
+						toolExecutionTasks.Add(toolExecTask);
+				}
 
-							prefixReasoningContent = string.Empty;
-							prefixContent = string.Empty;
+				void PartHandler(object? s, AssistantMessageDelta delta)
+				{
+					if (timeFirstToken == null)
+					{
+						timeFirstToken ??= DateTime.Now;
 
-							var usageMetadata = response.UsageMetadata;
-							if (usageMetadata != null)
+						statusService.Icon = MaterialIconKind.ChatProcessing;
+						statusService.Text = null;
+					}
+
+					domainResponseMessage.Status = AssistantMessageStatus.Streaming;
+
+					if (!string.IsNullOrEmpty(delta.DeltaReasoningContent))
+						domainResponseMessage.ReasoningContent = prefixReasoningContent + responseMessage.ReasoningContent;
+					if (!string.IsNullOrEmpty(delta.DeltaContent))
+						domainResponseMessage.Content = prefixContent + responseMessage.Content;
+
+					foreach (var toolCall in delta.NewToolCalls ?? [])
+						ProcessToolCall(toolCall);
+				}
+
+				domainResponseMessage.ReasoningContent = prefixReasoningContent + responseMessage.ReasoningContent;
+				domainResponseMessage.Content = prefixContent + responseMessage.Content;
+				foreach (var toolCall in responseMessage.ToolCalls)
+					ProcessToolCall(toolCall);
+
+				responseMessage.PartAdded += PartHandler;
+				try
+				{
+					try
+					{
+						await response;
+
+						timeFirstToken ??= DateTime.Now;
+						var timeReponseFinished = DateTime.Now;
+
+						prefixReasoningContent = string.Empty;
+						prefixContent = string.Empty;
+
+						var usageMetadata = response.UsageMetadata;
+						if (usageMetadata != null)
+						{
+							if (usageMetadata is IUsageCacheMetadata usageCacheMetadata)
 							{
-								if (usageMetadata is IUsageCacheMetadata usageCacheMetadata)
+								domainResponseMessage.AdditionalData.Add(new TokenCostViewModel
 								{
-									domainResponseMessage.AdditionalData.Add(new TokenCostViewModel
-									{
-										ModelName = modelName,
-										InputTokens = usageMetadata.InputTokens,
-										InputCacheHitTokens = usageCacheMetadata.InputCacheHitTokens,
-										InputCacheMissTokens = usageCacheMetadata.InputCacheMissTokens,
-										OutputTokens = usageMetadata.OutputTokens,
-										TTFT = (timeFirstToken!.Value - timeRequested).TotalSeconds,
-										GenerationTime = (timeReponseFinished - timeFirstToken.Value).TotalSeconds,
-									});
+									ModelName = modelName,
+									InputTokens = usageMetadata.InputTokens,
+									InputCacheHitTokens = usageCacheMetadata.InputCacheHitTokens,
+									InputCacheMissTokens = usageCacheMetadata.InputCacheMissTokens,
+									OutputTokens = usageMetadata.OutputTokens,
+									TTFT = (timeFirstToken!.Value - timeRequested).TotalSeconds,
+									GenerationTime = (timeReponseFinished - timeFirstToken.Value).TotalSeconds,
+								});
 
-									usageStatsCollector.RecordUsage(
-										model: modelName,
-										inputTokens: usageMetadata.InputTokens,
-										outputTokens: usageMetadata.OutputTokens,
-										cacheHitTokens: usageCacheMetadata.InputCacheHitTokens,
-										cacheMissTokens: usageCacheMetadata.InputCacheMissTokens,
-										durationMs: (long)(timeReponseFinished - timeRequested).TotalMilliseconds,
-										success: true);
-								}
-								else
-								{
-									domainResponseMessage.AdditionalData.Add(new TokenCostViewModel
-									{
-										ModelName = modelName,
-										InputTokens = usageMetadata.InputTokens,
-										InputCacheHitTokens = null,
-										InputCacheMissTokens = null,
-										OutputTokens = usageMetadata.OutputTokens,
-										TTFT = (timeFirstToken!.Value - timeRequested).TotalSeconds,
-										GenerationTime = (timeReponseFinished - timeFirstToken.Value).TotalSeconds,
-									});
-
-									usageStatsCollector.RecordUsage(
-										model: modelName,
-										inputTokens: usageMetadata.InputTokens,
-										outputTokens: usageMetadata.OutputTokens,
-										durationMs: (long)(timeReponseFinished - timeRequested).TotalMilliseconds,
-										success: true);
-								}
-
-								await RunResponseCompletedHooksAsync(new ChatAgentResponseExecutionHookContext
-								{
-									Chat = chat,
-									Agent = agent,
-									Response = domainResponseMessage,
-									UsageMetadata = usageMetadata,
-									HasToolCalls = toolExecutionTasks.Count > 0,
-									Cycle = cycle
-								}, cancellationToken);
+								usageStatsCollector.RecordUsage(
+									model: modelName,
+									inputTokens: usageMetadata.InputTokens,
+									outputTokens: usageMetadata.OutputTokens,
+									cacheHitTokens: usageCacheMetadata.InputCacheHitTokens,
+									cacheMissTokens: usageCacheMetadata.InputCacheMissTokens,
+									durationMs: (long)(timeReponseFinished - timeRequested).TotalMilliseconds,
+									success: true);
 							}
 							else
 							{
 								domainResponseMessage.AdditionalData.Add(new TokenCostViewModel
 								{
 									ModelName = modelName,
-									InputTokens = null,
+									InputTokens = usageMetadata.InputTokens,
 									InputCacheHitTokens = null,
 									InputCacheMissTokens = null,
-									OutputTokens = null,
+									OutputTokens = usageMetadata.OutputTokens,
 									TTFT = (timeFirstToken!.Value - timeRequested).TotalSeconds,
 									GenerationTime = (timeReponseFinished - timeFirstToken.Value).TotalSeconds,
 								});
+
+								usageStatsCollector.RecordUsage(
+									model: modelName,
+									inputTokens: usageMetadata.InputTokens,
+									outputTokens: usageMetadata.OutputTokens,
+									durationMs: (long)(timeReponseFinished - timeRequested).TotalMilliseconds,
+									success: true);
 							}
 
-							domainResponseMessage.Status = cancellationToken.IsCancellationRequested ?
-								AssistantMessageStatus.Cancelled : AssistantMessageStatus.Success;
+							await RunResponseCompletedHooksAsync(new ChatAgentResponseExecutionHookContext
+							{
+								Chat = chat,
+								Agent = agent,
+								Response = domainResponseMessage,
+								UsageMetadata = usageMetadata,
+								HasToolCalls = toolExecutionTasks.Count > 0,
+								Cycle = cycle
+							}, token);
 						}
-						catch (OperationCanceledException)
+						else
 						{
-							domainResponseMessage.Status = AssistantMessageStatus.Cancelled;
-							RecordFailedUsage(modelName, timeRequested, "Operation cancelled");
-							throw;
+							domainResponseMessage.AdditionalData.Add(new TokenCostViewModel
+							{
+								ModelName = modelName,
+								InputTokens = null,
+								InputCacheHitTokens = null,
+								InputCacheMissTokens = null,
+								OutputTokens = null,
+								TTFT = (timeFirstToken!.Value - timeRequested).TotalSeconds,
+								GenerationTime = (timeReponseFinished - timeFirstToken.Value).TotalSeconds,
+							});
 						}
-						catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
-						{
-							domainResponseMessage.Status = AssistantMessageStatus.Cancelled;
-							RecordFailedUsage(modelName, timeRequested, "Operation cancelled");
-							throw;
-						}
-						catch (Exception ex)
-						{
-							domainResponseMessage.Error = ex.ToString();
-							domainResponseMessage.Status = AssistantMessageStatus.Error;
-							RecordFailedUsage(modelName, timeRequested, ex.Message);
-							throw;
-						}
-						finally
-						{
-							responseMessage.PartAdded -= PartHandler;
-						}
+
+						domainResponseMessage.Status = token.IsCancellationRequested ?
+							AssistantMessageStatus.Cancelled : AssistantMessageStatus.Success;
+					}
+					catch (OperationCanceledException)
+					{
+						domainResponseMessage.Status = AssistantMessageStatus.Cancelled;
+						RecordFailedUsage(modelName, timeRequested, "Operation cancelled");
+						throw;
+					}
+					catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
+					{
+						domainResponseMessage.Status = AssistantMessageStatus.Cancelled;
+						RecordFailedUsage(modelName, timeRequested, "Operation cancelled");
+						throw;
+					}
+					catch (Exception ex)
+					{
+						domainResponseMessage.Error = ex.ToString();
+						domainResponseMessage.Status = AssistantMessageStatus.Error;
+						RecordFailedUsage(modelName, timeRequested, ex.Message);
+						throw;
 					}
 					finally
 					{
-						try
-						{
-							await Task.WhenAll(toolExecutionTasks);
-						}
-						catch
-						{
-						}
-						finally
-						{
-							// Invoke execution-finished hooks (e.g. auto-naming) fire-and-forget
-							if (toolExecutionTasks.Count == 0)
-								await RunAgentExecutionFinishedHooksAsync(new ChatAgentExecutionHookContext
-								{
-									Chat = chat,
-									Agent = agent,
-									Responses = responsesBuilder.ToImmutable()
-								}, cancellationToken);
-
-							completionSource.Complete();
-							cancellationToken.ThrowIfCancellationRequested();
-						}
+						responseMessage.PartAdded -= PartHandler;
 					}
-
-					if (toolExecutionTasks.Count == 0)
-						break;
-
-					completionSource = new CompletionSource();
-					domainResponseMessage = new Domain.AssistantMessage
-					{
-						CreatedAt = DateTime.Now,
-						Status = AssistantMessageStatus.Pending,
-						SenderAgentId = agentId,
-						AgentStageId = agentStageId,
-						IsUserLike = agent.Info.IdentifyAsUser,
-						CompletionToken = completionSource.Token
-					};
-					responsesBuilder.Add(domainResponseMessage);
-					cycle++;
-
-					storage.AppendMessage(domainResponseMessage);
-
-					timeRequested = DateTime.Now;
-					timeFirstToken = null;
-
-					await RunResponsePrepareHooksAsync(new ChatPrepareExecutionHookContext
-					{
-						Chat = chat,
-						Agent = agent,
-						Response = domainResponseMessage,
-						Cycle = cycle
-					}, cancellationToken);
-
-					promptBundle = promptComposer.Build(agent);
-					inputMessages = promptBundle.Messages;
-					toolset = promptBundle.Tools;
-
-					statusService.Icon = MaterialIconKind.ChatProcessing;
-					statusService.Text = LocalizationManager.LocalizeStatic("chat.status.waiting_for_first_response");
-
-					response = await llm.ChatStreamingAsync(inputMessages, tools: toolset, cancellationToken: cancellationToken);
-					responseMessage = response.Message;
 				}
+				finally
+				{
+					try
+					{
+						await Task.WhenAll(toolExecutionTasks);
+					}
+					finally
+					{
+						completionSource.Complete();
+						token.ThrowIfCancellationRequested();
+					}
+				}
+
+				return domainResponseMessage;
 			}
 			catch (OperationCanceledException)
 			{
@@ -467,13 +453,8 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex, "An error occurred while generating the response using agent: {ErrorMessage}", ex.Message);
+				Log.Error(ex, "An error occurred while generating the response message using agent: {ErrorMessage}", ex.Message);
 				throw;
-			}
-			finally
-			{
-				statusService.Icon = MaterialIconKind.ChatProcessing;
-				statusService.Text = null;
 			}
 		}
 
