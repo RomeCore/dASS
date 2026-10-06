@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Settings;
+using LLMDesktopAssistant.Tools;
 
 namespace LLMDesktopAssistant.LLM.Services.Agents
 {
@@ -18,11 +19,16 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 	) : ISubAgentTaskParamsResolver
 	{
 		public AgentTaskLaunchParameters Resolve(AgentTaskLaunchParameters sourceParameters,
-			TaskSubAgentDescriptor descriptor, IEnumerable<AgentChatMessage> additionalMessages, out List<string> errors)
+			TaskSubAgentDescriptor descriptor, IEnumerable<AgentChatMessage> additionalMessages, out List<string> errors,
+			ToolPolicyMask? policyOverride = null)
 		{
 			errors = [];
 
 			var chatSettingsObj = chatSettings.Settings;
+
+			// The chat-level sub-agent policy replaces the caller's policy when provided.
+			var autoApproveBehaviours = policyOverride?.AutoApproveBehaviours ?? sourceParameters.AutoApproveBehaviours;
+			var disallowedBehaviours = policyOverride?.DisallowedBehaviours ?? sourceParameters.DisallowedBehaviours;
 
 			if (descriptor is DirectTaskSubAgentDescriptor directDescriptor)
 			{
@@ -38,8 +44,8 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 						new AgentSystemMessage { Content = directDescriptor.SystemPrompt },
 						..additionalMessages ],
 
-					AutoApproveBehaviours = sourceParameters.AutoApproveBehaviours,
-					DisallowedBehaviours = sourceParameters.DisallowedBehaviours,
+					AutoApproveBehaviours = autoApproveBehaviours,
+					DisallowedBehaviours = disallowedBehaviours,
 					TimeOut = sourceParameters.TimeOut,
 					CompletionExpiryTime = sourceParameters.CompletionExpiryTime,
 					MaxParallelToolCalls = sourceParameters.MaxParallelToolCalls,
@@ -132,8 +138,8 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 					new AgentSystemMessage { Content = info.Body },
 						..additionalMessages ],
 
-				AutoApproveBehaviours = sourceParameters.AutoApproveBehaviours,
-				DisallowedBehaviours = sourceParameters.DisallowedBehaviours,
+				AutoApproveBehaviours = autoApproveBehaviours,
+				DisallowedBehaviours = disallowedBehaviours,
 				TimeOut = sourceParameters.TimeOut,
 				CompletionExpiryTime = sourceParameters.CompletionExpiryTime,
 				MaxParallelToolCalls = sourceParameters.MaxParallelToolCalls,

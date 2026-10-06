@@ -352,6 +352,7 @@ agent.sub_agents.sub_agent_list.hint: Override sub-agent settings for this agent
 sub_agents.enable: Enable sub-agents
 sub_agents.available: Available Sub-Agents
 sub_agents.available.hint: Sub-agents are loaded from the user profile, working directories and additional sources. Expand a card to see details.
+sub_agents.behaviour_policy: Behaviour policy
 sub_agents.search.placeholder: Search by name, description or tags...
 sub_agents.create: Create
 sub_agents.create.title: New Sub-Agent

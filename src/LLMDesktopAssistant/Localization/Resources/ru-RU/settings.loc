@@ -352,6 +352,7 @@ agent.sub_agents.sub_agent_list.hint: Переопределите настро�
 sub_agents.enable: Включить суб-агентов
 sub_agents.available: Доступные суб-агенты
 sub_agents.available.hint: Суб-агенты загружаются из профиля пользователя, рабочих директорий и дополнительных источников. Раскройте карточку, чтобы увидеть детали.
+sub_agents.behaviour_policy: Политика поведения
 sub_agents.search.placeholder: Поиск по имени, описанию или тегам...
 sub_agents.create: Создать
 sub_agents.create.title: Новый суб-агент

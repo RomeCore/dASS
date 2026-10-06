@@ -15,16 +15,6 @@ using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 {
-	public interface ISetPolicyMaskFlag
-	{
-		/// <summary>
-		/// Sets the policy mask override for the specified behaviour flag of the tool/settings.
-		/// </summary>
-		/// <param name="flag">The behaviour flag to override.</param>
-		/// <param name="state"><see langword="true"/> - auto-approve, <see langword="false"/> - disallowed, <see langword="null"/> - ask.</param>
-		public void SetPolicyMaskFlag(ToolBehaviour flag, bool? state);
-	}
-
 	public class ToolBehaviourCategoryViewModel
 	{
 		public required LocaleKeyBase Title { get; init; }
@@ -276,7 +266,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 				{
 					Title = Locale.GetKey($"tool.behaviour.category.{category.ToString().ToLower()}"),
 					Toggles = flags.Select(f => new ToolBehaviourMaskItem(this,
-						ToolBehaviourFlagInfo.Create(f), GetPolicyMaskState(effectivePolicyMask, f), true))
+						ToolBehaviourFlagInfo.Create(f), ToolPolicyMaskEditing.GetFlagState(effectivePolicyMask, f), true))
 						.ToImmutableList()
 				});
 			}
@@ -284,39 +274,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			return builder.ToImmutableList();
 		}
 
-		private static bool? GetPolicyMaskState(ToolPolicyMask mask, ToolBehaviour flag)
-		{
-			if (mask.AutoApproveBehaviours.HasFlag(flag))
-				return true;
-			if (mask.DisallowedBehaviours.HasFlag(flag))
-				return false;
-			return null;
-		}
-
 		/// <inheritdoc/>
 		public void SetPolicyMaskFlag(ToolBehaviour flag, bool? state)
 		{
-			var mask = ToolSettings.GetEffectivePolicy(_chatSettings);
-
-			mask = state switch
-			{
-				true => new ToolPolicyMask
-				{
-					AutoApproveBehaviours = mask.AutoApproveBehaviours | flag,
-					DisallowedBehaviours = mask.DisallowedBehaviours & ~flag
-				},
-				false => new ToolPolicyMask
-				{
-					AutoApproveBehaviours = mask.AutoApproveBehaviours & ~flag,
-					DisallowedBehaviours = mask.DisallowedBehaviours | flag
-				},
-				_ => new ToolPolicyMask
-				{
-					AutoApproveBehaviours = mask.AutoApproveBehaviours & ~flag,
-					DisallowedBehaviours = mask.DisallowedBehaviours & ~flag
-				}
-			};
-
+			var mask = ToolPolicyMaskEditing.SetFlag(ToolSettings.GetEffectivePolicy(_chatSettings), flag, state);
 			ToolSettings.SetEffectivePolicy(_chatSettings, mask);
 		}
 
@@ -325,7 +286,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			var mask = ToolSettings.GetEffectivePolicy(_chatSettings);
 			foreach (var category in PolicyMaskCategoryItems)
 				foreach (var item in category.Toggles)
-					item.Refresh(GetPolicyMaskState(mask, item.Flag));
+					item.Refresh(ToolPolicyMaskEditing.GetFlagState(mask, item.Flag));
 		}
 
 		private void CreateNewId()

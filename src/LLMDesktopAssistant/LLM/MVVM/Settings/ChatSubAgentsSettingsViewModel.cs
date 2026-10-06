@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
@@ -6,20 +7,22 @@ using LLMDesktopAssistant.Addons.MVVM;
 using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Controls.Dialogs;
+using LLMDesktopAssistant.LLM.MVVM.Settings.Agents;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 
 /// <summary>
-/// ViewModel for the chat-level sub-agent settings: the available sub-agents rendered by the reusable
-/// addon list (with the search box) and the sub-agent file actions.
+/// ViewModel for the chat-level sub-agent settings: the behaviour policy applied when the chat calls sub-agents,
+/// and the available sub-agents rendered by the reusable addon list (with the search box) and the sub-agent file actions.
 /// </summary>
 [ViewModelFor(typeof(ChatSubAgentsSettingsView))]
-public class ChatSubAgentsSettingsViewModel : ViewModelBase
+public class ChatSubAgentsSettingsViewModel : ViewModelBase, ISetPolicyMaskFlag
 {
 	/// <summary>
 	/// Gets the underlying chat sub-agent settings.
@@ -35,6 +38,25 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase
 	/// Gets the command that creates a new sub-agent file from a template.
 	/// </summary>
 	public ICommand CreateSubAgentCommand { get; }
+
+	/// <summary>
+	/// Gets the behaviour policy toggles grouped by category.
+	/// </summary>
+	public ImmutableList<ToolBehaviourCategoryViewModel> PolicyMaskCategoryItems { get; }
+
+	private InheritanceLevelItem _selectedPolicyInheritance;
+	/// <summary>
+	/// Gets or sets the inheritance level for the sub-agent behaviour policy.
+	/// </summary>
+	public InheritanceLevelItem SelectedPolicyInheritance
+	{
+		get => _selectedPolicyInheritance;
+		set
+		{
+			if (SetProperty(ref _selectedPolicyInheritance, value) && value is not null)
+				SubAgentSettings.PolicyInheritance = value.Value;
+		}
+	}
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatSubAgentsSettingsViewModel"/> class.
@@ -53,6 +75,11 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase
 		SubAgentSettings = settings;
 		CreateSubAgentCommand = new AsyncRelayCommand(CreateSubAgentAsync);
 
+		_selectedPolicyInheritance = InheritanceLevelItem.AllProfile.First(i => i.Value == settings.PolicyInheritance);
+		settings.PropertyChanged += SubAgentSettings_PropertyChanged;
+
+		PolicyMaskCategoryItems = InitializePolicyMaskItems();
+
 		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(subAgentsetCollector, cardFactory, addonInvalidator,
 			AddonKind.SubAgent, searchService)
 		{
@@ -60,6 +87,50 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase
 			EmptyTextKey = Locale.GetKey("settings.sub_agents.empty")
 		};
 		List.Update();
+	}
+
+	private void SubAgentSettings_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName != nameof(ChatSubAgentSettings.PolicyInheritance))
+			return;
+
+		_selectedPolicyInheritance = InheritanceLevelItem.AllProfile.First(i => i.Value == SubAgentSettings.PolicyInheritance);
+		RaisePropertyChanged(nameof(SelectedPolicyInheritance));
+		RefreshPolicyMaskItems();
+	}
+
+	private ImmutableList<ToolBehaviourCategoryViewModel> InitializePolicyMaskItems()
+	{
+		var builder = ImmutableList.CreateBuilder<ToolBehaviourCategoryViewModel>();
+		var effectivePolicyMask = SubAgentSettings.GetEffectivePolicy();
+
+		foreach (var (category, flags) in ToolBehaviours.ByCategory)
+		{
+			builder.Add(new ToolBehaviourCategoryViewModel
+			{
+				Title = Locale.GetKey($"tool.behaviour.category.{category.ToString().ToLower()}"),
+				Toggles = flags.Select(f => new ToolBehaviourMaskItem(this,
+					ToolBehaviourFlagInfo.Create(f), ToolPolicyMaskEditing.GetFlagState(effectivePolicyMask, f), true))
+					.ToImmutableList()
+			});
+		}
+
+		return builder.ToImmutableList();
+	}
+
+	/// <inheritdoc/>
+	public void SetPolicyMaskFlag(ToolBehaviour flag, bool? state)
+	{
+		var mask = ToolPolicyMaskEditing.SetFlag(SubAgentSettings.GetEffectivePolicy(), flag, state);
+		SubAgentSettings.SetEffectivePolicy(mask);
+	}
+
+	private void RefreshPolicyMaskItems()
+	{
+		var mask = SubAgentSettings.GetEffectivePolicy();
+		foreach (var category in PolicyMaskCategoryItems)
+			foreach (var item in category.Toggles)
+				item.Refresh(ToolPolicyMaskEditing.GetFlagState(mask, item.Flag));
 	}
 
 	private async Task CreateSubAgentAsync()
@@ -125,6 +196,9 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase
 		base.Dispose(disposing);
 
 		if (disposing)
+		{
+			SubAgentSettings.PropertyChanged -= SubAgentSettings_PropertyChanged;
 			List.Dispose();
+		}
 	}
 }

@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Agents.Tasks;
+using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools;
 
 namespace LLMDesktopAssistant.Agents.SubAgents
 {
@@ -72,7 +74,7 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 			try
 			{
 				var parameters = _paramsResolver.Resolve(_sourceParameters, descriptor,
-					[new AgentUserMessage { Content = input }], out var errors);
+					[new AgentUserMessage { Content = input }], out var errors, GetChatSubAgentPolicy());
 				if (errors.Count > 0)
 					return Error(string.Join(Environment.NewLine, errors));
 
@@ -92,6 +94,19 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 			{
 				return Error("An error occurred while calling the sub-agent: " + ex.Message);
 			}
+		}
+
+		/// <summary>
+		/// Reads the chat-level sub-agent tool behaviour policy, if the task is attached to a chat.
+		/// </summary>
+		private ToolPolicyMask? GetChatSubAgentPolicy()
+		{
+			var chat = _sourceParameters.TriggeredChat;
+			if (chat is null)
+				return null;
+
+			var settings = chat.Services.GetService<IChatSettingsService>();
+			return settings?.Settings.SubAgents.GetEffectivePolicy();
 		}
 
 		private static AgentToolCallResult Success(string content) => new() { Success = true, Content = content };

@@ -7,9 +7,43 @@
 			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+			 xmlns:agents="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatSubAgentsSettingsView"
 			 x:DataType="local:ChatSubAgentsSettingsViewModel"
 			 x:Name="VMRoot">
+
+	<UserControl.Styles>
+		<Style Selector="ToggleButton.MaskToggle">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="Width" Value="32"/>
+			<Setter Property="Height" Value="32"/>
+			<Setter Property="Padding" Value="0"/>
+			<Setter Property="CornerRadius" Value="4"/>
+			<Style Selector="^ > ico|VisualIcon">
+				<Setter Property="Width" Value="24"/>
+				<Setter Property="Height" Value="24"/>
+			</Style>
+		</Style>
+
+		<Style Selector="ToggleButton.MaskToggle:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#22FFFFFF"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
+		<Style Selector="ToggleButton.MaskToggle:checked /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#5522AA44"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
+		<Style Selector="ToggleButton.MaskToggle:unchecked /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#55AA2244"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
+		<Style Selector="ToggleButton.MaskToggle:indeterminate /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="Transparent"/>
+			<Setter Property="BorderBrush" Value="Transparent"/>
+		</Style>
+	</UserControl.Styles>
 
 	<StackPanel Margin="8" Spacing="8">
 
@@ -40,6 +74,101 @@
 		<TextBlock Text="{loc:Loc settings.sub_agents.available.hint}"
 				   Opacity="0.6"
 				   TextWrapping="Wrap"/>
+
+		<!-- ============================================================ -->
+		<!-- BEHAVIOUR POLICY -->
+		<!-- ============================================================ -->
+		<Rectangle Height="1"
+				   Fill="{DynamicResource DefaultForeground}"
+				   Opacity="0.2"/>
+
+		<Grid ColumnDefinitions="*,Auto">
+
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.sub_agents.behaviour_policy}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
+					   VerticalAlignment="Center"/>
+
+			<ComboBox Grid.Column="1"
+					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
+					  SelectedItem="{Binding SelectedPolicyInheritance}"
+					  VerticalAlignment="Center"
+					  Margin="0,0,8,0"
+					  MinWidth="120">
+
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="set:InheritanceLevelItem">
+						<TextBlock Text="{Binding DisplayName}"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+
+			</ComboBox>
+
+		</Grid>
+
+		<ItemsControl ItemsSource="{Binding PolicyMaskCategoryItems}">
+
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<WrapPanel ItemSpacing="8" LineSpacing="8"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+
+			<ItemsControl.ItemTemplate>
+				<DataTemplate x:DataType="agents:ToolBehaviourCategoryViewModel">
+					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+							BorderThickness="1"
+							CornerRadius="4"
+							Padding="8">
+						<StackPanel Orientation="Vertical" Spacing="6">
+
+							<TextBlock Text="{loc:Loc {Binding Title}}"
+									   TextTrimming="CharacterEllipsis"
+									   VerticalAlignment="Center"/>
+
+							<ItemsControl ItemsSource="{Binding Toggles}">
+								<ItemsControl.ItemsPanel>
+									<ItemsPanelTemplate>
+										<StackPanel Orientation="Horizontal" Spacing="4"/>
+									</ItemsPanelTemplate>
+								</ItemsControl.ItemsPanel>
+
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="agents:ToolBehaviourMaskItem">
+										<ToggleButton Classes="MaskToggle"
+													  IsThreeState="True"
+													  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+													  IsEnabled="{Binding !IsNone}"
+													  ToolTip.ShowOnDisabled="True">
+											<ToolTip.Tip>
+												<StackPanel Orientation="Vertical" Spacing="4">
+													<TextBlock Text="{loc:Loc {Binding DisplayName}}"
+															   FontSize="{DynamicResource FontSizeM}"
+															   FontWeight="SemiBold"/>
+													<TextBlock Text="{loc:Loc {Binding Description}}"/>
+													<TextBlock Text="{loc:Loc {Binding StateName}}"
+															   Foreground="{Binding StateColor}"
+															   FontSize="11"/>
+												</StackPanel>
+											</ToolTip.Tip>
+											<ico:VisualIcon Kind="{Binding Icon}"
+															Foreground="{Binding Color}"/>
+										</ToggleButton>
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+
+							</ItemsControl>
+
+						</StackPanel>
+					</Border>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+
+		<Rectangle Height="1"
+				   Fill="{DynamicResource DefaultForeground}"
+				   Opacity="0.2"/>
 
 		<!-- Search + list -->
 		<cards:AddonListView DataContext="{Binding List}"/>
