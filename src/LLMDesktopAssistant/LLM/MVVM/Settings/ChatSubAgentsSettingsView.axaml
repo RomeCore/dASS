@@ -47,34 +47,6 @@
 
 	<StackPanel Margin="8" Spacing="8">
 
-		<!-- Available sub-agents header -->
-		<Grid ColumnDefinitions="*,Auto,Auto">
-			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.sub_agents.available}"
-					   FontSize="{DynamicResource FontSizeL}"
-					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
-
-			<Button Grid.Column="1"
-					Command="{Binding CreateSubAgentCommand}"
-					Classes="IconButton"
-					Margin="0,0,4,0"
-					ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
-				<ico:VisualIcon Kind="FilePlusOutline"/>
-			</Button>
-
-			<Button Grid.Column="2"
-					Command="{Binding List.RefreshCommand}"
-					Classes="IconButton"
-					ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
-				<ico:VisualIcon Kind="Refresh"/>
-			</Button>
-		</Grid>
-
-		<TextBlock Text="{loc:Loc settings.sub_agents.available.hint}"
-				   Opacity="0.6"
-				   TextWrapping="Wrap"/>
-
 		<!-- ============================================================ -->
 		<!-- BEHAVIOUR POLICY -->
 		<!-- ============================================================ -->
@@ -169,6 +141,34 @@
 		<Rectangle Height="1"
 				   Fill="{DynamicResource DefaultForeground}"
 				   Opacity="0.2"/>
+		
+		<!-- Available sub-agents header -->
+		<Grid ColumnDefinitions="*,Auto,Auto">
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.sub_agents.available}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
+					   VerticalAlignment="Center"/>
+
+			<Button Grid.Column="1"
+					Command="{Binding CreateSubAgentCommand}"
+					Classes="IconButton"
+					Margin="0,0,4,0"
+					ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
+				<ico:VisualIcon Kind="FilePlusOutline"/>
+			</Button>
+
+			<Button Grid.Column="2"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
+				<ico:VisualIcon Kind="Refresh"/>
+			</Button>
+		</Grid>
+
+		<TextBlock Text="{loc:Loc settings.sub_agents.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
 
 		<!-- Search + list -->
 		<cards:AddonListView DataContext="{Binding List}"/>
