@@ -24,11 +24,16 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 
 ## Stage 1 — Command engine core
 
-- [ ] 1.1 `SlashCommandInfo` (+`SlashCommandChange`), `ModelFacingMode`, `ICommandExecutor`, execution context/result.
-- [ ] 1.2 `ISlashCommandProvider` + providers: skills, sub-agents (derived `SlashCommandInfo`).
-- [ ] 1.3 `SlashCommandSetCollector` + `SlashCommandSet` + chat-level `EnableCommands` + DI.
-- [ ] 1.4 `ISlashCommandResolver`: token grammar, namespaces (type + pack), aliases, conflict resolution, `Unknown`/`Ambiguous`.
-- [ ] 1.5 Argument grammar: schema, tokenizer, keyed/positional/rest parsing, validation.
+Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
+
+- [ ] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
+- [ ] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
+- [ ] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
+- [ ] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
+- [ ] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
+
+Blocking edges: `08 ← 07`, `09 ← 08`, `10 ← 09`, `11 ← 10`. Exit criterion: green build + green tests, no user-visible
+behaviour yet (the dispatch host is Stage 2).
 
 ## Stage 2 — Message-insertion / execution host
 
@@ -69,3 +74,10 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 - **Migrations**: none — 0 users, no release.
 - **`ChatExecutionLevel.Operation`**: taken by `ChatOperationService`; `ChatExecutionService` is reworked separately by the maintainer.
 - **`Chat.GenerationCts`**: removed; `IChatExecutionTokenService.ExecutionCancellationToken` is the single source for the UI.
+- **`ICommandExecutor` → `ISlashCommandExecutor`**: the implementation name; the locked design docs (`../slash-commands/`) keep the old spelling and are not rewritten.
+- **No `Ambiguous`**: the collector collapses same-key duplicates into `Overrides`, and the matcher orders by `OverrideOrder` desc → `Order` asc → fully-qualified key asc, so a true tie cannot occur. `SlashCommandResolutionStatus` is `{ Unknown, Exact, WonOthers }`; `WonOthers` is the UI state formerly called “ambiguous” (orange + underline).
+- **`SlashCommandResolution`** gains `Status` and `IReadOnlyList<SlashCommandInfo> Defeated` (the winner + its `Overrides`); `Error` is populated only for `Unknown`.
+- **Dedup key**: `string.Join(':', Namespaces.OrderBy(StringComparer.Ordinal)) + ":" + Name` — e.g. `matt-pocock:skill:grilling`.
+- **Arguments first**: `07` precedes `08`, because the executor context carries the parse result and the executor declares its schema.
+- **Inert addon plumbing for commands** (deviation from ticket 01's “no file locator/parser in v1”): `SlashCommandAddonTypeDescriptor` (`commands`, `UseDefaultSearchService = false`), an empty `SlashCommandFileLocator` and a stub `SlashCommandParser` exist so `AddonSetCollectorBase` can construct. A temporary `StubCommandExecutor` stands in until Stage 3.
+- **RCParsing grammar** of the argument parser is maintainer-owned: the agent ships the scaffold + tests, the maintainer writes the grammar.
