@@ -14,7 +14,7 @@ Status legend: `[ ]` not started · `[~]` in progress · `[x]` done.
 General infrastructure everything else leans on. No user-visible behaviour; the exit criterion is a green build + green tests.
 
 - [x] [01 — Rename `AddonKind.Command` to `SlashCommand`](./issues/01-slash-command-kind-rename.md)
-- [ ] [02 — `AddonSetCollectorBase.GetDeduplicationKey`](./issues/02-addon-collector-dedup-key.md)
+- [x] [02 — `AddonSetCollectorBase.GetDeduplicationKey`](./issues/02-addon-collector-dedup-key.md)
 - [ ] [03 — `AdditionalMessagePart.IsRestorable`](./issues/03-additional-part-restorable.md)
 - [ ] [04 — Move `Error` up to `ChatMessage`](./issues/04-message-error-base.md)
 - [ ] [05 — Multi-level `IChatExecutionTokenService` (remove `Chat.GenerationCts`)](./issues/05-execution-token-service.md)
