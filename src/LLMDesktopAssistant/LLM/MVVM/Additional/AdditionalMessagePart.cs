@@ -41,6 +41,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			set => SetProperty(ref _chipColor, value);
 		}
 
+		private bool _isRestorable = true;
+		/// <summary>
+		/// Gets or sets a value indicating whether this part is restored into the input draft when
+		/// the message is edited. Parts injected by commands set this to <see langword="false"/>
+		/// so editing does not clone them back into the user input.
+		/// </summary>
+		public bool IsRestorable
+		{
+			get => _isRestorable;
+			set => SetProperty(ref _isRestorable, value);
+		}
+
 		/// <summary>
 		/// Creates a shallow copy of this part. Used when editing messages to avoid
 		/// sharing part instances between the draft state and the original message.

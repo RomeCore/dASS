@@ -74,6 +74,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		}
 
 		/// <summary>
+		/// Gets the message parts that are restored into the input draft when the message is edited:
+		/// every <see cref="AdditionalMessagePart"/> whose <see cref="AdditionalMessagePart.IsRestorable"/> is set.
+		/// </summary>
+		/// <returns>The restorable message parts, in collection order.</returns>
+		public IEnumerable<AdditionalMessagePart> GetRestorableParts()
+		{
+			return this.OfType<AdditionalMessagePart>().Where(part => part.IsRestorable);
+		}
+
+		/// <summary>
 		/// Replaces the first additional view model of a specific type with a new one.
 		/// If not found, the new view model will be added to the collection.
 		/// </summary>

@@ -318,7 +318,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				throw new ArgumentException("The branched message does not contain a user message.");
 
 			_editParts.Clear();
-			foreach (var part in userMessage.AdditionalData.OfType<AttachmentMessagePart>())
+			foreach (var part in userMessage.AdditionalData.GetRestorableParts())
 				_editParts.Add(part.Clone());
 
 			_editText = userMessage.Content ?? string.Empty;
