@@ -122,14 +122,14 @@ public readonly record struct UserInputInsertionResult(bool Success, LocaleKeyBa
 public enum ChatExecutionLevel { None = 0, Operation, Command, AgentSequence, Agent, Message }
 public interface IChatExecutionTokenService
 {
-    CancellationTokenSource ExecutionCancellationToken { get; }   // "all levels", for the UI
+    CancellationTokenSource? ExecutionCancellationToken { get; }  // alive while any level is; null when the chat is idle
     event Action? ExecutionCancellationTokenChanged;
-    IDisposable WithToken(ChatExecutionLevel level, out CancellationToken cancellationToken);
+    IDisposable WithToken(ChatExecutionLevel level, CancellationToken inputCt, out CancellationToken cancellationToken);
     bool TryCancel(ChatExecutionLevel level);
 }
 ```
 
-  Rules: taking level `L` cancels/replaces the `L` token and recursively cancels all deeper levels; `Dispose` releases `L` and cancels all deeper; `CancellationTokenSource.Cancel()` cancels all levels; a deeper level never cancels a shallower one; `Operation` is taken for any chat mutation. The command runs under `Command`.
+  Rules: `Operation` is the **widest** level — cancelling it (e.g. switching a branch, any chat mutation) cancels everything (generation, router, commands). Taking level `L` cancels/replaces the `L` token and cascades into all narrower levels; levels may be **skipped** (`Message` without an active `Operation` is fine); each level links the caller's `inputCt` **and** the nearest live wider level; `Dispose` releases `L` and cascades into narrower levels; a narrower level never cancels a wider one. `ExecutionCancellationToken` is created lazily with the first active level and released when the last one is released — its `.Cancel()` kills all levels. `Chat.GenerationCts` is **removed**: the UI's "is generating" flag is `ExecutionCancellationToken != null` and the cancel button calls `ExecutionCancellationToken.Cancel()`. The command runs under `Command`.
 
 - **Flow**:
 
@@ -226,7 +226,7 @@ enum SlashCommandExecutionStatus { Executed, Failed, Cancelled }
 
 ## 13. Reusable layers surfaced by this effort
 
-- `IChatExecutionTokenService` (multi-level token; replaces manual CTS plumbing).
+- `IChatExecutionTokenService` (multi-level token; replaces manual CTS plumbing and removes `Chat.GenerationCts`).
 - `AdditionalMessageContentPart` + `AdditionalMessagePart.IsRestorable`.
 - `ChatSubAgentSettings.Policy` (and a fix to `agent-callsub`).
 - `AddonSetCollectorBase.GetDeduplicationKey`.
