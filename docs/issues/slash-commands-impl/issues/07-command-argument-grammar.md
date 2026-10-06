@@ -1,6 +1,6 @@
 # 07: Command argument grammar and schema
 
-Status: open
+Status: claimed
 Type: task
 Blocked by:
 
@@ -190,3 +190,9 @@ public static class SlashCommandArgumentBinder
 
 - Split of ownership agreed in the grilling session: the maintainer writes the RCParsing grammar, the agent ships the
   scaffold and the tests.
+- **Agent half delivered.** `SlashCommands/Arguments/` carries every type, a fully implemented and unit-tested
+  `SlashCommandArgumentBinder` (17 tests) and the `SlashCommandArgumentParser` scaffold (`Parser` / `Parse` / `TryParse`
+  throw `NotImplementedException` behind a `TODO` pointing here). The ten grammar-contract tests are in place and
+  `Skip`ped with `RCParsing grammar pending (maintainer)`.
+- **Remaining:** the maintainer's RCParsing grammar in `SlashCommandArgumentParser`; the ticket resolves once the ten
+  grammar tests are un-skipped and green. Locale domain `command` was registered in `Localization/Resources/RULES.md`.

@@ -36,6 +36,7 @@ domain.screen.section.entity.attribute
 | `attachment` | Attachments manager |
 | `skill` | Skills: diagnostics, injection modes |
 | `task` | Agent tasks: details, statuses, tool calls |
+| `command` | Slash commands: argument errors (`command.error.*`) and argument names (`command.argument.*`) |
 | `tool` | Tools: `tool.name.*`, `tool.description.*`, `tool.category.*`, `tool.status.*`, `tool.behaviour.*`, `tool.source.*`, `tool.call.status.*`, `tool.fixed.*` |
 | `forms` | HITL forms: choice, confirm, input, file picker |
 | `webui` | Blazor web UI |

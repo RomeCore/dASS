@@ -1,0 +1,9 @@
+// Слеш-команды: ошибки разбора аргументов.
+
+%locale: ru-RU
+%namespace: command
+
+error.missing_argument: Не указан обязательный аргумент.
+error.invalid_argument: Недопустимое значение аргумента.
+error.too_many_arguments: Слишком много аргументов.
+error.parse_error: Не удалось разобрать аргументы.
