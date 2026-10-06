@@ -7,7 +7,9 @@ namespace LLMDesktopAssistant.LLM.Services
 	/// </summary>
 	public enum ChatExecutionLevel
 	{
-		/// <summary>No level. Cannot be taken.</summary>
+		/// <summary>
+		/// No level. Cannot be taken.
+		/// </summary>
 		None = 0,
 
 		/// <summary>
@@ -16,16 +18,24 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// </summary>
 		Operation = 1,
 
-		/// <summary>A single slash-command execution.</summary>
+		/// <summary>
+		/// A single slash-command execution.
+		/// </summary>
 		Command = 2,
 
-		/// <summary>A whole agent sequence within one chat execution.</summary>
+		/// <summary>
+		/// A whole agent sequence within one chat execution.
+		/// </summary>
 		AgentSequence = 3,
 
-		/// <summary>A single agent's execution.</summary>
+		/// <summary>
+		/// A single agent's execution.
+		/// </summary>
 		Agent = 4,
 
-		/// <summary>The narrowest level: one message generation.</summary>
+		/// <summary>
+		/// The narrowest level: one message generation.
+		/// </summary>
 		Message = 5
 	}
 }
