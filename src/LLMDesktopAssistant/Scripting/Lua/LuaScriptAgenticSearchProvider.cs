@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public override string UsageHint => "available in Lua code via their namespace";
 
 		/// <inheritdoc/>
-		protected override IEnumerable<LuaScriptInfo> GetCandidates(ChatAgentDescriptor agent)
+		protected override IEnumerable<LuaScriptInfo> GetCandidates(ChatAgentDescriptor? agent)
 		{
 			return Collector.GetAddonsForChat();
 		}
