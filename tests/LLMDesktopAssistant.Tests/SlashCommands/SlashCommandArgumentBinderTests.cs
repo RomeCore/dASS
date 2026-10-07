@@ -48,7 +48,17 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		private static SlashCommandRawArgument Raw(string value, SlashCommandArgument? definition = null,
 			bool quoted = false)
 		{
-			return new SlashCommandRawArgument { Definition = definition, Unescaped = value, WasQuoted = quoted };
+			return new SlashCommandRawArgument
+			{
+				Definition = definition,
+				Raw = value,
+				Unescaped = value,
+				WasQuoted = quoted,
+				Position = 0,
+				Length = value.Length,
+				ValuePosition = 0,
+				KeyLength = 0
+			};
 		}
 
 		private static SlashCommandArgumentsResult RawResult(
@@ -56,14 +66,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			IEnumerable<KeyValuePair<string, SlashCommandRawArgument>>? keyed = null,
 			string rawArguments = "",
 			string rawPositionalArguments = "",
+			string restPositionalArguments = "",
+			int errorPosition = -1,
 			LocaleKeyBase? error = null)
 		{
 			return new SlashCommandArgumentsResult
 			{
 				RawArguments = rawArguments,
 				RawPositionalArguments = rawPositionalArguments,
+				RestPositionalArguments = restPositionalArguments,
 				Positionals = positionals is null ? [] : [.. positionals],
 				Keyed = keyed is null ? [] : ImmutableDictionary.CreateRange(keyed),
+				ErrorPosition = errorPosition,
 				Error = error
 			};
 		}
@@ -96,9 +110,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(result.IsValid);
 			Assert.Equal(2, result.Positionals.Count);
-			Assert.Equal("first", result.Positionals[0].Raw);
+			Assert.Equal("first", result.Positionals[0].Ready);
 			Assert.Equal("first", result.Positionals[0].Value);
-			Assert.Equal("second", result.Positionals[1].Raw);
+			Assert.Equal("second", result.Positionals[1].Ready);
 		}
 
 		[Fact]
@@ -121,7 +135,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var result = SlashCommandArgumentBinder.Bind(schema, RawResult());
 
 			Assert.True(result.IsValid);
-			Assert.Equal("fallback", result.Positionals[0].Raw);
+			Assert.Equal("fallback", result.Positionals[0].Ready);
 			Assert.Equal("fallback", result.Positionals[0].Value);
 		}
 
@@ -134,8 +148,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(result.IsValid);
 			Assert.Equal(2, result.Positionals.Count);
-			Assert.Equal("first", result.Positionals[0].Raw);
-			Assert.Equal(string.Empty, result.Positionals[1].Raw);
+			Assert.Equal("first", result.Positionals[0].Ready);
+			Assert.Null(result.Positionals[1].Raw);
+			Assert.Null(result.Positionals[1].Ready);
 			Assert.Null(result.Positionals[1].Value);
 		}
 
@@ -159,7 +174,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				RawResult(keyed: [KeyValuePair.Create("wait", Raw("true"))]));
 
 			Assert.True(result.IsValid);
-			Assert.Equal("true", result.Keyed["wait"].Raw);
+			Assert.Equal("true", result.Keyed["wait"].Ready);
 			Assert.Equal("true", result.Keyed["wait"].Value);
 		}
 
@@ -171,7 +186,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var result = SlashCommandArgumentBinder.Bind(schema, RawResult());
 
 			Assert.True(result.IsValid);
-			Assert.Equal("false", result.Keyed["wait"].Raw);
+			Assert.Equal("false", result.Keyed["wait"].Ready);
 		}
 
 		[Fact]
@@ -267,20 +282,59 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(result.IsValid);
 			Assert.Equal(0, format.ValidateCalls);
-			Assert.Equal("false", result.Keyed["wait"].Raw);
+			Assert.Equal("false", result.Keyed["wait"].Ready);
 			Assert.Equal("<false>", result.Keyed["wait"].Value);
+		}
+
+		[Fact]
+		public void UserSuppliedValue_KeepsItsRawArgument()
+		{
+			var schema = new SlashCommandArgumentSchema { Positionals = [Argument()] };
+
+			var result = SlashCommandArgumentBinder.Bind(schema, RawResult(positionals: [Raw("first")]));
+
+			Assert.NotNull(result.Positionals[0].Raw);
+			Assert.Equal("first", result.Positionals[0].Raw!.Unescaped);
+			Assert.Equal("first", result.Positionals[0].Ready);
+			Assert.Equal("first", result.Positionals[0].Value);
+		}
+
+		[Fact]
+		public void DefaultedValue_HasNoRawArgumentButHasReady()
+		{
+			var schema = new SlashCommandArgumentSchema { Positionals = [Argument(@default: "fallback")] };
+
+			var result = SlashCommandArgumentBinder.Bind(schema, RawResult());
+
+			Assert.Null(result.Positionals[0].Raw);
+			Assert.Equal("fallback", result.Positionals[0].Ready);
+			Assert.Equal("fallback", result.Positionals[0].Value);
 		}
 
 		[Fact]
 		public void ParseError_IsPropagated()
 		{
 			var result = SlashCommandArgumentBinder.Bind(new SlashCommandArgumentSchema(),
-				RawResult(error: Locale.GetKey("command.error.parse_error"), rawPositionalArguments: "rest"));
+				RawResult(error: Locale.GetKey("command.error.parse_error"), rawPositionalArguments: "rest",
+					errorPosition: 3));
 
 			Assert.False(result.IsValid);
 			Assert.Equal("command.error.parse_error", result.Error!.Key);
+			Assert.Equal(3, result.ErrorPosition);
 			Assert.Equal("rest", result.RawPositionalArguments);
 			Assert.Empty(result.Positionals);
+		}
+
+		[Fact]
+		public void BindingError_HasNoPosition()
+		{
+			var schema = new SlashCommandArgumentSchema { Positionals = [Argument(required: true)] };
+
+			var result = SlashCommandArgumentBinder.Bind(schema, RawResult());
+
+			Assert.False(result.IsValid);
+			Assert.Equal("command.error.missing_argument", result.Error!.Key);
+			Assert.Equal(-1, result.ErrorPosition);
 		}
 
 		[Fact]
@@ -292,6 +346,19 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(result.IsValid);
 			Assert.Equal("hello world", result.RawPositionalArguments);
+		}
+
+		[Fact]
+		public void RawAndRestPositionalArguments_AreCarriedThroughSeparately()
+		{
+			var schema = new SlashCommandArgumentSchema { HasRestPositional = true };
+
+			var result = SlashCommandArgumentBinder.Bind(schema,
+				RawResult(rawPositionalArguments: "one two", restPositionalArguments: "two"));
+
+			Assert.True(result.IsValid);
+			Assert.Equal("one two", result.RawPositionalArguments);
+			Assert.Equal("two", result.RestPositionalArguments);
 		}
 	}
 }

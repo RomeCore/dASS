@@ -14,7 +14,9 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	public static class SlashCommandArgumentBinder
 	{
 		/// <summary>
-		/// Binds <paramref name="parsed"/> against <paramref name="schema"/>.
+		/// Binds <paramref name="parsed"/> against <paramref name="schema"/>. The verbatim positional text
+		/// (<see cref="SlashCommandArgumentsResult.RawPositionalArguments"/> and
+		/// <see cref="SlashCommandArgumentsResult.RestPositionalArguments"/>) is carried over untouched.
 		/// </summary>
 		/// <remarks>
 		/// Binding stops at the first problem and returns empty collections with the error set. Defaults are converted
@@ -40,7 +42,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 				if (i < parsed.Positionals.Count)
 				{
-					if (!TryBindValidated(definition, parsed.Positionals[i].Unescaped, out var bound, out var error))
+					if (!TryBindValidated(definition, parsed.Positionals[i], out var bound, out var error))
 						return Failure(parsed, error!);
 					positionals.Add(bound!);
 					continue;
@@ -48,15 +50,16 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 				if (definition.Default is not null)
 				{
-					positionals.Add(BindTrusted(definition, definition.Default));
+					positionals.Add(BindDefault(definition, definition.Default));
 					continue;
 				}
 
 				if (definition.Required)
 					return Failure(parsed, Locale.GetKey("command.error.missing_argument"));
 
-				// Absent optional without a default: keep the slot so indices stay aligned with the schema.
-				positionals.Add(new ParsedSlashCommandArgument { Definition = definition, Raw = string.Empty });
+				// Absent optional without a default: keep the slot so indices stay aligned with the schema. No raw argument
+				// and no ready text — the argument simply is not there.
+				positionals.Add(new ParsedSlashCommandArgument { Definition = definition });
 			}
 
 			if (parsed.Positionals.Count > schema.Positionals.Count)
@@ -67,13 +70,13 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 			{
 				if (parsed.Keyed.TryGetValue(key, out var raw))
 				{
-					if (!TryBindValidated(definition, raw.Unescaped, out var bound, out var error))
+					if (!TryBindValidated(definition, raw, out var bound, out var error))
 						return Failure(parsed, error!);
 					keyed[key] = bound!;
 				}
 				else if (definition.Default is not null)
 				{
-					keyed[key] = BindTrusted(definition, definition.Default);
+					keyed[key] = BindDefault(definition, definition.Default);
 				}
 				else if (definition.Required)
 				{
@@ -85,44 +88,60 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 			{
 				Positionals = positionals.ToImmutable(),
 				Keyed = keyed.ToImmutable(),
-				RawPositionalArguments = parsed.RawPositionalArguments
+				RawPositionalArguments = parsed.RawPositionalArguments,
+				RestPositionalArguments = parsed.RestPositionalArguments
 			};
 		}
 
 		/// <summary>
 		/// Binds a user-supplied value: validates it through the format provider, then converts it.
 		/// </summary>
-		private static bool TryBindValidated(SlashCommandArgument definition, string raw,
+		private static bool TryBindValidated(SlashCommandArgument definition, SlashCommandRawArgument raw,
 			out ParsedSlashCommandArgument? bound, out LocaleKeyBase? error)
 		{
 			bound = null;
 			error = null;
 
-			if (definition.Format is not null && !definition.Format.TryValidate(raw, out error))
+			if (definition.Format is not null && !definition.Format.TryValidate(raw.Unescaped, out error))
 			{
 				error ??= Locale.GetKey("command.error.invalid_argument");
 				return false;
 			}
 
-			bound = BindTrusted(definition, raw);
+			bound = BindFromInput(definition, raw);
 			return true;
 		}
 
 		/// <summary>
-		/// Binds a trusted value (a schema default, or a value that already passed validation): converts it only.
+		/// Binds a value the user wrote: the raw argument is kept (span and all) and the value is converted from its
+		/// unescaped text.
 		/// </summary>
-		private static ParsedSlashCommandArgument BindTrusted(SlashCommandArgument definition, string raw)
+		private static ParsedSlashCommandArgument BindFromInput(SlashCommandArgument definition, SlashCommandRawArgument raw)
 		{
 			return new ParsedSlashCommandArgument
 			{
 				Definition = definition,
 				Raw = raw,
-				Value = definition.Format is null ? raw : definition.Format.Convert(raw)
+				Value = definition.Format is null ? raw.Unescaped : definition.Format.Convert(raw.Unescaped)
 			};
 		}
 
 		/// <summary>
-		/// Builds a failed result: empty collections, the given error and the rest positional carried over.
+		/// Binds a schema default: there is no source text, so the raw argument stays <see langword="null"/>, and the
+		/// default is converted but never validated (it is authored, not typed by the user).
+		/// </summary>
+		private static ParsedSlashCommandArgument BindDefault(SlashCommandArgument definition, string value)
+		{
+			return new ParsedSlashCommandArgument
+			{
+				Definition = definition,
+				Value = definition.Format is null ? value : definition.Format.Convert(value)
+			};
+		}
+
+		/// <summary>
+		/// Builds a failed result: empty collections, the given error and the verbatim positional text carried over. The
+		/// parser's error position rides along — it is -1 for an error the binder itself raised.
 		/// </summary>
 		private static SlashCommandBoundArguments Failure(SlashCommandArgumentsResult parsed, LocaleKeyBase error)
 		{
@@ -131,7 +150,9 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 				Positionals = [],
 				Keyed = [],
 				RawPositionalArguments = parsed.RawPositionalArguments,
-				Error = error
+				RestPositionalArguments = parsed.RestPositionalArguments,
+				Error = error,
+				ErrorPosition = parsed.ErrorPosition
 			};
 		}
 	}

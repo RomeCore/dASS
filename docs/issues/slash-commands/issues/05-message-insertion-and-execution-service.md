@@ -76,6 +76,7 @@ if finalGenerate: ChatExecutionService.GenerateResponseAsync(ct)
 
 - A command that does not exist, or whose arguments fail validation, **blocks the send** — nothing is inserted.
 - Validation uses `ISlashCommandArgumentFormatProvider.TryValidate` (errors are `LocaleKeyBase`).
+- A **parse** failure (an unterminated quote, say) blocks the same way and reports *where* it happened, so blocking the send is never an unexplained refusal.
 
 ### Error model
 
@@ -88,9 +89,10 @@ Task<UserInputInsertionResult> TryInsertUserInputAsync(
     UserInput input, bool generateIntent, int? editIndex = null, CancellationToken ct = default);
 
 public readonly record struct UserInputInsertionResult(
-    bool Success, LocaleKeyBase? Error, ChatMessage? Message);
+    bool Success, LocaleKeyBase? Error, int ErrorPosition, ChatMessage? Message);
 ```
 
+- `ErrorPosition` is the offset into the argument text where a **syntax** error sits (carried over from `SlashCommandBoundArguments.ErrorPosition`), and `-1` when the failure has no position — an unknown command, a missing or an invalid argument. It travels with the error so the refusal can point at the offending character instead of merely naming the problem.
 - The command **fingerprint** is **not** a separate field: it lives on the message (`Message.AdditionalData` — ticket 06), so this contract does not depend on ticket 06's concrete type.
 
 ## Comments
@@ -98,3 +100,4 @@ public readonly record struct UserInputInsertionResult(
 - Two rounds. Round 1: service shape (a), token ownership, flow, edits, entry points.
 - Round 2: `ChatExecutionLevel` enum + `WithToken(level, out ct)`; `TryCancel(level)` added; `ExecutionCancellationToken` is the CTS itself; validation blocks the send; `ChatMessage.Error` move.
 - `UserInputInsertionResult` returns the inserted `ChatMessage` only (fingerprint read from its `AdditionalData`) — chose option (A).
+- **Amended:** `UserInputInsertionResult` gains `ErrorPosition` — the offset of a syntax error in the argument text (`-1` when the failure has no position), carried over from `SlashCommandBoundArguments.ErrorPosition` (ticket 07), so the UI can point at the offending character.

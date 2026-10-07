@@ -40,8 +40,8 @@ Native (built-in) commands; scriptable commands and their script-side API; `.md`
 
 ```csharp
 Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct);
-// ctx: Chat, Message (target, already inserted), Positionals, Keyed, RawPositionalArguments, RawArguments,
-//      GenerateIntent, Services
+// ctx: Chat, Message (target, already inserted), Positionals, Keyed, RawPositionalArguments,
+//      RestPositionalArguments, RawArguments, GenerateIntent, Services
 // result: bool Generate, string? Error
 ```
 
@@ -70,7 +70,9 @@ Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx,
   - a new **argument tokenizer** (not `ShellCommandSplitter`): whitespace separates, `'…'`/`"…"` group and the quotes are **stripped**, `\` escapes `"` in double quotes; tokens carry a "was quoted" flag;
   - a single left-to-right resolver: `key=…` where `key` ∈ schema `Keyed` starts a keyed argument; an **unquoted** value runs to the next schema key (spaces allowed), a **quoted** value bounds it; a `key=value` with an **undeclared** key stays plain text; everything else is positional;
   - **mixed is allowed** (positionals precede the first key); quoting a keyed value is for **symmetry**, not protection;
-  - a **rest positional** (the "big" argument) is delivered raw as `RawPositionalArguments`.
+  - every positional argument is kept **verbatim** (quotes and spacing kept, no splitting) as `RawPositionalArguments` — the whole region before the first key; empty when the text carries keyed segments only;
+  - a **rest positional** (the "big" argument) is the **surplus** beyond the declared positionals, delivered verbatim as `RestPositionalArguments` — a slice of `RawPositionalArguments`, and identical to it when no positionals are declared.
+  - a syntax error (an unterminated quote) is reported as an error key plus `ErrorPosition`, the offset into `RawArguments`, and blocks the send (the binder carries the position over);
 - **Schema**:
 
 ```csharp
@@ -102,7 +104,7 @@ public interface ISlashCommandArgumentFormatProvider
 }
 ```
 
-- **Parsed arguments**: `ParsedSlashCommandArgument { Definition, Raw, Value }`.
+- **Parsed arguments**: `ParsedSlashCommandArgument { Definition, Raw, Ready, Value }` — `Raw` is the `SlashCommandRawArgument` the user wrote (text, quotedness, source span) or `null` when the value came from a schema default, and `Ready` is the derived text (`Raw.Unescaped` or the default) that `Value` is converted from.
 - **Validation at send**: an unknown command, or one whose arguments fail `TryValidate`, **blocks the send** (nothing is inserted). `Completer` is UX-only.
 - **File / scriptable formats (contracts, not implemented)**: pack folder `commands/`; `SlashCommandParser : FrontmatterBasedAddonParser<SlashCommandInfo, SlashCommandChange>` with descriptor like `SkillParser` and its own thin `Populate` (SkillInfo's body/frontmatter is **not** reused); frontmatter = base set + `namespaces`, `model-facing`, `generate`, `argument-schema`; scriptable `IScriptableCommandEngine` mirrors `IScriptableToolEngine`; file commands arrive via the **non-additional** set (`IAddonAccessor<SlashCommandInfo>`).
 
@@ -113,7 +115,8 @@ public interface ISlashCommandArgumentFormatProvider
 ```csharp
 Task<UserInputInsertionResult> TryInsertUserInputAsync(
     UserInput input, bool generateIntent, int? editIndex = null, CancellationToken ct = default);
-public readonly record struct UserInputInsertionResult(bool Success, LocaleKeyBase? Error, ChatMessage? Message);
+public readonly record struct UserInputInsertionResult(
+    bool Success, LocaleKeyBase? Error, int ErrorPosition, ChatMessage? Message);
 ```
 
 - **Execution token** (shared infrastructure):
@@ -145,6 +148,7 @@ if finalGenerate: ChatExecutionService.GenerateResponseAsync(ct)
 
 - **Runtime** errors are attached to the message (`ChatMessage.Error`); commands run only on **new-message** insertion (`editIndex` edits do not re-run them).
 - **Error model**: `Error : string?` moves from `AssistantMessage` up to **`ChatMessage`**.
+- A failure that has a place in the text **carries it**: `ErrorPosition` is the offset into the argument text where the syntax error sits, `-1` for a failure with no position (an unknown command, a missing or invalid argument).
 
 ## 7. Skill and agent commands
 
@@ -152,13 +156,13 @@ if finalGenerate: ChatExecutionService.GenerateResponseAsync(ct)
 
 - Body injected as a new reusable **`AdditionalMessageContentPart : AdditionalMessagePart`** whose `Content` is appended to `message.Content` inside `ChatMessageQuoteRenderer` (**no context expander**); chip badge, e.g. *"Used skill 'grilling'"*.
 - `AdditionalMessagePart` gains **`bool IsRestorable { get; set; } = true`**; command parts set it `false` so editing does not clone them into `UserInputState`.
-- Positional arguments are **substituted into the body** (`$ARGUMENTS` / named placeholders).
+- Positional arguments are **substituted into the body** (`$ARGUMENTS` / named placeholders); a skill declares no positionals, so the whole argument text is the rest positional (`RestPositionalArguments`).
 - Body always injected **in full** (`InjectionMode` is not applied); the `SkillLoadTool` home-directory note is appended when `HomeDirectory` is set.
 - Default `Generate = null`.
 
 ### `/agent:<name> input`
 
-- Input = `RawPositionalArguments` → `AgentUserMessage.Content`.
+- Input = `RestPositionalArguments` → `AgentUserMessage.Content`.
 - Launch mirrors `agent-callsub`: fresh `AgentTaskLaunchParameters { TaskName, TriggeredChat, TriggeredMessage = commandMessage, InitialMessages = [], AutoApproveBehaviours, DisallowedBehaviours }` → `ISubAgentTaskParamsResolver.Resolve(...)` → `IAgentTaskExecutor.Execute`; the task attaches to `message.AgentTasks`.
 - Policies come from **`ChatSubAgentSettings`** (§10).
 - **Fire-and-forget**; a named argument **`wait`** (default `false`) can await the result (schema: `Keyed = { wait: bool }` + `HasRestPositional`).

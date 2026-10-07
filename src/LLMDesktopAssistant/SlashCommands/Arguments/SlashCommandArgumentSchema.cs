@@ -22,9 +22,10 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public ImmutableDictionary<string, SlashCommandArgument> Keyed { get; init; } = [];
 
 		/// <summary>
-		/// Whether the schema declares a rest positional: the remainder of the argument text is not split into
-		/// positional tokens and is delivered verbatim as
-		/// <see cref="SlashCommandArgumentsResult.RawPositionalArguments"/>.
+		/// Whether the schema declares a rest positional: the tokens beyond the declared <see cref="Positionals"/> are
+		/// not split further and are delivered verbatim as <see cref="SlashCommandArgumentsResult.RawPositionalArguments"/>.
+		/// The rest positional is an implicit slot that follows the declared positionals — it is not one of them and does
+		/// not appear in <see cref="SlashCommandArgumentsResult.Positionals"/>.
 		/// </summary>
 		public bool HasRestPositional { get; init; }
 	}

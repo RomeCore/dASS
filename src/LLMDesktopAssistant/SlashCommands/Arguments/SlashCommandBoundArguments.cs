@@ -10,8 +10,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	{
 		/// <summary>
 		/// The bound positional arguments: exactly one entry per declared positional, in schema order. An optional
-		/// positional that was neither supplied nor defaulted keeps its slot with an empty raw value and a
-		/// <see langword="null"/> value, so indices stay aligned with the schema.
+		/// positional that was neither supplied nor defaulted keeps its slot with a <see langword="null"/> raw argument
+		/// and a <see langword="null"/> value, so indices stay aligned with the schema.
 		/// </summary>
 		public required ImmutableList<ParsedSlashCommandArgument> Positionals { get; init; }
 
@@ -22,9 +22,14 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required ImmutableDictionary<string, ParsedSlashCommandArgument> Keyed { get; init; }
 
 		/// <summary>
-		/// The rest positional's verbatim text.
+		/// The verbatim text of every positional argument, as it was written.
 		/// </summary>
 		public required string RawPositionalArguments { get; init; }
+
+		/// <summary>
+		/// The rest positional's verbatim text, or an empty string when the schema declares no rest positional.
+		/// </summary>
+		public required string RestPositionalArguments { get; init; }
 
 		/// <summary>
 		/// The blocking error, or <see langword="null"/> when the arguments bound successfully.
@@ -35,6 +40,13 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// <c>command.error.too_many_arguments</c> and <c>command.error.invalid_argument</c>.
 		/// </remarks>
 		public LocaleKeyBase? Error { get; init; }
+
+		/// <summary>
+		/// The offset into the raw argument text where a syntax error sits, or -1 when there is no syntax error.
+		/// Carried over from <see cref="SlashCommandArgumentsResult.ErrorPosition"/>, so the caller can point at the
+		/// offending character; an error found while binding (a missing or invalid argument, say) has no position.
+		/// </summary>
+		public int ErrorPosition { get; init; } = -1;
 
 		/// <summary>
 		/// Whether the arguments bound successfully.
