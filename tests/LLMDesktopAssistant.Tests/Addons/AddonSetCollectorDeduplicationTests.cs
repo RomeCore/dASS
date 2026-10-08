@@ -5,13 +5,20 @@ namespace LLMDesktopAssistant.Tests.Addons
 {
 	public class AddonSetCollectorDeduplicationTests
 	{
-		private sealed class TestAddon : AddonChangedBase<TestAddon, AddonChangeBase>
+		private class TestAddon : AddonChangedBase<TestAddon, AddonChangeBase>
 		{
-			public string Key
+		}
+
+		private sealed class GroupedAddon : AddonChangedBase<GroupedAddon, AddonChangeBase>
+		{
+			public string Group
 			{
 				get => field ??= string.Empty;
 				set => SetProperty(ref field, value);
 			}
+
+			// The name is only unique together with the extra group.
+			public override string Key => $"{Name}:{Group}";
 		}
 
 		private sealed class DefaultCollector(IServiceProvider services)
@@ -19,38 +26,29 @@ namespace LLMDesktopAssistant.Tests.Addons
 		{
 		}
 
-		private sealed class KeyedCollector(IServiceProvider services)
-			: AddonSetCollectorBase<TestAddon, AddonChangeBase>(services)
+		private sealed class GroupedCollector(IServiceProvider services)
+			: AddonSetCollectorBase<GroupedAddon, AddonChangeBase>(services)
 		{
-			// A composite key - the name is only unique together with the extra key.
-			protected override object GetDeduplicationKey(TestAddon addon) => (addon.Name, addon.Key);
 		}
 
-		private sealed class FakeServiceProvider(IAddonAccessor<TestAddon> accessor) : IServiceProvider
+		private sealed class FakeServiceProvider<TAddon>(IAddonAccessor<TAddon> accessor) : IServiceProvider
 		{
 			public object? GetService(Type serviceType) =>
-				serviceType == typeof(IAddonAccessor<TestAddon>) ? accessor : null;
+				serviceType == typeof(IAddonAccessor<TAddon>) ? accessor : null;
 		}
 
-		private sealed class FakeAccessor(IEnumerable<TestAddon> addons) : IAddonAccessor<TestAddon>
+		private sealed class FakeAccessor<TAddon>(IEnumerable<TAddon> addons) : IAddonAccessor<TAddon>
 		{
-			public ReadOnlyObservableCollection<TestAddon> Addons { get; } = new(addons.ToList());
+			public ReadOnlyObservableCollection<TAddon> Addons { get; } = new(addons.ToList());
 		}
-
-		private static TestAddon Addon(string name, int overrideOrder = 0, string key = "") => new()
-		{
-			Name = name,
-			OverrideOrder = overrideOrder,
-			Key = key
-		};
 
 		[Fact]
 		public void DefaultKey_GroupsByName()
 		{
-			var collector = new DefaultCollector(new FakeServiceProvider(new FakeAccessor(
+			var collector = new DefaultCollector(new FakeServiceProvider<TestAddon>(new FakeAccessor<TestAddon>(
 			[
-				Addon("shared", overrideOrder: 1),
-				Addon("shared", overrideOrder: 0)
+				new TestAddon { Name = "shared", OverrideOrder = 1 },
+				new TestAddon { Name = "shared", OverrideOrder = 0 }
 			])));
 
 			var result = collector.GetAvailableAddons().ToList();
@@ -64,26 +62,26 @@ namespace LLMDesktopAssistant.Tests.Addons
 		}
 
 		[Fact]
-		public void OverriddenKey_UsesCustomKey()
+		public void OverriddenKey_UsesTheAddonKey()
 		{
-			var collector = new KeyedCollector(new FakeServiceProvider(new FakeAccessor(
+			var collector = new GroupedCollector(new FakeServiceProvider<GroupedAddon>(new FakeAccessor<GroupedAddon>(
 			[
-				Addon("shared", overrideOrder: 0, key: "a"),
-				Addon("shared", overrideOrder: 1, key: "a"),
-				Addon("shared", overrideOrder: 0, key: "b")
+				new GroupedAddon { Name = "shared", OverrideOrder = 0, Group = "a" },
+				new GroupedAddon { Name = "shared", OverrideOrder = 1, Group = "a" },
+				new GroupedAddon { Name = "shared", OverrideOrder = 0, Group = "b" }
 			])));
 
 			var result = collector.GetAvailableAddons().ToList();
 
-			// (shared, a) and (shared, b) are two distinct addons; the two (shared, a) collapse.
+			// "shared:a" and "shared:b" are two distinct addons; the two "shared:a" collapse.
 			Assert.Equal(2, result.Count);
 
-			var groupA = Assert.Single(result, addon => addon.Key == "a");
+			var groupA = Assert.Single(result, addon => addon.Group == "a");
 			Assert.Equal(1, groupA.OverrideOrder);
 			var loser = Assert.Single(groupA.Overrides);
 			Assert.Equal(0, loser.OverrideOrder);
 
-			var groupB = Assert.Single(result, addon => addon.Key == "b");
+			var groupB = Assert.Single(result, addon => addon.Group == "b");
 			Assert.Empty(groupB.Overrides);
 		}
 	}

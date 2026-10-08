@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 
 		public TChange? Change
 		{
-			get => field ??= SetConfig?.Changes.GetValueOrDefault(Addon.Name);
+			get => field ??= SetConfig?.Changes.GetValueOrDefault(Addon.Key);
 			private set => SetProperty(ref field, value);
 		}
 
@@ -42,10 +42,10 @@ namespace LLMDesktopAssistant.Addons.MVVM
 			if (SetConfig is null)
 				throw new InvalidOperationException("Cannot get change in the read-only context.");
 
-			if (!SetConfig.Changes.TryGetValue(Addon.Name, out var change))
+			if (!SetConfig.Changes.TryGetValue(Addon.Key, out var change))
 			{
 				change = new TChange();
-				SetConfig.Changes.Add(Addon.Name, change);
+				SetConfig.Changes.Add(Addon.Key, change);
 			}
 			Change = change;
 			return Change;
@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 
 		public void Reset()
 		{
-			SetConfig?.Changes.Remove(Addon.Name);
+			SetConfig?.Changes.Remove(Addon.Key);
 			Change = null;
 		}
 	}

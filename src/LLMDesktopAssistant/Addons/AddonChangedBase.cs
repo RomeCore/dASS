@@ -11,6 +11,17 @@ namespace LLMDesktopAssistant.Addons
 		where TChange : AddonChangeBase
 	{
 		/// <summary>
+		/// The key that identifies the addon for deduplication and change resolution: addons that share a
+		/// <see cref="Key"/> are one logical addon (the collector collapses them into <see cref="Overrides"/>), and a
+		/// per-chat change is stored under it. Defaults to the addon name; an addon whose name is not unique across its
+		/// namespaces (a command, for example) overrides it.
+		/// </summary>
+		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
+		public virtual string Key => Name;
+
+		/// <summary>
 		/// The order that used when addons with same name is conflicting.
 		/// The addon with the higher <see cref="OverrideOrder"/> wins, others puts to <see cref="Overrides"/>.
 		/// </summary>
