@@ -24,6 +24,9 @@ public class MessageContentProjectorTests
 	private static string? Project(string content, MessagePartsFacet parts, params object[] additional)
 	{
 		var message = PromptingTestHelpers.User(content, 0).Message;
+		// Raise the collection events synchronously (see SkillCommandExecutorTests): the default collection marshals
+		// to the Avalonia UI thread, which deadlocks when two test classes do it in parallel.
+		message.AdditionalData.RaiseInUIThread = false;
 		foreach (var item in additional)
 			message.AdditionalData.Add((AdditionalChatData)item);
 		return MessageContentProjector.Project(message, parts);
