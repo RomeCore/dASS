@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.SlashCommands.Resolution
 	/// <remarks>
 	/// The resolver works on the slash-free token — knowing about the leading <c>/</c> marker is the job of the
 	/// message-insertion service and the input autocomplete service, both of which use
-	/// <see cref="SlashCommandMatcher.TryExtractToken"/>.
+	/// <see cref="SlashCommandExtractor.TryExtractToken"/>.
 	/// </remarks>
 	public interface ISlashCommandResolver
 	{

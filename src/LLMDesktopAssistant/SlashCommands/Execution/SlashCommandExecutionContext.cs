@@ -25,12 +25,13 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		public required SlashCommandInfo Command { get; init; }
 
 		/// <summary>
-		/// The canonicalized command token, i.e. the resolved form such as <c>/skill:grilling</c>.
+		/// The canonical, slash-free form of the command, e.g. <c>skill:grilling</c>
+		/// (<see cref="SlashCommandInfo.CanonicalToken"/>).
 		/// </summary>
 		public required string Token { get; init; }
 
 		/// <summary>
-		/// The command token exactly as the user typed it, such as <c>/grilling</c>.
+		/// The command token exactly as the user typed it, slash-free (e.g. <c>grilling</c>).
 		/// </summary>
 		public required string RawToken { get; init; }
 

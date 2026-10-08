@@ -35,6 +35,20 @@ namespace LLMDesktopAssistant.SlashCommands
 		public override string Key => string.Join(':', Namespaces.OrderBy(n => n, StringComparer.Ordinal)) + ":" + Name;
 
 		/// <summary>
+		/// The canonical, slash-free token of the command: its namespaces in stored order (the type first, then the
+		/// pack) followed by the name, joined by <c>:</c> — for example <c>skill:matt-pocock:grilling</c>.
+		/// </summary>
+		/// <remarks>
+		/// Unlike <see cref="Key"/> (which sorts the namespaces ordinally and is the deduplication / settings
+		/// identity), this reads like the token a user types and is re-parseable by the matcher. Tokens never carry the
+		/// leading <c>/</c> marker.
+		/// </remarks>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[LiteDB.BsonIgnore]
+		[YamlDotNet.Serialization.YamlIgnore]
+		public string CanonicalToken => string.Join(':', Namespaces.Add(Name));
+
+		/// <summary>
 		/// How the command's message is presented to the model. Defaults to <see cref="ModelFacingMode.Raw"/>.
 		/// </summary>
 		public ModelFacingMode ModelFacingMode
