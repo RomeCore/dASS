@@ -81,6 +81,8 @@ type.agents.name: Sub-agents
 type.agents.description: Reusable sub-agents (agent.md files) that define specialist personas with their own tools, skills, sub-agents and memory blocks.
 type.context.name: Prompt contexts
 type.context.description: The sections the system prompt of an agent is assembled from (identity, skills, sub-agents, memory blocks, tools, working directories and others).
+type.commands.name: Slash commands
+type.commands.description: User-triggered commands (/skill:<name>, /agent:<name>) that inject a skill's body or launch a sub-agent from the start of a message.
 
 // =====================================================
 // === Diagnostics                                   ===

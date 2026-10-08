@@ -61,7 +61,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 		}
 
-		private static SlashCommandArgumentsResult RawResult(
+		private static SlashCommandParsedArguments RawResult(
 			IEnumerable<SlashCommandRawArgument>? positionals = null,
 			IEnumerable<KeyValuePair<string, SlashCommandRawArgument>>? keyed = null,
 			string rawArguments = "",
@@ -70,7 +70,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			int errorPosition = -1,
 			LocaleKeyBase? error = null)
 		{
-			return new SlashCommandArgumentsResult
+			return new SlashCommandParsedArguments
 			{
 				RawArguments = rawArguments,
 				RawPositionalArguments = rawPositionalArguments,

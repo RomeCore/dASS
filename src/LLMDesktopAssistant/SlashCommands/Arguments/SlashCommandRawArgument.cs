@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required bool WasQuoted { get; init; }
 
 		/// <summary>
-		/// The offset of the whole argument in <see cref="SlashCommandArgumentsResult.RawArguments"/>: the token itself
+		/// The offset of the whole argument in <see cref="SlashCommandParsedArguments.RawArguments"/>: the token itself
 		/// for a positional, the whole <c>key=value</c> for a keyed argument.
 		/// </summary>
 		public required int Position { get; init; }

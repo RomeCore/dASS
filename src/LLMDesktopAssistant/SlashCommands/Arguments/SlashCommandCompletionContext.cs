@@ -4,11 +4,15 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// The context of an argument-completion request.
 	/// </summary>
 	/// <remarks>
-	/// The context deliberately carries only argument-level state for now: it gains the resolved command
-	/// (<c>SlashCommandInfo Command</c>) in ticket 08, once that type exists.
+	/// The context carries the resolved command alongside the argument-level state, so a format provider can complete
+	/// against the whole command definition.
 	/// </remarks>
 	public sealed class SlashCommandCompletionContext
 	{
+		/// <summary>
+		/// The resolved command whose argument is being completed.
+		/// </summary>
+		public required SlashCommandInfo Command { get; init; }
 		/// <summary>
 		/// The whole raw argument text typed so far (after the command token).
 		/// </summary>

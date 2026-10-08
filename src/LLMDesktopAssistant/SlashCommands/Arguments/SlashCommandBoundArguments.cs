@@ -3,7 +3,7 @@ using LLMDesktopAssistant.Localization;
 namespace LLMDesktopAssistant.SlashCommands.Arguments
 {
 	/// <summary>
-	/// The result of binding a <see cref="SlashCommandArgumentsResult"/> against a
+	/// The result of binding a <see cref="SlashCommandParsedArguments"/> against a
 	/// <see cref="SlashCommandArgumentSchema"/>.
 	/// </summary>
 	public sealed class SlashCommandBoundArguments
@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 		/// <summary>
 		/// The offset into the raw argument text where a syntax error sits, or -1 when there is no syntax error.
-		/// Carried over from <see cref="SlashCommandArgumentsResult.ErrorPosition"/>, so the caller can point at the
+		/// Carried over from <see cref="SlashCommandParsedArguments.ErrorPosition"/>, so the caller can point at the
 		/// offending character; an error found while binding (a missing or invalid argument, say) has no position.
 		/// </summary>
 		public int ErrorPosition { get; init; } = -1;

@@ -23,9 +23,9 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 		/// <summary>
 		/// Whether the schema declares a rest positional: the tokens beyond the declared <see cref="Positionals"/> are
-		/// not split further and are delivered verbatim as <see cref="SlashCommandArgumentsResult.RawPositionalArguments"/>.
+		/// not split further and are delivered verbatim as <see cref="SlashCommandParsedArguments.RawPositionalArguments"/>.
 		/// The rest positional is an implicit slot that follows the declared positionals — it is not one of them and does
-		/// not appear in <see cref="SlashCommandArgumentsResult.Positionals"/>.
+		/// not appear in <see cref="SlashCommandParsedArguments.Positionals"/>.
 		/// </summary>
 		public bool HasRestPositional { get; init; }
 	}

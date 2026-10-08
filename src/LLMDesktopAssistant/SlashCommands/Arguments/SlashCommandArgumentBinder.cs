@@ -15,15 +15,15 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	{
 		/// <summary>
 		/// Binds <paramref name="parsed"/> against <paramref name="schema"/>. The verbatim positional text
-		/// (<see cref="SlashCommandArgumentsResult.RawPositionalArguments"/> and
-		/// <see cref="SlashCommandArgumentsResult.RestPositionalArguments"/>) is carried over untouched.
+		/// (<see cref="SlashCommandParsedArguments.RawPositionalArguments"/> and
+		/// <see cref="SlashCommandParsedArguments.RestPositionalArguments"/>) is carried over untouched.
 		/// </summary>
 		/// <remarks>
 		/// Binding stops at the first problem and returns empty collections with the error set. Defaults are converted
 		/// but never validated (they are authored, not typed by the user).
 		/// </remarks>
 		public static SlashCommandBoundArguments Bind(
-			SlashCommandArgumentSchema schema, SlashCommandArgumentsResult parsed)
+			SlashCommandArgumentSchema schema, SlashCommandParsedArguments parsed)
 		{
 			ArgumentNullException.ThrowIfNull(schema);
 			ArgumentNullException.ThrowIfNull(parsed);
@@ -143,7 +143,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// Builds a failed result: empty collections, the given error and the verbatim positional text carried over. The
 		/// parser's error position rides along — it is -1 for an error the binder itself raised.
 		/// </summary>
-		private static SlashCommandBoundArguments Failure(SlashCommandArgumentsResult parsed, LocaleKeyBase error)
+		private static SlashCommandBoundArguments Failure(SlashCommandParsedArguments parsed, LocaleKeyBase error)
 		{
 			return new SlashCommandBoundArguments
 			{

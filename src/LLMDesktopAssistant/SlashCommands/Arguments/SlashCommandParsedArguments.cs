@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// This is a purely syntactic result — no schema default has been applied, nothing has been validated or converted.
 	/// Use <see cref="SlashCommandArgumentBinder"/> to turn it into <see cref="SlashCommandBoundArguments"/>.
 	/// </remarks>
-	public sealed class SlashCommandArgumentsResult
+	public sealed class SlashCommandParsedArguments
 	{
 		/// <summary>
 		/// The whole argument text, i.e. everything after the command token with the leading whitespace trimmed.

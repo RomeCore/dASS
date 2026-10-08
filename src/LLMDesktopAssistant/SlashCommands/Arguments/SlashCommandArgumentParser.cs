@@ -17,8 +17,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// its quotes; everything else is positional; positionals precede the first key; with
 	/// <see cref="SlashCommandArgumentSchema.HasRestPositional"/> the declared positionals are parsed as usual and the
 	/// surplus is not split further — declared <c>key=…</c> segments are still extracted and that surplus is delivered
-	/// verbatim (quotes kept) as <see cref="SlashCommandArgumentsResult.RestPositionalArguments"/>. Independently of the
-	/// schema, <see cref="SlashCommandArgumentsResult.RawPositionalArguments"/> always carries every positional argument
+	/// verbatim (quotes kept) as <see cref="SlashCommandParsedArguments.RestPositionalArguments"/>. Independently of the
+	/// schema, <see cref="SlashCommandParsedArguments.RawPositionalArguments"/> always carries every positional argument
 	/// — the whole region before the first key, verbatim.
 	/// </para>
 	/// <para>
@@ -141,7 +141,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// Parses <paramref name="rawArguments"/> against <paramref name="schema"/>.
 		/// </summary>
 		/// <exception cref="InvalidOperationException">The argument text is not a valid argument list.</exception>
-		public static SlashCommandArgumentsResult Parse(SlashCommandArgumentSchema schema, string rawArguments)
+		public static SlashCommandParsedArguments Parse(SlashCommandArgumentSchema schema, string rawArguments)
 		{
 			if (!TryParse(schema, rawArguments, out var result))
 				throw new InvalidOperationException($"Failed to parse slash command arguments: {result.Error?.Key}.");
@@ -157,7 +157,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// reason (<c>command.error.parse_error</c>).
 		/// </returns>
 		public static bool TryParse(SlashCommandArgumentSchema schema, string rawArguments,
-			out SlashCommandArgumentsResult result)
+			out SlashCommandParsedArguments result)
 		{
 			ArgumentNullException.ThrowIfNull(schema);
 			ArgumentNullException.ThrowIfNull(rawArguments);
@@ -304,7 +304,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 			if (error is not null)
 			{
-				result = new SlashCommandArgumentsResult
+				result = new SlashCommandParsedArguments
 				{
 					RawArguments = text,
 					RawPositionalArguments = rawPositionals,
@@ -317,7 +317,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 				return false;
 			}
 
-			result = new SlashCommandArgumentsResult
+			result = new SlashCommandParsedArguments
 			{
 				RawArguments = text,
 				RawPositionalArguments = rawPositionals,

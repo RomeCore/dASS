@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 		/// <summary>
 		/// The raw argument the user wrote — its text, its quotedness and its span in
-		/// <see cref="SlashCommandArgumentsResult.RawArguments"/> — or <see langword="null"/> when the value came from
+		/// <see cref="SlashCommandParsedArguments.RawArguments"/> — or <see langword="null"/> when the value came from
 		/// <see cref="SlashCommandArgument.Default"/> or was not supplied at all.
 		/// </summary>
 		public SlashCommandRawArgument? Raw { get; init; }
