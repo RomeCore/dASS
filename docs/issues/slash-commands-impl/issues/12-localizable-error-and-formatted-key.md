@@ -1,6 +1,6 @@
 # 12: Localizable message error and `LocaleFormattedKey`
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by:
 
@@ -72,21 +72,49 @@ today and must be adapted (`Message.Error is not null` → `Message.Error.Value`
 
 ## Acceptance criteria
 
-- [ ] `ChatMessage.Error`, `MessageModel.Error` and `MessageViewModelBase.Error` are `LocaleKeyBase?`.
-- [ ] `MessageDatabaseSynchronizer` persists and restores `Error` for **all** message roles (assistant **and** user).
-- [ ] `ChatExecutionService` stores a generation failure as `Locale.GetConstKey(ex.ToString())`.
-- [ ] `LocaleFormattedKey` exists with `ImmutableArray<string?> FormatArgs`, caches its own value, invalidates on
+- [x] `ChatMessage.Error`, `MessageModel.Error` and `MessageViewModelBase.Error` are `LocaleKeyBase?`.
+- [x] `MessageDatabaseSynchronizer` persists and restores `Error` for **all** message roles (assistant **and** user).
+- [x] `ChatExecutionService` stores a generation failure as `Locale.GetConstKey(ex.ToString())`.
+- [x] `LocaleFormattedKey` exists with `ImmutableArray<string?> FormatArgs`, caches its own value, invalidates on
       language change, is **not** cached by the facade, and compares by `(Key, FormatArgs)`.
-- [ ] `Locale.GetFormattedKey(string key, params string?[] args)` exists.
-- [ ] BSON and JSON round-trip a `LocaleFormattedKey` (key + args), and still round-trip `LocaleKey`/`ConstLocaleKey`.
-- [ ] Desktop message views render the error through the localization layer; Blazor's assistant component compiles and
+- [x] `Locale.GetFormattedKey(string key, params string?[] args)` exists.
+- [x] BSON and JSON round-trip a `LocaleFormattedKey` (key + args), and still round-trip `LocaleKey`/`ConstLocaleKey`.
+- [x] Desktop message views render the error through the localization layer; Blazor's assistant component compiles and
       shows the resolved text.
-- [ ] The solution builds (main + desktop + Blazor); the full test suite stays green; new unit tests cover
+- [x] The solution builds (main + desktop + Blazor); the full test suite stays green; new unit tests cover
       `LocaleFormattedKey` rendering/caching and its BSON/JSON round-trip.
 
 ## Answer
 
-<!-- appended on resolution -->
+- **Type change.** `ChatMessage.Error`, `MessageModel.Error` and `MessageViewModelBase.Error` are `LocaleKeyBase?`.
+  `ChatExecutionService` wraps the raw exception text as `Locale.GetConstKey(ex.ToString())`.
+- **Synchronizer.** `MessageDatabaseSynchronizer` now carries `Error` for every role: `CopyToModel` copies it in the
+  common part (so a `UserMessage` command error persists) and `CreateFromModel` sets it on the user message too.
+- **`LocaleFormattedKey`** (`Localization/LocaleFormattedKey.cs`): `ImmutableArray<string?> FormatArgs`, `RawValue`
+  renders the localized template with `string.Format` lazily and caches it, invalidating the cache and raising
+  `PropertyChanged` on `LocalizationManager.StaticLanguageChanged` (parity with `LocaleKey`); `Equals`/`GetHashCode`
+  are by `(Key, FormatArgs)`. The facade returns a fresh instance per call — `Locale.GetFormattedKey(key, params
+  string?[] args)`.
+- **BSON.** The `LocaleKeyBase` registration moved out into `Localization/LocaleKeyBsonSerializer.Register(BsonMapper)`
+  (per the maintainer's note, mirroring `VisualIconKindBsonSerializer`); `LiteDB_BSON_SerializerConfig` now just calls
+  it next to the `VisualIconKind` one, and exposes `Register(BsonMapper)` so tests can build a private mapper without
+  touching `BsonMapper.Global`. A third discriminator `formatted` carries the `args` array; `const`/`default` unchanged.
+- **JSON.** `JsonLocaleKeyConverter` gained the symmetric `formatted` branch (`type` + `key` + `args`).
+- **UI.** `UserMessageView` / `AssistantMessageView` bind `Content="{loc:Loc {Binding Error}}"` (reactive to a language
+  switch) and gate `IsVisible` on `NotnullToBooleanConverter`; the Blazor `AssistantMessageComponent` reads
+  `Message.Error.Value`.
+- **Tests.** `LocaleKeyTests` gained five `LocaleFormattedKey` cases (formatting, not-cached-but-equal, equal-by-args,
+  missing-key fallback, language-change notification); `LocaleKeySerializationTests` covers JSON and BSON round-trips
+  (default / const / formatted). The two language-change tests now reset to the neutral locale first, so they no longer
+  depend on the order they run in.
+
+Builds: main + desktop + Blazor green (only pre-existing warnings). Full suite: 905 total, 904 passed, 1 skipped
+(pre-existing).
+
+One caveat worth recording: `LocaleFormattedKey` instances subscribe to the static `StaticLanguageChanged` and (unlike
+`LocaleKey`) are not held in a cache, so a live instance is kept alive by that subscription until the event is raised.
+For chat message errors this matches the message lifetime; if the type spreads to short-lived uses, a weak-reference
+subscription may be worth adding later.
 
 ## Comments
 
