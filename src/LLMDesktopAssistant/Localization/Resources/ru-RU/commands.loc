@@ -15,3 +15,7 @@ argument.wait.description: Ждать ли завершения субагент
 
 // Команда навыка (command.skill.*).
 skill.used: Использован навык '{0}'.
+
+// Команда агента (command.agent.*) и её ошибки.
+error.sub_agent_not_found: Субагент '{0}' не найден.
+agent.result: Результат субагента '{0}'

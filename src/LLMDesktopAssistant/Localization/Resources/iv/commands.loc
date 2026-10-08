@@ -15,3 +15,7 @@ argument.wait.description: Whether to wait for the sub-agent to finish before co
 
 // Skill command (command.skill.*).
 skill.used: Used skill '{0}'.
+
+// Agent command (command.agent.*) and its errors.
+error.sub_agent_not_found: Sub-agent '{0}' was not found.
+agent.result: Sub-agent '{0}' result
