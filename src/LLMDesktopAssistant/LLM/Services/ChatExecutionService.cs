@@ -422,7 +422,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					}
 					catch (Exception ex)
 					{
-						domainResponseMessage.Error = ex.ToString();
+						domainResponseMessage.Error = Locale.GetConstKey(ex.ToString());
 						domainResponseMessage.Status = AssistantMessageStatus.Error;
 						RecordFailedUsage(modelName, timeRequested, ex.Message);
 						throw;

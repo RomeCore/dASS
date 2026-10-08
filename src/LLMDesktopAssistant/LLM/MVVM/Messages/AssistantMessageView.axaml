@@ -40,9 +40,9 @@
 		<ContentControl Content="{Binding TextPart}"/>
 		<ContentControl Content="{Binding ToolCalls}"/>
 
-		<Label Content="{Binding Error}"
+		<Label Content="{loc:Loc {Binding Error}}"
 					 Foreground="Red"
-					 IsVisible="{Binding Error, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+					 IsVisible="{Binding Error, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
 		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
 

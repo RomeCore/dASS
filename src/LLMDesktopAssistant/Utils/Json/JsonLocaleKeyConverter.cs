@@ -1,9 +1,16 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Utils.Json
 {
+	/// <summary>
+	/// (De)serializes <see cref="LocaleKeyBase"/> as a discriminated object so that a persisted key survives a restart:
+	/// <c>{ "type": "default" | "const" | "formatted", "key": "…", "args": ["…"] }</c> (<c>args</c> only for
+	/// <see cref="LocaleFormattedKey"/>). Mirrors the BSON representation in
+	/// <c>LiteDB_BSON_SerializerConfig</c>.
+	/// </summary>
 	public class JsonLocaleKeyConverter : JsonConverter<LocaleKeyBase>
 	{
 		public override LocaleKeyBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -16,6 +23,7 @@ namespace LLMDesktopAssistant.Utils.Json
 
 			string? type = null;
 			string? key = null;
+			ImmutableArray<string?>? args = null;
 
 			while (reader.Read())
 			{
@@ -34,6 +42,9 @@ namespace LLMDesktopAssistant.Utils.Json
 					case "key":
 						key = reader.GetString();
 						break;
+					case "args":
+						args = ReadArgs(ref reader);
+						break;
 					default:
 						reader.Skip();
 						break;
@@ -43,14 +54,59 @@ namespace LLMDesktopAssistant.Utils.Json
 			if (key is null)
 				throw new JsonException("LocaleKeyBase object must contain a 'key' property.");
 
-			return type == "const" ? Locale.GetConstKey(key) : Locale.GetKey(key);
+			return type switch
+			{
+				"const" => Locale.GetConstKey(key),
+				"formatted" => Locale.GetFormattedKey(key, [.. args ?? []]),
+				_ => Locale.GetKey(key)
+			};
+		}
+
+		private static ImmutableArray<string?> ReadArgs(ref Utf8JsonReader reader)
+		{
+			if (reader.TokenType != JsonTokenType.StartArray)
+			{
+				reader.Skip();
+				return [];
+			}
+
+			var builder = ImmutableArray.CreateBuilder<string?>();
+			while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
+				builder.Add(reader.TokenType == JsonTokenType.Null ? null : reader.GetString());
+			return builder.ToImmutable();
 		}
 
 		public override void Write(Utf8JsonWriter writer, LocaleKeyBase value, JsonSerializerOptions options)
 		{
 			writer.WriteStartObject();
-			writer.WriteString("type", value is ConstLocaleKey ? "const" : "default");
-			writer.WriteString("key", value.Key);
+
+			switch (value)
+			{
+				case ConstLocaleKey:
+					writer.WriteString("type", "const");
+					writer.WriteString("key", value.Key);
+					break;
+
+				case LocaleFormattedKey formatted:
+					writer.WriteString("type", "formatted");
+					writer.WriteString("key", value.Key);
+					writer.WriteStartArray("args");
+					foreach (var arg in formatted.FormatArgs)
+					{
+						if (arg is null)
+							writer.WriteNullValue();
+						else
+							writer.WriteStringValue(arg);
+					}
+					writer.WriteEndArray();
+					break;
+
+				default:
+					writer.WriteString("type", "default");
+					writer.WriteString("key", value.Key);
+					break;
+			}
+
 			writer.WriteEndObject();
 		}
 	}

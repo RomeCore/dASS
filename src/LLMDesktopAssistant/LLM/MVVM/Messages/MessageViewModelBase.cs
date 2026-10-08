@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
@@ -16,11 +17,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public ChatMessage Message => branchedMessage.Message;
 
-		private string? _error;
+		private LocaleKeyBase? _error;
 		/// <summary>
 		/// Gets the error message associated with the message, if any. Shared by every message type.
 		/// </summary>
-		public string? Error
+		public LocaleKeyBase? Error
 		{
 			get => _error;
 			private set => SetProperty(ref _error, value);

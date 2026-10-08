@@ -1,5 +1,6 @@
 using LiteDB;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Data.ChatModels
 {
@@ -77,6 +78,6 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		/// <summary>
 		/// Gets or sets the error associated with the message, if any.
 		/// </summary>
-		public string? Error { get; set; }
+		public LocaleKeyBase? Error { get; set; }
 	}
 }

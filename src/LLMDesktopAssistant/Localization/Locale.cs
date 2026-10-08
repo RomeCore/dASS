@@ -29,6 +29,19 @@ namespace LLMDesktopAssistant.Localization
 		}
 
 		/// <summary>
+		/// Gets a <see cref="LocaleFormattedKey"/> for the specified key and format arguments: the localized template
+		/// rendered with <see cref="string.Format(string, object?[])"/>. The instance is not cached (the arguments are
+		/// part of the value), but it caches its own rendered text and refreshes on a language change.
+		/// </summary>
+		/// <param name="key">The full localization key.</param>
+		/// <param name="formatArgs">The format arguments substituted into the localized template.</param>
+		/// <returns>The <see cref="LocaleFormattedKey"/> instance.</returns>
+		public static LocaleFormattedKey GetFormattedKey(string key, params string?[] formatArgs)
+		{
+			return new LocaleFormattedKey(key, [.. formatArgs]);
+		}
+
+		/// <summary>
 		/// Gets the localized value for the specified key. If the key is not found, the key itself is returned.
 		/// </summary>
 		/// <param name="key">The full localization key.</param>

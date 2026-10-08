@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Utils;
 using LLTSharp;
 using RCLargeLanguageModels.Messages.Attachments;
@@ -20,12 +21,16 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref field, value);
 		} = string.Empty;
 
-		private string? _error;
+		private LocaleKeyBase? _error;
 		/// <summary>
 		/// Gets or sets the error message associated with the message, if any.
 		/// Runtime failures (generation, tools, commands) are attached here.
 		/// </summary>
-		public string? Error
+		/// <remarks>
+		/// The error is a locale-backed key (or a const key for raw text) rather than a pre-rendered string, so it is
+		/// localized at the point of display and stays correct after a language change.
+		/// </remarks>
+		public LocaleKeyBase? Error
 		{
 			get => _error;
 			set => SetProperty(ref _error, value);

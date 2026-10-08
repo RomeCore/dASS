@@ -101,7 +101,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					Visibility = model.Visibility,
 					IsRevealed = model.IsRevealed,
 					VisibleTo = model.VisibleTo,
-					IsVisibleToWhiteList = model.IsVisibleToWhiteList
+					IsVisibleToWhiteList = model.IsVisibleToWhiteList,
+					Error = model.Error
 				},
 				RoleModel.Assistant => new AssistantMessage
 				{
@@ -133,6 +134,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		{
 			model.CreatedAt = from.CreatedAt;
 			model.Content = from.Content;
+			model.Error = from.Error;
 
 			switch (from)
 			{
@@ -151,7 +153,6 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					model.AgentStageId = assistantMessage.AgentStageId;
 					model.IsUserLike = assistantMessage.IsUserLike;
 					model.ReasoningContent = assistantMessage.ReasoningContent;
-					model.Error = assistantMessage.Error;
 					model.Status = assistantMessage.Status switch
 					{
 						AssistantMessageStatus.Pending => MessageStatusModel.Pending,

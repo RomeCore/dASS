@@ -98,7 +98,60 @@ public class LocaleKeyTests
 				raised = true;
 		};
 
+		Manager.CurrentLanguage = string.Empty;
 		Manager.CurrentLanguage = "ru-RU";
+
+		Assert.True(raised);
+	}
+
+	[Fact]
+	public void FormattedKey_ValueFormatsTemplateWithArgs()
+	{
+		var key = Locale.GetFormattedKey("test.count", "42");
+
+		Assert.Equal("Count: 42", key.Value);
+	}
+
+	[Fact]
+	public void FormattedKey_IsNotCachedByFacade_ButComparesByKeyAndArgs()
+	{
+		var first = Locale.GetFormattedKey("test.count", "1");
+		var second = Locale.GetFormattedKey("test.count", "1");
+
+		Assert.NotSame(first, second);
+		Assert.Equal(first, second);
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+	}
+
+	[Fact]
+	public void FormattedKey_EqualsComparesKeyAndArgs()
+	{
+		Assert.NotEqual(Locale.GetFormattedKey("test.count", "1"), Locale.GetFormattedKey("test.count", "2"));
+		Assert.NotEqual(Locale.GetFormattedKey("test.count", "1"), Locale.GetFormattedKey("test.missing", "1"));
+		Assert.NotEqual(Locale.GetFormattedKey("test.count", "1", null), Locale.GetFormattedKey("test.count", "1"));
+	}
+
+	[Fact]
+	public void FormattedKey_MissingKey_FallsBackToKey()
+	{
+		var key = Locale.GetFormattedKey("test.missing", "x");
+
+		Assert.Equal("test.missing", key.Value);
+	}
+
+	[Fact]
+	public void FormattedKey_LanguageChange_RaisesPropertyChangedForValue()
+	{
+		var key = Locale.GetFormattedKey("test.count", "7");
+		var raised = false;
+
+		key.PropertyChanged += (_, e) =>
+		{
+			if (e.PropertyName == nameof(LocaleKey.Value))
+				raised = true;
+		};
+
+		Manager.CurrentLanguage = Manager.CurrentLanguage == "ru-RU" ? "en-US" : "ru-RU";
 
 		Assert.True(raised);
 	}

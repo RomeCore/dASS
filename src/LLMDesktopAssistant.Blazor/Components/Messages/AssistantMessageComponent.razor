@@ -62,11 +62,11 @@
 		</div>
 	}
 
-	@if (!string.IsNullOrWhiteSpace(Message.Error))
+	@if (Message.Error is not null)
 	{
 		<div class="message-error">
 			<VisualIconComponent Kind="@MaterialIconKind.AlertCircle" Size="16" Color="#d32f2f" AdditionalStyle="margin-right: 4px;" />
-			@Message.Error
+			@Message.Error.Value
 		</div>
 	}
 
