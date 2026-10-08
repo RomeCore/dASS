@@ -86,7 +86,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					: reasoningContent?[..Math.Min(reasoningContent.Length, briefReasoningCharacters)])
 				: null;
 
-			context["content"] = parts.HasFlag(MessagePartsFacet.Content) ? message.Content : null;
+			context["content"] = MessageContentProjector.Project(message, parts);
 
 			List<IAttachment> nativeAttachments = [.. message.GetNativeAttachments()];
 			context["attachments"] = parts.HasFlag(MessagePartsFacet.Attachments)

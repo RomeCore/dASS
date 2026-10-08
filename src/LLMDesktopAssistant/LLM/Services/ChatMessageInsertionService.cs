@@ -90,7 +90,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,
 						resolution.Arguments, generateIntent, execution.Generate, execution.Status, execution.Error,
-						execution.EffectSummary));
+						execution.EffectSummary, execution.ModelFacingMode));
 
 					generate = execution.Generate;
 				}
@@ -144,7 +144,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			return new CommandExecution(
 				SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate),
-				SlashCommandExecutionStatus.Executed, null, result.EffectSummary);
+				SlashCommandExecutionStatus.Executed, null, result.EffectSummary, result.ModelFacingMode);
 		}
 
 		/// <summary>
@@ -195,6 +195,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		/// <summary>The outcome of running a command: the final generation decision and what to record.</summary>
 		private readonly record struct CommandExecution(
-			bool Generate, SlashCommandExecutionStatus Status, LocaleKeyBase? Error, string? EffectSummary);
+			bool Generate, SlashCommandExecutionStatus Status, LocaleKeyBase? Error, string? EffectSummary,
+			ModelFacingMode? ModelFacingMode = null);
 	}
 }

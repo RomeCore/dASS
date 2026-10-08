@@ -97,7 +97,8 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		/// </summary>
 		public static SlashCommandFingerprint Create(string token, SlashCommandInfo? command,
 			SlashCommandBoundArguments? arguments, bool generateIntent, bool generateOutcome,
-			SlashCommandExecutionStatus status, LocaleKeyBase? error = null, string? effectSummary = null)
+			SlashCommandExecutionStatus status, LocaleKeyBase? error = null, string? effectSummary = null,
+			ModelFacingMode? modelFacingMode = null)
 		{
 			var parsed = SlashCommandMatcher.ParseToken(token);
 
@@ -115,7 +116,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 					: arguments.Keyed.Where(kv => kv.Value.Raw is not null)
 						.ToDictionary(kv => kv.Key, kv => kv.Value.Raw!.Raw),
 				RestPositionalArguments = arguments?.RestPositionalArguments ?? string.Empty,
-				ModelFacingMode = command?.ModelFacingMode ?? ModelFacingMode.Raw,
+				ModelFacingMode = modelFacingMode ?? command?.ModelFacingMode ?? ModelFacingMode.Raw,
 				GenerateIntent = generateIntent,
 				GenerateOutcome = generateOutcome,
 				Status = status,

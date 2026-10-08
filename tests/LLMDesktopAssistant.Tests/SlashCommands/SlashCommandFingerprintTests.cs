@@ -84,6 +84,16 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
+		public void Create_WithAnExplicitMode_OverridesTheCommandsDeclarativeMode()
+		{
+			var fingerprint = SlashCommandFingerprint.Create("grilling", Command(), Bind("alpha"),
+				generateIntent: true, generateOutcome: true, SlashCommandExecutionStatus.Executed,
+				modelFacingMode: ModelFacingMode.Neutral);
+
+			Assert.Equal(ModelFacingMode.Neutral, fingerprint.ModelFacingMode);
+		}
+
+		[Fact]
 		public void Fingerprint_RoundTripsThroughTheAdditionalDataSynchronizer()
 		{
 			using var database = new ChatDatabase(null);

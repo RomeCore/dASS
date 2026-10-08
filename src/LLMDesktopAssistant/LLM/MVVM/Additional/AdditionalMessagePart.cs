@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using LLMDesktopAssistant.Localization;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
@@ -21,11 +22,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			set => SetProperty(ref _chipIcon, value);
 		}
 
-		private string? _chipTitle;
+		private LocaleKeyBase? _chipTitle;
 		/// <summary>
-		/// Gets or sets the title shown on the part chip.
+		/// Gets or sets the title shown on the part chip. A locale key rather than a rendered string, so the chip
+		/// relocalizes when the language changes (like the message's <c>Error</c>).
 		/// </summary>
-		public string? ChipTitle
+		public LocaleKeyBase? ChipTitle
 		{
 			get => _chipTitle;
 			set => SetProperty(ref _chipTitle, value);

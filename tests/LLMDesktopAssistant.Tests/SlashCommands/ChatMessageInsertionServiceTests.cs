@@ -336,6 +336,35 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Null(harness.LastMessage.Error);
 			Assert.Equal(0, harness.Executor.GenerateCalls);
 		}
+
+		[Fact]
+		public async Task Insert_WhenTheExecutorOverridesTheMode_RecordsItInTheFingerprint()
+		{
+			using var harness = new Harness();
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor
+			{
+				Result = SlashCommandExecutionResult.Ok(modelFacingMode: ModelFacingMode.Neutral)
+			}));
+
+			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: false);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.Equal(ModelFacingMode.Neutral, fingerprint!.ModelFacingMode);
+		}
+
+		[Fact]
+		public async Task Insert_WhenTheExecutorDoesNotOverrideTheMode_KeepsTheCommandsMode()
+		{
+			using var harness = new Harness();
+			var command = Command("grilling", new RecordingExecutor());
+			command.ModelFacingMode = ModelFacingMode.Neutral;
+			harness.Resolver.Add(command);
+
+			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: false);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.Equal(ModelFacingMode.Neutral, fingerprint!.ModelFacingMode);
+		}
 	}
 
 	/// <summary>

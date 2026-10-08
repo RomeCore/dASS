@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
 using RCLargeLanguageModels.Messages.Attachments;
@@ -161,7 +162,7 @@ namespace LLMDesktopAssistant.LLM.Services.Attachments
 			return new AttachmentMessagePart
 			{
 				ChipIcon = visuals.Icon,
-				ChipTitle = fileName,
+				ChipTitle = Locale.GetConstKey(fileName),
 				ChipColor = visuals.Color,
 				SourceUrl = sourceUri.AbsoluteUri,
 				LocalPath = localPath,

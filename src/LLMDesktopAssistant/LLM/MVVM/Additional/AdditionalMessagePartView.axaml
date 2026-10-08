@@ -4,6 +4,7 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
 			 x:DataType="local:AdditionalMessagePart">
@@ -21,7 +22,7 @@
 							  Width="14" Height="14"
 							  VerticalAlignment="Center"/>
 
-			<TextBlock Text="{Binding ChipTitle}"
+			<TextBlock Text="{loc:Loc {Binding ChipTitle}}"
 					   VerticalAlignment="Center"/>
 
 		</StackPanel>
