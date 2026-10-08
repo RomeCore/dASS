@@ -27,6 +27,14 @@ namespace LLMDesktopAssistant.SlashCommands
 		} = [];
 
 		/// <summary>
+		/// The fully-qualified identity of the command: its namespaces (sorted ordinally) and its name, joined by
+		/// <c>:</c> — for example <c>matt-pocock:skill:grilling</c>. Two commands that share a bare name but differ in
+		/// namespace (a skill and a sub-agent both called <c>grilling</c>, say) are therefore distinct, both for
+		/// deduplication and for per-command settings.
+		/// </summary>
+		public override string Key => string.Join(':', Namespaces.OrderBy(n => n, StringComparer.Ordinal)) + ":" + Name;
+
+		/// <summary>
 		/// How the command's message is presented to the model. Defaults to <see cref="ModelFacingMode.Raw"/>.
 		/// </summary>
 		public ModelFacingMode ModelFacingMode

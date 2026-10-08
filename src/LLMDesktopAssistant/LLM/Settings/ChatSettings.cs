@@ -110,6 +110,15 @@ namespace LLMDesktopAssistant.LLM.Settings
 		}
 
 		/// <summary>
+		/// Settings related to slash commands.
+		/// </summary>
+		public ChatCommandSettings Commands
+		{
+			get => field ??= new();
+			set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// Settings related to scripts (Lua, for example).
 		/// </summary>
 		public ChatScriptSettings Scripts
