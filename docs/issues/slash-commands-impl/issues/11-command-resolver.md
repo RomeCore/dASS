@@ -1,6 +1,6 @@
 # 11: Command resolver and namespacing
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 10
 
@@ -14,7 +14,12 @@ Files live under `src/LLMDesktopAssistant/SlashCommands/Resolution/`.
 ### Token grammar
 
 A message is a command message when its **leading** whitespace-delimited word starts with `/`. That word is the
-**token**; the rest of the message is the raw argument text.
+**token**; the rest of the message is the raw argument text. A message whose leading word starts with `//` is
+**escaped** — it is not a command, and one leading slash is stripped (`//foo` → `/foo`).
+
+The token model is **slash-free**: the leading `/` is a marker of the message text, not of the command's identity.
+The only place that knows the marker is `SlashCommandMatcher.TryExtractToken` (reused by the message-insertion and
+autocomplete services); everything downstream — `SlashCommandToken`, the resolver, the stored `Token` — is slash-free.
 
 The token is `:`-separated: the **last** segment is the command name, every preceding segment is a **namespace
 qualifier** that must match one of the command's `Namespaces` (set semantics, case-insensitive — a namespace set is
@@ -42,8 +47,12 @@ public static class SlashCommandMatcher
     // Extracts the leading command token and the raw argument remainder; false when the message is not a command.
     public static bool TryExtractToken(string rawText, out string token, out string rawArguments);
 
-    // Splits "/skill:matt-pocock:grilling" into qualifiers + name; IsValid = starts with '/', no empty segments.
+    // Splits "skill:matt-pocock:grilling" (slash-free) into qualifiers + name; IsValid = non-empty name, no empty
+    // segments.
     public static SlashCommandToken ParseToken(string token);
+
+    // Undoes the "//" escape: drops the first of two leading slashes; returns the text unchanged otherwise.
+    public static string UnescapeLeadingSlash(string rawText);
 
     // Every command whose name (or alias) matches and whose namespaces satisfy every qualifier,
     // ordered by the total order below. The first entry is the winner, the rest are defeated.
@@ -97,26 +106,69 @@ its `ArgumentSchema`); it does **not** implement token autocomplete — that bel
 
 ## Acceptance criteria
 
-- [ ] `SlashCommandToken`, `SlashCommandCandidate`, `SlashCommandMatcher`, `SlashCommandResolutionStatus`,
+- [x] `SlashCommandToken`, `SlashCommandCandidate`, `SlashCommandMatcher`, `SlashCommandResolutionStatus`,
       `SlashCommandResolution`, `ISlashCommandResolver` and `SlashCommandResolver` exist.
-- [ ] `TryExtractToken` handles: no leading `/`, a bare `/`, `/name`, `/name args`, leading whitespace, and a
+- [x] `TryExtractToken` handles: no leading `/`, a bare `/`, `/name`, `/name args`, leading whitespace, and a
       multi-line remainder (arguments keep everything after the token).
-- [ ] `ParseToken` splits qualifiers/name, rejects empty segments and case-normalises for matching.
-- [ ] `Match` covers: bare name; by type (`/skill:`); by pack (`/pack:`); by both; alias; set-semantics namespace
+- [x] `ParseToken` splits qualifiers/name, rejects empty segments and case-normalises for matching.
+- [x] `Match` covers: bare name; by type (`/skill:`); by pack (`/pack:`); by both; alias; set-semantics namespace
       matching (`/pack:skill:name` resolves too); no match → empty list; commands with the same name in different
       namespaces both match a bare token; deterministic ordering by the three-level total order.
-- [ ] `Resolve` returns `Unknown` + `command.error.unknown` for a token with no match, `Exact` with empty `Defeated` for
+- [x] `Resolve` returns `Unknown` + `command.error.unknown` for a token with no match, `Exact` with empty `Defeated` for
       a unique match, and `WonOthers` with the defeated set for a shadowed name.
-- [ ] `WonOthers` includes the winner's `Overrides` (collapsed duplicates).
-- [ ] Locale key `command.error.unknown` exists in `iv` and `ru-RU`.
-- [ ] The solution builds; the full test suite stays green.
+- [x] `WonOthers` includes the winner's `Overrides` (collapsed duplicates).
+- [x] Locale key `command.error.unknown` exists in `iv` and `ru-RU`.
+- [x] The solution builds; the full test suite stays green.
 
 ## Answer
 
-<!-- appended on resolution -->
+Implemented under `src/LLMDesktopAssistant/SlashCommands/Resolution/`: `SlashCommandToken`,
+`SlashCommandCandidate`, `SlashCommandMatcher`, `SlashCommandResolutionStatus`, `SlashCommandResolution`,
+`ISlashCommandResolver` and `SlashCommandResolver`.
+
+### Slash-free tokens (reworked from the ticket)
+
+The token model carries **no leading `/`** — the marker belongs to the message text, not to the command's identity.
+`TryExtractToken` is the one place that knows it: it skips leading whitespace, requires the first non-whitespace
+character to be `/`, and strips it from the returned token. `SlashCommandToken.Raw` is slash-free (`skill:grilling`),
+and `IsValid` is now "non-empty name and no empty segments" (the `startsWith('/')` check moved to the message level).
+Docs and examples keep `/` where it means "what the user types".
+
+### The `//` escape
+
+A message whose first non-whitespace word starts with `//` is **not** a command: `TryExtractToken` returns `false`, and
+`SlashCommandMatcher.UnescapeLeadingSlash` drops the first of the two slashes so the host can send the intended text
+(`//foo` → `/foo`). Whitespace before the marker is preserved; a normal message or a lone leading `\` is untouched.
+
+### Matcher
+
+`TryExtractToken` — any whitespace character separates; the argument remainder is the text after the token with the
+separating whitespace trimmed off the left, kept verbatim otherwise (newlines included). `ParseToken` — `:` split, last
+segment the name, `IsValid` as above. `Match` — name-or-alias and qualifier-set-subset, both case-insensitive, ordered
+by `OverrideOrder` desc → `Order` asc → `Key` asc, so a true tie cannot occur. `Match` is pure and knows nothing about
+the collector's `Overrides`.
+
+### Resolver
+
+`SlashCommandResolver` (`[ChatService(typeof(ISlashCommandResolver))]`) over `IAddonSetCollector<SlashCommandInfo>`
+using `GetAddonsForChat()`. `Unknown` (nothing matched or the token is invalid) carries `command.error.unknown`;
+`Exact` has an empty `Defeated`; `WonOthers` carries `matches.Skip(1) ++ winner.Overrides` — the de-duplication
+artifacts are folded in by the resolver, not the matcher.
+
+### Tests
+
+`SlashCommandMatcherTests` + `SlashCommandResolverTests` (37 cases): the extractor cases incl. the escape, the
+multi-line remainder, `ParseToken`, matching by bare/type/pack/both/alias, case-insensitivity, no-match, same name in
+different namespaces, the total order (tier → order → key), and the three resolver statuses incl. `Overrides` in
+`WonOthers`.
+
+Locale key `command.error.unknown` added to `iv` and `ru-RU`. Main + desktop builds green; full suite: 895 total,
+894 passed, 1 skipped (pre-existing).
 
 ## Comments
 
+- **Escape hatch agreed during grilling**: `//` at the start of the (whitespace-trimmed) message means "not a command"; one leading slash is stripped. Token model made slash-free, with `/` knowledge kept in `TryExtractToken` /
+  `UnescapeLeadingSlash` (the message-insertion service and the input autocomplete service reuse them).
 - `Ambiguous` from the design ticket is dropped during implementation: the collector collapses same-key duplicates and
   the matcher's three-level total order makes the remaining outcome deterministic, so a true tie cannot occur. The UI
   state formerly called "ambiguous" (orange + underline) is `WonOthers`; `Unknown` (red + underline) is unchanged.

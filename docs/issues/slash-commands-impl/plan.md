@@ -30,10 +30,12 @@ Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
 - [x] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
 - [x] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
 - [x] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
-- [ ] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
+- [x] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
 
 Blocking edges: `08 ← 07`, `09 ← 08`, `10 ← 09`, `11 ← 10`. Exit criterion: green build + green tests, no user-visible
 behaviour yet (the dispatch host is Stage 2).
+
+> **Stage 1 complete.** Tickets 07–11 resolved.
 
 ## Stage 2 — Message-insertion / execution host
 
@@ -91,3 +93,4 @@ behaviour yet (the dispatch host is Stage 2).
 - **Derived commands carry provenance**: `SourcePack` / `Path` / `AddonSource` and `SlashCommandInfo.Source` (the source addon, typed `object?`).
 - **`AddonChangedBase.Key` replaces `GetDeduplicationKey`** (the earlier per-collector override): one `virtual string Key => Name` used for dedup **and** change resolution in `AddonSetCollectorBase` and `AddonCardContext`. `SlashCommandInfo.Key` is the fully-qualified identity, so `skill:grilling` and `agent:grilling` never collide. Ticket 02's `GetDeduplicationKey` is removed.
 - **`EnableCommands` is chat-local (not inherited)**; `CommandsSet` is `[InheritedChatSetting]`. Commands are chat-level and agent-agnostic: `GetAddonsForChat()` is the only exposed path, `GetAddonsForAgent()` is left unimplemented on purpose.
+- **Tokens are slash-free** and the `//` prefix escapes a message from being a command (one slash stripped). `/` knowledge lives only in `SlashCommandMatcher.TryExtractToken` / `UnescapeLeadingSlash`; the resolver and everything downstream is slash-free. `Match` is pure; the resolver folds `winner.Overrides` into `Defeated`.
