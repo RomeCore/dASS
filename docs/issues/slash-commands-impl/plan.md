@@ -28,7 +28,7 @@ Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
 
 - [x] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
 - [x] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
-- [ ] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
+- [x] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
 - [ ] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
 - [ ] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
 
@@ -86,3 +86,6 @@ behaviour yet (the dispatch host is Stage 2).
 - **Executor errors are `LocaleKeyBase?`** (`SlashCommandExecutionResult.Error`): a user-facing error stays a locale key until the boundary (message `Error`, fingerprint).
 - **`Token` is canonical, `RawToken` is as-typed**; `SlashCommandArgumentsResult` was renamed to `SlashCommandParsedArguments`.
 - **`SlashCommandFileLocator` declares `Folders = ["commands"]`** with empty `Extensions` (inert but real); no tests are added until the engine has behaviour to test.
+- **One generic `DerivedSlashCommandProvider<TSource>`** instead of two copies: `TypeNamespace` + `CreateArgumentSchema(source)` + `CreateCommandExecutor(source)` (abstract) and a `PopulateFromSource` hook; the base assigns the executor.
+- **Availability filtering is centralised in `AddonBase.IsValid`** (virtual, computed, `[*Ignore]`), used by `AddonSetCollectorBase`. Providers read `GetAvailableAddons().Where(a => a.IsValid)` — the *source* collectors; the *command* collector's `GetAddonsForChat()` is what autocomplete/resolution call.
+- **Derived commands carry provenance**: `SourcePack` / `Path` / `AddonSource` and `SlashCommandInfo.Source` (the source addon, typed `object?`).
