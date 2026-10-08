@@ -39,9 +39,12 @@ behaviour yet (the dispatch host is Stage 2).
 
 ## Stage 2 — Message-insertion / execution host
 
-- [ ] 2.1 `IChatMessageInsertionService` + `UserInputInsertionResult`; `ChatOperationService` delegates.
-- [ ] 2.2 Flow: resolve → validate (block) → insert → execute → generate; runtime errors on the message; edits don't re-run commands.
-- [ ] 2.3 `SlashCommandFingerprint` + `SlashCommandExecutionStatus`.
+- [ ] [12 — Localizable message error and `LocaleFormattedKey`](./issues/12-localizable-error-and-formatted-key.md) — prefactor: the error of a message becomes a `LocaleKeyBase` and a format-argument key type lands. **First**, because the host and the fingerprint carry typed errors.
+- [ ] [13 — `SlashCommandExtractor` and `SlashCommandInfo.CanonicalToken`](./issues/13-command-extractor-and-canonical-token.md) — move the `/` marker out of the matcher; give a command its slash-free canonical token.
+- [ ] [14 — Chat message-insertion service (command host)](./issues/14-chat-message-insertion-service.md) — the resolve → validate → insert → execute → generate host; the guard; the view-model pre-flight.
+- [ ] [15 — Command fingerprint and execution status](./issues/15-command-fingerprint.md) — the persisted trace of an invocation and `SlashCommandExecutionStatus`.
+
+Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 
 ## Stage 3 — First two commands
 
