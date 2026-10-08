@@ -24,6 +24,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			=> new() { HasRestPositional = true };
 
 		protected override ISlashCommandExecutor CreateCommandExecutor(SkillInfo source)
-			=> StubCommandExecutor.Instance;
+			=> new SkillCommandExecutor(source);
 	}
 }

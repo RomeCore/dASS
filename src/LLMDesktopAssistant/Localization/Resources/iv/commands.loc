@@ -12,3 +12,6 @@ error.unknown: Unknown command '{0}'.
 // Argument names (command.argument.*).
 argument.wait: wait
 argument.wait.description: Whether to wait for the sub-agent to finish before continuing.
+
+// Skill command (command.skill.*).
+skill.used: Used skill '{0}'.

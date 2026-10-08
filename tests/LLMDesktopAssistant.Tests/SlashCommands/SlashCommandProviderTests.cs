@@ -70,7 +70,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Null(command.Hidden);
 			Assert.Equal(ModelFacingMode.Raw, command.ModelFacingMode);
 			Assert.Null(command.Generate);
-			Assert.Same(StubCommandExecutor.Instance, command.Executor);
+			Assert.IsType<SkillCommandExecutor>(command.Executor);
 
 			// Provenance is carried over from the source.
 			Assert.Same(pack, command.SourcePack);
