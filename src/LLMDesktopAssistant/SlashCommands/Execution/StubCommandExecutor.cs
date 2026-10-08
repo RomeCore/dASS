@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace LLMDesktopAssistant.SlashCommands.Execution
 {
 	/// <summary>
@@ -16,7 +18,11 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		}
 
 		/// <inheritdoc/>
-		public Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
-			=> Task.FromResult(SlashCommandExecutionResult.Ok());
+		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
+		{
+			Log.Information("Executing stub command executor for {CommandName}", ctx.Token);
+			await Task.Delay(2000);
+			return SlashCommandExecutionResult.Ok();
+		}
 	}
 }
