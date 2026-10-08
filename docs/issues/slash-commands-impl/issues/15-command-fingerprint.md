@@ -1,6 +1,6 @@
 # 15: Command fingerprint and execution status
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 12, 14
 
@@ -61,21 +61,42 @@ The stub executor leaves it `null`; the real `/skill` and `/agent` executors (St
 
 ## Acceptance criteria
 
-- [ ] `SlashCommandFingerprint` and `SlashCommandExecutionStatus` exist with the shape above; the fingerprint is
-      data-only and persisted.
-- [ ] `SlashCommandExecutionResult` carries `EffectSummary` (optional, defaulting to `null`).
-- [ ] `SlashCommandInsertionService` writes the fingerprint on success, failure and cancellation, with the correct
+- [x] `SlashCommandFingerprint` and `SlashCommandExecutionStatus` exist; the fingerprint is data-only and persisted.
+- [x] `SlashCommandExecutionResult` carries `EffectSummary` (optional, defaulting to `null`).
+- [x] `ChatMessageInsertionService` writes the fingerprint on success, failure and cancellation, with the correct
       `Status`, `Error` and `GenerateOutcome`, and attaches it to the message.
-- [ ] A persisted fingerprint round-trips through the `AdditionalChatData` synchronizer (read back via
+- [x] A persisted fingerprint round-trips through the `AdditionalChatData` synchronizer (read back via
       `AdditionalData.TryGet<SlashCommandFingerprint>()`).
-- [ ] The fingerprint is never rendered into the prompt.
-- [ ] Tests: building the fingerprint from a bound-arguments + result pair (pure), and a round-trip on
-      `ChatStorageTestContext`.
-- [ ] The solution builds; the full test suite stays green.
+- [x] The fingerprint is never rendered into the prompt.
+- [x] Tests: building the fingerprint from a bound-arguments + result pair (pure), and a round-trip through the
+      additional-data synchronizer.
+- [x] The solution builds; the (filtered) test suite stays green.
 
 ## Answer
 
-<!-- appended on resolution -->
+- **`SlashCommandFingerprint : AdditionalChatData`** + `SlashCommandExecutionStatus { Executed, Failed, Cancelled }`.
+  `IsVisible = false` (data-only), `IsTemporary` stays `false` (persisted), so it round-trips and is read back with
+  `AdditionalData.TryGet<SlashCommandFingerprint>()`. `Create(token, command?, arguments?, …)` builds the snapshot;
+  `command`/`arguments` are `null` for an unresolved token, so the trace is then built from the token alone (name +
+  qualifiers via `SlashCommandMatcher.ParseToken`).
+- **`EffectSummary`** is a new optional field on `SlashCommandExecutionResult`, recorded in the trace.
+- **Write timing.** The host writes the fingerprint **after** the command ran (or after the guard rejected it) — one
+  shot, so the properties can stay `init`-only; it is attached to the produced message's `AdditionalData`. Success →
+  `Executed`; an executor-returned error or a thrown exception → `Failed` (message `Error` set); a cancellation →
+  `Cancelled` (no message error). The guard path (unresolved token / bad arguments) also writes a `Failed` trace.
+- **Deviations from the ticket's shape**, all forced by LiteDB / recorded during the grilling:
+  - `RawText` is dropped (the raw text is the message `Content`);
+  - `Token` is slash-free (`command.CanonicalToken`);
+  - the collections are `IReadOnlyList<string>` (the `Immutable*` collections do not round-trip through LiteDB) and the
+    keyed map is a concrete `Dictionary<string, string>` (`IReadOnlyDictionary` and `ImmutableDictionary` do not
+    round-trip either — the round-trip test caught this);
+  - `Source` is the source addon's type name (e.g. `SkillInfo`) or `null`.
+
+- **Tests.** `SlashCommandFingerprintTests` (building from a resolved invocation, building from an unresolved token, and
+  a BSON round-trip through `AdditionalChatDataSynchronizer`), plus four cases in `ChatMessageInsertionServiceTests`
+  asserting the recorded `Status`/`Error`/`GenerateOutcome` for executed / unresolved / executor-error / cancelled.
+
+Builds: main green. Slash-command test set: 126 passed.
 
 ## Comments
 
