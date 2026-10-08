@@ -269,6 +269,73 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal("boom", harness.LastMessage.Error!.Value);
 			Assert.Equal(0, harness.Executor.GenerateCalls);
 		}
+
+		[Fact]
+		public async Task Insert_AValidCommand_RecordsAnExecutedFingerprint()
+		{
+			using var harness = new Harness();
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor(), schema: new SlashCommandArgumentSchema { HasRestPositional = true }));
+
+			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.NotNull(fingerprint);
+			Assert.Equal("skill:grilling", fingerprint!.Token);
+			Assert.Equal("do it", fingerprint.RestPositionalArguments);
+			Assert.Equal(SlashCommandExecutionStatus.Executed, fingerprint.Status);
+			Assert.True(fingerprint.GenerateIntent);
+			Assert.True(fingerprint.GenerateOutcome);
+			Assert.Null(fingerprint.Error);
+			Assert.False(fingerprint.IsVisible);
+			Assert.False(fingerprint.IsTemporary);
+		}
+
+		[Fact]
+		public async Task Insert_AnUnknownCommand_RecordsAFailedFingerprint()
+		{
+			using var harness = new Harness();
+
+			await harness.Service.InsertUserInputAsync(Input("/nope"), generateIntent: true);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.NotNull(fingerprint);
+			Assert.Equal(SlashCommandExecutionStatus.Failed, fingerprint!.Status);
+			Assert.Equal("command.error.unknown", fingerprint.Error!.Key);
+			Assert.False(fingerprint.GenerateOutcome);
+		}
+
+		[Fact]
+		public async Task Insert_WhenTheExecutorReturnsAnError_RecordsAFailedFingerprint()
+		{
+			using var harness = new Harness();
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor
+			{
+				Result = new SlashCommandExecutionResult(true, Locale.GetKey("command.error.invalid_argument"))
+			}));
+
+			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.Equal(SlashCommandExecutionStatus.Failed, fingerprint!.Status);
+			Assert.Equal("command.error.invalid_argument", fingerprint.Error!.Key);
+			Assert.False(fingerprint.GenerateOutcome);
+			Assert.Equal(0, harness.Executor.GenerateCalls);
+		}
+
+		[Fact]
+		public async Task Insert_ACancelledCommand_RecordsACancelledFingerprint()
+		{
+			using var harness = new Harness();
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor { Throws = new OperationCanceledException() }));
+
+			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+
+			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
+			Assert.Equal(SlashCommandExecutionStatus.Cancelled, fingerprint!.Status);
+			Assert.Null(fingerprint.Error);
+			Assert.Null(harness.LastMessage.Error);
+			Assert.Equal(0, harness.Executor.GenerateCalls);
+		}
 	}
 
 	/// <summary>

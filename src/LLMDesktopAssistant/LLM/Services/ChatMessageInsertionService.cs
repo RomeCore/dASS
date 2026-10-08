@@ -70,16 +70,29 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			if (isCommand)
 			{
-				if (resolution.Invocation is not { } invocation)
+				if (resolution.Error is not null || resolution.Command is null)
 				{
-					// Guard: inserted without a passing pre-flight (or a race). Attach the error, skip the command and
-					// the generation — but never drop the input.
-					message.Error = resolution.Error ?? Locale.GetKey("command.error.unknown");
+					// Guard: inserted without a passing pre-flight (or a race). Attach the error and the failed trace,
+					// skip the command and the generation — but never drop the input.
+					var error = resolution.Error ?? Locale.GetKey("command.error.unknown");
+					message.Error = error;
+					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,
+						arguments: null, generateIntent, generateOutcome: false, SlashCommandExecutionStatus.Failed, error));
 					generate = false;
 				}
 				else
 				{
-					generate = await ExecuteCommandAsync(invocation, message, generateIntent, ct);
+					var execution = await ExecuteCommandAsync(resolution.Command, resolution.Arguments!,
+						resolution.RawArguments, rawToken, message, generateIntent, ct);
+
+					if (execution.Error is not null)
+						message.Error = execution.Error;
+
+					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,
+						resolution.Arguments, generateIntent, execution.Generate, execution.Status, execution.Error,
+						execution.EffectSummary));
+
+					generate = execution.Generate;
 				}
 			}
 
@@ -89,21 +102,20 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		private bool CommandsEnabled => chatSettings.Settings.Commands.EnableCommands;
 
-		private async Task<bool> ExecuteCommandAsync(CommandInvocation invocation, ChatMessage message,
+		private async Task<CommandExecution> ExecuteCommandAsync(SlashCommandInfo command,
+			SlashCommandBoundArguments arguments, string rawArguments, string rawToken, ChatMessage message,
 			bool generateIntent, CancellationToken ct)
 		{
-			var command = invocation.Command;
-
 			var context = new SlashCommandExecutionContext
 			{
 				Chat = chat,
 				Message = message,
 				Command = command,
 				Token = command.CanonicalToken,
-				RawToken = invocation.RawToken,
+				RawToken = rawToken,
 				RawText = message.Content,
-				RawArguments = invocation.RawArguments,
-				Arguments = invocation.Arguments,
+				RawArguments = rawArguments,
+				Arguments = arguments,
 				GenerateIntent = generateIntent,
 				Services = chat.Services
 			};
@@ -117,43 +129,47 @@ namespace LLMDesktopAssistant.LLM.Services
 			catch (OperationCanceledException)
 			{
 				// A cancelled command is not a failure: no message error, no generation.
-				return false;
+				return new CommandExecution(false, SlashCommandExecutionStatus.Cancelled, null, null);
 			}
 			catch (Exception ex)
 			{
 				// The message is already in history, so a runtime failure is attached rather than thrown.
-				message.Error = Locale.GetConstKey(ex.Message);
-				return false;
+				return new CommandExecution(false, SlashCommandExecutionStatus.Failed,
+					Locale.GetConstKey(ex.Message), null);
 			}
 
 			if (result.Error is not null)
-				message.Error = result.Error;
+				return new CommandExecution(false, SlashCommandExecutionStatus.Failed, result.Error,
+					result.EffectSummary);
 
-			return SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate);
+			return new CommandExecution(
+				SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate),
+				SlashCommandExecutionStatus.Executed, null, result.EffectSummary);
 		}
 
 		/// <summary>
-		/// Resolves the token, parses and binds its arguments. Anything that fails yields a
-		/// <see cref="CommandResolution"/> whose <see cref="CommandResolution.Error"/> blocks the send.
+		/// Resolves the token, parses and binds its arguments. The resolved command and the bound arguments are carried
+		/// even when binding fails, so the fingerprint can describe the attempt.
 		/// </summary>
 		private CommandResolution Resolve(string rawToken, string rawArguments)
 		{
 			var resolution = resolver.Resolve(rawToken);
 			if (resolution.Command is null)
-				return new CommandResolution(null, resolution.Error ?? Locale.GetKey("command.error.unknown"), -1);
+				return new CommandResolution(null, null, rawArguments,
+					resolution.Error ?? Locale.GetKey("command.error.unknown"), -1);
 
-			var schema = resolution.Command.ArgumentSchema ?? EmptySchema;
+			var command = resolution.Command;
+			var schema = command.ArgumentSchema ?? EmptySchema;
 
 			if (!SlashCommandArgumentParser.TryParse(schema, rawArguments, out var parsed))
-				return new CommandResolution(null, parsed.Error ?? Locale.GetKey("command.error.parse_error"),
-					parsed.ErrorPosition);
+				return new CommandResolution(command, null, parsed.RawArguments,
+					parsed.Error ?? Locale.GetKey("command.error.parse_error"), parsed.ErrorPosition);
 
 			var bound = SlashCommandArgumentBinder.Bind(schema, parsed);
 			if (!bound.IsValid)
-				return new CommandResolution(null, bound.Error, bound.ErrorPosition);
+				return new CommandResolution(command, null, parsed.RawArguments, bound.Error, bound.ErrorPosition);
 
-			return new CommandResolution(
-				new CommandInvocation(resolution.Command, rawToken, parsed.RawArguments, bound), null, -1);
+			return new CommandResolution(command, bound, parsed.RawArguments, null, -1);
 		}
 
 		private static UserMessage CreateUserMessage(UserInput userInput, string content)
@@ -171,12 +187,14 @@ namespace LLMDesktopAssistant.LLM.Services
 			return message;
 		}
 
-		/// <summary>A resolved and bound command invocation.</summary>
-		private readonly record struct CommandInvocation(
-			SlashCommandInfo Command, string RawToken, string RawArguments, SlashCommandBoundArguments Arguments);
-
-		/// <summary>The outcome of resolving a command: either an invocation or the reason the send is blocked.</summary>
+		/// <summary>The outcome of resolving a command: the resolved command and bound arguments when it succeeded, or
+		/// the reason the send is blocked.</summary>
 		private readonly record struct CommandResolution(
-			CommandInvocation? Invocation, LocaleKeyBase? Error, int ErrorPosition);
+			SlashCommandInfo? Command, SlashCommandBoundArguments? Arguments, string RawArguments,
+			LocaleKeyBase? Error, int ErrorPosition);
+
+		/// <summary>The outcome of running a command: the final generation decision and what to record.</summary>
+		private readonly record struct CommandExecution(
+			bool Generate, SlashCommandExecutionStatus Status, LocaleKeyBase? Error, string? EffectSummary);
 	}
 }

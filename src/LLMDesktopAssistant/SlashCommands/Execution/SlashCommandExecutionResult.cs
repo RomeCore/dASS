@@ -13,7 +13,11 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 	/// The user-facing error, as a locale key, or <see langword="null"/> on success. The host resolves it to text when
 	/// writing the fingerprint and the message's <c>Error</c>.
 	/// </param>
-	public readonly record struct SlashCommandExecutionResult(bool Generate, LocaleKeyBase? Error)
+	/// <param name="EffectSummary">
+	/// An optional short human-readable summary of what the command did, recorded in the fingerprint (for example
+	/// "sub-agent task launched"). <see langword="null"/> when the executor has nothing to add.
+	/// </param>
+	public readonly record struct SlashCommandExecutionResult(bool Generate, LocaleKeyBase? Error, string? EffectSummary = null)
 	{
 		/// <summary>
 		/// A successful result, requesting generation by default.
