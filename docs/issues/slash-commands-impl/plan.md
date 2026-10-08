@@ -55,8 +55,9 @@ Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 
 ## Stage 4 — Message level
 
-- [ ] 4.1 `ChatMessage.IsDisabledForAgents` + first-check in `MessageVisibilityService`.
-- [ ] 4.2 UI: eye toggle + dimmed opacity.
+- [x] [18 — Disabled-for-agents message flag](./issues/18-disabled-for-agents-flag.md) — the model flag, its persistence and the first visibility rule.
+- [x] [19 — SCM carriers decoupled from message visibility](./issues/19-scm-carriers-decoupled-from-visibility.md) — anchors/deltas/stamps located in the raw history, so a hidden carrier keeps contributing.
+- [x] [20 — Disabled-message toggle UI](./issues/20-disabled-message-toggle-ui.md) — the eye toggle (`Eye`/`EyeOff`) and the dimmed message.
 
 ## Stage 5 — Input UX
 
@@ -113,3 +114,6 @@ Added after Stage 2 — the plan originally carried no settings UI for commands.
 - **`SlashCommandFingerprint.Source` (type-name string) is replaced by the `SourceKind` enum** — ticket 15's shape superseded; 0 users, no migrations.
 - **The chat commands page is editable at chat level** (unlike the read-only chat skills/sub-agents pages), because commands have no per-agent page: the cards edit `GetEffectiveCommandsSet()` and the page carries a `CommandsSetInheritance` selector. Commands are user-only, so the list is built with a `null` search service (substring fallback) and the BM25 `IAddonSearchService` stays off.
 - **The ADDONS section order is tools → skills → sub-agents → memory → commands → prompt contexts → Lua scripts**, and the scripts tab is renamed "Lua scripts".
+- **`IsDisabledForAgents` is universal and first-checked**: a disabled message is invisible to every agent (including its own sender), persisted for all roles, and set only by the model/view (never inherited from a setting).
+- **SCM carriers are decoupled from visibility**: the anchor boundary/live-anchor/delta walks in `PromptAnchoredSectionProcessor` run over the raw `Chat.Messages` (boundary = the newest enabled checkpoint of any kind; rebaseline installs on the first raw message after it), and `AgentPromptComposer` renders the deltas/stamps of hidden carriers at the nearest visible assistant message at or after them (else the pending turn). `CheckVisibility` stays the single "hidden from agents" gate; only the SCM payload is exempt.
+- **The disabled-message toggle is desktop-only** (Blazor WebUI is a v1 non-goal); the flag and the visibility rule are core.
