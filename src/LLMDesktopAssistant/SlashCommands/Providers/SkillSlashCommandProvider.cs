@@ -15,6 +15,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	{
 		protected override string TypeNamespace => "skill";
 
+		protected override SlashCommandSource SourceKind => SlashCommandSource.Skill;
+
 		/// <remarks>
 		/// A skill substitutes the whole argument text into its body, so its schema is a single rest positional.
 		/// </remarks>

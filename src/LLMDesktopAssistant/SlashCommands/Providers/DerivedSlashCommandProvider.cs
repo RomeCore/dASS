@@ -33,6 +33,12 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		protected abstract string TypeNamespace { get; }
 
 		/// <summary>
+		/// The source kind stamped onto every command the provider derives: a skill provider yields
+		/// <see cref="SlashCommandSource.Skill"/>, a sub-agent provider <see cref="SlashCommandSource.SubAgent"/>.
+		/// </summary>
+		protected abstract SlashCommandSource SourceKind { get; }
+
+		/// <summary>
 		/// Builds the command's argument schema. Takes the source because a source may shape its schema (an argument
 		/// hint, for example).
 		/// </summary>
@@ -64,7 +70,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 					Aliases = source.Aliases,
 					Order = source.Order,
 					Namespaces = BuildNamespaces(source),
-					OverrideOrder = SlashCommandOrderTiers.Derived,
+					OverrideOrder = SlashCommandOrderTiers.ForSource(SourceKind),
 					Enabled = null,
 					Hidden = null,
 					ModelFacingMode = ModelFacingMode.Raw,
@@ -74,6 +80,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 					SourcePack = source.SourcePack,
 					Path = source.Path,
 					AddonSource = source.AddonSource,
+					SourceKind = this.SourceKind,
 					Source = source
 				};
 

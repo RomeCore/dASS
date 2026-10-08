@@ -14,15 +14,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	/// </summary>
 	public class SlashCommandFingerprintTests
 	{
-		private sealed class FakeSource
-		{
-		}
-
 		private static SlashCommandInfo Command() => new()
 		{
 			Name = "grilling",
 			Namespaces = ["skill", "matt-pocock"],
-			Source = new FakeSource(),
+			SourceKind = SlashCommandSource.Skill,
 			ModelFacingMode = ModelFacingMode.Raw
 		};
 
@@ -54,7 +50,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal("skill:matt-pocock:grilling", fingerprint.Token);
 			Assert.Equal("grilling", fingerprint.CommandName);
 			Assert.Equal(new[] { "skill", "matt-pocock" }, fingerprint.Namespaces);
-			Assert.Equal("FakeSource", fingerprint.Source);
+			Assert.Equal(SlashCommandSource.Skill, fingerprint.SourceKind);
 			Assert.Equal(new[] { "alpha" }, fingerprint.PositionalArguments);
 			Assert.Equal("true", fingerprint.KeyedArguments["wait"]);
 			Assert.Equal("beta", fingerprint.RestPositionalArguments);
@@ -78,7 +74,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal("skill:nope:thing", fingerprint.Token);
 			Assert.Equal("thing", fingerprint.CommandName);
 			Assert.Equal(new[] { "skill", "nope" }, fingerprint.Namespaces);
-			Assert.Null(fingerprint.Source);
+			Assert.Equal(SlashCommandSource.Unknown, fingerprint.SourceKind);
 			Assert.Empty(fingerprint.PositionalArguments);
 			Assert.Empty(fingerprint.KeyedArguments);
 			Assert.Empty(fingerprint.RestPositionalArguments);
@@ -102,6 +98,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal("skill:matt-pocock:grilling", stored.Token);
 			Assert.Equal("grilling", stored.CommandName);
 			Assert.Equal(new[] { "skill", "matt-pocock" }, stored.Namespaces);
+			Assert.Equal(SlashCommandSource.Skill, stored.SourceKind);
 			Assert.Equal(new[] { "alpha" }, stored.PositionalArguments);
 			Assert.Equal("true", stored.KeyedArguments["wait"]);
 			Assert.Equal("beta", stored.RestPositionalArguments);

@@ -95,6 +95,16 @@ namespace LLMDesktopAssistant.SlashCommands
 		}
 
 		/// <summary>
+		/// The kind of source the command originates from. Defaults to <see cref="SlashCommandSource.Unknown"/>;
+		/// a derived provider stamps it alongside <see cref="Source"/>.
+		/// </summary>
+		public SlashCommandSource SourceKind
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = SlashCommandSource.Unknown;
+
+		/// <summary>
 		/// The executor that runs the command's action. Never <see langword="null"/>.
 		/// </summary>
 		/// <remarks>

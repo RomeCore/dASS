@@ -17,6 +17,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	{
 		protected override string TypeNamespace => "agent";
 
+		protected override SlashCommandSource SourceKind => SlashCommandSource.SubAgent;
+
 		/// <remarks>
 		/// The sub-agent input is the rest positional; <c>wait</c> is an optional boolean that is left with a string
 		/// default — its format provider arrives with the executor (Stage 3).

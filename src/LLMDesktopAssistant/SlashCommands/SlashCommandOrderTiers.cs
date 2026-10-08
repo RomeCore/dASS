@@ -20,5 +20,16 @@ namespace LLMDesktopAssistant.SlashCommands
 		/// Built-in native commands (reserved).
 		/// </summary>
 		public const int Native = 2000;
+
+		/// <summary>
+		/// Maps a source kind onto its tier: native commands beat scriptable ones, which beat derived ones (skills,
+		/// sub-agents, tools). An unknown source is treated as derived.
+		/// </summary>
+		public static int ForSource(SlashCommandSource source) => source switch
+		{
+			SlashCommandSource.Native => Native,
+			SlashCommandSource.Script => Scriptable,
+			_ => Derived
+		};
 	}
 }

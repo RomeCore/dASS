@@ -30,10 +30,10 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		public IReadOnlyList<string> Namespaces { get; init; } = [];
 
 		/// <summary>
-		/// The provider label of the command's source addon — the source type name, e.g. <c>SkillInfo</c> — or
-		/// <see langword="null"/> for a command with no source (native/scriptable, or an unresolved token).
+		/// The kind of source the command originates from (<see cref="SlashCommandSource.Unknown"/> for a command
+		/// with no source, or a token that did not resolve).
 		/// </summary>
-		public string? Source { get; init; }
+		public SlashCommandSource SourceKind { get; init; }
 
 		/// <summary>The positional arguments, exactly as the user wrote them.</summary>
 		public IReadOnlyList<string> PositionalArguments { get; init; } = [];
@@ -82,7 +82,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 				Token = command?.CanonicalToken ?? token,
 				CommandName = command?.Name ?? parsed.Name,
 				Namespaces = command is not null ? [.. command.Namespaces] : [.. parsed.Qualifiers],
-				Source = command?.Source?.GetType().Name,
+				SourceKind = command?.SourceKind ?? SlashCommandSource.Unknown,
 				PositionalArguments = arguments is null
 					? []
 					: [.. arguments.Positionals.Where(a => a.Raw is not null).Select(a => a.Raw!.Raw)],

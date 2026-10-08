@@ -31,6 +31,17 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
+		public void OrderTiers_MapTheSourceKindOntoTheTier()
+		{
+			Assert.Equal(SlashCommandOrderTiers.Native, SlashCommandOrderTiers.ForSource(SlashCommandSource.Native));
+			Assert.Equal(SlashCommandOrderTiers.Scriptable, SlashCommandOrderTiers.ForSource(SlashCommandSource.Script));
+			Assert.Equal(SlashCommandOrderTiers.Derived, SlashCommandOrderTiers.ForSource(SlashCommandSource.Skill));
+			Assert.Equal(SlashCommandOrderTiers.Derived, SlashCommandOrderTiers.ForSource(SlashCommandSource.SubAgent));
+			Assert.Equal(SlashCommandOrderTiers.Derived, SlashCommandOrderTiers.ForSource(SlashCommandSource.Tool));
+			Assert.Equal(SlashCommandOrderTiers.Derived, SlashCommandOrderTiers.ForSource(SlashCommandSource.Unknown));
+		}
+
+		[Fact]
 		public void CanonicalToken_IsReParseable()
 		{
 			var parsed = SlashCommandMatcher.ParseToken(Command("skill", "matt-pocock").CanonicalToken);

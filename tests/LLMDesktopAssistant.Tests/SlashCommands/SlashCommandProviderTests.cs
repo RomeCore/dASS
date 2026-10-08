@@ -65,6 +65,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal(7, command.Order);
 			Assert.Equal(new[] { "skill", "matt-pocock" }, command.Namespaces);
 			Assert.Equal(SlashCommandOrderTiers.Derived, command.OverrideOrder);
+			Assert.Equal(SlashCommandSource.Skill, command.SourceKind);
 			Assert.Null(command.Enabled);
 			Assert.Null(command.Hidden);
 			Assert.Equal(ModelFacingMode.Raw, command.ModelFacingMode);
@@ -146,6 +147,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var schema = command.ArgumentSchema!;
 
 			Assert.Equal(new[] { "agent" }, command.Namespaces);
+			Assert.Equal(SlashCommandSource.SubAgent, command.SourceKind);
 			Assert.True(schema.HasRestPositional);
 			Assert.Empty(schema.Positionals);
 
