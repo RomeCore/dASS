@@ -20,13 +20,19 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 	/// </remarks>
 	public class SlashCommandFingerprint : AdditionalChatData
 	{
-		/// <summary>The canonical, slash-free command token (<see cref="SlashCommandInfo.CanonicalToken"/>).</summary>
+		/// <summary>
+		/// The canonical, slash-free command token (<see cref="SlashCommandInfo.CanonicalToken"/>).
+		/// </summary>
 		public required string Token { get; init; }
 
-		/// <summary>The bare command name; for an unresolved token, the name segment of the token.</summary>
-		public required string CommandName { get; init; }
+		/// <summary>
+		/// The bare command name; for an unresolved token, the name segment of the token.
+		/// </summary>
+		public required string RawToken { get; init; }
 
-		/// <summary>The command's namespace qualifiers (type first, then pack).</summary>
+		/// <summary>
+		/// The command's namespace qualifiers (type first, then pack).
+		/// </summary>
 		public IReadOnlyList<string> Namespaces { get; init; } = [];
 
 		/// <summary>
@@ -35,31 +41,49 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		/// </summary>
 		public SlashCommandSource SourceKind { get; init; }
 
-		/// <summary>The positional arguments, exactly as the user wrote them.</summary>
+		/// <summary>
+		/// The positional arguments, exactly as the user wrote them.
+		/// </summary>
 		public IReadOnlyList<string> PositionalArguments { get; init; } = [];
 
-		/// <summary>The keyed arguments, exactly as the user wrote them, by key.</summary>
+		/// <summary>
+		/// The keyed arguments, exactly as the user wrote them, by key.
+		/// </summary>
 		public Dictionary<string, string> KeyedArguments { get; init; } = new();
 
-		/// <summary>The verbatim rest-positional text (the surplus beyond the declared positionals).</summary>
+		/// <summary>
+		/// The verbatim rest-positional text (the surplus beyond the declared positionals).
+		/// </summary>
 		public string RestPositionalArguments { get; init; } = string.Empty;
 
-		/// <summary>How the command's message is presented to the model.</summary>
+		/// <summary>
+		/// How the command's message is presented to the model.
+		/// </summary>
 		public ModelFacingMode ModelFacingMode { get; init; }
 
-		/// <summary>The caller's generation intent.</summary>
+		/// <summary>
+		/// The caller's generation intent.
+		/// </summary>
 		public bool GenerateIntent { get; init; }
 
-		/// <summary>The resolved generation outcome.</summary>
+		/// <summary>
+		/// The resolved generation outcome.
+		/// </summary>
 		public bool GenerateOutcome { get; init; }
 
-		/// <summary>How the invocation ended.</summary>
+		/// <summary>
+		/// How the invocation ended.
+		/// </summary>
 		public SlashCommandExecutionStatus Status { get; init; }
 
-		/// <summary>The failure, when <see cref="Status"/> is <see cref="SlashCommandExecutionStatus.Failed"/>.</summary>
+		/// <summary>
+		/// The failure, when <see cref="Status"/> is <see cref="SlashCommandExecutionStatus.Failed"/>.
+		/// </summary>
 		public LocaleKeyBase? Error { get; init; }
 
-		/// <summary>A short human-readable summary of the effect, when the executor provided one.</summary>
+		/// <summary>
+		/// A short human-readable summary of the effect, when the executor provided one.
+		/// </summary>
 		public string? EffectSummary { get; init; }
 
 		public SlashCommandFingerprint()
@@ -80,7 +104,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 			return new SlashCommandFingerprint
 			{
 				Token = command?.CanonicalToken ?? token,
-				CommandName = command?.Name ?? parsed.Name,
+				RawToken = command?.Name ?? parsed.Name,
 				Namespaces = command is not null ? [.. command.Namespaces] : [.. parsed.Qualifiers],
 				SourceKind = command?.SourceKind ?? SlashCommandSource.Unknown,
 				PositionalArguments = arguments is null

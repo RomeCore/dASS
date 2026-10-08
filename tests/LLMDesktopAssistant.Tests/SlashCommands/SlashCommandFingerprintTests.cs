@@ -48,7 +48,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				generateIntent: true, generateOutcome: true, SlashCommandExecutionStatus.Executed, effectSummary: "did a thing");
 
 			Assert.Equal("skill:matt-pocock:grilling", fingerprint.Token);
-			Assert.Equal("grilling", fingerprint.CommandName);
+			Assert.Equal("grilling", fingerprint.RawToken);
 			Assert.Equal(new[] { "skill", "matt-pocock" }, fingerprint.Namespaces);
 			Assert.Equal(SlashCommandSource.Skill, fingerprint.SourceKind);
 			Assert.Equal(new[] { "alpha" }, fingerprint.PositionalArguments);
@@ -72,7 +72,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				error: Locale.GetKey("command.error.unknown"));
 
 			Assert.Equal("skill:nope:thing", fingerprint.Token);
-			Assert.Equal("thing", fingerprint.CommandName);
+			Assert.Equal("thing", fingerprint.RawToken);
 			Assert.Equal(new[] { "skill", "nope" }, fingerprint.Namespaces);
 			Assert.Equal(SlashCommandSource.Unknown, fingerprint.SourceKind);
 			Assert.Empty(fingerprint.PositionalArguments);
@@ -96,7 +96,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var stored = Assert.IsType<SlashCommandFingerprint>(database.AdditionalChatData.FindAll().Single().Data);
 
 			Assert.Equal("skill:matt-pocock:grilling", stored.Token);
-			Assert.Equal("grilling", stored.CommandName);
+			Assert.Equal("grilling", stored.RawToken);
 			Assert.Equal(new[] { "skill", "matt-pocock" }, stored.Namespaces);
 			Assert.Equal(SlashCommandSource.Skill, stored.SourceKind);
 			Assert.Equal(new[] { "alpha" }, stored.PositionalArguments);
