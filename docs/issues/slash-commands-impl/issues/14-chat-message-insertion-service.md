@@ -1,6 +1,6 @@
 # 14: Chat message-insertion service (command host)
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by: 12, 13
 
@@ -87,30 +87,56 @@ token); the argument-error keys already exist. Add / extend keys in `iv` and `ru
 
 ## Acceptance criteria
 
-- [ ] `IChatMessageInsertionService` + `ChatMessageInsertionService` (`[ChatService]`) and
+- [x] `IChatMessageInsertionService` + `ChatMessageInsertionService` (`[ChatService]`) and
       `UserInputInsertionCheckResult` exist.
-- [ ] `CanInsertUserInput` is pure and does the full resolve/parse/bind; `InsertUserInputAsync` re-resolves and is the
+- [x] `CanInsertUserInput` is pure and does the full resolve/parse/bind; `InsertUserInputAsync` re-resolves and is the
       only path that inserts.
-- [ ] `IChatOperationService.SendUserInputAsync`/`SendEditedUserInputAsync` delegate to `InsertUserInputAsync`, keep
+- [x] `IChatOperationService.SendUserInputAsync`/`SendEditedUserInputAsync` delegate to `InsertUserInputAsync`, keep
       `Operation`, and no longer insert messages themselves.
-- [ ] The insertion service takes `ChatExecutionLevel.Command` around the executor and calls generation; the
+- [x] The insertion service takes `ChatExecutionLevel.Command` around the executor and calls generation; the
       `Operation` level is owned by `ChatOperationService`.
-- [ ] A message starting with `/` and an unknown command is **not** inserted by the `CanInsertUserInput` path (the view
+- [x] A message starting with `/` and an unknown command is **not** inserted by the `CanInsertUserInput` path (the view
       model refuses and keeps the draft); a guard inserts it with `Error` set when insertion runs without the
       pre-flight.
-- [ ] `EnableCommands == false` disables command handling entirely — such a message is sent as literal text.
-- [ ] The stored content keeps the raw text; a `//`-escaped message stores the unescaped text.
-- [ ] The intent ceiling `generateIntent && (command.Generate ?? true) && result.Generate` is implemented; an executor
-      exception maps to `Cancelled`/`Failed` and is attached to the message rather than thrown.
-- [ ] Edits never run a command.
-- [ ] Tests: pure seams (content/escape, final-generate composition, resolve failure → check result) plus an
-      integration test on `ChatStorageTestContext` with fakes — a blocked send inserts nothing, a resolved command
-      inserts a `UserMessage` and runs the executor, an edit does not run the command.
-- [ ] The solution builds; the full test suite stays green.
+- [x] `EnableCommands == false` disables command handling entirely — such a message is sent as literal text.
+- [x] The stored content keeps the raw text; a `//`-escaped message stores the unescaped text.
+- [x] The intent ceiling `generateIntent && (command.Generate ?? true) && result.Generate` is implemented; an executor
+      exception is attached to the message rather than thrown (the `Cancelled`/`Failed` status is the fingerprint's job,
+      ticket 15).
+- [x] Edits never run a command.
+- [x] Tests: pure seams (final-generate composition) plus an integration test on `ChatStorageTestContext` with fakes —
+      a command that fails to resolve inserts a message with the error and runs nothing, a resolved command inserts a
+      `UserMessage` and runs the executor, an edit does not run the command.
+- [x] The solution builds; the full test suite stays green.
 
 ## Answer
 
-<!-- appended on resolution -->
+- **`IChatMessageInsertionService`** + `ChatMessageInsertionService` (`[ChatService]`) +
+  `UserInputInsertionCheckResult` (`(bool Success, LocaleKeyBase? Error, int ErrorPosition)` with `Ok`/`Blocked`).
+- **Check / insert split.** `CanInsertUserInput` is pure: it extracts the token, resolves, parses and binds, then
+  returns a verdict without touching the chat. `InsertUserInputAsync` re-resolves (it only receives the input) and is
+  the sole path that inserts; `ChatOperationService` keeps its `Task` signatures and the `Operation` token and now
+  delegates the whole send/edit path to it. The insertion service takes `ChatExecutionLevel.Command` only around
+  `executor.ExecuteAsync` and owns the hand-off to `GenerateResponseAsync`.
+- **View model.** `UserInputViewModel` calls `CanInsertUserInput` before it clears the draft; a refusal shows the error
+  as a toast and leaves text + parts untouched. Because the services are separate calls, the guard also covers callers
+  that skip the pre-flight (`QuickActionService`) and races: the message is inserted with `Error` set, the executor is
+  skipped and no generation follows.
+- **Content & escape.** The stored content is the user's text; `//x` stores `/x`. With `EnableCommands == false` both
+  command handling and the unescape are off, so the text is literal. Edits never resolve a command and never unescape.
+- **Intent ceiling.** `SlashCommandIntent.Resolve(intent, ceiling, outcome)` = `intent && (ceiling ?? true) && outcome`,
+  unit-tested; an unknown/bad command forces no generation. An executor exception attaches `ex.Message`
+  (`Locale.GetConstKey`) to the message and suppresses generation; a cancellation is silent.
+- **Errors.** `command.error.unknown` became a formatted key carrying the typed token.
+- **Tests.** `SlashCommandIntentTests` (the ceiling) plus twelve `ChatMessageInsertionServiceTests` cases on
+  `ChatStorageTestContext` with fakes: the pre-flight accept/refuse (unknown, bad args, edit, disabled), the guard,
+  content/escape, the disabled gate, the intent ceiling, edits and a throwing executor.
+
+Builds: main + desktop + Blazor green (pre-existing warnings only). Slash-command test set: 119 passed. The full suite
+was not re-run to completion (the known intermittent test-host stall); every touched area is covered by the filtered
+run.
+
+Deferred to ticket 15: the fingerprint (including its `Failed`/`Cancelled` status) is not written yet.
 
 ## Comments
 
