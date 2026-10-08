@@ -74,6 +74,13 @@ Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 - [ ] 7.1 Localization keys.
 - [ ] 7.2 Help/docs (`docs/help/*`, `GLOSSARY.md`).
 
+## Chat commands settings UI (out of plan)
+
+Added after Stage 2 — the plan originally carried no settings UI for commands.
+
+- [x] [16 — Command source kind](./issues/16-command-source-kind.md) — the `SlashCommandSource` enum, stamped on the command and recorded in the fingerprint.
+- [x] [17 — Chat commands settings tab](./issues/17-commands-settings-tab.md) — the chat-level command page (gate, set inheritance, editable list), the ADDONS reorder and the "Lua scripts" rename.
+
 ## Committed decisions (during implementation)
 
 - **Commits**: straight to `main`, atomic per checklist item.
@@ -102,3 +109,7 @@ Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 - **`ChatMessage.Error` is `LocaleKeyBase?`** (was `string?`): runtime errors are stored as keys and localized where displayed. A new `LocaleFormattedKey` (immutable `FormatArgs`, caches its own value, not instance-cached) + `Locale.GetFormattedKey`; both BSON (`LocaleKeyBsonSerializer`) and JSON (`JsonLocaleKeyConverter`) gained a `formatted` discriminator. The message synchronizer now persists `Error` for **all** message roles, not only assistant messages.
 - **Stage 2 host split**: `IChatOperationService` keeps the send path and the `Operation` token and delegates to `IChatMessageInsertionService.InsertUserInputAsync(input, generateIntent, editIndex, ct)`; a separate pure `CanInsertUserInput(...)` returns `UserInputInsertionCheckResult` and is called by the view model before it clears the draft. `IChatMessageInsertionService` owns the `Command` token. `EnableCommands == false` disables command handling entirely.
 - **`SlashCommandMatcher` knows nothing about slashes**: the marker handling moves to a `SlashCommandExtractor`, and the canonical slash-free token is `SlashCommandInfo.CanonicalToken` (`[JsonIgnore][BsonIgnore][YamlIgnore]`, stored namespace order + name). `RawToken` is the as-typed slash-free token.
+- **`SlashCommandSource` is descriptive; the tiers stay the ordering authority**: a derived provider stamps `SourceKind` (ticket 16) and `OverrideOrder` is derived from it through `SlashCommandOrderTiers.ForSource` (`Native → Native`, `Script → Scriptable`, else `Derived`).
+- **`SlashCommandFingerprint.Source` (type-name string) is replaced by the `SourceKind` enum** — ticket 15's shape superseded; 0 users, no migrations.
+- **The chat commands page is editable at chat level** (unlike the read-only chat skills/sub-agents pages), because commands have no per-agent page: the cards edit `GetEffectiveCommandsSet()` and the page carries a `CommandsSetInheritance` selector. Commands are user-only, so the list is built with a `null` search service (substring fallback) and the BM25 `IAddonSearchService` stays off.
+- **The ADDONS section order is tools → skills → sub-agents → memory → commands → prompt contexts → Lua scripts**, and the scripts tab is renamed "Lua scripts".
