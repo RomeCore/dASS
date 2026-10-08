@@ -24,6 +24,10 @@ internal sealed class FakeMessageVisibilityService : IMessageVisibilityService
 
 	public MessageVisibilityResult CheckVisibility(BranchedMessage message, ChatAgentDescriptor agent)
 	{
+		// Mirrors the real service: a message disabled for agents is invisible to every agent.
+		if (message.Message.IsDisabledForAgents)
+			return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+
 		bool visible = message.Message is AssistantMessage
 			? IsAssistantVisible(message)
 			: IsUserVisible(message);

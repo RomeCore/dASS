@@ -6,6 +6,7 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
+using LLMDesktopAssistant.Prompting.Hooks;
 using LLMDesktopAssistant.Tests.Storage;
 using LLMDesktopAssistant.Tools;
 using RCLargeLanguageModels.Tasks;
@@ -24,6 +25,7 @@ internal sealed class PromptComposerHarness
 	private readonly FakeChatSettingsService _chatSettings = new();
 	private readonly FakeMessageVisibilityService _visibility = new();
 	private readonly List<IPromptContextProvider> _providers = [];
+	private readonly List<IPromptBuildingHook> _hooks = [];
 
 	public Chat Chat { get; }
 	public FakeChatSettingsService ChatSettings => _chatSettings;
@@ -53,12 +55,24 @@ internal sealed class PromptComposerHarness
 		return this;
 	}
 
+	public PromptComposerHarness WithProvider(IPromptContextProvider provider)
+	{
+		_providers.Add(provider);
+		return this;
+	}
+
+	public PromptComposerHarness WithHook(IPromptBuildingHook hook)
+	{
+		_hooks.Add(hook);
+		return this;
+	}
+
 	public AgentPromptComposer CreateComposer() => new(
 		Chat,
 		_chatSettings,
 		new FakeQuoteRenderer(),
 		new AgentEffectiveMessagesProvider(Chat, _chatSettings, _visibility),
-		[],
+		_hooks,
 		ToolsetCache,
 		new PromptAnchoredSectionProcessor(Chat, _chatSettings),
 		new FakeSupersedeProcessor(),
