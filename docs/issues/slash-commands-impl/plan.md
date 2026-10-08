@@ -27,7 +27,7 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
 
 - [x] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
-- [ ] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
+- [x] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
 - [ ] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
 - [ ] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
 - [ ] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
@@ -82,3 +82,7 @@ behaviour yet (the dispatch host is Stage 2).
 - **Inert addon plumbing for commands** (deviation from ticket 01's “no file locator/parser in v1”): `SlashCommandAddonTypeDescriptor` (`commands`, `UseDefaultSearchService = false`), an empty `SlashCommandFileLocator` and a stub `SlashCommandParser` exist so `AddonSetCollectorBase` can construct. A temporary `StubCommandExecutor` stands in until Stage 3.
 - **RCParsing grammar** of the argument parser is maintainer-owned: the agent ships the scaffold + tests, the maintainer writes the grammar.
 - **Immutable command schema**: `SlashCommandArgumentSchema` and `SlashCommandArgument` are `init`-only — the schema is semantically atomic and travels with the command definition, and `Immutable*` is only shallowly immutable so the leaf type is `init`-only too. Only the addon's *reference* (`SlashCommandInfo.ArgumentSchema`) is settable, because the addon model is mutable and `Clone()` copies settable properties.
+- **`SlashCommandExecutionContext` carries `SlashCommandBoundArguments`** (property `Arguments`) instead of the flat argument fields; `RawArguments` stays on the context (pre-parse), and `RestPositionalArguments` rides inside the bound object.
+- **Executor errors are `LocaleKeyBase?`** (`SlashCommandExecutionResult.Error`): a user-facing error stays a locale key until the boundary (message `Error`, fingerprint).
+- **`Token` is canonical, `RawToken` is as-typed**; `SlashCommandArgumentsResult` was renamed to `SlashCommandParsedArguments`.
+- **`SlashCommandFileLocator` declares `Folders = ["commands"]`** with empty `Extensions` (inert but real); no tests are added until the engine has behaviour to test.

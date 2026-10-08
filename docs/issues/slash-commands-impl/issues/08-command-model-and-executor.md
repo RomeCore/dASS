@@ -1,6 +1,6 @@
 # 08: Command model and executor contracts
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 07
 
@@ -133,21 +133,51 @@ type did not exist yet).
 
 ## Acceptance criteria
 
-- [ ] `SlashCommandInfo` carries `Namespaces`, `ModelFacingMode`, `Generate`, `ArgumentSchema` and a non-nullable
+- [x] `SlashCommandInfo` carries `Namespaces`, `ModelFacingMode`, `Generate`, `ArgumentSchema` and a non-nullable
       `Executor` defaulting to `StubCommandExecutor.Instance`.
-- [ ] `SlashCommandInfo` is constructible with `new()`, survives `Clone()` + `Freeze()` (the addon machinery) and
+- [x] `SlashCommandInfo` is constructible with `new()`, survives `Clone()` + `Freeze()` (the addon machinery) and
       `ValidatePropertiesCore` reports a missing executor.
-- [ ] `ModelFacingMode`, `SlashCommandChange`, `ISlashCommandExecutor`, `SlashCommandExecutionContext`,
+- [x] `ModelFacingMode`, `SlashCommandChange`, `ISlashCommandExecutor`, `SlashCommandExecutionContext`,
       `SlashCommandExecutionResult` and `StubCommandExecutor` exist with the shapes above.
-- [ ] `SlashCommandAddonTypeDescriptor`, `SlashCommandFileLocator` and `SlashCommandParser` are registered and resolve;
+- [x] `SlashCommandAddonTypeDescriptor`, `SlashCommandFileLocator` and `SlashCommandParser` are registered and resolve;
       `UseDefaultSearchService` is `false`.
-- [ ] `SlashCommandCompletionContext.Command` exists.
-- [ ] Locale keys `addon.type.commands.name` / `addon.type.commands.description` exist in `iv` and `ru-RU` (`addon.loc`).
-- [ ] The solution builds; the full test suite stays green (loading an empty `commands/` folder yields no addons).
+- [x] `SlashCommandCompletionContext.Command` exists.
+- [x] Locale keys `addon.type.commands.name` / `addon.type.commands.description` exist in `iv` and `ru-RU` (`addon.loc`).
+- [x] The solution builds; the full test suite stays green (loading an empty `commands/` folder yields no addons).
 
 ## Answer
 
-<!-- appended on resolution -->
+Implemented under `src/LLMDesktopAssistant/SlashCommands/`:
+
+- model: `SlashCommandInfo` (`Namespaces`, `ModelFacingMode`, `Generate`, `ArgumentSchema`, non-nullable `Executor`
+  defaulting to `StubCommandExecutor.Instance`; `Executor` carries the three ignore attributes), `SlashCommandChange`
+  and `ModelFacingMode`;
+- execution (`Execution/`): `ISlashCommandExecutor`, `SlashCommandExecutionContext`, `SlashCommandExecutionResult`
+  and `StubCommandExecutor`;
+- addon plumbing (`Loading/`): `SlashCommandAddonTypeDescriptor` (`commands`, `UseDefaultSearchService = false`),
+  `SlashCommandFileLocator` and the inert `SlashCommandParser`.
+
+Deviations from the ticket, agreed during the grilling session:
+
+- **The context carries `SlashCommandBoundArguments`, not the flat argument fields.** `Arguments` is one bound object
+  (defaults applied, values validated and converted); `RawArguments` stays on the context next to `RawText` because it
+  is the pre-parse remainder, not a bound value. This also restores `RestPositionalArguments`, which the ticket's flat
+  field list had dropped but `/agent` and `/skill` need.
+- **`SlashCommandExecutionResult.Error` is `LocaleKeyBase?`**, not `string?` — the error travels to the user as a locale
+  key and is resolved to text only at the boundary (the message's `Error`, the fingerprint).
+- **`Token` is the canonicalized token** (the resolved form, e.g. `/skill:grilling`); **`RawToken`** was added for the
+  token exactly as the user typed it (e.g. `/grilling`); `RawText` is the whole message verbatim.
+- **`SlashCommandArgumentsResult` was renamed to `SlashCommandParsedArguments`** (the parser, binder, docs and the
+  grammar/binder tests were updated; no behaviour change).
+- **`SlashCommandFileLocator` uses `Folders = ["commands"]`** (the ticket said `[]`): the pipeline now really scans
+  the folder; `Extensions` stays empty, so file commands still find nothing.
+- **No tests were added** at this stage (maintainer's call): the ticket is contracts plus inert plumbing, and the
+  "empty folder" criterion is vacuous by construction. The existing suite stays green.
+
+`SlashCommandCompletionContext` gained `required SlashCommandInfo Command`. Locale keys `addon.type.commands.name` and
+`addon.type.commands.description` were added to `iv` and `ru-RU` (`addon.loc`).
+
+Main + desktop builds green; full suite: 845 total, 844 passed, 1 skipped (pre-existing).
 
 ## Comments
 
