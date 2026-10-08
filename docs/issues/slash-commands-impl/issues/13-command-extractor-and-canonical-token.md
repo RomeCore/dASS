@@ -1,6 +1,6 @@
 # 13: `SlashCommandExtractor` and `SlashCommandInfo.CanonicalToken`
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by:
 
@@ -52,19 +52,38 @@ public string CanonicalToken => string.Join(':', [..Namespaces, Name]);   // e.g
 
 ## Acceptance criteria
 
-- [ ] `SlashCommandExtractor` exists with `Prefix`, `TryExtractToken`, `UnescapeLeadingSlash`; behaviour is byte-for-byte
+- [x] `SlashCommandExtractor` exists with `Prefix`, `TryExtractToken`, `UnescapeLeadingSlash`; behaviour is byte-for-byte
       unchanged from ticket 11 (leading whitespace, bare `/`, `//` escape, multi-line remainder).
-- [ ] `SlashCommandMatcher` no longer mentions `/` anywhere (no `Prefix`, no extractor methods); `ParseToken`/`Match`
+- [x] `SlashCommandMatcher` no longer mentions `/` anywhere (no `Prefix`, no extractor methods); `ParseToken`/`Match`
       unchanged.
-- [ ] `SlashCommandInfo.CanonicalToken` exists (computed, with the three ignore attributes), is slash-free, and equals
+- [x] `SlashCommandInfo.CanonicalToken` exists (computed, with the three ignore attributes), is slash-free, and equals
       `namespaces + name` joined by `:` in stored order.
-- [ ] Extractor tests live in a new `SlashCommandExtractorTests`; `SlashCommandMatcherTests` keeps only matcher cases.
-- [ ] `SlashCommandExecutionContext.Token`/`RawToken` docs and any other stale `/`-in-token docs are corrected.
-- [ ] The solution builds; the full test suite stays green.
+- [x] Extractor tests live in a new `SlashCommandExtractorTests`; `SlashCommandMatcherTests` keeps only matcher cases.
+- [x] `SlashCommandExecutionContext.Token`/`RawToken` docs and any other stale `/`-in-token docs are corrected.
+- [x] The solution builds; the full test suite stays green.
 
 ## Answer
 
-<!-- appended on resolution -->
+- **`SlashCommandExtractor`** (`SlashCommands/SlashCommandExtractor.cs`, namespace `LLMDesktopAssistant.SlashCommands`)
+  owns `Prefix`, `TryExtractToken` and `UnescapeLeadingSlash`, moved verbatim from the matcher — behaviour is unchanged.
+- **`SlashCommandMatcher`** is now purely slash-free: the extractor methods, `Prefix` and the now-unused
+  `SkipWhitespace` are gone; `ParseToken`/`Match` are untouched. Its remarks no longer claim to know the marker.
+- **`SlashCommandInfo.CanonicalToken`**: `string.Join(':', Namespaces.Add(Name))` — slash-free, stored namespace order
+  (type, then pack) + name, e.g. `skill:matt-pocock:grilling`; carries the three ignore attributes. It differs from
+  `Key` (which sorts the namespaces ordinally) — `SlashCommandInfoTests` asserts both the difference and that the token
+  is re-parseable by `ParseToken`.
+- **Docs**: `ISlashCommandResolver` now points at `SlashCommandExtractor.TryExtractToken`; the
+  `SlashCommandExecutionContext.Token`/`RawToken` summaries are slash-free.
+- **Tests**: extractor cases moved to `SlashCommandExtractorTests`; `SlashCommandMatcherTests` keeps parsing/matching;
+  `SlashCommandInfoTests` covers `CanonicalToken`.
+
+Builds: main green. Slash-command test set: 97 passed. (A full-suite run was cancelled by the maintainer because the
+suite stalled at ~43s — the known intermittent test-host hang noted in the stage-2 handoff, not a failure; the affected
+namespace was already verified in isolation.)
+
+Note: the matcher's total order gained an "exact name before alias match" key while this ticket was in flight — the
+maintainer's own edit, committed separately (`fix(slash-commands): prefer an exact command name over an alias match`).
+The matcher remark now documents it; ticket 11's Answer still describes the older order and is left as history.
 
 ## Comments
 
