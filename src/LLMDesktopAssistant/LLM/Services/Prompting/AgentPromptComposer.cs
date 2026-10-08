@@ -94,7 +94,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			// SCM stamps: walk up beyond effective message history (but including one effective message)
 			// to find the most recent stamp of each type.
 			Dictionary<string, (int MsgId, int Order, PromptSupersedeStampBase Stamp)>? seenStamps = [];
-			for (int i = effectiveContext.EffectiveMessagesStartIndex; i >= 0; i--)
+			// Clamp the start: an empty chat reports a start index of 0 with no messages behind it.
+			for (int i = Math.Min(effectiveContext.EffectiveMessagesStartIndex, chat.Messages.Count - 1); i >= 0; i--)
 			{
 				var branchedMessage = chat.Messages[i];
 
