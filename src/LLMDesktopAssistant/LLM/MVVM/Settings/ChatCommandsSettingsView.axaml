@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
+			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatCommandsSettingsView"
+			 x:DataType="local:ChatCommandsSettingsViewModel"
+			 x:Name="VMRoot">
+
+	<StackPanel Margin="8" Spacing="8">
+
+		<!-- Available commands header -->
+		<Grid ColumnDefinitions="*,Auto">
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.commands.available}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
+					   VerticalAlignment="Center"/>
+
+			<Button Grid.Column="1"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.commands.refresh}">
+				<ico:VisualIcon Kind="Refresh"/>
+			</Button>
+		</Grid>
+
+		<TextBlock Text="{loc:Loc settings.commands.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
+
+		<!-- Master gate -->
+		<CheckBox Content="{loc:Loc settings.commands.enabled}"
+				  IsChecked="{Binding CommandSettings.EnableCommands, Mode=TwoWay}"/>
+
+		<TextBlock Text="{loc:Loc settings.commands.enabled.hint}"
+				   Opacity="0.5"
+				   FontSize="11"
+				   Margin="24,0,0,4"
+				   TextWrapping="Wrap"/>
+
+		<!-- Command set selection -->
+		<Grid ColumnDefinitions="*,Auto">
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.commands.set}"
+					   VerticalAlignment="Center"/>
+
+			<ComboBox Grid.Column="1"
+					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
+					  SelectedItem="{Binding SelectedCommandsSetInheritance}"
+					  VerticalAlignment="Center"
+					  MinWidth="120">
+
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="set:InheritanceLevelItem">
+						<TextBlock Text="{Binding DisplayName}"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+
+			</ComboBox>
+		</Grid>
+
+		<!-- Search + list -->
+		<cards:AddonListView DataContext="{Binding List}"/>
+
+	</StackPanel>
+
+</UserControl>

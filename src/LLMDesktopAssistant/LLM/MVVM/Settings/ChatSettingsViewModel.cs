@@ -20,6 +20,7 @@ using LLMDesktopAssistant.Prompting.Management;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Scripting.Lua;
+using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Settings;
 using LLMDesktopAssistant.Tools;
@@ -186,14 +187,6 @@ namespace LLMDesktopAssistant.LLM.Settings
 				Locale.Get("addon.settings.title"),
 				MaterialIconKind.PuzzleOutline,
 				[
-					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompt_contexts"),
-						MaterialIconKind.LayersOutline,
-						() => new ChatPromptContextsSettingsViewModel(
-							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
-
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.tools"),
 						MaterialIconKind.Wrench,
 						() => new ChatToolsSettingsViewModel(
@@ -218,17 +211,32 @@ namespace LLMDesktopAssistant.LLM.Settings
 							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
 							Chat.Services.GetRequiredService<IAddonSearchService<SubAgentInfo>>())),
 
+					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.memory"),
+						MaterialIconKind.Database,
+						() => new ChatMemorySettingsViewModel(Settings.Memory)),
+
+					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.commands"),
+						MaterialIconKind.Console,
+						() => new ChatCommandsSettingsViewModel(Settings.Commands,
+							Chat.Services.GetRequiredService<IAddonSetCollector<SlashCommandInfo>>(),
+							Chat.Services.GetRequiredService<IAddonCardFactory<SlashCommandInfo, SlashCommandChange>>(),
+							Chat.Services.GetRequiredService<IAddonManagerInvalidator>())),
+
+					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompt_contexts"),
+						MaterialIconKind.LayersOutline,
+						() => new ChatPromptContextsSettingsViewModel(
+							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
+							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
+							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
+							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
+
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.scripts"),
 						MaterialIconKind.ScriptTextOutline,
 						() => new ChatScriptsSettingsViewModel(Settings.Scripts,
 							Chat.Services.GetRequiredService<IAddonSetCollector<LuaScriptInfo>>(),
 							Chat.Services.GetRequiredService<IAddonCardFactory<LuaScriptInfo, LuaScriptChange>>(),
 							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<LuaScriptInfo>>())),
-
-					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.memory"),
-						MaterialIconKind.Database,
-						() => new ChatMemorySettingsViewModel(Settings.Memory))
+							Chat.Services.GetRequiredService<IAddonSearchService<LuaScriptInfo>>()))
 				],
 				() => new ChatAddonsSettingsViewModel(Settings.Addons,
 					Chat.Services.GetRequiredService<IAddonPackLocator>(),

@@ -97,11 +97,12 @@ chat.model.chat.hint: Модель чата
 chat.model.router.hint: Модель для роутера агентов
 chat.model.tools.hint: Модель для агентных инструментов
 chat.model.vision.hint: Зрительная модель
+chat.commands: Команды
 chat.models: Модели
 chat.models.hint: Выберите языковые модели, используемые для чата, агентного роутинга, агентных инструментов и зрительных задач.
 chat.prompts: Промпты
 chat.read: Права чтения
-chat.scripts: Скрипты
+chat.scripts: Lua-скрипты
 chat.skills: Навыки
 chat.summarization: Авто-суммаризация
 chat.summarization.enabled: Включить авто-суммаризацию чата
@@ -248,6 +249,15 @@ scripts.enabled_by_default.hint: При включении скрипты без
 scripts.refresh: Обновить список скриптов
 scripts.search.placeholder: Поиск по имени, описанию или тегам...
 scripts.set: Набор скриптов
+
+commands.available: Доступные команды
+commands.available.hint: Слеш-команды — это вводимые пользователем токены в начале сообщения, которые внедряют навык или запускают субагента. Агентам они никогда не показываются.
+commands.empty: Команды не найдены
+commands.enabled: Включить слеш-команды
+commands.enabled.hint: Если выключено, ведущий токен «/» в сообщении считается обычным текстом.
+commands.refresh: Обновить список команд
+commands.search.placeholder: Поиск по имени, описанию или тегам...
+commands.set: Набор команд
 
 skills.available: Доступные навыки
 skills.available.hint: Навыки, найденные в директориях. Только включённые навыки внедряются в промпт агента.

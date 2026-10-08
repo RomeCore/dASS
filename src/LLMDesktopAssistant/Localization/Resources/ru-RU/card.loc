@@ -81,6 +81,17 @@ scripts.namespace.global: Глобальное
 scripts.manuals: Мануалы
 
 // =====================================================
+// === Команды                                      ===
+// =====================================================
+commands.source: Источник команды
+commands.source.unknown: Неизвестно
+commands.source.native: Встроенная
+commands.source.script: Скрипт
+commands.source.skill: Навык
+commands.source.subagent: Субагент
+commands.source.tool: Инструмент
+
+// =====================================================
 // === Инструменты                                   ===
 // =====================================================
 tools.policy_mask: Маска политик

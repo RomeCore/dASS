@@ -97,11 +97,12 @@ chat.model.chat.hint: Chat model
 chat.model.router.hint: Agentic routing model
 chat.model.tools.hint: Agentic tools model
 chat.model.vision.hint: Vision model
+chat.commands: Commands
 chat.models: Models
 chat.models.hint: Select the language models used for the chat, agentic routing, agentic tools and vision tasks.
 chat.prompts: Prompts
 chat.read: Read permissions
-chat.scripts: Scripts
+chat.scripts: Lua scripts
 chat.skills: Skills
 chat.summarization: Auto-summarization
 chat.summarization.enabled: Enable chat auto-summarization
@@ -248,6 +249,15 @@ scripts.enabled_by_default.hint: When enabled, scripts without an explicit overr
 scripts.refresh: Refresh scripts list
 scripts.search.placeholder: Search by name, description or tags...
 scripts.set: Script set
+
+commands.available: Available commands
+commands.available.hint: Slash commands are user-typed tokens at the start of a message that inject a skill or launch a sub-agent. They are never exposed to agents.
+commands.empty: No commands found
+commands.enabled: Enable slash commands
+commands.enabled.hint: When disabled, a leading "/" token in a message is treated as plain text.
+commands.refresh: Refresh commands list
+commands.search.placeholder: Search by name, description or tags...
+commands.set: Command set
 
 skills.available: Available Skills
 skills.available.hint: Skills discovered in skill directories. Only enabled skills are injected into agent prompts.

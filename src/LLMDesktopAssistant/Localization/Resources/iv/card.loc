@@ -81,6 +81,17 @@ scripts.namespace.global: Global
 scripts.manuals: Manuals
 
 // =====================================================
+// === Commands                                     ===
+// =====================================================
+commands.source: Command source
+commands.source.unknown: Unknown
+commands.source.native: Native
+commands.source.script: Script
+commands.source.skill: Skill
+commands.source.subagent: Sub-agent
+commands.source.tool: Tool
+
+// =====================================================
 // === Tools                                        ===
 // =====================================================
 tools.policy_mask: Policy mask
