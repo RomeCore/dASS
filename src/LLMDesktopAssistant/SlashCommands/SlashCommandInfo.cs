@@ -59,6 +59,20 @@ namespace LLMDesktopAssistant.SlashCommands
 		}
 
 		/// <summary>
+		/// The addon the command was derived from — a <c>SkillInfo</c>, a <c>SubAgentInfo</c>, a <c>ToolInfo</c> and so
+		/// on — or <see langword="null"/> for native/scriptable commands. Typed <see cref="object"/> because the addon
+		/// bases are CRTP-parameterized and share no non-generic base. Runtime-only, never serialized.
+		/// </summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[LiteDB.BsonIgnore]
+		[YamlDotNet.Serialization.YamlIgnore]
+		public object? Source
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// The executor that runs the command's action. Never <see langword="null"/>.
 		/// </summary>
 		/// <remarks>

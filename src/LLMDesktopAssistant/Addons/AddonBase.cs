@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using LiteDB;
@@ -223,6 +223,16 @@ namespace LLMDesktopAssistant.Addons
 			get;
 			set => SetProperty(ref field, value);
 		}
+
+		/// <summary>
+		/// Gets a value indicating whether the addon is valid and may be consumed (search, prompt, commands, ...).
+		/// Invalid addons stay visible in the UI but are filtered out wherever addons are actually used —
+		/// see <see cref="AddonSetCollectorBase{TAddon,TChange}"/>.
+		/// </summary>
+		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
+		public virtual bool IsValid => Diagnostic?.IsFatal is not true;
 
 		/// <summary>
 		/// Expands the addon's diagnostic information with the provided diagnostic information.

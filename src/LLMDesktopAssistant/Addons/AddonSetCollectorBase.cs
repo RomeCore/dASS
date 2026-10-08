@@ -75,7 +75,7 @@ namespace LLMDesktopAssistant.Addons
 			Log.Warning("GetAddons* not implemented for {0}! Returning all addons. Override if necessary.", GetType());
 			return GetAvailableAddons().Where(a =>
 			{
-				if (a.Diagnostic?.IsFatal is true)
+				if (!a.IsValid)
 					return false;
 				if (a.ChatAvailablePredicate is null)
 					return true;
@@ -87,7 +87,7 @@ namespace LLMDesktopAssistant.Addons
 		{
 			return GetAddonsForChat().Where(a =>
 			{
-				if (a.Diagnostic?.IsFatal is true)
+				if (!a.IsValid)
 					return false;
 				if (a.AgentAvailablePredicate is null)
 					return true;
@@ -103,7 +103,7 @@ namespace LLMDesktopAssistant.Addons
 
 			foreach (var addon in addons)
 			{
-				if (addon.Diagnostic?.IsFatal is true)
+				if (!addon.IsValid)
 					continue;
 
 				if (addon.ChatAvailablePredicate is not null && !addon.ChatAvailablePredicate.Invoke(addon, _services))
