@@ -44,14 +44,6 @@ namespace LLMDesktopAssistant.LLM.Services
 		public async Task InsertUserInputAsync(UserInput input, bool generateIntent, int? editIndex = null,
 			CancellationToken ct = default)
 		{
-			if (editIndex is not null)
-			{
-				storage.EditMessage(editIndex.Value, CreateUserMessage(input, input.Content));
-				if (generateIntent)
-					await executor.GenerateResponseAsync(ct);
-				return;
-			}
-
 			var commandsEnabled = CommandsEnabled;
 			string rawToken = string.Empty;
 			string rawArguments = string.Empty;
@@ -64,7 +56,10 @@ namespace LLMDesktopAssistant.LLM.Services
 			var resolution = isCommand ? Resolve(rawToken, rawArguments) : default;
 
 			var message = CreateUserMessage(input, content);
-			storage.AppendMessage(message);
+			if (editIndex is not null)
+				storage.EditMessage(editIndex.Value, message);
+			else
+				storage.AppendMessage(message);
 
 			var generate = generateIntent;
 
