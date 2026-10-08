@@ -1,21 +1,12 @@
-using System.Net.Mail;
 using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
-using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
-using LLMDesktopAssistant.Prompting.ContextExpanders;
 using LLMDesktopAssistant.Prompting.Hooks;
-using LLMDesktopAssistant.Prompting.Plugins;
-using LLMDesktopAssistant.Users;
-using LLTSharp;
 using RCLargeLanguageModels.Messages;
-using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Tools;
 using Serilog;
 
@@ -121,6 +112,14 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				}
 			}
 
+			// SCM announcements (anchor deltas and supersede stamps) carried by messages hidden from the agent
+			// must still reach it: collect them from the raw history and render them at the nearest visible
+			// assistant message. When nothing is hidden the map is empty and the loop below is unchanged.
+			var hiddenAnnouncements = anchor is null
+				? null
+				: CollectHiddenAnnouncements(chat.Messages, effectiveContext, agent.Id, anchor,
+					effectiveContext.EffectiveMessagesStartIndex);
+
 			for (int i = 0; i < effectiveContext.Messages.Count; i++)
 			{
 				var effectiveMessage = effectiveContext.Messages[i];
@@ -150,6 +149,16 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					var systemReminderSb = new StringBuilder();
 					systemReminderSb.Append($"<{systemReminderTag}>").Append('\n');
 					int dataCounter = 0;
+
+					// Process SCM announcements carried by hidden messages (rendered at this message).
+					if (hiddenAnnouncements is not null && hiddenAnnouncements.TryGetValue(i, out var hiddenSnapshots))
+					{
+						foreach (var snapshot in hiddenSnapshots)
+						{
+							systemReminderSb.Append(snapshot).Append('\n');
+							dataCounter++;
+						}
+					}
 
 					// Process SCM anchor deltas.
 					if (anchor is not null && branchedMessage.Message.AdditionalData.TryGet<PromptStateDeltaMessageData>() is { } deltas)
@@ -299,5 +308,76 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			ToolStatus.Cancelled => "[TOOL RESULT WAS COMPACTED, CANCELLED BEFORE]",
 			_ => "[TOOL RESULT WAS COMPACTED]"
 		};
+
+		/// <summary>
+		/// Collects the SCM announcements (anchor deltas and supersede stamps) carried by messages that are
+		/// <em>not</em> in the agent's effective set, keyed by the effective index of the assistant message that
+		/// should host them: the nearest visible assistant message at or after the carrier, or the pending turn
+		/// when there is none. A message hidden from the agent must not silence the state changes it announced.
+		/// </summary>
+		internal static Dictionary<int, List<string>> CollectHiddenAnnouncements(
+			IReadOnlyList<BranchedMessage> rawMessages,
+			EffectiveChatContext effectiveContext,
+			Guid agentId,
+			PromptStateAnchorMessageData anchor,
+			int effectiveStartIndex)
+		{
+			var visible = new HashSet<BranchedMessage>();
+			var assistantHosts = new List<(int RawIndex, int EffectiveIndex)>();
+
+			for (int i = 0; i < effectiveContext.Messages.Count; i++)
+			{
+				var effectiveMessage = effectiveContext.Messages[i];
+				visible.Add(effectiveMessage.BranchedMessage);
+
+				if (effectiveMessage.BranchedMessage.Message is Domain.AssistantMessage)
+					assistantHosts.Add((effectiveMessage.BranchedMessage.MessageIndex, i));
+			}
+
+			var result = new Dictionary<int, List<string>>();
+
+			for (int r = Math.Max(0, effectiveStartIndex); r < rawMessages.Count; r++)
+			{
+				var branchedMessage = rawMessages[r];
+
+				if (visible.Contains(branchedMessage))
+					continue;
+				if (branchedMessage.Message is not Domain.AssistantMessage assistant || assistant.SenderAgentId != agentId)
+					continue;
+
+				List<string>? snapshots = null;
+
+				if (assistant.AdditionalData.TryGet<PromptStateDeltaMessageData>(out var deltas)
+					&& deltas.AnchorId == anchor.Id
+					&& !string.IsNullOrWhiteSpace(deltas.Snapshot))
+					(snapshots ??= []).Add(deltas.Snapshot);
+
+				if (assistant.AdditionalData.TryGet<PromptSupersedeStampMessageData>(out var stamps))
+				{
+					foreach (var stamp in stamps.Stamps)
+						(snapshots ??= []).Add(stamp.Snapshot);
+				}
+
+				if (snapshots is null)
+					continue;
+
+				var host = assistantHosts.Count == 0 ? effectiveContext.Messages.Count - 1 : assistantHosts[^1].EffectiveIndex;
+				foreach (var (rawIndex, effectiveIndex) in assistantHosts)
+				{
+					if (rawIndex >= branchedMessage.MessageIndex)
+					{
+						host = effectiveIndex;
+						break;
+					}
+				}
+
+				if (!result.TryGetValue(host, out var list))
+					result[host] = list = [];
+
+				list.AddRange(snapshots);
+			}
+
+			return result;
+		}
 	}
 }

@@ -1,6 +1,7 @@
 using System.Text;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
 using Serilog;
 
@@ -9,7 +10,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	/// <inheritdoc cref="IPromptAnchoredSectionProcessor"/>
 	[ChatService(typeof(IPromptAnchoredSectionProcessor))]
 	public class PromptAnchoredSectionProcessor(
-		Chat chat
+		Chat chat,
+		IChatSettingsService chatSettings
 	) : IPromptAnchoredSectionProcessor
 	{
 		/// <inheritdoc/>
@@ -20,19 +22,35 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			if (promptMode != PromptContextMode.Hybrid)
 				return null;
 
-			if (effectiveContext.Messages.Count == 0 ||
-				effectiveContext.Messages[^1].BranchedMessage.Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
+			if (chat.Messages.Count == 0 ||
+				chat.Messages[^1].Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
 				throw new InvalidOperationException("Expected a pending assistant message, but none was found.");
+
+			// The boundary is the newest enabled checkpoint, located in the raw history: an anchor must survive
+			// its own message being hidden from agents, so the visibility-filtered effective set cannot be used.
+			var disabledCheckpoints = agent.Context.GetEffectiveDisabledFlags(chatSettings.Settings);
+			int boundaryIndex = -1;
+			for (int i = chat.Messages.Count - 1; i >= 0; i--)
+			{
+				if (chat.Messages[i].Message.AdditionalData.TryGet<ContextCheckpoint>(out var checkpoint)
+					&& checkpoint.IsCompletedAndEnabled
+					&& (checkpoint.Kind & ~disabledCheckpoints) != ContextCheckpointKind.None)
+				{
+					boundaryIndex = i;
+					break;
+				}
+			}
 
 			PromptStateAnchorMessageData? anchor = null;
 			int messageWithAnchor = -1;
 
-			// Live anchor: the newest anchor of this agent positioned after the last checkpoint.
+			// Live anchor: the newest anchor of this agent positioned after the boundary. Walking the raw history
+			// (not the effective set) keeps an anchor carried by a hidden message reachable.
 			// A single message may hold anchors of multiple agents — scan all of them.
-			for (int i = effectiveContext.Messages.Count - 1; i > effectiveContext.LastCheckpointIndex; i--)
+			for (int i = chat.Messages.Count - 1; i > boundaryIndex; i--)
 			{
-				var branchedMessage = effectiveContext.Messages[i];
-				foreach (var candidate in branchedMessage.BranchedMessage.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>())
+				var branchedMessage = chat.Messages[i];
+				foreach (var candidate in branchedMessage.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>())
 				{
 					if (candidate.AgentId != agent.Id)
 						continue;
@@ -47,16 +65,16 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			if (anchor is not null)
 			{
-				if (messageWithAnchor + 1 < effectiveContext.Messages.Count)
+				if (messageWithAnchor + 1 < chat.Messages.Count)
 				{
 					var deltasPerAnchor = new Dictionary<string, List<PromptSectionDeltaBase>>();
 
-					for (int i = messageWithAnchor + 1; i < effectiveContext.Messages.Count; i++)
+					for (int i = messageWithAnchor + 1; i < chat.Messages.Count; i++)
 					{
-						var branchedMessage = effectiveContext.Messages[i];
-						if (branchedMessage.BranchedMessage.Message is AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
+						var branchedMessage = chat.Messages[i];
+						if (branchedMessage.Message is AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
 						{
-							foreach (var deltaData in branchedMessage.BranchedMessage.Message.AdditionalData.OfType<PromptStateDeltaMessageData>())
+							foreach (var deltaData in branchedMessage.Message.AdditionalData.OfType<PromptStateDeltaMessageData>())
 							{
 								if (deltaData.AnchorId != anchor.Id)
 									continue;
@@ -106,16 +124,16 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				return anchor;
 			}
 
-			// Rebaseline: create a new anchor on the first message after the last checkpoint.
-			int targetIndex = effectiveContext.LastCheckpointIndex + 1;
-			if (targetIndex >= effectiveContext.Messages.Count)
+			// Rebaseline: create a new anchor on the first raw message after the boundary.
+			int targetIndex = boundaryIndex + 1;
+			if (targetIndex >= chat.Messages.Count)
 			{
 				Log.Debug("Skipped prompt state anchor creation for agent {AgentId}: no target message after the last checkpoint.",
 					agent.Id);
 				return null;
 			}
 
-			var target = effectiveContext.Messages[targetIndex];
+			var target = chat.Messages[targetIndex];
 			var states = sections.CaptureStates(agent);
 			var snapshot = sections.RenderHeader(states);
 
@@ -127,9 +145,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				Snapshot = snapshot
 			};
 
-			target.BranchedMessage.Message.AdditionalData.Add(anchor);
-			Log.Information("Created prompt state anchor #{AnchorId} for agent {AgentId} on message {MessageId} (effective index {Index}).",
-				anchor.Id, agent.Id, target.BranchedMessage.MessageId, targetIndex);
+			target.Message.AdditionalData.Add(anchor);
+			Log.Information("Created prompt state anchor #{AnchorId} for agent {AgentId} on message {MessageId} (raw index {Index}).",
+				anchor.Id, agent.Id, target.MessageId, targetIndex);
 			return anchor;
 		}
 

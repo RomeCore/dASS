@@ -3,6 +3,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
+using LLMDesktopAssistant.Tests.Storage;
 
 namespace LLMDesktopAssistant.Tests.Prompting;
 
@@ -15,7 +16,7 @@ public class PromptStateStageTests
 	/// <summary>
 	/// Creates a stage. Sections are passed per <see cref="PromptAnchoredSectionProcessor.Process"/> call.
 	/// </summary>
-	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat);
+	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat, new FakeChatSettingsService());
 
 	private static FakeSection[] CreateSections() => [new FakeSection(0, "core")];
 
@@ -103,7 +104,7 @@ public class PromptStateStageTests
 
 		// The cut checkpoint is carried by the first message of the effective set (index 0),
 		// so the anchor pinned to it is now before the cut and must be rebaselined.
-		var cut = new ContextCheckpoint { Kind = ContextCheckpointKind.Shield };
+		var cut = PromptingTestHelpers.AddCheckpoint(u0, ContextCheckpointKind.Shield);
 		var effectiveAfterCut = new EffectiveChatContext
 		{
 			Agent = new ChatAgentDescriptor(),
