@@ -7,6 +7,7 @@ error.missing_argument: A required argument is missing.
 error.invalid_argument: The argument value is not valid.
 error.too_many_arguments: Too many arguments.
 error.parse_error: The arguments could not be parsed.
+error.unknown: Unknown command.
 
 // Argument names (command.argument.*).
 argument.wait: wait

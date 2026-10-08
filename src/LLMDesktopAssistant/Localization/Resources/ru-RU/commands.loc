@@ -7,6 +7,7 @@ error.missing_argument: Не указан обязательный аргуме�
 error.invalid_argument: Недопустимое значение аргумента.
 error.too_many_arguments: Слишком много аргументов.
 error.parse_error: Не удалось разобрать аргументы.
+error.unknown: Неизвестная команда.
 
 // Имена аргументов (command.argument.*).
 argument.wait: wait

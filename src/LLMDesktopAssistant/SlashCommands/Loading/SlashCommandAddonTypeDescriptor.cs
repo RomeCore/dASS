@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		public bool UseDefaultDiagnosticFactory => true;
 
 		/// <summary>
-		/// Commands are not BM25-searched in v1 — they are resolved by token, not searched.
+		/// Commands are not agent-searchable for now, so we don't use the default search service for them.
 		/// </summary>
 		public bool UseDefaultSearchService => false;
 
