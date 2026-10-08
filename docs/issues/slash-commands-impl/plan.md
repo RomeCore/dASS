@@ -50,8 +50,11 @@ Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 
 ## Stage 3 — First two commands
 
-- [ ] 3.1 `/skill:<name> args…`: executor + `AdditionalMessageContentPart` + `ChatMessageQuoteRenderer` append + chip + arg substitution.
-- [ ] 3.2 `/agent:<name> input`: executor (sub-agent launch, attach to `message.AgentTasks`, fire-and-forget, `wait`), policy from `ChatSubAgentSettings`.
+- [ ] [21 — Command message-content layers](./issues/21-command-message-content-layers.md) — prefactor: `AdditionalMessageContentPart`, localizable `ChipTitle`, `ModelFacingMode` in the result + fingerprint, and the renderer's model-facing content projection. **First**, because both executors write their message through it.
+- [ ] [22 — `/skill:<name>` executor](./issues/22-skill-command-executor.md) — body injection, argument/variable substitution, chip.
+- [ ] [23 — `/agent:<name>` executor](./issues/23-sub-agent-command-executor.md) — sub-agent launch, chat-level policy, `wait`, result injection.
+
+Blocking edges: `22, 23 ← 21`; `22` and `23` are independent.
 
 ## Stage 4 — Message level
 
@@ -117,3 +120,8 @@ Added after Stage 2 — the plan originally carried no settings UI for commands.
 - **`IsDisabledForAgents` is universal and first-checked**: a disabled message is invisible to every agent (including its own sender), persisted for all roles, and set only by the model/view (never inherited from a setting).
 - **SCM carriers are decoupled from visibility**: the anchor boundary/live-anchor/delta walks in `PromptAnchoredSectionProcessor` run over the raw `Chat.Messages` (boundary = the newest enabled checkpoint of any kind; rebaseline installs on the first raw message after it), and `AgentPromptComposer` renders the deltas/stamps of hidden carriers at the nearest visible assistant message at or after them (else the pending turn). `CheckVisibility` stays the single "hidden from agents" gate; only the SCM payload is exempt.
 - **The disabled-message toggle is desktop-only** (Blazor WebUI is a v1 non-goal); the flag and the visibility rule are core.
+- **Stage 3 is sliced into `21`–`23`** (prefactor → `/skill` → `/agent`). `SkillCommandExecutor` / `SubAgentCommandExecutor` live next to their providers (in `Providers/`), constructed by them with chat-scoped dependencies injected through the provider's constructor.
+- **The model-facing content projection lives in `ChatMessageQuoteRenderer`, not `MessageVisibilityService`**: `Raw` → the message content, `Neutral` → `/` + the fingerprint's `RawToken` (the bare name), `Hidden` → nothing, content parts appended in every mode. `SlashCommandExecutionResult` carries a `ModelFacingMode?` override that the host folds into the fingerprint.
+- **`AdditionalMessagePart.ChipTitle` is `LocaleKeyBase?`** (chips localize; 0 users, no migration) and `AdditionalMessageContentPart` is the reusable text part a command writes into its message.
+- **Skill-variable expansion lives in a static `SlashCommandVariableExpander`** with `string? GetSkillVariable(string name, SlashCommandBoundArguments arguments)`: `ARGUMENTS` = `RawPositionalArguments`, `CLAUDE_SKILL_DIR`/`SKILL_DIR` = `HomeDirectory ?? dirname(Path)`, `SKILL_NAME`, then the process environment; unknown names stay verbatim.
+- **`StubCommandExecutor` stays** as the non-null default of `SlashCommandInfo.Executor` until file commands need a real one (its removal would force the property nullable).
