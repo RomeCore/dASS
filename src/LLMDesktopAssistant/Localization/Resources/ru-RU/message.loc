@@ -37,6 +37,7 @@ reasoning: Мышление
 regenerate: Сгенерировать заново
 resend: Отправить заново
 render_markdown: Рендерить Markdown
+disable_for_agents: Отключить для агентов
 summarization.in_progress: Идёт суммаризация…
 summarization.unavailable.title: Суммаризация недоступна
 summarization.unavailable.description: Модель-суммаризатор не выбрана или не найдена

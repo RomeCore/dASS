@@ -37,6 +37,7 @@ reasoning: Reasoning process
 regenerate: Regenerate
 resend: Resend
 render_markdown: Render Markdown
+disable_for_agents: Disable for agents
 summarization.in_progress: Summarization in progress…
 summarization.unavailable.title: Summarization unavailable
 summarization.unavailable.description: No summarizer model is selected or found

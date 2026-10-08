@@ -12,7 +12,8 @@
 
 	<StackPanel Orientation="Vertical"
 							VerticalAlignment="Top"
-							Margin="40,8">
+							Margin="40,8"
+							Opacity="{Binding ContentOpacity}">
 
 		<StackPanel Orientation="Horizontal" IsVisible="{Binding ShowAvatar}">
 
@@ -103,6 +104,15 @@
 				</Button>
 
 			</StackPanel>
+
+			<ToggleButton Classes="IconButton"
+							IsChecked="{Binding IsDisabledForAgents, Mode=TwoWay}"
+							ToolTip.Tip="{loc:Loc message.disable_for_agents}">
+				<Panel>
+					<ico:VisualIcon Kind="Eye" IsVisible="{Binding !IsDisabledForAgents}"/>
+					<ico:VisualIcon Kind="EyeOff" IsVisible="{Binding IsDisabledForAgents}"/>
+				</Panel>
+			</ToggleButton>
 
 			<ToggleButton Classes="IconButton"
 							IsChecked="{Binding RenderMarkdown, Mode=TwoWay}"
