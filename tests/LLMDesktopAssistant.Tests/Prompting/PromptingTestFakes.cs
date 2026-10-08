@@ -105,6 +105,20 @@ internal static class PromptingTestHelpers
 		MessageIndex = index
 	};
 
+	public static BranchedMessage Completed(string content, int index, Guid agentId) => new()
+	{
+		Message = new AssistantMessage
+		{
+			Content = content,
+			CreatedAt = DateTime.UtcNow,
+			SenderAgentId = agentId,
+			AgentStageId = Guid.NewGuid(),
+			CompletionToken = CompletionToken.Success
+		},
+		MessageId = index,
+		MessageIndex = index
+	};
+
 	public static Chat CreateChat(params BranchedMessage[] messages)
 	{
 		var chat = new Chat(new EmptyServiceProvider());
