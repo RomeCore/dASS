@@ -26,7 +26,7 @@ General infrastructure everything else leans on. No user-visible behaviour; the 
 
 Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
 
-- [ ] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
+- [x] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
 - [ ] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
 - [ ] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
 - [ ] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).

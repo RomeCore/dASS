@@ -1,6 +1,6 @@
 # 07: Command argument grammar and schema
 
-Status: claimed
+Status: resolved
 Type: task
 Blocked by:
 
@@ -188,25 +188,38 @@ text.
 
 ## Acceptance criteria
 
-- [ ] `SlashCommandArgumentSchema`, `SlashCommandArgument`, `ParsedSlashCommandArgument`, `SlashCommandRawArgument`,
+- [x] `SlashCommandArgumentSchema`, `SlashCommandArgument`, `ParsedSlashCommandArgument`, `SlashCommandRawArgument`,
       `SlashCommandArgumentsResult`, `SlashCommandBoundArguments`, `ISlashCommandArgumentFormatProvider`,
       `SlashCommandCompletionItem`, `SlashCommandCompletionContext` exist under `SlashCommands/Arguments/`.
-- [ ] `SlashCommandArgumentParser` exists with the public shape above; `Parse`/`TryParse` route through the RCParsing
+- [x] `SlashCommandArgumentParser` exists with the public shape above; `Parse`/`TryParse` route through the RCParsing
       `Parser` and the schema metadata factory.
-- [ ] `SlashCommandArgumentBinder.Bind` is implemented and unit-tested for all five rules above.
-- [ ] The grammar contract is covered by tests (whitespace, quote stripping, `\"`, undeclared `key=`, unquoted value
+- [x] `SlashCommandArgumentBinder.Bind` is implemented and unit-tested for all five rules above.
+- [x] The grammar contract is covered by tests (whitespace, quote stripping, `\"`, undeclared `key=`, unquoted value
       running to the next declared key, quoted value bounding, mixed positional-before-key, every positional verbatim as
       `RawPositionalArguments`, rest-positional surplus verbatim with declared keys extracted and slicing
       `RestPositionalArguments`). While the grammar is pending these are `Skip`ped with
       `Skip = "RCParsing grammar pending (maintainer)"` so `main` stays green; the ticket resolves only after they are
       un-skipped and green.
-- [ ] Locale keys `command.error.missing_argument`, `command.error.invalid_argument`, `command.error.too_many_arguments`,
+- [x] Locale keys `command.error.missing_argument`, `command.error.invalid_argument`, `command.error.too_many_arguments`,
       `command.error.parse_error` exist in `iv` and `ru-RU` (new `commands.loc`, namespace `command`).
-- [ ] The solution builds.
+- [x] The solution builds.
 
 ## Answer
 
-<!-- appended on resolution -->
+Resolved. The argument layer is complete under `src/LLMDesktopAssistant/SlashCommands/Arguments/`:
+`SlashCommandArgumentBinder.Bind` is implemented (rules 1–5) and the RCParsing grammar is in
+(`SlashCommandArgumentParser.Parser` / `Parse` / `TryParse`, the schema reaching the grammar through a parsing
+parameter).
+
+The grammar contract is covered by `SlashCommandArgumentGrammarTests` — whitespace, quote grouping and stripping,
+`\"` escaping inside double quotes, an undeclared `key=` staying plain text, an unquoted keyed value running to the
+next declared key, a quoted value bounding, mixed positionals-before-key, every positional verbatim as
+`RawPositionalArguments`, the rest positional as a verbatim slice (`RestPositionalArguments`) with declared keys
+extracted, source spans (`Position` / `Length` / `ValuePosition` / `KeyLength` / `ValueLength`) and `RawArguments`
+trimming. The ten scaffold tests are un-`Skip`ped and green. Locale keys `command.error.*` exist in `iv` and `ru-RU`
+(`commands.loc`, domain `command`, registered in `Localization/Resources/RULES.md`).
+
+Builds green; `dotnet test --filter SlashCommands` → 44 passed, 0 failed, 0 skipped.
 
 ## Comments
 
