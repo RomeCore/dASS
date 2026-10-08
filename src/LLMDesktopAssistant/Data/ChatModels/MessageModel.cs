@@ -79,5 +79,10 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		/// Gets or sets the error associated with the message, if any.
 		/// </summary>
 		public LocaleKeyBase? Error { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the message is hidden from every agent.
+		/// </summary>
+		public bool IsDisabledForAgents { get; set; }
 	}
 }

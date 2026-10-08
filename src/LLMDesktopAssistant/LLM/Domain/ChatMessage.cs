@@ -36,6 +36,17 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _error, value);
 		}
 
+		/// <summary>
+		/// Gets or sets a value indicating whether the message is disabled for every agent: it stays in the
+		/// transcript and in the UI but is never shown to an agent — not even to its own sender. Defaults to
+		/// <see langword="false"/>.
+		/// </summary>
+		public bool IsDisabledForAgents
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
 		// Yeah, even the user can call tools!
 		/// <summary>
 		/// The collection of tool calls associated with this message.
