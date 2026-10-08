@@ -51,7 +51,7 @@ Blocking edges: `13, 14, 15 ← 12`; `14 ← 13`; `15 ← 14`.
 ## Stage 3 — First two commands
 
 - [x] [21 — Command message-content layers](./issues/21-command-message-content-layers.md) — prefactor: `AdditionalMessageContentPart`, localizable `ChipTitle`, `ModelFacingMode` in the result + fingerprint, and the renderer's model-facing content projection. **First**, because both executors write their message through it.
-- [ ] [22 — `/skill:<name>` executor](./issues/22-skill-command-executor.md) — body injection, argument/variable substitution, chip.
+- [x] [22 — `/skill:<name>` executor](./issues/22-skill-command-executor.md) — body injection, argument/variable substitution, chip.
 - [ ] [23 — `/agent:<name>` executor](./issues/23-sub-agent-command-executor.md) — sub-agent launch, chat-level policy, `wait`, result injection.
 
 Blocking edges: `22, 23 ← 21`; `22` and `23` are independent.
