@@ -29,7 +29,7 @@ Sliced into tracer-bullet tickets; each is one atomic commit to `main`.
 - [x] [07 — Command argument grammar and schema](./issues/07-command-argument-grammar.md) — argument model, format-provider contract, RCParsing parser (maintainer-owned grammar) and the binder. **First**, because the executor context consumes the parse result.
 - [x] [08 — Command model and executor contracts](./issues/08-command-model-and-executor.md) — `SlashCommandInfo`/`SlashCommandChange`, `ModelFacingMode`, `ISlashCommandExecutor`, context/result, the temporary stub, and the inert locator/parser/descriptor.
 - [x] [09 — Command providers (skills, sub-agents)](./issues/09-command-providers.md) — `ISlashCommandProvider` + the two derived providers and the order tiers.
-- [ ] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
+- [x] [10 — Command set collector, settings and DI](./issues/10-command-collector-and-settings.md) — `SlashCommandSetCollector`, the fully-qualified dedup key, `ChatCommandSettings` (`EnableCommands`).
 - [ ] [11 — Command resolver and namespacing](./issues/11-command-resolver.md) — pure matcher, token grammar, `SlashCommandResolution` (status + defeated), chat-scoped resolver.
 
 Blocking edges: `08 ← 07`, `09 ← 08`, `10 ← 09`, `11 ← 10`. Exit criterion: green build + green tests, no user-visible
@@ -89,3 +89,5 @@ behaviour yet (the dispatch host is Stage 2).
 - **One generic `DerivedSlashCommandProvider<TSource>`** instead of two copies: `TypeNamespace` + `CreateArgumentSchema(source)` + `CreateCommandExecutor(source)` (abstract) and a `PopulateFromSource` hook; the base assigns the executor.
 - **Availability filtering is centralised in `AddonBase.IsValid`** (virtual, computed, `[*Ignore]`), used by `AddonSetCollectorBase`. Providers read `GetAvailableAddons().Where(a => a.IsValid)` — the *source* collectors; the *command* collector's `GetAddonsForChat()` is what autocomplete/resolution call.
 - **Derived commands carry provenance**: `SourcePack` / `Path` / `AddonSource` and `SlashCommandInfo.Source` (the source addon, typed `object?`).
+- **`AddonChangedBase.Key` replaces `GetDeduplicationKey`** (the earlier per-collector override): one `virtual string Key => Name` used for dedup **and** change resolution in `AddonSetCollectorBase` and `AddonCardContext`. `SlashCommandInfo.Key` is the fully-qualified identity, so `skill:grilling` and `agent:grilling` never collide. Ticket 02's `GetDeduplicationKey` is removed.
+- **`EnableCommands` is chat-local (not inherited)**; `CommandsSet` is `[InheritedChatSetting]`. Commands are chat-level and agent-agnostic: `GetAddonsForChat()` is the only exposed path, `GetAddonsForAgent()` is left unimplemented on purpose.
