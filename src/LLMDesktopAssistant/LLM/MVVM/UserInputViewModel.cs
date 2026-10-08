@@ -8,6 +8,7 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.MVVM.Attachments;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using Serilog;
@@ -385,6 +386,19 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			var editingMessage = EditingMessage;
 			var userInput = GetCurrentUserInput();
 
+			if (userInput is null)
+				return Task.CompletedTask;
+
+			// Pre-flight: an unknown command or an invalid argument list refuses the send before the draft is cleared,
+			// so the user's text survives a refusal.
+			var insertion = Chat.Services.GetRequiredService<IChatMessageInsertionService>();
+			var check = insertion.CanInsertUserInput(userInput, generate, editingMessage?.MessageIndex);
+			if (!check.Success)
+			{
+				Chat.Services.GetRequiredService<IToastService>().ShowError(check.Error!.Value);
+				return Task.CompletedTask;
+			}
+
 			if (editingMessage != null)
 			{
 				// Editing: drop the in-memory edit buffer, the persisted draft was never touched.
@@ -397,15 +411,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				UserInputState.Parts.Clear();
 			}
 
-			if (userInput != null)
-			{
-				var chatOperator = Chat.Services.GetRequiredService<IChatOperationService>();
-				if (editingMessage != null)
-					return chatOperator.SendEditedUserInputAsync(editingMessage.MessageIndex, userInput, generate, cts);
-				return chatOperator.SendUserInputAsync(userInput, generate, cts);
-			}
-
-			return Task.CompletedTask;
+			var chatOperator = Chat.Services.GetRequiredService<IChatOperationService>();
+			if (editingMessage != null)
+				return chatOperator.SendEditedUserInputAsync(editingMessage.MessageIndex, userInput, generate, cts);
+			return chatOperator.SendUserInputAsync(userInput, generate, cts);
 		}
 
 		protected override void Dispose(bool disposing)

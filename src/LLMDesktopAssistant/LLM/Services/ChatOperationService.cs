@@ -7,7 +7,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		Chat chat,
 		IChatStorageService storage,
 		IChatExecutionService executor,
-		IChatExecutionTokenService tokens
+		IChatExecutionTokenService tokens,
+		IChatMessageInsertionService insertion
 		) : IChatOperationService
 	{
 		public async Task ContinueGenerationAsync(CancellationToken cancellationToken = default)
@@ -19,11 +20,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		public async Task SendUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default)
 		{
 			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
-
-			storage.AppendMessage(CreateUserMessage(userInput));
-
-			if (generate)
-				await executor.GenerateResponseAsync(token);
+			await insertion.InsertUserInputAsync(userInput, generate, editIndex: null, token);
 		}
 
 		public async Task SendEditedUserInputAsync(int messageIndex, UserInput userInput, bool generate, CancellationToken cancellationToken = default)
@@ -32,11 +29,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				throw new ArgumentOutOfRangeException(nameof(messageIndex));
 
 			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
-
-			storage.EditMessage(messageIndex, CreateUserMessage(userInput));
-
-			if (generate)
-				await executor.GenerateResponseAsync(token);
+			await insertion.InsertUserInputAsync(userInput, generate, editIndex: messageIndex, token);
 		}
 
 		public async Task RegenerateMessageAsync(int messageIndex, CancellationToken cancellationToken = default)
@@ -104,21 +97,6 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, default, out _);
 			storage.DeleteMessageWithDescendants(messageIndex);
-		}
-
-		private static UserMessage CreateUserMessage(UserInput userInput)
-		{
-			var userMessage = new UserMessage
-			{
-				CreatedAt = DateTime.Now,
-				Content = userInput.Content,
-				SenderLogin = userInput.SenderLogin,
-				Visibility = userInput.Visibility,
-				VisibleTo = userInput.VisibleTo,
-				IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
-			};
-			userMessage.AdditionalData.Reset(userInput.Parts);
-			return userMessage;
 		}
 	}
 }

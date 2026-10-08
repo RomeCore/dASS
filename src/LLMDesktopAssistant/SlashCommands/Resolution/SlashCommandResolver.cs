@@ -21,7 +21,7 @@ namespace LLMDesktopAssistant.SlashCommands.Resolution
 			{
 				return new SlashCommandResolution(
 					null,
-					Locale.GetKey("command.error.unknown"),
+					Locale.GetFormattedKey("command.error.unknown", token),
 					SlashCommandResolutionStatus.Unknown,
 					[]);
 			}
