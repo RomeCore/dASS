@@ -113,7 +113,8 @@ namespace LLMDesktopAssistant.SlashCommands.Resolution
 
 			var ordered = commands
 				.Where(command => MatchesName(command, token.Name) && MatchesQualifiers(command, token.Qualifiers))
-				.OrderByDescending(command => command.OverrideOrder)
+				.OrderByDescending(command => string.Equals(command.Name, token.Name, StringComparison.OrdinalIgnoreCase) ? 1 : 0)
+				.ThenByDescending(command => command.OverrideOrder)
 				.ThenBy(command => command.Order)
 				.ThenBy(command => command.Key, StringComparer.Ordinal)
 				.ToList();
