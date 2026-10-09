@@ -13,6 +13,7 @@
 	<conv:NotnullToBooleanConverter Invert="True" x:Key="NotnullToBooleanConverterInverted"/>
 	<conv:EqualsConverter x:Key="EqualsConverter"/>
 	<conv:StringEqualsConverter x:Key="StringEqualsConverter"/>
+	<conv:FallbackMultiConverter x:Key="FallbackMultiConverter"/>
 	<conv:JsonToMarkdownConverter x:Key="JsonToMarkdownConverter"/>
 	<conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
 

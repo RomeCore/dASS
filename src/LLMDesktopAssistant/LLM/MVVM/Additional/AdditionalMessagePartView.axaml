@@ -6,19 +6,27 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+			 xmlns:conv="using:LLMDesktopAssistant.Converters"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
 			 x:DataType="local:AdditionalMessagePart">
 
 	<Border Background="{DynamicResource MessageBackground}"
-			BorderBrush="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}}"
-			BorderThickness="1"
-			CornerRadius="8"
-			Padding="6,3">
+					BorderThickness="1"
+					CornerRadius="8"
+					Padding="6,3"
+					x:Name="Border">
+
+		<Border.BorderBrush>
+			<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
+				<Binding Path="ChipColor" Converter="{StaticResource ColorToBrushConverter}"/>
+				<DynamicResource ResourceKey="DefaultForeground"/>
+			</MultiBinding>
+		</Border.BorderBrush>
 
 		<StackPanel Orientation="Horizontal" Spacing="4">
 
 			<ico:VisualIcon Kind="{Binding ChipIcon}"
-							  Foreground="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}}"
+							  Foreground="{Binding #Border.BorderBrush}"
 							  Width="14" Height="14"
 							  VerticalAlignment="Center"/>
 
