@@ -39,6 +39,12 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			var body = await agentSkill.GetBodyAsync(ct);
 			body = SlashCommandVariableExpander.ExpandSkill(body, ctx.Arguments, skill);
 
+			body = $"""
+				[USER HAS INVOKED SKILL MANUALLY (you don't need to invoke it by yourself)]:
+
+				{body}
+				""";
+			
 			if (agentSkill.HomeDirectory is { Length: > 0 } home)
 			{
 				body = $"""
