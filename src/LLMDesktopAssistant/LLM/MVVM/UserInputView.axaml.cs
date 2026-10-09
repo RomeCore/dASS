@@ -18,8 +18,8 @@ public partial class UserInputView : UserControl
 		InputTextBox.PastingFromClipboard += InputTextBox_PastingFromClipboard;
 		InputTextBox.AddHandler(TextBox.KeyDownEvent, InputTextBox_KeyDown, RoutingStrategies.Tunnel);
 		InputTextBox.CaretStateChanged += (_, _) => OnCaretChanged();
-		InputTextBox.PointerCaretStateChanged += (_, _) => (DataContext as UserInputViewModel)?.Completion.Close();
-		CompletionList.AcceptRequested += (_, _) => AcceptCompletion();
+		InputTextBox.PointerCaretStateChanged += (_, _) => (DataContext as UserInputViewModel)?.CompletionViewModel.Close();
+		CompletionList.AcceptRequested += (_, _) => { AcceptCompletion(oneChar: false); };
 		CompletionPopup.Opened += (_, _) => ScheduleCompletionPopupOffset();
 
 		DragDrop.SetAllowDrop(this, true);
@@ -81,14 +81,19 @@ public partial class UserInputView : UserControl
 			viewModel.SendCurrentUserInputAsync(generate: generate);
 	}
 
-	private void AcceptCompletion()
+	/// <summary>
+	/// Applies the completion's accept to the input: the new text and caret. The completion is not closed — the text
+	/// change recomputes it, so the popup stays open while there is still context to complete (a command's arguments,
+	/// say) and closes on its own when nothing claims the caret anymore. Returns whether anything was accepted.
+	/// </summary>
+	private bool AcceptCompletion(bool oneChar)
 	{
-		if (DataContext is not UserInputViewModel viewModel || viewModel.Completion.Accept() is not { } accepted)
-			return;
+		if (DataContext is not UserInputViewModel viewModel || viewModel.CompletionViewModel.Accept(oneChar) is not { } accepted)
+			return false;
 
 		InputTextBox.Text = accepted.Text;
 		InputTextBox.SetCaretPosition(accepted.Caret);
-		viewModel.Completion.Close();
+		return true;
 	}
 
 	private async void InputTextBox_PastingFromClipboard(object? sender, RoutedEventArgs e)
@@ -140,10 +145,17 @@ public partial class UserInputView : UserControl
 		if (e.KeyModifiers != KeyModifiers.None)
 			return;
 
-		// Enter accepts the completion when the popup is open; otherwise it sends.
-		if (e.Key is Key.Enter or Key.Tab && viewModel.Completion.CanAccept)
+		// Enter/Tab accept the popup's selection; otherwise Enter sends.
+		if (e.Key is Key.Enter or Key.Tab && viewModel.CompletionViewModel.CanAccept)
 		{
-			AcceptCompletion();
+			AcceptCompletion(oneChar: false);
+			e.Handled = true;
+			return;
+		}
+
+		// Right walks the inline ghost one character at a time; with nothing to commit it falls through to the caret.
+		if (e.Key == Key.Right && AcceptCompletion(oneChar: true))
+		{
 			e.Handled = true;
 			return;
 		}
@@ -156,7 +168,7 @@ public partial class UserInputView : UserControl
 		}
 
 		// Up/Down/Escape are the popup's keys; Right is handled by the control (inline completion).
-		if (viewModel.Completion.TryHandleKey(e.Key))
+		if (viewModel.CompletionViewModel.TryHandleKey(e.Key))
 			e.Handled = true;
 	}
 

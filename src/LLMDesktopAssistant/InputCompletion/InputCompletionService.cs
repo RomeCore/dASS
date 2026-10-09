@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LLMDesktopAssistant.Controls.Text;
+using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.Services;
 
 namespace LLMDesktopAssistant.InputCompletion
@@ -16,6 +18,8 @@ namespace LLMDesktopAssistant.InputCompletion
 	{
 		private readonly IReadOnlyList<IInputCompletionSource> _sources;
 
+		public IHighlightTransformProvider CompletionTransformProvider { get; }
+
 		public InputCompletionService(IEnumerable<IInputCompletionSource> sources)
 		{
 			ArgumentNullException.ThrowIfNull(sources);
@@ -24,28 +28,46 @@ namespace LLMDesktopAssistant.InputCompletion
 				.OrderByDescending(source => source.Priority)
 				.ThenBy(source => source.GetType().FullName, StringComparer.Ordinal)
 				.ToList();
+
+			CompletionTransformProvider = new InputCompletionTransformProvider(this, _sources);
 		}
 
 		/// <inheritdoc/>
 		public event EventHandler? ResultChanged;
 
 		/// <inheritdoc/>
+		public event EventHandler? SelectedIndexChanged;
+
+		/// <inheritdoc/>
 		public InputCompletionResult? Result { get; private set; }
 
 		/// <inheritdoc/>
-		public void Update(string? text, int caretIndex)
-			=> SetResult(Compute(new InputCompletionRequest(text ?? string.Empty, caretIndex)));
+		public int SelectedIndex { get; private set; }
 
 		/// <inheritdoc/>
-		public void Close() => SetResult(null);
+		public void Update(string? text, int caretIndex)
+		{
+			SetResult(Compute(text ?? string.Empty, caretIndex));
+		}
 
-		private InputCompletionResult? Compute(InputCompletionRequest request)
+		/// <inheritdoc/>
+		public void Select(int completionIndex)
+		{
+			SelectedIndex = completionIndex;
+			SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		/// <inheritdoc/>
+		public void Close()
+		{
+			SetResult(null);
+		}
+
+		private InputCompletionResult? Compute(string text, int caretIndex)
 		{
 			foreach (var source in _sources)
-			{
-				if (source.TryCompute(request, out var result))
+				if (source.TryCompute(text, caretIndex) is { } result)
 					return result;
-			}
 
 			return null;
 		}
@@ -56,6 +78,7 @@ namespace LLMDesktopAssistant.InputCompletion
 				return;
 
 			Result = result;
+			SelectedIndex = 0;
 			ResultChanged?.Invoke(this, EventArgs.Empty);
 		}
 	}

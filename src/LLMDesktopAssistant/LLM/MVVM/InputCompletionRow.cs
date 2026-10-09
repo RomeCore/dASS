@@ -20,15 +20,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>The row's icon, chosen by the continuation's kind.</summary>
 		public VisualIconKind Icon => InputCompletionIcons.For(Item.Kind);
 
-		private bool _isSelected;
-
 		/// <summary>
 		/// Whether this is the row <see cref="InputCompletionViewModel.Accept"/> would accept.
 		/// </summary>
 		public bool IsSelected
 		{
-			get => _isSelected;
-			set => SetProperty(ref _isSelected, value);
+			get;
+			set => SetProperty(ref field, value);
 		}
 	}
 }

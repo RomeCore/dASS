@@ -1,51 +1,51 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-			 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
-			 xmlns:sett="using:LLMDesktopAssistant.Settings"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 mc:Ignorable="d" d:DesignWidth="800"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.UserInputView"
-			 x:DataType="local:UserInputViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
+						 xmlns:sett="using:LLMDesktopAssistant.Settings"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 mc:Ignorable="d" d:DesignWidth="800"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.UserInputView"
+						 x:DataType="local:UserInputViewModel">
 
 	<Grid RowDefinitions="Auto,*"
-		  Background="Transparent">
+			  Background="Transparent">
 
 		<!-- Message parts (attachments) -->
 		<ContentControl Grid.Row="0"
-						Content="{Binding AdditionalData}"/>
+										Content="{Binding AdditionalData}"/>
 
 		<txt:HighlightTextBox Grid.Row="1"
-				 x:Name="InputTextBox"
-				 Text="{Binding Text, Mode=TwoWay}"
-				 HighlightTransformProvider="{Binding CompletionTransformProvider}"
-				 AcceptsReturn="True"
-				 TextWrapping="Wrap"
-				 MaxHeight="150"
-				 Margin="0,4"
-				 FontSize="16"
-				 VerticalAlignment="Center"
-				 PlaceholderText="{loc:Loc chat.input.hint}"
-				 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+													x:Name="InputTextBox"
+													Text="{Binding Text, Mode=TwoWay}"
+													HighlightTransformProvider="{Binding CompletionTransformProvider}"
+													AcceptsReturn="True"
+													TextWrapping="Wrap"
+													MaxHeight="150"
+													Margin="0,4"
+													FontSize="16"
+													VerticalAlignment="Center"
+													PlaceholderText="{loc:Loc chat.input.hint}"
+													ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
 		<Border x:Name="DropOverlay"
-				Grid.RowSpan="2"
-				Background="#2000BCD4"
-				BorderBrush="#6000BCD4"
-				BorderThickness="3"
-				CornerRadius="8"
-				IsVisible="False"
-				IsHitTestVisible="False">
+						Grid.RowSpan="2"
+						Background="#2000BCD4"
+						BorderBrush="#6000BCD4"
+						BorderThickness="3"
+						CornerRadius="8"
+						IsVisible="False"
+						IsHitTestVisible="False">
 
 			<TextBlock Text="{loc:Loc attachment.drop_files_here}"
-					   HorizontalAlignment="Center"
-					   VerticalAlignment="Center"
-					   FontSize="18"
-					   Foreground="#FF00BCD4"/>
+							   HorizontalAlignment="Center"
+							   VerticalAlignment="Center"
+							   FontSize="18"
+							   Foreground="#FF00BCD4"/>
 		</Border>
 
 		<!--
@@ -53,12 +53,12 @@
 			is being typed; the view shifts it horizontally to the caret (see UserInputView.axaml.cs).
 		-->
 		<Popup x:Name="CompletionPopup"
-			   PlacementTarget="{Binding #InputTextBox}"
-			   Placement="TopEdgeAlignedLeft"
-			   IsOpen="{Binding Completion.IsOpen}"
-			   IsLightDismissEnabled="False">
+				   PlacementTarget="{Binding #InputTextBox}"
+				   Placement="TopEdgeAlignedLeft"
+				   IsOpen="{Binding CompletionViewModel.IsOpen}"
+				   IsLightDismissEnabled="False">
 			<local:InputCompletionPopup x:Name="CompletionList"
-										DataContext="{Binding Completion}"/>
+																	DataContext="{Binding CompletionViewModel}"/>
 		</Popup>
 
 	</Grid>

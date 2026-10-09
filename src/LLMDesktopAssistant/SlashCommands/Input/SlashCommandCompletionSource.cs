@@ -19,10 +19,10 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// It is also the renderer of its own regions (<see cref="IInputCompletionRenderer"/>): what the caret sits in, how
-	/// it resolves and how it looks are the same knowledge, so the analysis, the parse and the palette live here rather
-	/// than in a renderer registered next to the source. The inline ghost of a completion belongs to the input instead —
-	/// see <c>InputCompletionTransformProvider</c>.
+	/// It also paints its own regions (<see cref="TryHighlight"/>): what the caret sits in, how it resolves and how it
+	/// looks are the same knowledge, so the analysis, the parse and the palette live here rather than in a renderer
+	/// registered next to the source. The inline ghost of a completion belongs to the input instead — see
+	/// <c>InputCompletionTransformProvider</c>.
 	/// </para>
 	/// <para>
 	/// Two completion states. <b>Token</b> — the caret is inside the token: prefix-match it against the commands, mark
@@ -39,9 +39,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 	/// </para>
 	/// </remarks>
 	[ChatService(typeof(IInputCompletionSource))]
-	[ChatService(typeof(IInputCompletionRenderer))]
 	public class SlashCommandCompletionSource(IAddonSetCollector<SlashCommandInfo> commands)
-		: IInputCompletionSource, IInputCompletionRenderer
+		: IInputCompletionSource
 	{
 		/// <summary>
 		/// The source's priority. Commands claim only the leading token and its arguments, so they sit above any
@@ -64,32 +63,27 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		public int Priority => CommandSourcePriority;
 
 		/// <inheritdoc/>
-		public bool TryCompute(InputCompletionRequest request, [NotNullWhen(true)] out InputCompletionResult? result)
+		public InputCompletionResult? TryCompute(string text, int caretIndex)
 		{
-			result = null;
-
 			var commandSet = commands.GetAddonsForChat().ToList();
 			if (commandSet.Count == 0)
-				return false;
+				return null;
 
-			var analysis = SlashCommandInputAnalyzer.Analyze(request.Text, request.CaretIndex, commandSet);
+			var analysis = SlashCommandInputAnalyzer.Analyze(text, caretIndex, commandSet);
 			if (!analysis.IsCommand)
-				return false;
+				return null;
 
 			if (analysis.IsCaretInToken)
-			{
-				result = ComputeToken(request, analysis, commandSet);
-				return true;
-			}
+				return ComputeToken(text, caretIndex, analysis, commandSet);
 
 			if (analysis.IsCaretInArguments)
-				return TryComputeArgument(request, analysis, commandSet, out result);
+				return TryComputeArgument(text, caretIndex, analysis, commandSet);
 
-			return false;
+			return null;
 		}
 
 		/// <inheritdoc/>
-		public HighlightTransformResult? Render(string text, int caretIndex)
+		public IReadOnlyList<TextHighlightSpan>? TryHighlight(string text, int caretIndex)
 		{
 			text ??= string.Empty;
 
@@ -110,14 +104,14 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 			AddArgumentSpans(spans, text, analysis);
 
-			return spans.Count > 0 ? new HighlightTransformResult(spans) : null;
+			return spans.Count > 0 ? spans : null;
 		}
 
 		/// <summary>
 		/// The token state: the prefix matches, ordered by <c>Order</c> then name, each in its fully-qualified form,
 		/// shadowed ones marked. An empty match set still yields a result — the popup shows "no matches".
 		/// </summary>
-		private static InputCompletionResult ComputeToken(InputCompletionRequest request,
+		private static InputCompletionResult ComputeToken(string text, int caretIndex,
 			SlashCommandInputAnalysis analysis, IReadOnlyList<SlashCommandInfo> commandSet)
 		{
 			var matches = SlashCommandPrefixMatcher.Match(commandSet, analysis.Token);
@@ -130,24 +124,17 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				.Select(command => TokenItem(command, commandSet, defeated.Contains(command)))
 				.ToList();
 
-			// The ghost previews the top match only while it *continues* the typed token: a command reached through an
-			// alias or a namespace prefix has a fully-qualified form that does not extend what is typed, so there is
-			// nothing to preview and the inline accept stays inert.
-			var typed = TypedToken(request, analysis.TokenSpan);
-			var ghost = items.Count > 0
-				? GhostOf(items[0].InsertText, typed, previewWithoutPrefix: false)
-				: null;
-
 			return new InputCompletionResult
 			{
+				Text = text,
+				CaretIndex = caretIndex,
 				Span = analysis.TokenSpan,
 				State = new InputCompletionState
 				{
 					Kind = InputCompletionKind.Command,
 					Title = Locale.GetKey("command.completion.title.commands")
 				},
-				Items = items,
-				GhostText = ghost
+				Items = items
 			};
 		}
 
@@ -175,31 +162,11 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// The raw text of the token from its start up to the caret — the leading <c>/</c> included, so it compares
 		/// against an <see cref="InputCompletionItem.InsertText"/> directly.
 		/// </summary>
-		private static string TypedToken(InputCompletionRequest request, InputCompletionSpan tokenSpan)
+		private static string TypedToken(string text, int caretIndex, InputCompletionSpan tokenSpan)
 		{
-			var text = request.Text ?? string.Empty;
 			var start = Math.Clamp(tokenSpan.Start, 0, text.Length);
-			var end = Math.Clamp(request.CaretIndex, start, text.Length);
+			var end = Math.Clamp(caretIndex, start, text.Length);
 			return text[start..end];
-		}
-
-		/// <summary>
-		/// The suffix of <paramref name="insertText"/> the typed prefix does not carry yet — the ghost preview — or
-		/// <see langword="null"/> when there is nothing left to preview or the completion does not continue the prefix.
-		/// </summary>
-		/// <remarks>
-		/// An empty prefix previews the completion in full only with <paramref name="previewWithoutPrefix"/>: a keyed
-		/// value has one obvious completion to offer, while a bare <c>/</c> has none.
-		/// </remarks>
-		private static string? GhostOf(string insertText, string typedPrefix, bool previewWithoutPrefix)
-		{
-			if (typedPrefix.Length == 0 && !previewWithoutPrefix)
-				return null;
-
-			if (!insertText.StartsWith(typedPrefix, StringComparison.OrdinalIgnoreCase))
-				return null;
-
-			return insertText.Length > typedPrefix.Length ? insertText[typedPrefix.Length..] : null;
 		}
 
 		/// <summary>
@@ -208,15 +175,14 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// Requires a resolved command; returns <see langword="false"/> when there is none, because an unresolved token
 		/// has no context to show.
 		/// </summary>
-		private static bool TryComputeArgument(InputCompletionRequest request, SlashCommandInputAnalysis analysis,
-			IReadOnlyList<SlashCommandInfo> commandSet, out InputCompletionResult? result)
+		private static InputCompletionResult? TryComputeArgument(string text, int caretIndex, SlashCommandInputAnalysis analysis,
+			IReadOnlyList<SlashCommandInfo> commandSet)
 		{
-			result = null;
 			if (analysis.Command is not { } command)
-				return false;
+				return null;
 
-			var rawArguments = request.Text[analysis.ArgumentSpan.Start..];
-			var caretOffset = request.CaretIndex - analysis.ArgumentSpan.Start;
+			var rawArguments = text[analysis.ArgumentSpan.Start..];
+			var caretOffset = caretIndex - analysis.ArgumentSpan.Start;
 			var schema = command.Executor.ArgumentSchema ?? EmptySchema;
 
 			// The analyzer already parsed the region; an invalid argument list (an unterminated quote, say) leaves the
@@ -245,22 +211,16 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				}));
 			}
 
-			// The ghost previews the top completion, so the input can accept it character by character (e.g. "wait=tr" →
-			// "ue"); a keyed value previews in full even before its first character is typed.
-			var ghost = items.Count > 0
-				? GhostOf(items[0].InsertText, completablePrefix!, previewWithoutPrefix: true)
-				: null;
-
-			result = new InputCompletionResult
+			return new InputCompletionResult
 			{
+				Text = text,
+				CaretIndex = caretIndex,
 				Span = target is { } value
 					? new InputCompletionSpan(analysis.ArgumentSpan.Start + value.ValueStart, value.ValueLength)
 					: new InputCompletionSpan(analysis.ArgumentSpan.Start, 0),
 				State = BuildArgumentState(command, commandSet, schema, target),
-				Items = items,
-				GhostText = ghost
+				Items = items
 			};
-			return true;
 		}
 
 		/// <summary>

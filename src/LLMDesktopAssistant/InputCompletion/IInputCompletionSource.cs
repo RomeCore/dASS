@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using LLMDesktopAssistant.Controls.Text;
 
 namespace LLMDesktopAssistant.InputCompletion
 {
@@ -19,11 +20,19 @@ namespace LLMDesktopAssistant.InputCompletion
 		int Priority { get; }
 
 		/// <summary>
-		/// Tries to compute a completion for the request. Returns <see langword="false"/> when the source does not own
-		/// the caret (it must not return an empty result in that case).
+		/// Tries to compute a completion for the request.
 		/// </summary>
-		/// <param name="request">The text and the caret position.</param>
-		/// <param name="result">The computed completion when the source claims the request.</param>
-		bool TryCompute(InputCompletionRequest request, [NotNullWhen(true)] out InputCompletionResult? result);
+		/// <param name="text">The text to complete.</param>
+		/// <param name="caretIndex">The caret position in the text.</param>
+		/// <returns>The computed completion when the source claims the request, or <see langword="null"/> otherwise.</returns>
+		InputCompletionResult? TryCompute(string text, int caretIndex);
+
+		/// <summary>
+		/// Tries to highlight the request. Returns <see langword="null"/> when the source does not own the caret.
+		/// </summary>
+		/// <param name="text">The text to complete.</param>
+		/// <param name="caretIndex">The caret position in the text.</param>
+		/// <returns>The computed highlights when the source claims the request, or <see langword="null"/> otherwise.</returns>
+		IReadOnlyList<TextHighlightSpan>? TryHighlight(string text, int caretIndex);
 	}
 }

@@ -5,11 +5,6 @@ using LLMDesktopAssistant.InputCompletion;
 namespace LLMDesktopAssistant.LLM.MVVM
 {
 	/// <summary>
-	/// The text and caret a completion accept produces.
-	/// </summary>
-	public readonly record struct InputCompletionAccept(string Text, int Caret);
-
-	/// <summary>
 	/// Drives the input completion: it asks <see cref="IInputCompletionService"/> for the completion at the caret and
 	/// exposes the state the popup binds to, the current selection and the accept action. It owns no text — the caller
 	/// supplies the text and applies the accept.
@@ -64,7 +59,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					return;
 				if (SetProperty(ref _selectedIndex, ((value % Items.Count) + Items.Count) % Items.Count))
 				{
-					RaisePropertyChanged(nameof(SelectedItem));
+					_service.Select(_selectedIndex);
 					UpdateRowSelection();
 				}
 			}
@@ -119,6 +114,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_caretIndex = caretIndex;
 
 			_service.Update(_text, caretIndex);
+			_service.Select(_selectedIndex);
 			SetResult(_service.Result);
 		}
 
@@ -161,19 +157,16 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		}
 
 		/// <summary>
-		/// Accepts the selected continuation: it replaces the completion's span with the continuation text plus a
-		/// trailing space and parks the caret after it. Returns <see langword="null"/> when there is nothing to accept.
+		/// Accepts the selected continuation. With <paramref name="oneChar"/> it commits a single character of the ghost
+		/// at the caret (the Right-key inline accept); otherwise it replaces the completion's span with the continuation
+		/// text plus a trailing space. Returns <see langword="null"/> when there is nothing to accept.
 		/// </summary>
-		public InputCompletionAccept? Accept()
+		public InputCompletionAccept? Accept(bool oneChar)
 		{
 			if (SelectedItem is not { } item || Result is not { } result)
 				return null;
 
-			var start = Math.Clamp(result.Span.Start, 0, _text.Length);
-			var end = Math.Clamp(result.Span.End, start, _text.Length);
-			var replacement = item.InsertText + " ";
-
-			return new InputCompletionAccept(_text[..start] + replacement + _text[end..], start + replacement.Length);
+			return result.Apply(item, oneChar);
 		}
 
 		private void Move(int delta) => SelectedIndex += delta;
@@ -183,7 +176,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			Items = result?.Items ?? [];
 			Rows = BuildRows(Items);
 			State = result?.State;
-			_selectedIndex = Items.Count > 0 ? Math.Clamp(result!.SelectedIndex, 0, Items.Count - 1) : 0;
+			_selectedIndex = 0;
 			UpdateRowSelection();
 
 			IsOpen = result is not null;

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Avalonia.Input;
+using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.MVVM;
 
@@ -18,8 +19,11 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		private sealed class FakeService(InputCompletionResult? result) : IInputCompletionService
 		{
 			public event EventHandler? ResultChanged;
+			public event EventHandler? SelectedIndexChanged;
 
 			public InputCompletionResult? Result { get; private set; } = result;
+			public int SelectedIndex { get; private set; }
+			public IHighlightTransformProvider CompletionTransformProvider => null!;
 
 			public string? Text { get; private set; }
 			public int CaretIndex { get; private set; }
@@ -29,6 +33,12 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 			{
 				Text = text;
 				CaretIndex = caretIndex;
+			}
+
+			public void Select(int completionIndex)
+			{
+				SelectedIndex = completionIndex;
+				SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
 			}
 
 			public void Close()
@@ -42,12 +52,15 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 			}
 		}
 
-		private static InputCompletionResult Result(InputCompletionSpan span, params string[] insertTexts) => new()
-		{
-			Span = span,
-			State = new InputCompletionState { Kind = InputCompletionKind.Command },
-			Items = [.. insertTexts.Select(text => new InputCompletionItem { InsertText = text })]
-		};
+		private static InputCompletionResult Result(string text, int caretIndex, InputCompletionSpan span,
+			params string[] insertTexts) => new()
+			{
+				Text = text,
+				CaretIndex = caretIndex,
+				Span = span,
+				State = new InputCompletionState { Kind = InputCompletionKind.Command },
+				Items = [.. insertTexts.Select(insertText => new InputCompletionItem { InsertText = insertText })]
+			};
 
 		private static InputCompletionViewModel Vm(InputCompletionResult? result) => new(new FakeService(result));
 
@@ -65,7 +78,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[Fact]
 		public void Update_WithACompletion_OpensThePopup()
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
 
 			vm.Update("/gr", 3);
 
@@ -80,6 +93,8 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		{
 			var vm = Vm(new InputCompletionResult
 			{
+				Text = "/zzz",
+				CaretIndex = 4,
 				Span = new InputCompletionSpan(0, 3),
 				State = new InputCompletionState { Kind = InputCompletionKind.Command }
 			});
@@ -97,6 +112,8 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		{
 			var vm = Vm(new InputCompletionResult
 			{
+				Text = "/agent:x ",
+				CaretIndex = 9,
 				Span = new InputCompletionSpan(0, 3),
 				State = new InputCompletionState { Kind = InputCompletionKind.Argument }
 			});
@@ -110,7 +127,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[Fact]
 		public void Rows_MirrorTheItems_AndFollowTheSelection()
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a", "b"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "a", "b"));
 			vm.Update("/gr", 3);
 
 			Assert.Equal(2, vm.Rows.Count);
@@ -130,7 +147,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[InlineData(Key.Up, 2)]
 		public void TryHandleKey_MovesTheSelection_AndWraps(Key key, int expected)
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a", "b", "c"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "a", "b", "c"));
 			vm.Update("/gr", 3);
 
 			Assert.True(vm.TryHandleKey(key));
@@ -154,7 +171,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		public void TryHandleKey_Escape_ClosesTheSessionToo()
 		{
 			// The inline preview is a projection of the session's result, so closing the popup must close that as well.
-			var service = new FakeService(Result(new InputCompletionSpan(0, 3), "a"));
+			var service = new FakeService(Result("/gr", 3, new InputCompletionSpan(0, 3), "a"));
 			var vm = new InputCompletionViewModel(service);
 			vm.Update("/gr", 3);
 
@@ -167,7 +184,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[Fact]
 		public void TryHandleKey_Escape_Closes()
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "a"));
 			vm.Update("/gr", 3);
 
 			Assert.True(vm.TryHandleKey(Key.Escape));
@@ -186,10 +203,10 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[Fact]
 		public void Accept_ReplacesTheSpan_AndAppendsATrailingSpace()
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "/skill:grilling"));
 			vm.Update("/gr", 3);
 
-			var accepted = vm.Accept();
+			var accepted = vm.Accept(oneChar: false);
 
 			Assert.NotNull(accepted);
 			Assert.Equal("/skill:grilling ", accepted!.Value.Text);
@@ -199,22 +216,44 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		[Fact]
 		public void Accept_UsesTheSelectedItem()
 		{
-			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
 			vm.Update("/gr", 3);
 			vm.SelectedIndex = 1;
 
-			var accepted = vm.Accept();
+			var accepted = vm.Accept(oneChar: false);
 
 			Assert.Equal("/agent:grilling ", accepted!.Value.Text);
 		}
 
 		[Fact]
-		public void Accept_WithNoItems_ReturnsNull()
+		public void Accept_OneChar_CommitsASingleGhostCharacter()
 		{
-			var vm = Vm(new InputCompletionResult { Span = new InputCompletionSpan(0, 3) });
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "/grilling"));
 			vm.Update("/gr", 3);
 
-			Assert.Null(vm.Accept());
+			var accepted = vm.Accept(oneChar: true);
+
+			Assert.NotNull(accepted);
+			Assert.Equal("/gri", accepted!.Value.Text);
+			Assert.Equal(4, accepted.Value.Caret);
+		}
+
+		[Fact]
+		public void Accept_OneChar_WhenTheItemDoesNotContinueTheTypedText_ReturnsNull()
+		{
+			var vm = Vm(Result("/gr", 3, new InputCompletionSpan(0, 3), "/agent:grilling"));
+			vm.Update("/gr", 3);
+
+			Assert.Null(vm.Accept(oneChar: true));
+		}
+
+		[Fact]
+		public void Accept_WithNoItems_ReturnsNull()
+		{
+			var vm = Vm(new InputCompletionResult { Text = "/gr", CaretIndex = 3, Span = new InputCompletionSpan(0, 3) });
+			vm.Update("/gr", 3);
+
+			Assert.Null(vm.Accept(oneChar: false));
 		}
 	}
 }

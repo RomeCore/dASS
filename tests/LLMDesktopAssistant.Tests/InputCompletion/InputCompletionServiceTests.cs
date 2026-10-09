@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.Localization;
 
@@ -12,37 +12,41 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 	/// </summary>
 	public class InputCompletionServiceTests
 	{
-		private sealed class FakeSource(int priority, Func<InputCompletionRequest, InputCompletionResult?> compute)
+		private sealed class FakeSource(int priority, Func<string, int, InputCompletionResult?> compute)
 			: IInputCompletionSource
 		{
 			public int Priority { get; } = priority;
 			public int Calls { get; private set; }
-			public InputCompletionRequest LastRequest { get; private set; }
+			public string? LastText { get; private set; }
+			public int LastCaret { get; private set; }
 
-			public bool TryCompute(InputCompletionRequest request, [NotNullWhen(true)] out InputCompletionResult? result)
+			public InputCompletionResult? TryCompute(string text, int caretIndex)
 			{
 				Calls++;
-				LastRequest = request;
-				result = compute(request);
-				return result is not null;
+				LastText = text;
+				LastCaret = caretIndex;
+				return compute(text, caretIndex);
 			}
+
+			public IReadOnlyList<TextHighlightSpan>? TryHighlight(string text, int caretIndex) => null;
 		}
 
 		private static InputCompletionResult Result(string insertText, LocaleKeyBase? title = null,
-			IReadOnlyList<InputCompletionItem>? items = null, int? selectedIndex = null)
+			IReadOnlyList<InputCompletionItem>? items = null)
 			=> new()
 			{
+				Text = "/gr",
+				CaretIndex = 3,
 				Span = new InputCompletionSpan(0, 1),
 				State = title is null ? null : new InputCompletionState { Title = title },
-				Items = items ?? [new InputCompletionItem { InsertText = insertText }],
-				SelectedIndex = selectedIndex ?? 0
+				Items = items ?? [new InputCompletionItem { InsertText = insertText }]
 			};
 
 		private static FakeSource Claims(int priority, string insertText)
-			=> new(priority, _ => Result(insertText));
+			=> new(priority, (_, _) => Result(insertText));
 
 		private static FakeSource DoesNotClaim(int priority)
-			=> new(priority, _ => null);
+			=> new(priority, (_, _) => null);
 
 		[Fact]
 		public void Update_WithNoSources_LeavesNoResult()
@@ -74,8 +78,8 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 
 			service.Update("/gr", 3);
 
-			Assert.Equal("/gr", source.LastRequest.Text);
-			Assert.Equal(3, source.LastRequest.CaretIndex);
+			Assert.Equal("/gr", source.LastText);
+			Assert.Equal(3, source.LastCaret);
 		}
 
 		[Fact]
@@ -132,37 +136,37 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 		{
 			public int Priority => 5;
 
-			public bool TryCompute(InputCompletionRequest request, [NotNullWhen(true)] out InputCompletionResult? result)
+			public InputCompletionResult? TryCompute(string text, int caretIndex) => new()
 			{
-				result = new InputCompletionResult
-				{
-					Span = new InputCompletionSpan(0, 0),
-					Items = [new InputCompletionItem { InsertText = "alpha" }]
-				};
-				return true;
-			}
+				Text = text,
+				CaretIndex = caretIndex,
+				Span = new InputCompletionSpan(0, 0),
+				Items = [new InputCompletionItem { InsertText = "alpha" }]
+			};
+
+			public IReadOnlyList<TextHighlightSpan>? TryHighlight(string text, int caretIndex) => null;
 		}
 
 		private sealed class BetaSource : IInputCompletionSource
 		{
 			public int Priority => 5;
 
-			public bool TryCompute(InputCompletionRequest request, [NotNullWhen(true)] out InputCompletionResult? result)
+			public InputCompletionResult? TryCompute(string text, int caretIndex) => new()
 			{
-				result = new InputCompletionResult
-				{
-					Span = new InputCompletionSpan(0, 0),
-					Items = [new InputCompletionItem { InsertText = "beta" }]
-				};
-				return true;
-			}
+				Text = text,
+				CaretIndex = caretIndex,
+				Span = new InputCompletionSpan(0, 0),
+				Items = [new InputCompletionItem { InsertText = "beta" }]
+			};
+
+			public IReadOnlyList<TextHighlightSpan>? TryHighlight(string text, int caretIndex) => null;
 		}
 
 		[Fact]
 		public void Update_KeepsAStateWithNoItems()
 		{
 			var title = Locale.GetKey("command.argument.wait");
-			var source = new FakeSource(0, _ => Result("ignored", title, items: []));
+			var source = new FakeSource(0, (_, _) => Result("ignored", title, items: []));
 			var service = new InputCompletionService([source]);
 
 			service.Update("/agent:x ", 9);

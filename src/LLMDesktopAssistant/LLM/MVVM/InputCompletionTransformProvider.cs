@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
-using LLMDesktopAssistant.LLM.Services;
 
 namespace LLMDesktopAssistant.LLM.MVVM
 {
@@ -16,27 +15,28 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// The regions come from <see cref="IInputCompletionRenderer"/>, which a source implements next to
-	/// <see cref="IInputCompletionSource"/> — what a feature completes and how it looks stay in one place.
+	/// The regions come from <see cref="IInputCompletionSource"/>, which a source implements next to its completion —
+	/// what a feature completes and how it looks stay in one place.
 	/// </para>
 	/// <para>
-	/// The ghost is a projection of the current <see cref="InputCompletionResult"/> rather than of the source that
-	/// produced it, so closing the completion (Escape, a pointer-driven caret move) takes the preview away with it, and
-	/// the preview can never outlive the completion it belongs to.
+	/// The ghost is a projection of the current <see cref="InputCompletionResult"/> — the selected continuation — rather
+	/// than of the source that produced it, so closing the completion (Escape, a pointer-driven caret move) takes the
+	/// preview away with it, and the preview can never outlive the completion it belongs to.
 	/// </para>
 	/// </remarks>
-	[ChatService(typeof(IHighlightTransformProvider))]
-	public sealed class InputCompletionTransformProvider : IHighlightTransformProvider, IInlineCompletionProvider
+	public sealed class InputCompletionTransformProvider : IHighlightTransformProvider
 	{
-		/// <summary>The ghost's colour when the theme provides none.</summary>
+		/// <summary>
+		/// The ghost's colour when the theme provides none.
+		/// </summary>
 		private static readonly IBrush DefaultGhost = new SolidColorBrush(Color.Parse("#8C8C8C"));
 
 		private readonly IInputCompletionService _completion;
-		private readonly IReadOnlyList<IInputCompletionRenderer> _renderers;
+		private readonly IReadOnlyList<IInputCompletionSource> _renderers;
 		private readonly IBrush _ghost;
 
 		public InputCompletionTransformProvider(IInputCompletionService completion,
-			IEnumerable<IInputCompletionRenderer> renderers)
+			IEnumerable<IInputCompletionSource> renderers)
 		{
 			ArgumentNullException.ThrowIfNull(renderers);
 
@@ -46,18 +46,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			// A new completion — or a closed one — changes what the preview shows, so the layout has to be redone.
 			_completion.ResultChanged += (_, _) => NotifyLayoutChanged();
+
+			// So does the selection: the ghost previews the *selected* continuation, not the first one.
+			_completion.SelectedIndexChanged += (_, _) => NotifyLayoutChanged();
 		}
 
 		/// <inheritdoc/>
 		public event EventHandler? LayoutChanged;
 
-		/// <inheritdoc/>
-		public string? CompletionText { get; private set; }
-
-		/// <inheritdoc/>
-		public int TokenEnd { get; private set; }
-
-		/// <summary>Notifies the control that the visual output changed without a text change.</summary>
+		/// <summary>
+		/// Notifies the control that the visual output changed without a text change.
+		/// </summary>
 		public void NotifyLayoutChanged() => LayoutChanged?.Invoke(this, EventArgs.Empty);
 
 		/// <inheritdoc/>
@@ -65,29 +64,43 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		{
 			text ??= string.Empty;
 			caretIndex = Math.Clamp(caretIndex, 0, text.Length);
-			CompletionText = null;
-			TokenEnd = 0;
 
 			var spans = new List<TextHighlightSpan>();
 			foreach (var renderer in _renderers)
-			{
-				if (renderer.Render(text, caretIndex)?.HighlightSpans is { } regionSpans)
+				if (renderer.TryHighlight(text, caretIndex) is { } regionSpans)
+				{
 					spans.AddRange(regionSpans);
-			}
+					break;
+				}
 
 			string? rendered = null;
-			if (_completion.Result is { GhostText: { Length: > 0 } ghost } completion)
+			if (_completion.Result is { } completion
+				&& completion.ItemAt(_completion.SelectedIndex) is { } item
+				&& completion.GhostOf(item) is { Length: > 0 } ghost)
 			{
 				// The ghost *replaces* the tail of the region the completion would replace rather than being inserted
 				// before it: previewing the missing part of a token ("wait=tru" → "e") would otherwise draw the real tail
-				// a second time ("truee").
-				var tailEnd = Math.Clamp(completion.Span.End, caretIndex, text.Length);
+				// a second time ("truee"). It is drawn at the result's own caret, so the preview and the accept agree.
+				var caret = Math.Clamp(completion.CaretIndex, 0, text.Length);
+				var tailEnd = Math.Clamp(completion.Span.End, caret, text.Length);
+				var delta = ghost.Length - (tailEnd - caret); // how much the text after the insertion shifts
 
-				CompletionText = ghost;
-				TokenEnd = completion.Span.End;
+				rendered = text[..caret] + ghost + text[tailEnd..];
 
-				rendered = text[..caretIndex] + ghost + text[tailEnd..];
-				spans.Add(new TextHighlightSpan(caretIndex, ghost.Length, _ghost));
+				// The renderers paint the *raw* text; the ghost overwrites [caret, tailEnd). Remap every region onto the
+				// rendered text — trim the ones the ghost swallowed, shift the ones behind it — so that no region bleeds
+				// out of the ghost and the spans stay sorted and non-overlapping (TextLayout mispaints otherwise).
+				for (var i = 0; i < spans.Count; i++)
+				{
+					var span = spans[i];
+					if (span.Start >= tailEnd)
+						spans[i] = span with { Start = span.Start + delta };
+					else if (span.Start + span.Length > caret)
+						spans[i] = span with { Length = caret - Math.Min(span.Start, caret) };
+				}
+
+				spans.Add(new TextHighlightSpan(caret, ghost.Length, _ghost));
+				spans.Sort((a, b) => a.Start.CompareTo(b.Start));
 			}
 
 			return new HighlightTransformResult(rendered, spans.Count > 0 ? spans : null);

@@ -71,16 +71,16 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			})
 		};
 
-		private static HighlightTransformResult? Render(string text, params SlashCommandInfo[] commands)
-			=> new SlashCommandCompletionSource(new Collector(commands)).Render(text, text.Length);
+		private static IReadOnlyList<TextHighlightSpan>? Render(string text, params SlashCommandInfo[] commands)
+			=> new SlashCommandCompletionSource(new Collector(commands)).TryHighlight(text, text.Length);
 
 		/// <summary>Renders and requires that the source drew something.</summary>
-		private static HighlightTransformResult Rendered(string text, params SlashCommandInfo[] commands)
+		private static IReadOnlyList<TextHighlightSpan> Rendered(string text, params SlashCommandInfo[] commands)
 		{
-			var result = Render(text, commands);
+			var spans = Render(text, commands);
 
-			Assert.NotNull(result);
-			return result.GetValueOrDefault();
+			Assert.NotNull(spans);
+			return spans;
 		}
 
 		private static void AssertChipped(TextHighlightSpan span, int start, int length, IBrush brush)
@@ -100,9 +100,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Render_AnUnknownToken_IsPaintedWithTheUnknownBrush_AndUnderlined()
 		{
-			var result = Rendered("/zzz", Grilling);
+			var span = Assert.Single(Rendered("/zzz", Grilling));
 
-			var span = Assert.Single(result.HighlightSpans!);
 			Assert.Same(SlashCommandHighlightPalette.Default.Unknown, span.Brush);
 			Assert.Same(SlashCommandHighlightPalette.Default.UnknownDecorations, span.Decorations);
 		}
@@ -110,9 +109,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Render_ATokenThatWonOverOthers_IsAmbiguous_AndUnderlined()
 		{
-			var result = Rendered("/grilling", Grilling, AgentGrilling);
+			var span = Assert.Single(Rendered("/grilling", Grilling, AgentGrilling));
 
-			var span = Assert.Single(result.HighlightSpans!);
 			Assert.Same(SlashCommandHighlightPalette.Default.Ambiguous, span.Brush);
 			Assert.Same(SlashCommandHighlightPalette.Default.AmbiguousDecorations, span.Decorations);
 		}
@@ -127,9 +125,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Render_AKnownToken_IsPaintedWithTheKnownBrush()
 		{
-			var result = Rendered("/grilling", Grilling);
+			var span = Assert.Single(Rendered("/grilling", Grilling));
 
-			var span = Assert.Single(result.HighlightSpans!);
 			Assert.Equal(0, span.Start);
 			Assert.Equal(9, span.Length);
 			Assert.Same(SlashCommandHighlightPalette.Default.Known, span.Brush);
@@ -139,7 +136,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Render_AnArgument_IsPaintedAsOneChippedUnit()
 		{
-			var spans = Rendered("/grilling do it", Grilling).HighlightSpans!;
+			var spans = Rendered("/grilling do it", Grilling);
 
 			Assert.Equal(2, spans.Count);
 			Assert.Same(SlashCommandHighlightPalette.Default.Known, spans[0].Brush);
@@ -150,7 +147,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void Render_AKeyedArgument_PaintsItsNameItsEqualsItsValue_AndTheQuotes()
 		{
 			// "/agent wait=\"true\"": the key [7,4), the '=' [11,1), the quotes and the value inside them.
-			var spans = Rendered("/agent wait=\"true\"", Agent).HighlightSpans!;
+			var spans = Rendered("/agent wait=\"true\"", Agent);
 
 			Assert.Equal(6, spans.Count);
 			Assert.Same(SlashCommandHighlightPalette.Default.Known, spans[0].Brush);
@@ -165,7 +162,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void Render_ASingleQuotedArgument_HasItsQuotesPaintedLighter()
 		{
 			// "/grilling 'do it'": one positional, its grouping quotes set apart from the value.
-			var spans = Rendered("/grilling 'do it'", Grilling).HighlightSpans!;
+			var spans = Rendered("/grilling 'do it'", Grilling);
 
 			Assert.Equal(4, spans.Count);
 			AssertChipped(spans[1], 10, 1, SlashCommandHighlightPalette.Default.Quote);
@@ -178,7 +175,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			// The quote of a *declared* positional is never closed, so the list does not parse (a rest positional would
 			// have taken it verbatim): the region stays one grey span, with no chips.
-			var spans = Rendered("/plain \"do it", Plain).HighlightSpans!;
+			var spans = Rendered("/plain \"do it", Plain);
 
 			Assert.Equal(2, spans.Count);
 			Assert.Equal(new TextHighlightSpan(7, 6, SlashCommandHighlightPalette.Default.Argument), spans[1]);
@@ -187,7 +184,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Render_OnlyTheLeadingTokenIsACommand_Multiline()
 		{
-			var spans = Rendered("/grilling\nsecond /nope", Grilling).HighlightSpans!;
+			var spans = Rendered("/grilling\nsecond /nope", Grilling);
 
 			// The token, then the whole rest (arguments including the second line) — never a second token.
 			Assert.Equal(2, spans.Count);

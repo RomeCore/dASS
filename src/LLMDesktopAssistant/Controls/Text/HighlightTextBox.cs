@@ -8,7 +8,7 @@ using Avalonia.Input;
 namespace LLMDesktopAssistant.Controls.Text;
 
 /// <summary>
-/// TextBox with support for text range highlighting, text transformation (for ghost text) and inline completion.
+/// TextBox with support for text range highlighting and text transformation (for ghost text).
 /// Behavior, input, caret, selection and scrolling are native - only rendering is customized.
 /// </summary>
 /// <remarks>
@@ -46,12 +46,6 @@ public class HighlightTextBox : TextBox
 	/// reset a completion, because the caret was moved by hand.
 	/// </summary>
 	public event EventHandler? PointerCaretStateChanged;
-
-	/// <summary>
-	/// Raised at the start of <see cref="OnKeyDown"/>, before the base behaviour. Set
-	/// <see cref="KeyEventArgs.Handled"/> to consume the key.
-	/// </summary>
-	public event EventHandler<KeyEventArgs>? PreviewKeyDown;
 
 	static HighlightTextBox()
 	{
@@ -131,39 +125,6 @@ public class HighlightTextBox : TextBox
 
 		if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
 			PointerCaretStateChanged?.Invoke(this, EventArgs.Empty);
-	}
-
-	protected override void OnKeyDown(KeyEventArgs e)
-	{
-		PreviewKeyDown?.Invoke(this, e);
-		if (e.Handled)
-			return;
-
-		if (e.Key == Key.Right && TryAcceptInlineCompletion())
-		{
-			e.Handled = true;
-			return;
-		}
-
-		base.OnKeyDown(e);
-	}
-
-	private bool TryAcceptInlineCompletion()
-	{
-		if (HighlightTransformProvider is not IInlineCompletionProvider provider || _presenter is not { } presenter)
-			return false;
-
-		var completion = provider.CompletionText;
-		if (string.IsNullOrEmpty(completion))
-			return false;
-
-		if (InlineCompletionAcceptor.Accept(Text, presenter.CaretIndex, completion, provider.TokenEnd)
-			is not { } accepted)
-			return false;
-
-		Text = accepted.Text;
-		SetCaretPosition(accepted.Caret);
-		return true;
 	}
 
 	private void ClampCaretAndSelectionToText()

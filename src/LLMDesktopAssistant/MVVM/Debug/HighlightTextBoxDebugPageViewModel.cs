@@ -61,7 +61,13 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 	{
 		public event EventHandler? ResultChanged;
 
+		public event EventHandler? SelectedIndexChanged;
+
 		public InputCompletionResult? Result { get; private set; }
+
+		public int SelectedIndex { get; private set; }
+
+		public IHighlightTransformProvider CompletionTransformProvider { get; set; } = null!;
 
 		public void Update(string? value, int caretIndex)
 		{
@@ -70,7 +76,17 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 				return;
 
 			Result = result;
+			SelectedIndex = 0;
 			ResultChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		public void Select(int completionIndex)
+		{
+			if (SelectedIndex == completionIndex)
+				return;
+
+			SelectedIndex = completionIndex;
+			SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
 		}
 
 		public void Close() => Update(null, 0);
@@ -82,17 +98,20 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 
 			var current = text();
 			var analysis = SlashCommandInputAnalyzer.Analyze(current, current.Length, SampleCommands);
-			if (analysis.ResolutionState != SlashCommandInputResolutionState.Partial || analysis.Token.Length == 0)
+			if (analysis.ResolutionState != SlashCommandInputResolutionState.Partial || analysis.TokenSpan.Length == 0)
 				return null;
 
 			var match = SlashCommandPrefixMatcher.Match(SampleCommands, analysis.Token).FirstOrDefault();
-			if (match is null || !match.Name.StartsWith(analysis.Token, StringComparison.OrdinalIgnoreCase))
+			if (match is null)
 				return null;
 
+			// Mirror the production source: the ghost is the tail of the completed token the typed prefix does not carry.
 			return new InputCompletionResult
 			{
+				Text = current,
+				CaretIndex = analysis.TokenSpan.End,
 				Span = analysis.TokenSpan,
-				GhostText = match.Name[analysis.Token.Length..]
+				Items = [new InputCompletionItem { InsertText = "/" + match.Name }]
 			};
 		}
 	}
@@ -107,6 +126,7 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 	{
 		_completion = new DemoCompletion(() => EnableCommandHighlight, () => Text);
 		_transformProvider = new InputCompletionTransformProvider(_completion, [_commandRenderer]);
+		_completion.CompletionTransformProvider = _transformProvider;
 
 		ResetCommand = new RelayCommand(() => Text = DefaultSample);
 		UpdateSpans();

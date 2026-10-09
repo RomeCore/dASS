@@ -204,13 +204,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					{
 						_editText = value;
 						RaisePropertyChanged(nameof(Text));
-						Completion.Update(value, _completionCaretIndex);
+						CompletionViewModel.Update(value, _completionCaretIndex);
 					}
 				}
 				else if (UserInputState.Text != value)
 				{
 					UserInputState.Text = value;
-					Completion.Update(value, _completionCaretIndex);
+					CompletionViewModel.Update(value, _completionCaretIndex);
 				}
 			}
 		}
@@ -232,7 +232,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>
 		/// The input completion state (popup + selection) for the current text and caret.
 		/// </summary>
-		public InputCompletionViewModel Completion { get; }
+		public InputCompletionViewModel CompletionViewModel { get; }
 
 		/// <summary>
 		/// The renderer for the input: the slash-command palette and the ghost preview.
@@ -245,7 +245,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public void OnCompletionCaretChanged(int caretIndex)
 		{
 			_completionCaretIndex = caretIndex;
-			Completion.Update(Text, caretIndex);
+			CompletionViewModel.Update(Text, caretIndex);
 		}
 
 		/// <summary>
@@ -274,11 +274,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			ChatViewModel = chatVM;
 			_executionTokens = Chat.Services.GetRequiredService<IChatExecutionTokenService>();
 
-			Completion = new InputCompletionViewModel(Chat.Services.GetRequiredService<IInputCompletionService>());
-
-			// The input draws its completion regions and the preview through the chat-scoped provider, so it knows nothing
-			// about the features that colour it.
-			CompletionTransformProvider = Chat.Services.GetRequiredService<IHighlightTransformProvider>();
+			var inputCompletionService = Chat.Services.GetRequiredService<IInputCompletionService>();
+			CompletionViewModel = new InputCompletionViewModel(inputCompletionService);
+			CompletionTransformProvider = inputCompletionService.CompletionTransformProvider;
 
 			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
 			_draftData.Parts.IsEditing = true;
@@ -366,7 +364,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			EndEditing();
 			UserInputState.Text = string.Empty;
 			UserInputState.Parts.Clear();
-			Completion.Close();
+			CompletionViewModel.Close();
 		}
 
 		/// <summary>
