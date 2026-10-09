@@ -70,6 +70,17 @@ public partial class UserInputView : UserControl
 		return Math.Clamp(offset, leftmost, Math.Max(leftmost, rightmost));
 	}
 
+	/// <summary>
+	/// Sends the drafted message, or cancels the running generation instead — there is nothing to send while one runs.
+	/// </summary>
+	private static void Send(UserInputViewModel viewModel, bool generate)
+	{
+		if (viewModel.IsGenerating)
+			viewModel.CancelGenerationCommand.Execute(null);
+		else if (!viewModel.IsEmpty)
+			viewModel.SendCurrentUserInputAsync(generate: generate);
+	}
+
 	private void AcceptCompletion()
 	{
 		if (DataContext is not UserInputViewModel viewModel || viewModel.Completion.Accept() is not { } accepted)
@@ -118,6 +129,14 @@ public partial class UserInputView : UserControl
 		if (DataContext is not UserInputViewModel viewModel)
 			return;
 
+		// Ctrl+Enter sends without asking for a generation; the modifier also keeps the key away from the completion.
+		if (e.Key == Key.Enter && e.KeyModifiers == KeyModifiers.Control)
+		{
+			Send(viewModel, generate: false);
+			e.Handled = true;
+			return;
+		}
+
 		if (e.KeyModifiers != KeyModifiers.None)
 			return;
 
@@ -131,10 +150,7 @@ public partial class UserInputView : UserControl
 
 		if (e.Key == Key.Enter)
 		{
-			if (viewModel.IsGenerating)
-				viewModel.CancelGenerationCommand.Execute(null);
-			else if (!viewModel.IsEmpty)
-				viewModel.SendCurrentUserInputAsync(generate: true);
+			Send(viewModel, generate: true);
 			e.Handled = true;
 			return;
 		}

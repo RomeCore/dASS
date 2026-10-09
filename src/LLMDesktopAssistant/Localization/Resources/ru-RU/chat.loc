@@ -6,7 +6,8 @@
 input.attach_file.hint: Прикрепить файл...
 input.cancel_edit.hint: Отменить редактирование
 input.hint: Введите сообщение...
-input.send_button.hint: Отправить сообщение
+input.send_button.hint: Отправить сообщение · Ctrl+Enter
+input.send_generate_button.hint: Отправить сообщение и запустить генерацию
 input.stop_button.hint: Остановить генерацию
 list.title: Чаты
 manager.no_messages_to_rename.description: В чате отсутствуют сообщения

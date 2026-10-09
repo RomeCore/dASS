@@ -80,7 +80,7 @@
 		<Button Classes="IconButton"
 						Command="{Binding UserInput.SendGenerateMessageCommand}"
 						IsVisible="{Binding UserInput.IsGenerating, Converter={StaticResource InverseBooleanConverter}}"
-						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
+						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}">
 
 			<ico:VisualIcon Kind="Send"/>
 		</Button>

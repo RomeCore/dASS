@@ -6,7 +6,8 @@
 input.attach_file.hint: Attach file...
 input.cancel_edit.hint: Cancel editing
 input.hint: Enter your message...
-input.send_button.hint: Send message
+input.send_button.hint: Send message · Ctrl+Enter
+input.send_generate_button.hint: Send message and generate
 input.stop_button.hint: Stop generation
 list.title: Chats
 manager.no_messages_to_rename.description: Chat has no messages
