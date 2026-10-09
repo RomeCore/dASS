@@ -92,7 +92,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			{
 				ctx.Message.AdditionalData.Add(new AdditionalMessageContentPart
 				{
-					Content = task.LastGeneratedContent!,
+					Content = $"""
+						[USER HAS LAUNCHED AGENT THAT FINISHED WITH MESSAGE]:
+
+						{task.LastGeneratedContent}
+						""",
 					ChipTitle = Locale.GetFormattedKey("command.agent.result", subAgent.Name),
 					ChipIcon = (VisualIconKind)MaterialIconKind.Robot,
 					IsRestorable = false
