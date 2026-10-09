@@ -62,12 +62,27 @@ Blocking edges: `22, 23 ← 21`; `22` and `23` are independent.
 - [x] [19 — SCM carriers decoupled from message visibility](./issues/19-scm-carriers-decoupled-from-visibility.md) — anchors/deltas/stamps located in the raw history, so a hidden carrier keeps contributing.
 - [x] [20 — Disabled-message toggle UI](./issues/20-disabled-message-toggle-ui.md) — the eye toggle (`Eye`/`EyeOff`) and the dimmed message.
 
-## Stage 5 — Input UX
+## Stage 5 — Input UX (general input completion)
 
-- [ ] 5.1 General autocomplete service (command/namespace matching, defeated marking).
-- [ ] 5.2 Autocomplete popup in `HighlightTextBox`.
-- [ ] 5.3 Highlight transform provider (palette, ghost text, `→` char-by-char).
-- [ ] 5.4 Argument completion provider (`wait=true|false`).
+The autocomplete is a **general** input-completion mechanic, deliberately not command-specific — slash commands are
+its first source, chat-agent mentions (`@Code Reviewer`, names may contain spaces) a later one. Supersedes the earlier
+`5.1`–`5.4` sketch.
+
+- [ ] [24 — Edit-check fix](./issues/24-edit-check-fix.md) — prefactor: the view-model pre-flight must validate a
+      command on an edit exactly as on a new message (edits run commands). **First**, independent.
+- [ ] [25 — General input-completion core](./issues/25-general-input-completion-core.md) — the UI-agnostic
+      `IInputCompletionSource` / request / result / state / item types and the chat-scoped source resolver.
+- [ ] [27 — `SlashCommandInputAnalyzer` + highlight provider + theme brushes](./issues/27-input-analyzer-and-highlight.md)
+      — the shared pure input analyzer and the real highlighting for the chat input.
+- [ ] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
+      defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
+- [ ] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
+      key hook, mid-string ghost, `→` char-accept, reset on pointer caret moves.
+- [ ] [29 — Autocomplete popup + `InputCompletionViewModel`](./issues/29-autocomplete-popup.md) — the caret-anchored
+      popup, its state machine and the wiring into `UserInputView`.
+
+Blocking edges: `26 ← 25, 27`; `28 ← 25`; `29 ← 25, 26, 28`; `24` and `27` independent.
+Execution order: `24 → 25 → 27 → 26 → 28 → 29`.
 
 ## Stage 6 — Lua API
 
@@ -125,3 +140,8 @@ Added after Stage 2 — the plan originally carried no settings UI for commands.
 - **`AdditionalMessagePart.ChipTitle` is `LocaleKeyBase?`** (chips localize; 0 users, no migration) and `AdditionalMessageContentPart` is the reusable text part a command writes into its message.
 - **Skill-variable expansion lives in a static `SlashCommandVariableExpander`** with `string? GetSkillVariable(string name, SlashCommandBoundArguments arguments)`: `ARGUMENTS` = `RawPositionalArguments`, `CLAUDE_SKILL_DIR`/`SKILL_DIR` = `HomeDirectory ?? dirname(Path)`, `SKILL_NAME`, then the process environment; unknown names stay verbatim.
 - **`StubCommandExecutor` stays** as the non-null default of `SlashCommandInfo.Executor` until file commands need a real one (its removal would force the property nullable).
+- **Autocomplete is a general input-completion mechanic, not a command feature**: a caret-anchored popup (continuations + the current state, which may render with no continuations at all) plus a ghost of the selected continuation. Chat-agent mentions (`@Code Reviewer`, names with spaces) are a later `IInputCompletionSource`; the core (`IInputCompletionSource` / `InputCompletionRequest` / `InputCompletionResult` / `InputCompletionItem` / `InputCompletionState` in `Completion/`) never mentions commands, and the replace `Span` is defined by the source, never by whitespace.
+- **Accept replaces the current token**: given `abc|d e f`, accept yields `abc1 2 3`; `→` consumes one real char and commits one ghost char (`abc1| e f`), and only inserts when the real token tail is exhausted (or the caret is at the token end).
+- **Mid-string ghost is allowed** — the old "suffix-only" note was wrong: the presenter can insert the ghost at the caret; the caret/selection stay clamped to the real text, and any pointer-driven caret/selection change resets the completion state (popup + ghost) without calling the service.
+- **Argument completion is provider-driven**: `SlashCommandCompletionSource` asks the schema slot's `Format.CanComplete` and delegates to `Format.Complete` — no `wait`-specific code, so any existing or new `ISlashCommandArgumentFormatProvider` participates.
+- **Edits run commands** — the "edits never run a command" line in the design spec/doc-comments was an error introduced while writing the design docs, not the intent; the pre-flight must validate commands on edits too (ticket 24).
