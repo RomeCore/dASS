@@ -26,10 +26,10 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 			_builder = builder;
 		}
 
-		public void Invalidate(ChatAgentDescriptor agent)
+		public void Invalidate(ChatAgentDescriptor? agent)
 		{
 			_availableTools = _builder.GetAvailableAddons().ToImmutableDictionary(t => t.Name);
-			_validTools = _builder.GetAddonsForAgent(agent).ToImmutableDictionary(t => t.Name);
+			_validTools = agent is not null ? _builder.GetAddonsForAgent(agent).ToImmutableDictionary(t => t.Name) : _availableTools;
 			_aliasedTools = BuildDictionaryWithAliases(_availableTools.Values);
 			_validAliasedTools = BuildDictionaryWithAliases(_validTools.Values);
 		}

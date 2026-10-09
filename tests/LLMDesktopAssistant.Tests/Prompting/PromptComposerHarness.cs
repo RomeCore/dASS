@@ -135,7 +135,7 @@ internal sealed class PromptComposerHarness
 
 		public int InvalidateCount { get; private set; }
 
-		public void Invalidate(ChatAgentDescriptor agent) => InvalidateCount++;
+		public void Invalidate(ChatAgentDescriptor? agent) => InvalidateCount++;
 	}
 
 	internal sealed class RecordingPromptDumpService : IPromptDumpService

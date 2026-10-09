@@ -32,6 +32,6 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 		/// Invalidates the cache and refreshes it.
 		/// </summary>
 		/// <param name="agent">The agent for which to invalidate the cache.</param>
-		void Invalidate(ChatAgentDescriptor agent);
+		void Invalidate(ChatAgentDescriptor? agent);
 	}
 }

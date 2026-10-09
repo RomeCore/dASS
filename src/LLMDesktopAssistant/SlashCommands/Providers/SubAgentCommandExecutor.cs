@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
@@ -24,7 +25,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		SubAgentInfo subAgent,
 		ISubAgentTaskParamsResolver paramsResolver,
 		IAgentTaskExecutor agentTaskExecutor,
-		IChatSettingsService chatSettings) : ISlashCommandExecutor
+		IChatSettingsService chatSettings,
+		IToolsetCacheService toolsetCache) : ISlashCommandExecutor
 	{
 		public const string WaitArgumentKey = "wait";
 
@@ -61,6 +63,9 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			AgentTaskLaunchParameters parameters;
 			try
 			{
+				// Invalidate the toolset cache - params resolver will use it.
+				toolsetCache.Invalidate(agent: null);
+
 				parameters = paramsResolver.Resolve(sourceParameters, descriptor,
 					[new AgentUserMessage { Content = ctx.Arguments.RestPositionalArguments }],
 					out var errors, chatSettings.Settings.SubAgents.GetEffectivePolicy());

@@ -3,7 +3,6 @@ using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
-using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Settings;
 using LLMDesktopAssistant.Tools;

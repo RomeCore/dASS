@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
@@ -18,7 +19,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		IAddonSetCollector<SubAgentInfo> sources,
 		ISubAgentTaskParamsResolver paramsResolver,
 		IAgentTaskExecutor agentTaskExecutor,
-		IChatSettingsService chatSettings)
+		IChatSettingsService chatSettings,
+		IToolsetCacheService toolsetCache)
 		: DerivedSlashCommandProvider<SubAgentInfo>(sources)
 	{
 		protected override string TypeNamespace => "agent";
@@ -26,6 +28,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		protected override SlashCommandSource SourceKind => SlashCommandSource.SubAgent;
 
 		protected override ISlashCommandExecutor CreateCommandExecutor(SubAgentInfo source)
-			=> new SubAgentCommandExecutor(source, paramsResolver, agentTaskExecutor, chatSettings);
+			=> new SubAgentCommandExecutor(source, paramsResolver, agentTaskExecutor, chatSettings, toolsetCache);
 	}
 }
