@@ -18,8 +18,9 @@ public interface IHighlightTransformProvider
 	event EventHandler? LayoutChanged;
 
 	/// <summary>
-	/// Computes the rendered text and/or highlight spans for the specified text.
+	/// Computes the rendered text and/or highlight spans for the specified text and caret.
 	/// </summary>
 	/// <param name="text">The current (raw, untransformed) text, IME preedit included.</param>
-	HighlightTransformResult Transform(string text);
+	/// <param name="caretIndex">The caret position in the text: a provider paints the region the caret is in.</param>
+	HighlightTransformResult Transform(string text, int caretIndex);
 }

@@ -137,7 +137,7 @@ public class HighlightTextPresenter : TextPresenter
 		// User transform provider: highlight spans first (raw text coordinates), then rendered text
 		if (HighlightTransformProvider is { } provider)
 		{
-			var result = provider.Transform(text);
+			var result = provider.Transform(text, CaretIndex);
 
 			if (result.RenderedText is { } rendered && rendered.Length >= text.Length)
 				text = rendered;

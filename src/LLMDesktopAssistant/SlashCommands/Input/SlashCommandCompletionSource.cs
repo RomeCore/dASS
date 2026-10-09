@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Avalonia.Media;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
@@ -11,27 +13,35 @@ using LLMDesktopAssistant.SlashCommands.Arguments;
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
 	/// <summary>
-	/// The slash-command <see cref="IInputCompletionSource"/>: completes the leading command token from every command
-	/// the chat enabled and, once the token resolves, the argument under the caret — alongside the command's context
-	/// (its name, its description and the arguments it declares).
+	/// The slash-command input-completion source: it completes the leading command token from every command the chat
+	/// enabled and, once the token resolves, the argument under the caret — alongside the command's context (its name,
+	/// its description and the arguments it declares).
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// Two states. <b>Token</b> — the caret is inside the token: prefix-match it against the commands, mark the
-	/// shadowed ones (<see cref="InputCompletionItem.IsDefeated"/>) and offer each in its fully-qualified form
+	/// It is also the renderer of its own regions (<see cref="IInputCompletionRenderer"/>): what the caret sits in, how
+	/// it resolves and how it looks are the same knowledge, so the analysis, the parse and the palette live here rather
+	/// than in a renderer registered next to the source. The inline ghost of a completion belongs to the input instead —
+	/// see <c>InputCompletionTransformProvider</c>.
+	/// </para>
+	/// <para>
+	/// Two completion states. <b>Token</b> — the caret is inside the token: prefix-match it against the commands, mark
+	/// the shadowed ones (<see cref="InputCompletionItem.IsDefeated"/>) and offer each in its fully-qualified form
 	/// (<c>/skill:grilling</c>). <b>Argument</b> — the token resolved and the caret is in the argument region: build the
 	/// command's context, name the argument under the caret and delegate, when the slot declares a
 	/// <see cref="ISlashCommandArgumentFormatProvider"/> that <see cref="ISlashCommandArgumentFormatProvider.CanComplete"/>,
 	/// to <see cref="ISlashCommandArgumentFormatProvider.Complete"/>. There is no argument-kind-specific code here.
 	/// </para>
 	/// <para>
-	/// The source owns what the popup shows, so the argument state is produced for the whole argument region — the free
-	/// text of a rest positional included, where there is nothing to complete but the context is still worth showing.
-	/// The only argument region that yields nothing is the one whose token does not resolve.
+	/// The argument state is produced for the whole argument region — the free text of a rest positional included, where
+	/// there is nothing to complete but the context is still worth showing. The only argument region that yields nothing
+	/// is the one whose token does not resolve.
 	/// </para>
 	/// </remarks>
 	[ChatService(typeof(IInputCompletionSource))]
-	public class SlashCommandCompletionSource(IAddonSetCollector<SlashCommandInfo> commands) : IInputCompletionSource
+	[ChatService(typeof(IInputCompletionRenderer))]
+	public class SlashCommandCompletionSource(IAddonSetCollector<SlashCommandInfo> commands)
+		: IInputCompletionSource, IInputCompletionRenderer
 	{
 		/// <summary>
 		/// The source's priority. Commands claim only the leading token and its arguments, so they sit above any
@@ -47,6 +57,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		public const bool ShowArgumentListWithCurrentArgument = true;
 
 		private static readonly SlashCommandArgumentSchema EmptySchema = new();
+
+		private readonly SlashCommandHighlightPalette _palette = SlashCommandHighlightPalette.FromResources();
 
 		/// <inheritdoc/>
 		public int Priority => CommandSourcePriority;
@@ -74,6 +86,31 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				return TryComputeArgument(request, analysis, out result);
 
 			return false;
+		}
+
+		/// <inheritdoc/>
+		public HighlightTransformResult? Render(string text, int caretIndex)
+		{
+			text ??= string.Empty;
+
+			var commandSet = commands.GetAddonsForChat().ToList();
+			if (commandSet.Count == 0)
+				return null;
+
+			var analysis = SlashCommandInputAnalyzer.Analyze(text, caretIndex, commandSet);
+			if (!analysis.IsCommand)
+				return null;
+
+			var spans = new List<TextHighlightSpan>();
+			if (TokenStyle(analysis.ResolutionState) is { } style)
+			{
+				spans.Add(new TextHighlightSpan(analysis.TokenSpan.Start, analysis.TokenSpan.Length,
+					style.Brush, style.Decorations));
+			}
+
+			AddArgumentSpans(spans, text, analysis);
+
+			return spans.Count > 0 ? new HighlightTransformResult(spans) : null;
 		}
 
 		/// <summary>
@@ -284,6 +321,102 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			}
 
 			return defeated;
+		}
+
+		/// <summary>
+		/// The brush and the decorations of a token, by how it resolves; <see langword="null"/> for a token that has not
+		/// resolved yet (nothing to say about it yet).
+		/// </summary>
+		private (IBrush Brush, TextDecorationCollection? Decorations)? TokenStyle(
+			SlashCommandInputResolutionState state) => state switch
+		{
+			SlashCommandInputResolutionState.Known => (_palette.Known, null),
+			SlashCommandInputResolutionState.Unknown => (_palette.Unknown, _palette.UnknownDecorations),
+			SlashCommandInputResolutionState.WonOthers => (_palette.Ambiguous, _palette.AmbiguousDecorations),
+			_ => null
+		};
+
+		/// <summary>
+		/// Paints the arguments: every argument reads as one chipped unit, and inside it a keyed name, its <c>=</c>, the
+		/// value and the grouping quotes get their own colours. Without a parse — an unresolved token, or an invalid
+		/// argument list — the whole argument region falls back to the plain argument colour.
+		/// </summary>
+		private void AddArgumentSpans(List<TextHighlightSpan> spans, string text, SlashCommandInputAnalysis analysis)
+		{
+			if (analysis.ArgumentSpan.Length == 0)
+				return;
+
+			if (analysis.Arguments is not { } parsed)
+			{
+				spans.Add(new TextHighlightSpan(analysis.ArgumentSpan.Start, analysis.ArgumentSpan.Length,
+					_palette.Argument));
+				return;
+			}
+
+			// An argument's parts are contiguous and the parts of an argument precede the next argument's, so in raw-text
+			// order the spans never overlap — which matters, because a text run carries a single property set and the
+			// first span covering a position wins.
+			var offset = analysis.ArgumentSpan.Start;
+			foreach (var argument in ArgumentsOf(parsed).OrderBy(argument => argument.Position))
+			{
+				if (argument.KeyLength > 0)
+				{
+					AddPart(spans, text, offset + argument.Position, argument.KeyLength, _palette.ArgumentKey);
+					AddPart(spans, text, offset + argument.Position + argument.KeyLength, 1, _palette.ArgumentEquals);
+				}
+
+				AddValueParts(spans, text, offset + argument.ValuePosition, argument.ValueLength);
+			}
+		}
+
+		private static IEnumerable<SlashCommandRawArgument> ArgumentsOf(SlashCommandParsedArguments parsed)
+		{
+			foreach (var positional in parsed.Positionals)
+				yield return positional;
+
+			if (parsed.RestPositional is { } rest)
+				yield return rest;
+
+			foreach (var keyed in parsed.Keyed.Values)
+				yield return keyed;
+		}
+
+		/// <summary>
+		/// Paints a value: the grouping quotes lighter, the text between them in the argument colour.
+		/// </summary>
+		private void AddValueParts(List<TextHighlightSpan> spans, string text, int start, int length)
+		{
+			var end = Math.Min(start + length, text.Length);
+			var segmentStart = start;
+
+			for (var i = Math.Max(0, start); i < end; i++)
+			{
+				if (text[i] is not ('\'' or '"'))
+					continue;
+
+				if (i > segmentStart)
+					AddPart(spans, text, segmentStart, i - segmentStart, _palette.Argument);
+
+				AddPart(spans, text, i, 1, _palette.Quote);
+				segmentStart = i + 1;
+			}
+
+			if (end > segmentStart)
+				AddPart(spans, text, segmentStart, end - segmentStart, _palette.Argument);
+		}
+
+		/// <summary>
+		/// Adds one part of an argument: its own colour over the argument's chip. A part carries both, because a text run
+		/// has a single property set — the chip cannot be a separate span drawn underneath.
+		/// </summary>
+		private void AddPart(List<TextHighlightSpan> spans, string text, int start, int length, IBrush brush)
+		{
+			start = Math.Max(0, start);
+			length = Math.Min(length, text.Length - start);
+			if (length <= 0)
+				return;
+
+			spans.Add(new TextHighlightSpan(start, length, brush, null, _palette.ArgumentBackground));
 		}
 	}
 }

@@ -38,9 +38,6 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// <summary>The chip behind an argument, so one argument reads as one unit.</summary>
 		public IBrush ArgumentBackground { get; init; } = Hex("#268C8C8C");
 
-		/// <summary>The colour of the ghost preview.</summary>
-		public IBrush Ghost { get; init; } = Hex("#8C8C8C");
-
 		/// <summary>The decorations of an unknown token.</summary>
 		public TextDecorationCollection? UnknownDecorations { get; init; } = TextDecorations.Underline;
 
@@ -65,8 +62,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				ArgumentEquals = ResolveBrush(app, "SlashCommandArgumentEqualsBrush") ?? Default.ArgumentEquals,
 				Quote = ResolveBrush(app, "SlashCommandQuoteBrush") ?? Default.Quote,
 				ArgumentBackground = ResolveBrush(app, "SlashCommandArgumentBackgroundBrush")
-					?? Default.ArgumentBackground,
-				Ghost = ResolveBrush(app, "SlashCommandGhostBrush") ?? Default.Ghost
+					?? Default.ArgumentBackground
 			};
 		}
 

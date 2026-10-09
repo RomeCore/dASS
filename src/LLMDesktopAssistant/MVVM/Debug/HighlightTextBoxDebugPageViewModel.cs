@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
+using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Input;
 using LLMDesktopAssistant.Utils;
@@ -18,8 +21,10 @@ public sealed record HighlightSpanInfo(int Start, int End, string Kind)
 
 /// <summary>
 /// View model for the TextBox highlighting debug page: lets you "feel" the real slash-command highlighting and ghost
-/// preview inside <see cref="HighlightTextBox"/>. It uses the production <see cref="SlashCommandInputAnalyzer"/> and
-/// <see cref="SlashCommandHighlightTransformProvider"/>, so what you see is what the chat input will do.
+/// preview inside <see cref="HighlightTextBox"/>. It runs the production <see cref="SlashCommandCompletionSource"/>
+/// (its analysis, its parse and its palette) behind the production <see cref="InputCompletionTransformProvider"/>, so
+/// what you see is what the chat input will do — only the completion session is a stand-in, because the real one needs
+/// a chat.
 /// </summary>
 [ViewModelFor(typeof(HighlightTextBoxDebugPageView))]
 public class HighlightTextBoxDebugPageViewModel : ViewModelBase
@@ -38,15 +43,71 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 		new() { Name = "code-review", Namespaces = ["skill"] }
 	];
 
-	private readonly SlashCommandHighlightTransformProvider _transformProvider;
+	/// <summary>The command set the real source expects, over the sample commands.</summary>
+	private sealed class SampleCollector(IEnumerable<SlashCommandInfo> commands) : IAddonSetCollector<SlashCommandInfo>
+	{
+		public IEnumerable<SlashCommandInfo> GetAvailableAddons() => commands;
+
+		public IEnumerable<SlashCommandInfo> GetAddonsForChat() => commands;
+
+		public IEnumerable<SlashCommandInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => commands;
+	}
+
+	/// <summary>
+	/// The stand-in completion session: while the token is partial, it previews the top prefix match as an inline ghost,
+	/// so the page exercises the ghost path end to end.
+	/// </summary>
+	private sealed class DemoCompletion(Func<bool> enabled, Func<string> text) : IInputCompletionService
+	{
+		public event EventHandler? ResultChanged;
+
+		public InputCompletionResult? Result { get; private set; }
+
+		public void Update(string? value, int caretIndex)
+		{
+			var result = Compute();
+			if (ReferenceEquals(Result, result))
+				return;
+
+			Result = result;
+			ResultChanged?.Invoke(this, EventArgs.Empty);
+		}
+
+		public void Close() => Update(null, 0);
+
+		private InputCompletionResult? Compute()
+		{
+			if (!enabled())
+				return null;
+
+			var current = text();
+			var analysis = SlashCommandInputAnalyzer.Analyze(current, current.Length, SampleCommands);
+			if (analysis.ResolutionState != SlashCommandInputResolutionState.Partial || analysis.Token.Length == 0)
+				return null;
+
+			var match = SlashCommandPrefixMatcher.Match(SampleCommands, analysis.Token).FirstOrDefault();
+			if (match is null || !match.Name.StartsWith(analysis.Token, StringComparison.OrdinalIgnoreCase))
+				return null;
+
+			return new InputCompletionResult
+			{
+				Span = analysis.TokenSpan,
+				GhostText = match.Name[analysis.Token.Length..]
+			};
+		}
+	}
+
+	private readonly SlashCommandCompletionSource _commandRenderer = new(new SampleCollector(SampleCommands));
+
+	private readonly DemoCompletion _completion;
+
+	private readonly InputCompletionTransformProvider _transformProvider;
 
 	public HighlightTextBoxDebugPageViewModel()
 	{
-		_transformProvider = new SlashCommandHighlightTransformProvider(
-			() => EnableCommandHighlight ? SampleCommands : [],
-			() => Text.Length,
-			DemoCompletion,
-			SlashCommandHighlightPalette.FromResources());
+		_completion = new DemoCompletion(() => EnableCommandHighlight, () => Text);
+		_transformProvider = new InputCompletionTransformProvider(_completion, [_commandRenderer]);
+
 		ResetCommand = new RelayCommand(() => Text = DefaultSample);
 		UpdateSpans();
 	}
@@ -76,7 +137,7 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 			if (SetProperty(ref _enableCommandHighlight, value))
 			{
 				UpdateSpans();
-				_transformProvider.NotifyLayoutChanged();
+				RefreshCompletion();
 			}
 		}
 	}
@@ -112,29 +173,13 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 		}
 
 		Spans.Reset(infos);
+		RefreshCompletion();
 	}
 
-	/// <summary>
-	/// A stand-in for the (not yet built) completion source: while the token is partial, preview the top prefix match
-	/// as a ghost, so the debug page exercises the renderer's ghost path end to end.
-	/// </summary>
-	private InputCompletionResult? DemoCompletion()
+	/// <summary>Recomputes the stand-in completion and repaints whatever the provider draws.</summary>
+	private void RefreshCompletion()
 	{
-		if (!EnableCommandHighlight)
-			return null;
-
-		var analysis = SlashCommandInputAnalyzer.Analyze(Text, Text.Length, SampleCommands);
-		if (analysis.ResolutionState != SlashCommandInputResolutionState.Partial || analysis.Token.Length == 0)
-			return null;
-
-		var match = SlashCommandPrefixMatcher.Match(SampleCommands, analysis.Token).FirstOrDefault();
-		if (match is null || !match.Name.StartsWith(analysis.Token, StringComparison.OrdinalIgnoreCase))
-			return null;
-
-		return new InputCompletionResult
-		{
-			Span = analysis.TokenSpan,
-			GhostText = match.Name[analysis.Token.Length..]
-		};
+		_completion.Update(Text, Text.Length);
+		_transformProvider.NotifyLayoutChanged();
 	}
 }

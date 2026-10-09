@@ -7,12 +7,12 @@ namespace LLMDesktopAssistant.Controls.Text;
 /// </summary>
 public sealed class HighlightTransformProvider : IHighlightTransformProvider
 {
-	private readonly Func<string, HighlightTransformResult> _transform;
+	private readonly Func<string, int, HighlightTransformResult> _transform;
 
 	/// <summary>
 	/// Creates a provider that computes the result with the specified delegate.
 	/// </summary>
-	public HighlightTransformProvider(Func<string, HighlightTransformResult> transform)
+	public HighlightTransformProvider(Func<string, int, HighlightTransformResult> transform)
 	{
 		_transform = transform ?? throw new ArgumentNullException(nameof(transform));
 	}
@@ -27,7 +27,7 @@ public sealed class HighlightTransformProvider : IHighlightTransformProvider
 	private event EventHandler? _layoutChanged;
 
 	/// <inheritdoc/>
-	public HighlightTransformResult Transform(string text) => _transform(text);
+	public HighlightTransformResult Transform(string text, int caretIndex) => _transform(text, caretIndex);
 
 	/// <summary>
 	/// Notifies subscribers that the visual output changed and the layout must be recomputed.

@@ -275,11 +275,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_executionTokens = Chat.Services.GetRequiredService<IChatExecutionTokenService>();
 
 			Completion = new InputCompletionViewModel(Chat.Services.GetRequiredService<IInputCompletionService>());
-			var commandCollector = Chat.Services.GetRequiredService<IAddonSetCollector<SlashCommandInfo>>();
-			CompletionTransformProvider = new SlashCommandHighlightTransformProvider(
-				() => commandCollector.GetAddonsForChat().ToList(),
-				() => _completionCaretIndex,
-				() => Completion.Result);
+
+			// The input draws its completion regions and the preview through the chat-scoped provider, so it knows nothing
+			// about the features that colour it.
+			CompletionTransformProvider = Chat.Services.GetRequiredService<IHighlightTransformProvider>();
 
 			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
 			_draftData.Parts.IsEditing = true;

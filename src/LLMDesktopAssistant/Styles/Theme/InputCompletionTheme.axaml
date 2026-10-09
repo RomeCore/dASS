@@ -13,4 +13,7 @@
 	<!-- The row the accept would apply. -->
 	<SolidColorBrush x:Key="InputCompletionPopupSelectedBrush" Color="#336C5CE7"/>
 
+	<!-- The inline preview of the current completion, drawn in the input itself. -->
+	<SolidColorBrush x:Key="InputCompletionGhostBrush" Color="#8C8C8C"/>
+
 </ResourceDictionary>

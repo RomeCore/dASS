@@ -21,7 +21,6 @@
 	<SolidColorBrush x:Key="SlashCommandArgumentEqualsBrush" Color="#1E8E5A"/>
 	<SolidColorBrush x:Key="SlashCommandQuoteBrush" Color="#B9B9CC"/>
 	<SolidColorBrush x:Key="SlashCommandArgumentBackgroundBrush" Color="#268C8C8C"/>
-	<SolidColorBrush x:Key="SlashCommandGhostBrush" Color="#8C8C8C"/>
 
 	<ControlTheme x:Key="{x:Type txt:HighlightTextBox}"
 							  TargetType="txt:HighlightTextBox">

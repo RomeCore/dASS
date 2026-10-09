@@ -118,7 +118,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_text = text ?? string.Empty;
 			_caretIndex = caretIndex;
 
-			SetResult(_service.Compute(new InputCompletionRequest(_text, caretIndex)));
+			_service.Update(_text, caretIndex);
+			SetResult(_service.Result);
 		}
 
 		/// <summary>Recomputes the completion for the last text and caret.</summary>
@@ -127,8 +128,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>Closes the popup without changing the text.</summary>
 		public void Close()
 		{
-			if (IsOpen)
-				SetResult(null);
+			if (!IsOpen)
+				return;
+
+			_service.Close();
+			SetResult(null);
 		}
 
 		/// <summary>

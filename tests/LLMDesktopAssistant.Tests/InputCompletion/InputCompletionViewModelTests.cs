@@ -11,10 +11,35 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 	/// </summary>
 	public class InputCompletionViewModelTests
 	{
-		private sealed class FakeService(Func<InputCompletionRequest, InputCompletionResult?> compute)
-			: IInputCompletionService
+		/// <summary>
+		/// A completion session with a fixed result: the view model only mirrors what the session holds and forwards the
+		/// text, the caret and the close.
+		/// </summary>
+		private sealed class FakeService(InputCompletionResult? result) : IInputCompletionService
 		{
-			public InputCompletionResult? Compute(InputCompletionRequest request) => compute(request);
+			public event EventHandler? ResultChanged;
+
+			public InputCompletionResult? Result { get; private set; } = result;
+
+			public string? Text { get; private set; }
+			public int CaretIndex { get; private set; }
+			public int Closes { get; private set; }
+
+			public void Update(string? text, int caretIndex)
+			{
+				Text = text;
+				CaretIndex = caretIndex;
+			}
+
+			public void Close()
+			{
+				Closes++;
+				if (Result is null)
+					return;
+
+				Result = null;
+				ResultChanged?.Invoke(this, EventArgs.Empty);
+			}
 		}
 
 		private static InputCompletionResult Result(InputCompletionSpan span, params string[] insertTexts) => new()
@@ -24,7 +49,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 			Items = [.. insertTexts.Select(text => new InputCompletionItem { InsertText = text })]
 		};
 
-		private static InputCompletionViewModel Vm(InputCompletionResult? result) => new(new FakeService(_ => result));
+		private static InputCompletionViewModel Vm(InputCompletionResult? result) => new(new FakeService(result));
 
 		[Fact]
 		public void Update_WithNoCompletion_KeepsThePopupClosed()
@@ -111,6 +136,32 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 			Assert.True(vm.TryHandleKey(key));
 
 			Assert.Equal(expected, vm.SelectedIndex);
+		}
+
+		[Fact]
+		public void Update_ForwardsTheTextAndCaretToTheSession()
+		{
+			var service = new FakeService(null);
+			var vm = new InputCompletionViewModel(service);
+
+			vm.Update("/gr", 3);
+
+			Assert.Equal("/gr", service.Text);
+			Assert.Equal(3, service.CaretIndex);
+		}
+
+		[Fact]
+		public void TryHandleKey_Escape_ClosesTheSessionToo()
+		{
+			// The inline preview is a projection of the session's result, so closing the popup must close that as well.
+			var service = new FakeService(Result(new InputCompletionSpan(0, 3), "a"));
+			var vm = new InputCompletionViewModel(service);
+			vm.Update("/gr", 3);
+
+			Assert.True(vm.TryHandleKey(Key.Escape));
+
+			Assert.Equal(1, service.Closes);
+			Assert.False(vm.IsOpen);
 		}
 
 		[Fact]
