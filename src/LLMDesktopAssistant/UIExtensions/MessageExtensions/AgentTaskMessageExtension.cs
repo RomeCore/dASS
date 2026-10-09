@@ -16,10 +16,10 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 	/// its sole purpose is to subscribe to task changes and manage the
 	/// additional view models automatically.
 	/// </remarks>
-	[MessageExtension(Targets = MessageExtensionTargets.Assistant)]
+	[MessageExtension(Targets = MessageExtensionTargets.Both)]
 	public class AgentTaskMessageExtension : MessageExtension
 	{
-		private readonly AssistantMessage _message;
+		private readonly ChatMessage _message;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AgentTaskMessageExtension"/> class.
@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 		{
 			IsVisible = false; // No toolbar button — inline cards only
 
-			_message = ((AssistantMessageViewModel)viewModel).AssistantMessage;
+			_message = viewModel.Message;
 			var taskListVm = new AgentTaskListViewModel
 			{
 				Filtering = AgentTaskListFiltering.Message,
