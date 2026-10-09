@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// <remarks>
 	/// The body is always injected in full (the skill's <c>InjectionMode</c> does not apply) with the home-directory
 	/// note appended, exactly like the <c>skill-load</c> tool. The command leaves the caller's generation intent
-	/// untouched and shows the model the bare token rather than the raw <c>/skill:…</c> text.
+	/// untouched and the model sees the raw message text (<see cref="ModelFacingMode.Raw"/>, the v1 default).
 	/// </remarks>
 	public sealed class SkillCommandExecutor(SkillInfo skill) : ISlashCommandExecutor
 	{

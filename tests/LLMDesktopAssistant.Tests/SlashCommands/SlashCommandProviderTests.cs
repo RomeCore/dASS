@@ -142,7 +142,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void AgentSchema_IsARestPositionalPlusAnOptionalWait()
 		{
 			var subAgent = new SubAgentInfo { Name = "web-searcher", Description = "searches the web" };
-			var provider = new SubAgentSlashCommandProvider(new FakeCollector<SubAgentInfo>([subAgent]), null!, null!, null!);
+			var provider = new SubAgentSlashCommandProvider(new FakeCollector<SubAgentInfo>([subAgent]), null!, null!, null!, null!);
 
 			var command = Assert.Single(provider.GetCommands());
 			var schema = command.Executor.ArgumentSchema!;
@@ -154,7 +154,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			var wait = schema.Keyed["wait"];
 			Assert.False(wait.Required);
-			Assert.Equal("false", wait.Default);
+			Assert.Equal("true", wait.Default);
 			Assert.Equal("command.argument.wait", wait.Name.Key);
 			Assert.Equal("command.argument.wait.description", wait.Description!.Key);
 			Assert.Same(SlashCommandBooleanFormatProvider.Instance, wait.Format);

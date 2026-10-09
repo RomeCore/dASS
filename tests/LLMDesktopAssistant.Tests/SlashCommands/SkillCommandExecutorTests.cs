@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 {
 	/// <summary>
 	/// The <c>/skill:&lt;name&gt;</c> executor: it injects the substituted body as a non-restorable content part and
-	/// asks for the neutral model-facing mode.
+	/// keeps the raw model-facing mode.
 	/// </summary>
 	public class SkillCommandExecutorTests
 	{
@@ -58,7 +58,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			=> Assert.Single(message.AdditionalData.OfType<AdditionalMessageContentPart>());
 
 		[Fact]
-		public async Task Executes_InjectsTheSubstitutedBody_AndShowsTheNeutralToken()
+		public async Task Executes_InjectsTheSubstitutedBody_AndKeepsTheRawMode()
 		{
 			var skill = new SkillInfo { Name = "grilling", Description = "d", Body = "Body: $ARGUMENTS" };
 			var message = Message("/skill:grilling do it");
@@ -73,7 +73,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(result.IsSuccess);
 			Assert.True(result.Generate);
-			Assert.Equal(ModelFacingMode.Neutral, result.ModelFacingMode);
+			Assert.Equal(ModelFacingMode.Raw, result.ModelFacingMode);
 		}
 
 		[Fact]

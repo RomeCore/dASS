@@ -200,7 +200,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Contains("finished", result.EffectSummary!);
 
 			var part = Assert.Single(message.AdditionalData.OfType<AdditionalMessageContentPart>());
-			Assert.Equal("the answer", part.Content);
+			Assert.StartsWith("[USER HAS LAUNCHED AGENT THAT FINISHED WITH MESSAGE]:", part.Content);
+			Assert.Contains("the answer", part.Content);
 			Assert.False(part.IsRestorable);
 			Assert.Equal("command.agent.result", part.ChipTitle!.Key);
 		}
