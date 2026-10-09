@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
 using Avalonia.Input;
 using LLMDesktopAssistant.InputCompletion;
 
 namespace LLMDesktopAssistant.LLM.MVVM
 {
-	/// <summary>The text and caret a completion accept produces.</summary>
+	/// <summary>
+	/// The text and caret a completion accept produces.
+	/// </summary>
 	public readonly record struct InputCompletionAccept(string Text, int Caret);
 
 	/// <summary>
@@ -25,23 +25,31 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_service = service ?? throw new ArgumentNullException(nameof(service));
 		}
 
-		/// <summary>The completion computed for the last <see cref="Update"/>, or <see langword="null"/> when none.</summary>
-		public InputCompletionResult? Result { get; private set; }
-
-		private bool _isOpen;
-		/// <summary>Whether the popup is open (a completion exists, even if it carries no items).</summary>
-		public bool IsOpen
+		/// <summary>
+		/// The completion computed for the last <see cref="Update"/>, or <see langword="null"/> when none.
+		/// </summary>
+		public InputCompletionResult? Result
 		{
-			get => _isOpen;
-			private set => SetProperty(ref _isOpen, value);
+			get;
+			private set => SetProperty(ref field, value);
 		}
 
-		private IReadOnlyList<InputCompletionItem> _items = [];
-		/// <summary>The continuations to show.</summary>
+		/// <summary>
+		/// Whether the popup is open (a completion exists, even if it carries no items).
+		/// </summary>
+		public bool IsOpen
+		{
+			get;
+			private set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
+		/// The continuations to show.
+		/// </summary>
 		public IReadOnlyList<InputCompletionItem> Items
 		{
-			get => _items;
-			private set => SetProperty(ref _items, value);
+			get => field ??= [];
+			private set => SetProperty(ref field, value);
 		}
 
 		private int _selectedIndex;
@@ -58,16 +66,24 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		/// <summary>The selected continuation, or <see langword="null"/> when there are none.</summary>
+		/// <summary>
+		/// The selected continuation, or <see langword="null"/> when there are none.
+		/// </summary>
 		public InputCompletionItem? SelectedItem => Items.Count == 0 ? null : Items[SelectedIndex];
 
-		/// <summary>The state shown above the list (also when the list is empty).</summary>
+		/// <summary>
+		/// The state shown above the list (also when the list is empty).
+		/// </summary>
 		public InputCompletionState? State { get; private set; }
 
-		/// <summary>Whether there is nothing to show but the state.</summary>
+		/// <summary>
+		/// Whether there is nothing to show but the state.
+		/// </summary>
 		public bool IsStateOnly => IsOpen && Items.Count == 0;
 
-		/// <summary>Whether <see cref="Accept"/> can produce a result.</summary>
+		/// <summary>
+		/// Whether <see cref="Accept"/> can produce a result.
+		/// </summary>
 		public bool CanAccept => IsOpen && SelectedItem is not null && Result is not null;
 
 		/// <summary>
@@ -136,14 +152,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void SetResult(InputCompletionResult? result)
 		{
-			Result = result;
 			Items = result?.Items ?? [];
 			State = result?.State;
 			_selectedIndex = Items.Count > 0 ? Math.Clamp(result!.SelectedIndex, 0, Items.Count - 1) : 0;
 
 			IsOpen = result is not null;
+			Result = result;
 
-			RaisePropertyChanged(nameof(Result));
 			RaisePropertyChanged(nameof(Items));
 			RaisePropertyChanged(nameof(SelectedIndex));
 			RaisePropertyChanged(nameof(SelectedItem));
