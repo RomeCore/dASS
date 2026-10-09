@@ -27,8 +27,9 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <inheritdoc/>
 		public UserInputInsertionCheckResult CanInsertUserInput(UserInput input, bool generateIntent, int? editIndex = null)
 		{
-			// Edits never run a command, and with commands off the whole command path is disabled.
-			if (editIndex is not null || !CommandsEnabled)
+			// An edit runs its command too (see InsertUserInputAsync), so it is validated exactly like a new message.
+			// With commands off the whole command path is disabled.
+			if (!CommandsEnabled)
 				return UserInputInsertionCheckResult.Ok;
 
 			if (!SlashCommandExtractor.TryExtractToken(input.Content, out var rawToken, out var rawArguments))

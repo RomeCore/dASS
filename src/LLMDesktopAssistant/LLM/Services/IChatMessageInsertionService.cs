@@ -19,7 +19,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// </summary>
 		/// <param name="input">The user input to check.</param>
 		/// <param name="generateIntent">Whether the caller asked for generation.</param>
-		/// <param name="editIndex">The edited message index, or <see langword="null"/> for a new message (edits never run a command).</param>
+		/// <param name="editIndex">The edited message index, or <see langword="null"/> for a new message. An edit runs
+		/// its command too, so it is validated exactly like a new message.</param>
 		UserInputInsertionCheckResult CanInsertUserInput(UserInput input, bool generateIntent, int? editIndex = null);
 
 		/// <summary>

@@ -137,9 +137,54 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AnEdit_IsAlwaysAccepted()
+		public void CanInsertUserInput_APlainEdit_IsAccepted()
 		{
 			using var harness = new Harness();
+
+			Assert.True(harness.Service.CanInsertUserInput(Input("hello there"), generateIntent: true, editIndex: 0).Success);
+		}
+
+		[Fact]
+		public void CanInsertUserInput_AnEditWithAnUnknownCommand_IsRefused()
+		{
+			using var harness = new Harness();
+
+			var check = harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true, editIndex: 0);
+
+			Assert.False(check.Success);
+			Assert.Equal("command.error.unknown", check.Error!.Key);
+		}
+
+		[Fact]
+		public void CanInsertUserInput_AnEditWithBadArguments_IsRefused()
+		{
+			using var harness = new Harness();
+			var schema = new SlashCommandArgumentSchema
+			{
+				Positionals = [new SlashCommandArgument { Name = Locale.GetKey("test.arg"), Required = true }]
+			};
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
+
+			var check = harness.Service.CanInsertUserInput(Input("/grilling"), generateIntent: true, editIndex: 0);
+
+			Assert.False(check.Success);
+			Assert.Equal("command.error.missing_argument", check.Error!.Key);
+		}
+
+		[Fact]
+		public void CanInsertUserInput_AValidEditCommand_IsAccepted()
+		{
+			using var harness = new Harness();
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
+
+			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true, editIndex: 0).Success);
+		}
+
+		[Fact]
+		public void CanInsertUserInput_AnEdit_WhenCommandsAreDisabled_IsAccepted()
+		{
+			using var harness = new Harness();
+			harness.Settings.Settings.Commands.EnableCommands = false;
 
 			Assert.True(harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true, editIndex: 0).Success);
 		}
