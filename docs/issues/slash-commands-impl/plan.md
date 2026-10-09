@@ -100,9 +100,13 @@ namespace-heavy canonical names). The design was settled in a grilling session; 
 - [x] [30 — The rest positional as a schema slot](./issues/30-rest-positional-slot.md) — prefactor: `HasRestPositional`
       (a bool) becomes `RestPositional` (`SlashCommandArgument?`) with a real span, so free text is an argument the
       caret can be located in. **First**, because the popup's context is built on it.
-- [ ] [31 — Input completion popup rework](./issues/31-input-completion-popup.md) — the state model (header + context +
+- [x] [31 — Input completion popup rework](./issues/31-input-completion-popup.md) — the state model (header + context +
       picker), the popup's geometry and chrome, the ghost as a *replacement* of the token tail, argument highlighting,
-      namespace collapsing and `Ctrl+Enter`.
+      namespace collapsing and `Ctrl+Enter`. Includes the inversion the maintainer called for: a completion source
+      renders its own regions, so the input view knows nothing about commands.
+
+> **Stage 8 complete.** Both tickets resolved. The UI is build-green and unit-tested where pure; **manual verification
+> in the app is still pending** (see ticket 31's checklist).
 
 Blocking edges: `31 ← 30`.
 
