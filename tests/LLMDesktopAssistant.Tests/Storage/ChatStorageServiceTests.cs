@@ -12,6 +12,7 @@ namespace LLMDesktopAssistant.Tests.Storage;
 /// message collection updates, and guaranteed rollback (without poisoning the storage
 /// or the cached model) when a transaction fails.
 /// </summary>
+[Collection("Storage")]
 public class ChatStorageServiceTests
 {
 	private static ChatStorageTestContext CreateContext() => new();

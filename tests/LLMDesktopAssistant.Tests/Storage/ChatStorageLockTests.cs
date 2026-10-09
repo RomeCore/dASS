@@ -10,6 +10,7 @@ namespace LLMDesktopAssistant.Tests.Storage;
 /// leave an open transaction behind (the previous implementation leaked one and poisoned the
 /// thread), and the lock must be reentrant and always released.
 /// </summary>
+[Collection("Storage")]
 public class ChatStorageLockTests
 {
 	private static (ChatDatabase Database, ChatStorageLock StorageLock) CreateStorage()
