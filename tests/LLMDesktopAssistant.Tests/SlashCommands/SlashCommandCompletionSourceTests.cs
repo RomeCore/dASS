@@ -109,10 +109,14 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Empty(result.State.ContextItems);
 			Assert.Equal(2, result.Items.Count);
 
-			// Ordered by name then key: both are "grilling", so agent:grilling wins the tie and skill:grilling is defeated.
-			Assert.Equal("/agent:grilling", result.Items[0].InsertText);
+			// Ordered by name then key: both are "grilling", so agent:grilling wins the tie and skill:grilling is defeated. Only
+			// the winner may drop its namespace — the loser keeps the qualifier that tells it apart, so the collapsed form is
+			// never ambiguous.
+			Assert.Equal("/grilling", result.Items[0].InsertText);
+			Assert.Equal("/agent:grilling", result.Items[0].Hint);
 			Assert.False(result.Items[0].IsDefeated);
 			Assert.Equal("/skill:grilling", result.Items[1].InsertText);
+			Assert.Null(result.Items[1].Hint);
 			Assert.True(result.Items[1].IsDefeated);
 		}
 
@@ -194,7 +198,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			Assert.True(ok);
 			var state = result!.State!;
-			Assert.Equal("/agent:web-searcher", state.Title!.Key);
+			Assert.Equal("/web-searcher", state.Title!.Key);
 			Assert.Same(WebSearcher.DescriptionKey, state.Description);
 			Assert.Equal("command.argument.rest", state.ContextTitle!.Key);
 
@@ -222,17 +226,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void TryCompute_ATokenTheMatchContinues_PreviewsTheMissingSuffix()
 		{
-			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/skill:gri", 10), out var result);
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/gri", 4), out var result);
 
 			Assert.True(ok);
-			Assert.Equal("/skill:grilling", result!.Items[0].InsertText);
+			Assert.Equal("/grilling", result!.Items[0].InsertText);
+			Assert.Equal("/skill:grilling", result.Items[0].Hint);
 			Assert.Equal("lling", result.GhostText);
 		}
 
 		[Fact]
 		public void TryCompute_AMidTokenCaret_PreviewsFromTheCaret()
 		{
-			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/skill:grilling", 9), out var result);
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/grilling", 3), out var result);
 
 			Assert.True(ok);
 			Assert.Equal("illing", result!.GhostText);
@@ -241,11 +246,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void TryCompute_ATokenTheMatchDoesNotContinue_HasNoGhost()
 		{
-			// The item is the qualified form, which does not extend the partial name — there is nothing to preview inline.
-			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/gri", 4), out var result);
+			// The token matched by its namespace, so the offered form ("/grilling") does not extend what is typed.
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/sk", 3), out var result);
 
 			Assert.True(ok);
-			Assert.Equal("/skill:grilling", result!.Items[0].InsertText);
+			Assert.Equal("/grilling", result!.Items[0].InsertText);
 			Assert.Null(result.GhostText);
 		}
 

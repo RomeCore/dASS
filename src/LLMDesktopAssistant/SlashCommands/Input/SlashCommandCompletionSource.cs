@@ -83,7 +83,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			}
 
 			if (analysis.IsCaretInArguments)
-				return TryComputeArgument(request, analysis, out result);
+				return TryComputeArgument(request, analysis, commandSet, out result);
 
 			return false;
 		}
@@ -127,13 +127,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				.OrderBy(command => command.Order)
 				.ThenBy(command => command.Name, StringComparer.OrdinalIgnoreCase)
 				.ThenBy(command => command.Key, StringComparer.Ordinal)
-				.Select(command => new InputCompletionItem
-				{
-					InsertText = "/" + command.CanonicalToken,
-					Description = command.DescriptionKey,
-					Kind = InputCompletionKind.Command,
-					IsDefeated = defeated.Contains(command)
-				})
+				.Select(command => TokenItem(command, commandSet, defeated.Contains(command)))
 				.ToList();
 
 			// The ghost previews the top match only while it *continues* the typed token: a command reached through an
@@ -154,6 +148,26 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				},
 				Items = items,
 				GhostText = ghost
+			};
+		}
+
+		/// <summary>
+		/// One token-state continuation: the command under the shortest form it can safely be written in, with its
+		/// fully-qualified token riding along as the hint when the two differ.
+		/// </summary>
+		private static InputCompletionItem TokenItem(SlashCommandInfo command,
+			IReadOnlyList<SlashCommandInfo> commandSet, bool isDefeated)
+		{
+			var insertText = "/" + SlashCommandShortToken.For(command, commandSet);
+			var full = "/" + command.CanonicalToken;
+
+			return new InputCompletionItem
+			{
+				InsertText = insertText,
+				Hint = insertText == full ? null : full,
+				Description = command.DescriptionKey,
+				Kind = InputCompletionKind.Command,
+				IsDefeated = isDefeated
 			};
 		}
 
@@ -195,7 +209,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// has no context to show.
 		/// </summary>
 		private static bool TryComputeArgument(InputCompletionRequest request, SlashCommandInputAnalysis analysis,
-			out InputCompletionResult? result)
+			IReadOnlyList<SlashCommandInfo> commandSet, out InputCompletionResult? result)
 		{
 			result = null;
 			if (analysis.Command is not { } command)
@@ -242,7 +256,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				Span = target is { } value
 					? new InputCompletionSpan(analysis.ArgumentSpan.Start + value.ValueStart, value.ValueLength)
 					: new InputCompletionSpan(analysis.ArgumentSpan.Start, 0),
-				State = BuildArgumentState(command, schema, target),
+				State = BuildArgumentState(command, commandSet, schema, target),
 				Items = items,
 				GhostText = ghost
 			};
@@ -254,7 +268,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// the declared-arguments heading) as the context block, and the declared arguments as its rows.
 		/// </summary>
 		private static InputCompletionState BuildArgumentState(SlashCommandInfo command,
-			SlashCommandArgumentSchema schema, SlashCommandArgumentTarget? target)
+			IReadOnlyList<SlashCommandInfo> commandSet, SlashCommandArgumentSchema schema,
+			SlashCommandArgumentTarget? target)
 		{
 			var slot = target?.Slot;
 			var withList = ShowArgumentListWithCurrentArgument || slot is null;
@@ -262,7 +277,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			return new InputCompletionState
 			{
 				Kind = InputCompletionKind.Argument,
-				Title = Locale.GetConstKey("/" + command.CanonicalToken),
+				Title = Locale.GetConstKey("/" + SlashCommandShortToken.For(command, commandSet)),
 				Description = command.DescriptionKey,
 				ContextTitle = slot?.Name ?? Locale.GetKey("command.completion.arguments"),
 				ContextDescription = slot?.Description,

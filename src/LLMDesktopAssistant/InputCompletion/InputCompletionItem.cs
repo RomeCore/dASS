@@ -23,6 +23,12 @@ namespace LLMDesktopAssistant.InputCompletion
 		public LocaleKeyBase? Description { get; init; }
 
 		/// <summary>
+		/// Extra text the popup shows with the item on hover, if any — for a command, its fully-qualified token when the
+		/// item offers a shortened form.
+		/// </summary>
+		public string? Hint { get; init; }
+
+		/// <summary>
 		/// The kind of the item (used for the row icon).
 		/// </summary>
 		public InputCompletionKind Kind { get; init; }
