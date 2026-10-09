@@ -5,6 +5,7 @@
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Theme/Colors.axaml"/>
+				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Theme/InputCompletionTheme.axaml"/>
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Controls/Text/HighlightTextBoxTheme.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>

@@ -48,9 +48,13 @@
 					   Foreground="#FF00BCD4"/>
 		</Border>
 
+		<!--
+			The completion popup floats *above* the input (its bottom edge on the input's top edge) so it never covers what
+			is being typed; the view shifts it horizontally to the caret (see UserInputView.axaml.cs).
+		-->
 		<Popup x:Name="CompletionPopup"
 			   PlacementTarget="{Binding #InputTextBox}"
-			   Placement="BottomEdgeAlignedLeft"
+			   Placement="TopEdgeAlignedLeft"
 			   IsOpen="{Binding Completion.IsOpen}"
 			   IsLightDismissEnabled="False">
 			<local:InputCompletionPopup x:Name="CompletionList"

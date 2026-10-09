@@ -30,3 +30,4 @@ completion.defeated: Shadowed by another command; add a namespace to select it.
 completion.title.commands: Commands
 completion.arguments: Arguments
 completion.required: required
+completion.hint: ↑↓ select · Tab accept · Esc close

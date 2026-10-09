@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		The input-completion popup's palette. The popup is chrome of its own, so its colours live here rather than in
+		the popup's XAML: a theme can override any of them without touching the markup (the dialog host's look is the
+		reference - a very dark, slightly purple surface with a lighter frame).
+	-->
+
+	<SolidColorBrush x:Key="InputCompletionPopupBackgroundBrush" Color="#161628"/>
+	<SolidColorBrush x:Key="InputCompletionPopupBorderBrush" Color="#3A3A5E"/>
+
+	<!-- The row the accept would apply. -->
+	<SolidColorBrush x:Key="InputCompletionPopupSelectedBrush" Color="#336C5CE7"/>
+
+</ResourceDictionary>

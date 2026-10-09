@@ -1,8 +1,10 @@
 using System;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using Serilog;
 
 namespace LLMDesktopAssistant.LLM.MVVM;
@@ -18,6 +20,7 @@ public partial class UserInputView : UserControl
 		InputTextBox.CaretStateChanged += (_, _) => OnCaretChanged();
 		InputTextBox.PointerCaretStateChanged += (_, _) => (DataContext as UserInputViewModel)?.Completion.Close();
 		CompletionList.AcceptRequested += (_, _) => AcceptCompletion();
+		CompletionPopup.Opened += (_, _) => ScheduleCompletionPopupOffset();
 
 		DragDrop.SetAllowDrop(this, true);
 		AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
@@ -31,12 +34,40 @@ public partial class UserInputView : UserControl
 			return;
 
 		viewModel.OnCompletionCaretChanged(InputTextBox.CurrentCaretPosition);
+		ScheduleCompletionPopupOffset();
+	}
 
-		if (CompletionPopup.IsOpen && InputTextBox.GetCaretRect(InputTextBox) is { } rect)
-		{
-			CompletionPopup.HorizontalOffset = rect.X;
-			CompletionPopup.VerticalOffset = rect.Bottom;
-		}
+	/// <summary>
+	/// Re-anchors the popup to the caret on the next layout pass: the popup sits on the input's top edge (the placement
+	/// mode) and is shifted to the caret horizontally, which needs the popup's width — known only after it measured.
+	/// </summary>
+	private void ScheduleCompletionPopupOffset()
+		=> Dispatcher.UIThread.Post(UpdateCompletionPopupOffset, DispatcherPriority.Loaded);
+
+	private void UpdateCompletionPopupOffset()
+	{
+		if (!CompletionPopup.IsOpen || InputTextBox.GetCaretRect(InputTextBox) is not { } caret)
+			return;
+
+		CompletionPopup.VerticalOffset = 0;
+		CompletionPopup.HorizontalOffset = ClampToWindow(caret.X);
+	}
+
+	/// <summary>
+	/// Keeps the caret-anchored popup inside the window: it may not hang off either edge, however far right the caret is.
+	/// Offsets are relative to the input, so the input's own position in the window is taken into account.
+	/// </summary>
+	private double ClampToWindow(double offset)
+	{
+		if (TopLevel.GetTopLevel(this) is not { } topLevel || CompletionList.Bounds.Width <= 0)
+			return offset;
+
+		if (InputTextBox.TranslatePoint(new Point(0, 0), topLevel) is not { } origin)
+			return offset;
+
+		var leftmost = -origin.X;
+		var rightmost = topLevel.ClientSize.Width - origin.X - CompletionList.Bounds.Width;
+		return Math.Clamp(offset, leftmost, Math.Max(leftmost, rightmost));
 	}
 
 	private void AcceptCompletion()

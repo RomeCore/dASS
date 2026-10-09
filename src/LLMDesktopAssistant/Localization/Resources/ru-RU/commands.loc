@@ -30,3 +30,4 @@ completion.defeated: Перекрыта другой командой; уточ�
 completion.title.commands: Команды
 completion.arguments: Аргументы
 completion.required: обязательно
+completion.hint: ↑↓ выбрать · Tab принять · Esc закрыть

@@ -13,7 +13,7 @@
 	<UserControl.Styles>
 		<!-- The picker is a plain stack, so the selected row carries its own flag. -->
 		<Style Selector="Border.selected">
-			<Setter Property="Background" Value="#336C5CE7"/>
+			<Setter Property="Background" Value="{DynamicResource InputCompletionPopupSelectedBrush}"/>
 		</Style>
 
 		<!-- The argument the caret currently sits in. -->
@@ -23,11 +23,17 @@
 		</Style>
 	</UserControl.Styles>
 
-	<Border Background="{DynamicResource SolidBackgroundFillColorSecondaryBrush}"
-			BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+	<!--
+		The popup's chrome: a very dark, slightly purple surface with a lighter frame and a soft shadow, so it reads as
+		something floating above the input rather than as another panel. The colours are theme resources (see
+		Styles/Theme/InputCompletionTheme.axaml) and the placement above the input is the view's job (UserInputView).
+	-->
+	<Border Background="{DynamicResource InputCompletionPopupBackgroundBrush}"
+			BorderBrush="{DynamicResource InputCompletionPopupBorderBrush}"
 			BorderThickness="1"
-			CornerRadius="6"
-			Padding="2"
+			CornerRadius="10"
+			BoxShadow="0 8 24 #4c000000"
+			Padding="4"
 			MinWidth="280"
 			MaxWidth="520">
 		<StackPanel>
@@ -89,7 +95,7 @@
 
 			<!-- The picker: the continuations an accept applies. -->
 			<ScrollViewer x:Name="PickerList"
-						  MaxHeight="220"
+						  MaxHeight="240"
 						  VerticalScrollBarVisibility="Auto"
 						  Margin="0,2,0,0">
 				<ItemsControl ItemsSource="{Binding Rows}">
@@ -129,6 +135,15 @@
 			<TextBlock Text="{loc:Loc command.completion.no_matches}"
 					   IsVisible="{Binding ShowNoMatches}"
 					   Margin="8,6"/>
+
+			<!-- The keys the popup owns. -->
+			<Border Height="1"
+					Background="{DynamicResource InputCompletionPopupBorderBrush}"
+					Opacity="0.6"
+					Margin="4,4,4,0"/>
+			<TextBlock Text="{loc:Loc command.completion.hint}"
+					   FontSize="11" Opacity="0.55"
+					   Margin="8,4,8,2"/>
 
 		</StackPanel>
 	</Border>
