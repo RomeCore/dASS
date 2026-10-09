@@ -17,7 +17,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// its quotes; everything else is positional; positionals precede the first key; with
 	/// <see cref="SlashCommandArgumentSchema.HasRestPositional"/> the declared positionals are parsed as usual and the
 	/// surplus is not split further — declared <c>key=…</c> segments are still extracted and that surplus is delivered
-	/// verbatim (quotes kept) as <see cref="SlashCommandParsedArguments.RestPositionalArguments"/>. Independently of the
+	/// verbatim (quotes kept) as <see cref="SlashCommandParsedArguments.RestPositional"/>, a raw argument that carries
+	/// the schema's rest slot and the surplus span. Independently of the
 	/// schema, <see cref="SlashCommandParsedArguments.RawPositionalArguments"/> always carries every positional argument
 	/// — the whole region before the first key, verbatim.
 	/// </para>
@@ -300,7 +301,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 			// Every positional argument, verbatim: the whole region before the first key, quotes and spacing kept. The
 			// rest positional is a slice of that region — the surplus beyond the declared positionals.
 			var rawPositionals = prefix.TrimEnd();
-			var restPositionals = schema.HasRestPositional ? prefix[restStart..].TrimEnd() : string.Empty;
+			var restPositional = BuildRestPositional(schema, prefix, restStart);
 
 			if (error is not null)
 			{
@@ -308,7 +309,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 				{
 					RawArguments = text,
 					RawPositionalArguments = rawPositionals,
-					RestPositionalArguments = restPositionals,
+					RestPositional = restPositional,
 					Positionals = [],
 					Keyed = [],
 					ErrorPosition = errorPosition,
@@ -321,11 +322,44 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 			{
 				RawArguments = text,
 				RawPositionalArguments = rawPositionals,
-				RestPositionalArguments = restPositionals,
+				RestPositional = restPositional,
 				Positionals = positionalsBuilder.ToImmutable(),
 				Keyed = keyedBuilder.ToImmutable()
 			};
 			return true;
+		}
+
+		/// <summary>
+		/// Builds the rest positional's raw argument out of the surplus region, or returns <see langword="null"/> when the
+		/// schema declares no rest positional or the surplus is empty. The surplus is taken verbatim — quotes kept, never
+		/// checked for a closing one — and its span is the region from the first surplus token to the end of the positional
+		/// text, trailing whitespace excluded.
+		/// </summary>
+		private static SlashCommandRawArgument? BuildRestPositional(SlashCommandArgumentSchema schema, string prefix,
+			int restStart)
+		{
+			if (schema.RestPositional is not { } slot)
+				return null;
+
+			var restEnd = prefix.Length;
+			while (restEnd > restStart && char.IsWhiteSpace(prefix[restEnd - 1]))
+				restEnd--;
+
+			if (restEnd <= restStart)
+				return null;
+
+			var raw = prefix[restStart..restEnd];
+			return new SlashCommandRawArgument
+			{
+				Definition = slot,
+				Raw = raw,
+				Unescaped = raw,
+				WasQuoted = false,
+				Position = restStart,
+				Length = restEnd - restStart,
+				ValuePosition = restStart,
+				KeyLength = 0
+			};
 		}
 
 		/// <summary>

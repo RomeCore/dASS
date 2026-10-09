@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			{
 				RawArguments = rawArguments,
 				RawPositionalArguments = rawPositionalArguments,
-				RestPositionalArguments = restPositionalArguments,
+				RestPositional = restPositionalArguments.Length == 0 ? null : Raw(restPositionalArguments),
 				Positionals = positionals is null ? [] : [.. positionals],
 				Keyed = keyed is null ? [] : ImmutableDictionary.CreateRange(keyed),
 				ErrorPosition = errorPosition,
@@ -340,7 +340,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void RestPositional_IsCarriedThrough()
 		{
-			var schema = new SlashCommandArgumentSchema { HasRestPositional = true };
+			var schema = new SlashCommandArgumentSchema { RestPositional = Argument() };
 
 			var result = SlashCommandArgumentBinder.Bind(schema, RawResult(rawPositionalArguments: "hello world"));
 
@@ -351,7 +351,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void RawAndRestPositionalArguments_AreCarriedThroughSeparately()
 		{
-			var schema = new SlashCommandArgumentSchema { HasRestPositional = true };
+			var schema = new SlashCommandArgumentSchema { RestPositional = Argument() };
 
 			var result = SlashCommandArgumentBinder.Bind(schema,
 				RawResult(rawPositionalArguments: "one two", restPositionalArguments: "two"));

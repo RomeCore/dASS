@@ -24,7 +24,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// <inheritdoc/>
 		public SlashCommandArgumentSchema? ArgumentSchema { get; } = new()
 		{
-			HasRestPositional = true
+			RestPositional = new SlashCommandArgument
+			{
+				Name = Locale.GetKey("command.argument.skill.arguments"),
+				Description = Locale.GetKey("command.argument.skill.arguments.description")
+			}
 		};
 
 		/// <inheritdoc/>

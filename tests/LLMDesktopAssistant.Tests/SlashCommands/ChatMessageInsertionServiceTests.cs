@@ -86,6 +86,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Executor = executor
 		};
 
+		private static SlashCommandArgumentSchema RestSchema() => new()
+		{
+			RestPositional = new SlashCommandArgument { Name = Locale.GetKey("test.argument.rest") }
+		};
+
 		[Fact]
 		public void CanInsertUserInput_APlainMessage_IsAccepted_AndHasNoSideEffect()
 		{
@@ -131,7 +136,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void CanInsertUserInput_AValidCommand_IsAccepted()
 		{
 			using var harness = new Harness();
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
 			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true).Success);
 		}
@@ -175,7 +180,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void CanInsertUserInput_AValidEditCommand_IsAccepted()
 		{
 			using var harness = new Harness();
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
 			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true, editIndex: 0).Success);
 		}
@@ -216,7 +221,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			var executor = new RecordingExecutor()
 			{
-				ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true }
+				ArgumentSchema = RestSchema()
 			};
 			harness.Resolver.Add(Command("grilling", executor));
 
@@ -306,7 +311,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public async Task Insert_AValidCommand_RecordsAnExecutedFingerprint()
 		{
 			using var harness = new Harness();
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
 			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
 

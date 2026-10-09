@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		private static SlashCommandArgumentSchema WaitSchema() => new()
 		{
-			HasRestPositional = true,
+			RestPositional = new SlashCommandArgument { Name = Locale.GetKey("command.argument.rest") },
 			Keyed = new Dictionary<string, SlashCommandArgument>
 			{
 				["wait"] = new()
@@ -164,10 +164,15 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void TryCompute_TheRestPositional_HasNoSlot_SoReturnsFalse()
+		public void TryCompute_TheRestPositional_ReturnsAStateOnlyResult()
 		{
-			// The whole remainder is the rest positional (no schema slot) — nothing to complete.
-			Assert.False(Source(WebSearcher).TryCompute(new InputCompletionRequest("/agent:web-searcher x", 21), out _));
+			// The whole remainder is the rest positional: a real slot with no format provider — nothing to complete, but
+			// the caret inside it is accounted for.
+			var ok = Source(WebSearcher).TryCompute(new InputCompletionRequest("/agent:web-searcher x", 21), out var result);
+
+			Assert.True(ok);
+			Assert.Empty(result!.Items);
+			Assert.NotNull(result.State);
 		}
 
 		[Fact]

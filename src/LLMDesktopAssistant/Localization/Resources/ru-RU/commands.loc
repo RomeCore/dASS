@@ -12,6 +12,10 @@ error.unknown: Неизвестная команда '{0}'.
 // Имена аргументов (command.argument.*).
 argument.wait: wait
 argument.wait.description: Ждать ли завершения субагента перед продолжением.
+argument.skill.arguments: аргументы
+argument.skill.arguments.description: Аргументы навыка; подставляются в тело навыка как ARGUMENTS.
+argument.agent.message: сообщение
+argument.agent.message.description: Сообщение, с которым запускается субагент.
 
 // Команда навыка (command.skill.*).
 skill.used: Использован навык '{0}'.

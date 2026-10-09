@@ -23,11 +23,17 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required string RawPositionalArguments { get; init; }
 
 		/// <summary>
-		/// The rest positional's text: the slice of <see cref="RawPositionalArguments"/> that lies beyond the declared
-		/// positionals, delivered verbatim (quotes kept). Empty unless the schema declares
-		/// <see cref="SlashCommandArgumentSchema.HasRestPositional"/>.
+		/// The rest positional's raw argument: the slice of <see cref="RawPositionalArguments"/> that lies beyond the
+		/// declared positionals, delivered verbatim (quotes kept) and carrying its span. <see langword="null"/> when the
+		/// schema declares no rest positional or when nothing was written beyond the declared positionals.
 		/// </summary>
-		public required string RestPositionalArguments { get; init; }
+		public SlashCommandRawArgument? RestPositional { get; init; }
+
+		/// <summary>
+		/// The rest positional's verbatim text, or an empty string when there is none — see
+		/// <see cref="RestPositional"/>.
+		/// </summary>
+		public string RestPositionalArguments => RestPositional?.Raw ?? string.Empty;
 
 		/// <summary>
 		/// The positional arguments, in the order they were written.

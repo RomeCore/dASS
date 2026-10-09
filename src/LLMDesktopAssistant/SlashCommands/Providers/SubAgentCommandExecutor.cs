@@ -33,7 +33,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// <inheritdoc/>
 		public SlashCommandArgumentSchema? ArgumentSchema { get; } = new()
 		{
-			HasRestPositional = true,
+			RestPositional = new SlashCommandArgument
+			{
+				Name = Locale.GetKey("command.argument.agent.message"),
+				Description = Locale.GetKey("command.argument.agent.message.description")
+			},
 			Keyed = new Dictionary<string, SlashCommandArgument>
 			{
 				[SubAgentCommandExecutor.WaitArgumentKey] = new SlashCommandArgument

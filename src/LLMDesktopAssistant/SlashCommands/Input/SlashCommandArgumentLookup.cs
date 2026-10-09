@@ -17,7 +17,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// <summary>
 		/// The argument whose value region contains <paramref name="caretOffset"/> (a 0-based offset into
 		/// <paramref name="rawArguments"/>), or <see langword="null"/> when the caret is between arguments (or on a
-		/// keyed argument's key, which v1 does not complete).
+		/// keyed argument's key, which v1 does not complete). The rest positional counts as an argument: its region is
+		/// the whole surplus, so a caret anywhere in the free text resolves to it.
 		/// </summary>
 		public static SlashCommandArgumentTarget? Find(SlashCommandParsedArguments parsed, string rawArguments,
 			int caretOffset)
@@ -36,6 +37,11 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				if (TryTarget(argument, rawArguments, caretOffset, out var target))
 					return target;
 			}
+
+			// The rest positional is asked last: it spans the whole surplus region, so a declared or keyed argument that
+			// contains the caret has already won by the time it is reached.
+			if (parsed.RestPositional is { } rest && TryTarget(rest, rawArguments, caretOffset, out var restTarget))
+				return restTarget;
 
 			return null;
 		}

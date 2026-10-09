@@ -22,7 +22,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			return new SlashCommandArgumentSchema
 			{
-				HasRestPositional = restPositional,
+				RestPositional = restPositional
+					? new SlashCommandArgument { Name = Locale.GetKey("test.argument.rest") }
+					: null,
 				Positionals = positionalArguments.ToImmutable(),
 				Keyed = keyed.ToImmutable()
 			};
@@ -118,6 +120,16 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal(new[] { "one" }, result.Positionals.Select(p => p.Unescaped));
 			Assert.Equal("one two three", result.RawPositionalArguments);
 			Assert.Equal("two three", result.RestPositionalArguments);
+
+			// The rest carries its schema slot and its span, so a caret can be located inside it.
+			Assert.NotNull(result.RestPositional);
+			var rest = result.RestPositional!;
+			Assert.Equal("two three", rest.Raw);
+			Assert.Equal(4, rest.Position);
+			Assert.Equal(9, rest.Length);
+			Assert.Equal(4, rest.ValuePosition);
+			Assert.False(rest.WasQuoted);
+			Assert.Equal("test.argument.rest", rest.Definition!.Name.Key);
 		}
 
 		[Fact]
@@ -139,6 +151,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal(2, result.Positionals.Count);
 			Assert.Equal("one two", result.RawPositionalArguments);
 			Assert.Equal(string.Empty, result.RestPositionalArguments);
+			Assert.Null(result.RestPositional);
 		}
 
 		[Fact]

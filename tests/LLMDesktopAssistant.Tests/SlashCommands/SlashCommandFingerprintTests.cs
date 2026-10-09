@@ -31,7 +31,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			{
 				Positionals = [new SlashCommandArgument { Name = Locale.GetKey("test.arg") }],
 				Keyed = keyed.ToImmutable(),
-				HasRestPositional = true
+				RestPositional = new SlashCommandArgument { Name = Locale.GetKey("test.arg.rest") }
 			};
 		}
 

@@ -14,6 +14,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	{
 		private static readonly SlashCommandArgument Positional = new() { Name = Locale.GetKey("test.p") };
 		private static readonly SlashCommandArgument Keyed = new() { Name = Locale.GetKey("test.k") };
+		private static readonly SlashCommandArgument Rest = new() { Name = Locale.GetKey("test.r") };
 
 		private static SlashCommandArgumentSchema Schema() => new()
 		{
@@ -21,10 +22,21 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Keyed = new Dictionary<string, SlashCommandArgument> { ["key"] = Keyed }.ToImmutableDictionary()
 		};
 
+		private static SlashCommandArgumentSchema RestSchema() => new()
+		{
+			Positionals = [Positional],
+			RestPositional = Rest
+		};
+
 		// "hello key=value": the positional is [0,5), the keyed argument is [6,15) with its value at [10,15).
 		private static SlashCommandArgumentTarget? Find(int caretOffset)
 			=> SlashCommandArgumentLookup.Find(
 				SlashCommandArgumentParser.Parse(Schema(), "hello key=value"), "hello key=value", caretOffset);
+
+		// "hello two three": the declared positional is [0,5), the rest positional is [6,15).
+		private static SlashCommandArgumentTarget? FindRest(int caretOffset)
+			=> SlashCommandArgumentLookup.Find(
+				SlashCommandArgumentParser.Parse(RestSchema(), "hello two three"), "hello two three", caretOffset);
 
 		[Fact]
 		public void Find_InsideAPositional_ReturnsItsSlot_AndThePrefix()
@@ -48,6 +60,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal(10, target.Value.ValueStart);
 			Assert.Equal(5, target.Value.ValueLength);
 			Assert.Equal("value", target.Value.Prefix);
+		}
+
+		[Fact]
+		public void Find_InsideTheRestPositional_ReturnsItsSlot_AndTheTypedPrefix()
+		{
+			var target = FindRest(9);
+
+			Assert.NotNull(target);
+			Assert.Same(Rest, target!.Value.Slot);
+			Assert.Equal(6, target.Value.ValueStart);
+			Assert.Equal(9, target.Value.ValueLength);
+			Assert.Equal("two", target.Value.Prefix);
 		}
 
 		[Fact]
