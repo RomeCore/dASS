@@ -86,6 +86,21 @@ public class HighlightTextBox : TextBox
 	/// </summary>
 	public Rect? GetCaretRect(Visual target) => _presenter?.GetCaretRectIn(target);
 
+	/// <summary>
+	/// The current caret position. Reads the presenter (the caret's real owner) and falls back to the base property.
+	/// </summary>
+	public int CurrentCaretPosition => _presenter?.CaretIndex ?? CaretIndex;
+
+	/// <summary>
+	/// Moves the caret. Sets both the base property and the presenter, which owns the caret.
+	/// </summary>
+	public void SetCaretPosition(int index)
+	{
+		CaretIndex = index;
+		if (_presenter is { } presenter)
+			presenter.CaretIndex = index;
+	}
+
 	private void OnPresenterPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
 	{
 		if (e.Property == TextPresenter.CaretIndexProperty
@@ -147,8 +162,7 @@ public class HighlightTextBox : TextBox
 			return false;
 
 		Text = accepted.Text;
-		CaretIndex = accepted.Caret;
-		presenter.CaretIndex = accepted.Caret;
+		SetCaretPosition(accepted.Caret);
 		return true;
 	}
 

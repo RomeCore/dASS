@@ -1,0 +1,135 @@
+using System;
+using System.Linq;
+using Avalonia.Input;
+using LLMDesktopAssistant.InputCompletion;
+using LLMDesktopAssistant.LLM.MVVM;
+
+namespace LLMDesktopAssistant.Tests.InputCompletion
+{
+	/// <summary>
+	/// The completion view model: the open/close state, the selection, the keys it owns and the accept action.
+	/// </summary>
+	public class InputCompletionViewModelTests
+	{
+		private sealed class FakeService(Func<InputCompletionRequest, InputCompletionResult?> compute)
+			: IInputCompletionService
+		{
+			public InputCompletionResult? Compute(InputCompletionRequest request) => compute(request);
+		}
+
+		private static InputCompletionResult Result(InputCompletionSpan span, params string[] insertTexts) => new()
+		{
+			Span = span,
+			State = new InputCompletionState { Kind = InputCompletionKind.Command },
+			Items = [.. insertTexts.Select(text => new InputCompletionItem { InsertText = text })]
+		};
+
+		private static InputCompletionViewModel Vm(InputCompletionResult? result) => new(new FakeService(_ => result));
+
+		[Fact]
+		public void Update_WithNoCompletion_KeepsThePopupClosed()
+		{
+			var vm = Vm(null);
+
+			vm.Update("/zzz", 4);
+
+			Assert.False(vm.IsOpen);
+			Assert.Null(vm.Result);
+		}
+
+		[Fact]
+		public void Update_WithACompletion_OpensThePopup()
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
+
+			vm.Update("/gr", 3);
+
+			Assert.True(vm.IsOpen);
+			Assert.Equal(2, vm.Items.Count);
+			Assert.NotNull(vm.State);
+			Assert.True(vm.CanAccept);
+		}
+
+		[Fact]
+		public void Update_AStateOnlyResult_IsOpenWithoutItems()
+		{
+			var vm = Vm(new InputCompletionResult
+			{
+				Span = new InputCompletionSpan(0, 3),
+				State = new InputCompletionState { Kind = InputCompletionKind.Command }
+			});
+
+			vm.Update("/zzz", 4);
+
+			Assert.True(vm.IsOpen);
+			Assert.True(vm.IsStateOnly);
+			Assert.False(vm.CanAccept);
+		}
+
+		[Theory]
+		[InlineData(Key.Down, 1)]
+		[InlineData(Key.Up, 2)]
+		public void TryHandleKey_MovesTheSelection_AndWraps(Key key, int expected)
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a", "b", "c"));
+			vm.Update("/gr", 3);
+
+			Assert.True(vm.TryHandleKey(key));
+
+			Assert.Equal(expected, vm.SelectedIndex);
+		}
+
+		[Fact]
+		public void TryHandleKey_Escape_Closes()
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a"));
+			vm.Update("/gr", 3);
+
+			Assert.True(vm.TryHandleKey(Key.Escape));
+			Assert.False(vm.IsOpen);
+		}
+
+		[Fact]
+		public void TryHandleKey_WhenClosed_ReturnsFalse()
+		{
+			var vm = Vm(null);
+			vm.Update("hello", 5);
+
+			Assert.False(vm.TryHandleKey(Key.Down));
+		}
+
+		[Fact]
+		public void Accept_ReplacesTheSpan_AndAppendsATrailingSpace()
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling"));
+			vm.Update("/gr", 3);
+
+			var accepted = vm.Accept();
+
+			Assert.NotNull(accepted);
+			Assert.Equal("/skill:grilling ", accepted!.Value.Text);
+			Assert.Equal(16, accepted.Value.Caret);
+		}
+
+		[Fact]
+		public void Accept_UsesTheSelectedItem()
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "/skill:grilling", "/agent:grilling"));
+			vm.Update("/gr", 3);
+			vm.SelectedIndex = 1;
+
+			var accepted = vm.Accept();
+
+			Assert.Equal("/agent:grilling ", accepted!.Value.Text);
+		}
+
+		[Fact]
+		public void Accept_WithNoItems_ReturnsNull()
+		{
+			var vm = Vm(new InputCompletionResult { Span = new InputCompletionSpan(0, 3) });
+			vm.Update("/gr", 3);
+
+			Assert.Null(vm.Accept());
+		}
+	}
+}

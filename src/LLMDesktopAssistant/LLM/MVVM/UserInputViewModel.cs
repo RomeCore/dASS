@@ -1,14 +1,20 @@
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Controls.Dialogs;
+using LLMDesktopAssistant.Controls.Text;
+using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.MVVM.Attachments;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.SlashCommands;
+using LLMDesktopAssistant.SlashCommands.Input;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using Serilog;
@@ -198,10 +204,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					{
 						_editText = value;
 						RaisePropertyChanged(nameof(Text));
+						Completion.Update(value, _completionCaretIndex);
 					}
 				}
 				else if (UserInputState.Text != value)
+				{
 					UserInputState.Text = value;
+					Completion.Update(value, _completionCaretIndex);
+				}
 			}
 		}
 
@@ -216,6 +226,27 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		}
 
 		private readonly IChatExecutionTokenService _executionTokens;
+
+		private int _completionCaretIndex;
+
+		/// <summary>
+		/// The input completion state (popup + selection) for the current text and caret.
+		/// </summary>
+		public InputCompletionViewModel Completion { get; }
+
+		/// <summary>
+		/// The renderer for the input: the slash-command palette and the ghost preview.
+		/// </summary>
+		public IHighlightTransformProvider CompletionTransformProvider { get; }
+
+		/// <summary>
+		/// Recomputes the completion for the caret the input control reported.
+		/// </summary>
+		public void OnCompletionCaretChanged(int caretIndex)
+		{
+			_completionCaretIndex = caretIndex;
+			Completion.Update(Text, caretIndex);
+		}
 
 		/// <summary>
 		/// Command to send a message (without generation).
@@ -242,6 +273,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			Chat = chatVM.Chat;
 			ChatViewModel = chatVM;
 			_executionTokens = Chat.Services.GetRequiredService<IChatExecutionTokenService>();
+
+			Completion = new InputCompletionViewModel(Chat.Services.GetRequiredService<IInputCompletionService>());
+			var commandCollector = Chat.Services.GetRequiredService<IAddonSetCollector<SlashCommandInfo>>();
+			CompletionTransformProvider = new SlashCommandHighlightTransformProvider(
+				() => commandCollector.GetAddonsForChat().ToList(),
+				() => _completionCaretIndex,
+				() => Completion.Result);
 
 			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
 			_draftData.Parts.IsEditing = true;
@@ -329,6 +367,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			EndEditing();
 			UserInputState.Text = string.Empty;
 			UserInputState.Parts.Clear();
+			Completion.Close();
 		}
 
 		/// <summary>

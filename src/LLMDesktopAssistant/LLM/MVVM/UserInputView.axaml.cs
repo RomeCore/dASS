@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
@@ -14,11 +15,38 @@ public partial class UserInputView : UserControl
 
 		InputTextBox.PastingFromClipboard += InputTextBox_PastingFromClipboard;
 		InputTextBox.AddHandler(TextBox.KeyDownEvent, InputTextBox_KeyDown, RoutingStrategies.Tunnel);
+		InputTextBox.CaretStateChanged += (_, _) => OnCaretChanged();
+		InputTextBox.PointerCaretStateChanged += (_, _) => (DataContext as UserInputViewModel)?.Completion.Close();
+		CompletionList.AcceptRequested += (_, _) => AcceptCompletion();
 
 		DragDrop.SetAllowDrop(this, true);
 		AddHandler(DragDrop.DragEnterEvent, OnDragEnter);
 		AddHandler(DragDrop.DragLeaveEvent, OnDragLeave);
 		AddHandler(DragDrop.DropEvent, OnDrop);
+	}
+
+	private void OnCaretChanged()
+	{
+		if (DataContext is not UserInputViewModel viewModel)
+			return;
+
+		viewModel.OnCompletionCaretChanged(InputTextBox.CurrentCaretPosition);
+
+		if (CompletionPopup.IsOpen && InputTextBox.GetCaretRect(InputTextBox) is { } rect)
+		{
+			CompletionPopup.HorizontalOffset = rect.X;
+			CompletionPopup.VerticalOffset = rect.Bottom;
+		}
+	}
+
+	private void AcceptCompletion()
+	{
+		if (DataContext is not UserInputViewModel viewModel || viewModel.Completion.Accept() is not { } accepted)
+			return;
+
+		InputTextBox.Text = accepted.Text;
+		InputTextBox.SetCaretPosition(accepted.Caret);
+		viewModel.Completion.Close();
 	}
 
 	private async void InputTextBox_PastingFromClipboard(object? sender, RoutedEventArgs e)
@@ -56,20 +84,33 @@ public partial class UserInputView : UserControl
 
 	private void InputTextBox_KeyDown(object? sender, KeyEventArgs e)
 	{
+		if (DataContext is not UserInputViewModel viewModel)
+			return;
+
+		if (e.KeyModifiers != KeyModifiers.None)
+			return;
+
+		// Enter accepts the completion when the popup is open; otherwise it sends.
+		if (e.Key is Key.Enter or Key.Tab && viewModel.Completion.CanAccept)
+		{
+			AcceptCompletion();
+			e.Handled = true;
+			return;
+		}
+
 		if (e.Key == Key.Enter)
 		{
-			if (DataContext is UserInputViewModel viewModel)
-			{
-				if (e.KeyModifiers == KeyModifiers.None)
-				{
-					if (viewModel.IsGenerating)
-						viewModel.CancelGenerationCommand.Execute(null);
-					else if (!viewModel.IsEmpty)
-						viewModel.SendCurrentUserInputAsync(generate: true);
-					e.Handled = true;
-				}
-			}
+			if (viewModel.IsGenerating)
+				viewModel.CancelGenerationCommand.Execute(null);
+			else if (!viewModel.IsEmpty)
+				viewModel.SendCurrentUserInputAsync(generate: true);
+			e.Handled = true;
+			return;
 		}
+
+		// Up/Down/Escape are the popup's keys; Right is handled by the control (inline completion).
+		if (viewModel.Completion.TryHandleKey(e.Key))
+			e.Handled = true;
 	}
 
 	private void OnDragEnter(object? sender, DragEventArgs e)

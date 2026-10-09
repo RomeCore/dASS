@@ -129,11 +129,18 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				}));
 			}
 
+			// The ghost previews the top completion when it extends the typed prefix (e.g. "wait=tr" → "ue"), so the
+			// input can accept it character by character.
+			var ghost = items.Count > 0 && items[0].InsertText.StartsWith(target.Prefix, StringComparison.OrdinalIgnoreCase)
+				? items[0].InsertText[target.Prefix.Length..]
+				: null;
+
 			result = new InputCompletionResult
 			{
 				Span = new InputCompletionSpan(analysis.ArgumentSpan.Start + target.ValueStart, target.ValueLength),
 				State = new InputCompletionState { Kind = InputCompletionKind.Argument },
-				Items = items
+				Items = items,
+				GhostText = ghost
 			};
 			return true;
 		}

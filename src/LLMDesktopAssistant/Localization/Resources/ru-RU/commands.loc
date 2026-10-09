@@ -19,3 +19,7 @@ skill.used: Использован навык '{0}'.
 // Команда агента (command.agent.*) и её ошибки.
 error.sub_agent_not_found: Субагент '{0}' не найден.
 agent.result: Результат субагента '{0}'
+
+// Автодополнение ввода (command.completion.*).
+completion.no_matches: Нет подходящих команд.
+completion.defeated: Перекрыта другой командой; уточните пространством имён.

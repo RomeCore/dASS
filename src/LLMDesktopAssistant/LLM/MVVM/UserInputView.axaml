@@ -5,6 +5,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+			 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
 			 xmlns:sett="using:LLMDesktopAssistant.Settings"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 mc:Ignorable="d" d:DesignWidth="800"
@@ -18,9 +19,10 @@
 		<ContentControl Grid.Row="0"
 						Content="{Binding AdditionalData}"/>
 
-		<TextBox Grid.Row="1"
+		<txt:HighlightTextBox Grid.Row="1"
 				 x:Name="InputTextBox"
 				 Text="{Binding Text, Mode=TwoWay}"
+				 HighlightTransformProvider="{Binding CompletionTransformProvider}"
 				 AcceptsReturn="True"
 				 TextWrapping="Wrap"
 				 MaxHeight="150"
@@ -45,6 +47,15 @@
 					   FontSize="18"
 					   Foreground="#FF00BCD4"/>
 		</Border>
+
+		<Popup x:Name="CompletionPopup"
+			   PlacementTarget="{Binding #InputTextBox}"
+			   Placement="BottomEdgeAlignedLeft"
+			   IsOpen="{Binding Completion.IsOpen}"
+			   IsLightDismissEnabled="False">
+			<local:InputCompletionPopup x:Name="CompletionList"
+										DataContext="{Binding Completion}"/>
+		</Popup>
 
 	</Grid>
 
