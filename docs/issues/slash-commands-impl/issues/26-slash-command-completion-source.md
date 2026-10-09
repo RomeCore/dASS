@@ -1,6 +1,6 @@
 # 26: `SlashCommandCompletionSource`
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 25, 27
 
@@ -25,18 +25,39 @@ itself is registered as a chat-scoped `IInputCompletionSource`.
 
 ## Acceptance criteria
 
-- [ ] `/gr`, `/skill:`, `/matt:gr` produce the expected candidates; a bare-name defeated command is `IsDefeated` and
+- [x] `/gr`, `/skill:`, `/matt:gr` produce the expected candidates; a bare-name defeated command is `IsDefeated` and
       its `InsertText` is qualified.
-- [ ] `InsertText` is `/` + `CanonicalToken`; `Span` covers the typed token.
-- [ ] In argument mode the completions come from the slot's `ISlashCommandArgumentFormatProvider.Complete`; a slot with
+- [x] `InsertText` is `/` + `CanonicalToken`; `Span` covers the typed token.
+- [x] In argument mode the completions come from the slot's `ISlashCommandArgumentFormatProvider.Complete`; a slot with
       no provider (or `CanComplete == false`) yields no items but a non-null state.
-- [ ] Registering another format provider with `CanComplete` makes it complete without changing this ticket's code.
-- [ ] Pure matcher/lookup unit tests (boundary + negative); filtered slash-commands suite green.
-- [ ] Main builds.
+- [x] Registering another format provider with `CanComplete` makes it complete without changing this ticket's code.
+- [x] Pure matcher/lookup unit tests (boundary + negative); filtered slash-commands suite green.
+- [x] Main builds.
 
 ## Answer
 
-<!-- appended on resolution -->
+`SlashCommandCompletionSource` — a chat-scoped `IInputCompletionSource` (`Priority = 100`) over
+`IAddonSetCollector<SlashCommandInfo>.GetAddonsForChat()`:
+
+- **Token state** (`analysis.IsCaretInToken`): `SlashCommandPrefixMatcher.Match` over the typed token, ordered by
+  `Order` then name (then key), each item `InsertText = "/" + CanonicalToken`, `Description = DescriptionKey`,
+  `Kind = Command`, `IsDefeated` for the same-named losers; `Span = analysis.TokenSpan`; `State = Command`. An empty
+  match set still returns a result (the popup shows "no matches").
+- **Argument state** (`analysis.IsCaretInArguments`, needs a resolved command): the new pure
+  **`SlashCommandArgumentLookup`** locates the argument under the caret in `SlashCommandArgumentParser.Parse(...)`'s
+  result (its value region + the prefix typed before the caret) and, when the slot's `Format` declares `CanComplete`,
+  delegates to `ISlashCommandArgumentFormatProvider.Complete`. `Span` is the value region. No `wait`-specific code —
+  adding a provider with `CanComplete` makes it complete without touching this class.
+- Returns `false` when the caret is not in the token/argument region, when there are no commands, when the text is not
+  a command, when the resolved command has no completable argument, or when the caret sits in the rest positional / on
+  a key (neither declares a completable slot).
+
+**Ghost:** `GhostText` is left `null` here. The v1 commands declare no *required* argument (skills and sub-agents
+declare only a rest positional), so there is no required-argument hint to produce; the token inline-completion ghost's
+placement and acceptance are the control's (tickets 28/29). The renderer already draws `GhostText` and is covered by
+its own tests.
+
+Tests: source **11**, lookup **4** (15 new; 64 green in the area). Main builds.
 
 ## Comments
 

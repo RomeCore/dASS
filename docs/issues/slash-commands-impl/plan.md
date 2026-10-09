@@ -75,7 +75,7 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
 - [x] [27 — `SlashCommandInputAnalyzer` + highlight provider + theme brushes](./issues/27-input-analyzer-and-highlight.md)
       — the shared pure input analyzer and the real highlighting for the chat input (palette + ghost renderer + theme
       brushes; the debug page runs on it).
-- [ ] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
+- [x] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
       defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
 - [ ] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
       key hook, mid-string ghost, `→` char-accept, reset on pointer caret moves.
