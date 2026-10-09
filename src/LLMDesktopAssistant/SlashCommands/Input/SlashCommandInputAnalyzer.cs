@@ -28,6 +28,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var slashStart = SkipWhitespace(text, 0);
 			var tokenEnd = slashStart + 1 + token.Length;
 			var argumentStart = SkipWhitespace(text, tokenEnd);
+			var (state, command) = Resolve(token, commands);
 
 			return new SlashCommandInputAnalysis
 			{
@@ -35,30 +36,31 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				Token = token,
 				TokenSpan = new InputCompletionSpan(slashStart, tokenEnd - slashStart),
 				ArgumentSpan = new InputCompletionSpan(argumentStart, text.Length - argumentStart),
-				ResolutionState = Resolve(token, commands),
+				ResolutionState = state,
+				Command = command,
 				IsCaretInToken = caretIndex >= slashStart && caretIndex <= tokenEnd,
 				IsCaretInArguments = caretIndex > tokenEnd
 			};
 		}
 
-		private static SlashCommandInputResolutionState Resolve(string token, IReadOnlyList<SlashCommandInfo> commands)
+		private static (SlashCommandInputResolutionState State, SlashCommandInfo? Command) Resolve(
+			string token, IReadOnlyList<SlashCommandInfo> commands)
 		{
 			if (token.Length == 0)
-				return SlashCommandInputResolutionState.Partial;
+				return (SlashCommandInputResolutionState.Partial, null);
 
 			var candidates = SlashCommandMatcher.Match(commands, SlashCommandMatcher.ParseToken(token));
 			if (candidates.Count > 0)
 			{
 				var winner = candidates[0].Command;
 				var wonOthers = candidates.Count > 1 || winner.Overrides.Count > 0;
-				return wonOthers
-					? SlashCommandInputResolutionState.WonOthers
-					: SlashCommandInputResolutionState.Known;
+				return (wonOthers ? SlashCommandInputResolutionState.WonOthers
+					: SlashCommandInputResolutionState.Known, winner);
 			}
 
 			return SlashCommandPrefixMatcher.Match(commands, token).Count > 0
-				? SlashCommandInputResolutionState.Partial
-				: SlashCommandInputResolutionState.Unknown;
+				? (SlashCommandInputResolutionState.Partial, null)
+				: (SlashCommandInputResolutionState.Unknown, null);
 		}
 
 		private static int SkipWhitespace(string text, int index)

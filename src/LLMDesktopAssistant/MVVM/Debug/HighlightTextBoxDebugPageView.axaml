@@ -34,9 +34,6 @@
 				<CheckBox Content="{loc:Loc debug.highlight_textbox.commands}"
 						  IsChecked="{Binding EnableCommandHighlight}"/>
 
-				<CheckBox Content="{loc:Loc debug.highlight_textbox.transform}"
-						  IsChecked="{Binding EnableTransform}"/>
-				
 				<Button Content="{loc:Loc debug.highlight_textbox.reset}"
 						Command="{Binding ResetCommand}"
 						HorizontalAlignment="Left"

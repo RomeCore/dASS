@@ -31,6 +31,12 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// <summary>How the token resolves; <see cref="SlashCommandInputResolutionState.None"/> when not a command.</summary>
 		public SlashCommandInputResolutionState ResolutionState { get; init; }
 
+		/// <summary>
+		/// The command the token resolves to (<see cref="SlashCommandInputResolutionState.Known"/> or
+		/// <see cref="SlashCommandInputResolutionState.WonOthers"/>); <see langword="null"/> otherwise.
+		/// </summary>
+		public SlashCommandInfo? Command { get; init; }
+
 		/// <summary>Whether the caret sits inside the token (its end included).</summary>
 		public bool IsCaretInToken { get; init; }
 

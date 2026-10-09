@@ -27,5 +27,12 @@ namespace LLMDesktopAssistant.InputCompletion
 		/// The index of the item selected in the popup.
 		/// </summary>
 		public int SelectedIndex { get; init; }
+
+		/// <summary>
+		/// The text the renderer shows as a ghost preview after the input (a completion suffix, an argument hint, ...).
+		/// The source computes the text; the renderer decides how to draw it. <see langword="null"/> when there is
+		/// nothing to preview.
+		/// </summary>
+		public string? GhostText { get; init; }
 	}
 }

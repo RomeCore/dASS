@@ -12,6 +12,13 @@
 		Border#PART_BorderElement.
 	-->
 
+	<!-- Slash-command highlight palette (see SlashCommandHighlightPalette). Overridable per theme. -->
+	<SolidColorBrush x:Key="SlashCommandKnownBrush" Color="#FF6BC1"/>
+	<SolidColorBrush x:Key="SlashCommandUnknownBrush" Color="#F44747"/>
+	<SolidColorBrush x:Key="SlashCommandAmbiguousBrush" Color="#FFA500"/>
+	<SolidColorBrush x:Key="SlashCommandArgumentBrush" Color="#8C8C8C"/>
+	<SolidColorBrush x:Key="SlashCommandGhostBrush" Color="#8C8C8C"/>
+
 	<ControlTheme x:Key="{x:Type txt:HighlightTextBox}"
 							  TargetType="txt:HighlightTextBox">
 
