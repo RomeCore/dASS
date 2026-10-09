@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.InputCompletion;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
@@ -27,6 +28,13 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 		/// <summary>The span of the argument text after the token (the separating whitespace excluded); may be empty.</summary>
 		public InputCompletionSpan ArgumentSpan { get; init; }
+
+		/// <summary>
+		/// The arguments parsed out of the argument region, or <see langword="null"/> when the token does not resolve
+		/// (there is no schema to parse against) or the text is not a valid argument list (an unterminated quote, say).
+		/// Its offsets are relative to <see cref="ArgumentSpan"/>'s start.
+		/// </summary>
+		public SlashCommandParsedArguments? Arguments { get; init; }
 
 		/// <summary>How the token resolves; <see cref="SlashCommandInputResolutionState.None"/> when not a command.</summary>
 		public SlashCommandInputResolutionState ResolutionState { get; init; }

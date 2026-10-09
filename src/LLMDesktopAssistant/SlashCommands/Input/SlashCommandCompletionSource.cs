@@ -167,8 +167,11 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var rawArguments = request.Text[analysis.ArgumentSpan.Start..];
 			var caretOffset = request.CaretIndex - analysis.ArgumentSpan.Start;
 			var schema = command.Executor.ArgumentSchema ?? EmptySchema;
-			var parsed = SlashCommandArgumentParser.Parse(schema, rawArguments);
-			var target = SlashCommandArgumentLookup.Find(parsed, rawArguments, caretOffset);
+
+			// The analyzer already parsed the region; an invalid argument list (an unterminated quote, say) leaves the
+			// caret in no argument, so the popup keeps showing the command's context without a picker.
+			var parsed = analysis.Arguments;
+			var target = parsed is null ? null : SlashCommandArgumentLookup.Find(parsed, rawArguments, caretOffset);
 
 			var items = new List<InputCompletionItem>();
 			string? completablePrefix = null;

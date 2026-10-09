@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LLMDesktopAssistant.InputCompletion;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Resolution;
 
 namespace LLMDesktopAssistant.SlashCommands.Input
@@ -11,6 +12,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 	/// </summary>
 	public static class SlashCommandInputAnalyzer
 	{
+		private static readonly SlashCommandArgumentSchema EmptySchema = new();
 		/// <summary>
 		/// Analyses <paramref name="text"/> at <paramref name="caretIndex"/> against the chat's commands.
 		/// </summary>
@@ -30,12 +32,24 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var argumentStart = SkipWhitespace(text, tokenEnd);
 			var (state, command) = Resolve(token, commands);
 
+			// The parse is what the renderer colours the arguments with and what the completion source completes against,
+			// so it happens once, here. A token that does not resolve has no schema to parse against, and an invalid
+			// argument list has no parse at all — both leave the region to the coarse argument colour.
+			SlashCommandParsedArguments? arguments = null;
+			if (command is not null)
+			{
+				var schema = command.Executor.ArgumentSchema ?? EmptySchema;
+				if (SlashCommandArgumentParser.TryParse(schema, text[argumentStart..], out var parsed))
+					arguments = parsed;
+			}
+
 			return new SlashCommandInputAnalysis
 			{
 				IsCommand = true,
 				Token = token,
 				TokenSpan = new InputCompletionSpan(slashStart, tokenEnd - slashStart),
 				ArgumentSpan = new InputCompletionSpan(argumentStart, text.Length - argumentStart),
+				Arguments = arguments,
 				ResolutionState = state,
 				Command = command,
 				IsCaretInToken = caretIndex >= slashStart && caretIndex <= tokenEnd,

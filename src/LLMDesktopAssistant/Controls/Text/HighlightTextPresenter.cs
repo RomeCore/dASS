@@ -154,7 +154,7 @@ public class HighlightTextPresenter : TextPresenter
 					length = Math.Min(length, text.Length - start);
 					overrides.Add(new ValueSpan<TextRunProperties>(start, length,
 						new GenericTextRunProperties(typeface, FontSize, span.Decorations, span.Brush,
-							fontFeatures: FontFeatures)));
+							span.Background, fontFeatures: FontFeatures)));
 				}
 			}
 		}

@@ -1,19 +1,64 @@
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using Avalonia.Media;
 using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands;
+using LLMDesktopAssistant.SlashCommands.Arguments;
+using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.SlashCommands.Input;
 
 namespace LLMDesktopAssistant.Tests.SlashCommands
 {
 	/// <summary>
-	/// The slash-command renderer: the token palette, the argument span and the ghost preview. It is a pure projection
+	/// The slash-command renderer: the token palette, the argument chips and the ghost preview. It is a pure projection
 	/// of the given completion, so the tests drive it with hand-made results.
 	/// </summary>
 	public class SlashCommandHighlightTransformProviderTests
 	{
-		private static readonly SlashCommandInfo Grilling = new() { Name = "grilling", Namespaces = ["skill"] };
+		private sealed class FakeExecutor(SlashCommandArgumentSchema? schema) : ISlashCommandExecutor
+		{
+			public SlashCommandArgumentSchema? ArgumentSchema { get; } = schema;
+
+			public Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
+				=> Task.FromResult(SlashCommandExecutionResult.Ok());
+		}
+
+		private static SlashCommandArgument Argument(string name) => new() { Name = Locale.GetKey(name) };
+
+		/// <summary>A command whose whole argument region is one rest positional.</summary>
+		private static readonly SlashCommandInfo Grilling = new()
+		{
+			Name = "grilling",
+			Namespaces = ["skill"],
+			Executor = new FakeExecutor(new SlashCommandArgumentSchema { RestPositional = Argument("test.rest") })
+		};
+
 		private static readonly SlashCommandInfo AgentGrilling = new() { Name = "grilling", Namespaces = ["agent"] };
+
+		/// <summary>A command with one declared positional, so an unterminated quote is a parse error.</summary>
+		private static readonly SlashCommandInfo Plain = new()
+		{
+			Name = "plain",
+			Namespaces = ["skill"],
+			Executor = new FakeExecutor(new SlashCommandArgumentSchema { Positionals = [Argument("test.one")] })
+		};
+
+		/// <summary>A command with a rest positional and a keyed argument.</summary>
+		private static readonly SlashCommandInfo Agent = new()
+		{
+			Name = "agent",
+			Namespaces = ["agent"],
+			Executor = new FakeExecutor(new SlashCommandArgumentSchema
+			{
+				RestPositional = Argument("test.rest"),
+				Keyed = new Dictionary<string, SlashCommandArgument>
+				{
+					["wait"] = Argument("test.wait")
+				}.ToImmutableDictionary()
+			})
+		};
 
 		private InputCompletionResult? _completion;
 
@@ -33,6 +78,17 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			=> Provider(commands).Transform(text);
 
 		private static TextHighlightSpan Single(HighlightTransformResult result) => Assert.Single(result.HighlightSpans!);
+
+		private static void AssertChipped(TextHighlightSpan span, int start, int length, IBrush brush,
+			SlashCommandHighlightPalette? palette = null)
+		{
+			palette ??= SlashCommandHighlightPalette.Default;
+
+			Assert.Equal(start, span.Start);
+			Assert.Equal(length, span.Length);
+			Assert.Same(brush, span.Brush);
+			Assert.Same(palette.ArgumentBackground, span.Background);
+		}
 
 		[Fact]
 		public void Transform_PlainText_HasNoSpans()
@@ -80,13 +136,53 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void Transform_Arguments_ArePaintedGrey_AfterTheToken()
+		public void Transform_AnArgument_IsPaintedAsOneChippedUnit()
 		{
 			var spans = Transform("/grilling do it", Grilling).HighlightSpans!;
 
 			Assert.Equal(2, spans.Count);
-			Assert.Equal(new TextHighlightSpan(0, 9, SlashCommandHighlightPalette.Default.Known), spans[0] with { Decorations = null });
-			Assert.Equal(new TextHighlightSpan(10, 5, SlashCommandHighlightPalette.Default.Argument), spans[1]);
+			Assert.Equal(new TextHighlightSpan(0, 9, SlashCommandHighlightPalette.Default.Known),
+				spans[0] with { Decorations = null });
+			AssertChipped(spans[1], 10, 5, SlashCommandHighlightPalette.Default.Argument);
+		}
+
+		[Fact]
+		public void Transform_AKeyedArgument_PaintsItsNameItsEqualsItsValue_AndTheQuotes()
+		{
+			// "/agent wait=\"true\"": the key [7,4), the '=' [11,1), the quotes and the value inside them.
+			var spans = Transform("/agent wait=\"true\"", Agent).HighlightSpans!;
+
+			Assert.Equal(6, spans.Count);
+			Assert.Equal(new TextHighlightSpan(0, 6, SlashCommandHighlightPalette.Default.Known),
+				spans[0] with { Decorations = null });
+			AssertChipped(spans[1], 7, 4, SlashCommandHighlightPalette.Default.ArgumentKey);
+			AssertChipped(spans[2], 11, 1, SlashCommandHighlightPalette.Default.ArgumentEquals);
+			AssertChipped(spans[3], 12, 1, SlashCommandHighlightPalette.Default.Quote);
+			AssertChipped(spans[4], 13, 4, SlashCommandHighlightPalette.Default.Argument);
+			AssertChipped(spans[5], 17, 1, SlashCommandHighlightPalette.Default.Quote);
+		}
+
+		[Fact]
+		public void Transform_ASingleQuotedArgument_HasItsQuotesPaintedLighter()
+		{
+			// "/grilling 'do it'": one positional, its grouping quotes set apart from the value.
+			var spans = Transform("/grilling 'do it'", Grilling).HighlightSpans!;
+
+			Assert.Equal(4, spans.Count);
+			AssertChipped(spans[1], 10, 1, SlashCommandHighlightPalette.Default.Quote);
+			AssertChipped(spans[2], 11, 5, SlashCommandHighlightPalette.Default.Argument);
+			AssertChipped(spans[3], 16, 1, SlashCommandHighlightPalette.Default.Quote);
+		}
+
+		[Fact]
+		public void Transform_AnUnparseableArgumentList_FallsBackToThePlainArgumentColour()
+		{
+			// The quote of a *declared* positional is never closed, so the list does not parse (a rest positional would
+			// have taken it verbatim): the region stays one grey span, with no chips.
+			var spans = Transform("/plain \"do it", Plain).HighlightSpans!;
+
+			Assert.Equal(2, spans.Count);
+			Assert.Equal(new TextHighlightSpan(7, 6, SlashCommandHighlightPalette.Default.Argument), spans[1]);
 		}
 
 		[Fact]
