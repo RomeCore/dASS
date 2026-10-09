@@ -44,6 +44,7 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 	{
 		_transformProvider = new SlashCommandHighlightTransformProvider(
 			() => EnableCommandHighlight ? SampleCommands : [],
+			() => Text.Length,
 			DemoCompletion,
 			SlashCommandHighlightPalette.FromResources());
 		ResetCommand = new RelayCommand(() => Text = DefaultSample);

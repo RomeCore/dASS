@@ -7,33 +7,43 @@ using LLMDesktopAssistant.InputCompletion;
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
 	/// <summary>
-	/// The renderer of a command input: colours the token by its resolution state and the argument text, and appends
-	/// the completion's ghost preview.
+	/// The renderer of a command input: colours the token by its resolution state and the argument text, and inserts
+	/// the completion's ghost preview at the caret. It also exposes that preview through
+	/// <see cref="IInlineCompletionProvider"/>, so the input control can accept it character by character.
 	/// </summary>
 	/// <remarks>
-	/// Pure projection — it does not compute the completion itself. The commands (for the analysis) and the current
-	/// <see cref="InputCompletionResult"/> (for the ghost) are supplied through delegates, so the view model decides
-	/// what is current and the renderer only draws it. Colour choice is caret-independent; the ghost is a suffix
-	/// append (its mid-token placement and acceptance belong to the control).
+	/// Pure projection — it does not compute the completion itself. The commands (for the analysis), the caret and the
+	/// current <see cref="InputCompletionResult"/> (for the ghost) are supplied through delegates, so the view model
+	/// decides what is current and the renderer only draws it. Colour choice is caret-independent; the ghost is
+	/// inserted at the caret (mid-string is safe, the control resets on a manual caret move).
 	/// </remarks>
-	public sealed class SlashCommandHighlightTransformProvider : IHighlightTransformProvider
+	public sealed class SlashCommandHighlightTransformProvider : IHighlightTransformProvider, IInlineCompletionProvider
 	{
 		private readonly Func<IReadOnlyList<SlashCommandInfo>> _commands;
+		private readonly Func<int> _caret;
 		private readonly Func<InputCompletionResult?> _completion;
 		private readonly SlashCommandHighlightPalette _palette;
 
 		public SlashCommandHighlightTransformProvider(
 			Func<IReadOnlyList<SlashCommandInfo>> commands,
+			Func<int> caret,
 			Func<InputCompletionResult?> completion,
 			SlashCommandHighlightPalette? palette = null)
 		{
 			_commands = commands ?? throw new ArgumentNullException(nameof(commands));
+			_caret = caret ?? throw new ArgumentNullException(nameof(caret));
 			_completion = completion ?? throw new ArgumentNullException(nameof(completion));
 			_palette = palette ?? SlashCommandHighlightPalette.Default;
 		}
 
 		/// <inheritdoc/>
 		public event EventHandler? LayoutChanged;
+
+		/// <inheritdoc/>
+		public string? CompletionText { get; private set; }
+
+		/// <inheritdoc/>
+		public int TokenEnd { get; private set; }
 
 		/// <summary>Notifies the control that the visual output changed without a text change.</summary>
 		public void NotifyLayoutChanged() => LayoutChanged?.Invoke(this, EventArgs.Empty);
@@ -42,6 +52,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		public HighlightTransformResult Transform(string text)
 		{
 			text ??= string.Empty;
+			CompletionText = null;
+			TokenEnd = 0;
 
 			// With no commands there is nothing to highlight (commands disabled, or an empty set): leave the text alone.
 			var commands = _commands();
@@ -66,8 +78,12 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			string? rendered = null;
 			if (_completion()?.GhostText is { Length: > 0 } ghost)
 			{
-				rendered = text + ghost;
-				spans.Add(new TextHighlightSpan(text.Length, ghost.Length, _palette.Ghost));
+				var caretIndex = Math.Clamp(_caret(), 0, text.Length);
+				CompletionText = ghost;
+				TokenEnd = _completion()!.Span.End;
+
+				rendered = text[..caretIndex] + ghost + text[caretIndex..];
+				spans.Add(new TextHighlightSpan(caretIndex, ghost.Length, _palette.Ghost));
 			}
 
 			return new HighlightTransformResult(rendered, spans.Count > 0 ? spans : null);

@@ -19,14 +19,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		private bool _enabled = true;
 
-		private HighlightTransformResult Transform(string text, params SlashCommandInfo[] commands)
-		{
-			var provider = new SlashCommandHighlightTransformProvider(
+		// Defaults to the end of the text (the append case); a test can set it to a mid-token offset.
+		private int _caretIndex = int.MaxValue;
+
+		private SlashCommandHighlightTransformProvider Provider(params SlashCommandInfo[] commands)
+			=> new(
 				() => _enabled ? commands : [],
+				() => _caretIndex,
 				() => _completion,
 				SlashCommandHighlightPalette.Default);
-			return provider.Transform(text);
-		}
+
+		private HighlightTransformResult Transform(string text, params SlashCommandInfo[] commands)
+			=> Provider(commands).Transform(text);
 
 		private static TextHighlightSpan Single(HighlightTransformResult result) => Assert.Single(result.HighlightSpans!);
 
@@ -111,6 +115,21 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal("/grilling", result.RenderedText);
 			var span = Single(result);
 			Assert.Equal(new TextHighlightSpan(3, 6, SlashCommandHighlightPalette.Default.Ghost), span);
+		}
+
+		[Fact]
+		public void Transform_TheGhostIsInsertedAtTheCaret_AndExposedForAcceptance()
+		{
+			_completion = new InputCompletionResult { Span = new InputCompletionSpan(0, 4), GhostText = "XYZ" };
+			_caretIndex = 1;
+
+			var provider = Provider(Grilling);
+			var result = provider.Transform("abc");
+
+			Assert.Equal("aXYZbc", result.RenderedText);
+			Assert.Equal(new TextHighlightSpan(1, 3, SlashCommandHighlightPalette.Default.Ghost), Single(result));
+			Assert.Equal("XYZ", provider.CompletionText);
+			Assert.Equal(4, provider.TokenEnd);
 		}
 
 		[Fact]
