@@ -39,7 +39,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 					Name = Locale.GetKey("command.argument.wait"),
 					Description = Locale.GetKey("command.argument.wait.description"),
 					Required = false,
-					Default = "false",
+					Default = "true",
 					Format = SlashCommandBooleanFormatProvider.Instance
 				}
 			}.ToImmutableDictionary()
