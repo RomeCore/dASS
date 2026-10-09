@@ -68,7 +68,7 @@ The autocomplete is a **general** input-completion mechanic, deliberately not co
 its first source, chat-agent mentions (`@Code Reviewer`, names may contain spaces) a later one. Supersedes the earlier
 `5.1`–`5.4` sketch.
 
-- [ ] [24 — Edit-check fix](./issues/24-edit-check-fix.md) — prefactor: the view-model pre-flight must validate a
+- [x] [24 — Edit-check fix](./issues/24-edit-check-fix.md) — prefactor: the view-model pre-flight must validate a
       command on an edit exactly as on a new message (edits run commands). **First**, independent.
 - [ ] [25 — General input-completion core](./issues/25-general-input-completion-core.md) — the UI-agnostic
       `IInputCompletionSource` / request / result / state / item types and the chat-scoped source resolver.
