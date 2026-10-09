@@ -14,8 +14,9 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 	/// <remarks>
 	/// Pure projection — it does not compute the completion itself. The commands (for the analysis), the caret and the
 	/// current <see cref="InputCompletionResult"/> (for the ghost) are supplied through delegates, so the view model
-	/// decides what is current and the renderer only draws it. Colour choice is caret-independent; the ghost is
-	/// inserted at the caret (mid-string is safe, the control resets on a manual caret move).
+	/// decides what is current and the renderer only draws it. Colour choice is caret-independent; the ghost replaces
+	/// the region's tail from the caret (mid-string is safe — the control clamps the caret and the selection to the real
+	/// text and resets the completion whenever the pointer moves them).
 	/// </remarks>
 	public sealed class SlashCommandHighlightTransformProvider : IHighlightTransformProvider, IInlineCompletionProvider
 	{
@@ -76,13 +77,19 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			}
 
 			string? rendered = null;
-			if (_completion()?.GhostText is { Length: > 0 } ghost)
+			if (_completion() is { GhostText: { Length: > 0 } ghost } completion)
 			{
 				var caretIndex = Math.Clamp(_caret(), 0, text.Length);
-				CompletionText = ghost;
-				TokenEnd = _completion()!.Span.End;
 
-				rendered = text[..caretIndex] + ghost + text[caretIndex..];
+				// The ghost *replaces* the tail of the region the completion would replace rather than being inserted
+				// before it: previewing the missing part of a token ("wait=tru" → "e") would otherwise draw the real tail
+				// a second time ("truee").
+				var tailEnd = Math.Clamp(completion.Span.End, caretIndex, text.Length);
+
+				CompletionText = ghost;
+				TokenEnd = completion.Span.End;
+
+				rendered = text[..caretIndex] + ghost + text[tailEnd..];
 				spans.Add(new TextHighlightSpan(caretIndex, ghost.Length, _palette.Ghost));
 			}
 

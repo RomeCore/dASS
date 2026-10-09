@@ -66,7 +66,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 			if (analysis.IsCaretInToken)
 			{
-				result = ComputeToken(analysis, commandSet);
+				result = ComputeToken(request, analysis, commandSet);
 				return true;
 			}
 
@@ -80,8 +80,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// The token state: the prefix matches, ordered by <c>Order</c> then name, each in its fully-qualified form,
 		/// shadowed ones marked. An empty match set still yields a result — the popup shows "no matches".
 		/// </summary>
-		private static InputCompletionResult ComputeToken(SlashCommandInputAnalysis analysis,
-			IReadOnlyList<SlashCommandInfo> commandSet)
+		private static InputCompletionResult ComputeToken(InputCompletionRequest request,
+			SlashCommandInputAnalysis analysis, IReadOnlyList<SlashCommandInfo> commandSet)
 		{
 			var matches = SlashCommandPrefixMatcher.Match(commandSet, analysis.Token);
 			var defeated = FindDefeated(matches);
@@ -99,6 +99,14 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				})
 				.ToList();
 
+			// The ghost previews the top match only while it *continues* the typed token: a command reached through an
+			// alias or a namespace prefix has a fully-qualified form that does not extend what is typed, so there is
+			// nothing to preview and the inline accept stays inert.
+			var typed = TypedToken(request, analysis.TokenSpan);
+			var ghost = items.Count > 0
+				? GhostOf(items[0].InsertText, typed, previewWithoutPrefix: false)
+				: null;
+
 			return new InputCompletionResult
 			{
 				Span = analysis.TokenSpan,
@@ -107,8 +115,40 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 					Kind = InputCompletionKind.Command,
 					Title = Locale.GetKey("command.completion.title.commands")
 				},
-				Items = items
+				Items = items,
+				GhostText = ghost
 			};
+		}
+
+		/// <summary>
+		/// The raw text of the token from its start up to the caret — the leading <c>/</c> included, so it compares
+		/// against an <see cref="InputCompletionItem.InsertText"/> directly.
+		/// </summary>
+		private static string TypedToken(InputCompletionRequest request, InputCompletionSpan tokenSpan)
+		{
+			var text = request.Text ?? string.Empty;
+			var start = Math.Clamp(tokenSpan.Start, 0, text.Length);
+			var end = Math.Clamp(request.CaretIndex, start, text.Length);
+			return text[start..end];
+		}
+
+		/// <summary>
+		/// The suffix of <paramref name="insertText"/> the typed prefix does not carry yet — the ghost preview — or
+		/// <see langword="null"/> when there is nothing left to preview or the completion does not continue the prefix.
+		/// </summary>
+		/// <remarks>
+		/// An empty prefix previews the completion in full only with <paramref name="previewWithoutPrefix"/>: a keyed
+		/// value has one obvious completion to offer, while a bare <c>/</c> has none.
+		/// </remarks>
+		private static string? GhostOf(string insertText, string typedPrefix, bool previewWithoutPrefix)
+		{
+			if (typedPrefix.Length == 0 && !previewWithoutPrefix)
+				return null;
+
+			if (!insertText.StartsWith(typedPrefix, StringComparison.OrdinalIgnoreCase))
+				return null;
+
+			return insertText.Length > typedPrefix.Length ? insertText[typedPrefix.Length..] : null;
 		}
 
 		/// <summary>
@@ -151,12 +191,11 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				}));
 			}
 
-			// The ghost previews the top completion when it extends the typed prefix (e.g. "wait=tr" → "ue"), so the
-			// input can accept it character by character.
-			var ghost = items.Count > 0 && completablePrefix is not null
-				&& items[0].InsertText.StartsWith(completablePrefix, StringComparison.OrdinalIgnoreCase)
-					? items[0].InsertText[completablePrefix.Length..]
-					: null;
+			// The ghost previews the top completion, so the input can accept it character by character (e.g. "wait=tr" →
+			// "ue"); a keyed value previews in full even before its first character is typed.
+			var ghost = items.Count > 0
+				? GhostOf(items[0].InsertText, completablePrefix!, previewWithoutPrefix: true)
+				: null;
 
 			result = new InputCompletionResult
 			{

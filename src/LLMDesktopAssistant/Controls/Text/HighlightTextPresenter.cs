@@ -11,9 +11,11 @@ namespace LLMDesktopAssistant.Controls.Text;
 /// show ghost text (autocomplete preview) and transform the string before rendering.
 /// </summary>
 /// <remarks>
-/// Safe string transforms are: isometric (1:1, same length) or suffix-only (append to the end).
-/// Mid-string insertions/deletions corrupt the caret/selection position mapping, because the
-/// TextBox navigation engine is not virtual.
+/// A transform may replace the text from the caret onwards — the completion ghost substitutes the token's tail
+/// instead of being appended — so the rendered string and the real one differ in length, and the caret is mapped
+/// against the layout's own text. That is safe only because the caret and the selection are clamped to the real text
+/// and the owning view resets the completion whenever the pointer moves them, so a stale region never outlives the
+/// caret it was computed for.
 /// </remarks>
 public class HighlightTextPresenter : TextPresenter
 {

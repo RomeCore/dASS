@@ -220,6 +220,36 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
+		public void TryCompute_ATokenTheMatchContinues_PreviewsTheMissingSuffix()
+		{
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/skill:gri", 10), out var result);
+
+			Assert.True(ok);
+			Assert.Equal("/skill:grilling", result!.Items[0].InsertText);
+			Assert.Equal("lling", result.GhostText);
+		}
+
+		[Fact]
+		public void TryCompute_AMidTokenCaret_PreviewsFromTheCaret()
+		{
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/skill:grilling", 9), out var result);
+
+			Assert.True(ok);
+			Assert.Equal("illing", result!.GhostText);
+		}
+
+		[Fact]
+		public void TryCompute_ATokenTheMatchDoesNotContinue_HasNoGhost()
+		{
+			// The item is the qualified form, which does not extend the partial name — there is nothing to preview inline.
+			var ok = Source(SkillGrilling).TryCompute(new InputCompletionRequest("/gri", 4), out var result);
+
+			Assert.True(ok);
+			Assert.Equal("/skill:grilling", result!.Items[0].InsertText);
+			Assert.Null(result.GhostText);
+		}
+
+		[Fact]
 		public void TryCompute_ArgumentModeWhenTheTokenDoesNotResolve_ReturnsFalse()
 		{
 			Assert.False(Source(WebSearcher).TryCompute(new InputCompletionRequest("/zzz x", 6), out _));

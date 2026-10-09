@@ -102,7 +102,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void Transform_ACompletion_GhostIsAppended_AndPainted()
+		public void Transform_ACompletionAtTheRegionEnd_RendersTheGhost_AndPaintsIt()
 		{
 			_completion = new InputCompletionResult
 			{
@@ -118,18 +118,33 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void Transform_TheGhostIsInsertedAtTheCaret_AndExposedForAcceptance()
+		public void Transform_TheGhostReplacesTheRegionTail_FromTheCaret_AndIsExposedForAcceptance()
 		{
+			// The completion would replace "abc" entirely, so the preview keeps "a" and drops the rest of the region
+			// instead of drawing it beside the ghost.
 			_completion = new InputCompletionResult { Span = new InputCompletionSpan(0, 4), GhostText = "XYZ" };
 			_caretIndex = 1;
 
 			var provider = Provider(Grilling);
 			var result = provider.Transform("abc");
 
-			Assert.Equal("aXYZbc", result.RenderedText);
-			Assert.Equal(new TextHighlightSpan(1, 3, SlashCommandHighlightPalette.Default.Ghost), Single(result));
+			Assert.Equal("aXYZ", result.RenderedText);
+			Assert.Equal(new TextHighlightSpan(1, 3, SlashCommandHighlightPalette.Default.Ghost), result.HighlightSpans![^1]);
 			Assert.Equal("XYZ", provider.CompletionText);
 			Assert.Equal(4, provider.TokenEnd);
+		}
+
+		[Fact]
+		public void Transform_TheGhostReplacesTheRegionTail_KeepingWhatFollowsTheRegion()
+		{
+			// "wait=t|r": the ghost "rue" completes the value, so the "r" under the caret must not survive beside it —
+			// and everything after the region (" wait=false") does.
+			_completion = new InputCompletionResult { Span = new InputCompletionSpan(11, 2), GhostText = "rue" };
+			_caretIndex = 12;
+
+			var result = Transform("agent wait=tr wait=false", Grilling);
+
+			Assert.Equal("agent wait=true wait=false", result.RenderedText);
 		}
 
 		[Fact]
