@@ -1,6 +1,6 @@
 # 25: General input-completion core
 
-Status: open
+Status: resolved
 Type: task
 Blocked by:
 
@@ -11,7 +11,7 @@ are its first source; chat-agent mentions (`@Code Reviewer` — names may contai
 never assume whitespace-delimited tokens) are a later one. Pure C# — no Avalonia, no `SlashCommand*` types here —
 consumed by both the popup view model and the ghost rendering.
 
-New `Completion/` folder:
+New `InputCompletion/` folder (renamed from `Completion/` — "Completion" alone collides with the LLM chat-completion vocabulary):
 
 ```csharp
 interface IInputCompletionSource
@@ -43,16 +43,32 @@ when none claims the caret.
 
 ## Acceptance criteria
 
-- [ ] The types above exist; `Span` is in absolute raw-text coordinates and is defined by the source, not by whitespace.
-- [ ] `IInputCompletionService` (chat-scoped) picks the highest-priority source that claims the caret — one at a time.
-- [ ] `State` may be non-null with empty `Items` (the popup shows the state only).
-- [ ] No Avalonia and no `SlashCommand*` types leak into the core.
-- [ ] Unit tests cover priority resolution, no-source (null), and state-without-items.
-- [ ] Main builds.
+- [x] The types above exist; `Span` is in absolute raw-text coordinates and is defined by the source, not by whitespace.
+- [x] `IInputCompletionService` (chat-scoped) picks the highest-priority source that claims the caret — one at a time.
+- [x] `State` may be non-null with empty `Items` (the popup shows the state only).
+- [x] No Avalonia and no `SlashCommand*` types leak into the core.
+- [x] Unit tests cover priority resolution, no-source (null), and state-without-items.
+- [x] Main builds.
 
 ## Answer
 
-<!-- appended on resolution -->
+Implemented the general input-completion core in `src/LLMDesktopAssistant/InputCompletion/` (the folder was renamed
+from `Completion/`, which collided with the LLM "chat completion" vocabulary used throughout the codebase):
+
+- `InputCompletionRequest(Text, CaretIndex)`, `InputCompletionSpan(Start, Length)` (+ `End`, `FromBounds`),
+  `InputCompletionItem` (`InsertText`, `Display` → `DisplayText`, `Description`, `Kind`, `IsDefeated`),
+  `InputCompletionState` (`Title`, `Description`, `Kind`), `InputCompletionResult` (`Span`, `State`, `Items`,
+  `SelectedIndex`) and the `InputCompletionKind` enum.
+- `IInputCompletionSource` (`Priority`, `TryCompute(request, [NotNullWhen(true)] out result)`): a source returns
+  `false` — not an empty result — when it does not own the caret.
+- `IInputCompletionService` + `InputCompletionService` (`[ChatService]`): orders sources by `Priority` descending (ties
+  broken by ordinal type name) and returns the first claiming source's result, or `null` when none claims. Harmless
+  today — no source is registered yet.
+
+Tests (`InputCompletionServiceTests`, 9 cases): no sources → null; no source claims → null; the highest priority wins
+and the lower source is not asked; a non-claiming source is skipped and falls through; ordering is independent of
+registration order; a priority tie is deterministic; a state-without-items result is returned; `DisplayText` fallback;
+`Span.End` / `FromBounds`. Filtered run: **9 passed**.
 
 ## Comments
 
