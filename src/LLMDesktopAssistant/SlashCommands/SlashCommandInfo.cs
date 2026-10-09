@@ -58,14 +58,14 @@ namespace LLMDesktopAssistant.SlashCommands
 		} = ModelFacingMode.Raw;
 
 		/// <summary>
-		/// The declarative generation ceiling of the command: <see langword="null"/> leaves the caller's intent
+		/// The declarative generation ceiling of the command: <see langword="true"/> (default) leaves the caller's intent
 		/// untouched, <see langword="false"/> forbids generation. The command may lower the intent, never raise it.
 		/// </summary>
-		public bool? Generate
+		public bool Generate
 		{
 			get;
 			set => SetProperty(ref field, value);
-		} = null;
+		} = true;
 
 		/// <summary>
 		/// The addon the command was derived from — a <c>SkillInfo</c>, a <c>SubAgentInfo</c>, a <c>ToolInfo</c> and so

@@ -360,14 +360,15 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	public class SlashCommandIntentTests
 	{
 		[Theory]
-		[InlineData(true, null, true, true)]
-		[InlineData(true, null, false, false)]
 		[InlineData(true, true, true, true)]
-		[InlineData(true, false, true, false)]
-		[InlineData(false, null, true, false)]
-		[InlineData(false, true, true, false)]
 		[InlineData(true, true, false, false)]
-		public void Resolve_OnlyLowersTheIntent(bool intent, bool? ceiling, bool outcome, bool expected)
+		[InlineData(true, false, false, false)]
+		[InlineData(true, false, true, false)]
+		[InlineData(false, true, true, false)]
+		[InlineData(false, false, true, false)]
+		[InlineData(false, true, false, false)]
+		[InlineData(false, false, false, false)]
+		public void Resolve_OnlyLowersTheIntent(bool intent, bool ceiling, bool outcome, bool expected)
 			=> Assert.Equal(expected, SlashCommandIntent.Resolve(intent, ceiling, outcome));
 	}
 }
