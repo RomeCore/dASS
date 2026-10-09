@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.LLM.Services
 	{
 		/// <summary>
 		/// The schema used when a command declares none (<see cref="SlashCommandInfo.ArgumentSchema"/> is
-		/// <see langword="null"/>): a command with no schema takes no arguments, so any argument blocks the send.
+		/// <see langword="null"/>): a command with no schema takes no arguments.
 		/// </summary>
 		private static readonly SlashCommandArgumentSchema EmptySchema = new();
 
@@ -154,7 +154,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					resolution.Error ?? Locale.GetKey("command.error.unknown"), -1);
 
 			var command = resolution.Command;
-			var schema = command.ArgumentSchema ?? EmptySchema;
+			var schema = command.Executor.ArgumentSchema ?? EmptySchema;
 
 			if (!SlashCommandArgumentParser.TryParse(schema, rawArguments, out var parsed))
 				return new CommandResolution(command, null, parsed.RawArguments,

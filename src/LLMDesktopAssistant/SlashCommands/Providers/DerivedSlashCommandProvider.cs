@@ -39,12 +39,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		protected abstract SlashCommandSource SourceKind { get; }
 
 		/// <summary>
-		/// Builds the command's argument schema. Takes the source because a source may shape its schema (an argument
-		/// hint, for example).
-		/// </summary>
-		protected abstract SlashCommandArgumentSchema CreateArgumentSchema(TSource source);
-
-		/// <summary>
 		/// Builds the executor that runs the command. An explicit contract so an implementation cannot forget to
 		/// supply one.
 		/// </summary>
@@ -71,16 +65,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 					Order = source.Order,
 					Namespaces = BuildNamespaces(source),
 					OverrideOrder = SlashCommandOrderTiers.ForSource(SourceKind),
-					Enabled = null,
-					Hidden = null,
-					ModelFacingMode = ModelFacingMode.Raw,
-					Generate = null,
-					ArgumentSchema = CreateArgumentSchema(source),
 					Executor = CreateCommandExecutor(source),
 					SourcePack = source.SourcePack,
 					Path = source.Path,
 					AddonSource = source.AddonSource,
-					SourceKind = this.SourceKind,
+					SourceKind = SourceKind,
 					Source = source
 				};
 

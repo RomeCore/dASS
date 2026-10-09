@@ -68,19 +68,6 @@ namespace LLMDesktopAssistant.SlashCommands
 		} = null;
 
 		/// <summary>
-		/// The argument schema of the command, or <see langword="null"/> when it takes no arguments.
-		/// </summary>
-		/// <remarks>
-		/// The reference is settable (the addon model is mutable and <c>Clone()</c> copies settable
-		/// properties), but the schema instance itself is immutable.
-		/// </remarks>
-		public SlashCommandArgumentSchema? ArgumentSchema
-		{
-			get;
-			set => SetProperty(ref field, value);
-		}
-
-		/// <summary>
 		/// The addon the command was derived from — a <c>SkillInfo</c>, a <c>SubAgentInfo</c>, a <c>ToolInfo</c> and so
 		/// on — or <see langword="null"/> for native/scriptable commands. Typed <see cref="object"/> because the addon
 		/// bases are CRTP-parameterized and share no non-generic base. Runtime-only, never serialized.

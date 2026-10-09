@@ -1,3 +1,5 @@
+using LLMDesktopAssistant.SlashCommands.Arguments;
+
 namespace LLMDesktopAssistant.SlashCommands.Execution
 {
 	/// <summary>
@@ -10,6 +12,11 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 	/// </remarks>
 	public interface ISlashCommandExecutor
 	{
+		/// <summary>
+		/// The argument schema of the command, or <see langword="null"/> when it takes no arguments.
+		/// </summary>
+		public SlashCommandArgumentSchema? ArgumentSchema { get; }
+
 		/// <summary>
 		/// Runs the command.
 		/// </summary>

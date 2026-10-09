@@ -3,6 +3,7 @@ using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting.Skills;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using Material.Icons;
 
@@ -21,12 +22,18 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	public sealed class SkillCommandExecutor(SkillInfo skill) : ISlashCommandExecutor
 	{
 		/// <inheritdoc/>
+		public SlashCommandArgumentSchema? ArgumentSchema { get; } = new()
+		{
+			HasRestPositional = true
+		};
+
+		/// <inheritdoc/>
 		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
 		{
 			var agentSkill = new ChatAgentSkill(skill);
 
 			var body = await agentSkill.GetBodyAsync(ct);
-			body = SlashCommandVariableExpander.Expand(body, ctx.Arguments, skill);
+			body = SlashCommandVariableExpander.ExpandSkill(body, ctx.Arguments, skill);
 
 			if (agentSkill.HomeDirectory is { Length: > 0 } home)
 			{
@@ -47,7 +54,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 				IsRestorable = false
 			});
 
-			return SlashCommandExecutionResult.Ok(modelFacingMode: ModelFacingMode.Neutral);
+			return SlashCommandExecutionResult.Ok(modelFacingMode: ModelFacingMode.Raw);
 		}
 	}
 }

@@ -29,35 +29,35 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		[Fact]
 		public void Arguments_AreSubstituted()
-			=> Assert.Equal("Do: do it", SlashCommandVariableExpander.Expand("Do: $ARGUMENTS", Arguments("do it"), Skill()));
+			=> Assert.Equal("Do: do it", SlashCommandVariableExpander.ExpandSkill("Do: $ARGUMENTS", Arguments("do it"), Skill()));
 
 		[Fact]
 		public void BracedArguments_AreSubstituted()
 			=> Assert.Equal("Do: do it",
-				SlashCommandVariableExpander.Expand("Do: ${ARGUMENTS}", Arguments("do it"), Skill()));
+				SlashCommandVariableExpander.ExpandSkill("Do: ${ARGUMENTS}", Arguments("do it"), Skill()));
 
 		[Fact]
 		public void AnUnknownVariable_IsLeftVerbatim()
 			=> Assert.Equal("$NOPE and ${ALSO_NOPE}",
-				SlashCommandVariableExpander.Expand("$NOPE and ${ALSO_NOPE}", Arguments("x"), Skill()));
+				SlashCommandVariableExpander.ExpandSkill("$NOPE and ${ALSO_NOPE}", Arguments("x"), Skill()));
 
 		[Fact]
 		public void TheSkillDirectory_ResolvesFromTheHomeDirectory()
 		{
 			var skill = Skill(home: @"C:\skills\grilling");
 
-			Assert.Equal(@"C:\skills\grilling", SlashCommandVariableExpander.Expand("$CLAUDE_SKILL_DIR", Arguments(""), skill));
-			Assert.Equal(@"C:\skills\grilling", SlashCommandVariableExpander.Expand("$SKILL_DIR", Arguments(""), skill));
+			Assert.Equal(@"C:\skills\grilling", SlashCommandVariableExpander.ExpandSkill("$CLAUDE_SKILL_DIR", Arguments(""), skill));
+			Assert.Equal(@"C:\skills\grilling", SlashCommandVariableExpander.ExpandSkill("$SKILL_DIR", Arguments(""), skill));
 		}
 
 		[Fact]
 		public void TheSkillDirectory_FallsBackToTheFilePath()
 			=> Assert.Equal(@"C:\skills\grilling",
-				SlashCommandVariableExpander.Expand("$CLAUDE_SKILL_DIR", Arguments(""), Skill(path: @"C:\skills\grilling\SKILL.md")));
+				SlashCommandVariableExpander.ExpandSkill("$CLAUDE_SKILL_DIR", Arguments(""), Skill(path: @"C:\skills\grilling\SKILL.md")));
 
 		[Fact]
 		public void TheSkillName_Resolves()
-			=> Assert.Equal("grilling", SlashCommandVariableExpander.Expand("$SKILL_NAME", Arguments(""), Skill("grilling")));
+			=> Assert.Equal("grilling", SlashCommandVariableExpander.ExpandSkill("$SKILL_NAME", Arguments(""), Skill("grilling")));
 
 		[Fact]
 		public void AProcessEnvironmentVariable_Resolves()
@@ -66,7 +66,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Environment.SetEnvironmentVariable(name, "from-env");
 			try
 			{
-				Assert.Equal("from-env", SlashCommandVariableExpander.Expand("$" + name, Arguments(""), Skill()));
+				Assert.Equal("from-env", SlashCommandVariableExpander.ExpandSkill("$" + name, Arguments(""), Skill()));
 			}
 			finally
 			{
@@ -76,11 +76,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		[Fact]
 		public void APositionalMarker_IsLeftVerbatim()
-			=> Assert.Equal("$1 $2", SlashCommandVariableExpander.Expand("$1 $2", Arguments("x"), Skill()));
+			=> Assert.Equal("$1 $2", SlashCommandVariableExpander.ExpandSkill("$1 $2", Arguments("x"), Skill()));
 
 		[Fact]
 		public void ABodyWithoutVariables_IsUnchanged()
-			=> Assert.Equal("no variables here", SlashCommandVariableExpander.Expand("no variables here", Arguments("x"), Skill()));
+			=> Assert.Equal("no variables here", SlashCommandVariableExpander.ExpandSkill("no variables here", Arguments("x"), Skill()));
 
 		[Fact]
 		public void GetSkillVariable_AnUnknownName_ReturnsNull()

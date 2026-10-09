@@ -70,7 +70,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Null(command.Enabled);
 			Assert.Null(command.Hidden);
 			Assert.Equal(ModelFacingMode.Raw, command.ModelFacingMode);
-			Assert.Null(command.Generate);
+			Assert.True(command.Generate);
 			Assert.IsType<SkillCommandExecutor>(command.Executor);
 
 			// Provenance is carried over from the source.
@@ -131,7 +131,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>([Skill("grilling")]));
 
-			var schema = Assert.Single(provider.GetCommands()).ArgumentSchema!;
+			var schema = Assert.Single(provider.GetCommands()).Executor.ArgumentSchema!;
 
 			Assert.True(schema.HasRestPositional);
 			Assert.Empty(schema.Positionals);
@@ -145,7 +145,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var provider = new SubAgentSlashCommandProvider(new FakeCollector<SubAgentInfo>([subAgent]), null!, null!, null!);
 
 			var command = Assert.Single(provider.GetCommands());
-			var schema = command.ArgumentSchema!;
+			var schema = command.Executor.ArgumentSchema!;
 
 			Assert.Equal(new[] { "agent" }, command.Namespaces);
 			Assert.Equal(SlashCommandSource.SubAgent, command.SourceKind);

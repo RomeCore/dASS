@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using Serilog;
 
 namespace LLMDesktopAssistant.SlashCommands.Execution
@@ -16,6 +17,8 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		private StubCommandExecutor()
 		{
 		}
+
+		public SlashCommandArgumentSchema? ArgumentSchema => null;
 
 		/// <inheritdoc/>
 		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)

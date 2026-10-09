@@ -5,6 +5,7 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using Material.Icons;
 
@@ -25,8 +26,24 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		IAgentTaskExecutor agentTaskExecutor,
 		IChatSettingsService chatSettings) : ISlashCommandExecutor
 	{
-		/// <summary>The keyed argument that makes the command await the sub-agent.</summary>
 		public const string WaitArgumentKey = "wait";
+
+		/// <inheritdoc/>
+		public SlashCommandArgumentSchema? ArgumentSchema { get; } = new()
+		{
+			HasRestPositional = true,
+			Keyed = new Dictionary<string, SlashCommandArgument>
+			{
+				[SubAgentCommandExecutor.WaitArgumentKey] = new SlashCommandArgument
+				{
+					Name = Locale.GetKey("command.argument.wait"),
+					Description = Locale.GetKey("command.argument.wait.description"),
+					Required = false,
+					Default = "false",
+					Format = SlashCommandBooleanFormatProvider.Instance
+				}
+			}.ToImmutableDictionary()
+		};
 
 		/// <inheritdoc/>
 		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)

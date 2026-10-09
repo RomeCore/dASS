@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// The built-ins are the command's own arguments (<c>$ARGUMENTS</c>) and the skill's identity
 	/// (<c>$CLAUDE_SKILL_DIR</c> / <c>$SKILL_DIR</c>, <c>$SKILL_NAME</c>); anything else resolves against the process
 	/// environment. An unknown variable is left <em>verbatim</em> — a typo must not silently eat text. All the
-	/// expansion logic lives here, so the executor only calls <see cref="Expand"/>.
+	/// expansion logic lives here, so the executor only calls <see cref="ExpandSkill"/>.
 	/// </remarks>
 	public static class SlashCommandVariableExpander
 	{
@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// Expands every <c>$NAME</c> / <c>${NAME}</c> variable in <paramref name="body"/>. Unknown variables are left
 		/// verbatim.
 		/// </summary>
-		public static string Expand(string body, SlashCommandBoundArguments arguments, SkillInfo skill)
+		public static string ExpandSkill(string body, SlashCommandBoundArguments arguments, SkillInfo skill)
 		{
 			if (string.IsNullOrEmpty(body) || !body.Contains('$'))
 				return body;

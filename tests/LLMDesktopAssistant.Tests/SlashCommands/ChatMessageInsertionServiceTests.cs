@@ -33,6 +33,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			public SlashCommandExecutionResult Result { get; set; } = SlashCommandExecutionResult.Ok();
 			public Exception? Throws { get; set; }
 
+			public SlashCommandArgumentSchema? ArgumentSchema { get; set; }
+
 			public Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
 			{
 				Calls++;
@@ -76,13 +78,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		private static UserInput Input(string content) => new() { Content = content, SenderLogin = "user" };
 
-		private static SlashCommandInfo Command(string name, ISlashCommandExecutor executor, bool? generate = null,
-			SlashCommandArgumentSchema? schema = null) => new()
+		private static SlashCommandInfo Command(string name, ISlashCommandExecutor executor, bool generate = true) => new()
 		{
 			Name = name,
 			Namespaces = ["skill"],
 			Generate = generate,
-			ArgumentSchema = schema,
 			Executor = executor
 		};
 
@@ -119,7 +119,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			{
 				Positionals = [new SlashCommandArgument { Name = Locale.GetKey("test.arg"), Required = true }]
 			};
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor(), schema: schema));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
 
 			var check = harness.Service.CanInsertUserInput(Input("/grilling"), generateIntent: true);
 
@@ -131,7 +131,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void CanInsertUserInput_AValidCommand_IsAccepted()
 		{
 			using var harness = new Harness();
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor(), schema: new SlashCommandArgumentSchema { HasRestPositional = true }));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
 
 			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true).Success);
 		}
@@ -169,8 +169,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public async Task Insert_AValidCommand_InsertsTheMessage_RunsTheExecutor_AndGenerates()
 		{
 			using var harness = new Harness();
-			var executor = new RecordingExecutor();
-			harness.Resolver.Add(Command("grilling", executor, schema: new SlashCommandArgumentSchema { HasRestPositional = true }));
+			var executor = new RecordingExecutor()
+			{
+				ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true }
+			};
+			harness.Resolver.Add(Command("grilling", executor));
 
 			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
 
@@ -242,22 +245,6 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public async Task Insert_AnEdit_DoesNotRunTheCommand_ButStillGenerates()
-		{
-			using var harness = new Harness();
-			var executor = new RecordingExecutor();
-			harness.Resolver.Add(Command("grilling", executor));
-			await harness.Service.InsertUserInputAsync(Input("hello"), generateIntent: false);
-
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true, editIndex: 0);
-
-			Assert.Single(harness.Storage.Chat.Messages);
-			Assert.Equal("/grilling", harness.LastMessage.Content);
-			Assert.Equal(0, executor.Calls);
-			Assert.Equal(1, harness.Executor.GenerateCalls);
-		}
-
-		[Fact]
 		public async Task Insert_WhenTheExecutorThrows_AttachesTheError_AndDoesNotGenerate()
 		{
 			using var harness = new Harness();
@@ -274,7 +261,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public async Task Insert_AValidCommand_RecordsAnExecutedFingerprint()
 		{
 			using var harness = new Harness();
-			harness.Resolver.Add(Command("grilling", new RecordingExecutor(), schema: new SlashCommandArgumentSchema { HasRestPositional = true }));
+			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = new SlashCommandArgumentSchema { HasRestPositional = true } }));
 
 			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
 

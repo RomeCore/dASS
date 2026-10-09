@@ -17,12 +17,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 
 		protected override SlashCommandSource SourceKind => SlashCommandSource.Skill;
 
-		/// <remarks>
-		/// A skill substitutes the whole argument text into its body, so its schema is a single rest positional.
-		/// </remarks>
-		protected override SlashCommandArgumentSchema CreateArgumentSchema(SkillInfo source)
-			=> new() { HasRestPositional = true };
-
 		protected override ISlashCommandExecutor CreateCommandExecutor(SkillInfo source)
 			=> new SkillCommandExecutor(source);
 	}
