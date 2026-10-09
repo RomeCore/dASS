@@ -28,8 +28,8 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		/// <summary>
 		/// A successful result, requesting generation by default.
 		/// </summary>
-		public static SlashCommandExecutionResult Ok(bool generate = true, ModelFacingMode? modelFacingMode = null)
-			=> new(generate, null, null, modelFacingMode);
+		public static SlashCommandExecutionResult Ok(bool generate = true, string? effectSummary = null, ModelFacingMode? modelFacingMode = null)
+			=> new(generate, null, effectSummary, modelFacingMode);
 
 		/// <summary>
 		/// Whether the command succeeded.
