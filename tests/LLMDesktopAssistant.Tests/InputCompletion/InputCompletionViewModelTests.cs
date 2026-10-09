@@ -63,7 +63,41 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 
 			Assert.True(vm.IsOpen);
 			Assert.True(vm.IsStateOnly);
+			Assert.True(vm.ShowNoMatches);
 			Assert.False(vm.CanAccept);
+		}
+
+		[Fact]
+		public void Update_AnArgumentStateWithoutItems_DoesNotReadAsNoMatches()
+		{
+			var vm = Vm(new InputCompletionResult
+			{
+				Span = new InputCompletionSpan(0, 3),
+				State = new InputCompletionState { Kind = InputCompletionKind.Argument }
+			});
+
+			vm.Update("/agent:x ", 9);
+
+			Assert.True(vm.IsOpen);
+			Assert.False(vm.ShowNoMatches);
+		}
+
+		[Fact]
+		public void Rows_MirrorTheItems_AndFollowTheSelection()
+		{
+			var vm = Vm(Result(new InputCompletionSpan(0, 3), "a", "b"));
+			vm.Update("/gr", 3);
+
+			Assert.Equal(2, vm.Rows.Count);
+			Assert.Same(vm.Items[0], vm.Rows[0].Item);
+			Assert.True(vm.Rows[0].IsSelected);
+			Assert.False(vm.Rows[1].IsSelected);
+			Assert.False(vm.Icon.IsNone);
+
+			vm.SelectedIndex = 1;
+
+			Assert.False(vm.Rows[0].IsSelected);
+			Assert.True(vm.Rows[1].IsSelected);
 		}
 
 		[Theory]

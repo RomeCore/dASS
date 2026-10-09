@@ -41,6 +41,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				["wait"] = new()
 				{
 					Name = Locale.GetKey("command.argument.wait"),
+					Description = Locale.GetKey("command.argument.wait.description"),
 					Format = SlashCommandBooleanFormatProvider.Instance
 				}
 			}.ToImmutableDictionary()
@@ -68,7 +69,10 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Namespaces = ["skill"],
 			Executor = new FakeExecutor(new SlashCommandArgumentSchema
 			{
-				Positionals = [new SlashCommandArgument { Name = Locale.GetKey("command.argument.thing") }]
+				Positionals =
+				[
+					new SlashCommandArgument { Name = Locale.GetKey("command.argument.thing"), Required = true }
+				]
 			})
 		};
 
@@ -101,6 +105,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.True(ok);
 			Assert.Equal(new InputCompletionSpan(0, 3), result!.Span);
 			Assert.NotNull(result.State);
+			Assert.Equal("command.completion.title.commands", result.State!.Title!.Key);
+			Assert.Empty(result.State.ContextItems);
 			Assert.Equal(2, result.Items.Count);
 
 			// Ordered by name then key: both are "grilling", so agent:grilling wins the tie and skill:grilling is defeated.
@@ -161,6 +167,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.True(ok);
 			Assert.Empty(result!.Items);
 			Assert.NotNull(result.State);
+
+			// The required argument is listed, and marked as the one the caret sits in.
+			var argument = Assert.Single(result.State!.ContextItems);
+			Assert.True(argument.IsRequired);
+			Assert.True(argument.IsCurrent);
 		}
 
 		[Fact]
@@ -173,6 +184,39 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.True(ok);
 			Assert.Empty(result!.Items);
 			Assert.NotNull(result.State);
+		}
+
+		[Fact]
+		public void TryCompute_AnArgument_DescribesTheCommand_AndListsItsArguments()
+		{
+			// The caret sits in the free text, i.e. in the rest positional, with "wait" declared besides it.
+			var ok = Source(WebSearcher).TryCompute(new InputCompletionRequest("/agent:web-searcher Погода", 25), out var result);
+
+			Assert.True(ok);
+			var state = result!.State!;
+			Assert.Equal("/agent:web-searcher", state.Title!.Key);
+			Assert.Same(WebSearcher.DescriptionKey, state.Description);
+			Assert.Equal("command.argument.rest", state.ContextTitle!.Key);
+
+			Assert.Equal(2, state.ContextItems.Count);
+			Assert.Equal("command.argument.rest", state.ContextItems[0].Name.Key);
+			Assert.True(state.ContextItems[0].IsCurrent);
+			Assert.False(state.ContextItems[0].IsRequired);
+			Assert.Equal("command.argument.wait", state.ContextItems[1].Name.Key);
+			Assert.False(state.ContextItems[1].IsCurrent);
+		}
+
+		[Fact]
+		public void TryCompute_InAKeyedValue_NamesTheSlotAsTheContext()
+		{
+			// The caret sits after the value of "wait", so that keyed argument is the one under it.
+			var ok = Source(WebSearcher).TryCompute(new InputCompletionRequest("/agent:web-searcher wait=t", 26), out var result);
+
+			Assert.True(ok);
+			var state = result!.State!;
+			Assert.Equal("command.argument.wait", state.ContextTitle!.Key);
+			Assert.Equal("command.argument.wait.description", state.ContextDescription!.Key);
+			Assert.True(state.ContextItems[1].IsCurrent);
 		}
 
 		[Fact]

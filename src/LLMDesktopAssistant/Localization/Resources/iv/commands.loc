@@ -27,3 +27,6 @@ agent.result: Sub-agent '{0}' result
 // Input completion (command.completion.*).
 completion.no_matches: No matching commands.
 completion.defeated: Shadowed by another command; add a namespace to select it.
+completion.title.commands: Commands
+completion.arguments: Arguments
+completion.required: required

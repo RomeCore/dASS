@@ -27,3 +27,6 @@ agent.result: Результат субагента '{0}'
 // Автодополнение ввода (command.completion.*).
 completion.no_matches: Нет подходящих команд.
 completion.defeated: Перекрыта другой командой; уточните пространством имён.
+completion.title.commands: Команды
+completion.arguments: Аргументы
+completion.required: обязательно

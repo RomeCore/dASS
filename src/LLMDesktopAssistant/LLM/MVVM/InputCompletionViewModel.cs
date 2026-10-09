@@ -1,4 +1,5 @@
 using Avalonia.Input;
+using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.InputCompletion;
 
 namespace LLMDesktopAssistant.LLM.MVVM
@@ -62,7 +63,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				if (Items.Count == 0)
 					return;
 				if (SetProperty(ref _selectedIndex, ((value % Items.Count) + Items.Count) % Items.Count))
+				{
 					RaisePropertyChanged(nameof(SelectedItem));
+					UpdateRowSelection();
+				}
 			}
 		}
 
@@ -77,9 +81,29 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public InputCompletionState? State { get; private set; }
 
 		/// <summary>
+		/// The icon of the state's kind.
+		/// </summary>
+		public VisualIconKind Icon => InputCompletionIcons.For(State?.Kind ?? InputCompletionKind.None);
+
+		/// <summary>
+		/// The picker rows: the continuations paired with the view state the popup draws.
+		/// </summary>
+		public IReadOnlyList<InputCompletionRow> Rows
+		{
+			get => field ??= [];
+			private set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// Whether there is nothing to show but the state.
 		/// </summary>
 		public bool IsStateOnly => IsOpen && Items.Count == 0;
+
+		/// <summary>
+		/// Whether the state should read as "nothing matched": an open command state carrying no continuations. An
+		/// argument state with no continuations still has the command's context to show, so it never says that.
+		/// </summary>
+		public bool ShowNoMatches => IsOpen && Items.Count == 0 && State?.Kind == InputCompletionKind.Command;
 
 		/// <summary>
 		/// Whether <see cref="Accept"/> can produce a result.
@@ -153,18 +177,39 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		private void SetResult(InputCompletionResult? result)
 		{
 			Items = result?.Items ?? [];
+			Rows = BuildRows(Items);
 			State = result?.State;
 			_selectedIndex = Items.Count > 0 ? Math.Clamp(result!.SelectedIndex, 0, Items.Count - 1) : 0;
+			UpdateRowSelection();
 
 			IsOpen = result is not null;
 			Result = result;
 
 			RaisePropertyChanged(nameof(Items));
+			RaisePropertyChanged(nameof(Rows));
 			RaisePropertyChanged(nameof(SelectedIndex));
 			RaisePropertyChanged(nameof(SelectedItem));
 			RaisePropertyChanged(nameof(State));
+			RaisePropertyChanged(nameof(Icon));
 			RaisePropertyChanged(nameof(IsStateOnly));
+			RaisePropertyChanged(nameof(ShowNoMatches));
 			RaisePropertyChanged(nameof(CanAccept));
+		}
+
+		private static IReadOnlyList<InputCompletionRow> BuildRows(IReadOnlyList<InputCompletionItem> items)
+		{
+			var rows = new InputCompletionRow[items.Count];
+			for (var i = 0; i < items.Count; i++)
+				rows[i] = new InputCompletionRow(items[i]);
+
+			return rows;
+		}
+
+		/// <summary>Marks the selected picker row, so the popup can draw it without a list control.</summary>
+		private void UpdateRowSelection()
+		{
+			for (var i = 0; i < Rows.Count; i++)
+				Rows[i].IsSelected = i == _selectedIndex;
 		}
 	}
 }
