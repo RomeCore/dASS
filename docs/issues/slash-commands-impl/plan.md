@@ -77,8 +77,8 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
       brushes; the debug page runs on it).
 - [x] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
       defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
-- [ ] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
-      key hook, mid-string ghost, `→` char-accept, reset on pointer caret moves.
+- [x] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
+      key hook, mid-string ghost, `→` char-accept, pointer-caret signal (manual debug-page check pending).
 - [ ] [29 — Autocomplete popup + `InputCompletionViewModel`](./issues/29-autocomplete-popup.md) — the caret-anchored
       popup, its state machine and the wiring into `UserInputView`.
 

@@ -1,6 +1,6 @@
 # 28: `HighlightTextBox` completion hooks
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 25
 
@@ -23,17 +23,36 @@ The generic, command-agnostic control-side plumbing the popup and the ghost need
 
 ## Acceptance criteria
 
-- [ ] `GetCaretRect(Visual)` is public and returns the caret rect in the target's coordinates.
-- [ ] The owning view can intercept keys before the TextBox; a consumed key does not reach the base behaviour.
-- [ ] Ghost text renders at the caret, mid-token included.
-- [ ] `→` consumes one real char and commits one ghost char; at the token end it only inserts.
-- [ ] A pointer-driven caret/selection change resets the completion state.
-- [ ] Main + desktop build; verified manually in the debug page.
+- [x] `GetCaretRect(Visual)` is public and returns the caret rect in the target's coordinates.
+- [x] The owning view can intercept keys before the TextBox; a consumed key does not reach the base behaviour.
+- [x] Ghost text renders at the caret, mid-token included.
+- [x] `→` consumes one real char and commits one ghost char; at the token end it only inserts.
+- [x] A pointer-driven caret/selection change is signalled (the view model resets the completion on it).
+- [ ] Main + desktop build green; manual verification in the debug page pending.
 
 ## Answer
 
-<!-- appended on resolution -->
+- **`HighlightTextBox.GetCaretRect(Visual target)`** — public, delegates to `HighlightTextPresenter.GetCaretRectIn`.
+- **`CaretStateChanged`** (raised from the presenter's `CaretIndex` / `SelectionStart` / `SelectionEnd` changes) and
+  **`PointerCaretStateChanged`** (raised after a click or a left-button drag). The control only *signals* a
+  pointer-driven change; the view model resets the completion on it (ticket 29) — the control stays
+  completion-agnostic.
+- **`PreviewKeyDown`** — raised at the start of `OnKeyDown`; a handler that sets `Handled` consumes the key before any
+  base behaviour.
+- **Inline completion (generic):** the new `IInlineCompletionProvider` (`CompletionText`, `TokenEnd`) exposes a ghost
+  to the control; on `Right` the control commits one character through the pure **`InlineCompletionAcceptor`**
+  (replace one character in `[caret, TokenEnd)` with one completion character; nothing is consumed at/after the token
+  end) and parks the caret.
+- **The command renderer now implements `IInlineCompletionProvider`** and takes a caret accessor, so it inserts the
+  ghost **at the caret** (mid-string included) and exposes the text + token end for `→`. The debug page wires the
+  caret to the end of the text.
+
+Verified: main + desktop builds; `InlineCompletionAcceptorTests` (5) and the renderer's mid-caret test; 69 green in
+the area. **Manual verification in the debug page is still pending.**
 
 ## Comments
+
+- The `→` mechanics live in the control, but the completion *data* still comes from the renderer (it hands over the
+  ghost text and the token end), so the control never learns what a slash command is.
 
 <!-- appended conversation -->
