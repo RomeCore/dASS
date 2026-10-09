@@ -85,6 +85,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				var tailEnd = Math.Clamp(completion.Span.End, caret, text.Length);
 				var delta = ghost.Length - (tailEnd - caret); // how much the text after the insertion shifts
 
+				// If the ghost is shorter than the text it replaces, it is padded with spaces to match the length of the
+				// replacement.
+				if (delta < 0)
+				{
+					ghost += new string(' ', -delta);
+					delta = 0;
+				}
+
 				rendered = text[..caret] + ghost + text[tailEnd..];
 
 				// The renderers paint the *raw* text; the ghost overwrites [caret, tailEnd). Remap every region onto the
