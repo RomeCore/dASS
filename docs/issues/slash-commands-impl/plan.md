@@ -90,6 +90,22 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
 Blocking edges: `26 ← 25, 27`; `28 ← 25`; `29 ← 25, 26, 28`; `24` and `27` independent.
 Execution order: `24 → 25 → 27 → 26 → 28 → 29`.
 
+## Stage 8 — Input UX fixes (after Stage 5)
+
+Stage 5 landed build-green but its UI parts were never exercised in the app. The first live run (a screenshot of
+`/agent:…:web-searcher Погода Москва wait=true`) exposed four problems — the popup's look, argument completion, a state
+that is never filled, and a command context that is never shown — plus two follow-ups (the missing token ghost and
+namespace-heavy canonical names). The design was settled in a grilling session; the tail of this file lists the calls.
+
+- [x] [30 — The rest positional as a schema slot](./issues/30-rest-positional-slot.md) — prefactor: `HasRestPositional`
+      (a bool) becomes `RestPositional` (`SlashCommandArgument?`) with a real span, so free text is an argument the
+      caret can be located in. **First**, because the popup's context is built on it.
+- [ ] [31 — Input completion popup rework](./issues/31-input-completion-popup.md) — the state model (header + context +
+      picker), the popup's geometry and chrome, the ghost as a *replacement* of the token tail, argument highlighting,
+      namespace collapsing and `Ctrl+Enter`.
+
+Blocking edges: `31 ← 30`.
+
 ## Stage 6 — Lua API
 
 - [ ] 6.1 `LuaApiCommands` (`dass.commands.list` / `invoke`).
@@ -151,3 +167,40 @@ Added after Stage 2 — the plan originally carried no settings UI for commands.
 - **Mid-string ghost is allowed** — the old "suffix-only" note was wrong: the presenter can insert the ghost at the caret; the caret/selection stay clamped to the real text, and any pointer-driven caret/selection change resets the completion state (popup + ghost) without calling the service.
 - **Argument completion is provider-driven**: `SlashCommandCompletionSource` asks the schema slot's `Format.CanComplete` and delegates to `Format.Complete` — no `wait`-specific code, so any existing or new `ISlashCommandArgumentFormatProvider` participates.
 - **Edits run commands** — the "edits never run a command" line in the design spec/doc-comments was an error introduced while writing the design docs, not the intent; the pre-flight must validate commands on edits too (ticket 24).
+
+## Committed decisions (input UX fixes)
+
+- **The popup is a stack of blocks, not one list**: `InputCompletionState` keeps fixed fields — `Title`, `Description`,
+  `Kind`, `ContextTitle`, `ContextDescription`, `ContextItems[]` — plus the result's `Items` as the single picker. The
+  picker is always exactly one, because only one `IInputCompletionSource` claims a caret; `Result.SelectedIndex` and
+  `Result.GhostText` stay the accept mechanics.
+- **The state per mode**: token → `Title = command.completion.title.commands`, no context, the commands as items;
+  argument → `Title` / `Description` = the command (short token and description), `ContextTitle` / `ContextDescription` =
+  the current argument (the rest positional included) or the «arguments» heading, `ContextItems` = the declared
+  arguments with a "required" mark. Values of filled arguments are **not** shown and defaults are **not** substituted.
+  The current-argument block and the argument list are shown **together** (flip to "instead of" through the
+  `ShowArgumentListWithCurrentArgument` constant in the source).
+- **The popup is open whenever the source yields a state** — including while the free text of `/agent:<name>` is typed.
+  `command.completion.no_matches` renders in the token mode only.
+- **Geometry**: the popup sits above the text box (its bottom edge on the input's top edge), anchored horizontally to the
+  caret and clamped into the window; bounded height with an internal scroll and a footer carrying the key hints. Chrome:
+  one `Border` — background `#161628`, border `#3A3A5E` 1px, radius 10, shadow `0 8 24 #4c000000` — with the brushes in
+  the popup's own dictionary so a theme can override them.
+- **Ghost = replacement, not insertion**: the renderer draws `text[..caret] + ghost + text[span.End..]`, so a ghost that
+  duplicates the typed tail (`wait=tru` → `e`) never shows the real tail twice. `ghost = InsertText[prefix.Length..]`,
+  and only while `InsertText` starts with the raw prefix before the caret; the token state gets a ghost too (its prefix
+  is the raw token, the leading `/` included), otherwise `→` still does nothing for a token. The presenter's
+  "mid-string is unsafe" remark was stale and is rewritten.
+- **Argument highlighting**: keyed-argument names are green (`SlashCommandArgumentKeyBrush` `#2ECC71`), `=` darker green
+  (`#1E8E5A`), the value stays grey (`#8C8C8C`), quotes lighter (`#B9B9CC`), and every argument carries a background
+  chip (`#268C8C8C`): `TextHighlightSpan` gains an optional background — `GenericTextRunProperties` already takes one.
+- **Canonical names collapse when unambiguous**: a command's short form is the shortest suffix of its `CanonicalToken`
+  (leading segments dropped one at a time) that `SlashCommandMatcher.Match` resolves back to that same command. It is
+  used for `InsertText`, `Display` and the command's name in the context block, with the full token in the row's
+  tooltip. Aliases stay a typing convenience and are never inserted, and a defeated command keeps a longer form so it
+  stays distinguishable from its winner.
+- **The rest positional is a real schema slot** (ticket 30): `HasRestPositional` becomes computed from `RestPositional`,
+  the parser emits a raw argument with a span, the lookup resolves the caret inside the free text, and `/skill` and
+  `/agent` name that slot — `command.argument.skill.arguments` and `command.argument.agent.message`.
+- **`Ctrl+Enter` sends without the generate intent** (the toolbar's `Send` command), bypasses the popup, cancels while
+  generating and is hinted in the button's tooltip.
