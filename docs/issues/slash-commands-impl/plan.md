@@ -79,8 +79,13 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
       defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
 - [x] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
       key hook, mid-string ghost, `→` char-accept, pointer-caret signal (manual debug-page check pending).
-- [ ] [29 — Autocomplete popup + `InputCompletionViewModel`](./issues/29-autocomplete-popup.md) — the caret-anchored
+- [x] [29 — Autocomplete popup + `InputCompletionViewModel`](./issues/29-autocomplete-popup.md) — the caret-anchored
       popup, its state machine and the wiring into `UserInputView`.
+
+> **Stage 5 complete.** Tickets 24–29 resolved. The UI parts (27–29) are build-green and unit-tested where pure, but
+> **manual verification in the app is still pending** (the inline ghost for a token name is a follow-up). The
+> `ChatMessageInsertionServiceTests` parallel-collection host deadlock (pre-existing) still makes the combined
+> slash-command area filter unreliable — run `ChatMessageInsertionServiceTests` separately.
 
 Blocking edges: `26 ← 25, 27`; `28 ← 25`; `29 ← 25, 26, 28`; `24` and `27` independent.
 Execution order: `24 → 25 → 27 → 26 → 28 → 29`.
