@@ -72,8 +72,9 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
       command on an edit exactly as on a new message (edits run commands). **First**, independent.
 - [x] [25 — General input-completion core](./issues/25-general-input-completion-core.md) — the UI-agnostic
       `IInputCompletionSource` / request / result / state / item types and the chat-scoped source resolver.
-- [ ] [27 — `SlashCommandInputAnalyzer` + highlight provider + theme brushes](./issues/27-input-analyzer-and-highlight.md)
-      — the shared pure input analyzer and the real highlighting for the chat input.
+- [~] [27 — `SlashCommandInputAnalyzer` + highlight provider + theme brushes](./issues/27-input-analyzer-and-highlight.md)
+      — the shared pure input analyzer and the real highlighting for the chat input. **Pure core done** (analyzer +
+      prefix matcher + tests); the highlight provider, brushes and debug-page migration remain.
 - [ ] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
       defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
 - [ ] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
