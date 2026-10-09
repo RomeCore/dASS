@@ -4,10 +4,12 @@ using LLMDesktopAssistant.Utils;
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
 	public class AdditionalChatDataCollection : RangeObservableOrderedCollection<AdditionalChatData>
-	{ 
+	{
+		internal static bool RaiseInUIThreadGlobal { get; set; } = true;
+
 		public AdditionalChatDataCollection()
 		{
-			RaiseInUIThread = true;
+			RaiseInUIThread = RaiseInUIThreadGlobal;
 			Comparer = AdditionalViewModelComparer.Instance;
 		}
 
