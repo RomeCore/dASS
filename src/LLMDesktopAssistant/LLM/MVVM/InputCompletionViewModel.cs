@@ -114,8 +114,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_caretIndex = caretIndex;
 
 			_service.Update(_text, caretIndex);
-			_service.Select(_selectedIndex);
 			SetResult(_service.Result);
+			_service.Select(_selectedIndex);
 		}
 
 		/// <summary>Recomputes the completion for the last text and caret.</summary>
@@ -173,10 +173,18 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void SetResult(InputCompletionResult? result)
 		{
+			var prevSelected = Result?.ItemAt(_selectedIndex);
 			Items = result?.Items ?? [];
 			Rows = BuildRows(Items);
 			State = result?.State;
 			_selectedIndex = 0;
+			if (prevSelected is not null)
+				for (int i = 0; i < Items.Count; i++)
+					if (Items[i].DisplayText == prevSelected.DisplayText)
+					{
+						_selectedIndex = i;
+						break;
+					}
 			UpdateRowSelection();
 
 			IsOpen = result is not null;
