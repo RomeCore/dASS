@@ -3,6 +3,7 @@
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 xmlns:llm="using:LLMDesktopAssistant.LLM.MVVM"
+			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
 			 xmlns:ic="using:LLMDesktopAssistant.InputCompletion"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -103,6 +104,7 @@
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="llm:InputCompletionRow">
 							<Border Classes.selected="{Binding IsSelected}"
+											beh:BringIntoViewBehaviour.When="{Binding IsSelected}"
 											CornerRadius="4"
 											Margin="2,0"
 											Padding="4,2"
