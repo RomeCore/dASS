@@ -19,6 +19,7 @@ public partial class UserInputView : UserControl
 		InputTextBox.AddHandler(TextBox.KeyDownEvent, InputTextBox_KeyDown, RoutingStrategies.Tunnel);
 		InputTextBox.CaretStateChanged += (_, _) => OnCaretChanged();
 		InputTextBox.PointerCaretStateChanged += (_, _) => (DataContext as UserInputViewModel)?.CompletionViewModel.Close();
+		InputTextBox.AddHandler(TextBox.LostFocusEvent, InputTextBox_LostFocus, RoutingStrategies.Bubble);
 		CompletionList.AcceptRequested += (_, _) => { AcceptCompletion(oneChar: false); };
 		CompletionPopup.Opened += (_, _) => ScheduleCompletionPopupOffset();
 
@@ -170,6 +171,14 @@ public partial class UserInputView : UserControl
 		// Up/Down/Escape are the popup's keys; Right is handled by the control (inline completion).
 		if (viewModel.CompletionViewModel.TryHandleKey(e.Key))
 			e.Handled = true;
+	}
+
+	private void InputTextBox_LostFocus(object? sender, RoutedEventArgs e)
+	{
+		if (DataContext is not UserInputViewModel vm)
+			return;
+
+		vm.CompletionViewModel.Close();
 	}
 
 	private void OnDragEnter(object? sender, DragEventArgs e)
