@@ -78,14 +78,15 @@ its first source, chat-agent mentions (`@Code Reviewer`, names may contain space
 - [x] [26 — `SlashCommandCompletionSource`](./issues/26-slash-command-completion-source.md) — token prefix matching,
       defeated marking and argument completion delegated to `ISlashCommandArgumentFormatProvider`.
 - [x] [28 — `HighlightTextBox` completion hooks](./issues/28-highlight-textbox-completion-hooks.md) — caret accessor,
-      key hook, mid-string ghost, `→` char-accept, pointer-caret signal (manual debug-page check pending).
+      key hook, mid-string ghost, `→` char-accept, pointer-caret signal.
 - [x] [29 — Autocomplete popup + `InputCompletionViewModel`](./issues/29-autocomplete-popup.md) — the caret-anchored
       popup, its state machine and the wiring into `UserInputView`.
 
-> **Stage 5 complete.** Tickets 24–29 resolved. The UI parts (27–29) are build-green and unit-tested where pure, but
-> **manual verification in the app is still pending** (the inline ghost for a token name is a follow-up). The
-> `ChatMessageInsertionServiceTests` parallel-collection host deadlock (pre-existing) still makes the combined
-> slash-command area filter unreliable — run `ChatMessageInsertionServiceTests` separately.
+> **Stage 5 complete.** Tickets 24–29 resolved. The UI parts (27–29) are build-green and unit-tested where pure, and
+> the inline ghost for a token name landed as a follow-up in ticket 31. Manual verification in the app is done: the
+> first live run exposed the popup problems Stage 8 reworked, and the post-Stage-8 `fix(input-completion)` commits
+> (popup focus loss, selection across recomputes, scrolling into view, ghost padding) are its results. The
+> `ChatMessageInsertionServiceTests` parallel-collection host deadlock is fixed — see the note under Stage 8.
 
 Blocking edges: `26 ← 25, 27`; `28 ← 25`; `29 ← 25, 26, 28`; `24` and `27` independent.
 Execution order: `24 → 25 → 27 → 26 → 28 → 29`.
@@ -105,8 +106,12 @@ namespace-heavy canonical names). The design was settled in a grilling session; 
       namespace collapsing and `Ctrl+Enter`. Includes the inversion the maintainer called for: a completion source
       renders its own regions, so the input view knows nothing about commands.
 
-> **Stage 8 complete.** Both tickets resolved. The UI is build-green and unit-tested where pure; **manual verification
-> in the app is still pending** (see ticket 31's checklist).
+> **Stage 8 complete.** Both tickets resolved. The UI is build-green and unit-tested where pure, and manual
+> verification in the app is done — the post-Stage-8 `fix(input-completion)` commits (close the popup when the input
+> loses focus, keep the selected row across recomputes, scroll it into view, pad a shorter ghost) are its results.
+> The `ChatMessageInsertionServiceTests` parallel-collection host deadlock (pre-existing) is fixed too: `58e454a`
+> adds an internal `RaiseInUIThreadGlobal` switch (default `true`, so production is unchanged) set to `false` in
+> `TestInitialization`, so the combined slash-command area filter no longer has to run the host tests separately.
 
 Blocking edges: `31 ← 30`.
 
