@@ -1,12 +1,21 @@
 ---
 name: commit-message
 disable-model-invocation: true
-description: Name a commit from the repository diff. Call the `git-full-diff` tool immediately as the first action of the turn - before replying - then name the change; it already returns the diff, the stats and the recent commit history, so no separate `git log` is needed. Use when the user asks for a commit name or message, hands over a diff to be named, or is about to commit.
+description: Name a commit from the repository diff. Call the `git-full-diff` tool immediately as the first action of the turn - before replying - then name the change; it already returns the diff, the stats and the recent commit history, so no separate `git log` is needed. Use when the user asks for a commit name or message, hands over a diff to be named, or is about to commit. Pass `auto` (`/commit-message auto`) to also create the commit instead of stopping at the message.
 ---
 
 # Naming a commit from the diff
 
 The product is a short list of candidate names plus one ready-to-paste message. The diff is the truth; the user's summary is a hint.
+
+## The argument
+
+Read one optional argument from the invoking message (`/commit-message <arg>`):
+
+- **no argument** - name only: produce the candidates and the ready-to-paste message, then stop. Committing stays a separate step the user asks for.
+- **`auto`** - name *and* commit: run steps 1-5, then create the commit(s) yourself (step 6). The argument *is* the user's instruction to commit - do not ask for confirmation again.
+
+Any other argument is treated as absent: name only.
 
 ## Steps
 
@@ -63,6 +72,17 @@ When the diff holds independent changes, add a **How to split** section on top -
 
 *Done when:* either the diff is declared a single intent, or every independent change has its own proposed commit.
 
+### 6. Commit it (only with `auto`)
+
+Without the `auto` argument, stop at step 5 - the message is the whole product. With it, the message is already written, so make the commit:
+
+- Stage exactly the paths the diff listed, tracked and untracked alike (`git add -A` when the diff *is* the whole worktree); leave everything else in the worktree untouched.
+- Commit the subject with `git commit -m`, adding the body as further `-m` paragraphs when step 4 produced one.
+- A splittable diff becomes one commit per proposed split, in the listed order - never one squashed commit.
+- Never push. Report the created commit hash(es).
+
+*Done when:* `git log` shows the new commit(s) with the exact recommended subjects.
+
 ## Pitfalls
 
 - Naming from the user's summary instead of the diff - the summary is stale by the time it reaches you.
@@ -71,3 +91,5 @@ When the diff holds independent changes, add a **How to split** section on top -
 - Running `git log`, `git status` or `git diff` by hand - `git-full-diff` already returned the history, the diff and the stats in one call.
 - `style` for a UI or layout change - `style` is code formatting only; a visual change is `feat`, `fix` or `agent`.
 - `feat` for a commit whose only lasting effect is that the same behaviour now lives in different code - that is `refactor`.
+- Committing without `auto` - no argument means name only; the commit is the user's call, not mine.
+- Asking for confirmation again under `auto` - the argument *is* the confirmation; name it and commit it.
