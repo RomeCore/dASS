@@ -4,11 +4,13 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Avalonia.Media;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands.Arguments;
+using Material.Icons;
 
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
@@ -140,7 +142,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 		/// <summary>
 		/// One token-state continuation: the command under the shortest form it can safely be written in, with its
-		/// fully-qualified token riding along as the hint when the two differ.
+		/// fully-qualified token riding along as the hint when the two differ and the icon of its source kind.
 		/// </summary>
 		private static InputCompletionItem TokenItem(SlashCommandInfo command,
 			IReadOnlyList<SlashCommandInfo> commandSet, bool isDefeated)
@@ -154,20 +156,25 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				Hint = insertText == full ? null : full,
 				Description = command.DescriptionKey,
 				Kind = InputCompletionKind.Command,
+				IconOverride = IconForSource(command.SourceKind),
 				IsDefeated = isDefeated
 			};
 		}
 
 		/// <summary>
-		/// The raw text of the token from its start up to the caret — the leading <c>/</c> included, so it compares
-		/// against an <see cref="InputCompletionItem.InsertText"/> directly.
+		/// The row icon of a command, by the kind of source it was derived from — the same vocabulary the command chips
+		/// use. <see cref="SlashCommandSource.Unknown"/> returns <see langword="null"/> so the item falls back to the
+		/// icon its <see cref="InputCompletionKind.Command"/> uses.
 		/// </summary>
-		private static string TypedToken(string text, int caretIndex, InputCompletionSpan tokenSpan)
+		private static VisualIconKind? IconForSource(SlashCommandSource source) => source switch
 		{
-			var start = Math.Clamp(tokenSpan.Start, 0, text.Length);
-			var end = Math.Clamp(caretIndex, start, text.Length);
-			return text[start..end];
-		}
+			SlashCommandSource.Native => MaterialIconKind.Console,
+			SlashCommandSource.Script => MaterialIconKind.ScriptTextOutline,
+			SlashCommandSource.Skill => MaterialIconKind.Lightbulb,
+			SlashCommandSource.SubAgent => MaterialIconKind.Robot,
+			SlashCommandSource.Tool => MaterialIconKind.Wrench,
+			_ => null
+		};
 
 		/// <summary>
 		/// The argument state: the command as the header, the argument under the caret (or the declared-arguments

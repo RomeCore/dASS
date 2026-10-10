@@ -17,8 +17,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>The continuation the row offers.</summary>
 		public InputCompletionItem Item { get; }
 
-		/// <summary>The row's icon, chosen by the continuation's kind.</summary>
-		public VisualIconKind Icon => InputCompletionIcons.For(Item.Kind);
+		/// <summary>
+		/// The row's icon: the continuation's explicit <see cref="InputCompletionItem.IconOverride"/> when set, otherwise
+		/// the one chosen by its kind.
+		/// </summary>
+		public VisualIconKind Icon => Item.IconOverride ?? InputCompletionIcons.For(Item.Kind);
 
 		/// <summary>
 		/// Whether this is the row <see cref="InputCompletionViewModel.Accept"/> would accept.

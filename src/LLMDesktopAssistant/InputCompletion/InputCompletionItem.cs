@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.InputCompletion
@@ -32,6 +33,13 @@ namespace LLMDesktopAssistant.InputCompletion
 		/// The kind of the item (used for the row icon).
 		/// </summary>
 		public InputCompletionKind Kind { get; init; }
+
+		/// <summary>
+		/// An explicit icon for the row, overriding the one the item's <see cref="Kind"/> would pick. Set this when a
+		/// source wants a continuation to read differently than its category (for example, a tool-specific icon for a
+		/// command it derived). <see langword="null"/> keeps the kind-based default.
+		/// </summary>
+		public VisualIconKind? IconOverride { get; init; }
 
 		/// <summary>
 		/// Whether the item is shadowed by a higher-priority one and is reachable only through a qualifier. Marked in
