@@ -20,7 +20,7 @@ dass.tool.result.append_data(ui)              -- render it under this tool call
 
 `dass.ui.create_control(xaml, view_model) -> uicontrol`
 
-- `xaml` - a non-empty string, loaded at runtime, so it uses reflection bindings: `{Binding key}` and `{Binding [key]}`. Keep compiled bindings and `x:DataType` out of the string.
+- `xaml` - a non-empty string, loaded at runtime, so it uses reflection bindings: `{Binding key}` and `{Binding [key]}`. Keep compiled bindings and `x:DataType` out of the string. The **root element must declare the Avalonia namespace** - `xmlns="https://github.com/avaloniaui"` - or the loader resolves no element types and the control renders as an error box (see *What bites*).
 - `view_model` - a Lua table, or `nil`. A table becomes the dynamic view model (step 3); `nil` gives an empty one for purely static markup.
 
 The result is a handle: a plain value, no methods, reusable. The same handle may be appended any number of times.
@@ -67,7 +67,7 @@ Declare commands with the expression form `vm.submit = function(self) ... end` o
 A member whose value is a Lua **array** renders as a list:
 
 ```xml
-<ItemsControl ItemsSource="{Binding items}">
+<ItemsControl xmlns="https://github.com/avaloniaui" ItemsSource="{Binding items}">
   <ItemsControl.ItemTemplate>
     <DataTemplate>
       <TextBlock Text="{Binding label}"/>
@@ -163,7 +163,7 @@ Rendering errors are silent, so walk the list from the outside in:
 
 ### What the markup may contain
 
-Any Avalonia markup, with any root `Control` (not only panels). Binding is reflection-based and flows both ways - a `TwoWay` binding writes back through the same view model. The fragment has no code-behind and no event handlers; a control either binds a member or invokes a command. It runs with full trust and may reference any type the loader resolves.
+Any Avalonia markup, with any root `Control` (not only panels). The root element **must** carry the Avalonia namespace (`xmlns="https://github.com/avaloniaui"`); without it the loader resolves no element types at all and the control renders as an error box. Further namespaces are declared per prefix as usual (`xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"`, `xmlns:loc="using:..."`). Binding is reflection-based and flows both ways - a `TwoWay` binding writes back through the same view model. The fragment has no code-behind and no event handlers; a control either binds a member or invokes a command. It runs with full trust and may reference any type the loader resolves.
 
 ### What persists, and how
 
@@ -187,6 +187,7 @@ The additional data stores its AXAML string plus a `BsonValue` snapshot of the v
 ### What bites
 
 - **A dotted function *statement*** - `function vm.bump(self) ... end` - crashes the AsyncLua parser with a bare `NullReferenceException` (`AsyncLuaParser.DeclareStatements`) before a line runs; the message names the host, not the construct. Use `vm.bump = function(self) ... end` or `function vm:bump() ... end`. Traced and reported as `docs/agent-reports/AR-0005-*`.
+- **A markup fragment with no Avalonia namespace** renders an error box reading `Failed to render dynamic UI: Unable to resolve type <X> from namespace ` - note the **empty** namespace: the root element resolved no types. Put `xmlns="https://github.com/avaloniaui"` on the root element. This is the most common reason a control that "should" render fails.
 - **A bind that misses the table** renders empty - nothing validates the string, so nothing warns.
 - **Markup written for compiled bindings** (`x:DataType`, `{CompiledBinding}`) fails at render time, not at `create_control` time.
 - **`append_data` from a script that is not a running tool** is a silent no-op.
