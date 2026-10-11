@@ -92,6 +92,15 @@ namespace LLMDesktopAssistant.LLM.Settings
 		}
 
 		/// <summary>
+		/// Settings related to prompt contexts.
+		/// </summary>
+		public ChatPromptContextSettings PromptContexts
+		{
+			get => field ??= new();
+			set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// Settings related to skills.
 		/// </summary>
 		public ChatSkillSettings Skills

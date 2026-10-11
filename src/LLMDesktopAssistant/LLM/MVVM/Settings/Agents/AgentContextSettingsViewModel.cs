@@ -3,9 +3,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Services.Prompting;
@@ -66,19 +64,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		/// </summary>
 		public ContextSetSettings EffectiveContextSet => Settings.GetEffectiveContextSet(_chatSettings);
 
-		public AgentContextSettingsViewModel(AgentContextSettings settings, ChatSettings chatSettings,
-			ChatAgentDescriptor agent, IAddonSetCollector<PromptContextInfo> promptContextCollector,
-			IAddonCardFactory<PromptContextInfo, PromptContextChange> cardFactory,
-			IAddonManagerInvalidator addonInvalidator,
-			IAddonSearchService<PromptContextInfo> searchService)
+		public AgentContextSettingsViewModel(IServiceProvider services, ChatAgentDescriptor agent,
+			AgentContextSettings settings, ChatSettings chatSettings)
 		{
 			Settings = settings;
 			_chatSettings = chatSettings;
 			_agent = agent;
-			_promptContextCollector = promptContextCollector;
+			_promptContextCollector = services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>();
 
-			List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(promptContextCollector, cardFactory,
-				addonInvalidator, AddonKind.PromptContext, searchService,
+			List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(services, agent, AddonKind.PromptContext,
 				(list, addon) => new AddonCardContext<PromptContextInfo, PromptContextChange>
 				{
 					Addon = addon,

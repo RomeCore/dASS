@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
@@ -52,23 +51,15 @@ public class ChatCommandsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatCommandsSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
 	/// <param name="settings">The chat command settings.</param>
-	/// <param name="collector">The collector that provides the available commands.</param>
-	/// <param name="cardFactory">The factory that builds the command cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	public ChatCommandsSettingsViewModel(ChatCommandSettings settings,
-		IAddonSetCollector<SlashCommandInfo> collector,
-		IAddonCardFactory<SlashCommandInfo, SlashCommandChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator)
+	public ChatCommandsSettingsViewModel(IServiceProvider services, ChatCommandSettings settings)
 	{
 		_commandSettings = settings;
 		_selectedCommandsSetInheritance = InheritanceLevelItem.AllProfile.First(item => item.Value == settings.CommandsSetInheritance);
 		settings.PropertyChanged += CommandSettings_PropertyChanged;
 
-		// The commands are never agent-searchable, so no search service is passed: the list falls back to the plain
-		// substring match over name/description/tags.
-		List = new AddonListViewModel<SlashCommandInfo, SlashCommandChange>(collector, cardFactory, addonInvalidator,
-			AddonKind.SlashCommand, null, (list, addon) => new AddonCardContext<SlashCommandInfo, SlashCommandChange>
+		List = new AddonListViewModel<SlashCommandInfo, SlashCommandChange>(services, null, AddonKind.SlashCommand, (list, addon) => new AddonCardContext<SlashCommandInfo, SlashCommandChange>
 			{
 				Addon = addon,
 				SetConfig = EffectiveCommandsSet,

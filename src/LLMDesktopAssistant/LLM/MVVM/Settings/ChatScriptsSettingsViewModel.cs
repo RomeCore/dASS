@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting.Lua;
@@ -53,23 +51,15 @@ public class ChatScriptsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatScriptsSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
 	/// <param name="settings">The chat script settings.</param>
-	/// <param name="collector">The collector that provides the available Lua scripts.</param>
-	/// <param name="cardFactory">The factory that builds the Lua script cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public ChatScriptsSettingsViewModel(ChatScriptSettings settings,
-		IAddonSetCollector<LuaScriptInfo> collector,
-		IAddonCardFactory<LuaScriptInfo, LuaScriptChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<LuaScriptInfo> searchService)
+	public ChatScriptsSettingsViewModel(IServiceProvider services, ChatScriptSettings settings)
 	{
 		_scriptSettings = settings;
 		_selectedScriptsetInheritance = InheritanceLevelItem.AllProfile.First(item => item.Value == settings.ScriptsetInheritance);
 		settings.PropertyChanged += ScriptSettings_PropertyChanged;
 
-		List = new AddonListViewModel<LuaScriptInfo, LuaScriptChange>(collector, cardFactory, addonInvalidator,
-			AddonKind.LuaScript, searchService, (list, addon) => new AddonCardContext<LuaScriptInfo, LuaScriptChange>
+		List = new AddonListViewModel<LuaScriptInfo, LuaScriptChange>(services, null, AddonKind.LuaScript, (list, addon) => new AddonCardContext<LuaScriptInfo, LuaScriptChange>
 			{
 				Addon = addon,
 				SetConfig = EffectiveScriptset,

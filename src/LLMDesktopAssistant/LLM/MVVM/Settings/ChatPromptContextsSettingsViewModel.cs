@@ -1,7 +1,6 @@
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
+using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting.Context;
 
@@ -16,6 +15,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 public class ChatPromptContextsSettingsViewModel : ViewModelBase
 {
 	/// <summary>
+	/// Gets the underlying chat prompt context settings.
+	/// </summary>
+	public ChatPromptContextSettings PromptContextSettings { get; }
+
+	/// <summary>
 	/// Gets the addon list that renders the available prompt contexts and searches over them.
 	/// </summary>
 	public AddonListViewModel List { get; }
@@ -23,17 +27,13 @@ public class ChatPromptContextsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatPromptContextsSettingsViewModel"/> class.
 	/// </summary>
-	/// <param name="promptContextCollector">The collector that provides the available prompt contexts.</param>
-	/// <param name="cardFactory">The factory that builds the prompt context cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public ChatPromptContextsSettingsViewModel(IAddonSetCollector<PromptContextInfo> promptContextCollector,
-		IAddonCardFactory<PromptContextInfo, PromptContextChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<PromptContextInfo> searchService)
+	/// <param name="services">The chat services used to build the addon list.</param>
+	/// <param name="settings">The chat prompt context settings.</param>
+	public ChatPromptContextsSettingsViewModel(IServiceProvider services, ChatPromptContextSettings settings)
 	{
-		List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(promptContextCollector, cardFactory,
-			addonInvalidator, AddonKind.PromptContext, searchService)
+		PromptContextSettings = settings;
+
+		List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(services, null, AddonKind.PromptContext)
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.prompt_contexts.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.prompt_contexts.empty")

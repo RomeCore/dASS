@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM.Grouping;
 using LLMDesktopAssistant.Addons.Search;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Utils;
@@ -164,6 +165,8 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		where TAddon : AddonChangedBase<TAddon, TChange>, new()
 		where TChange : AddonChangeBase, new()
 	{
+		private readonly IServiceProvider _services;
+		private readonly ChatAgentDescriptor? _agent;
 		private readonly IAddonSetCollector<TAddon> _collector;
 		private readonly IAddonCardFactory<TAddon, TChange> _factory;
 		private readonly IAddonManagerInvalidator _invalidator;
@@ -182,23 +185,21 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddonListViewModel{TAddon, TChange}"/> class.
 		/// </summary>
-		/// <param name="collector">The collector that provides the addons of the list.</param>
-		/// <param name="factory">The factory that builds the cards of an addon.</param>
-		/// <param name="invalidator">The invalidator used to reload the addons before building the list.</param>
+		/// <param name="services">The services to use.</param>
+		/// <param name="agent">The agent descriptor, if any.</param>
 		/// <param name="kind">The kind of addon to list.</param>
-		/// <param name="searchService">The search service used to filter the list by the search query, or
-		/// <see langword="null"/> to fall back to the plain substring match.</param>
 		/// <param name="contextBuilder">The optional builder of the card context, used when the cards need
 		/// a context other than the default one (for example, when they edit the overrides of a set).</param>
-		public AddonListViewModel(IAddonSetCollector<TAddon> collector, IAddonCardFactory<TAddon, TChange> factory,
-			IAddonManagerInvalidator invalidator, AddonKind kind, IAddonSearchService<TAddon>? searchService = null,
+		public AddonListViewModel(IServiceProvider services, ChatAgentDescriptor? agent, AddonKind kind,
 			Func<AddonListViewModel<TAddon, TChange>, TAddon, AddonCardContext<TAddon, TChange>>? contextBuilder = null)
 		{
-			_collector = collector;
-			_factory = factory;
-			_invalidator = invalidator;
+			_services = services;
+			_agent = agent;
+			_collector = services.GetRequiredService<IAddonSetCollector<TAddon>>();
+			_factory = services.GetRequiredService<IAddonCardFactory<TAddon, TChange>>();
+			_invalidator = services.GetRequiredService<IAddonManagerInvalidator>();
 			_kind = kind;
-			_searchService = searchService;
+			_searchService = services.GetService<IAddonSearchService<TAddon>>();
 			_contextBuilder = contextBuilder;
 			GroupingModes = StandardGroupingModes.CreateDefault<TAddon>();
 		}
@@ -225,7 +226,17 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Gets the addons shown by the list.
 		/// </summary>
-		protected virtual IEnumerable<TAddon> GetAddons() => _collector.GetAvailableAddons();
+		protected virtual IEnumerable<TAddon> GetAddons()
+		{
+			Func<TAddon, bool> filter;
+			if (_agent is null)
+				filter = a => a.ChatAvailablePredicate?.Invoke(a, _services) ?? true;
+			else
+				filter = a => (a.ChatAvailablePredicate?.Invoke(a, _services) ?? true)
+					&& (a.AgentAvailablePredicate?.Invoke(a, _services, _agent) ?? true);
+
+			return _collector.GetAvailableAddons().Where(filter);
+		}
 
 		/// <summary>
 		/// Creates the context the card of the given addon is built with.

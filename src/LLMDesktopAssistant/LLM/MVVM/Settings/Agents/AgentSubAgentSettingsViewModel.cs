@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.Agents.SubAgents;
@@ -55,25 +53,19 @@ public class AgentSubAgentSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="AgentSubAgentSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
+	/// <param name="agent">The agent the list belongs to.</param>
 	/// <param name="settings">The agent sub-agent settings.</param>
 	/// <param name="chatSettings">The chat settings used to resolve the inherited sub-agentset.</param>
-	/// <param name="subAgentsetCollector">The collector that provides the available sub-agents.</param>
-	/// <param name="cardFactory">The factory that builds the sub-agent cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public AgentSubAgentSettingsViewModel(AgentSubAgentSettings settings, ChatSettings chatSettings,
-		IAddonSetCollector<SubAgentInfo> subAgentsetCollector,
-		IAddonCardFactory<SubAgentInfo, SubAgentChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<SubAgentInfo> searchService)
+	public AgentSubAgentSettingsViewModel(IServiceProvider services, ChatAgentDescriptor agent,
+		AgentSubAgentSettings settings, ChatSettings chatSettings)
 	{
 		SubAgentSettings = settings;
 		_chatSettings = chatSettings;
 		_selectedSubAgentChangesInheritance = InheritanceLevelItem.AllAgent.First(item => item.Value == settings.SubAgentsetInheritance);
 		settings.PropertyChanged += SubAgentSettings_PropertyChanged;
 
-		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(subAgentsetCollector, cardFactory, addonInvalidator,
-			AddonKind.SubAgent, searchService, (list, addon) => new AddonCardContext<SubAgentInfo, SubAgentChange>
+		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(services, agent, AddonKind.SubAgent, (list, addon) => new AddonCardContext<SubAgentInfo, SubAgentChange>
 			{
 				Addon = addon,
 				SetConfig = EffectiveSubAgentset,

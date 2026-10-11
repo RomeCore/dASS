@@ -2,9 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.LLM.MVVM.Settings.Agents;
@@ -61,16 +59,9 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase, ISetPolicyMaskFlag
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatSubAgentsSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
 	/// <param name="settings">The chat sub-agent settings.</param>
-	/// <param name="subAgentsetCollector">The collector that provides the available sub-agents.</param>
-	/// <param name="cardFactory">The factory that builds the sub-agent cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public ChatSubAgentsSettingsViewModel(ChatSubAgentSettings settings,
-		IAddonSetCollector<SubAgentInfo> subAgentsetCollector,
-		IAddonCardFactory<SubAgentInfo, SubAgentChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<SubAgentInfo> searchService)
+	public ChatSubAgentsSettingsViewModel(IServiceProvider services, ChatSubAgentSettings settings)
 	{
 		SubAgentSettings = settings;
 		CreateSubAgentCommand = new AsyncRelayCommand(CreateSubAgentAsync);
@@ -80,8 +71,7 @@ public class ChatSubAgentsSettingsViewModel : ViewModelBase, ISetPolicyMaskFlag
 
 		PolicyMaskCategoryItems = InitializePolicyMaskItems();
 
-		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(subAgentsetCollector, cardFactory, addonInvalidator,
-			AddonKind.SubAgent, searchService)
+		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(services, null, AddonKind.SubAgent)
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.sub_agents.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.sub_agents.empty")

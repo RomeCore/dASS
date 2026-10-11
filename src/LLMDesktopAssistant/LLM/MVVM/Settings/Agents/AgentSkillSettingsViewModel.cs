@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Settings;
@@ -54,25 +52,19 @@ public class AgentSkillSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="AgentSkillSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
+	/// <param name="agent">The agent the list belongs to.</param>
 	/// <param name="settings">The agent skill settings.</param>
 	/// <param name="chatSettings">The chat settings used to resolve the inherited skillset.</param>
-	/// <param name="skillsetCollector">The collector that provides the available skills.</param>
-	/// <param name="cardFactory">The factory that builds the skill cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public AgentSkillSettingsViewModel(AgentSkillSettings settings, ChatSettings chatSettings,
-		IAddonSetCollector<SkillInfo> skillsetCollector,
-		IAddonCardFactory<SkillInfo, SkillChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<SkillInfo> searchService)
+	public AgentSkillSettingsViewModel(IServiceProvider services, ChatAgentDescriptor agent,
+		AgentSkillSettings settings, ChatSettings chatSettings)
 	{
 		SkillSettings = settings;
 		_chatSettings = chatSettings;
 		_selectedSkillChangesInheritance = InheritanceLevelItem.AllAgent.First(item => item.Value == settings.SkillsetInheritance);
 		settings.PropertyChanged += SkillSettings_PropertyChanged;
 
-		List = new AddonListViewModel<SkillInfo, SkillChange>(skillsetCollector, cardFactory, addonInvalidator,
-			AddonKind.Skill, searchService, (list, addon) => new AddonCardContext<SkillInfo, SkillChange>
+		List = new AddonListViewModel<SkillInfo, SkillChange>(services, agent, AddonKind.Skill, (list, addon) => new AddonCardContext<SkillInfo, SkillChange>
 			{
 				Addon = addon,
 				SetConfig = EffectiveSkillset,

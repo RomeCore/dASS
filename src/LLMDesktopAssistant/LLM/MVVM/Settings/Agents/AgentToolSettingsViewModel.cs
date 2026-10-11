@@ -1,10 +1,8 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
 using LLMDesktopAssistant.Addons.MVVM.Grouping;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Settings;
@@ -188,15 +186,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AgentToolSettingsViewModel"/> class.
 		/// </summary>
+		/// <param name="services">The chat services used to build the addon list.</param>
+		/// <param name="agent">The agent the list belongs to.</param>
 		/// <param name="settings">The agent tool settings to edit.</param>
-		/// <param name="toolsetBuildingService">The toolset building service used to enumerate available tools.</param>
 		/// <param name="chatSettings">The chat settings used to resolve inherited settings.</param>
-		/// <param name="cardFactory">The factory that builds the tool cards.</param>
-		/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-		/// <param name="searchService">The search service used to filter the list by the search query.</param>
-		public AgentToolSettingsViewModel(AgentToolSettings settings, IAddonSetCollector<ToolInfo> toolsetBuildingService,
-			ChatSettings chatSettings, IAddonCardFactory<ToolInfo, ToolChange> cardFactory,
-			IAddonManagerInvalidator addonInvalidator, IAddonSearchService<ToolInfo> searchService)
+		public AgentToolSettingsViewModel(IServiceProvider services, ChatAgentDescriptor agent, AgentToolSettings settings,
+			ChatSettings chatSettings)
 		{
 			_chatSettings = chatSettings;
 			ToolSettings = settings;
@@ -209,8 +204,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 
 			PolicyMaskCategoryItems = InitializePolicyMaskItems();
 
-			List = new AddonListViewModel<ToolInfo, ToolChange>(toolsetBuildingService, cardFactory, addonInvalidator,
-				AddonKind.Tool, searchService, (list, addon) => new AddonCardContext<ToolInfo, ToolChange>
+			List = new AddonListViewModel<ToolInfo, ToolChange>(services, agent, AddonKind.Tool, (list, addon) => new AddonCardContext<ToolInfo, ToolChange>
 				{
 					Addon = addon,
 					SetConfig = EffectiveToolsetConfiguration,

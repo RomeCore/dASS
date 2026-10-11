@@ -1,7 +1,6 @@
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
+using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 
@@ -16,6 +15,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 public class ChatToolsSettingsViewModel : ViewModelBase
 {
 	/// <summary>
+	/// Gets the underlying chat tool settings.
+	/// </summary>
+	public ChatToolSettings ToolSettings { get; }
+
+	/// <summary>
 	/// Gets the addon list that renders the available tools and searches over them.
 	/// </summary>
 	public AddonListViewModel List { get; }
@@ -23,17 +27,13 @@ public class ChatToolsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatToolsSettingsViewModel"/> class.
 	/// </summary>
-	/// <param name="toolsetCollector">The collector that provides the available tools.</param>
-	/// <param name="cardFactory">The factory that builds the tool cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public ChatToolsSettingsViewModel(IAddonSetCollector<ToolInfo> toolsetCollector,
-		IAddonCardFactory<ToolInfo, ToolChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<ToolInfo> searchService)
+	/// <param name="services">The chat services used to build the addon list.</param>
+	/// <param name="settings">The chat tool settings.</param>
+	public ChatToolsSettingsViewModel(IServiceProvider services, ChatToolSettings settings)
 	{
-		List = new AddonListViewModel<ToolInfo, ToolChange>(toolsetCollector, cardFactory, addonInvalidator,
-			AddonKind.Tool, searchService)
+		ToolSettings = settings;
+
+		List = new AddonListViewModel<ToolInfo, ToolChange>(services, null, AddonKind.Tool)
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.tools.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.tools.empty")

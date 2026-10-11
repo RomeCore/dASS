@@ -1,9 +1,7 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Addons.MVVM;
-using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
@@ -39,22 +37,14 @@ public class ChatSkillsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Initializes a new instance of the <see cref="ChatSkillsSettingsViewModel"/> class.
 	/// </summary>
+	/// <param name="services">The chat services used to build the addon list.</param>
 	/// <param name="settings">The chat skill settings.</param>
-	/// <param name="skillsetCollector">The collector that provides the available skills.</param>
-	/// <param name="cardFactory">The factory that builds the skill cards.</param>
-	/// <param name="addonInvalidator">The invalidator used to reload the addons before building the list.</param>
-	/// <param name="searchService">The search service used to filter the list by the search query.</param>
-	public ChatSkillsSettingsViewModel(ChatSkillSettings settings,
-		IAddonSetCollector<SkillInfo> skillsetCollector,
-		IAddonCardFactory<SkillInfo, SkillChange> cardFactory,
-		IAddonManagerInvalidator addonInvalidator,
-		IAddonSearchService<SkillInfo> searchService)
+	public ChatSkillsSettingsViewModel(IServiceProvider services, ChatSkillSettings settings)
 	{
 		SkillSettings = settings;
 		CreateSkillCommand = new AsyncRelayCommand(CreateSkillAsync);
 
-		List = new AddonListViewModel<SkillInfo, SkillChange>(skillsetCollector, cardFactory, addonInvalidator,
-			AddonKind.Skill, searchService)
+		List = new AddonListViewModel<SkillInfo, SkillChange>(services, null, AddonKind.Skill)
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.skills.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.skills.empty")

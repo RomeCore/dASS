@@ -189,27 +189,15 @@ namespace LLMDesktopAssistant.LLM.Settings
 				[
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.tools"),
 						MaterialIconKind.Wrench,
-						() => new ChatToolsSettingsViewModel(
-							Chat.Services.GetRequiredService<IAddonSetCollector<ToolInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<ToolInfo, ToolChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<ToolInfo>>())),
+							() => new ChatToolsSettingsViewModel(Chat.Services, Settings.Tools)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.skills"),
 						MaterialIconKind.Cards,
-						() => new ChatSkillsSettingsViewModel(Settings.Skills,
-							Chat.Services.GetRequiredService<IAddonSetCollector<SkillInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<SkillInfo, SkillChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<SkillInfo>>())),
+							() => new ChatSkillsSettingsViewModel(Chat.Services, Settings.Skills)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.sub_agents"),
 						MaterialIconKind.RobotHappy,
-						() => new ChatSubAgentsSettingsViewModel(Settings.SubAgents,
-							Chat.Services.GetRequiredService<IAddonSetCollector<SubAgentInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<SubAgentInfo, SubAgentChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<SubAgentInfo>>())),
+							() => new ChatSubAgentsSettingsViewModel(Chat.Services, Settings.SubAgents)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.memory"),
 						MaterialIconKind.Database,
@@ -217,26 +205,15 @@ namespace LLMDesktopAssistant.LLM.Settings
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.commands"),
 						MaterialIconKind.Console,
-						() => new ChatCommandsSettingsViewModel(Settings.Commands,
-							Chat.Services.GetRequiredService<IAddonSetCollector<SlashCommandInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<SlashCommandInfo, SlashCommandChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>())),
+							() => new ChatCommandsSettingsViewModel(Chat.Services, Settings.Commands)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompt_contexts"),
 						MaterialIconKind.LayersOutline,
-						() => new ChatPromptContextsSettingsViewModel(
-							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
+							() => new ChatPromptContextsSettingsViewModel(Chat.Services, Settings.PromptContexts)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.scripts"),
 						MaterialIconKind.ScriptTextOutline,
-						() => new ChatScriptsSettingsViewModel(Settings.Scripts,
-							Chat.Services.GetRequiredService<IAddonSetCollector<LuaScriptInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<LuaScriptInfo, LuaScriptChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<LuaScriptInfo>>()))
+							() => new ChatScriptsSettingsViewModel(Chat.Services, Settings.Scripts))
 				],
 				() => new ChatAddonsSettingsViewModel(Settings.Addons,
 					Chat.Services.GetRequiredService<IAddonPackLocator>(),
@@ -290,14 +267,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.context"),
 						MaterialIconKind.Layers,
-						() => new AgentContextSettingsViewModel(
-							descriptor.Context,
-							Settings,
-							descriptor,
-							Chat.Services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<PromptContextInfo, PromptContextChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<PromptContextInfo>>())),
+							() => new AgentContextSettingsViewModel(Chat.Services, descriptor, descriptor.Context, Settings)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompts"),
 						MaterialIconKind.Text,
@@ -311,32 +281,14 @@ namespace LLMDesktopAssistant.LLM.Settings
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.tools"),
 						MaterialIconKind.Wrench,
-						() => new AgentToolSettingsViewModel(
-							descriptor.Tools,
-							Chat.Services.GetRequiredService<IAddonSetCollector<ToolInfo>>(),
-							Settings,
-							Chat.Services.GetRequiredService<IAddonCardFactory<ToolInfo, ToolChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<ToolInfo>>())),
+							() => new AgentToolSettingsViewModel(Chat.Services, descriptor, descriptor.Tools, Settings)),
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.skills"),
 						MaterialIconKind.Cards,
-						() => new AgentSkillSettingsViewModel(
-							descriptor.Skills,
-							Settings,
-							Chat.Services.GetRequiredService<IAddonSetCollector<SkillInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<SkillInfo, SkillChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<SkillInfo>>())),
+							() => new AgentSkillSettingsViewModel(Chat.Services, descriptor, descriptor.Skills, Settings)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.sub_agents"),
 						MaterialIconKind.RobotHappy,
-						() => new AgentSubAgentSettingsViewModel(
-							descriptor.SubAgents,
-							Settings,
-							Chat.Services.GetRequiredService<IAddonSetCollector<SubAgentInfo>>(),
-							Chat.Services.GetRequiredService<IAddonCardFactory<SubAgentInfo, SubAgentChange>>(),
-							Chat.Services.GetRequiredService<IAddonManagerInvalidator>(),
-							Chat.Services.GetRequiredService<IAddonSearchService<SubAgentInfo>>())),
+							() => new AgentSubAgentSettingsViewModel(Chat.Services, descriptor, descriptor.SubAgents, Settings)),
 
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.memory"),
 						MaterialIconKind.Database,
