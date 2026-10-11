@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.StructuredValues.Const;
 using LLMDesktopAssistant.Tools;
 
@@ -84,5 +85,13 @@ namespace LLMDesktopAssistant.Prompting.Skills
 			set => SetProperty(ref field, value);
 		} = null;
 
+		/// <summary>
+		/// The schema describing the arguments this skill accepts, used for creating slash command derived from this skill.
+		/// </summary>
+		public SlashCommandArgumentSchema? ArgumentSchema
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = null;
 	}
 }

@@ -31,6 +31,15 @@ namespace LLMDesktopAssistant.Addons
 
 		MissingFile = 1UL << 10,
 
-		FileAccessError = 1UL << 11
+		FileAccessError = 1UL << 11,
+
+		// ==============================
+		// === Addon-specific errors  ===
+		// ==============================
+
+		/// <summary>
+		/// The addon's <c>argument-hint</c> starts with an argument but could not be parsed.
+		/// </summary>
+		InvalidArgumentHint = 1UL << 12
 	}
 }

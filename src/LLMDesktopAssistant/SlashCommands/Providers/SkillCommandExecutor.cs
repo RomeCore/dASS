@@ -21,8 +21,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// </remarks>
 	public sealed class SkillCommandExecutor(SkillInfo skill) : ISlashCommandExecutor
 	{
-		/// <inheritdoc/>
-		public SlashCommandArgumentSchema? ArgumentSchema { get; } = new()
+		/// <summary>
+		/// The free-form rest slot used by skills that declare no schema (e.g. template-backed skills that carry no
+		/// <c>argument-hint</c>).
+		/// </summary>
+		private static readonly SlashCommandArgumentSchema DefaultSchema = new()
 		{
 			RestPositional = new SlashCommandArgument
 			{
@@ -30,6 +33,9 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 				Description = Locale.GetKey("command.argument.skill.arguments.description")
 			}
 		};
+
+		/// <inheritdoc/>
+		public SlashCommandArgumentSchema? ArgumentSchema { get; } = skill.ArgumentSchema ?? DefaultSchema;
 
 		/// <inheritdoc/>
 		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)

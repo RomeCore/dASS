@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Prompting.Skills;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.StructuredValues;
 
 namespace LLMDesktopAssistant.Tests.Skills;
@@ -394,5 +395,57 @@ public class SkillParserTests
 			""");
 
 		Assert.True(skill.AdditionalProperties.ContainsKey("x-config"));
+	}
+
+	[Fact]
+	public void ArgumentHint_BuildsTheArgumentSchema()
+	{
+		var skill = Parse("""
+			---
+			name: with-hint
+			description: Skill with an argument hint.
+			argument-hint: "[issue-number] [files...:$a|b:%The files]"
+			---
+			""");
+
+		Assert.Equal("[issue-number] [files...:$a|b:%The files]", skill.ArgumentHint);
+
+		var schema = Assert.IsType<SlashCommandArgumentSchema>(skill.ArgumentSchema);
+		Assert.Equal("issue-number", Assert.Single(schema.Positionals).Name.Key);
+		Assert.Equal("files", schema.RestPositional!.Name.Key);
+		Assert.IsType<ChoiceArgumentFormatProvider>(schema.RestPositional.Format);
+	}
+
+	[Fact]
+	public void NoArgumentHint_YieldsTheDefaultRestSlot()
+	{
+		var skill = Parse("""
+			---
+			name: no-hint
+			description: Skill without an argument hint.
+			---
+			""");
+
+		Assert.Null(skill.ArgumentHint);
+
+		var rest = Assert.IsType<SlashCommandArgument>(skill.ArgumentSchema!.RestPositional);
+		Assert.Equal("command.argument.skill.arguments", rest.Name.Key);
+	}
+
+	[Fact]
+	public void AnInvalidArgumentHint_ReportsTheDiagnostic()
+	{
+		var skill = Parse("""
+			---
+			name: bad-hint
+			description: Skill with a broken argument hint.
+			argument-hint: "[a] [b"
+			---
+			""");
+
+		Assert.NotNull(skill.Diagnostic);
+		Assert.True(skill.Diagnostic!.Codes.HasFlag(AddonDiagnosticCode.InvalidArgumentHint));
+
+		Assert.Equal("[a] [b", skill.ArgumentSchema!.RestPositional!.Description!.Key);
 	}
 }

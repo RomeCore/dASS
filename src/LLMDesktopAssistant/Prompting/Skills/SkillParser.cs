@@ -2,6 +2,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.Tools;
 
 namespace LLMDesktopAssistant.Prompting.Skills
@@ -61,6 +62,16 @@ namespace LLMDesktopAssistant.Prompting.Skills
 
 			var argumentHint = frontmatter.Get<string>("argument-hint");
 			addon.ArgumentHint = string.IsNullOrWhiteSpace(argumentHint) ? null : argumentHint.Trim();
+
+			addon.ArgumentSchema = SkillArgumentHintParser.Build(addon.ArgumentHint, out bool invalidArgumentHint);
+			if (invalidArgumentHint)
+			{
+				diagnostic = diagnostic.Combine(new AddonDiagnostic
+				{
+					Codes = AddonDiagnosticCode.InvalidArgumentHint,
+					Messages = [$"Failed to parse the 'argument-hint': '{addon.ArgumentHint}'."]
+				});
+			}
 
 			addon.ChatAvailablePredicate = (skill, services) => !addon.DisableModelInvocation;
 		}
