@@ -8,6 +8,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	[ViewModelFor(typeof(AssistantMessageReasoningPartView))]
 	public class AssistantMessageReasoningPartViewModel : MessagePartViewModel
 	{
+		private readonly AssistantMessage _assistantMessage;
 		private DispatcherOperation? _currentUpdateOperation;
 
 		private string _reasoningText = string.Empty;
@@ -37,33 +38,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public AssistantMessageReasoningPartViewModel(AssistantMessage message)
 		{
-			ReasoningText = message.ReasoningContent ?? string.Empty;
+			_assistantMessage = message;
+
+			_assistantMessage.ToolCalls.CollectionChanged += ToolCallsChanged;
+			_assistantMessage.PropertyChanged += PropertyChangedHandler;
+			ReasoningText = _assistantMessage.ReasoningContent ?? string.Empty;
 			UpdateVisibility();
 
-			Completed = message.IsCompleted;
-			if (message.IsCompleted) return;
+			Completed = _assistantMessage.IsCompleted;
 
-			void ToolCallsChanged(object? s, NotifyCollectionChangedEventArgs e)
-			{
-				Completed = true;
-			}
-			void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
-			{
-				Completed = e.PropertyName != nameof(message.ReasoningContent);
-				if (Completed)
-					return;
-
-				_currentUpdateOperation?.Abort();
-				_currentUpdateOperation = InvokeUIAsync(() =>
-				{
-					ReasoningText = message.ReasoningContent ?? string.Empty;
-					UpdateVisibility();
-				});
-			}
-
-			message.ToolCalls.CollectionChanged += ToolCallsChanged;
-			message.PropertyChanged += PropertyChangedHandler;
-			message.CompletionToken.OnCompleted(() =>
+			_assistantMessage.CompletionToken.OnCompleted(() =>
 			{
 				InvokeUIAsync(() =>
 				{
@@ -72,9 +56,33 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					Completed = true;
 					UpdateVisibility();
 				});
+			});
+		}
 
-				message.ToolCalls.CollectionChanged -= ToolCallsChanged;
-				message.PropertyChanged -= PropertyChangedHandler;
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				_assistantMessage.ToolCalls.CollectionChanged -= ToolCallsChanged;
+				_assistantMessage.PropertyChanged -= PropertyChangedHandler;
+			}
+		}
+
+		void ToolCallsChanged(object? s, NotifyCollectionChangedEventArgs e)
+		{
+			Completed = true;
+		}
+		void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
+		{
+			Completed = e.PropertyName != nameof(_assistantMessage.ReasoningContent);
+
+			_currentUpdateOperation?.Abort();
+			_currentUpdateOperation = InvokeUIAsync(() =>
+			{
+				ReasoningText = _assistantMessage.ReasoningContent ?? string.Empty;
+				UpdateVisibility();
 			});
 		}
 

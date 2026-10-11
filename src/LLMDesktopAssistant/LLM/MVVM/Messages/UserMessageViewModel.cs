@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
@@ -10,6 +12,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	public class UserMessageViewModel : MessageViewModelBase
 	{
 		private readonly UserMessage _userMessage;
+		private DispatcherOperation? _currentUpdateOperation;
+
 		public UserMessage UserMessage => _userMessage;
 
 		public bool ShowAvatar { get; }
@@ -39,10 +43,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			var prevMessage = branchedMessage.MessageIndex - 1 >= 0
 				? chatVM.Chat.Messages[branchedMessage.MessageIndex - 1].Message as UserMessage
 				: null;
-			if (prevMessage == null || userMessage.SenderLogin != prevMessage.SenderLogin)
+			if (prevMessage == null || _userMessage.SenderLogin != prevMessage.SenderLogin)
 			{
 				var userManager = chatVM.Chat.Services.GetRequiredService<IUserManagementService>();
-				var user = userManager.FindByLogin(userMessage.SenderLogin);
+				var user = userManager.FindByLogin(_userMessage.SenderLogin);
 
 				try
 				{
@@ -57,11 +61,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				{
 					SenderAvatar = null;
 				}
-				SenderName = user?.Name ?? userMessage.SenderLogin;
+				SenderName = user?.Name ?? _userMessage.SenderLogin;
 				ShowAvatar = true;
 			}
 
-			Text = userMessage.Content ?? string.Empty;
+			_userMessage.PropertyChanged += PropertyChangedHandler;
+			Text = _userMessage.Content ?? string.Empty;
 			Extensions = MessageExtensionManager.CreateExtensions(this, chatVM.Chat);
 
 			EditCommand = new RelayCommand(() =>
@@ -76,9 +81,19 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
+				_userMessage.PropertyChanged -= PropertyChangedHandler;
 				foreach (var extension in Extensions)
 					extension.Dispose();
 			}
+		}
+
+		void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
+		{
+			_currentUpdateOperation?.Abort();
+			_currentUpdateOperation = InvokeUIAsync(() =>
+			{
+				Text = _userMessage.Content ?? string.Empty;
+			});
 		}
 	}
 }

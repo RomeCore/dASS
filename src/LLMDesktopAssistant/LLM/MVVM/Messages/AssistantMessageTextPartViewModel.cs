@@ -7,6 +7,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	[ViewModelFor(typeof(AssistantMessageTextPartView))]
 	public class AssistantMessageTextPartViewModel : MessagePartViewModel
 	{
+		private readonly AssistantMessage _assistantMessage;
 		private DispatcherOperation? _currentUpdateOperation;
 
 		private string _text = string.Empty;
@@ -37,42 +38,44 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public AssistantMessageTextPartViewModel(AssistantMessage message)
 		{
-			Text = message.Content ?? string.Empty;
+			_assistantMessage = message;
+			_assistantMessage.PropertyChanged += PropertyChangedHandler;
+			Text = _assistantMessage.Content ?? string.Empty;
 			UpdateVisibility();
 
-			if (!message.IsCompleted)
+			Completed = _assistantMessage.IsCompleted;
+
+			_assistantMessage.CompletionToken.OnCompleted(() =>
 			{
-				Completed = false;
-
-				void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
+				InvokeUIAsync(() =>
 				{
-					_currentUpdateOperation = InvokeUIAsync(() =>
-					{
-						_currentUpdateOperation?.Abort();
-						Text = message.Content ?? string.Empty;
-						UpdateVisibility();
-					});
-				}
-
-				message.PropertyChanged += PropertyChangedHandler;
-				message.CompletionToken.OnCompleted(() =>
-				{
-					InvokeUIAsync(() =>
-					{
-						_currentUpdateOperation?.Abort();
-						_currentUpdateOperation = null;
-						Completed = true;
-						RaisePropertyChanged(nameof(NotCompleted));
-						UpdateVisibility();
-					});
-
-					message.PropertyChanged -= PropertyChangedHandler;
+					_currentUpdateOperation?.Abort();
+					_currentUpdateOperation = null;
+					Completed = true;
+					RaisePropertyChanged(nameof(NotCompleted));
+					UpdateVisibility();
 				});
-			}
-			else
+			});
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
 			{
-				Completed = true;
+				_assistantMessage.PropertyChanged -= PropertyChangedHandler;
 			}
+		}
+
+		void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
+		{
+			_currentUpdateOperation = InvokeUIAsync(() =>
+			{
+				_currentUpdateOperation?.Abort();
+				Text = _assistantMessage.Content ?? string.Empty;
+				UpdateVisibility();
+			});
 		}
 
 		private void UpdateVisibility() => IsVisible = !string.IsNullOrEmpty(Text);

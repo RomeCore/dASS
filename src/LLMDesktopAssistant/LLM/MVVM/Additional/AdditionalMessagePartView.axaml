@@ -26,9 +26,10 @@
 		<StackPanel Orientation="Horizontal" Spacing="4">
 
 			<ico:VisualIcon Kind="{Binding ChipIcon}"
-							  Foreground="{Binding #Border.BorderBrush}"
-							  Width="14" Height="14"
-							  VerticalAlignment="Center"/>
+											Foreground="{Binding #Border.BorderBrush}"
+											IsVisible="{Binding ChipIcon, Converter={StaticResource NotnullToBooleanConverter}}"
+											Width="14" Height="14"
+											VerticalAlignment="Center"/>
 
 			<TextBlock Text="{loc:Loc {Binding ChipTitle}}"
 					   VerticalAlignment="Center"/>
