@@ -1,6 +1,7 @@
-using System.Text;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.SlashCommands.Arguments;
+using RCParsing;
 
 namespace LLMDesktopAssistant.SlashCommands.Providers
 {
@@ -15,8 +16,82 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// </remarks>
 	public static class SlashCommandVariableExpander
 	{
-		/// <summary>The command's rest-positional text, exposed as <c>$ARGUMENTS</c>.</summary>
+		private static readonly Parser _replacer;
+
+		private static bool IsValidNameChar(char c)
+		{
+			return char.IsLetterOrDigit(c) || c == '_' || c == '-';
+		}
+
+		static SlashCommandVariableExpander()
+		{
+			var builder = new ParserBuilder();
+
+			builder.CreateRule("name")
+				.Choice(
+					b => b.IntegerNumber<int>()
+						.Transform(v =>
+						{
+							var index = v.GetIntermediateValue<int>();
+							var (isZeroBased, arguments, skill) = v.GetParsingParameter<(bool, SlashCommandBoundArguments, SkillInfo)>();
+							if (!isZeroBased)
+								index--; // Convert to zero-based index
+							return GetSkillVariable(index, arguments, skill);
+						}),
+					b => b.OneOrMoreChars(IsValidNameChar)
+						.Transform(v =>
+						{
+							var name = v.Text;
+							var (isZeroBased, arguments, skill) = v.GetParsingParameter<(bool, SlashCommandBoundArguments, SkillInfo)>();
+							return GetSkillVariable(name, arguments, skill);
+						})
+				);
+
+			builder.CreateRule("substitution")
+				.Choice(
+					b => b.Literal('`').TextUntil('`').Literal('`'),
+					b => b.Literal("```").TextUntil("```").Literal("```")
+				)
+
+				.Transform(v => v.Text);
+
+			builder.CreateRule("variable")
+				.Literal('$')
+
+				.Choice(
+					b => b
+						.Literal('{')
+						.Rule("name").Label("name")
+						.Literal('}')
+
+						.Transform(v => v["name"].Value),
+					b => b.Rule("name")
+				).Label("variable")
+
+				.Transform(v =>
+				{
+					var value = v.TryGetValue<string?>("variable");
+
+					if (value is null)
+						return v.Text; // Pass verbatim if no match found.
+
+					return value;
+				});
+
+			builder.CreateMainRule()
+				.Choice(
+					b => b.Rule("substitution"),
+					b => b.Rule("variable")
+				);
+
+			_replacer = builder.Build();
+		}
+
+		/// <summary>The command's raw positional text, exposed as <c>$ARGUMENTS</c>.</summary>
 		public const string ArgumentsVariable = "ARGUMENTS";
+
+		/// <summary>The command's rest positional arguments text, exposed as <c>REST</c>.</summary>
+		public const string RestPositionalArgumentsVariable = "REST";
 
 		/// <summary>The skill's home directory, exposed as <c>$CLAUDE_SKILL_DIR</c>.</summary>
 		public const string SkillDirectoryVariable = "CLAUDE_SKILL_DIR";
@@ -28,6 +103,21 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		public const string SkillNameVariable = "SKILL_NAME";
 
 		/// <summary>
+		/// Resolves a single positional variable, or <see langword="null"/> when it is unknown (the caller then leaves it
+		/// verbatim).
+		/// </summary>
+		/// <param name="index">The variable index, 0-based.</param>
+		/// <param name="arguments">The command's bound arguments.</param>
+		/// <param name="skill">The skill the body belongs to; provides the skill-scoped variables.</param>
+		public static string? GetSkillVariable(int index, SlashCommandBoundArguments arguments, SkillInfo skill)
+		{
+			if (index >= 0 && index < arguments.Positionals.Count)
+				return arguments.Positionals[index].Ready ?? string.Empty;
+
+			return null;
+		}
+
+		/// <summary>
 		/// Resolves a single variable, or <see langword="null"/> when it is unknown (the caller then leaves it
 		/// verbatim).
 		/// </summary>
@@ -36,7 +126,24 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// <param name="skill">The skill the body belongs to; provides the skill-scoped variables.</param>
 		public static string? GetSkillVariable(string name, SlashCommandBoundArguments arguments, SkillInfo skill)
 		{
+			if (skill.ArgumentSchema is { } schema)
+			{
+				if (schema.RestPositional is { } rest && rest.Name is ConstLocaleKey { } restArgName && restArgName.Key == name)
+					return arguments.RestPositionalArguments;
+
+				for (int i = 0; i < schema.Positionals.Count; i++)
+				{
+					var positional = schema.Positionals[i];
+					// Schema's positional argument names are created from 'argument-hint' names
+					if (positional.Name is ConstLocaleKey { } argName && argName.Key == name)
+						return arguments.Positionals[i].Ready ?? string.Empty;
+				}
+			}
+
 			if (string.Equals(name, ArgumentsVariable, StringComparison.OrdinalIgnoreCase))
+				return arguments.RawPositionalArguments;
+
+			if (string.Equals(name, RestPositionalArgumentsVariable, StringComparison.OrdinalIgnoreCase))
 				return arguments.RestPositionalArguments;
 
 			if (string.Equals(name, SkillNameVariable, StringComparison.OrdinalIgnoreCase))
@@ -44,7 +151,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 
 			if (string.Equals(name, SkillDirectoryVariable, StringComparison.OrdinalIgnoreCase) ||
 				string.Equals(name, SkillDirectoryAliasVariable, StringComparison.OrdinalIgnoreCase))
-				return GetSkillDirectory(skill);
+				return skill.HomeDirectory;
 
 			return Environment.GetEnvironmentVariable(name);
 		}
@@ -55,81 +162,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// </summary>
 		public static string ExpandSkill(string body, SlashCommandBoundArguments arguments, SkillInfo skill)
 		{
-			if (string.IsNullOrEmpty(body) || !body.Contains('$'))
-				return body;
-
-			var builder = new StringBuilder(body.Length);
-			for (int i = 0; i < body.Length; i++)
-			{
-				if (body[i] != '$' || i + 1 >= body.Length)
-				{
-					builder.Append(body[i]);
-					continue;
-				}
-
-				int nameStart = i + 1;
-				string name;
-				int nameEnd; // index of the last character of the whole variable occurrence
-
-				if (body[nameStart] == '{')
-				{
-					int close = body.IndexOf('}', nameStart + 1);
-					if (close < 0)
-					{
-						builder.Append(body[i]);
-						continue;
-					}
-
-					name = body[(nameStart + 1)..close];
-					nameEnd = close;
-				}
-				else
-				{
-					int j = nameStart;
-					while (j < body.Length && (char.IsLetterOrDigit(body[j]) || body[j] == '_'))
-						j++;
-
-					if (j == nameStart)
-					{
-						builder.Append(body[i]);
-						continue;
-					}
-
-					name = body[nameStart..j];
-					nameEnd = j - 1;
-				}
-
-				if (!IsValidName(name))
-				{
-					builder.Append(body[i]);
-					continue;
-				}
-
-				var value = GetSkillVariable(name, arguments, skill);
-				if (value is null)
-				{
-					// Unknown variable: keep the occurrence exactly as written.
-					builder.Append(body, i, nameEnd - i + 1);
-				}
-				else
-				{
-					builder.Append(value);
-				}
-
-				i = nameEnd;
-			}
-
-			return builder.ToString();
+			bool isZeroBased = body.Contains("$0");
+			return _replacer.ReplaceAllMatches(body, parameter: (isZeroBased, arguments, skill));
 		}
-
-		private static bool IsValidName(string name)
-			=> name.Length > 0 && (char.IsLetter(name[0]) || name[0] == '_');
-
-		private static string? GetSkillDirectory(SkillInfo skill)
-			=> skill.HomeDirectory is { Length: > 0 } home
-				? home
-				: skill.Path is { Length: > 0 } path
-					? Path.GetDirectoryName(path)
-					: null;
 	}
 }
