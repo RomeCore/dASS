@@ -63,7 +63,7 @@ namespace LLMDesktopAssistant.Prompting.Skills
 			var argumentHint = frontmatter.Get<string>("argument-hint");
 			addon.ArgumentHint = string.IsNullOrWhiteSpace(argumentHint) ? null : argumentHint.Trim();
 
-			addon.ArgumentSchema = SkillArgumentHintParser.Build(addon.ArgumentHint, out bool invalidArgumentHint);
+			addon.ArgumentSchema = ArgumentHintParser.Build(addon.ArgumentHint, out bool invalidArgumentHint);
 			if (invalidArgumentHint)
 			{
 				diagnostic = diagnostic.Combine(new AddonDiagnostic

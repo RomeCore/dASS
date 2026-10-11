@@ -5,7 +5,8 @@ using RCParsing;
 namespace LLMDesktopAssistant.SlashCommands.Arguments
 {
 	/// <summary>
-	/// Parses a skill's <c>argument-hint</c> frontmatter string into a <see cref="SlashCommandArgumentSchema"/>.
+	/// Parses the compact bracketed argument hint (as used by skills and by scriptable commands) into a
+	/// <see cref="SlashCommandArgumentSchema"/>.
 	/// </summary>
 	/// <remarks>
 	/// <para>
@@ -24,21 +25,25 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// that same fallback and reports <paramref name="invalid"/> so the caller can raise
 	/// <see cref="LLMDesktopAssistant.Addons.AddonDiagnosticCode.InvalidArgumentHint"/>.
 	/// </para>
+	/// <para>
+	/// Named (<c>key=value</c>) arguments are not expressible in a hint yet; they are declared through the structured
+	/// <c>argument-schema</c> DSL instead (see <see cref="SlashCommandArgumentSchemaParser"/>).
+	/// </para>
 	/// </remarks>
-	public static class SkillArgumentHintParser
+	public static class ArgumentHintParser
 	{
 		/// <summary>The locale key of the default free-form arguments slot's name.</summary>
-		private const string ArgumentsKey = "command.argument.skill.arguments";
+		private const string ArgumentsKey = "command.argument.arguments";
 
 		/// <summary>The locale key of the default free-form arguments slot's description.</summary>
-		private const string ArgumentsDescriptionKey = "command.argument.skill.arguments.description";
+		private const string ArgumentsDescriptionKey = "command.argument.arguments.description";
 
 		private static readonly Parser _parser = BuildParser();
 
 		/// <summary>
-		/// Builds the argument schema of a skill from its raw <c>argument-hint</c>.
+		/// Builds the argument schema from a raw hint.
 		/// </summary>
-		/// <param name="hint">The raw hint, or <see langword="null"/>/whitespace when the skill declares none.</param>
+		/// <param name="hint">The raw hint, or <see langword="null"/>/whitespace when none is declared.</param>
 		/// <param name="invalid">
 		/// Whether the hint started with <c>&lt;</c> or <c>[</c> but could not be parsed — the caller should report
 		/// <see cref="LLMDesktopAssistant.Addons.AddonDiagnosticCode.InvalidArgumentHint"/>.

@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.SlashCommands.Scripting;
 
 namespace LLMDesktopAssistant.SlashCommands.Loading
 {
@@ -7,16 +8,19 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 	/// The locator that finds file-based slash commands in the <c>commands/</c> folder of an addon pack.
 	/// </summary>
 	/// <remarks>
-	/// v1 commands come from providers (skills and sub-agents), not from files, so <see cref="Extensions"/> is empty
-	/// and the locator finds nothing. The folder is already declared so that file commands plug in without touching the
-	/// addon pipeline.
+	/// The extensions are contributed by the registered <see cref="IScriptableSlashCommandEngine"/>s, so a new engine
+	/// (a new language) plugs in without touching this locator.
 	/// </remarks>
 	[Service(typeof(IAddonFileLocator<SlashCommandInfo>))]
 	public class SlashCommandFileLocator : AddonFileLocatorBase<SlashCommandInfo>
 	{
+		private readonly IScriptableSlashCommandEngine[] _engines;
+
+		public SlashCommandFileLocator(IEnumerable<IScriptableSlashCommandEngine> engines) => _engines = [.. engines];
+
 		public override string[] Folders => ["commands"];
 
-		public override string[] Extensions => []; // v2: file commands
+		public override string[] Extensions => field ??= [.. _engines.SelectMany(e => e.Descriptor.Extensions).Distinct()];
 
 		public override bool AllowShortFormat => true;
 

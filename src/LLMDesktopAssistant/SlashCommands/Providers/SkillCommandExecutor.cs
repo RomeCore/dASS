@@ -29,8 +29,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		{
 			RestPositional = new SlashCommandArgument
 			{
-				Name = Locale.GetKey("command.argument.skill.arguments"),
-				Description = Locale.GetKey("command.argument.skill.arguments.description")
+				Name = Locale.GetKey("command.argument.arguments"),
+				Description = Locale.GetKey("command.argument.arguments.description")
 			}
 		};
 
