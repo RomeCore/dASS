@@ -11,9 +11,5 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		string FrontmatterStart { get; }
 
 		string FrontmatterEnd { get; }
-
-		string Examples { get; }
-
-		string Template { get; }
 	}
 }

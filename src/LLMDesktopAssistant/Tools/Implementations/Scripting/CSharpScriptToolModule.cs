@@ -134,7 +134,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 				{
 					var workdir = context.Chat.Services.GetService<IWorkingDirectoryAccessService>()?.GetWorkingDirectory();
 
-					var globals = new CSharpScriptGlobals
+					var globals = new CSharpScriptToolGlobals
 					{
 						ToolArgs = null,
 						Context = context,

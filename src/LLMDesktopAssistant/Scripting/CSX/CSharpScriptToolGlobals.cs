@@ -7,7 +7,7 @@ namespace LLMDesktopAssistant.Scripting.CSX
 	/// The globals object passed to C# scripts executed by <see cref="CSharpScriptToolEngine"/>.
 	/// Provides access to tool arguments, the execution context and the reactive result.
 	/// </summary>
-	public sealed class CSharpScriptGlobals
+	public sealed class CSharpScriptToolGlobals
 	{
 		/// <summary>
 		/// The arguments passed to the tool call, or <see langword="null"/> when the tool was called without arguments.

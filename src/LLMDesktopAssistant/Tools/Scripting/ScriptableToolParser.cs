@@ -48,8 +48,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	/// </summary>
 	/// <remarks>
 	/// The tool body (everything except the frontmatter) is the execution code that is passed to
-	/// <see cref="IScriptableToolEngine.CreateExecutor"/>. Supported frontmatter keys are described in
-	/// <see cref="IScriptableToolEngineDescriptor.Template"/>.
+	/// <see cref="IScriptableToolEngine.CreateExecutor"/>.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<ToolInfo>))]
 	public class ScriptableToolParser : FrontmatterBasedAddonParser<ToolInfo, ToolChange>

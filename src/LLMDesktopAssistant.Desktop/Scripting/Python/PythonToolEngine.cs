@@ -1,5 +1,4 @@
 using System.IO;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
@@ -7,6 +6,7 @@ using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Scripting;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 						import sys
 						sys.stdout.reconfigure(encoding="utf-8")
 						sys.stderr.reconfigure(encoding="utf-8")
-						tool_args = {SerializeNodeToPython(args)}
+						tool_args = {PythonStructuredSerializer.ToPythonString(args.ToConstNodeValue())}
 						{tool.Body}
 						""";
 
@@ -83,61 +83,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 					return ReactiveToolResult.CreateError($"Python execution error: {ex.Message}");
 				}
 			};
-		}
-
-		private static string SerializeNodeToPython(JsonNode? node)
-		{
-			if (node == null)
-				return "None";
-
-			return node switch
-			{
-				JsonValue value => SerializeValueToPython(value),
-				JsonObject obj => SerializeObjectToPython(obj),
-				JsonArray arr => SerializeArrayToPython(arr),
-				_ => throw new NotSupportedException($"Unsupported node type: {node.GetType()}")
-			};
-		}
-
-		private static string SerializeValueToPython(JsonValue value)
-		{
-			switch (value.GetValueKind())
-			{
-				case JsonValueKind.Null:
-					return "None";
-				case JsonValueKind.True:
-					return "True";
-				case JsonValueKind.False:
-					return "False";
-				default:
-					return value.ToJsonString();
-			}
-		}
-
-		private static string SerializeObjectToPython(JsonObject obj)
-		{
-			var parts = new List<string>();
-
-			foreach (var kvp in obj)
-			{
-				string key = SerializeValueToPython(JsonValue.Create(kvp.Key));
-				string value = SerializeNodeToPython(kvp.Value);
-				parts.Add($"{key}: {value}");
-			}
-
-			return "{" + string.Join(", ", parts) + "}";
-		}
-
-		private static string SerializeArrayToPython(JsonArray arr)
-		{
-			var items = new List<string>();
-
-			foreach (var item in arr)
-			{
-				items.Add(SerializeNodeToPython(item));
-			}
-
-			return "[" + string.Join(", ", items) + "]";
 		}
 	}
 }
