@@ -126,24 +126,22 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 
 			_ = Task.Run(async () =>
 			{
+				// The execution context no longer lives in the globals - AsyncLocal carries it correctly for
+				// both isolated and non-isolated runs.
+				LuaExecutionContext.Set(tool: context, reactiveResult: reactiveResult);
+
 				try
 				{
 					LuaTuple scriptResult;
 					if (isolatedExecution)
 					{
-						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), g =>
-						{
-							g[LuaVariables.ToolExecutionContext] = LuaValueConverter.ToLuaValue(context);
-							g[LuaVariables.ToolReactiveResult] = LuaValueConverter.ToLuaValue(reactiveResult);
-						}, cancellationToken);
+						// A fresh clone of the global environment: mutations do not leak into the persistent state.
+						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), _ => { }, cancellationToken);
 					}
 					else
 					{
-						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), g =>
-						{
-							g[LuaVariables.ToolExecutionContext] = LuaValueConverter.ToLuaValue(context);
-							g[LuaVariables.ToolReactiveResult] = LuaValueConverter.ToLuaValue(reactiveResult);
-						}, cancellationToken);
+						// The shared, persistent Lua state (registered scripts and accumulated state are visible).
+						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), null, cancellationToken);
 					}
 
 					reactiveResult.TryCompleteWithSuccess();

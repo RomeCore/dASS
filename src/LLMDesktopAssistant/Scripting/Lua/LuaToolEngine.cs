@@ -4,6 +4,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Scripting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -26,14 +27,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 				_ = Task.Run(async () =>
 				{
+					// The execution context flows through AsyncLocal, so it does not have to live in the globals.
+					LuaExecutionContext.Set(tool: context, reactiveResult: reactiveResult);
+
 					try
 					{
 						var luaService = context.Chat.Services.GetRequiredService<LuaService>();
 						var scriptResult = await luaService.ExecuteAsync(tool.Body, print => reactiveResult.ResultContentLines.Add(print), g =>
 						{
 							g["tool_args"] = StructuredLuaConverter.JsonNodeToLuaValue(args);
-							g[LuaVariables.ToolExecutionContext] = LuaValueConverter.ToLuaValue(context);
-							g[LuaVariables.ToolReactiveResult] = LuaValueConverter.ToLuaValue(reactiveResult);
 						});
 						reactiveResult.StructuredResult ??= StructuredLuaConverter.LuaValueToJsonNode(scriptResult);
 						reactiveResult.ResultContentLines.Add($"Script returned: " + scriptResult.ToString());
@@ -48,9 +50,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 					{
 						reactiveResult.ResultContentLines.Add("Caught error: " + ex.Message);
 						reactiveResult.TryCompleteWithError();
-					}
-					finally
-					{
 					}
 				}, CancellationToken.None);
 
