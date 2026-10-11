@@ -28,11 +28,11 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// </summary>
 		/// <remarks>
 		/// The rest positional is an implicit slot that follows the declared positionals — it is not one of them and
-		/// never appears in <see cref="SlashCommandParsedArguments.Positionals"/>. It is descriptive: its
-		/// <see cref="SlashCommandArgument.Name"/> and <see cref="SlashCommandArgument.Description"/> say what the slot
-		/// is for (the input completion, the help), while <see cref="SlashCommandArgument.Required"/>,
-		/// <see cref="SlashCommandArgument.Default"/> and <see cref="SlashCommandArgument.Format"/> do not apply — the
-		/// rest is never split, never reported missing, never validated and never converted.
+		/// never appears in <see cref="SlashCommandParsedArguments.Positionals"/>. It is bound like any other argument:
+		/// <see cref="SlashCommandArgument.Required"/>, <see cref="SlashCommandArgument.Default"/> and
+		/// <see cref="SlashCommandArgument.Format"/> all apply, and the converted value lands in
+		/// <see cref="SlashCommandBoundArguments.RestPositional"/>. The one thing that never happens is splitting: the
+		/// whole surplus is a single, verbatim value — quotes kept — so a tail may legitimately carry spaces.
 		/// </remarks>
 		public SlashCommandArgument? RestPositional { get; init; }
 

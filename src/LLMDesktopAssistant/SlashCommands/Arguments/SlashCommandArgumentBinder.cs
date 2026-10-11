@@ -20,7 +20,9 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// </summary>
 		/// <remarks>
 		/// Binding stops at the first problem and returns empty collections with the error set. Defaults are converted
-		/// but never validated (they are authored, not typed by the user).
+		/// but never validated (they are authored, not typed by the user). The rest positional is bound the same way as
+		/// any other argument — as one, never-split value — so its <c>Required</c>, <c>Default</c> and <c>Format</c> all
+		/// apply and its converted value lands in <see cref="SlashCommandBoundArguments.RestPositional"/>.
 		/// </remarks>
 		public static SlashCommandBoundArguments Bind(
 			SlashCommandArgumentSchema schema, SlashCommandParsedArguments parsed)
@@ -84,10 +86,31 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 				}
 			}
 
+			// 4. The rest positional, if the schema declares one: one value — the whole tail, never split — bound,
+			// validated and converted exactly like a declared positional.
+			ParsedSlashCommandArgument? rest = null;
+			if (schema.RestPositional is { } restDefinition)
+			{
+				if (parsed.RestPositional is { } restRaw)
+				{
+					if (!TryBindValidated(restDefinition, restRaw, out rest, out var restError))
+						return Failure(parsed, restError!);
+				}
+				else if (restDefinition.Default is not null)
+				{
+					rest = BindDefault(restDefinition, restDefinition.Default);
+				}
+				else if (restDefinition.Required)
+				{
+					return Failure(parsed, Locale.GetKey("command.error.missing_argument"));
+				}
+			}
+
 			return new SlashCommandBoundArguments
 			{
 				Positionals = positionals.ToImmutable(),
 				Keyed = keyed.ToImmutable(),
+				RestPositional = rest,
 				RawPositionalArguments = parsed.RawPositionalArguments,
 				RestPositionalArguments = parsed.RestPositionalArguments
 			};

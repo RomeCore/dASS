@@ -22,6 +22,14 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required ImmutableDictionary<string, ParsedSlashCommandArgument> Keyed { get; init; }
 
 		/// <summary>
+		/// The rest positional bound like any other argument — validated and converted — or <see langword="null"/> when
+		/// the schema declares none, or the tail was absent and no default applied. Kept alongside the verbatim
+		/// <see cref="RestPositionalArguments"/>: the raw text for free-text consumers, the bound argument for value
+		/// consumers.
+		/// </summary>
+		public ParsedSlashCommandArgument? RestPositional { get; init; }
+
+		/// <summary>
 		/// The verbatim text of every positional argument, as it was written.
 		/// </summary>
 		public required string RawPositionalArguments { get; init; }
