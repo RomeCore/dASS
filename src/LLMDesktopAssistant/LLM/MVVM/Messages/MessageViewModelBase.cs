@@ -99,7 +99,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// <summary>
 		/// Gets the opacity of the whole message: a message hidden from agents is dimmed.
 		/// </summary>
-		public double ContentOpacity => IsDisabledForAgents ? 0.75 : 1.0;
+		public double ContentOpacity => IsDisabledForAgents ? 0.55 : 1.0;
 
 		/// <summary>
 		/// Gets a value indicating whether the message contains tool calls.
