@@ -31,7 +31,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var tokenEnd = slashStart + 1 + token.Length;
 			var argumentStart = SkipWhitespace(text, tokenEnd);
 			var (state, command) = Resolve(token, commands);
-
+			
 			// The parse is what the renderer colours the arguments with and what the completion source completes against,
 			// so it happens once, here. A token that does not resolve has no schema to parse against, and an invalid
 			// argument list has no parse at all — both leave the region to the coarse argument colour.

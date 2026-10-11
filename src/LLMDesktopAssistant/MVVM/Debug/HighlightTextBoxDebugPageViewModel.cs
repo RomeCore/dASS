@@ -111,7 +111,7 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 				Text = current,
 				CaretIndex = analysis.TokenSpan.End,
 				Span = analysis.TokenSpan,
-				Items = [new InputCompletionItem { InsertText = "/" + match.Name }]
+				Items = [new InputCompletionItem { InsertText = SlashCommandExtractor.Prefix + match.Name }]
 			};
 		}
 	}

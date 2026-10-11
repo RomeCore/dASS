@@ -147,8 +147,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		private static InputCompletionItem TokenItem(SlashCommandInfo command,
 			IReadOnlyList<SlashCommandInfo> commandSet, bool isDefeated)
 		{
-			var insertText = "/" + SlashCommandShortToken.For(command, commandSet);
-			var full = "/" + command.CanonicalToken;
+			var insertText = SlashCommandExtractor.Prefix + SlashCommandShortToken.For(command, commandSet);
+			var full = SlashCommandExtractor.Prefix + command.CanonicalToken;
 
 			return new InputCompletionItem
 			{
@@ -248,7 +248,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			return new InputCompletionState
 			{
 				Kind = InputCompletionKind.Argument,
-				Title = Locale.GetConstKey("/" + SlashCommandShortToken.For(command, commandSet)),
+				Title = Locale.GetConstKey(SlashCommandExtractor.Prefix + SlashCommandShortToken.For(command, commandSet)),
 				Description = command.DescriptionKey,
 				ContextTitle = slot?.Name ?? Locale.GetKey("command.completion.arguments"),
 				ContextDescription = slot?.Description,

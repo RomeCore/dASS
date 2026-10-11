@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			string? content = fingerprint?.ModelFacingMode switch
 			{
 				ModelFacingMode.Hidden => null,
-				ModelFacingMode.Neutral => "/" + fingerprint!.RawToken,
+				ModelFacingMode.Neutral => SlashCommandExtractor.Prefix + fingerprint!.RawToken,
 				_ => message.Content
 			};
 
