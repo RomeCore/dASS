@@ -2,7 +2,7 @@
 
 Disclosed reference for `equip`. Every rule here is a lookup, and the lookup is cheap: when in doubt, read the locator named at the bottom rather than trusting this file.
 
-Scriptable tools are the one exception to "everything is here": the shape of a tool - its frontmatter, its behaviours, what the body receives - lives in the `tool-authoring` skill, which is its single home. This file keeps only what `equip` needs in order to propose one.
+Scriptable tools and skills are the two exceptions to "everything is here": the shape of a tool - its frontmatter, its behaviours, what the body receives - lives in the `tool-authoring` skill, and the shape of a skill - its frontmatter semantics and `argument-hint` - in the `skill-authoring` skill, each its single home. This file keeps only what `equip` needs in order to propose one: the kind, the folder, the file name and the key names.
 
 ## Where addons live
 
@@ -32,7 +32,7 @@ Skills and sub-agents take `.md` or `.mdx`. A **full format** folder is the one 
 - Skills and sub-agents: `---` ... `---`, optional - without it the file falls back to plain markdown.
 - Scriptable tools: **required**, and the delimiters belong to the engine. There is no markdown fallback, because the body is code.
 - **`name` matches the file name** in short format, and **the folder name** in full format. A mismatch is the most common way a new addon silently fails to load.
-- Skill keys: `allowed-tools`, `available-tools`, `disallowed-tools`, `injection-mode` (`default` or `full`). The tool lists are display metadata today, not enforcement.
+- Skill keys: `user-invocable` (default `true` - whether a `/skill:<name>` command is derived), `disable-model-invocation` (default `false` - whether the model may invoke it), `argument-hint` (the command's arguments), `injection-mode` (`default` or `full`), and `allowed-tools` / `available-tools` / `disallowed-tools` (display metadata today, not enforcement). What each key does, and how `argument-hint` parses, is in the `skill-authoring` skill.
 - Shared by every addon kind: `description` - a missing one raises a diagnostic - plus `order`, `aliases`, `enabled` and `hidden`. `title` and `category` are localizable display strings: they name the addon in the UI and drive no behaviour.
 
 ## Scriptable tools, from here
@@ -69,6 +69,7 @@ No index. The addon sources already are the index of what the agent carries, the
 Read these instead of restating them here:
 
 - The shape of a scriptable tool, its frontmatter, behaviours and verification: the `tool-authoring` skill.
+- The shape of a skill, its frontmatter semantics and the `argument-hint` grammar: the `skill-authoring` skill.
 - LLT prompt parts - components, slots, skills and sub-agents as templates, `params_schema`, localization: the `llt-prompt-parts` skill.
 - Human-facing help pages: `docs/help/tools/metatools.md`, `docs/help/tools/scripting.md`.
 - The folder and filename rules above come from `SkillFileLocator`, `SubAgentFileLocator`, `ToolFileLocator` and `TemplateFileLocator` under `src/LLMDesktopAssistant/`.
