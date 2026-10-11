@@ -18,7 +18,7 @@ how it was cracked, and what was left undone.
   (the project once had the typo `achevements`; it is fixed - do not bring it back).
   If the folder does not exist, create it.
 - **One file = one achievement**, name: `YYYY-MM-DD_ACH-NNNN_<slug>.md`
-  - `YYYY-MM-DD` - the date of the entry (do not invent it, take it from `time-get`);
+  - `YYYY-MM-DD` - the date of the entry, taken from the send timestamp the client stamps on the user's message (a guessed date breaks sorting and trust);
   - `ACH-NNNN` - 4 digits, **sequential** numbering;
   - `<slug>` - latin, kebab-case, 3–6 words describing the work.
 - **ID:** look at what already exists (`fs-glob` over `.llmassist/achievements/*.md` or a folder listing),
@@ -91,7 +91,7 @@ A verbatim quote of the user's reaction, if there was one. No quote - drop the s
 7. **No secrets.** Tokens, passwords, private URLs, personal data - never.
    The `.llmassist/` folder may be committed or may simply leak.
 8. **The entry language = the language of the user's request.**
-9. **Dates come from `time-get` only.** A guessed date breaks sorting and trust.
+9. **The date is the one on the user's message.** Take the send timestamp the client shows on the request that asked for the entry; fall back to the local clock only when there is no message. Do not second-guess it against the machine clock - the app may run in another timezone. A guessed date breaks sorting and trust.
 10. **Do not edit past entries** without an explicit request (the exception is `INDEX.md`
     and broken links).
 
@@ -100,7 +100,7 @@ A verbatim quote of the user's reaction, if there was one. No quote - drop the s
 1. Figure out what exactly was achieved: the result, why it was hard, where it lives.
    If the work is trivial ("I ran the build") - tell the user straight and suggest not creating an entry;
    the decision is theirs, but an honest assessment is your job.
-2. Get the current date (`time-get`).
+2. Take the date from the user's message send timestamp.
 3. Find the next free `ACH-NNNN`.
 4. Assemble the entry using the template above.
 5. Update `INDEX.md`.
@@ -111,7 +111,7 @@ A verbatim quote of the user's reaction, if there was one. No quote - drop the s
 ## Pre-delivery checklist
 
 - [ ] The file lives in `.llmassist/achievements/`, the name follows the scheme, the ID is max + 1 and free.
-- [ ] The date came from `time-get`, not from imagination.
+- [ ] The date matches the user's message send date (or the local clock when there is no message).
 - [ ] The header (ID, date, agent, request, status) is filled in.
 - [ ] TL;DR, "How it was solved", "Artifacts" and "What did not work" are present.
 - [ ] All facts and numbers are real and verifiable.
