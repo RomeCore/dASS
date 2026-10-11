@@ -27,6 +27,11 @@ namespace LLMDesktopAssistant.InputCompletion
 		public LocaleKeyBase? Description { get; init; }
 
 		/// <summary>
+		/// The context block's rows — what the caret's region declares but cannot complete.
+		/// </summary>
+		public IReadOnlyList<InputCompletionContextItem> ContextItems { get; init; } = [];
+
+		/// <summary>
 		/// The locale key of the context block's heading, if any — the argument the caret sits in, or the name of the
 		/// list <see cref="ContextItems"/> carries.
 		/// </summary>
@@ -36,12 +41,6 @@ namespace LLMDesktopAssistant.InputCompletion
 		/// The locale key of the context block's description, if any.
 		/// </summary>
 		public LocaleKeyBase? ContextDescription { get; init; }
-
-		/// <summary>
-		/// The context block's rows — what the caret's region declares but cannot complete. Informational: they are
-		/// shown next to the picker and are never selected or accepted.
-		/// </summary>
-		public IReadOnlyList<InputCompletionContextItem> ContextItems { get; init; } = [];
 
 		/// <summary>
 		/// The kind of the state (used for a leading icon).

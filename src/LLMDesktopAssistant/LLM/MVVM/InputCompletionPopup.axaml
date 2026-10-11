@@ -58,18 +58,9 @@
 				</StackPanel>
 			</Grid>
 
-			<!-- The context block: the argument under the caret, and the arguments the command declares. -->
-			<TextBlock Text="{loc:Loc {Binding State.ContextTitle}}"
-					   IsVisible="{Binding State.ContextTitle, Converter={StaticResource NotnullToBooleanConverter}}"
-					   FontSize="12" FontWeight="SemiBold" Opacity="0.85"
-					   Margin="8,6,8,0"/>
-			<TextBlock Text="{loc:Loc {Binding State.ContextDescription}}"
-					   IsVisible="{Binding State.ContextDescription, Converter={StaticResource NotnullToBooleanConverter}}"
-					   FontSize="11" Opacity="0.7"
-					   TextWrapping="Wrap" MaxLines="3"
-					   Margin="8,0,8,0"/>
+			<!-- The context block. -->
 			<ItemsControl ItemsSource="{Binding State.ContextItems}"
-						  Margin="0,2,0,0">
+						  Margin="0,4,0,0">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate x:DataType="ic:InputCompletionContextItem">
 						<Grid ColumnDefinitions="Auto,*,Auto"
@@ -94,6 +85,15 @@
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
+			<TextBlock Text="{loc:Loc {Binding State.ContextTitle}}"
+					   IsVisible="{Binding State.ContextTitle, Converter={StaticResource NotnullToBooleanConverter}}"
+					   FontSize="12" FontWeight="SemiBold" Opacity="0.85"
+					   Margin="8,6,8,0"/>
+			<TextBlock Text="{loc:Loc {Binding State.ContextDescription}}"
+					   IsVisible="{Binding State.ContextDescription, Converter={StaticResource NotnullToBooleanConverter}}"
+					   FontSize="11" Opacity="0.7"
+					   TextWrapping="Wrap" MaxLines="3"
+					   Margin="8,0,8,0"/>
 
 			<!-- The picker: the continuations an accept applies. -->
 			<ScrollViewer x:Name="PickerList"
