@@ -60,7 +60,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			{
 				Content = body,
 				ChipTitle = Locale.GetFormattedKey("command.skill.used", skill.Name),
-				ChipIcon = (VisualIconKind)MaterialIconKind.Lightbulb,
+				ChipIcon = (VisualIconKind)MaterialIconKind.Cards,
 				IsRestorable = false
 			});
 

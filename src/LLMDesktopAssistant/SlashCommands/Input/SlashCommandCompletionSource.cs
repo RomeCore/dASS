@@ -170,7 +170,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		{
 			SlashCommandSource.Native => MaterialIconKind.Console,
 			SlashCommandSource.Script => MaterialIconKind.ScriptTextOutline,
-			SlashCommandSource.Skill => MaterialIconKind.Lightbulb,
+			SlashCommandSource.Skill => MaterialIconKind.Cards,
 			SlashCommandSource.SubAgent => MaterialIconKind.Robot,
 			SlashCommandSource.Tool => MaterialIconKind.Wrench,
 			_ => null
