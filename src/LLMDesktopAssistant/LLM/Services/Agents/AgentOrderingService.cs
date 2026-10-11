@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.ExecutionStages;
 using LLMDesktopAssistant.LLM.Domain;
 
@@ -14,12 +15,18 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 		{
 			var stages = chatSettings.Settings.Agents.ExecutionStages
 				.ToList();
+
+			// A forced agent wins over everything: it is honoured before the "no enabled stage" guard, before mentions
+			// and before the router.
+			if (GetForcedAgent(stages) is { } forced)
+				return forced;
+
 			if (!stages.Any(s => s.Enabled))
 				return null;
 
 			var (roundUserMessages, roundAssistantMessages) = CollectThisRoundMessages();
 			var executedInThisRound = CollectExecutedAgents(roundAssistantMessages);
-			var (prevAgentId, prevStageId, prevAgentMessages) = GetPreviousExecutionInfo(roundAssistantMessages);
+			var (prevAgentId, prevStageId, prevAgentMessages) = GetPreviousExecutionInfo(roundAssistantMessages, stages);
 			var (currentStageExecuted, currentStageMessages) = GetCurrentStageInfo(roundAssistantMessages, prevStageId);
 
 			int targetStageIndex = FindTargetStageIndex(prevStageId);
@@ -69,6 +76,54 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 
 			return null;
 		}
+
+		/// <summary>
+		/// Returns the agent forced onto the current round together with the stage to tag its turn with, or
+		/// <see langword="null"/> when no live <see cref="ForcedAgentMarker"/> is in play.
+		/// </summary>
+		/// <remarks>
+		/// The marker lives on a user message of the current round, and a round is a run of consecutive user messages
+		/// (a marked message followed by plain text, say) — so the whole trailing run is searched, newest message first,
+		/// not just the last message. The scan stops at the first assistant (or other) message: a marker behind an
+		/// assistant message belongs to a previous round and is inert, even though the marker itself is never consumed.
+		/// The forced agent runs even when it belongs to no enabled stage (its turn is tagged with
+		/// <see cref="Guid.Empty"/>); only its existence is required.
+		/// </remarks>
+		private (Guid AgentId, Guid StageId)? GetForcedAgent(IReadOnlyList<AgentExecutionStage> stages)
+		{
+			ForcedAgentMarker? marker = null;
+			for (int i = chat.Messages.Count - 1; i >= 0; i--)
+			{
+				var message = chat.Messages[i].Message;
+				if (message is UserMessage)
+				{
+					if (message.AdditionalData.TryGet<ForcedAgentMarker>(out var found))
+					{
+						marker = found;
+						break;
+					}
+
+					continue;
+				}
+
+				break;
+			}
+
+			if (marker is null)
+				return null;
+
+			if (services.GetRequiredService<IAgentManagementService>().TryGetAgentDescriptor(marker.AgentId) is null)
+				return null;
+
+			var stageId = stages.FirstOrDefault(s => s.Enabled && ContainsAgent(s, marker.AgentId))?.Id
+				?? stages.FirstOrDefault(s => ContainsAgent(s, marker.AgentId))?.Id
+				?? Guid.Empty;
+
+			return (marker.AgentId, stageId);
+		}
+
+		private static bool ContainsAgent(AgentExecutionStage stage, Guid agentId)
+			=> stage.AgentInstances.Any(instance => instance.AgentId == agentId);
 
 		private (IReadOnlyList<UserMessage> UserMessages, IReadOnlyList<AssistantMessage> AssistantMessages) CollectThisRoundMessages()
 		{
@@ -123,31 +178,46 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			return executedInThisRound.AsReadOnly();
 		}
 
+		/// <summary>
+		/// Finds the previous execution to resume from: the nearest trailing assistant message that belongs to a stage
+		/// which still exists.
+		/// </summary>
+		/// <remarks>
+		/// A stage can be removed from the chat's settings (or a stage-less forced turn can tag its message with
+		/// <see cref="Guid.Empty"/>) while its messages stay in the history. Such messages are skipped, so that the
+		/// returned <c>prevStageId</c> is always a valid stage, and the trailing run of messages from the same agent
+		/// around the found message becomes <c>PreviousAgentMessages</c>. When nothing valid is found in the round the
+		/// result is empty and the caller restarts from the first stage.
+		/// </remarks>
 		private (Guid? AgentId, Guid? StageId, IReadOnlyList<AssistantMessage> Messages) GetPreviousExecutionInfo(
-			IReadOnlyList<AssistantMessage> thisRoundMessages)
+			IReadOnlyList<AssistantMessage> thisRoundMessages, IReadOnlyList<AgentExecutionStage> stages)
 		{
-			if (thisRoundMessages.Count > 0 && thisRoundMessages[^1] is AssistantMessage asm)
+			int previousIndex = -1;
+			for (int i = thisRoundMessages.Count - 1; i >= 0; i--)
 			{
-				var agentMessages = new List<AssistantMessage> { asm };
-
-				for (int j = thisRoundMessages.Count - 2; j >= 0; j--)
+				if (stages.Any(stage => stage.Id == thisRoundMessages[i].AgentStageId))
 				{
-					if (thisRoundMessages[j] is AssistantMessage prevAsm
-						&& prevAsm.SenderAgentId == asm.SenderAgentId)
-					{
-						agentMessages.Add(prevAsm);
-					}
-					else
-					{
-						break;
-					}
+					previousIndex = i;
+					break;
 				}
-
-				agentMessages.Reverse();
-				return (asm.SenderAgentId, asm.AgentStageId, agentMessages.AsReadOnly());
 			}
 
-			return (null, null, []);
+			if (previousIndex < 0)
+				return (null, null, []);
+
+			var asm = thisRoundMessages[previousIndex];
+			var agentMessages = new List<AssistantMessage> { asm };
+
+			for (int j = previousIndex - 1; j >= 0; j--)
+			{
+				if (thisRoundMessages[j].SenderAgentId == asm.SenderAgentId)
+					agentMessages.Add(thisRoundMessages[j]);
+				else
+					break;
+			}
+
+			agentMessages.Reverse();
+			return (asm.SenderAgentId, asm.AgentStageId, agentMessages.AsReadOnly());
 		}
 
 		private int FindTargetStageIndex(Guid? previousStageId)

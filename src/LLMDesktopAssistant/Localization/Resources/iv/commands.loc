@@ -36,3 +36,10 @@ completion.hint: ↑↓ select · Tab accept · Esc close
 addon_reload.name: Addon reload
 addon_reload.description: Rescan the addon packs and reload every addon manager.
 addon_reload.done: Addons reloaded
+
+// Call command (command.call.*, command.argument.call.*, command.error.agent_not_found).
+call.name: Call agent
+call.description: Force the next turn to run a specific chat agent, bypassing the router.
+argument.call.agent: agent
+argument.call.agent.description: The name of the chat agent to force.
+error.agent_not_found: Agent '{0}' was not found.

@@ -36,3 +36,10 @@ completion.hint: ↑↓ выбрать · Tab принять · Esc закрыт
 addon_reload.name: Перезагрузка аддонов
 addon_reload.description: Перечитать аддон-паки и перезагрузить все менеджеры аддонов.
 addon_reload.done: Аддоны перезагружены
+
+// Call command (command.call.*, command.argument.call.*, command.error.agent_not_found).
+call.name: Вызвать агента
+call.description: Принудительно запустить конкретного чат-агента следующим ходом, минуя роутер.
+argument.call.agent: агент
+argument.call.agent.description: Имя чат-агента, которого нужно вызвать принудительно.
+error.agent_not_found: Агент '{0}' не найден.
