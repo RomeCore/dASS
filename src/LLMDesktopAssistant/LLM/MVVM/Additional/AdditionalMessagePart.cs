@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	/// at the bottom of a message or a tool call.
 	/// </summary>
 	[ViewModelFor(typeof(AdditionalMessagePartView))]
-	public abstract class AdditionalMessagePart : AdditionalChatData
+	public class AdditionalMessagePart : AdditionalChatData
 	{
 		private VisualIconKind? _chipIcon;
 		/// <summary>
