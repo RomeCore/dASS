@@ -31,3 +31,8 @@ completion.title.commands: Commands
 completion.arguments: Arguments
 completion.required: required
 completion.hint: ↑↓ select · Tab accept · Esc close
+
+// Native commands (command.addon_reload.*).
+addon_reload.name: Addon reload
+addon_reload.description: Rescan the addon packs and reload every addon manager.
+addon_reload.done: Addons reloaded

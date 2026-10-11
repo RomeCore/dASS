@@ -31,3 +31,8 @@ completion.title.commands: Команды
 completion.arguments: Аргументы
 completion.required: обязательно
 completion.hint: ↑↓ выбрать · Tab принять · Esc закрыть
+
+// Native commands (command.addon_reload.*).
+addon_reload.name: Перезагрузка аддонов
+addon_reload.description: Перечитать аддон-паки и перезагрузить все менеджеры аддонов.
+addon_reload.done: Аддоны перезагружены
