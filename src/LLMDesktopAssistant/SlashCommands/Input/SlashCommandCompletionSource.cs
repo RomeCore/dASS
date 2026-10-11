@@ -250,7 +250,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				Kind = InputCompletionKind.Argument,
 				Title = Locale.GetConstKey(SlashCommandExtractor.Prefix + SlashCommandShortToken.For(command, commandSet)),
 				Description = command.DescriptionKey,
-				ContextTitle = slot?.Name ?? Locale.GetKey("command.completion.arguments"),
+				ContextTitle = slot?.Name ?? null,
 				ContextDescription = slot?.Description,
 				ContextItems = withList ? BuildContextItems(schema, slot) : []
 			};
