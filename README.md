@@ -33,6 +33,19 @@ Everything that extends the assistant — skills, sub-agents, tools, prompt cont
 - **On-demand discovery** - agents search the addon library instead of carrying every skill in the prompt, so a large collection costs nothing until it is actually needed.
 - **Visual browser** - a card-based panel for inspecting packs and addons, toggling them, setting per-addon parameters and models, and seeing diagnostics for broken files instead of having them fail silently.
 
+### ⌨️ Slash commands
+
+Type a `/`-prefixed token at the very start of a message to trigger a runtime action instead of a plain send — the command is consumed and its effect lands on the same message.
+
+- **`/skill:<name> [arguments]`** — loads a skill and injects its body straight into the message, so the agent gets it in full without a separate load round-trip.
+- **`/agent:<name> [input]`** — launches a predefined sub-agent exactly like the `agent-callsub` tool. It is fire-and-forget by default; pass `wait=false` to return immediately, or `wait=true` (the default) to await the sub-agent and inject its last answer back onto the message.
+- **Fully-qualified tokens** — a command is addressed as `type:pack:name` (for example `/skill:matt-pocock:grilling` or `/agent:web-searcher`). Namespace qualifiers are optional while unambiguous, and commands that share a bare name are resolved deterministically (an exact name beats an alias, native beats scripted beats addon-derived).
+- **Everything is live while you type** — a palette completes the command and its arguments, an inline ghost previews the rest of the token, and the token is colour-coded as it resolves (known / unknown / ambiguous). A `//` prefix escapes a literal leading slash.
+- **Commands are user-only** — they are never shown to agents or exposed to the model; the model only ever sees the message a command produced.
+- **Per-chat control** — slash commands have a chat-local master switch and per-command overrides that inherit from the application defaults.
+
+Commands are collected from the addon packs — one per available skill and sub-agent; file-based commands under a pack's `commands/` folder are planned.
+
 ### 🛠️ Rich tool system
 - **Filesystem operations** - read, write, search, replace, copy, delete files and directories
 - **Web requests & search** - fetch URLs, search the web, download files

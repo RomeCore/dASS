@@ -17,7 +17,7 @@ The project has **2** separate agentic execution systems:
 ```
 src/LLMDesktopAssistant/Addons/
     AddonBase.cs - base of every agentic addon (name, order, aliases, description/body, paths, diagnostics)
-    AddonKind.cs - [Flags] kinds: Pack, Skill, SubAgent, Tool, PromptContext, Template, LuaScript (+ MemoryBlock, Command - reserved)
+    AddonKind.cs - [Flags] kinds: Pack, Skill, SubAgent, Tool, PromptContext, Template, LuaScript, SlashCommand (+ MemoryBlock reserved)
     IAddonTypeDescriptor.cs - per-kind descriptor marked with [AddonTypeDescriptor]
     AddonSetCollectorBase.cs - merges addons across packs, applies per-agent changes, freezes clones
     Loading/ - AddonFileLocatorBase<T>, pack locators (App/Chat/Combined), AddonPackSearchFoldersProvider
@@ -83,6 +83,24 @@ src/LLMDesktopAssistant/LLM/
             ToolsetBuildingService.cs - service for collecting and building toolset from all sources for each agent
             ...
 
+src/LLMDesktopAssistant/SlashCommands/
+    SlashCommandInfo.cs - the slash-command addon info (namespaces, ModelFacingMode, Generate ceiling, Executor)
+    SlashCommandExtractor.cs - the single owner of the leading '/' marker and the '//' escape; everything downstream is slash-free
+    SlashCommandSetCollector.cs - merges ISlashCommandProvider into the chat's set + the EnableCommands gate
+    SlashCommandSource.cs / SlashCommandOrderTiers.cs - source kind and the native > scriptable > derived tiers
+    ModelFacingMode.cs - Raw / Neutral / Hidden (v1 uses Raw)
+    Loading/ - SlashCommandAddonTypeDescriptor ('commands'), SlashCommandFileLocator (Extensions empty in v1), SlashCommandParser (inert)
+    Providers/ - DerivedSlashCommandProvider<T>, Skill/SubAgent providers and their executors
+    Resolution/ - SlashCommandResolver, SlashCommandMatcher (exact match), SlashCommandToken
+    Arguments/ - SlashCommandArgumentParser/Binder/Schema, ISlashCommandArgumentFormatProvider
+    Execution/ - ISlashCommandExecutor, execution context/result, SlashCommandIntent, SlashCommandFingerprint
+    Input/ - SlashCommandCompletionSource, InputAnalyzer, PrefixMatcher, HighlightPalette
+
+src/LLMDesktopAssistant/InputCompletion/
+    IInputCompletionSource.cs - generic source (Priority, TryCompute, TryHighlight); the first source that claims the caret wins
+    InputCompletionService.cs - picks the owning source, keeps the result, raises ResultChanged/SelectedIndexChanged
+    InputCompletionResult/Item/State/Span/Kind - the completion snapshot (span to replace, continuations, popup state)
+
 ```
 
 ## Addons
@@ -99,12 +117,38 @@ A pack is a directory scanned for one folder per kind:
 | `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
 | `Template` | `templates/` | LLT template extensions |
 | `PromptContext` | `context/` | extensions not implemented yet |
+| `SlashCommand` | `commands/` | reserved - file commands are not wired yet (`SlashCommandFileLocator.Extensions` is empty) |
 
 Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`. `AddonPackSearchFoldersProvider` also scans other agent runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, `.windsurf`, `.opencode`, `.cline`, `.roocode`, `.lmstudio`, `.junie`, `.everywhere`, ...), so third-party skills and sub-agents are picked up as-is - expect addons you did not create.
 
-Adding a kind = `<X>Info : AddonBase<X>` + parser + `IAddonFileLocator<X>` (`Folders`, `Extensions` ordered by priority, `AllowShortFormat`, `FullFormatName`) + `IAddonTypeDescriptor` marked `[AddonTypeDescriptor]` + `AddonSetCollectorBase<X, TChange>`, plus an optional card factory and search provider. `MemoryBlock` and `Command` kinds are declared but reserved.
+Adding a kind = `<X>Info : AddonBase<X>` + parser + `IAddonFileLocator<X>` (`Folders`, `Extensions` ordered by priority, `AllowShortFormat`, `FullFormatName`) + `IAddonTypeDescriptor` marked `[AddonTypeDescriptor]` + `AddonSetCollectorBase<X, TChange>`, plus an optional card factory and search provider. `MemoryBlock` is declared but reserved; `SlashCommand` is an active kind, derived from other addons for now (see **Slash commands**).
 
 Addons are **frozen after collection** - `addon.Clone()` returns an unfrozen copy to mutate.
+
+## Slash commands
+
+A slash command is a **user-only** token at the very start of a message (`/skill:grilling`, `/agent:web-searcher <input>`) that triggers a runtime action before the message reaches the model. Commands are **never exposed to agents** - the model only sees the message a command produced. They are the `AddonKind.SlashCommand` kind, **chat-level and agent-agnostic**.
+
+In v1 commands are **derived**, not loaded from files: one command per valid available skill and sub-agent, synthesised by providers. The file kind is declared but inert - `SlashCommandFileLocator.Extensions` is empty and `SlashCommandParser.Populate` is a no-op - so a pack's `commands/` folder plugs in later without touching the pipeline.
+
+Wiring (all chat-scoped):
+- `ISlashCommandProvider` contributes commands; `DerivedSlashCommandProvider<TSource>` builds one per addon of a kind (`SkillSlashCommandProvider` -> `/skill:<name>`, `SubAgentSlashCommandProvider` -> `/agent:<name>`), stamping `SlashCommandSource` and an executor.
+- `SlashCommandSetCollector : AddonSetCollectorBase<SlashCommandInfo, SlashCommandChange>` merges the providers into the chat's set. `GetAddonsForChat()` is the only consumer path; `GetAddonsForAgent` is deliberately left unimplemented.
+- `SlashCommandInfo.Key` (namespaces sorted, then name) is the dedup/settings identity; `CanonicalToken` (`type:pack:name`) is the typed form. `SlashCommandOrderTiers`: native `2000` > script `1000` > derived `0`.
+
+Pipeline (`ChatMessageInsertionService`; pre-flight `CanInsertUserInput` and the send):
+
+1. `SlashCommandExtractor.TryExtractToken` - **the single owner of the `/` marker**; the token is slash-free everywhere downstream. `//` escapes a literal leading slash.
+2. `SlashCommandResolver` + `SlashCommandMatcher` - exact match; total order is exact name > alias, then `OverrideOrder` desc, `Order` asc, `Key`; the winner's losers and `Overrides` form the defeated set.
+3. Arguments: the schema lives on the **executor** (`ISlashCommandExecutor.ArgumentSchema`); `SlashCommandArgumentParser` + `SlashCommandArgumentBinder` apply defaults, validate and convert (via `ISlashCommandArgumentFormatProvider`). An invalid argument set blocks the send before execution.
+4. Execute: `ISlashCommandExecutor.ExecuteAsync(ctx, ct)` runs under a `ChatExecutionLevel.Command` token and **mutates `ctx.Message` directly**. `SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate)` is the final generation decision - it can only lower the caller's intent.
+5. `SlashCommandFingerprint` (data-only, persisted) goes into `AdditionalData`; `MessageContentProjector` shapes the model-facing content by `ModelFacingMode` (`Raw` in v1, `Neutral`/`Hidden` reserved) plus the `AdditionalMessageContentPart`s the executor added.
+
+Built-in executors: `SkillCommandExecutor` injects the skill body in full (no `skill-load` round-trip); `SubAgentCommandExecutor` launches the sub-agent like `agent-callsub`, with a `wait` keyed boolean argument (default `true`) deciding whether it awaits and injects the last answer or fires-and-forgets.
+
+Input side: `SlashCommandCompletionSource` is an `IInputCompletionSource` (`Priority = 100`, above generic sources) implementing both `TryCompute` (token state / argument state) and `TryHighlight` (token colour by resolution state, argument chips). Analysis is shared in the pure `SlashCommandInputAnalyzer`; prefix matching in `SlashCommandPrefixMatcher`; shortest-token logic in `SlashCommandShortToken`. The inline ghost preview comes from `InputCompletionTransformProvider` in the generic `InputCompletion/` layer.
+
+Settings: `ChatCommandSettings.EnableCommands` is a chat-local master gate (never inherited); `CommandsSet` (`SlashCommandSet`, keyed by `SlashCommandInfo.Key`) holds per-command overrides and inherits the app bag.
 
 ## Prompting & SCM
 
