@@ -16,6 +16,12 @@ namespace LLMDesktopAssistant.Tools
 				result |= ToolBehaviour.PromptEdit;
 			if (kind.HasFlag(AddonKind.Tool))
 				result |= ToolBehaviour.ScriptEdit;
+			if (kind.HasFlag(AddonKind.MemoryBlock))
+				result |= ToolBehaviour.PromptEdit;
+			if (kind.HasFlag(AddonKind.PromptContext))
+				result |= ToolBehaviour.PromptEdit;
+			if (kind.HasFlag(AddonKind.SlashCommand))
+				result |= ToolBehaviour.ScriptEdit;
 			if (kind.HasFlag(AddonKind.Template))
 				result |= ToolBehaviour.PromptEdit;
 			if (kind.HasFlag(AddonKind.LuaScript))
