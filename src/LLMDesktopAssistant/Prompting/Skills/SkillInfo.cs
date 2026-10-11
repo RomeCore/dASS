@@ -54,5 +54,35 @@ namespace LLMDesktopAssistant.Prompting.Skills
 			set => SetProperty(ref field, value);
 		} = SkillInjectionMode.Default;
 
+		/// <summary>
+		/// Whether the model is forbidden from invoking this skill on its own (e.g. via the <c>skill-load</c> tool).
+		/// Frontmatter: 'disable-model-invocation'. Default: <see langword="false"/> (the model may invoke it).
+		/// </summary>
+		public bool DisableModelInvocation
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
+		/// <summary>
+		/// Whether the user is allowed to invoke this skill (e.g. via a slash command).
+		/// Frontmatter: 'user-invocable'. Default: <see langword="true"/>.
+		/// </summary>
+		public bool UserInvocable
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = true;
+
+		/// <summary>
+		/// The hint describing the arguments this skill accepts, shown to the user.
+		/// Frontmatter: 'argument-hint'. Default: <see langword="null"/> (no hint).
+		/// </summary>
+		public string? ArgumentHint
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = null;
+
 	}
 }

@@ -52,6 +52,17 @@ namespace LLMDesktopAssistant.Prompting.Skills
 						break;
 				}
 			}
+
+			if (frontmatter.TryRequest("disable-model-invocation", ref diagnostic, out bool disableModelInvocation))
+				addon.DisableModelInvocation = disableModelInvocation;
+
+			if (frontmatter.TryRequest("user-invocable", ref diagnostic, out bool userInvocable))
+				addon.UserInvocable = userInvocable;
+
+			var argumentHint = frontmatter.Get<string>("argument-hint");
+			addon.ArgumentHint = string.IsNullOrWhiteSpace(argumentHint) ? null : argumentHint.Trim();
+
+			addon.ChatAvailablePredicate = (skill, services) => !addon.DisableModelInvocation;
 		}
 
 		protected override bool IsValidName(string name)

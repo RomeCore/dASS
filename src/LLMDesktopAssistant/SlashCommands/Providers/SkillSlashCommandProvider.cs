@@ -17,6 +17,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 
 		protected override SlashCommandSource SourceKind => SlashCommandSource.Skill;
 
+		protected override bool FilterAddon(SkillInfo source)
+		{
+			return base.FilterAddon(source) && source.UserInvocable;
+		}
+
 		protected override ISlashCommandExecutor CreateCommandExecutor(SkillInfo source)
 			=> new SkillCommandExecutor(source);
 	}

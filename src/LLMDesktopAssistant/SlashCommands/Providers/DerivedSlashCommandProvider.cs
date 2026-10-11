@@ -52,10 +52,18 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		{
 		}
 
+		/// <summary>
+		/// Filters an addon to determine whether it should be included in the command set.
+		/// </summary>
+		protected virtual bool FilterAddon(TSource source)
+		{
+			return source.IsValid;
+		}
+
 		/// <inheritdoc/>
 		public IEnumerable<SlashCommandInfo> GetCommands()
 		{
-			foreach (var source in _sources.GetAvailableAddons().Where(a => a.IsValid))
+			foreach (var source in _sources.GetAvailableAddons().Where(a => FilterAddon(a)))
 			{
 				var command = new SlashCommandInfo
 				{
