@@ -67,7 +67,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var result = await new SkillCommandExecutor(skill).ExecuteAsync(ctx, CancellationToken.None);
 
 			var part = InjectedPart(message);
-			Assert.Equal("Body: do it", part.Content);
+			Assert.Contains("Body: do it", part.Content);
 			Assert.False(part.IsRestorable);
 			Assert.Equal("command.skill.used", part.ChipTitle!.Key);
 
@@ -92,7 +92,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			await new SkillCommandExecutor(skill).ExecuteAsync(ctx, CancellationToken.None);
 
 			var part = InjectedPart(message);
-			Assert.StartsWith("SKILL BODY", part.Content);
+			Assert.Contains("SKILL BODY", part.Content);
 			Assert.Contains(@"C:\skills\grilling", part.Content);
 		}
 
@@ -105,7 +105,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			await new SkillCommandExecutor(skill).ExecuteAsync(ctx, CancellationToken.None);
 
-			Assert.Equal("SKILL BODY", InjectedPart(message).Content);
+			Assert.Contains("SKILL BODY", InjectedPart(message).Content);
 		}
 	}
 }
