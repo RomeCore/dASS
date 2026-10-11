@@ -251,10 +251,10 @@ scripts.search.placeholder: Search by name, description or tags...
 scripts.set: Script set
 
 commands.available: Available commands
-commands.available.hint: Slash commands are user-typed tokens at the start of a message that inject a skill or launch a sub-agent. They are never exposed to agents.
+commands.available.hint: Slash commands are user-typed and used to manually execute scripts, skills and launch sub-agents.
 commands.empty: No commands found
 commands.enabled: Enable slash commands
-commands.enabled.hint: When disabled, a leading "/" token in a message is treated as plain text.
+commands.enabled.hint: When disabled, a slash command will not be recognized and will be treated as a regular message.
 commands.refresh: Refresh commands list
 commands.search.placeholder: Search by name, description or tags...
 commands.set: Command set
