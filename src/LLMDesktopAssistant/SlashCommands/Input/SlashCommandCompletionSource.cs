@@ -197,6 +197,10 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var parsed = analysis.Arguments;
 			var target = parsed is null ? null : SlashCommandArgumentLookup.Find(parsed, rawArguments, caretOffset);
 
+			// Nothing under the caret — an empty tail such as "/call ", or the gap between two arguments: complete the
+			// next expected slot (the first unwritten positional, otherwise the rest positional) with an empty prefix.
+			target ??= parsed is null ? null : SlashCommandArgumentLookup.FindNext(schema, parsed, caretOffset);
+
 			var items = new List<InputCompletionItem>();
 			string? completablePrefix = null;
 			if (target is { Slot.Format: { CanComplete: true } format } argument)

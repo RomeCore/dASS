@@ -46,6 +46,35 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			return null;
 		}
 
+		/// <summary>
+		/// The slot the caret is about to write into when it sits in no argument yet — an empty tail such as
+		/// <c>/call </c>, or the gap between two arguments: the first declared positional that has not been written,
+		/// otherwise the rest positional. Returns <see langword="null"/> when the schema has no slot left to fill.
+		/// </summary>
+		/// <remarks>
+		/// This exists because an argument only becomes a target once it has been <em>written</em>: an empty tail parses
+		/// to no argument, so completion would otherwise have nothing to complete against. Only an <em>unwritten</em>
+		/// slot is offered — once the rest positional carries the tail, a trailing space must not re-offer it. The
+		/// returned target carries an empty prefix and a zero-length value anchored at the caret, so the accepted
+		/// completion is inserted there.
+		/// </remarks>
+		public static SlashCommandArgumentTarget? FindNext(SlashCommandArgumentSchema schema,
+			SlashCommandParsedArguments parsed, int caretOffset)
+		{
+			ArgumentNullException.ThrowIfNull(schema);
+			ArgumentNullException.ThrowIfNull(parsed);
+
+			// The first declared positional that has not been written yet...
+			SlashCommandArgument? slot = null;
+			if (parsed.Positionals.Count < schema.Positionals.Count)
+				slot = schema.Positionals[parsed.Positionals.Count];
+			// ...otherwise the rest positional, but only while it is still unwritten.
+			else if (parsed.RestPositional is null)
+				slot = schema.RestPositional;
+
+			return slot is null ? null : new SlashCommandArgumentTarget(slot, caretOffset, 0, string.Empty);
+		}
+
 		private static bool TryTarget(SlashCommandRawArgument argument, string rawArguments, int caretOffset,
 			out SlashCommandArgumentTarget target)
 		{
