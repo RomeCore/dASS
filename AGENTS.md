@@ -463,8 +463,10 @@ Also, observe the MINIMAL number of files that really needed for understanding b
 DO NOT build the entire solution! Build the each project separately instead (but desktop project should be built inside the temporary directory):
 
 ```powershell
+# The artifacts path is built into a variable first: $env:TEMP does NOT expand inside single quotes.
 dotnet build 'src/LLMDesktopAssistant/LLMDesktopAssistant.csproj'
-dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath='$env:TEMP\dass-temp-build\'
+$a = Join-Path $env:TEMP 'dass-temp-build'
+dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
 ```
 
 **NEVER pipe the build output through `Select-Object` (`| Select-Object -Last 40`, `| Select`, `| select`, etc.)!**
