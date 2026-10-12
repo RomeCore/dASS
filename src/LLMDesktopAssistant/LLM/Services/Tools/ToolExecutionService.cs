@@ -191,6 +191,8 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				}
 
 				var approvalLevel = toolInfo.ApprovalLevel ?? ToolApprovalLevel.PolicyBased;
+				var (decision, decisionMessage) = toolApprovalService.ApproveTool(
+					approvalLevel, toolCall.ExpectedBehaviour.Value, autoApproveBehaviours, disallowedBehaviours);
 
 				// Specifier layer: evaluated only for policy-based approval levels.
 				SpecifierVerdict specifierVerdict = SpecifierVerdict.None;
@@ -216,9 +218,6 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 					specifierMessage = specifierResult.Message;
 					sharedContext = specifierToolExecutionContext.SharedContext;
 				}
-
-				var (decision, decisionMessage) = toolApprovalService.ApproveTool(
-					approvalLevel, toolCall.ExpectedBehaviour.Value, autoApproveBehaviours, disallowedBehaviours);
 
 				// Combine the specifier verdict with the policy decision.
 				if (approvalLevel.IsPolicyBased() && toolInfo.SpecifierAnalyzer != null && toolInfo.Specifiers.Count > 0)
