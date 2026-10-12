@@ -34,6 +34,8 @@ The map ends at the spec. Implementation is a separate effort.
 - **Approval belongs to agent decisions.** An agent's tool choice is approved; a user's own action (a typed tool command, a tool restart) *is* the decision and need not re-ask. Whether trusted code (a script) also skips policy, and whether a hard floor survives for any of these, is ticket 13.
 - Invocation sources are a first-class notion even without a stage engine: the source selects the orchestrator and how the context is filled.
 - All eight feature goals are in scope; the core refactor is however many tickets it takes.
+- **Decompose by concern, not by size.** The chat execution loop is large but cohesive — one job spread over many lines — and is *not* a target: at most its mechanical parts (the ordered hook runners, the failed-usage recording) move to a collaborator. The tool execution core is the opposite: several independent decisions sharing one body, which is exactly why it decomposes.
+- **A hook precedent already exists.** The chat execution loop already models cross-cutting collaborators as an ordered hook list invoked at fixed points (used today by memory, naming, summarization, message reveal). The scripted hook mechanism should be designed against that precedent rather than from scratch.
 
 ## Decisions so far
 

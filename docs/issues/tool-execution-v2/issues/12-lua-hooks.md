@@ -15,3 +15,5 @@ Scripts should be able to register hooks; the user's idea is a registration func
 ## Comments
 
 <!-- appended conversation -->
+
+- Related precedent (noted while charting): the chat execution loop already carries an ordered hook mechanism — collaborators registered as hooks and invoked, in registration order, at the prepare, response-completed, agent-finished and execution-finished points; memory reading and recording, chat naming and summarization ride it today. The scripted hook design should be measured against this precedent: the same registration-and-order shape, and a decision on whether scripted hooks extend that mechanism, mirror it, or attach at a different seam.
