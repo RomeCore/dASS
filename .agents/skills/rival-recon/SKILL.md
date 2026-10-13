@@ -157,7 +157,7 @@ Per surviving finding, one sentence of the form "if we do X, the user gets Y". A
 
 ### 7. Write the teardown, and promote nothing by yourself
 
-File it as `docs/rival-recon/YYYY-MM-DD_<rival>_<area>.md` - the rival part and the area are both kebab-cased slugs of what was studied (`Claude Code` → `claude-code`), never raw names with spaces - creating the folder when it is not there yet. Then stop. This skill writes no dASS source code and files no issues. Promotion into the issue tracker (`docs/issues/`) or into an idea (`docs/ideas/NN-<slug>.md`) is the user's call - offer it, do not do it.
+File it as `docs/rival-recon/YYYY-MM-DD_<rival>_<area>.md` - the rival part and the area are both kebab-cased slugs of what was studied (`Claude Code` → `claude-code`), never raw names with spaces - creating the folder when it is not there yet. Then stop. This skill writes no dASS source code and files no issues. Promotion into the issue tracker (`docs/issues/`) or into an idea (`docs/ideas/<scope>/<idea-slug>.md`) is the user's call - offer it, do not do it.
 
 *Done when:* the document is on disk, the user has the path, and the repository is otherwise untouched.
 
