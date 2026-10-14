@@ -67,7 +67,7 @@ A forged tool names its `behaviours` truthfully - those flags are what the appro
 
 Now, **after** the forging. One file - `.agents/skills/equip/loadout/YYYY-MM-DD_<slug>.md`, next to the skill that reads it - carrying the reasoning: which signals fired, which candidates they produced, what was forged, and why the refusals were refused. A refusal is a result; its reason is what keeps the same idea from coming back next session, and step 3 reads these notes before the next forging.
 
-The date comes from `time-get`. The book of achievements is not written here - a forged addon is a decent candidate for `record-achievement`, and that call is the user's.
+The date comes from the send timestamp the client stamps on the user's message - same rule as `record-achievement`, never the machine clock (the app may run in another timezone). The book of achievements is not written here - a forged addon is a decent candidate for `record-achievement`, and that call is the user's.
 
 *Done when:* the note covers **every** candidate from step 5 - forged, refused and deferred alike.
 

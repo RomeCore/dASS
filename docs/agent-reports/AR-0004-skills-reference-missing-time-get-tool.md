@@ -1,6 +1,6 @@
 # AR-0004 - shipped skills tell the agent to use `time-get`, which is not in the agent's toolset
 
-- **Status:** open
+- **Status:** fixed
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** prompt (skill `record-achievement`; same reference in skill `equip`)
@@ -49,6 +49,17 @@ Obtained the date via `shell-powershell` (`Get-Date -Format 'yyyy-MM-dd'`), whic
 1. **Make the date obtainable as the skill promises.** Either expose `time-get` to the desktop-assistant agent's toolset, or reword the skill to a mechanism the agent actually has (e.g. "get the date via your shell / `fs` / `lua` API").
 2. **If the reword route:** keep the intent ("never invent a date") and drop the tool name, so the rule cannot rot when the tool list changes.
 3. **Sweep the other skills** for the same bare `time-get` reference (at least `equip`) and reconcile them in one pass.
+
+## Resolution
+
+Two separate causes, both resolved - and neither was a missing tool.
+
+1. **The tool existed; it was switched off in configuration.** `time-get` is a native tool (`src/LLMDesktopAssistant/Tools/Implementations/TimeToolModule.cs`, `[ToolModule(chatScoped: false)]`), so the agent-side wiring was never broken - the per-context config had it disabled. It is exposed to the agent again (confirmed in the live toolset of a later session).
+2. **The skills stopped asking for a tool at all.** The date no longer needs a call: it comes from the send timestamp the client stamps on the user's message, which is in front of the agent for free. `record-achievement` now says so in the naming scheme, rule 9, workflow step 2 and the checklist ("a guessed date breaks sorting and trust" survives as intent, the `time-get`-only letter does not).
+
+- **2026-10-05** - commit `a7f57767` ("agent(skills): drop stale reference from record-achievement skill") - the bare `time-get` reference removed.
+- **2026-10-12** - commit `d4cf8e71` ("agent(skills): take the achievement date from the user's message") - the rule rewritten around the message timestamp.
+- **2026-10-14** - proposed fix 3 swept: `.agents/skills/equip/SKILL.md` step 7 now takes the note's date from the user's message send timestamp ("same rule as `record-achievement`, never the machine clock"). That was the last surviving `time-get` reference, so the sweep is complete - a grep for `time-get` over the addon sources now hits only this report and the historical loadout note that filed it.
 
 ## Unverified
 

@@ -1,6 +1,6 @@
 # AR-0002 - shell-powershell mangles double quotes inside the command argument
 
-- **Status:** open
+- **Status:** fixed
 - **Severity:** visible
 - **Lane:** agent
 - **Surface:** tool `shell-powershell`
@@ -51,6 +51,13 @@ Rewrote every command with single quotes and kept using them for the rest of the
 1. **State the embedding rule in the description.** Either "the string is passed to PowerShell verbatim" (then the transport must preserve `"`) or "the string is embedded into a generated script; quote for the generated layer" - today's wording says neither, and the examples only ever use quote-free commands.
 2. **Make the transport preserve the argument.** Whatever layer wraps the string in its own quotes should either avoid re-wrapping or escape the inner quotes.
 3. **Name the culprit in the error text** ("argument was passed as: ...") so a parse failure points at the transport and not at the command.
+
+## Resolution
+
+The transport now escapes ordinary arguments with the C-runtime rules (`System.PasteArguments.AppendArgument`, ported verbatim), so `"` survives into the child process. `VerbatimArguments` remains the explicit opt-out for the one caller that wants raw text (`shell-batch`).
+
+- **2026-10-05** - commit `a23166e7` ("fix(terminal): escape pty arguments with CRT rules instead of cmd quoting") - added `src/LLMDesktopAssistant.Desktop/Execution/CommandLineEscaping.cs` and wired it into `ProcessLauncher.BuildTerminalArguments` (the terminal path, where `Porta.Pty` had been joining args with cmd.exe-style quoting). The non-terminal path was already correct: `ProcessLauncher.LaunchNonTerminal` hands the args to `ProcessStartInfo.ArgumentList`, which uses the same escaping.
+- The fix lands at the transport layer, so it covers every tool that goes through `IProcessLauncher`, not just `shell-powershell`. Both halves of the original repro now behave: the double-quoted form parses, and the single-quoted form is unchanged.
 
 ## Unverified
 
