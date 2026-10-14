@@ -73,7 +73,7 @@ namespace LLMDesktopAssistant.Prompting.Skills
 				});
 			}
 
-			addon.ChatAvailablePredicate = (skill, services) => !addon.DisableModelInvocation;
+			addon.ChatAvailablePredicate = (skill, services) => !skill.DisableModelInvocation;
 		}
 
 		protected override bool IsValidName(string name)
