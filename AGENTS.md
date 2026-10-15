@@ -61,7 +61,7 @@ src/LLMDesktopAssistant/Prompting/
 
 src/LLMDesktopAssistant/LLM/
     Domain/
-        Chat.cs - the chat instance itself, contains a messages sequence and ContextTabs - point of persisted/visual extension
+        Chat.cs - the chat instance itself, contains a messages sequence
         ChatMessage.cs - abstract base class for messages
         ...
     Services/
@@ -82,6 +82,8 @@ src/LLMDesktopAssistant/LLM/
             ToolExecutionService.cs - service for chat-related tool execution
             ToolsetBuildingService.cs - service for collecting and building toolset from all sources for each agent
             ...
+    MVVM/
+        Additional/ - AdditionalData, the point of persisted/visual extension, carried by chats, messages and tool calls (AdditionalChatData, AdditionalMessagePart, DynamicAxamlControlAdditionalData + their views); a message's AdditionalData also holds the slash-command fingerprint and the executor-added message content parts
 
 src/LLMDesktopAssistant/SlashCommands/
     SlashCommandInfo.cs - the slash-command addon info (namespaces, ModelFacingMode, Generate ceiling, Executor)
