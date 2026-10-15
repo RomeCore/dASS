@@ -1,12 +1,12 @@
 ---
-name: trace-driven-design
+name: code-trace
 description: Stress-test a design by writing a runtime trace instead of a diagram - start at one entry point and, at every key call, paste the callee's body inline and keep going into it. The discipline is that every hop must name the argument it passes and the value it returns, so hand-waving about context cannot survive it. Reach for it when the hard part is what gets passed where - a context, state or request object crossing stages, orchestrators, services, pipelines or middleware - when you suspect a sequence is written more than once across callers, or when a diagram stays vague because the seam is in the plumbing, not the boxes. Used well it turns "the pipeline handles it" into a named value, a named owner and a named seam.
 user-invocable: true
 disable-model-invocation: false
 injection-mode: default
 ---
 
-# Trace-driven design
+# Code trace
 
 A **trace** is the code as the machine executes it: start at one entry point, and **every time execution reaches a key function, stop and paste that function's body inline, in place**, then keep going into it. It is a debugger's *step into*, written down. The output is not a diagram, a call graph, or pseudocode that gestures at the seams - it is one linear walk in which every hop must name exactly what it passes and what comes back.
 
