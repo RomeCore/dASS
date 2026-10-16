@@ -1,6 +1,6 @@
 # Tool-command source (slash command to tool)
 
-Status: open
+Status: resolved
 Type: grilling
 Blocked by: 01, 03
 
@@ -10,7 +10,11 @@ The fifth source of slash commands: a command synthesised from a tool, whose arg
 
 ## Answer
 
-<!-- appended on resolution -->
+The tool-command source is a **derived slash command**, exactly like skills and sub-agents:
+
+- The **slash-command subsystem owns the source**: a `DerivedSlashCommandProvider<ToolInfo>` synthesises one command per tool (`/tool:<name>`), stamping `SlashCommandSource` and an executor, ordered by `SlashCommandOrderTiers.ForSource` (derived tier). No new slash-command mechanism is introduced.
+- The command's **argument schema is generated from the tool's `ArgumentSchema`**, with the notion of a **designated main argument** mapped onto the positional slot / rest that the slash-command argument grammar already supports.
+- The **run is owned by the tool-execution subsystem**: the executor launches the tool through the **`Command` orchestrator** (ticket 03) — which, per ticket 13, runs as a user action (policy/confirmation skipped, hard floor honoured).
 
 ## Comments
 

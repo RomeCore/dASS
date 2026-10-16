@@ -1,6 +1,6 @@
 # Trust model for non-agent invocations
 
-Status: open
+Status: resolved
 Type: grilling
 Blocked by:
 
@@ -10,7 +10,13 @@ An agent's tool choice is approved; a user's own action (typing a tool command, 
 
 ## Answer
 
-<!-- appended on resolution -->
+Approval belongs to **agent decisions** only. The three source families split as:
+
+- **Agent decisions** (`ChatRun`, `AgentTask`) — the agent's tool choice goes through the **full pipeline** (policy → specifiers → confirmation).
+- **The user's own actions** (`Command`, `ChatRestart`) — the user *is* the decision, so they **skip policy and confirmation**, but a **hard floor survives**: a tool explicitly marked `AlwaysDisallow` (an equivalent hard deny) is still refused.
+- **Scripts** (`Script`, including nested calls from Lua / CSX / Python) — **bypass the pipeline entirely**: no policy, no confirmation, **no hard floor**. Scripts are a deliberately powerful — and partly dangerous — area, and that is by design.
+
+Because scripts bypass the pipeline, the "entry point surfaces what a script can do" clause is **moot**: there is no script-declared capability set and no approval to inform.
 
 ## Comments
 

@@ -1,6 +1,6 @@
 # Lua hooks
 
-Status: open
+Status: resolved
 Type: grilling
 Blocked by: 02
 
@@ -10,10 +10,24 @@ Scripts should be able to register hooks; the user's idea is a registration func
 
 ## Answer
 
-<!-- appended on resolution -->
+Hooks are a **further-expansion** topic. This ticket fixes the seam and the hook semantics and explicitly defers the rest.
+
+### Seam
+
+Hook points are **positional** (`BeforeX` / `AfterX`) around the pipeline stages — they are **hooks, not events**: a subscriber does not merely observe, it acts at a point in the flow. They are fired **by the stage service in whose life the point occurs** (nobody else knows the moment). The existing chat-execution hooks are the *opposite* model (fire-and-forget notifications) and are deliberately **not** the model here.
+
+### Execution model
+
+Hooks run **sequentially**; **each sees the previous hook's result** and can **interrupt the flow** or **override** it. Concretely: if the policy disallowed a tool but a hook allowed it, **the hook wins**. Hooks may also mutate the invocation (e.g. via `ArgumentsOverride`, the hook channel from ticket 07).
+
+### Deferred (further expansion)
+
+- the full taxonomy of hook points;
+- the verdict shape returned by a hook;
+- ordering when several hooks target the same point;
+- failure handling (abort the invocation vs swallow);
+- whether hooks run **sequentially or in parallel** — explicitly **still open**.
 
 ## Comments
 
 <!-- appended conversation -->
-
-- Related precedent (noted while charting): the chat execution loop already carries an ordered hook mechanism — collaborators registered as hooks and invoked, in registration order, at the prepare, response-completed, agent-finished and execution-finished points; memory reading and recording, chat naming and summarization ride it today. The scripted hook design should be measured against this precedent: the same registration-and-order shape, and a decision on whether scripted hooks extend that mechanism, mirror it, or attach at a different seam.
