@@ -2,6 +2,8 @@ using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Memory
 {
@@ -107,7 +109,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 		/// <param name="requireFacts">Whether the block must have facts enabled.</param>
 		/// <param name="requireLogs">Whether the block must have logs enabled.</param>
 		/// <returns>The resolved block and the exclusion reason, or <see langword="null"/> error when resolved.</returns>
-		protected (MemoryBlock? Block, string? Error) GetBlock(ToolExecutionContext ctx, string name,
+		protected (MemoryBlock? Block, string? Error) GetBlock(IToolExecutionContext ctx, string name,
 			bool requireReading, bool requireWriting, bool requireFacts = false, bool requireLogs = false)
 		{
 			var resolution = GetBlocks(ctx, [name], requireReading, requireWriting, requireFacts, requireLogs);
@@ -129,10 +131,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 		/// <param name="requireFacts">Whether to include only blocks with facts enabled.</param>
 		/// <param name="requireLogs">Whether to include only blocks with logs enabled.</param>
 		/// <returns>The resolution result with the resolved blocks and the exclusion reasons.</returns>
-		protected MemoryBlockResolution GetBlocks(ToolExecutionContext ctx, string[]? names,
+		protected MemoryBlockResolution GetBlocks(IToolExecutionContext ctx, string[]? names,
 			bool requireReading, bool requireWriting, bool requireFacts = false, bool requireLogs = false)
 		{
-			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agent = _agentManager.TryGetSenderAgentDescriptor(((ChatToolExecutionContext)ctx).Message);
 			if (agent is null)
 				return new MemoryBlockResolution([], new Dictionary<string, string>());
 

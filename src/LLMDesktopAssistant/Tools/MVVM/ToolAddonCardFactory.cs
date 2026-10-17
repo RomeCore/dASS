@@ -77,7 +77,7 @@ namespace LLMDesktopAssistant.Tools.MVVM
 				Content = new AddonCardBodyTextViewModel(context.Addon.ArgumentSchema.ToJsonString(_argumentSchemaSerializationOptions))
 			});
 
-			if (context.Addon.SpecifierAnalyzer is not null)
+			if (context.Addon.Specifier is not null)
 				elements.Add(new AddonCardToolSpecifiersBlock(context) { Order = BlockOrder + 20 });
 		}
 

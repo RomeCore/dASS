@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.MVVM.Diff;
 using LLMDesktopAssistant.Utils.Files;
 
@@ -23,11 +24,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		}
 
 		protected async Task<DiffPostProcessResult> PostProcessDiffAsync(string filename, string oldContent, string newContent,
-			ToolExecutionContext ctx, ReactiveToolResult result, CancellationToken cancellationToken)
+			IToolExecutionContext ctx, CancellationToken cancellationToken)
 		{
 			var diff = UnifiedDiff.Compute(oldContent, newContent, contextLines: 3);
 
-			if (!ctx.RunningInUI)
+			if (!ctx.RunningInUi)
 				return new DiffPostProcessResult
 				{
 					Diff = diff,
@@ -43,17 +44,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					Title = filename,
 					IsReadOnly = false,
-					ConsentContext = ctx.ConsentContext
+					ConsentContext = ctx.Consent
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				result.AdditionalData.Add(diffVM);
+				ctx.Call.AddAdditionalData(diffVM);
 
 				using var reg = cancellationToken.Register(() =>
 				{
 					diffVM.Decline(null);
 				});
 
-				var chatStatusService = ctx.Chat.Services.GetService<IChatExecutionStatusService>();
+				var chatStatusService = ctx.Services.GetService<IChatExecutionStatusService>();
 
 				MemorizedDecision decision;
 				using (var askStatus = chatStatusService?.WithConfirmation())
@@ -87,7 +88,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					IsReadOnly = true
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				result.AdditionalData.Add(diffVM);
+				ctx.Call.AddAdditionalData(diffVM);
 				return new DiffPostProcessResult
 				{
 					Diff = diff,

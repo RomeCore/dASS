@@ -83,3 +83,5 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
 4. Cascade reach has no UI in this pass; the core implements reach, the picker is deferred.
 5. The file tools' diff UI is attached by their own approval provider; `ToolConsentPanel` stays the
    generic shell. Panel-hosted custom approval content is deferred.
+6. `ToolContextCreationParams.Host` is `IToolCallHost?`, not the spec's `ChatMessage?`: the task's
+   assistant message is not a `ChatMessage`, and the core only needs the sibling calls.

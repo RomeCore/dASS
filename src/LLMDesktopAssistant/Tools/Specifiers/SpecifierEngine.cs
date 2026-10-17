@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Specifiers;
 
@@ -31,9 +32,9 @@ public static class SpecifierEngine
 	/// <returns>The aggregated verdict and the message describing the matched specifier.</returns>
 	public static SpecifierVerdictResult Evaluate(
 		IEnumerable<ToolSpecifierRule> specifiers,
-		Func<Specifier, JsonNode?, ToolExecutionContext, SpecifierMatchResult> analyzer,
+		IToolSpecifierAnalyzer analyzer,
 		JsonNode? args,
-		ToolExecutionContext context,
+		IToolExecutionContext context,
 		IEnumerable<string> specifierParameters,
 		SpecifierAggregationMode mode)
 	{
@@ -79,7 +80,7 @@ public static class SpecifierEngine
 			SpecifierMatchResult match;
 			try
 			{
-				match = analyzer(specifier, args, context);
+				match = analyzer.Analyze(specifier, args, context);
 			}
 			catch (Exception ex)
 			{

@@ -2,10 +2,13 @@ using System.Text;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -40,12 +43,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				CategoryKey = Locale.GetKey("tool.category.filesystem"),
 				DefaultExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.FileDirectoryCreate | ToolBehaviour.AccessOutsideWorkdir |
 					ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit,
-				DefaultSelfHandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
-				SynchronizationGroup = FileSystemEditBaseToolModule.SyncGroup
+				HandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
+				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, FileSystemEditBaseToolModule.SyncGroup)]
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult? WriteFileStream(
+		private StreamingToolAnalysisResult WriteFileStream(
+			IToolExecutionContext ctx,
 			string? path,
 			string? content,
 			bool append = false)
@@ -57,12 +61,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				foreach (var line in content.EnumerateLines())
 					lines++;
 
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-write_file.streaming_status",
-					path != null ? $"**{path}**" : string.Empty,
-					lines)
-			};
+			ctx.Call.SetStatusTitle(LocalizationManager.LocalizeStaticFormat("tool.status.fs-write_file.streaming_status",
+				path != null ? $"**{path}**" : string.Empty,
+				lines));
+
+			return StreamingToolAnalysisResult.Continue;
 		}
 
 		private class WriteFileContext
@@ -71,7 +74,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private PreviewToolExecutionResult? WriteFilePreview(
+		private DomainPreviewResult? WriteFilePreview(
+			IToolExecutionContext ctx,
 			[SharedContext] out WriteFileContext? sharedCtx,
 			string path,
 			string content,
@@ -93,21 +97,22 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						var oldContent = File.ReadAllText(fullPath);
 						if (oldContent == content)
 						{
-							return new PreviewToolExecutionResult
+							ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
+								LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+							ctx.Call.SetResult($"File **{path}** already contains the same content.");
+
+							return new DomainPreviewResult
 							{
-								StatusIcon = Material.Icons.MaterialIconKind.FileQuestion,
-								StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"),
 								ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 									AddonKindToolBehaviourConverter.Convert(addonKind),
-								InterruptingSuccess = true,
-								InterruptingContent = $"File **{path}** already contains the same content."
+								InterruptingSuccess = true
 							};
 						}
 
-						return new PreviewToolExecutionResult
+						ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
+
+						return new DomainPreviewResult
 						{
-							StatusIcon = Material.Icons.MaterialIconKind.FilePlus,
-							StatusTitle = $"**{path}**",
 							ExpectedBehaviour = ToolBehaviour.FileEdit |
 								(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 								AddonKindToolBehaviourConverter.Convert(addonKind)
@@ -119,31 +124,30 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					}
 				}
 
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
+
+				return new DomainPreviewResult
 				{
-					StatusIcon = Material.Icons.MaterialIconKind.FilePlus,
-					StatusTitle = $"**{path}**",
 					ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-						AddonKindToolBehaviourConverter.Convert(addonKind),
-					SelfHandledDecisions = ToolPolicyDecision.None
+						AddonKindToolBehaviourConverter.Convert(addonKind)
 				};
 			}
 			catch (Exception ex)
 			{
 				sharedCtx = null;
-				return new PreviewToolExecutionResult
+				ctx.Call.SetResult($"Error writing file: {ex.Message}");
+
+				return new DomainPreviewResult
 				{
-					InterruptingContent = $"Error writing file: {ex.Message}",
 					InterruptingSuccess = false
 				};
 			}
 		}
 
-		private async Task WriteFile(
+		private async Task<ToolExecutionResult> WriteFile(
 			[SharedContext] WriteFileContext? sharedCtx,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
 			string path,
 			string content,
@@ -170,7 +174,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (fileExisted)
 				{
-					var postProcessResult = await PostProcessDiffAsync(fullPath, oldContent, content, ctx, result, cancellationToken);
+					var postProcessResult = await PostProcessDiffAsync(fullPath, oldContent, content, ctx, cancellationToken);
 					string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
 						? string.Empty
 						: $"""
@@ -179,14 +183,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 							""";
 					if (!postProcessResult.AppliedDiff.HasGroups)
 					{
-						result.StatusIcon = Material.Icons.MaterialIconKind.FileDiscard;
-						result.StatusTitle = $"**{path}**";
-						result.ResultContent = $"""
+						ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDiscard, $"**{path}**");
+						ctx.Call.SetResult($"""
 							User has rejected the changes, none has applied.
 							{userNotesPostfix}
-							""";
-						result.CompleteWithSuccess();
-						return;
+							""");
+						return ToolExecutionResult.Succeeded;
 					}
 
 					File.WriteAllText(fullPath, postProcessResult.NewContent);
@@ -226,10 +228,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						output.AppendLine(userNotesPostfix);
 					}
 
-					result.StatusIcon = append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck;
-					result.StatusTitle = $"**{path}**{changesTitlePostfix}";
-					result.ResultContent = output.ToString();
-					result.CompleteWithSuccess();
+					ctx.Call.SetStatus(
+						append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck,
+						$"**{path}**{changesTitlePostfix}");
+					ctx.Call.SetResult(output.ToString());
+					return ToolExecutionResult.Succeeded;
 				}
 				else
 				{
@@ -244,19 +247,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					output.AppendLine($"Operation: Write");
 					output.AppendLine($"Size: {fileInfo.Length} bytes ~ ({size})");
 
-					result.StatusIcon = Material.Icons.MaterialIconKind.FilePlus;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = output.ToString();
-					result.CompleteWithSuccess();
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
+					ctx.Call.SetResult(output.ToString());
+					return ToolExecutionResult.Succeeded;
 				}
 
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = Material.Icons.MaterialIconKind.FileAlert;
-				result.StatusTitle = $"**{path}**";
-				result.ResultContent = $"Error writing file: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetResult($"Error writing file: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 	}

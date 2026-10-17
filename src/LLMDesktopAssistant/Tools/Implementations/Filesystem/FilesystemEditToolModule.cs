@@ -5,11 +5,14 @@ using System.Text.RegularExpressions;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -74,8 +77,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				CategoryKey = Locale.GetKey("tool.category.filesystem"),
 				DefaultExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.AccessOutsideWorkdir |
 					ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit,
-				DefaultSelfHandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
-				SynchronizationGroup = FileSystemEditBaseToolModule.SyncGroup
+				HandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
+				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, FileSystemEditBaseToolModule.SyncGroup)]
 			});
 		}
 
@@ -150,18 +153,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public IReadOnlyList<string> PatchErrors { get; init; } = [];
 		}
 
-		private StreamingToolArgumentsAnalysisResult EditStreaming(
+		private StreamingToolAnalysisResult EditStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.FileDocumentEdit,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult EditPreview(
+		private DomainPreviewResult EditPreview(
+			IToolExecutionContext ctx,
 			[SharedContext] ref FSWriteSharedContext? sharedCtx,
 			string path,
 			List<EditPatch> patches,
@@ -174,12 +176,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			var error = CheckArgs(path, fullPath, patches);
 			if (error != null)
 			{
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetResult(error);
+
+				return new DomainPreviewResult
 				{
 					InterruptingSuccess = false,
-					InterruptingContent = error,
-					StatusIcon = MaterialIconKind.FileAlert,
-					StatusTitle = $"**{path}**",
 					ExpectedBehaviour = ToolBehaviour.None |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind)
@@ -201,14 +203,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					PatchErrors = patchErrors
 				};
 
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
+					LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+				ctx.Call.SetResult(patchErrors.Count > 0
+					? $"No changes were made to the file.\n{string.Join("\n", patchErrors)}"
+					: "No changes were made to the file. The specified matches were not found.");
+
+				return new DomainPreviewResult
 				{
 					InterruptingSuccess = true,
-					InterruptingContent = patchErrors.Count > 0
-						? $"No changes were made to the file.\n{string.Join("\n", patchErrors)}"
-						: "No changes were made to the file. The specified matches were not found.",
-					StatusIcon = MaterialIconKind.FileQuestion,
-					StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"),
 					ExpectedBehaviour = ToolBehaviour.None |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind)
@@ -223,20 +226,19 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				PatchErrors = patchErrors
 			};
 
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.FileDocumentEdit,
-				StatusTitle = $"**{path}**",
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 					AddonKindToolBehaviourConverter.Convert(addonKind)
 			};
 		}
 
-		private async Task Edit(
+		private async Task<ToolExecutionResult> Edit(
 			[SharedContext] FSWriteSharedContext? sharedCtx,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
 			[Description("The path to the file to edit.")]
 			string path,
@@ -253,11 +255,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (error != null)
 				{
-					result.StatusIcon = MaterialIconKind.FileAlert;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = error;
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetResult(error);
+					return ToolExecutionResult.Failed;
 				}
 
 				var originalContent = File.ReadAllText(fullPath!);
@@ -272,16 +272,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (newContent == originalContent)
 				{
-					result.StatusIcon = MaterialIconKind.FileQuestion;
-					result.StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**");
-					result.ResultContent = patchErrors.Count > 0
+					ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
+						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+					ctx.Call.SetResult(patchErrors.Count > 0
 						? $"No changes were made to the file.\n{string.Join("\n", patchErrors)}"
-						: "No changes were made to the file. The specified matches were not found.";
-					result.CompleteWithSuccess();
-					return;
+						: "No changes were made to the file. The specified matches were not found.");
+					return ToolExecutionResult.Succeeded;
 				}
 
-				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, result, cancellationToken);
+				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, cancellationToken);
 				string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
 					? string.Empty
 					:	$"""
@@ -291,17 +290,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 							""";
 				if (!postProcessResult.AppliedDiff.HasGroups)
 				{
-					result.StatusIcon = MaterialIconKind.FileDiscard;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = postProcessResult.RejectedDiff.HasGroups ?
+					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
 						[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
 						{postProcessResult.RejectedDiff}{userNotesPostfix}
 						""" :
-						$"User has rejected the changes, none has applied.{userNotesPostfix}";
-					result.CompleteWithSuccess();
-					return;
+						$"User has rejected the changes, none has applied.{userNotesPostfix}");
+					return ToolExecutionResult.Succeeded;
 				}
 
 				File.WriteAllText(fullPath!, postProcessResult.NewContent);
@@ -318,9 +315,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						"""
 					: string.Empty;
 
-				result.StatusIcon = MaterialIconKind.FileDocumentEdit;
-				result.StatusTitle = $"**{path}** *(-{removed} +{added})*";
-				result.ResultContent = postProcessResult.RejectedDiff.HasGroups ?
+				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
+				ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
@@ -332,22 +328,20 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
 					{diff}{userNotesPostfix}{notAppliedText}
-					""";
-				result.CompleteWithSuccess();
+					""");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (OperationCanceledException)
 			{
-				result.StatusIcon = MaterialIconKind.FileQuestion;
-				result.StatusTitle = $"**{path}**";
-				result.ResultContent = "Edit operation was cancelled.";
-				result.CompleteWithError();
+				ctx.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				ctx.Call.SetResult("Edit operation was cancelled.");
+				return ToolExecutionResult.Failed;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.FileAlert;
-				result.StatusTitle = $"**{path}**";
-				result.ResultContent = $"Error editing file: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetResult($"Error editing file: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

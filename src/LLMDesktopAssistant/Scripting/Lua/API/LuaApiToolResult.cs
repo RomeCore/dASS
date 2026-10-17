@@ -1,14 +1,13 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
-using LLMDesktopAssistant.Tools;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
 	/// <summary>
 	/// Lua API for reactive tool result: <c>dass.tool.result.*</c>.
-	/// Provides access to the current tool's <see cref="ReactiveToolResult"/>
+	/// Provides access to the current tool's result (see <see cref="LuaToolResult"/>)
 	/// for streaming output, progress updates, status icons, and completion control.
 	/// </summary>
 	[LuaApi(chatScoped: false)]
@@ -168,9 +167,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			return null;
 		}
 
-		private static ReactiveToolResult? GetResult(LuaCallingContext ctx)
+		private static LuaToolResult? GetResult(LuaCallingContext ctx)
 		{
-			return ctx.TryGetReactiveToolResult();
+			return LuaExecutionContext.Result;
 		}
 
 		private LuaTuple Available(LuaCallingContext ctx, LuaValue[] args)
@@ -186,16 +185,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			var table = new LuaTable();
 
-			table["content"] = new LuaString(result.ResultContent);
-			table["is_completed"] = LuaBoolean.FromBoolean(result.Completion.IsCompleted);
-			table["success"] = result.Completion.IsCompleted
-				? LuaBoolean.FromBoolean(result.Completion.Result) as LuaValue
+			table["content"] = new LuaString(result.Content);
+			table["is_completed"] = LuaBoolean.FromBoolean(result.IsCompleted);
+			table["success"] = result.IsCompleted
+				? LuaBoolean.FromBoolean(result.Success == true) as LuaValue
 				: LuaNil.Instance;
 			table["progress"] = result.Progress.HasValue
 				? new LuaNumber(result.Progress.Value) as LuaValue
 				: LuaNil.Instance;
-			table["progress_min"] = new LuaNumber(result.MinProgress);
-			table["progress_max"] = new LuaNumber(result.MaxProgress);
+			table["progress_min"] = new LuaNumber(result.ProgressMin);
+			table["progress_max"] = new LuaNumber(result.ProgressMax);
 			if (result.StatusIcon != null)
 				table["status_icon"] = new LuaString(result.StatusIcon.ToString()!);
 			if (result.StatusTitle != null)
@@ -209,7 +208,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var result = GetResult(ctx);
 			if (args.Length > 0 && args[0] is LuaString text && result != null)
-				result.ResultContentLines.Add(text.Value);
+				result.Write(text.Value);
 			return new LuaTuple(LuaNil.Instance);
 		}
 
@@ -224,7 +223,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				foreach (var value in lines.Values)
 				{
 					if (value is LuaString text)
-						result.ResultContentLines.Add(text.Value);
+						result.Write(text.Value);
 				}
 			}
 
@@ -235,7 +234,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var result = GetResult(ctx);
 			if (args.Length > 0 && args[0] is LuaString text && result != null)
-				result.ResultContent = text.Value;
+				result.SetContent(text.Value);
 			return new LuaTuple(LuaNil.Instance);
 		}
 
@@ -249,15 +248,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			{
 				var value = args[0];
 				if (value is LuaNumber num)
-					result.Progress = num.Value;
+					result.SetProgress(num.Value);
 				else if (value is LuaNil)
-					result.Progress = null;
+					result.SetProgress(null);
 			}
 
 			if (args.Length >= 2 && args[1] is LuaNumber minNum)
-				result.MinProgress = minNum.Value;
+				result.SetProgress(result.Progress, minNum.Value);
 			if (args.Length >= 3 && args[2] is LuaNumber maxNum)
-				result.MaxProgress = maxNum.Value;
+				result.SetProgress(result.Progress, null, maxNum.Value);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -272,8 +271,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			table["value"] = result.Progress.HasValue
 				? new LuaNumber(result.Progress.Value) as LuaValue
 				: LuaNil.Instance;
-			table["min"] = new LuaNumber(result.MinProgress);
-			table["max"] = new LuaNumber(result.MaxProgress);
+			table["min"] = new LuaNumber(result.ProgressMin);
+			table["max"] = new LuaNumber(result.ProgressMax);
 			return new LuaTuple(table);
 		}
 
@@ -288,16 +287,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				try
 				{
 					var icon = VisualIconKind.Parse(iconArg.Value);
-					result.StatusIcon = VisualIconDataHandler.Resolve(icon).IsOk ? icon : null;
+					result.SetStatusIcon(VisualIconDataHandler.Resolve(icon).IsOk ? icon : null);
 				}
 				catch
 				{
-					result.StatusIcon = null;
+					result.SetStatusIcon(null);
 				}
 			}
 
 			if (args.Length > 1 && args[1] is LuaString titleArg && !string.IsNullOrEmpty(titleArg.Value))
-				result.StatusTitle = titleArg.Value;
+				result.SetStatusTitle(titleArg.Value);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -314,7 +313,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				if (data is LuaTable || data is LuaNil)
 				{
 					var jsonNode = StructuredLuaConverter.LuaValueToJsonNode(data);
-					result.StructuredResult = jsonNode;
+					result.SetStructured(jsonNode);
 				}
 			}
 
@@ -339,7 +338,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				uiControl.XamlChanged += OnXamlChanged;
 				additional.OnDispose += (_, _) => uiControl.XamlChanged -= OnXamlChanged;
 
-				result.AdditionalData.Add(additional);
+				result.AddAdditionalData(additional);
 			}
 
 			return new LuaTuple(LuaNil.Instance);
@@ -364,7 +363,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return new LuaTuple(LuaNil.Instance);
 
 			var success = args.Length == 0 || args[0] is LuaNil || (args[0] is LuaBoolean bVal && bVal.Value);
-			result.TryComplete(success);
+			result.Complete(success);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -372,22 +371,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private LuaTuple CompleteWithSuccess(LuaCallingContext ctx, LuaValue[] args)
 		{
 			var result = GetResult(ctx);
-			result?.TryCompleteWithSuccess();
+			result?.Complete(true);
 			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private LuaTuple CompleteWithError(LuaCallingContext ctx, LuaValue[] args)
 		{
 			var result = GetResult(ctx);
-			result?.TryCompleteWithError();
+			result?.Complete(false);
 			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private LuaTuple Clear(LuaCallingContext ctx, LuaValue[] args)
 		{
 			var result = GetResult(ctx);
-			if (result != null)
-				result.ResultContentLines.Clear();
+			result?.Clear();
 			return new LuaTuple(LuaNil.Instance);
 		}
 	}

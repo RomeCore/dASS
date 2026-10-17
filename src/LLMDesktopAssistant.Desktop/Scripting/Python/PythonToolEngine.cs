@@ -8,6 +8,9 @@ using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Scripting;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -35,9 +38,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			_pythonHelperService = pythonHelperService;
 		}
 
-		public Func<JsonNode?, ToolExecutionContext, CancellationToken, Task<ReactiveToolResult>> CreateExecutor(ToolInfo tool)
+		public IToolMainExecutor CreateExecutor(ToolInfo tool)
 		{
-			return async (JsonNode? args, ToolExecutionContext context, CancellationToken cancellationToken) =>
+			return new DelegateMainExecutor(async (args, ctx, cancellationToken) =>
 			{
 				try
 				{
@@ -49,8 +52,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 						{tool.Body}
 						""";
 
-					var addonInvalidator = context.Chat.Services.GetRequiredService<IAddonManagerInvalidator>();
-					var chatSettings = context.Chat.Services.GetRequiredService<IChatSettingsService>().Settings;
+					var addonInvalidator = ctx.Services.GetRequiredService<IAddonManagerInvalidator>();
+					var chatSettings = ctx.Services.GetRequiredService<IChatSettingsService>().Settings;
 					var workDir = chatSettings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory();
 
 					var tempPyFile = Path.GetFullPath(Path.Combine(workDir, $"{Guid.NewGuid()}.py"));
@@ -64,14 +67,16 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 						addonInvalidator.Invalidate(AddonKind.All);
 
 						int exitCode = await process;
-						return ReactiveToolResult.Create(exitCode == 0, process.Output + $"\nProcess exited with code {exitCode}. Check terminal output above for details.");
+						ctx.Call.SetResult(process.Output + $"\nProcess exited with code {exitCode}. Check terminal output above for details.");
+						return exitCode == 0 ? ToolExecutionResult.Succeeded : ToolExecutionResult.Failed;
 					}
 					catch (Exception ex)
 					{
 						if (process != null)
-							return ReactiveToolResult.CreateError(process.Output + $"\nProcess finished with error: {ex.Message}");
+							ctx.Call.SetResult(process.Output + $"\nProcess finished with error: {ex.Message}");
 						else
-							return ReactiveToolResult.CreateError(ex.Message);
+							ctx.Call.SetResult(ex.Message);
+						return ToolExecutionResult.Failed;
 					}
 					finally
 					{
@@ -80,9 +85,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 				}
 				catch (Exception ex)
 				{
-					return ReactiveToolResult.CreateError($"Python execution error: {ex.Message}");
+					ctx.Call.SetResult($"Python execution error: {ex.Message}");
+					return ToolExecutionResult.Failed;
 				}
-			};
+			});
 		}
 	}
 }

@@ -6,6 +6,9 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Search;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -121,10 +124,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private ReactiveToolResult SearchAddons(
+		private ToolExecutionResult SearchAddons(
 			[Description("The free-form search query, for example 'code review' or 'postgres migrations'.")]
 			string query,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("Optional filters by addon type. Omit the parameter to use all available kinds.")]
 			string[]? kinds = null,
 			[Description("The maximum number of matches per addon kind.")]
@@ -134,15 +137,17 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			bool detailed = false)
 		{
 			if (string.IsNullOrWhiteSpace(query))
-				return CreateError("The search query must not be empty.");
+				return CreateError(ctx.Call, "The search query must not be empty.");
 
 			var kindsError = TryParseKinds(kinds, out var kindsFilter);
 			if (kindsError is not null)
-				return CreateError(kindsError);
+				return CreateError(ctx.Call, kindsError);
 
 			maxResults = Math.Clamp(maxResults <= 0 ? DefaultMaxResults : maxResults, 1, MaxResultsLimit);
 
-			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agent = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
@@ -162,37 +167,32 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				builder.AppendLine(body);
 			}
 
+			ctx.Call.SetStatus(MaterialIconKind.Search, $"**{query}**");
+			ctx.Call.UseMarkdown = true;
+
 			if (builder.Length == 0)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.Search,
-					StatusTitle = $"**{query}**",
-					ResultContent = $"No addons matched \"{query}\". Try different or fewer terms" +
-						(kindsFilter == _allSearchableKinds ? "." : " or omit the 'kinds' filter."),
-					UseMarkdown = true
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult($"No addons matched \"{query}\". Try different or fewer terms" +
+					(kindsFilter == _allSearchableKinds ? "." : " or omit the 'kinds' filter."));
+				return ToolExecutionResult.Succeeded;
 			}
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Search,
-				StatusTitle = $"**{query}**",
-				ResultContent = builder.ToString(),
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(builder.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult ListAvailableAddons(
-			ToolExecutionContext ctx,
+		private ToolExecutionResult ListAvailableAddons(
+			IToolExecutionContext ctx,
 			[Description("Optional filters by addon type. Omit the parameter to use all available kinds.")]
 			string[]? kinds = null)
 		{
 			var kindsError = TryParseKinds(kinds, out var kindsFilter);
 			if (kindsError is not null)
-				return CreateError(kindsError, MaterialIconKind.FormatListBulleted);
+				return CreateError(ctx.Call, kindsError, MaterialIconKind.FormatListBulleted);
 
-			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agent = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
@@ -212,36 +212,33 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				builder.AppendLine(body);
 			}
 
+			ctx.Call.SetStatusIcon(MaterialIconKind.FormatListBulleted);
+			ctx.Call.UseMarkdown = true;
+
 			if (builder.Length == 0)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.FormatListBulleted,
-					ResultContent = kindsFilter == _allSearchableKinds
-						? "No addons are available to you."
-						: "No addons are available for the specified kinds.",
-					UseMarkdown = true
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult(kindsFilter == _allSearchableKinds
+					? "No addons are available to you."
+					: "No addons are available for the specified kinds.");
+				return ToolExecutionResult.Succeeded;
 			}
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.FormatListBulleted,
-				ResultContent = builder.ToString(),
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(builder.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GetAddonInfo(
+		private ToolExecutionResult GetAddonInfo(
 			[Description("The exact addon name, it can be a tool name or skill name.")]
 			string name,
-			ToolExecutionContext ctx)
+			IToolExecutionContext ctx)
 		{
 			if (string.IsNullOrWhiteSpace(name))
-				return CreateError("The addon name must not be empty.", MaterialIconKind.Information);
+				return CreateError(ctx.Call, "The addon name must not be empty.", MaterialIconKind.Information);
 
 			name = name.Trim();
-			var agent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agent = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 
 			var builder = new StringBuilder();
 			foreach (var provider in _providers)
@@ -257,25 +254,18 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				builder.AppendLine(body);
 			}
 
+			ctx.Call.SetStatus(MaterialIconKind.Information, $"**{name}**");
+			ctx.Call.UseMarkdown = true;
+
 			if (builder.Length == 0)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.Information,
-					StatusTitle = $"**{name}**",
-					ResultContent = $"No addon with the exact name \"{name}\" is available to you. " +
-						"Use `addon-list_available` to see the exact available names.",
-					UseMarkdown = true
-				}.CompleteWithError();
+				ctx.Call.SetResult($"No addon with the exact name \"{name}\" is available to you. " +
+					"Use `addon-list_available` to see the exact available names.");
+				return ToolExecutionResult.Failed;
 			}
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Information,
-				StatusTitle = $"**{name}**",
-				ResultContent = builder.ToString(),
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(builder.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
 		/// <summary>
@@ -338,14 +328,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return type.Replace('\\', '/').Trim().Trim('/');
 		}
 
-		private static ReactiveToolResult CreateError(string message, VisualIconKind? icon = null)
+		private static ToolExecutionResult CreateError(IToolCall call, string message, VisualIconKind? icon = null)
 		{
-			return new ReactiveToolResult
-			{
-				StatusIcon = icon ?? (VisualIconKind)MaterialIconKind.Search,
-				ResultContent = message,
-				UseMarkdown = true
-			}.CompleteWithError();
+			call.SetStatusIcon(icon ?? (VisualIconKind)MaterialIconKind.Search);
+			call.SetResult(message);
+			call.UseMarkdown = true;
+			return ToolExecutionResult.Failed;
 		}
 	}
 }

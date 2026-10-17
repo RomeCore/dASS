@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -31,7 +33,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private ReactiveToolResult TimeGet(
+		private ToolExecutionResult TimeGet(IToolExecutionContext ctx,
 			[Description("Timezone to get the time for (e.g., 'UTC', 'UTC+5', 'GMT+3'). Default is current user's timezone.")]
 			string? timezone = null)
 		{
@@ -44,12 +46,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				if (timezoneId == null)
 				{
 					time = DateTime.Now;
-					return new ReactiveToolResult
-					{
-						ResultContent = time.ToString("O"),
-						StatusIcon = MaterialIconKind.ClockOutline,
-						StatusTitle = time.ToString("yyyy-MM-dd HH:mm:ss.fff")
-					}.CompleteWithSuccess();
+					ctx.Call.SetResult(time.ToString("O"));
+					ctx.Call.SetStatus(MaterialIconKind.ClockOutline, time.ToString("yyyy-MM-dd HH:mm:ss.fff"));
+					return ToolExecutionResult.Succeeded;
 				}
 
 				// Parse timezone from the format "UTC+X", "UTC-X", "GMT+X", "GMT-X" or standard timezone names
@@ -74,12 +73,14 @@ namespace LLMDesktopAssistant.Tools.Implementations
 						}
 						catch
 						{
-							return ReactiveToolResult.CreateError($"Invalid timezone offset: {timezoneId}");
+							ctx.Call.SetResult($"Invalid timezone offset: {timezoneId}");
+							return ToolExecutionResult.Failed;
 						}
 					}
 					else
 					{
-						return ReactiveToolResult.CreateError($"Invalid timezone format: {timezone}. Expected format: UTC+X, UTC-X, GMT+X, GMT-X");
+						ctx.Call.SetResult($"Invalid timezone format: {timezone}. Expected format: UTC+X, UTC-X, GMT+X, GMT-X");
+						return ToolExecutionResult.Failed;
 					}
 				}
 				else
@@ -91,27 +92,26 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					}
 					catch (TimeZoneNotFoundException)
 					{
-						return ReactiveToolResult.CreateError($"Timezone not found: {timezone}. Valid examples: 'UTC', 'UTC+5', 'GMT+3', 'Pacific Standard Time'");
+						ctx.Call.SetResult($"Timezone not found: {timezone}. Valid examples: 'UTC', 'UTC+5', 'GMT+3', 'Pacific Standard Time'");
+						return ToolExecutionResult.Failed;
 					}
 				}
 
 				time = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tz);
 				var display = time.ToString("yyyy-MM-dd HH:mm:ss.fff") + $" ({timezoneId})";
 
-				return new ReactiveToolResult
-				{
-					ResultContent = time.ToString("O"),
-					StatusIcon = MaterialIconKind.ClockOutline,
-					StatusTitle = display
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult(time.ToString("O"));
+				ctx.Call.SetStatus(MaterialIconKind.ClockOutline, display);
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				return ReactiveToolResult.CreateError($"Time get error: {ex.Message}");
+				ctx.Call.SetResult($"Time get error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private ReactiveToolResult TimeWait(
+		private async Task<ToolExecutionResult> TimeWait(IToolExecutionContext ctx,
 			[Description("Duration to wait in format 'hours:minutes:seconds' or 'minutes:seconds' (e.g., '0:05', '1:30', '1:00:10')")]
 			string span = "0:00",
 			CancellationToken cancellationToken = default)
@@ -121,80 +121,70 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				// Parse the time span
 				if (!TryParseTimeSpan(span, out TimeSpan duration))
 				{
-					return ReactiveToolResult.CreateError("Invalid time span format. Expected format: 'hours:minutes:seconds' or 'minutes:seconds' (e.g., '0:05', '1:30', '0:00:10')");
+					ctx.Call.SetResult("Invalid time span format. Expected format: 'hours:minutes:seconds' or 'minutes:seconds' (e.g., '0:05', '1:30', '0:00:10')");
+					return ToolExecutionResult.Failed;
 				}
 
 				if (duration.TotalMilliseconds <= 0)
 				{
-					return new ReactiveToolResult
-					{
-						ResultContent = "Wait completed instantly (duration <= 0).",
-						StatusIcon = Material.Icons.MaterialIconKind.TimerCheck,
-						StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.completed"), "0:00")
-					}.CompleteWithSuccess();
+					ctx.Call.SetResult("Wait completed instantly (duration <= 0).");
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.TimerCheck,
+						string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.completed"), "0:00"));
+					return ToolExecutionResult.Succeeded;
 				}
 
-				var result = new ReactiveToolResult();
-
-				Task.Run(async () =>
+				try
 				{
-					try
+					var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+					var totalMilliseconds = duration.TotalMilliseconds;
+					var updateInterval = TimeSpan.FromMilliseconds(100); // Update every 100ms for smooth progress
+
+					ctx.Call.SetStatus(MaterialIconKind.TimerSand,
+						string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.status"), FormatTimeSpan(duration)));
+					ctx.Call.SetProgress(0, 0, totalMilliseconds);
+
+					while (stopwatch.Elapsed < duration)
 					{
-						var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-						var totalMilliseconds = duration.TotalMilliseconds;
-						var updateInterval = TimeSpan.FromMilliseconds(100); // Update every 100ms for smooth progress
+						cancellationToken.ThrowIfCancellationRequested();
 
-						result.StatusIcon = MaterialIconKind.TimerSand;
-						result.StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.status"), FormatTimeSpan(duration));
-						result.Progress = 0;
-						result.MaxProgress = (int)totalMilliseconds;
+						var elapsed = stopwatch.Elapsed;
+						var remaining = duration - elapsed;
 
-						while (stopwatch.Elapsed < duration)
-						{
-							cancellationToken.ThrowIfCancellationRequested();
+						ctx.Call.SetProgress(Math.Min(elapsed.TotalMilliseconds, totalMilliseconds), 0, totalMilliseconds);
+						ctx.Call.SetStatusTitle(string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.status"), FormatTimeSpan(remaining)));
+						ctx.Call.SetStatusIcon(MaterialIconKind.TimerSand);
 
-							var elapsed = stopwatch.Elapsed;
-							var remaining = duration - elapsed;
+						// Calculate the next update delay, but don't wait longer than remaining time
+						var nextUpdateDelay = TimeSpan.FromMilliseconds(Math.Min(
+							updateInterval.TotalMilliseconds,
+							Math.Max(1, remaining.TotalMilliseconds)));
 
-							result.Progress = (int)Math.Min(elapsed.TotalMilliseconds, totalMilliseconds);
-							result.StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.status"), FormatTimeSpan(remaining));
-							result.StatusIcon = MaterialIconKind.TimerSand;
-
-							// Calculate the next update delay, but don't wait longer than remaining time
-							var nextUpdateDelay = TimeSpan.FromMilliseconds(Math.Min(
-								updateInterval.TotalMilliseconds,
-								Math.Max(1, remaining.TotalMilliseconds)));
-
-							await Task.Delay(nextUpdateDelay, cancellationToken);
-						}
-
-						stopwatch.Stop();
-
-						result.ResultContent = $"Wait completed: {FormatTimeSpan(stopwatch.Elapsed)} elapsed";
-						result.Progress = (int)totalMilliseconds;
-						result.StatusIcon = MaterialIconKind.TimerCheck;
-						result.StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.completed"), FormatTimeSpan(stopwatch.Elapsed));
-						result.Complete(true);
+						await Task.Delay(nextUpdateDelay, cancellationToken);
 					}
-					catch (OperationCanceledException)
-					{
-						result.StatusIcon = MaterialIconKind.TimerCancel;
-						result.StatusTitle = "Wait cancelled";
-						result.Complete(false);
-					}
-					catch (Exception ex)
-					{
-						result.StatusIcon = null;
-						result.StatusTitle = $"Error: {ex.Message}";
-						result.Complete(false);
-					}
-				}, CancellationToken.None);
 
-				return result;
+					stopwatch.Stop();
+
+					ctx.Call.SetResult($"Wait completed: {FormatTimeSpan(stopwatch.Elapsed)} elapsed");
+					ctx.Call.SetProgress(totalMilliseconds, 0, totalMilliseconds);
+					ctx.Call.SetStatus(MaterialIconKind.TimerCheck,
+						string.Format(LocalizationManager.LocalizeStatic("tool.status.time-wait.completed"), FormatTimeSpan(stopwatch.Elapsed)));
+					return ToolExecutionResult.Succeeded;
+				}
+				catch (OperationCanceledException)
+				{
+					ctx.Call.SetStatus(MaterialIconKind.TimerCancel, "Wait cancelled");
+					return ToolExecutionResult.Failed;
+				}
+				catch (Exception ex)
+				{
+					ctx.Call.SetStatus(null, $"Error: {ex.Message}");
+					return ToolExecutionResult.Failed;
+				}
 			}
 			catch (Exception ex)
 			{
-				return ReactiveToolResult.CreateError($"Time wait error: {ex.Message}");
+				ctx.Call.SetResult($"Time wait error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

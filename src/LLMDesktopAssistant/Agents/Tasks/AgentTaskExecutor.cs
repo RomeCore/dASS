@@ -11,6 +11,7 @@ using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Specifiers;
+using IToolExecutionContext = LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext;
 using LLMDesktopAssistant.Utils;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Completions;
@@ -18,6 +19,7 @@ using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Metadata;
 using RCLargeLanguageModels.Tools;
+using ToolStatus = LLMDesktopAssistant.LLM.Domain.ToolStatus;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
@@ -465,7 +467,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 			var agentToolCall = new AgentToolCall
 			{
-				Status = AgentToolCallStatus.Pending,
+				Status = ToolStatus.Pending,
 				ToolCallId = toolCall.Id,
 				ToolName = toolCall.ToolName,
 				Arguments = functionCall.Args,
@@ -498,7 +500,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					Success = false,
 					Content = $"Tool '{toolCall.ToolName}' not found."
 				};
-				agentToolCall.Status = AgentToolCallStatus.Failed;
+				agentToolCall.Status = ToolStatus.Error;
 				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 					toolCall.Id, toolCall.ToolName);
 			}
@@ -515,14 +517,14 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					Success = false,
 					Content = $"Failed to parse args: " + ex.Message // Even with tolerant parser lol
 				};
-				agentToolCall.Status = AgentToolCallStatus.Failed;
+				agentToolCall.Status = ToolStatus.Error;
 				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 					toolCall.Id, toolCall.ToolName);
 			}
 
 			try
 			{
-				agentToolCall.Status = AgentToolCallStatus.PreExecuting;
+				agentToolCall.Status = ToolStatus.PreExecuting;
 				var previewResult = await tool.PreExecuteAsync(args, cancellationToken);
 				agentToolCall.ExpectedBehaviour = previewResult.ExpectedBehaviour;
 
@@ -536,7 +538,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 							: previewResult.InterruptingContent,
 						Attachments = previewResult.InterruptingAttachments
 					};
-					agentToolCall.Status = previewResult.InterruptingSuccess.Value ? AgentToolCallStatus.Success : AgentToolCallStatus.Failed;
+					agentToolCall.Status = previewResult.InterruptingSuccess.Value ? ToolStatus.Success : ToolStatus.Error;
 					return new ToolMessage(new ToolResult(previewResult.InterruptingSuccess.Value ? ToolResultStatus.Success : ToolResultStatus.Error,
 						agentToolCall.Result.Content, agentToolCall.Result.Attachments.Select(ConvertAttachmentFromAgent)), toolCall.Id, toolCall.ToolName);
 				}
@@ -556,9 +558,9 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				SpecifierVerdict specifierVerdict = SpecifierVerdict.None;
 				string? specifierMessage = null;
 				if (tool.ApprovalLevel.IsPolicyBased() && tool.Specifiers.Count > 0 &&
-					previewResult.SharedContext is ToolExecutionContext specifierContext)
+					previewResult.SharedContext is IToolExecutionContext specifierContext)
 				{
-					var specifierResult = SpecifierEngine.Evaluate(tool.Specifiers, tool.AnalyzeSpecifier,
+					var specifierResult = SpecifierEngine.Evaluate(tool.Specifiers, tool.Specifier,
 						args, specifierContext, tool.SpecifierParameters, tool.SpecifierAggregationMode);
 					specifierVerdict = specifierResult.Verdict;
 					specifierMessage = specifierResult.Message;
@@ -594,7 +596,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						Success = false,
 						Content = decisionMessage
 					};
-					agentToolCall.Status = AgentToolCallStatus.Failed;
+					agentToolCall.Status = ToolStatus.Error;
 					return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 						toolCall.Id, toolCall.ToolName);
 				}
@@ -614,7 +616,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					task.ToolCallConfirmationRequests.Add(request);
 					try
 					{
-						agentToolCall.Status = AgentToolCallStatus.Confirming;
+						agentToolCall.Status = ToolStatus.WaitingForApproval;
 						var consentResult = await request.UserConfirmationSource.Task.WaitAsync(cancellationToken);
 						_toolMemorizationService.MemorizeConsent(triggeredChat, agentToolCall.ToolName, consentResult);
 						if (consentResult.Memorization == ToolApprovalMemorization.Always && triggeredChat != null)
@@ -629,7 +631,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 									$"User denied the tool execution. Reason: {consentResult.Notes}." :
 									"User denied the tool execution without the reason."
 							};
-							agentToolCall.Status = AgentToolCallStatus.Failed;
+							agentToolCall.Status = ToolStatus.Error;
 							return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 								toolCall.Id, toolCall.ToolName);
 						}
@@ -642,7 +644,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					}
 				}
 
-				agentToolCall.Status = AgentToolCallStatus.Executing;
+				agentToolCall.Status = ToolStatus.Executing;
 				var result = await tool.ExecuteAsync(args, previewResult.SharedContext, cancellationToken);
 
 				agentToolCall.Result = new AgentToolCallResult
@@ -653,7 +655,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						result.Content,
 					Attachments = result.Attachments
 				};
-				agentToolCall.Status = result.Success ? AgentToolCallStatus.Success : AgentToolCallStatus.Failed;
+				agentToolCall.Status = result.Success ? ToolStatus.Success : ToolStatus.Error;
 				return new ToolMessage(new ToolResult(result.Success ? ToolResultStatus.Success : ToolResultStatus.Error,
 					agentToolCall.Result.Content, agentToolCall.Result.Attachments.Select(ConvertAttachmentFromAgent)), toolCall.Id, toolCall.ToolName);
 			}
@@ -664,7 +666,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					Success = false,
 					Content = $"Tool execution was canceled."
 				};
-				agentToolCall.Status = AgentToolCallStatus.Cancelled;
+				agentToolCall.Status = ToolStatus.Cancelled;
 				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 					toolCall.Id, toolCall.ToolName);
 			}
@@ -675,7 +677,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					Success = false,
 					Content = $"Tool execution was canceled."
 				};
-				agentToolCall.Status = AgentToolCallStatus.Cancelled;
+				agentToolCall.Status = ToolStatus.Cancelled;
 				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 					toolCall.Id, toolCall.ToolName);
 			}
@@ -686,7 +688,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					Success = false,
 					Content = $"Tool execution failed: " + ex.Message
 				};
-				agentToolCall.Status = AgentToolCallStatus.Failed;
+				agentToolCall.Status = ToolStatus.Error;
 				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
 					toolCall.Id, toolCall.ToolName);
 			}

@@ -1,7 +1,7 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.SlashCommands.Execution;
-using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -52,7 +52,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// Gets the tool execution the current script belongs to, or <see langword="null"/> when the script is not
 		/// running as a tool. Read from the ambient <see cref="LuaExecutionContext"/>, not from a global.
 		/// </summary>
-		public static ToolExecutionContext? TryGetToolExecutionContext(this LuaCallingContext ctx)
+		public static IToolExecutionContext? TryGetToolExecutionContext(this LuaCallingContext ctx)
 			=> LuaExecutionContext.Tool;
 
 		/// <summary>
@@ -61,11 +61,5 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		public static SlashCommandExecutionContext? TryGetCommandExecutionContext(this LuaCallingContext ctx)
 			=> LuaExecutionContext.Command;
-
-		/// <summary>
-		/// Gets the reactive result of the current tool execution, or <see langword="null"/>.
-		/// </summary>
-		public static ReactiveToolResult? TryGetReactiveToolResult(this LuaCallingContext ctx)
-			=> LuaExecutionContext.ReactiveResult;
 	}
 }

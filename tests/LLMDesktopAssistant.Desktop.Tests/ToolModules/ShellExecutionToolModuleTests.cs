@@ -90,8 +90,8 @@ public class ShellExecutionToolModuleTests
 			["runTerminal"] = runTerminal,
 			["wait"] = wait
 		};
-		var context = ToolExecutionContext.CreateDummy(tool, null, null);
-		return tool.SpecifierAnalyzer!(specifier, args, context);
+		var context = ToolTestContext.Create(tool).Context;
+		return tool.Specifier!.Analyze(specifier, args, context);
 	}
 
 	// ──────────────────────────── registration ────────────────────────────
@@ -106,7 +106,7 @@ public class ShellExecutionToolModuleTests
 
 		var tool = GetTool(module, toolName);
 
-		Assert.NotNull(tool.SpecifierAnalyzer);
+		Assert.NotNull(tool.Specifier);
 		Assert.Equal(["runTerminal", "wait"], tool.SpecifierParameters);
 	}
 
@@ -242,9 +242,9 @@ public class ShellExecutionToolModuleTests
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "git status:* || git log:*", Decision = SpecifierDecision.Allow };
 		var args = new JsonObject { ["powershell"] = "git status; git log --oneline", ["runTerminal"] = false, ["wait"] = true };
-		var context = ToolExecutionContext.CreateDummy(tool, null, null);
+		var context = ToolTestContext.Create(tool).Context;
 
-		var result = SpecifierEngine.Evaluate([rule], tool.SpecifierAnalyzer!, args, context,
+		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
 			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.Allow, result.Verdict);
@@ -257,9 +257,9 @@ public class ShellExecutionToolModuleTests
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "rm *", Decision = SpecifierDecision.Deny };
 		var args = new JsonObject { ["powershell"] = "rm -rf node_modules; git status", ["runTerminal"] = false, ["wait"] = true };
-		var context = ToolExecutionContext.CreateDummy(tool, null, null);
+		var context = ToolTestContext.Create(tool).Context;
 
-		var result = SpecifierEngine.Evaluate([rule], tool.SpecifierAnalyzer!, args, context,
+		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
 			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.Deny, result.Verdict);
@@ -272,9 +272,9 @@ public class ShellExecutionToolModuleTests
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "git status:*", Decision = SpecifierDecision.Allow };
 		var args = new JsonObject { ["powershell"] = "git status; npm install", ["runTerminal"] = false, ["wait"] = true };
-		var context = ToolExecutionContext.CreateDummy(tool, null, null);
+		var context = ToolTestContext.Create(tool).Context;
 
-		var result = SpecifierEngine.Evaluate([rule], tool.SpecifierAnalyzer!, args, context,
+		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
 			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.None, result.Verdict);

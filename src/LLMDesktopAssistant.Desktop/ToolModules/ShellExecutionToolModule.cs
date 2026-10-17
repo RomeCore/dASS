@@ -4,11 +4,14 @@ using LLMDesktopAssistant.Desktop.ToolModules.Terminal;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Specifiers;
 
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Addons.Management;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -69,28 +72,25 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExecuteBashStreaming(string bash)
+		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string bash)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{bash}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{bash}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecuteBashPreview(string bash, bool runTerminal)
+		private DomainPreviewResult ExecuteBashPreview(IToolExecutionContext ctx, string bash, bool runTerminal)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{bash}`");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{bash}`",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
 			};
 		}
 
-		private ReactiveToolResult ExecuteBash(
-			ToolExecutionContext context,
+		private Task<ToolExecutionResult> ExecuteBash(
+			IToolExecutionContext context,
 			[Description("The bash command to run.")] string bash,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
@@ -114,28 +114,25 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExecuteBatchStreaming(string batch)
+		private StreamingToolAnalysisResult ExecuteBatchStreaming(IToolExecutionContext ctx, string batch)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{batch}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{batch}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecuteBatchPreview(string batch, bool runTerminal)
+		private DomainPreviewResult ExecuteBatchPreview(IToolExecutionContext ctx, string batch, bool runTerminal)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{batch}`");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{batch}`",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
 			};
 		}
 
-		private ReactiveToolResult ExecuteBatch(
-			ToolExecutionContext context,
+		private Task<ToolExecutionResult> ExecuteBatch(
+			IToolExecutionContext context,
 			[Description("The batch command to run.")] string batch,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
@@ -160,28 +157,25 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExecutePowerShellStreaming(string powershell)
+		private StreamingToolAnalysisResult ExecutePowerShellStreaming(IToolExecutionContext ctx, string powershell)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Powershell,
-				StatusTitle = $"`{powershell}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"`{powershell}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecutePowerShellPreview(string powershell, bool runTerminal)
+		private DomainPreviewResult ExecutePowerShellPreview(IToolExecutionContext ctx, string powershell, bool runTerminal)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"`{powershell}`");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.Powershell,
-				StatusTitle = $"`{powershell}`",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
 			};
 		}
 
-		private ReactiveToolResult ExecutePowerShell(
-			ToolExecutionContext context,
+		private Task<ToolExecutionResult> ExecutePowerShell(
+			IToolExecutionContext context,
 			[Description("The powershell command to run.")] string powershell,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,

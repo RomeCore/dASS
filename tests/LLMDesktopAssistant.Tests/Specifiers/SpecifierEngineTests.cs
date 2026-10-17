@@ -1,20 +1,23 @@
 using System.Text.Json.Nodes;
+using LLMDesktopAssistant.Tests.Tools;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
 
 namespace LLMDesktopAssistant.Tests.Specifiers;
 
 public class SpecifierEngineTests
 {
-	private static ToolExecutionContext CreateContext()
+	private static IToolExecutionContext CreateContext()
 	{
 		var tool = ToolInfo.Create(new ToolInitializationInfo
 		{
 			Name = "test",
 			Description = "test",
-			Executor = (JsonNode? _, ToolExecutionContext _, CancellationToken _) => Task.FromResult(new ReactiveToolResult())
+			Executor = (JsonNode? _, IToolExecutionContext _, CancellationToken _) =>
+				Task.FromResult(ToolExecutionResult.Succeeded)
 		});
-		return ToolExecutionContext.CreateDummy(tool, null, null);
+		return ToolTestContext.Create(tool).Context;
 	}
 
 	private static ToolSpecifierRule Change(string pattern, SpecifierDecision decision) => new()
@@ -23,16 +26,23 @@ public class SpecifierEngineTests
 		Decision = decision
 	};
 
-	private static Func<Specifier, JsonNode?, ToolExecutionContext, SpecifierMatchResult> Analyzer(params string[] parts)
+	private static IToolSpecifierAnalyzer Analyzer(params string[] parts)
 	{
-		return (specifier, _, _) => SpecifierMatcher.Match(specifier, parts, []);
+		return new AnalyzerStub((specifier, _, _) => SpecifierMatcher.Match(specifier, parts, []));
 	}
 
-	private static Func<Specifier, JsonNode?, ToolExecutionContext, SpecifierMatchResult> ParameterAnalyzer(
+	private static IToolSpecifierAnalyzer ParameterAnalyzer(
 		string[] parts, params (string Name, string Value)[] parameters)
 	{
-		return (specifier, _, _) => SpecifierMatcher.Match(specifier, parts,
-			parameters.Select(p => new KeyValuePair<string, string>(p.Name, p.Value)));
+		return new AnalyzerStub((specifier, _, _) => SpecifierMatcher.Match(specifier, parts,
+			parameters.Select(p => new KeyValuePair<string, string>(p.Name, p.Value))));
+	}
+
+	private sealed class AnalyzerStub(
+		Func<Specifier, JsonNode?, IToolExecutionContext, SpecifierMatchResult> match) : IToolSpecifierAnalyzer
+	{
+		public SpecifierMatchResult Analyze(Specifier specifier, JsonNode? args, IToolExecutionContext ctx) =>
+			match(specifier, args, ctx);
 	}
 
 	// ──────────────────────────── Evaluate: basics ────────────────────────────
@@ -113,9 +123,9 @@ public class SpecifierEngineTests
 	public void Evaluate_AnalyzerThrows_Skipped()
 	{
 		var result = SpecifierEngine.Evaluate([Change("git *", SpecifierDecision.Deny), Change("npm *", SpecifierDecision.Allow)],
-			(specifier, _, _) => specifier.Parts.Count == 1 && specifier.Parts[0] is SpecifierLiteralPart { Value: "git *" }
+			new AnalyzerStub((specifier, _, _) => specifier.Parts.Count == 1 && specifier.Parts[0] is SpecifierLiteralPart { Value: "git *" }
 				? throw new InvalidOperationException("boom")
-				: SpecifierMatcher.Match(specifier, ["npm install"], []),
+				: SpecifierMatcher.Match(specifier, ["npm install"], [])),
 			null, CreateContext(), [], SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.Allow, result.Verdict);

@@ -1,6 +1,7 @@
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using LLTSharp;
 using RCLargeLanguageModels.Messages.Attachments;
@@ -10,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 	/// <summary>
 	/// Represents a base class for chat messages.
 	/// </summary>
-	public abstract class ChatMessage : ChatObjectBase
+	public abstract class ChatMessage : ChatObjectBase, IToolCallHost
 	{
 		/// <summary>
 		/// Gets or sets the content of the message.
@@ -56,6 +57,8 @@ namespace LLMDesktopAssistant.LLM.Domain
 			get => field ??= [];
 			set => (field ??= []).Reset(value);
 		}
+
+		IReadOnlyList<IToolCall> IToolCallHost.ToolCalls => ToolCalls;
 
 		/// <summary>
 		/// Gets the collection of agent tasks associated with this message.

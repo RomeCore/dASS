@@ -1,8 +1,11 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using Material.Icons;
+using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.LLM.Domain
@@ -10,7 +13,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 	/// <summary>
 	/// Represents a tool call within a chat message.
 	/// </summary>
-	public class ToolCall : ChatObjectBase
+	public class ToolCall : ChatObjectBase, IToolCall
 	{
 		/// <summary>
 		/// Gets or sets the name of the tool being called.
@@ -129,17 +132,90 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _expectedBehaviour, value);
 		}
 
-		private ReactiveToolResult? _reactiveToolResult;
-		/// <summary>
-		/// Gets or sets the reactive tool result. This is used for real-time updates and interactions.
-		/// Only avalable during execution.
-		/// </summary>
-		public ReactiveToolResult? ReactiveToolResult
+		ToolBehaviour IToolCall.ExpectedBehaviour
 		{
-			get => _reactiveToolResult;
-			set => SetProperty(ref _reactiveToolResult, value);
+			get => ExpectedBehaviour ?? ToolBehaviour.None;
+			set => ExpectedBehaviour = value;
 		}
 
+		private CancellationTokenSource _cancellationTokenSource = new();
+		/// <summary>
+		/// The per-invocation cancellation source. Runtime-only: it is never persisted and is replaced
+		/// before a restart.
+		/// </summary>
+		public CancellationTokenSource CancellationTokenSource
+		{
+			get => _cancellationTokenSource;
+			set => SetProperty(ref _cancellationTokenSource, value);
+		}
+
+		private double? _progress;
+		/// <summary>
+		/// The progress of the tool execution. <see langword="null"/> means indeterminate.
+		/// </summary>
+		public double? Progress
+		{
+			get => _progress;
+			private set => SetProperty(ref _progress, value);
+		}
+
+		private double _minProgress;
+		/// <summary>
+		/// The minimum of the progress range.
+		/// </summary>
+		public double MinProgress
+		{
+			get => _minProgress;
+			private set => SetProperty(ref _minProgress, value);
+		}
+
+		private double _maxProgress = 1.0;
+		/// <summary>
+		/// The maximum of the progress range.
+		/// </summary>
+		public double MaxProgress
+		{
+			get => _maxProgress;
+			private set => SetProperty(ref _maxProgress, value);
+		}
+
+		/// <summary>
+		/// Reports progress together with the range it belongs to.
+		/// </summary>
+		/// <param name="value">The current value, or <see langword="null"/> for indeterminate progress.</param>
+		/// <param name="min">The minimum of the range.</param>
+		/// <param name="max">The maximum of the range.</param>
+		public void SetProgress(double? value, double min, double max)
+		{
+			MinProgress = min;
+			MaxProgress = max;
+			Progress = value;
+		}
+
+		/// <summary>
+		/// Adds an attachment, projected into the chat's native attachment part.
+		/// </summary>
+		/// <param name="attachment">The neutral attachment to project.</param>
+		public void AddAttachment(ToolAttachment attachment)
+		{
+			IAttachment native = attachment.Kind switch
+			{
+				ToolAttachmentKind.Image => new ImageAttachment(attachment.Url),
+				ToolAttachmentKind.Audio => new AudioAttachment(attachment.Url),
+				ToolAttachmentKind.Video => new VideoAttachment(attachment.Url),
+				_ => throw new ArgumentOutOfRangeException(nameof(attachment), attachment.Kind, "Unknown attachment kind.")
+			};
+
+			AdditionalData.Add(new NativeAttachmentMessagePart { NativeAttachment = native });
+		}
+
+		/// <summary>
+		/// Adds a UI part or payload produced by the tool.
+		/// </summary>
+		/// <param name="data">The part to add.</param>
+		public void AddAdditionalData(AdditionalChatData data) => AdditionalData.Add(data);
+
+		
 		/// <summary>
 		/// Gets or sets the completion token associated with this tool call.
 		/// </summary>
@@ -152,5 +228,13 @@ namespace LLMDesktopAssistant.LLM.Domain
 		public bool IsCompleted => CompletionToken.IsCompleted;
 
 		public CompletionToken GetAwaiter() => CompletionToken;
+
+		protected override void Dispose(bool disposing)
+		{
+			if (disposing)
+				_cancellationTokenSource.Dispose();
+
+			base.Dispose(disposing);
+		}
 	}
 }

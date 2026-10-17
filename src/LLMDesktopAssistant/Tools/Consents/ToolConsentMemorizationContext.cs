@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.Tools.Consents;
 /// <summary>
 /// Lets a tool persist user consent decisions ("remember") for self-handled confirmations.
 /// Created by the tool execution pipeline and exposed to tools via
-/// <see cref="ToolExecutionContext.ConsentContext"/>.
+/// <see cref="LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext.Consent"/>.
 /// </summary>
 public sealed class ToolConsentMemorizationContext
 {

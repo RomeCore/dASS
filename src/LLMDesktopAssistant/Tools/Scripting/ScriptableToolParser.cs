@@ -147,7 +147,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 			// === Execution ===
 
 			addon.ToolSource = ToolSource.Meta;
-			addon.Executor = engine.CreateExecutor(addon);
+			addon.Main = engine.CreateExecutor(addon);
 		}
 
 		/// <inheritdoc/>

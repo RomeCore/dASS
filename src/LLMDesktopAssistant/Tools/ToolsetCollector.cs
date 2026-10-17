@@ -3,6 +3,9 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
 
 namespace LLMDesktopAssistant.Tools
 {
@@ -15,6 +18,13 @@ namespace LLMDesktopAssistant.Tools
 		) : AddonSetCollectorBase<ToolInfo, ToolChange>(services)
 	{
 		private readonly IServiceProvider _services = services;
+		private IToolExecutionContextFactory? _contextFactory;
+
+		private IToolExecutionContextFactory ContextFactory => _contextFactory ??= new ChatToolContextFactory(
+			chat,
+			_services.GetRequiredService<IToolMemorizationService>(),
+			_services.GetRequiredService<IAgentManagementService>(),
+			chatSettings);
 
 		protected override IEnumerable<ToolInfo> GetAdditionalAddons()
 		{
@@ -37,6 +47,8 @@ namespace LLMDesktopAssistant.Tools
 		protected override void ApplyChange(ToolInfo target, ToolChange change, ChatAgentDescriptor? agent)
 		{
 			base.ApplyChange(target, change, agent);
+			target.ContextFactory = ContextFactory;
+			target.ApprovalHelper = change.ApprovalHelper ?? target.ApprovalHelper;
 			target.ApprovalLevel = change.ApprovalLevel ?? target.ApprovalLevel ??
 				agent!.Tools.GetEffectiveToolset(chatSettings.Settings).GetEffectiveConfiguration().DefaultApprovalLevel;
 			target.PolicyMask = change.PolicyMask ?? target.PolicyMask;

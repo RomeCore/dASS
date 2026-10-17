@@ -1,11 +1,11 @@
 using System.Text.Json.Nodes;
-using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Scripting.CSX
 {
 	/// <summary>
 	/// The globals object passed to C# scripts executed by <see cref="CSharpScriptToolEngine"/>.
-	/// Provides access to tool arguments, the execution context and the reactive result.
+	/// Provides access to tool arguments, the execution context and the tool result.
 	/// </summary>
 	public sealed class CSharpScriptToolGlobals
 	{
@@ -17,10 +17,10 @@ namespace LLMDesktopAssistant.Scripting.CSX
 		/// <summary>
 		/// The context of the current tool execution.
 		/// </summary>
-		public required ToolExecutionContext Context { get; init; }
+		public required IToolExecutionContext Context { get; init; }
 
 		/// <summary>
-		/// The reactive result of the current tool execution, usable for streaming output, status updates and completion control.
+		/// The result of the current tool execution, usable for streaming output, status updates and completion control.
 		/// </summary>
 		public required CSharpScriptToolResult Result { get; init; }
 

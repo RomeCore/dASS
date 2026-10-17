@@ -11,12 +11,12 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 	public class TerminalToolRunParameters
 	{
 		/// <summary>
-		/// The status icon to set into <see cref="ReactiveToolResult"/>.
+		/// The status icon to set into the tool call.
 		/// </summary>
 		public VisualIconKind? StatusIcon { get; init; }
 
 		/// <summary>
-		/// The status title to set into <see cref="ReactiveToolResult"/>.
+		/// The status title to set into the tool call.
 		/// </summary>
 		public string? StatusTitle { get; init; }
 

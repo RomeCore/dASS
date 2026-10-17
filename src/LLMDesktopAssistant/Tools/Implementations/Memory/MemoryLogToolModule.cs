@@ -4,6 +4,9 @@ using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Localization;
 using Material.Icons;
 
@@ -90,12 +93,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 			});
 		}
 
-		private async Task AppendAsync(
+		private async Task<ToolExecutionResult> AppendAsync(
 			[Description("The memory block where the log should be appended")] string block,
 			[Description("The text of the log describing what happened. Must not be empty.")] string text,
 			[Description("The importance of the log, from 0.0 (least important) to 1.0 (most important)")] double importance,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The real-time timestamp when the log began in UTC ISO 8601 format (e.g. 2026-08-10T15:00:00Z). Defaults to now.")] DateTime? timeStampBegin = null,
 			[Description("The real-time timestamp when the log ended in UTC ISO 8601 format (e.g. 2026-08-10T15:00:00Z). Defaults to timeStampBegin.")] DateTime? timeStampEnd = null,
 			[Description("The alternative timeline ordinal when the log began (for example, the day number)")] double timeLineOrdinalBegin = 0,
@@ -104,20 +106,18 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 			[Description("The alternative timeline details when the log ended. Defaults to the begin details.")] string? timeLineDetailsEnd = null,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseAdd;
-			result.StatusTitle = $"**{text}** → *{block}*";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseAdd, $"**{text}** → *{block}*");
 
 			var (targetBlock, error) = GetBlock(ctx, block, requireReading: false, requireWriting: true, requireLogs: true);
 			if (targetBlock is null)
 			{
-				result.ResultContent = error ?? $"Memory block '{block}' is not available.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(error ?? $"Memory block '{block}' is not available.");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
 			{
-				int messageId = ctx.FindMessageId();
+				int messageId = ((ChatToolExecutionContext)ctx).FindMessageId();
 
 				var log = await _memoryLogStore.AppendAsync(
 					targetBlock,
@@ -133,37 +133,34 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 					importance: importance,
 					cancellationToken: cancellationToken);
 
-				result.StatusIcon = MaterialIconKind.DatabaseCheck;
-				result.ResultContent = $"Log appended successfully. ID: {log.Id}";
-				result.CompleteWithSuccess();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+				ctx.Call.SetResult($"Log appended successfully. ID: {log.Id}");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to append log to memory block '{block}'. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to append log to memory block '{block}'. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task SearchAsync(
+		private async Task<ToolExecutionResult> SearchAsync(
 			[Description("The memory blocks where the logs should be searched. Use null to search in all enabled memory blocks")] string[]? blocks,
 			[Description("The search query text")] string query,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The maximum number of logs to return")] int maxCount = 5,
 			[Description("The minimum importance score of the logs. Logs with lower scores are excluded.")] double minImportance = 0.0,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseSearch;
-			result.StatusTitle = $"**{query}**";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseSearch, $"**{query}**");
 
 			var resolution = GetBlocks(ctx, blocks, requireReading: true, requireWriting: false, requireLogs: true);
 
 			if (!resolution.HasBlocks)
 			{
-				result.ResultContent = resolution.BuildError("No memory blocks with logs enabled are available to search in.");
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(resolution.BuildError("No memory blocks with logs enabled are available to search in."));
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -198,27 +195,25 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 				if (totalFound == 0)
 				{
-					result.ResultContent = "No matching logs found.";
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetResult("No matching logs found.");
+					return ToolExecutionResult.Succeeded;
 				}
 
-				result.UseMarkdown = true;
-				result.ResultContent = sb.ToString();
-				result.CompleteWithSuccess();
+				ctx.Call.UseMarkdown = true;
+				ctx.Call.SetResult(sb.ToString());
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to search logs. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to search logs. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task ViewLogsAsync(
+		private async Task<ToolExecutionResult> ViewLogsAsync(
 			[Description("The memory blocks where the logs should be viewed. Use null to view logs in all enabled memory blocks")] string[]? blocks,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The inclusive lower bound of the real-time window in UTC ISO 8601 format (e.g. 2026-08-10T15:00:00Z)")] DateTime? from = null,
 			[Description("The inclusive upper bound of the real-time window in UTC ISO 8601 format (e.g. 2026-08-10T15:00:00Z)")] DateTime? to = null,
 			[Description("The inclusive lower bound of the alternative timeline ordinal window (for example, the day number)")] double? timeLineFrom = null,
@@ -227,18 +222,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 			[Description("The minimum importance score of the logs. Logs with lower scores are excluded.")] double minImportance = 0.0,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseSearch;
-			result.StatusTitle = from.HasValue || to.HasValue || timeLineFrom.HasValue || timeLineTo.HasValue
-				? LocalizationManager.LocalizeStatic("tool.status.memory-view_logs.time_window")
-				: LocalizationManager.LocalizeStaticFormat("tool.status.memory-view_logs.latest", maxCount);
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseSearch,
+				from.HasValue || to.HasValue || timeLineFrom.HasValue || timeLineTo.HasValue
+					? LocalizationManager.LocalizeStatic("tool.status.memory-view_logs.time_window")
+					: LocalizationManager.LocalizeStaticFormat("tool.status.memory-view_logs.latest", maxCount));
 
 			var resolution = GetBlocks(ctx, blocks, requireReading: true, requireWriting: false, requireLogs: true);
 
 			if (!resolution.HasBlocks)
 			{
-				result.ResultContent = resolution.BuildError("No memory blocks with logs enabled are available to view.");
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(resolution.BuildError("No memory blocks with logs enabled are available to view."));
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -273,49 +267,46 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 					sb.AppendJoin(' ', resolution.Excluded.Values);
 				}
 
-				result.UseMarkdown = true;
-				result.ResultContent = sb.ToString();
-				result.CompleteWithSuccess();
+				ctx.Call.UseMarkdown = true;
+				ctx.Call.SetResult(sb.ToString());
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to view logs. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to view logs. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task DeleteAsync(
+		private async Task<ToolExecutionResult> DeleteAsync(
 			[Description("The memory block that contains the log")] string block,
 			[Description("The ID of the log to delete")] int logId,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseRemove;
-			result.StatusTitle = $"**{block}** [id: {logId}]";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseRemove, $"**{block}** [id: {logId}]");
 
 			var (targetBlock, error) = GetBlock(ctx, block, requireReading: false, requireWriting: true, requireLogs: true);
 			if (targetBlock is null)
 			{
-				result.ResultContent = error ?? $"Memory block '{block}' is not available.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(error ?? $"Memory block '{block}' is not available.");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
 			{
 				await _memoryLogStore.HardDeleteAsync(targetBlock, logId, cancellationToken);
 
-				result.StatusIcon = MaterialIconKind.DatabaseCheck;
-				result.ResultContent = $"Log [id: {logId}] permanently deleted from memory block '{block}'.";
-				result.CompleteWithSuccess();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+				ctx.Call.SetResult($"Log [id: {logId}] permanently deleted from memory block '{block}'.");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to delete log [id: {logId}] in memory block '{block}'. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to delete log [id: {logId}] in memory block '{block}'. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 	}

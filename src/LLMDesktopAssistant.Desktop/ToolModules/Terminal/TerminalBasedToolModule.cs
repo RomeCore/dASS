@@ -4,7 +4,8 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Tools;
-using LLMDesktopAssistant.Utils;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Serilog;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
@@ -30,26 +31,23 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 
 		/// <summary>
 		/// Runs a process with terminal output displayed in the chat message.
-		/// Creates a <see cref="TerminalAdditionalViewModel"/>, adds it to the message's
-		/// AdditionalViewModels collection, and waits for the process to complete.
+		/// Creates a <see cref="TerminalAdditionalViewModel"/>, attaches it to the tool call,
+		/// and waits for the process to complete.
 		/// </summary>
 		/// <param name="parameters">Parameters describing what to run.</param>
-		/// <param name="context">The tool execution context (provides access to the chat message).</param>
+		/// <param name="context">The tool execution context (provides access to the tool call).</param>
 		/// <param name="cancellationToken">Cancellation token.</param>
-		/// <returns>A ReactiveToolResult with the process exit code.</returns>
-		protected ReactiveToolResult Run(
+		/// <returns>A <see cref="ToolExecutionResult"/> with the process exit code.</returns>
+		protected async Task<ToolExecutionResult> Run(
 			TerminalToolRunParameters parameters,
-			ToolExecutionContext context,
+			IToolExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(parameters);
 			ArgumentNullException.ThrowIfNull(context);
 
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = parameters.StatusIcon,
-				StatusTitle = parameters.StatusTitle
-			};
+			var call = context.Call;
+			call.SetStatus(parameters.StatusIcon, parameters.StatusTitle);
 
 			ProcessDescriptor descriptor;
 			try
@@ -60,83 +58,59 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 			}
 			catch (Exception ex)
 			{
-				result.ResultContent = $"Failed to launch process: {ex.Message}";
-				result.CompleteWithError();
-				return result;
+				call.SetResult($"Failed to launch process: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 
-			Task.Run(async () =>
+			TerminalAdditionalViewModel? viewModel = null;
+			if (parameters.ProcessParameters.RunInTerminal)
 			{
-				TerminalAdditionalViewModel? viewModel = null;
-				if (parameters.ProcessParameters.RunInTerminal)
+				viewModel = new TerminalAdditionalViewModel
 				{
-					viewModel = new TerminalAdditionalViewModel
-					{
-						Descriptor = descriptor,
-						IsRunning = true
-					};
-					viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
-					result.AdditionalData.Add(viewModel);
-				}
+					Descriptor = descriptor,
+					IsRunning = true
+				};
+				viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
+				call.AddAdditionalData(viewModel);
+			}
 
-				if (parameters.Wait)
+			if (!parameters.Wait)
+			{
+				async void FireAndForgetTask()
 				{
-					int exitCode;
-					IDisposable? syncSub = null;
 					try
 					{
-						// Stream only when we are not running in a terminal, so user can see the
-						// streaming output progress in the tool call details.
-						if (!parameters.ProcessParameters.RunInTerminal)
-							syncSub = result.ResultContentLines.SyncFrom(descriptor.PlainOutput!.Output);
-						exitCode = await descriptor.ExitCodeTask.WaitAsync(cancellationToken);
+						viewModel?.Complete(await descriptor.ExitCodeTask);
 					}
-					catch (OperationCanceledException)
+					catch (Exception ex)
 					{
-						viewModel?.Cancel();
-						result.ResultContent = descriptor.Output;
-						result.CompleteWithError();
-						return;
-					}
-					finally
-					{
-						syncSub?.Dispose();
-					}
-
-					viewModel?.Complete(exitCode);
-					result.ResultContent = descriptor.Output;
-
-					if (exitCode == 0)
-					{
-						result.CompleteWithSuccess();
-						return;
-					}
-					else
-					{
-						result.ResultContent += $"\nProcess exited with code {exitCode}. Check terminal output above for details.";
-						result.CompleteWithError();
-						return;
+						Log.Error(ex, "Error waiting for process exit code: {Error}", ex.Message);
 					}
 				}
-				else
-				{
-					async void FireAndForgetTask()
-					{
-						try
-						{
-							viewModel?.Complete(await descriptor.ExitCodeTask);
-						}
-						catch (Exception ex)
-						{
-							Log.Error(ex, "Error waiting for process exit code: {Error}", ex.Message);
-						}
-					}
-					FireAndForgetTask();
-					result.CompleteWithSuccess();
-				}
-			}, CancellationToken.None);
+				FireAndForgetTask();
+				return ToolExecutionResult.Succeeded;
+			}
 
-			return result;
+			int exitCode;
+			try
+			{
+				exitCode = await descriptor.ExitCodeTask.WaitAsync(cancellationToken);
+			}
+			catch (OperationCanceledException)
+			{
+				viewModel?.Cancel();
+				call.SetResult(descriptor.Output);
+				return ToolExecutionResult.Failed;
+			}
+
+			viewModel?.Complete(exitCode);
+			call.SetResult(descriptor.Output);
+
+			if (exitCode == 0)
+				return ToolExecutionResult.Succeeded;
+
+			call.ResultContent += $"\nProcess exited with code {exitCode}. Check terminal output above for details.";
+			return ToolExecutionResult.Failed;
 		}
 	}
 }

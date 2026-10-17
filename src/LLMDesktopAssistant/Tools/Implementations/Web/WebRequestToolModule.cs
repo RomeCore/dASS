@@ -11,6 +11,9 @@ using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
 using RCLargeLanguageModels.Json.Schema;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
+using PreviewToolExecutionResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Web
 {
@@ -72,80 +75,69 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult CheckWebsiteStatusStreaming(
-			string? url)
+		private StreamingToolAnalysisResult CheckWebsiteStatusStreaming(
+			string? url,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = $"`{url}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Web, $"`{url}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private async Task<ReactiveToolResult> CheckWebsiteStatus(
+		private async Task<ToolExecutionResult> CheckWebsiteStatus(
+			IToolExecutionContext ctx,
 			[Description("URL to check")]
 			string url,
 			[Description("Timeout in seconds (default: 30)")]
 			int timeoutSeconds = 30,
 			CancellationToken cancellationToken = default)
 		{
-			var result = new ReactiveToolResult
+			ctx.Call.SetStatus(MaterialIconKind.Web, $"`{url}`");
+
+			try
 			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = $"`{url}`"
-			};
+				using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+				using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts1.Token);
+				var startTime = DateTime.UtcNow;
 
-			_ = Task.Run(async () =>
+				var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
+				var endTime = DateTime.UtcNow;
+
+				ctx.Call.ResultContent = $"""
+					Url: {url}
+					Status code: {(int)response.StatusCode}
+					Status description: {response.StatusCode.ToString()}
+					Is accessible: {response.IsSuccessStatusCode}
+					Response time ms: {(endTime - startTime).TotalMilliseconds}
+					Content type: {response.Content.Headers.ContentType?.ToString()}
+					Content length: {response.Content.Headers.ContentLength}
+					Server: {response.Headers.Server?.ToString() ?? "Unknown"}
+					""";
+
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (TaskCanceledException)
 			{
-				try
-				{
-					using var cts1 = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-					using var cts2 = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, cts1.Token);
-					var startTime = DateTime.UtcNow;
-
-					var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cts2.Token);
-					var endTime = DateTime.UtcNow;
-
-					result.ResultContent = $"""
-						Url: {url}
-						Status code: {(int)response.StatusCode}
-						Status description: {response.StatusCode.ToString()}
-						Is accessible: {response.IsSuccessStatusCode}
-						Response time ms: {(endTime - startTime).TotalMilliseconds}
-						Content type: {response.Content.Headers.ContentType?.ToString()}
-						Content length: {response.Content.Headers.ContentLength}
-						Server: {response.Headers.Server?.ToString() ?? "Unknown"}
-						""";
-
-					result.CompleteWithSuccess();
-				}
-				catch (TaskCanceledException)
-				{
-					result.StatusIcon = MaterialIconKind.WebCancel;
-					result.ResultContent = $"Website check timeout after {timeoutSeconds} seconds for URL: {url}";
-					result.CompleteWithSuccess();
-				}
-				catch (Exception ex)
-				{
-					result.ResultContent = $"Error checking website status: {ex.Message}";
-					result.CompleteWithError();
-				}
-			});
-
-			return result;
+				ctx.Call.SetStatusIcon(MaterialIconKind.WebCancel);
+				ctx.Call.ResultContent = $"Website check timeout after {timeoutSeconds} seconds for URL: {url}";
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (Exception ex)
+			{
+				ctx.Call.ResultContent = $"Error checking website status: {ex.Message}";
+				return ToolExecutionResult.Failed;
+			}
 		}
 
-		private StreamingToolArgumentsAnalysisResult WebRequestStreaming(
-			string? method, string? url)
+		private StreamingToolAnalysisResult WebRequestStreaming(
+			string? method, string? url,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = url != null ? $"{method} `{url}`" : method
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Web, url != null ? $"{method} `{url}`" : method);
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private async Task<ReactiveToolResult> WebRequest(
+		private async Task<ToolExecutionResult> WebRequest(
+			IToolExecutionContext ctx,
 			[Description("Method of the request"), Enum(["GET", "POST", "PUT", "DELETE"])]
 			string method,
 			[Description("URL to send request to")]
@@ -162,79 +154,69 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			string contentType = "application/json",
 			CancellationToken cancellationToken = default)
 		{
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = url != null ? $"{method} `{url}`" : method
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Web, url != null ? $"{method} `{url}`" : method);
 
-			_ = Task.Run(async () =>
+			try
 			{
-				try
+				var httpMethod = method switch
 				{
-					var httpMethod = method switch
+					"GET" => HttpMethod.Get,
+					"POST" => HttpMethod.Post,
+					"PUT" => HttpMethod.Put,
+					"DELETE" => HttpMethod.Delete,
+					_ => throw new ArgumentException("Invalid HTTP method", nameof(method))
+				};
+
+				using var request = new HttpRequestMessage(httpMethod, url);
+
+				if (!string.IsNullOrEmpty(content))
+					request.Content = new StringContent(content, Encoding.UTF8, contentType);
+
+				if (headersJson != null)
+				{
+					foreach (var header in headersJson)
 					{
-						"GET" => HttpMethod.Get,
-						"POST" => HttpMethod.Post,
-						"PUT" => HttpMethod.Put,
-						"DELETE" => HttpMethod.Delete,
-						_ => throw new ArgumentException("Invalid HTTP method", nameof(method))
-					};
-
-					using var request = new HttpRequestMessage(httpMethod, url);
-
-					if (!string.IsNullOrEmpty(content))
-						request.Content = new StringContent(content, Encoding.UTF8, contentType);
-
-					if (headersJson != null)
-					{
-						foreach (var header in headersJson)
-						{
-							request.Headers.TryAddWithoutValidation(header.Key, header.Value?.GetValue<string>());
-						}
+						request.Headers.TryAddWithoutValidation(header.Key, header.Value?.GetValue<string>());
 					}
-
-					var response = await _httpClient.SendAsync(request, cancellationToken);
-					var responseContent = await response.Content.ReadAsStringAsync();
-
-					var actualCount = Math.Min(count, content.Length - start);
-					var slice = responseContent.Substring(start, actualCount);
-
-					result.ResultContent = $"""
-						Status code: {(int)response.StatusCode}
-						Status description: {response.StatusCode.ToString()}
-						Headers: {JsonSerializer.Serialize(response.Headers)}
-						Content length: {responseContent.Length}
-						Showing slice: {start}-{start + actualCount}
-						Content slice:
-						```
-						{slice}
-						```
-						""";
-					result.CompleteWithSuccess();
 				}
-				catch (Exception ex)
-				{
-					result.ResultContent = $"Error performing {method} request: {ex.Message}";
-					result.CompleteWithError();
-				}
-			});
 
-			return result;
+				var response = await _httpClient.SendAsync(request, cancellationToken);
+				var responseContent = await response.Content.ReadAsStringAsync();
+
+				var actualCount = Math.Min(count, content.Length - start);
+				var slice = responseContent.Substring(start, actualCount);
+
+				ctx.Call.ResultContent = $"""
+					Status code: {(int)response.StatusCode}
+					Status description: {response.StatusCode.ToString()}
+					Headers: {JsonSerializer.Serialize(response.Headers)}
+					Content length: {responseContent.Length}
+					Showing slice: {start}-{start + actualCount}
+					Content slice:
+					```
+					{slice}
+					```
+					""";
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (Exception ex)
+			{
+				ctx.Call.ResultContent = $"Error performing {method} request: {ex.Message}";
+				return ToolExecutionResult.Failed;
+			}
 		}
 
-		private StreamingToolArgumentsAnalysisResult DownloadFileStreaming(
-			string? url, string? savePath)
+		private StreamingToolAnalysisResult DownloadFileStreaming(
+			string? url, string? savePath,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Download,
-				StatusTitle = savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Download, savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
 		private PreviewToolExecutionResult DownloadFilePreview(
-			string url, string savePath)
+			string url, string savePath,
+			IToolExecutionContext ctx)
 		{
 			try
 			{
@@ -246,127 +228,115 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 
 				if (fileExisted)
 				{
+					ctx.Call.SetStatus(MaterialIconKind.Download, savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`");
 					return new PreviewToolExecutionResult
 					{
-						StatusIcon = MaterialIconKind.Download,
-						StatusTitle = savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`",
 						ExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.InternetAccess |
 							AddonKindToolBehaviourConverter.Convert(addonKind)
 					};
 				}
 
+				ctx.Call.SetStatus(MaterialIconKind.Download, savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`");
 				return new PreviewToolExecutionResult
 				{
-					StatusIcon = MaterialIconKind.Download,
-					StatusTitle = savePath != null ? $"`{url}` → `{savePath}`" : $"`{url}`",
 					ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate | ToolBehaviour.InternetAccess |
 						AddonKindToolBehaviourConverter.Convert(addonKind)
 				};
 			}
 			catch (Exception ex)
 			{
-				return new PreviewToolExecutionResult
-				{
-					InterruptingContent = $"Error downloading file: {ex.Message}",
-					InterruptingSuccess = false
-				};
+				ctx.Call.SetResult($"Error downloading file: {ex.Message}");
+				return new PreviewToolExecutionResult { InterruptingSuccess = false };
 			}
 		}
 
-		private async Task<ReactiveToolResult> DownloadFile(
+		private async Task<ToolExecutionResult> DownloadFile(
+			IToolExecutionContext ctx,
 			[Description("URL of the file to download")] string url,
 			[Description("Local working directory path to save the file")] string savePath,
 			[Description("Optional: Additional headers as JSON")] JsonObject? headersJson = null,
 			CancellationToken cancellationToken = default)
 		{
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Download,
-				StatusTitle = $"`{url}` → `{savePath}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Download, $"`{url}` → `{savePath}`");
 
-			_ = Task.Run(async () =>
+			long downloadedBytes = 0;
+			long? totalBytes = null;
+			try
 			{
-				long downloadedBytes = 0;
-				long? totalBytes = null;
-				try
+				var fullSavePath = _fileAccess.AccessPath(savePath, DirectoryAccessMode.Write);
+				var fileExisted = File.Exists(fullSavePath);
+				var addonKind = _addonDetector.Detect(savePath, isFile: true,
+					fileExisted ? FileOperation.Edit : FileOperation.Create,
+					fileExisted ? null : FileUtils.GetExistingAncestorDirectory(fullSavePath));
+				var dir = Path.GetDirectoryName(fullSavePath);
+				if (!Directory.Exists(dir))
+					Directory.CreateDirectory(dir!);
+				using var fileStream = File.Create(fullSavePath);
+				_addonInvalidator.Invalidate(addonKind);
+				using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+				if (headersJson != null)
 				{
-					var fullSavePath = _fileAccess.AccessPath(savePath, DirectoryAccessMode.Write);
-					var fileExisted = File.Exists(fullSavePath);
-					var addonKind = _addonDetector.Detect(savePath, isFile: true,
-						fileExisted ? FileOperation.Edit : FileOperation.Create,
-						fileExisted ? null : FileUtils.GetExistingAncestorDirectory(fullSavePath));
-					var dir = Path.GetDirectoryName(fullSavePath);
-					if (!Directory.Exists(dir))
-						Directory.CreateDirectory(dir!);
-					using var fileStream = File.Create(fullSavePath);
-					_addonInvalidator.Invalidate(addonKind);
-					using var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-					if (headersJson != null)
+					foreach (var header in headersJson)
 					{
-						foreach (var header in headersJson)
+						request.Headers.TryAddWithoutValidation(header.Key, header.Value?.GetValue<string>());
+					}
+				}
+
+				var response = await _httpInfiniteTimeoutClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+				if (response.IsSuccessStatusCode)
+				{
+					using var downloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+					totalBytes = response.Content.Headers.ContentLength;
+					if (!totalBytes.HasValue)
+						try
 						{
-							request.Headers.TryAddWithoutValidation(header.Key, header.Value?.GetValue<string>());
+							totalBytes = downloadStream.Length;
+						}
+						catch { }
+
+					int bytesRead;
+					byte[] buffer = new byte[16384];
+
+					while ((bytesRead = await downloadStream.ReadAsync(buffer, cancellationToken)) > 0)
+					{
+						fileStream.Write(buffer, 0, bytesRead);
+						await fileStream.FlushAsync();
+						downloadedBytes += bytesRead;
+
+						if (totalBytes.HasValue)
+						{
+							double progress = (double)downloadedBytes / totalBytes.Value;
+							ctx.Call.SetStatusTitle($"`{url}` → `{savePath}` " +
+								$"({FileUtils.BytesToDisplaySize(downloadedBytes)} / " +
+								$"{FileUtils.BytesToDisplaySize(totalBytes.Value)}, {progress:P2})");
+							ctx.Call.SetProgress(progress);
+						}
+						else
+						{
+							ctx.Call.SetStatusTitle($"`{url}` → `{savePath}` " +
+								$"({FileUtils.BytesToDisplaySize(downloadedBytes)})");
+							ctx.Call.SetProgress(null);
 						}
 					}
-
-					var response = await _httpInfiniteTimeoutClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-					if (response.IsSuccessStatusCode)
-					{
-						using var downloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-						totalBytes = response.Content.Headers.ContentLength;
-						if (!totalBytes.HasValue)
-							try
-							{
-								totalBytes = downloadStream.Length;
-							}
-							catch { }
-
-						int bytesRead;
-						byte[] buffer = new byte[16384];
-
-						while ((bytesRead = await downloadStream.ReadAsync(buffer, cancellationToken)) > 0)
-						{
-							fileStream.Write(buffer, 0, bytesRead);
-							await fileStream.FlushAsync();
-							downloadedBytes += bytesRead;
-
-							if (totalBytes.HasValue)
-							{
-								double progress = (double)downloadedBytes / totalBytes.Value;
-								result.StatusTitle = $"`{url}` → `{savePath}` " +
-									$"({FileUtils.BytesToDisplaySize(downloadedBytes)} / " +
-									$"{FileUtils.BytesToDisplaySize(totalBytes.Value)}, {progress:P2})";
-								result.Progress = progress;
-							}
-							else
-							{
-								result.StatusTitle = $"`{url}` → `{savePath}` " +
-									$"({FileUtils.BytesToDisplaySize(downloadedBytes)})";
-								result.Progress = null;
-							}
-						}
-					}
-
-					result.ResultContent = $"""
-						Status code: {(int)response.StatusCode}
-						Status description: {response.StatusCode.ToString()}
-						Downloaded: {downloadedBytes} ({FileUtils.BytesToDisplaySize(downloadedBytes)})
-						Total size: {totalBytes ?? -1} {(totalBytes.HasValue ? FileUtils.BytesToDisplaySize(totalBytes.Value) : "unknown")}.
-						""";
-					result.CompleteWithSuccess();
 				}
-				catch (Exception ex)
-				{
-					result.StatusIcon = MaterialIconKind.DownloadOff;
-					result.ResultContent = $"Error downloading file: {ex.Message}; " +
-						$"downloaded ({FileUtils.BytesToDisplaySize(downloadedBytes)}) " +
-						$"of {totalBytes ?? -1} ({(totalBytes.HasValue ? FileUtils.BytesToDisplaySize(totalBytes.Value) : "unknown")}).";
-					result.CompleteWithError();
-				}
-			});
-			return result;
+
+				ctx.Call.ResultContent = $"""
+					Status code: {(int)response.StatusCode}
+					Status description: {response.StatusCode.ToString()}
+					Downloaded: {downloadedBytes} ({FileUtils.BytesToDisplaySize(downloadedBytes)})
+					Total size: {totalBytes ?? -1} {(totalBytes.HasValue ? FileUtils.BytesToDisplaySize(totalBytes.Value) : "unknown")}.
+					""";
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (Exception ex)
+			{
+				ctx.Call.SetStatusIcon(MaterialIconKind.DownloadOff);
+				ctx.Call.ResultContent = $"Error downloading file: {ex.Message}; " +
+					$"downloaded ({FileUtils.BytesToDisplaySize(downloadedBytes)}) " +
+					$"of {totalBytes ?? -1} ({(totalBytes.HasValue ? FileUtils.BytesToDisplaySize(totalBytes.Value) : "unknown")}).";
+				return ToolExecutionResult.Failed;
+			}
 		}
 
 		protected override void Dispose(bool disposing)

@@ -3,6 +3,8 @@ using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
 
@@ -44,23 +46,20 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 			});
 		}
 
-		private async Task ClearAsync(
+		private async Task<ToolExecutionResult> ClearAsync(
 			[Description("The memory block to clear")] string block,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("Whether to clear the semantic facts. Defaults to true")] bool clearFacts = true,
 			[Description("Whether to clear the episodic logs. Defaults to false")] bool clearLogs = false,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseRefresh;
-			result.StatusTitle = $"**{block}**";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseRefresh, $"**{block}**");
 
 			var (targetBlock, error) = GetBlock(ctx, block, requireReading: false, requireWriting: true);
 			if (targetBlock is null)
 			{
-				result.ResultContent = error ?? $"Memory block '{block}' is not available.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(error ?? $"Memory block '{block}' is not available.");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -73,15 +72,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 				if (clearLogs && targetBlock.LogsEnabled)
 					removedLogs = await _memoryLogStore.ClearAsync(targetBlock, cancellationToken);
 
-				result.StatusIcon = MaterialIconKind.DatabaseCheck;
-				result.ResultContent = $"Memory block '{block}' cleared. Removed facts: {removedFacts}, removed logs: {removedLogs}.";
-				result.CompleteWithSuccess();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+				ctx.Call.SetResult($"Memory block '{block}' cleared. Removed facts: {removedFacts}, removed logs: {removedLogs}.");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to clear memory block '{block}'. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to clear memory block '{block}'. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 	}

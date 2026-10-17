@@ -202,9 +202,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			ToolCallId = toolCall.ToolCallId;
 
 			Status = toolCall.Status;
-			Progress = toolCall.ReactiveToolResult?.Progress;
-			MinProgress = toolCall.ReactiveToolResult?.MinProgress ?? 0.0;
-			MaxProgress = toolCall.ReactiveToolResult?.MaxProgress ?? 1.0;
+			Progress = toolCall.Progress;
+			MinProgress = toolCall.MinProgress;
+			MaxProgress = toolCall.MaxProgress;
 
 			StatusIcon = toolCall.StatusIcon;
 			StatusTitle = toolCall.StatusTitle;
@@ -216,7 +216,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (!toolCall.IsCompleted)
 			{
-				var reactiveToolResult = toolCall.ReactiveToolResult;
 				void OnToolCallPropertyChanged(object? s, PropertyChangedEventArgs e)
 				{
 					InvokeUI(() =>
@@ -227,32 +226,17 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 							case nameof(ToolCall.StatusIcon): StatusIcon = toolCall.StatusIcon; break;
 							case nameof(ToolCall.StatusTitle): StatusTitle = toolCall.StatusTitle; break;
 							case nameof(ToolCall.ExpectedBehaviour): ExpectedBehaviour = toolCall.ExpectedBehaviour; break;
-
-							case nameof(ToolCall.ReactiveToolResult):
-								reactiveToolResult?.PropertyChanged -= OnReactiveToolResultPropertyChanged;
-								reactiveToolResult = toolCall.ReactiveToolResult;
-								reactiveToolResult?.PropertyChanged += OnReactiveToolResultPropertyChanged;
-								OnReactiveToolResultPropertyChanged(null, null!);
-								break;
+							case nameof(ToolCall.Progress): Progress = toolCall.Progress; break;
+							case nameof(ToolCall.MinProgress): MinProgress = toolCall.MinProgress; break;
+							case nameof(ToolCall.MaxProgress): MaxProgress = toolCall.MaxProgress; break;
 						}
-					});
-				}
-				void OnReactiveToolResultPropertyChanged(object? s, PropertyChangedEventArgs e)
-				{
-					InvokeUI(() =>
-					{
-						Progress = reactiveToolResult?.Progress;
-						MinProgress = reactiveToolResult?.MinProgress ?? 0.0;
-						MaxProgress = reactiveToolResult?.MaxProgress ?? 1.0;
 					});
 				}
 
 				toolCall.PropertyChanged += OnToolCallPropertyChanged;
-				reactiveToolResult?.PropertyChanged += OnReactiveToolResultPropertyChanged;
 				toolCall.CompletionToken.OnCompleted(() =>
 				{
 					toolCall.PropertyChanged -= OnToolCallPropertyChanged;
-					reactiveToolResult?.PropertyChanged -= OnReactiveToolResultPropertyChanged;
 				});
 			}
 		}

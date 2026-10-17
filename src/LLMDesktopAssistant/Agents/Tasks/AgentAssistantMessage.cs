@@ -1,8 +1,9 @@
-﻿using LLMDesktopAssistant.Utils;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
-	public class AgentAssistantMessage : AgentChatMessage
+	public class AgentAssistantMessage : AgentChatMessage, IToolCallHost
 	{
 		private string? _reasoningContent;
 		/// <summary>
@@ -33,6 +34,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			get => _toolCalls;
 			set => _toolCalls.Reset(value);
 		}
+
+		IReadOnlyList<IToolCall> IToolCallHost.ToolCalls => ToolCalls;
 
 		private AgentUsageStatistics? _usageStatistics;
 		/// <summary>

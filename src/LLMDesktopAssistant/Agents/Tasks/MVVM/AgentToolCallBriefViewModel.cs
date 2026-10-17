@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
+using ToolStatus = LLMDesktopAssistant.LLM.Domain.ToolStatus;
 
 namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 {
@@ -198,26 +199,26 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		{
 			var status = _toolCall.Status;
 
-			IsCompleted = status is AgentToolCallStatus.Success or AgentToolCallStatus.Failed or AgentToolCallStatus.Cancelled;
-			IsRunning = status is AgentToolCallStatus.Pending or AgentToolCallStatus.PreExecuting or AgentToolCallStatus.Executing;
-			IsConfirming = status == AgentToolCallStatus.Confirming;
-			IsFailed = status is AgentToolCallStatus.Failed or AgentToolCallStatus.Cancelled;
+			IsCompleted = status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled;
+			IsRunning = status is ToolStatus.Pending or ToolStatus.PreExecuting or ToolStatus.Executing;
+			IsConfirming = status == ToolStatus.WaitingForApproval;
+			IsFailed = status is ToolStatus.Error or ToolStatus.Cancelled;
 
 			(StatusIcon, StatusText) = status switch
 			{
-				AgentToolCallStatus.Pending => (MaterialIconKind.ClockOutline,
+				ToolStatus.Pending => (MaterialIconKind.ClockOutline,
 					LocalizationManager.LocalizeStatic("tool.call.status.pending")),
-				AgentToolCallStatus.PreExecuting => (MaterialIconKind.WrenchClock,
+				ToolStatus.PreExecuting => (MaterialIconKind.WrenchClock,
 					LocalizationManager.LocalizeStatic("tool.call.status.pre_executing")),
-				AgentToolCallStatus.Confirming => (MaterialIconKind.QuestionMarkCircle,
+				ToolStatus.WaitingForApproval => (MaterialIconKind.QuestionMarkCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.confirming")),
-				AgentToolCallStatus.Executing => (MaterialIconKind.WrenchClock,
+				ToolStatus.Executing => (MaterialIconKind.WrenchClock,
 					LocalizationManager.LocalizeStatic("tool.call.status.executing")),
-				AgentToolCallStatus.Success => (MaterialIconKind.CheckCircle,
+				ToolStatus.Success => (MaterialIconKind.CheckCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.success")),
-				AgentToolCallStatus.Failed => (MaterialIconKind.AlertCircle,
+				ToolStatus.Error => (MaterialIconKind.AlertCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.failed")),
-				AgentToolCallStatus.Cancelled => (MaterialIconKind.Cancel,
+				ToolStatus.Cancelled => (MaterialIconKind.Cancel,
 					LocalizationManager.LocalizeStatic("tool.call.status.cancelled")),
 				_ => (MaterialIconKind.HelpCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.unknown"))

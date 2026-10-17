@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
+using LLMDesktopAssistant.Tests.Tools;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Implementations.Filesystem;
 using LLMDesktopAssistant.Utils.Files;
@@ -105,10 +106,9 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 	private static ToolInfo GetFsEditTool(FilesystemEditToolModule module)
 		=> module.GetTools().Single(t => t.Name == "fs-edit");
 
-	private static async Task<ReactiveToolResult> ExecuteAsync(ToolInfo tool, JsonObject args)
+	private static Task<LLMDesktopAssistant.LLM.Domain.ToolCall> ExecuteAsync(ToolInfo tool, JsonObject args)
 	{
-		var ctx = ToolExecutionContext.CreateDummy(tool, args, null);
-		return await tool.Executor!(args, ctx, CancellationToken.None);
+		return ToolTestContext.ExecuteAsync(tool, args);
 	}
 
 	[Fact]

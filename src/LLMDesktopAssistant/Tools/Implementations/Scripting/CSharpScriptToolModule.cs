@@ -3,7 +3,10 @@ using System.Text.Json;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting.CSX;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 using Material.Icons;
 using Microsoft.CodeAnalysis.Scripting;
 
@@ -93,87 +96,78 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExecuteStreaming(string? csharp)
+		private StreamingToolAnalysisResult ExecuteStreaming(string? csharp, IToolExecutionContext ctx)
 		{
 			int lines = 0;
 			if (csharp != null)
 				foreach (var line in csharp.EnumerateLines())
 					lines++;
 
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.LanguageCsharp,
-				StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines)
-			};
+			ctx.Call.SetStatus(MaterialIconKind.LanguageCsharp,
+				LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines));
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecutePreview(string csharp)
+		private DomainPreviewResult ExecutePreview(string csharp, IToolExecutionContext ctx)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.LanguageCsharp, null);
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.LanguageCsharp,
-				StatusTitle = null,
 				ExpectedBehaviour = ToolBehaviour.PossiblyUnexpected
 			};
 		}
 
-		private ReactiveToolResult Execute(
+		private async Task<ToolExecutionResult> Execute(
 			[Description("The C# code to execute.")] string csharp,
-			ToolExecutionContext context,
+			IToolExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
-			var reactiveResult = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.LanguageCsharp,
-				StatusTitle = null
-			};
+			context.Call.SetStatus(MaterialIconKind.LanguageCsharp, null);
+			var result = new CSharpScriptToolResult(context.Call);
 
-			_ = Task.Run(async () =>
+			try
 			{
-				try
+				var workdir = context.Services.GetService<IWorkingDirectoryAccessService>()?.GetWorkingDirectory();
+
+				var globals = new CSharpScriptToolGlobals
 				{
-					var workdir = context.Chat.Services.GetService<IWorkingDirectoryAccessService>()?.GetWorkingDirectory();
+					ToolArgs = null,
+					Context = context,
+					Result = result,
+					Workdir = workdir ?? Directories.DefaultWorkingDirectory,
+				};
 
-					var globals = new CSharpScriptToolGlobals
+				var returnValue = await _scriptService.RunAsync(csharp, globals, cancellationToken);
+
+				if (context.Call.StructuredResult == null && returnValue != null)
+				{
+					try
 					{
-						ToolArgs = null,
-						Context = context,
-						Result = new CSharpScriptToolResult(reactiveResult),
-						Workdir = workdir ?? Directories.DefaultWorkingDirectory,
-					};
-
-					var returnValue = await _scriptService.RunAsync(csharp, globals, cancellationToken);
-
-					if (reactiveResult.StructuredResult == null && returnValue != null)
-					{
-						try
-						{
-							reactiveResult.StructuredResult = JsonSerializer.SerializeToNode(returnValue);
-						}
-						catch (Exception ex)
-						{
-							reactiveResult.ResultContentLines.Add("Failed to serialize return value: " + ex.Message);
-						}
+						context.Call.SetStructuredResult(JsonSerializer.SerializeToNode(returnValue));
 					}
+					catch (Exception ex)
+					{
+						result.Write("Failed to serialize return value: " + ex.Message);
+					}
+				}
 
-					reactiveResult.ResultContentLines.Add("Script returned: " + returnValue);
-					reactiveResult.TryCompleteWithSuccess();
-				}
-				catch (CompilationErrorException cex)
-				{
-					reactiveResult.ResultContentLines.Add("Compilation errors:");
-					foreach (var diagnostic in cex.Diagnostics)
-						reactiveResult.ResultContentLines.Add(diagnostic.ToString());
-					reactiveResult.TryCompleteWithError();
-				}
-				catch (Exception ex)
-				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
-					reactiveResult.TryCompleteWithError();
-				}
-			}, CancellationToken.None);
+				result.Write("Script returned: " + returnValue);
+				result.CompleteWithSuccess();
+			}
+			catch (CompilationErrorException cex)
+			{
+				result.Write("Compilation errors:");
+				foreach (var diagnostic in cex.Diagnostics)
+					result.Write(diagnostic.ToString());
+				result.CompleteWithError();
+			}
+			catch (Exception ex)
+			{
+				result.Write("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
+				result.CompleteWithError();
+			}
 
-			return reactiveResult;
+			return result.ToExecutionResult();
 		}
 	}
 }

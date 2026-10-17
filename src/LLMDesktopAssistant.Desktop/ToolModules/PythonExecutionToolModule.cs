@@ -10,7 +10,10 @@ using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -72,26 +75,24 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			});
 		}
 
-		public StreamingToolArgumentsAnalysisResult ExecuteStreaming(string? python)
+		public StreamingToolAnalysisResult ExecuteStreaming(IToolExecutionContext ctx, string? python)
 		{
 			int lines = 0;
 			if (python != null)
 				foreach (var line in python.EnumerateLines())
 					lines++;
 
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines)
-			};
+			ctx.Call.SetStatus(MaterialIconKind.LanguagePython,
+				LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines));
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public PreviewToolExecutionResult ExecutePreview(string python, bool runTerminal)
+		public DomainPreviewResult ExecutePreview(IToolExecutionContext ctx, string python, bool runTerminal)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.LanguagePython, null);
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = null,
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
 			};
@@ -102,10 +103,10 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		/// Creates a temporary .py file, runs it via the virtual environment's Python,
 		/// and displays the output in an embedded terminal.
 		/// </summary>
-		public async Task<ReactiveToolResult> Execute(
+		public async Task<ToolExecutionResult> Execute(
 			[Description("The Python code to execute or the path to *.py file.")] string python,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
-			ToolExecutionContext context,
+			IToolExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
 			var workDir = _chatSettings.Settings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory();
@@ -158,7 +159,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 						$"python \"{pyFile}\"", "Python", runTerminal, false)
 				}, context, cancellationToken);
 
-				_ = result.Completion.ContinueWith(t =>
+				_ = result.ContinueWith(t =>
 				{
 					try
 					{
@@ -168,7 +169,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 					catch { }
 				}, CancellationToken.None);
 
-				return result;
+				return await result;
 			}
 			catch (Exception ex)
 			{
@@ -179,30 +180,24 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				}
 				catch { }
 
-				return new ReactiveToolResult
-				{
-					ResultContent = "Error running Python script: " + ex.Message,
-					StatusIcon = MaterialIconKind.LanguagePython,
-					StatusTitle = null,
-				}.CompleteWithError();
+				context.Call.SetStatus(MaterialIconKind.LanguagePython, null);
+				context.Call.SetResult("Error running Python script: " + ex.Message);
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		public StreamingToolArgumentsAnalysisResult ExecuteVenvShellStreaming(string shell)
+		public StreamingToolAnalysisResult ExecuteVenvShellStreaming(IToolExecutionContext ctx, string shell)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = $"`{shell}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.LanguagePython, $"`{shell}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public PreviewToolExecutionResult ExecuteVenvShellPreview(string shell, bool runTerminal)
+		public DomainPreviewResult ExecuteVenvShellPreview(IToolExecutionContext ctx, string shell, bool runTerminal)
 		{
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.LanguagePython, $"`{shell}`");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = $"`{shell}`",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
 			};
@@ -212,10 +207,10 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		/// Executes a shell command in the Python virtual environment via terminal.
 		/// Useful for pip install, pip list, etc.
 		/// </summary>
-		public ReactiveToolResult ExecuteVenvShell(
+		public Task<ToolExecutionResult> ExecuteVenvShell(
 			[Description("The shell command to run in the Python's virtual environment.")] string shell,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
-			ToolExecutionContext context,
+			IToolExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
 			return Run(new TerminalToolRunParameters
@@ -231,8 +226,8 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		/// Gets the list of installed packages in the current Python virtual environment.
 		/// Still returns a simple ToolResult since it's a quick query, not a long-running process.
 		/// </summary>
-		public ReactiveToolResult GetInstalledPackagesList(
-			ToolExecutionContext context, CancellationToken cancellationToken = default)
+		public Task<ToolExecutionResult> GetInstalledPackagesList(
+			IToolExecutionContext context, CancellationToken cancellationToken = default)
 		{
 			return Run(new TerminalToolRunParameters
 			{

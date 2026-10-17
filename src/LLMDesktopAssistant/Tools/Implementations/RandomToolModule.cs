@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -92,73 +94,60 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private ReactiveToolResult GenerateGUID()
+		private ToolExecutionResult GenerateGUID(IToolExecutionContext ctx)
 		{
 			var value = Guid.NewGuid();
-			return new ReactiveToolResult
-			{
-				ResultContent = value.ToString(),
-				StatusIcon = MaterialIconKind.IdCard,
-				StatusTitle = value.ToString()
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value.ToString());
+			ctx.Call.SetStatus(MaterialIconKind.IdCard, value.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateRandomInteger(
+		private ToolExecutionResult GenerateRandomInteger(IToolExecutionContext ctx,
 			[Description("The minimum inclusive value")] long minValue,
 			[Description("The maximum inclusive value")] long maxValue)
 		{
 			var value = _random.NextInt64(minValue, maxValue + 1);
-			return new ReactiveToolResult
-			{
-				ResultContent = value.ToString(),
-				StatusIcon = MaterialIconKind.DiceMultipleOutline,
-				StatusTitle = value.ToString()
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value.ToString());
+			ctx.Call.SetStatus(MaterialIconKind.DiceMultipleOutline, value.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateRandomFloat(
+		private ToolExecutionResult GenerateRandomFloat(IToolExecutionContext ctx,
 			[Description("The minimum inclusive value")] double minValue,
 			[Description("The maximum inclusive value")] double maxValue)
 		{
 			var range = maxValue - minValue;
 			var value = _random.NextDouble() * range + minValue;
-			return new ReactiveToolResult
-			{
-				ResultContent = value.ToString(),
-				StatusIcon = MaterialIconKind.DiceMultipleOutline,
-				StatusTitle = value.ToString()
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value.ToString());
+			ctx.Call.SetStatus(MaterialIconKind.DiceMultipleOutline, value.ToString());
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateCoinFlip()
+		private ToolExecutionResult GenerateCoinFlip(IToolExecutionContext ctx)
 		{
 			bool result = _random.NextDouble() < 0.5;
 			var value = result ? "Heads" : "Tails";
 
-			return new ReactiveToolResult
-			{
-				ResultContent = value,
-				StatusIcon = MaterialIconKind.Coins,
-				StatusTitle = result ? LocalizationManager.LocalizeStatic("tool.status.random-coin_flip.heads") : LocalizationManager.LocalizeStatic("tool.status.random-coin_flip.tails")
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value);
+			ctx.Call.SetStatus(MaterialIconKind.Coins,
+				result ? LocalizationManager.LocalizeStatic("tool.status.random-coin_flip.heads") : LocalizationManager.LocalizeStatic("tool.status.random-coin_flip.tails"));
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateCheckChance(
+		private ToolExecutionResult GenerateCheckChance(IToolExecutionContext ctx,
 			[Description("The probability of success as a percentage from 0 to 100")] double chance)
 		{
 			var gained = _random.NextDouble() * 100;
 			var result = gained <= chance;
 			var value = $"{gained} < {chance}? " + (result ? "Success" : "Failure");
 
-			return new ReactiveToolResult
-			{
-				ResultContent = value,
-				StatusIcon = result ? MaterialIconKind.Check : MaterialIconKind.Close,
-				StatusTitle = $"{chance}%: " + (result ? LocalizationManager.LocalizeStatic("tool.status.random-check_chance.success") : LocalizationManager.LocalizeStatic("tool.status.random-check_chance.failure"))
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value);
+			ctx.Call.SetStatus(result ? MaterialIconKind.Check : MaterialIconKind.Close,
+				$"{chance}%: " + (result ? LocalizationManager.LocalizeStatic("tool.status.random-check_chance.success") : LocalizationManager.LocalizeStatic("tool.status.random-check_chance.failure")));
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateRandomDiceRoll(
+		private ToolExecutionResult GenerateRandomDiceRoll(IToolExecutionContext ctx,
 			[Description("Count of dices to roll")] int numberOfDice = 1,
 			[Description("Number of sides per die")] int sides = 6)
 		{
@@ -171,50 +160,43 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var total = rolls.Sum();
 			var value = $"{total} (Rolls: {string.Join(", ", rolls)})";
 
-			return new ReactiveToolResult
+			ctx.Call.SetResult(value);
+			ctx.Call.SetStatus(sides switch
 			{
-				ResultContent = value,
-				StatusIcon = sides switch
-				{
-					4 => MaterialIconKind.DiceD4,
-					6 => MaterialIconKind.DiceD6,
-					8 => MaterialIconKind.DiceD8,
-					10 => MaterialIconKind.DiceD10,
-					12 => MaterialIconKind.DiceD12,
-					20 => MaterialIconKind.DiceD20,
-					_ => MaterialIconKind.DiceMultiple
-				},
-				StatusTitle = $"{LocalizationManager.LocalizeStatic("tool.status.random-dice_roll.rolled")} {numberOfDice}d{sides}: {string.Join(", ", rolls)}"
-			}.CompleteWithSuccess();
+				4 => MaterialIconKind.DiceD4,
+				6 => MaterialIconKind.DiceD6,
+				8 => MaterialIconKind.DiceD8,
+				10 => MaterialIconKind.DiceD10,
+				12 => MaterialIconKind.DiceD12,
+				20 => MaterialIconKind.DiceD20,
+				_ => MaterialIconKind.DiceMultiple
+			},
+				$"{LocalizationManager.LocalizeStatic("tool.status.random-dice_roll.rolled")} {numberOfDice}d{sides}: {string.Join(", ", rolls)}");
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateRandomItemsFromList(
+		private ToolExecutionResult GenerateRandomItemsFromList(IToolExecutionContext ctx,
 			[Description("List of items")] string[] items,
 			[Description("Number of items to select")] int count = 1)
 		{
 			var values = _random.GetItems(items, count);
 			var value = string.Join(", ", values);
 
-			return new ReactiveToolResult
-			{
-				ResultContent = value,
-				StatusIcon = MaterialIconKind.Shuffle,
-				StatusTitle = value
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value);
+			ctx.Call.SetStatus(MaterialIconKind.Shuffle, value);
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private ReactiveToolResult GenerateRandomShuffledList(
+		private ToolExecutionResult GenerateRandomShuffledList(IToolExecutionContext ctx,
 			[Description("List of items to shuffle")] string[] items)
 		{
 			_random.Shuffle(items);
 			var value = string.Join(", ", items);
 
-			return new ReactiveToolResult
-			{
-				ResultContent = value,
-				StatusIcon = MaterialIconKind.Shuffle,
-				StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.random-shuffle_list.shuffled"), items.Length)
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(value);
+			ctx.Call.SetStatus(MaterialIconKind.Shuffle,
+				string.Format(LocalizationManager.LocalizeStatic("tool.status.random-shuffle_list.shuffled"), items.Length));
+			return ToolExecutionResult.Succeeded;
 		}
 	}
 }

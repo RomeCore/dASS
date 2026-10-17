@@ -3,23 +3,32 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
 using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
+using DomainToolCall = LLMDesktopAssistant.LLM.Domain.ToolCall;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
+	/// <summary>
+	/// The transitional adapter that lets a chat tool participate in an agent task. It delegates every
+	/// capability to the chat descriptor's carried executors; P5 dissolves it into the task toolset
+	/// projection.
+	/// </summary>
 	public class ChatAgentTool : AgentTool
 	{
 		/// <summary>
-		/// The tool information for the chat tool.
+		/// The descriptor of the chat tool this adapter exposes.
 		/// </summary>
 		public ToolInfo ChatToolInfo { get; }
 
 		/// <summary>
-		/// The execution context for the tool. If null, the default (dummy) context will be created.
+		/// The execution context supplied by the caller, or <see langword="null"/> when the adapter
+		/// should create its own.
 		/// </summary>
-		public ToolExecutionContext? ExecutionContext { get; }
+		public IToolExecutionContext? ExecutionContext { get; }
 
 		public override string Name => ChatToolInfo.Name;
 
@@ -29,7 +38,12 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 		public override JsonObject ArgumentSchema => ChatToolInfo.ArgumentSchema;
 
-		public ChatAgentTool(ToolInfo chatToolInfo, ToolExecutionContext? executionContext)
+		/// <summary>
+		/// Creates the adapter over a chat tool.
+		/// </summary>
+		/// <param name="chatToolInfo">The chat descriptor.</param>
+		/// <param name="executionContext">The caller-supplied context, or <see langword="null"/>.</param>
+		public ChatAgentTool(ToolInfo chatToolInfo, IToolExecutionContext? executionContext)
 		{
 			ChatToolInfo = chatToolInfo;
 			ExecutionContext = executionContext;
@@ -44,26 +58,14 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <inheritdoc/>
-		public override SpecifierMatchResult AnalyzeSpecifier(Specifier specifier, JsonNode? args, ToolExecutionContext context)
-		{
-			return ChatToolInfo.SpecifierAnalyzer?.Invoke(specifier, args, context) ?? SpecifierMatchResult.NoMatch;
-		}
+		public override SpecifierMatchResult AnalyzeSpecifier(Specifier specifier, JsonNode? args,
+			IToolExecutionContext context) =>
+			ChatToolInfo.Specifier?.Analyze(specifier, args, context) ?? SpecifierMatchResult.NoMatch;
 
-		private ToolExecutionContext CreateContext()
+		private ChatToolExecutionContext CreateContext()
 		{
-			if (ExecutionContext != null)
-			{
-				return new ToolExecutionContext
-				{
-					Chat = ExecutionContext.Chat,
-					Message = ExecutionContext.Message,
-					Call = ExecutionContext.Call,
-					Info = ChatToolInfo,
-					PolicyDecision = ToolPolicyDecision.None,
-					RunningInUI = false,
-					SharedContext = null
-				};
-			}
+			if (ExecutionContext is ChatToolExecutionContext chatContext)
+				return chatContext;
 
 			var dummyChat = new Chat(ServiceRegistry.Provider);
 			var dummyMessage = new AssistantMessage
@@ -74,7 +76,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				CompletionToken = CompletionToken.Success
 			};
 			dummyChat.Messages.Add(dummyMessage);
-			var dummyToolCall = new ToolCall
+
+			var dummyToolCall = new DomainToolCall
 			{
 				CompletionToken = CompletionToken.Success,
 				ToolCallId = ToolCallId.Generate(),
@@ -82,16 +85,17 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			};
 			dummyMessage.ToolCalls.Add(dummyToolCall);
 
-			return new ToolExecutionContext
+			var parameters = new ToolContextCreationParams
 			{
-				Chat = dummyChat,
-				Message = dummyMessage,
 				Call = dummyToolCall,
-				Info = ChatToolInfo,
-				PolicyDecision = ToolPolicyDecision.None,
-				RunningInUI = false,
-				SharedContext = null
+				Descriptor = ChatToolInfo,
+				Source = ToolInvocationSource.AgentTask,
+				Host = dummyMessage,
+				RunningInUi = false,
+				Confirmation = new RejectingConfirmationSink()
 			};
+
+			return new ChatToolExecutionContext(dummyChat, dummyMessage, parameters, null);
 		}
 
 		private static AgentAttachment? TryConvertAttachment(AttachmentMessagePart? part)
@@ -99,45 +103,69 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			return AgentAttachment.TryConvertFromNativeAttachment(part?.NativeAttachment);
 		}
 
-		public override async Task<AgentToolCallPreResult> PreExecuteAsync(JsonNode? arguments, CancellationToken cancellationToken = default)
+		private static ImmutableList<AgentAttachment> ReadAttachments(
+			LLMDesktopAssistant.Tools.Execution.Domain.IToolCall call)
 		{
-			if (ChatToolInfo.PreviewExecutor == null)
+			if (call is not DomainToolCall chatCall)
+				return [];
+
+			return [.. chatCall.AdditionalData
+				.OfType<AttachmentMessagePart>()
+				.Select(TryConvertAttachment)
+				.Where(a => a != null)!];
+		}
+
+		/// <inheritdoc/>
+		public override async Task<AgentToolCallPreResult> PreExecuteAsync(JsonNode? arguments,
+			CancellationToken cancellationToken = default)
+		{
+			var ctx = CreateContext();
+			var preview = ChatToolInfo.Preview;
+
+			if (preview is null)
 			{
 				return new AgentToolCallPreResult
 				{
-					ExpectedBehaviour = ChatToolInfo.DefaultExpectedBehaviour
+					ExpectedBehaviour = ChatToolInfo.DefaultExpectedBehaviour,
+					SharedContext = ctx
 				};
 			}
 
-			var ctx = CreateContext();
-			var result = await ChatToolInfo.PreviewExecutor.Invoke(arguments, ctx, cancellationToken);
+			var result = await preview.PreviewAsync(arguments, ctx, cancellationToken);
 
 			return new AgentToolCallPreResult
 			{
 				InterruptingSuccess = result.InterruptingSuccess,
-				InterruptingContent = result.InterruptingContent,
-				InterruptingAttachments = result.InterruptingAdditionalData
-					.OfType<AttachmentMessagePart>().Select(TryConvertAttachment)
-					.Where(a => a != null).ToImmutableList()!,
+				InterruptingContent = result.InterruptingSuccess is not null ? ctx.Call.ResultContent : null,
+				InterruptingAttachments = ReadAttachments(ctx.Call),
 				ExpectedBehaviour = result.ExpectedBehaviour ?? ChatToolInfo.DefaultExpectedBehaviour,
 				SharedContext = ctx
 			};
 		}
 
-		public override async Task<AgentToolCallResult> ExecuteAsync(JsonNode? arguments, object? sharedContext, CancellationToken cancellationToken = default)
+		/// <inheritdoc/>
+		public override async Task<AgentToolCallResult> ExecuteAsync(JsonNode? arguments, object? sharedContext,
+			CancellationToken cancellationToken = default)
 		{
-			var ctx = sharedContext as ToolExecutionContext ?? CreateContext();
-			var result = await ChatToolInfo.Executor.Invoke(arguments, ctx, cancellationToken);
-			var success = await result.Completion;
+			var ctx = sharedContext as IToolExecutionContext ?? CreateContext();
+			var result = await ChatToolInfo.Main.ExecuteAsync(arguments, ctx, cancellationToken);
 
 			return new AgentToolCallResult
 			{
-				Success = success,
-				Content = result.ResultContent,
-				Attachments = result.AdditionalData
-					.OfType<AttachmentMessagePart>().Select(TryConvertAttachment)
-					.Where(a => a != null).ToImmutableList()!
+				Success = result.Success,
+				Content = ctx.Call.ResultContent ?? string.Empty,
+				Attachments = ReadAttachments(ctx.Call)
 			};
+		}
+
+		/// <summary>
+		/// The task executor owns confirmation; this sink is never expected to be reached.
+		/// </summary>
+		private sealed class RejectingConfirmationSink : IConfirmationSink
+		{
+			public Task<ToolApprovalResult> RequestAsync(IToolExecutionContext ctx, CancellationToken ct) =>
+				Task.FromResult(ToolApprovalResult.DeniedOnce(
+					"The agent task handles confirmation outside the tool."));
 		}
 	}
 }

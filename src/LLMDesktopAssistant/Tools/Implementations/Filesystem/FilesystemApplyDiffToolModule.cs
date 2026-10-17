@@ -2,11 +2,14 @@ using System.ComponentModel;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -49,8 +52,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				CategoryKey = Locale.GetKey("tool.category.filesystem"),
 				DefaultExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.AccessOutsideWorkdir |
 					ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit,
-				DefaultSelfHandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
-				SynchronizationGroup = FileSystemEditBaseToolModule.SyncGroup
+				HandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
+				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, FileSystemEditBaseToolModule.SyncGroup)]
 			});
 		}
 
@@ -61,18 +64,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required string NewContent { get; init; }
 		}
 
-		private StreamingToolArgumentsAnalysisResult ApplyDiffStreaming(
+		private StreamingToolAnalysisResult ApplyDiffStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.FileDocumentEdit,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ApplyDiffPreview(
+		private DomainPreviewResult ApplyDiffPreview(
+			IToolExecutionContext ctx,
 			[SharedContext] ref FSApplyDiffSharedContext? sharedCtx,
 			string path, string? deleteLines = null, string? insertBeforeLine = null, string? insertText = null)
 		{
@@ -81,12 +83,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+				ctx.Call.SetResult($"File or directory not found: {path}");
+
+				return new DomainPreviewResult
 				{
 					InterruptingSuccess = false,
-					InterruptingContent = $"File or directory not found: {path}",
-					StatusIcon = MaterialIconKind.FileDocumentEdit,
-					StatusTitle = $"**{path}**",
 					ExpectedBehaviour = ToolBehaviour.None |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind)
@@ -105,12 +107,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					NewContent = originalContent
 				};
 
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
+					LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+				ctx.Call.SetResult(errorMessage ??
+					"No changes were made to the file. The specified match was not found.");
+
+				return new DomainPreviewResult
 				{
 					InterruptingSuccess = true,
-					InterruptingContent = errorMessage ?? "No changes were made to the file. The specified match was not found.",
-					StatusIcon = MaterialIconKind.FileQuestion,
-					StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"),
 					ExpectedBehaviour = ToolBehaviour.None |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -124,20 +128,19 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				NewContent = newContent
 			};
 
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.FileDocumentEdit,
-				StatusTitle = $"**{path}**",
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 					AddonKindToolBehaviourConverter.Convert(addonKind)
 			};
 		}
 
-		private async Task ApplyDiff(
+		private async Task<ToolExecutionResult> ApplyDiff(
 			[SharedContext] FSApplyDiffSharedContext? sharedCtx,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
 			string path,
 			[Description("Range of lines to delete, e.g. '10-20' or '10'. If not specified, no lines will be deleted.")]
@@ -154,20 +157,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!File.Exists(fullPath))
 				{
-					result.StatusIcon = MaterialIconKind.FileAlert;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = $"File '{path}' not found.";
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetResult($"File '{path}' not found.");
+					return ToolExecutionResult.Failed;
 				}
 
 				if (FileUtils.IsBinaryFile(fullPath))
 				{
-					result.StatusIcon = MaterialIconKind.FileAlert;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = "Cannot apply diff to binary files.";
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetResult("Cannot apply diff to binary files.");
+					return ToolExecutionResult.Failed;
 				}
 
 				var originalContent = File.ReadAllText(fullPath);
@@ -178,11 +177,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 					if (edited.Item2 != null)
 					{
-						result.StatusIcon = MaterialIconKind.FileAlert;
-						result.StatusTitle = $"**{path}**";
-						result.ResultContent = edited.Item2;
-						result.CompleteWithError();
-						return;
+						ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+						ctx.Call.SetResult(edited.Item2);
+						return ToolExecutionResult.Failed;
 					}
 
 					newContent = edited.Item1!;
@@ -190,14 +187,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (newContent == originalContent)
 				{
-					result.StatusIcon = MaterialIconKind.FileQuestion;
-					result.StatusTitle = $"**{path}** *({LocalizationManager.LocalizeStatic("tool.status.fs-apply_diff.changes_none")})*";
-					result.ResultContent = "No changes applied to the file.";
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
+						$"**{path}** *({LocalizationManager.LocalizeStatic("tool.status.fs-apply_diff.changes_none")})*");
+					ctx.Call.SetResult("No changes applied to the file.");
+					return ToolExecutionResult.Succeeded;
 				}
 
-				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, result, cancellationToken);
+				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, cancellationToken);
 				string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
 					? string.Empty
 					: $"""
@@ -207,17 +203,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 							""";
 				if (!postProcessResult.AppliedDiff.HasGroups)
 				{
-					result.StatusIcon = MaterialIconKind.FileDiscard;
-					result.StatusTitle = $"**{path}**";
-					result.ResultContent = postProcessResult.RejectedDiff.HasGroups ?
+					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
 						[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
 						{postProcessResult.RejectedDiff}{userNotesPostfix}
 						""" :
-						$"User has rejected the changes, none has applied.{userNotesPostfix}";
-					result.CompleteWithSuccess();
-					return;
+						$"User has rejected the changes, none has applied.{userNotesPostfix}");
+					return ToolExecutionResult.Succeeded;
 				}
 
 				File.WriteAllText(fullPath!, postProcessResult.NewContent);
@@ -226,9 +220,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				var diff = postProcessResult.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
 
-				result.StatusIcon = Material.Icons.MaterialIconKind.FileDocumentEdit;
-				result.StatusTitle = $"**{path}** *(-{removed} +{added})*";
-				result.ResultContent = postProcessResult.RejectedDiff.HasGroups ?
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
+				ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
@@ -240,15 +233,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
 					{diff}{userNotesPostfix}
-					""";
-				result.CompleteWithSuccess();
+					""");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.FileAlert;
-				result.StatusTitle = $"**{path}**";
-				result.ResultContent = $"Error applying diff: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetResult($"Error applying diff: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

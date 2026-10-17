@@ -3,11 +3,14 @@ using System.Text;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
 using Material.Icons;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -53,44 +56,38 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult GlobStreaming(
+		private StreamingToolAnalysisResult GlobStreaming(
+			IToolExecutionContext ctx,
 			string? path, string? pattern)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.FileSearch,
-				StatusTitle = pattern != null ? $"**{path}** → **{pattern.MarkdownEscape()}**" : $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FileSearch,
+				pattern != null ? $"**{path}** → **{pattern.MarkdownEscape()}**" : $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult GlobPreview(
+		private DomainPreviewResult GlobPreview(IToolExecutionContext ctx,
 			string path, string pattern, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
 
 			if (!Directory.Exists(fullPath))
 			{
-				new PreviewToolExecutionResult
-				{
-					StatusIcon = MaterialIconKind.FolderSearch,
-					StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}**",
-					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
-					InterruptingSuccess = false,
-					InterruptingContent = $"Directory not found: {path}"
-				};
+				ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
+				ctx.Call.SetResult($"Directory not found: {path}");
 			}
 
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.FolderSearch,
-				StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}**",
 				ExpectedBehaviour = ToolBehaviour.DirectoryRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 			};
 		}
 
-		private ReactiveToolResult Glob(
+		private async Task<ToolExecutionResult> Glob(
+			IToolExecutionContext ctx,
 			[SharedContext] string? fullPath,
 			[Description("The glob pattern to search for, e.g. '**/*.cs' or '*.txt'")]
 			string pattern,
@@ -113,14 +110,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				fullPath ??= _fileAccess.AccessPath(path, DirectoryAccessMode.Read);
 				var workingDirectory = _fileAccess.GetWorkingDirectory();
 
-				var result = new ReactiveToolResult();
-
-				Task.Run(() =>
+				return await Task.Run(() =>
 				{
 					try
 					{
-						result.StatusIcon = MaterialIconKind.FolderSearch;
-						result.StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}**";
+						ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
 
 						var matcher = new Matcher();
 						matcher.AddInclude(pattern);
@@ -157,7 +151,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 									matchingFiles.Add($"[FILE] {displayPath} ({FileUtils.BytesToDisplaySize(metrics.Size)}, {lines}, {metrics.Modified:yyyy-MM-dd HH:mm})");
 
-									result.StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}";
+									ctx.Call.SetStatusTitle($"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
 
 									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
 										break;
@@ -213,7 +207,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 									matchingDirectories.Add($"[DIR] {displayPath} ({items} items, {dirInfo.LastWriteTime:yyyy-MM-dd HH:mm})");
 
-									result.StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}";
+									ctx.Call.SetStatusTitle($"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
 
 									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
 										break;
@@ -248,37 +242,33 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						if (total == 0)
 						{
 							sb.AppendLine("No matches found.");
-							result.StatusIcon = MaterialIconKind.FolderOpen;
-							result.StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}";
+							ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
 						}
 						else
 						{
-							result.StatusIcon = MaterialIconKind.FolderMultiple;
-							result.StatusTitle = $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}";
+							ctx.Call.SetStatus(MaterialIconKind.FolderMultiple, $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
 						}
 
-						result.ResultContent = sb.ToString();
-						result.Complete(true);
+						ctx.Call.SetResult(sb.ToString());
+						return ToolExecutionResult.Succeeded;
 					}
 					catch (OperationCanceledException)
 					{
-						result.ResultContent = "Glob search cancelled.";
-						result.Complete(false);
+						ctx.Call.SetResult("Glob search cancelled.");
+						return ToolExecutionResult.Failed;
 					}
 					catch (Exception ex)
 					{
-						result.StatusIcon = null;
-						result.StatusTitle = null;
-						result.ResultContent = $"Error during glob search: {ex.Message}";
-						result.Complete(false);
+						ctx.Call.SetStatus(null, null);
+						ctx.Call.SetResult($"Error during glob search: {ex.Message}");
+						return ToolExecutionResult.Failed;
 					}
 				}, cancellationToken);
-
-				return result;
 			}
 			catch (Exception ex)
 			{
-				return ReactiveToolResult.CreateError($"Glob error: {ex.Message}");
+				ctx.Call.SetResult($"Glob error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 	}

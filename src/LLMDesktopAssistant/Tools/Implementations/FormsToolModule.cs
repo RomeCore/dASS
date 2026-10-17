@@ -4,6 +4,8 @@ using LLMDesktopAssistant.Tools.MVVM;
 using RCLargeLanguageModels.Json.Schema;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 
 namespace LLMDesktopAssistant.Tools.Implementations;
 
@@ -72,9 +74,8 @@ public class FormsToolModule : ToolModule
 		});
 	}
 
-	private async Task FormsConfirm(
-		ToolExecutionContext context,
-		ReactiveToolResult result,
+	private async Task<ToolExecutionResult> FormsConfirm(
+		IToolExecutionContext context,
 		[Description("Title of the confirmation question. For example: 'Delete file?', 'Confirm sending?'")] string title,
 		[Description("Detailed description of what needs to be confirmed. Provide context for the user.")] string? description,
 		[Description("Text on the confirm button (default: 'OK')")] string? confirmText,
@@ -82,11 +83,10 @@ public class FormsToolModule : ToolModule
 		[Description("Is this a dangerous action? If true, the button will be red (default: false)")] bool? isDanger,
 		CancellationToken cancellationToken = default)
 	{
-		if (!context.RunningInUI)
+		if (!context.RunningInUi)
 		{
-			result.ResultContent = "This tool requires a UI context to run.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("This tool requires a UI context to run.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var viewModel = new FormsConfirmViewModel
@@ -97,7 +97,7 @@ public class FormsToolModule : ToolModule
 			CancelText = cancelText ?? "Cancel",
 			IsDanger = isDanger ?? false
 		};
-		result.AdditionalData.Add(viewModel);
+		context.Call.AddAdditionalData(viewModel);
 
 		bool confirmed;
 		try
@@ -107,27 +107,24 @@ public class FormsToolModule : ToolModule
 		}
 		catch (OperationCanceledException)
 		{
-			result.AdditionalData.Remove(viewModel);
-			result.ResultContent = "User cancelled the confirmation.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("User cancelled the confirmation.");
+			return ToolExecutionResult.Failed;
 		}
 
 		if (confirmed)
 		{
-			result.ResultContent = $"User confirmed: \"{title}\".";
-			result.TryCompleteWithSuccess();
+			context.Call.SetResult($"User confirmed: \"{title}\".");
+			return ToolExecutionResult.Succeeded;
 		}
 		else
 		{
-			result.ResultContent = $"User declined: \"{title}\".";
-			result.TryCompleteWithSuccess();
+			context.Call.SetResult($"User declined: \"{title}\".");
+			return ToolExecutionResult.Succeeded;
 		}
 	}
 
-	private async Task FormsChoice(
-		ToolExecutionContext context,
-		ReactiveToolResult result,
+	private async Task<ToolExecutionResult> FormsChoice(
+		IToolExecutionContext context,
 		[Description("Title of the question")] string title,
 		[Description("Detailed description of what needs to be selected")] string? description,
 		[Description("Array of options to choose from. Each option is a string that will be shown to the user and returned as a value.")]
@@ -138,11 +135,10 @@ public class FormsToolModule : ToolModule
 		[Description("Maximum number of selectable options (default: 1, when allowMultiple=true: all options)")] int? maxSelect,
 		CancellationToken cancellationToken = default)
 	{
-		if (!context.RunningInUI)
+		if (!context.RunningInUi)
 		{
-			result.ResultContent = "This tool requires a UI context to run.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("This tool requires a UI context to run.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var formOptions = new List<ChoiceOption>();
@@ -165,7 +161,7 @@ public class FormsToolModule : ToolModule
 			MinSelect = minSelect ?? 1,
 			MaxSelect = maxSelect ?? (allowMultiple == true ? options.Length : 1)
 		};
-		result.AdditionalData.Add(viewModel);
+		context.Call.AddAdditionalData(viewModel);
 
 		ChoiceResult formResult;
 		try
@@ -175,10 +171,8 @@ public class FormsToolModule : ToolModule
 		}
 		catch (OperationCanceledException)
 		{
-			result.AdditionalData.Remove(viewModel);
-			result.ResultContent = "User cancelled the selection.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("User cancelled the selection.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var selectedStr = string.Join(", ", formResult.Selected);
@@ -186,24 +180,22 @@ public class FormsToolModule : ToolModule
 		if (!string.IsNullOrWhiteSpace(formResult.Custom))
 			resultText += $" Additional text: \"{formResult.Custom}\".";
 
-		result.ResultContent = resultText;
-		result.TryCompleteWithSuccess();
+		context.Call.SetResult(resultText);
+		return ToolExecutionResult.Succeeded;
 	}
 
-	private async Task FormsInput(
-		ToolExecutionContext context,
-		ReactiveToolResult result,
+	private async Task<ToolExecutionResult> FormsInput(
+		IToolExecutionContext context,
 		[Description("Title of the form")] string title,
 		[Description("Description of the form")] string? description,
 		[Description("Array of JSON objects describing form fields. Each object must contain:\n- id (string, required) — field key in the result\n- label (string, required) — display label for the field\n- type (string, optional) — field type: 'text' (default), 'number', 'password', 'multiline'\n- placeholder (string, optional) — placeholder text inside the field\n- required (bool, optional) — whether the field is required (default: false)\n- default (string, optional) — default value\nExample: [{\"id\": \"name\", \"label\": \"Name\", \"required\": true}, {\"id\": \"comment\", \"label\": \"Comment\", \"type\": \"multiline\"}]")]
 		JsonNode[] fields,
 		CancellationToken cancellationToken = default)
 	{
-		if (!context.RunningInUI)
+		if (!context.RunningInUi)
 		{
-			result.ResultContent = "This tool requires a UI context to run.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("This tool requires a UI context to run.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var formFields = new List<InputField>();
@@ -230,9 +222,8 @@ public class FormsToolModule : ToolModule
 
 		if (formFields.Count == 0)
 		{
-			result.ResultContent = "Failed to parse form fields. Make sure a valid array of fields with id and label is provided.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("Failed to parse form fields. Make sure a valid array of fields with id and label is provided.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var viewModel = new FormsInputViewModel(formFields)
@@ -240,7 +231,7 @@ public class FormsToolModule : ToolModule
 			Title = title,
 			Description = description ?? string.Empty
 		};
-		result.AdditionalData.Add(viewModel);
+		context.Call.AddAdditionalData(viewModel);
 
 		InputResult formResult;
 		try
@@ -250,20 +241,17 @@ public class FormsToolModule : ToolModule
 		}
 		catch (OperationCanceledException)
 		{
-			result.AdditionalData.Remove(viewModel);
-			result.ResultContent = "User cancelled data input.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("User cancelled data input.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var valuesStr = string.Join(", ", formResult.Values.Select(kv => $"{kv.Key}=\"{kv.Value}\""));
-		result.ResultContent = $"User entered data: {valuesStr}.";
-		result.TryCompleteWithSuccess();
+		context.Call.SetResult($"User entered data: {valuesStr}.");
+		return ToolExecutionResult.Succeeded;
 	}
 
-	private async Task FormsFilePicker(
-		ToolExecutionContext context,
-		ReactiveToolResult result,
+	private async Task<ToolExecutionResult> FormsFilePicker(
+		IToolExecutionContext context,
 		[Description("Title of the file selection dialog")] string title,
 		[Description("Description or instructions for the user")] string? description,
 		[Description("The mode of the dialog."), Enum(["open", "save", "directory"])] string mode,
@@ -271,11 +259,10 @@ public class FormsToolModule : ToolModule
 		[Description("Allow multiple file selection")] bool allowMultiple = false,
 		CancellationToken cancellationToken = default)
 	{
-		if (!context.RunningInUI)
+		if (!context.RunningInUi)
 		{
-			result.ResultContent = "This tool requires a UI context to run.";
-			result.CompleteWithError();
-			return;
+			context.Call.SetResult("This tool requires a UI context to run.");
+			return ToolExecutionResult.Failed;
 		}
 
 		var viewModel = new FormsFilePickerViewModel
@@ -293,7 +280,7 @@ public class FormsToolModule : ToolModule
 			AllowMultiple = allowMultiple
 		};
 
-		result.AdditionalData.Add(viewModel);
+		context.Call.AddAdditionalData(viewModel);
 
 		try
 		{
@@ -301,21 +288,17 @@ public class FormsToolModule : ToolModule
 			var formResult = await viewModel.Result.WaitAsync(cancellationToken);
 			if (formResult.Paths.Length == 0)
 			{
-				result.ResultContent = "User did not select any files.";
-				result.TryCompleteWithSuccess();
-				return;
+				context.Call.SetResult("User did not select any files.");
+				return ToolExecutionResult.Succeeded;
 			}
 
-			result.ResultContent = $"User selected files: {string.Join(", ", formResult.Paths)}.";
-			result.TryCompleteWithSuccess();
-			return;
+			context.Call.SetResult($"User selected files: {string.Join(", ", formResult.Paths)}.");
+			return ToolExecutionResult.Succeeded;
 		}
 		catch (OperationCanceledException)
 		{
-			result.AdditionalData.Remove(viewModel);
-			result.ResultContent = "User cancelled file selection.";
-			result.TryCompleteWithError();
-			return;
+			context.Call.SetResult("User cancelled file selection.");
+			return ToolExecutionResult.Failed;
 		}
 	}
 }

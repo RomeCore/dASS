@@ -2,7 +2,10 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting.Lua;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Scripting
@@ -89,81 +92,67 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExecuteStreaming(string? lua)
+		private StreamingToolAnalysisResult ExecuteStreaming(string? lua, IToolExecutionContext ctx)
 		{
 			int lines = 0;
 			if (lua != null)
 				foreach (var line in lua.EnumerateLines())
 					lines++;
 
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.LanguageLua,
-				StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines)
-			};
+			ctx.Call.SetStatus(MaterialIconKind.LanguageLua,
+				LocalizationManager.LocalizeStaticFormat("tool.status.script.lines", lines));
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecutePreview(string lua)
+		private DomainPreviewResult ExecutePreview(string lua, IToolExecutionContext ctx)
 		{
-			return new PreviewToolExecutionResult
-			{
-				StatusIcon = MaterialIconKind.LanguageLua,
-				StatusTitle = null
-			};
+			ctx.Call.SetStatus(MaterialIconKind.LanguageLua, null);
+			return new DomainPreviewResult();
 		}
 
-		private ReactiveToolResult Execute(
+		private async Task<ToolExecutionResult> Execute(
 			string lua,
-			ToolExecutionContext context,
+			IToolExecutionContext context,
 			bool isolatedExecution = true,
 			CancellationToken cancellationToken = default)
 		{
-			var reactiveResult = new ReactiveToolResult
+			context.Call.SetStatus(MaterialIconKind.LanguageLua, null);
+			var result = new LuaToolResult(context.Call);
+
+			// The execution context no longer lives in the globals - AsyncLocal carries it correctly for
+			// both isolated and non-isolated runs.
+			LuaExecutionContext.SetTool(context, result);
+
+			try
 			{
-				StatusIcon = MaterialIconKind.LanguageLua,
-				StatusTitle = null
-			};
+				LuaTuple scriptResult;
+				if (isolatedExecution)
+				{
+					// A fresh clone of the global environment: mutations do not leak into the persistent state.
+					scriptResult = await _lua.ExecuteAsync(lua, print => result.Write(print), _ => { }, cancellationToken);
+				}
+				else
+				{
+					// The shared, persistent Lua state (registered scripts and accumulated state are visible).
+					scriptResult = await _lua.ExecuteAsync(lua, print => result.Write(print), null, cancellationToken);
+				}
 
-			_ = Task.Run(async () =>
+				result.Complete(true);
+			}
+			catch (LuaRuntimeException srex)
 			{
-				// The execution context no longer lives in the globals - AsyncLocal carries it correctly for
-				// both isolated and non-isolated runs.
-				LuaExecutionContext.Set(tool: context, reactiveResult: reactiveResult);
+				result.Write("Caught error: " + (DebugHelper.IsDebug ? srex.ToString() : srex.Message));
+				result.Write("Remember to read the manuals for API");
+				result.Complete(false);
+			}
+			catch (Exception ex)
+			{
+				result.Write("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
+				result.Write("Remember to read the manuals for API");
+				result.Complete(false);
+			}
 
-				try
-				{
-					LuaTuple scriptResult;
-					if (isolatedExecution)
-					{
-						// A fresh clone of the global environment: mutations do not leak into the persistent state.
-						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), _ => { }, cancellationToken);
-					}
-					else
-					{
-						// The shared, persistent Lua state (registered scripts and accumulated state are visible).
-						scriptResult = await _lua.ExecuteAsync(lua, print => reactiveResult.ResultContentLines.Add(print), null, cancellationToken);
-					}
-
-					reactiveResult.TryCompleteWithSuccess();
-				}
-				catch (LuaRuntimeException srex)
-				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? srex.ToString() : srex.Message));
-					reactiveResult.ResultContentLines.Add("Remember to read the manuals for API");
-					reactiveResult.TryCompleteWithError();
-				}
-				catch (Exception ex)
-				{
-					reactiveResult.ResultContentLines.Add("Caught error: " + (DebugHelper.IsDebug ? ex.ToString() : ex.Message));
-					reactiveResult.ResultContentLines.Add("Remember to read the manuals for API");
-					reactiveResult.TryCompleteWithError();
-				}
-				finally
-				{
-				}
-			}, CancellationToken.None);
-
-			return reactiveResult;
+			return result.ToExecutionResult();
 		}
 	}
 }

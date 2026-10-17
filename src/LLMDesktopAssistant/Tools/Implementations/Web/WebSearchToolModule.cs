@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using RCLargeLanguageModels.Json.Schema;
 using SearXSharp;
@@ -57,13 +59,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			});
 		}
 
-		private ReactiveToolResult GetEngines()
+		private ToolExecutionResult GetEngines(IToolExecutionContext ctx)
 		{
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.SearchExpand,
-				UseMarkdown = true
-			};
+			ctx.Call.SetStatusIcon(MaterialIconKind.SearchExpand);
+			ctx.Call.UseMarkdown = true;
 
 			var sb = new StringBuilder();
 			int counter = 0;
@@ -81,25 +80,25 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 					sb.AppendLine($"  Supports time range");
 				sb.AppendLine();
 			}
-			result.ResultContent = sb.ToString();
+			ctx.Call.ResultContent = sb.ToString();
 
-			return result.CompleteWithSuccess();
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private StreamingToolArgumentsAnalysisResult SearchStreaming(string? query)
+		private StreamingToolAnalysisResult SearchStreaming(
+			string? query,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Search,
-				StatusTitle = query
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Search, query);
+			return StreamingToolAnalysisResult.Continue;
 		}
 
 		/// <summary>
 		/// Performs a search across all available search engines with the specified category.
 		/// Returns ALL non-default fields from SearchResult for rich metadata.
 		/// </summary>
-		private async Task<ReactiveToolResult> Search(
+		private async Task<ToolExecutionResult> Search(
+			IToolExecutionContext ctx,
 			[Description("The query to search by")] string query,
 			[Description("The page number to return results for (1-based)"), Range(1, 10)] int page = 1,
 			[Description("Language code (auto, en, ru, etc.)")] string language = "auto",
@@ -113,17 +112,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			[Description("Maximum number of results (per engine) to return"), Range(1, 50)] int maxResults = 10,
 			CancellationToken ct = default)
 		{
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Search,
-				StatusTitle = $"{query}",
-				UseMarkdown = true
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Search, $"{query}");
+			ctx.Call.UseMarkdown = true;
 
-			_ = Task.Run(async () =>
+			try
 			{
-				try
-				{
 					var searchQuery = BuildSearchQuery(query, page, language, timeRange, safeSearch, category, engines, maxResults);
 					var resultList = await _searchManager.SearchAllAsync(searchQuery, ct);
 
@@ -132,10 +125,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 						var errors = string.Join("; ", resultList.UnresponsiveEngines.Select(e =>
 							$"{e.Engine}: {e.ErrorType}{(e.IsSuspended ? " (suspended)" : "")}"));
 
-						result.StatusIcon = MaterialIconKind.SearchMinus;
-						result.ResultContent = $"All search engines failed: {errors}";
-						result.CompleteWithError();
-						return;
+						ctx.Call.SetStatusIcon(MaterialIconKind.SearchMinus);
+						ctx.Call.ResultContent = $"All search engines failed: {errors}";
+						return ToolExecutionResult.Failed;
 					}
 
 					var allEngines = resultList.Results.SelectMany(r => r.Engines.Count > 0 ? r.Engines : [r.Engine])
@@ -323,20 +315,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 						sb.AppendLine("*Note: fewer results than expected. Consider change the category (some categories have few number of engines and low quality for results, especially 'news' or 'it'), using more engines (at least 7-8), or using 'auto' language if needed.*");
 					}
 
-					result.StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.web-search.results", $"{query}", resultList.TotalResults ?? 0);
-					result.ResultContent = sb.ToString().Trim();
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetStatusTitle(LocalizationManager.LocalizeStaticFormat("tool.status.web-search.results", $"{query}", resultList.TotalResults ?? 0));
+					ctx.Call.ResultContent = sb.ToString().Trim();
+					return ToolExecutionResult.Succeeded;
 				}
 				catch (Exception ex)
 				{
-					result.StatusIcon = MaterialIconKind.SearchMinus;
-					result.ResultContent = $"Web search failed: {ex.Message}";
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetStatusIcon(MaterialIconKind.SearchMinus);
+					ctx.Call.ResultContent = $"Web search failed: {ex.Message}";
+					return ToolExecutionResult.Failed;
 				}
-			});
-			return result;
 		}
 
 		/// <summary>

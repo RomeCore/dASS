@@ -3,6 +3,9 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting.Skills;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -32,11 +35,13 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private ReactiveToolResult LoadSkill(
+		private ToolExecutionResult LoadSkill(
 			[Description("The name of the skill to load.")] string name,
-			ToolExecutionContext ctx)
+			IToolExecutionContext ctx)
 		{
-			var senderAgent = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var senderAgent = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 			var skills = senderAgent is not null ?
 				_skillsetBuilder.GetAddonsForAgent(senderAgent) :
 				_skillsetBuilder.GetAvailableAddons();
@@ -44,30 +49,24 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			if (foundSkill == null)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.Cards,
-					StatusTitle = $"*{name}*",
-					ResultContent = $"No skill found with the name *{name}*.",
-					UseMarkdown = true
-				}.CompleteWithError();
+				ctx.Call.SetResult($"No skill found with the name *{name}*.");
+				ctx.Call.SetStatus(MaterialIconKind.Cards, $"*{name}*");
+				ctx.Call.UseMarkdown = true;
+				return ToolExecutionResult.Failed;
 			}
 
 			var body = foundSkill.BodyGetter(foundSkill);
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.Cards,
-				StatusTitle = $"*{name}*",
-				ResultContent = string.IsNullOrEmpty(foundSkill.HomeDirectory) ? body : $"""
+			ctx.Call.SetResult(string.IsNullOrEmpty(foundSkill.HomeDirectory) ? body : $"""
 				{body}
 
 				---
 
 				**Note**: all paths in the skill are relative to skill's home path: *{foundSkill.HomeDirectory}*
-				""",
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+				""");
+			ctx.Call.SetStatus(MaterialIconKind.Cards, $"*{name}*");
+			ctx.Call.UseMarkdown = true;
+			return ToolExecutionResult.Succeeded;
 		}
 	}
 }

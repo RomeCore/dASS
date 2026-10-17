@@ -4,8 +4,11 @@ using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -50,45 +53,38 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			});
 		}
 
-		public StreamingToolArgumentsAnalysisResult OpenFileStreaming(
+		public StreamingToolAnalysisResult OpenFileStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.OpenInNew,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.OpenInNew, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public PreviewToolExecutionResult OpenFilePreview(
+		public DomainPreviewResult OpenFilePreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Execute, out var isAccessed);
 
+			ctx.Call.SetStatus(MaterialIconKind.OpenInNew, $"**{path}**");
+
 			if (!File.Exists(fullPath))
 			{
-				new PreviewToolExecutionResult
-				{
-					StatusIcon = MaterialIconKind.OpenInNew,
-					StatusTitle = $"**{path}**",
-					InterruptingSuccess = false,
-					InterruptingContent = $"File not found: {path}"
-				};
+				ctx.Call.SetResult($"File not found: {path}");
 			}
 
-			return new PreviewToolExecutionResult
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.OpenInNew,
-				StatusTitle = $"**{path}**",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.FileRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : 0)
 			};
 		}
 
-		public ReactiveToolResult OpenFile(
+		public ToolExecutionResult OpenFile(
 			[SharedContext] string? fullPath,
-			string path)
+			string path,
+			IToolExecutionContext ctx)
 		{
 			try
 			{
@@ -97,12 +93,9 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 				if (!File.Exists(fullPath))
 				{
-					return new ReactiveToolResult
-					{
-						StatusIcon = MaterialIconKind.OpenInNew,
-						StatusTitle = $"**{path}**",
-						ResultContent = $"File not found: {path}"
-					}.CompleteWithError();
+					ctx.Call.SetStatus(MaterialIconKind.OpenInNew, $"**{path}**");
+					ctx.Call.SetResult($"File not found: {path}");
+					return ToolExecutionResult.Failed;
 				}
 
 				using (Process process = new Process())
@@ -116,52 +109,45 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 					process.Start();
 				}
 
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.OpenInNew,
-					StatusTitle = $"**{path}**",
-					ResultContent = $"Successfully opened: {path}"
-				}.CompleteWithSuccess();
+				ctx.Call.SetStatus(MaterialIconKind.OpenInNew, $"**{path}**");
+				ctx.Call.SetResult($"Successfully opened: {path}");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.OpenInNew,
-					StatusTitle = $"**{path}**",
-					ResultContent = $"Error opening file {path}: {ex.Message}"
-				}.CompleteWithError();
+				ctx.Call.SetStatus(MaterialIconKind.OpenInNew, $"**{path}**");
+				ctx.Call.SetResult($"Error opening file {path}: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		public StreamingToolArgumentsAnalysisResult OpenInExplorerStreaming(
+		public StreamingToolAnalysisResult OpenInExplorerStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.FolderOpen,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public PreviewToolExecutionResult OpenInExplorerPreview(
+		public DomainPreviewResult OpenInExplorerPreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Execute, out var isAccessed);
 
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
+
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.FolderOpen,
-				StatusTitle = $"**{path}**",
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : 0)
 			};
 		}
 
-		public ReactiveToolResult OpenInExplorer(
+		public ToolExecutionResult OpenInExplorer(
 			[SharedContext] string? fullPath,
-			string path)
+			string path,
+			IToolExecutionContext ctx)
 		{
 			try
 			{
@@ -169,29 +155,20 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 				if (!_explorerOpener.OpenPath(fullPath))
 				{
-					return new ReactiveToolResult
-					{
-						StatusIcon = MaterialIconKind.FolderOpen,
-						StatusTitle = $"**{path}**",
-						ResultContent = $"Failed to open in explorer: {path}"
-					}.CompleteWithError();
+					ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
+					ctx.Call.SetResult($"Failed to open in explorer: {path}");
+					return ToolExecutionResult.Failed;
 				}
 
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.FolderOpen,
-					StatusTitle = $"**{path}**",
-					ResultContent = $"Successfully opened in explorer: {path}"
-				}.CompleteWithSuccess();
+				ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
+				ctx.Call.SetResult($"Successfully opened in explorer: {path}");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.FolderOpen,
-					StatusTitle = $"**{path}**",
-					ResultContent = $"Error opening {path} in explorer: {ex.Message}"
-				}.CompleteWithError();
+				ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
+				ctx.Call.SetResult($"Error opening {path} in explorer: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

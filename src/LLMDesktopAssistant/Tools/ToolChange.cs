@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
 using LLMDesktopAssistant.Utils;
 
@@ -49,6 +50,17 @@ namespace LLMDesktopAssistant.Tools
 		{
 			get => _specifierUnionMode;
 			set => SetProperty(ref _specifierUnionMode, value);
+		}
+
+		private ApprovalHelperConfig? _approvalHelper;
+		/// <summary>
+		/// Gets or sets the approval-helper configuration for the tool.
+		/// Null indicates that the tool uses its declared configuration.
+		/// </summary>
+		public ApprovalHelperConfig? ApprovalHelper
+		{
+			get => _approvalHelper;
+			set => SetProperty(ref _approvalHelper, value);
 		}
 
 		private readonly RangeObservableCollection<ToolSpecifierRule> _specifiers = [];

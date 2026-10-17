@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	/// The <c>argument-hint</c> parser: the bracket grammar (required/optional, rest, choices, description and
 	/// escaping) and the fallbacks (the free-form rest slot and the invalid-hint report).
 	/// </summary>
-	public class SkillArgumentHintParserTests
+	public class ArgumentHintParserTests
 	{
 		[Theory]
 		[InlineData(null)]
@@ -14,14 +14,14 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[InlineData("   ")]
 		public void AnEmptyHint_YieldsTheDefaultRestSlot(string? hint)
 		{
-			var schema = SkillArgumentHintParser.Build(hint, out var invalid);
+			var schema = ArgumentHintParser.Build(hint, out var invalid);
 
 			Assert.False(invalid);
 			Assert.Empty(schema.Positionals);
 
 			var rest = Assert.IsType<SlashCommandArgument>(schema.RestPositional);
-			Assert.Equal("command.argument.skill.arguments", rest.Name.Key);
-			Assert.Equal("command.argument.skill.arguments.description", rest.Description!.Key);
+			Assert.Equal("command.argument.arguments", rest.Name.Key);
+			Assert.Equal("command.argument.arguments.description", rest.Description!.Key);
 			Assert.False(rest.Required);
 			Assert.Null(rest.Format);
 		}
@@ -29,18 +29,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void AFreeFormHint_YieldsARestSlotCarryingTheRawHint()
 		{
-			var schema = SkillArgumentHintParser.Build("commit-name, files", out var invalid);
+			var schema = ArgumentHintParser.Build("commit-name, files", out var invalid);
 
 			Assert.False(invalid);
 			Assert.Empty(schema.Positionals);
 			Assert.Equal("commit-name, files", schema.RestPositional!.Description!.Key);
-			Assert.Equal("command.argument.skill.arguments", schema.RestPositional.Name.Key);
+			Assert.Equal("command.argument.arguments", schema.RestPositional.Name.Key);
 		}
 
 		[Fact]
 		public void ARequiredArgument_IsARequiredPositional()
 		{
-			var schema = SkillArgumentHintParser.Build("<pr-number>", out var invalid);
+			var schema = ArgumentHintParser.Build("<pr-number>", out var invalid);
 
 			Assert.False(invalid);
 			Assert.Null(schema.RestPositional);
@@ -55,7 +55,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void AnOptionalArgument_IsAnOptionalPositional()
 		{
-			var schema = SkillArgumentHintParser.Build("[issue-number]", out var invalid);
+			var schema = ArgumentHintParser.Build("[issue-number]", out var invalid);
 
 			Assert.False(invalid);
 			var positional = Assert.Single(schema.Positionals);
@@ -70,7 +70,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[InlineData("<a>\t[b]\n<c>", 3)]
 		public void MultipleArguments_ParseInOrder(string hint, int count)
 		{
-			var schema = SkillArgumentHintParser.Build(hint, out var invalid);
+			var schema = ArgumentHintParser.Build(hint, out var invalid);
 
 			Assert.False(invalid);
 			Assert.Equal(count, schema.Positionals.Count);
@@ -80,7 +80,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void ChoicesAndDescription_AreParsed()
 		{
-			var schema = SkillArgumentHintParser.Build("[mode:$low|medium|ultra:%Mode for something]", out var invalid);
+			var schema = ArgumentHintParser.Build("[mode:$low|medium|ultra:%Mode for something]", out var invalid);
 
 			Assert.False(invalid);
 			var positional = Assert.Single(schema.Positionals);
@@ -96,7 +96,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void DescriptionWithoutChoices_IsParsed()
 		{
-			var schema = SkillArgumentHintParser.Build("[name:%Just a description]", out var invalid);
+			var schema = ArgumentHintParser.Build("[name:%Just a description]", out var invalid);
 
 			Assert.False(invalid);
 			var positional = Assert.Single(schema.Positionals);
@@ -107,7 +107,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void AnEllipsis_MakesTheArgumentTheRestSlot()
 		{
-			var schema = SkillArgumentHintParser.Build("[files...]", out var invalid);
+			var schema = ArgumentHintParser.Build("[files...]", out var invalid);
 
 			Assert.False(invalid);
 			Assert.Empty(schema.Positionals);
@@ -120,7 +120,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void ARestSlot_CombinesWithPositionalsAndChoices()
 		{
-			var schema = SkillArgumentHintParser.Build("[commit-name] [files...:$a|b:%The files]", out var invalid);
+			var schema = ArgumentHintParser.Build("[commit-name] [files...:$a|b:%The files]", out var invalid);
 
 			Assert.False(invalid);
 			Assert.Equal("commit-name", Assert.Single(schema.Positionals).Name.Key);
@@ -134,7 +134,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void AnEscapedBracket_StaysInsideTheDescription()
 		{
-			var schema = SkillArgumentHintParser.Build(@"[name:%Has \] a bracket]", out var invalid);
+			var schema = ArgumentHintParser.Build(@"[name:%Has \] a bracket]", out var invalid);
 
 			Assert.False(invalid);
 			Assert.Equal("Has ] a bracket", Assert.Single(schema.Positionals).Description!.Key);
@@ -143,7 +143,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void AnEscapedPipe_StaysInsideAChoice()
 		{
-			var schema = SkillArgumentHintParser.Build(@"[x:$a\|b|c]", out var invalid);
+			var schema = ArgumentHintParser.Build(@"[x:$a\|b|c]", out var invalid);
 
 			Assert.False(invalid);
 			var format = Assert.IsType<ChoiceArgumentFormatProvider>(Assert.Single(schema.Positionals).Format);
@@ -159,13 +159,13 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[InlineData("<a]")] // mismatched brackets
 		public void AnUnparseableHint_FallsBackAndReportsInvalid(string hint)
 		{
-			var schema = SkillArgumentHintParser.Build(hint, out var invalid);
+			var schema = ArgumentHintParser.Build(hint, out var invalid);
 
 			Assert.True(invalid);
 			Assert.Empty(schema.Positionals);
 
 			var rest = Assert.IsType<SlashCommandArgument>(schema.RestPositional);
-			Assert.Equal("command.argument.skill.arguments", rest.Name.Key);
+			Assert.Equal("command.argument.arguments", rest.Name.Key);
 			Assert.Equal(hint, rest.Description!.Key);
 		}
 	}

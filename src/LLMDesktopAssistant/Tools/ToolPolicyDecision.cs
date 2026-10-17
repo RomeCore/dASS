@@ -31,7 +31,7 @@ public enum ToolPolicyDecision
 	/// (e.g., <see cref="Forms.FormsToolModule"/> or a custom diff preview).
 	/// The <see cref="LLM.Services.Tools.ToolExecutionService"/> must wait
 	/// for the tool's own confirmation mechanism before proceeding.
-	/// When <see cref="ToolExecutionContext.RunningInUI"/> is <see langword="false"/>,
+	/// When <see cref="LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext.RunningInUi"/> is <see langword="false"/>,
 	/// this should be treated as <see cref="Approve"/>.
 	/// </summary>
 	Ask = 1 << 1,

@@ -3,6 +3,8 @@ using System.Numerics;
 using LLMDesktopAssistant.Calculation;
 using LLMDesktopAssistant.Calculation.Ast;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using RCParsing;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -99,7 +101,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private ReactiveToolResult Calculate([Description("Expression to evaluate")] string expression)
+		private ToolExecutionResult Calculate(IToolExecutionContext ctx,
+			[Description("Expression to evaluate")] string expression)
 		{
 			try
 			{
@@ -109,34 +112,25 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				var result = resultEntity.ToComplexOrThrow();
 				var formatted = FormatComplex(result);
 
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{expression}` = `{formatted}`",
-					ResultContent = formatted
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult(formatted);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{expression}` = `{formatted}`");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (MathEvaluationException mex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{expression}`",
-					ResultContent = "Error evaluating expression: " + mex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error evaluating expression: " + mex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{expression}`");
+				return ToolExecutionResult.Failed;
 			}
 			catch (ParsingException pex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{expression}`",
-					ResultContent = "Error parsing expression: " + pex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error parsing expression: " + pex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{expression}`");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private ReactiveToolResult Solve(
+		private ToolExecutionResult Solve(IToolExecutionContext ctx,
 			[Description("Equation to solve. Examples: 'x^2 - 4 = 0', 'sin(x) - 0.5', 'x^3 - 2*x - 5 = 0'")] string equation,
 			[Description("Variable to solve for. Default: 'x'")] string variable = "x",
 			[Description("Left bound of the search range. Default: -100")] double rangeStart = -100.0,
@@ -158,43 +152,33 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (roots.Length == 0)
 				{
-					return new ReactiveToolResult
-					{
-						StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-						StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.no_roots", $"`{equation}`"),
-						ResultContent = "No real roots found in the specified range. Try 'math-solve-complex' for complex roots."
-					}.CompleteWithSuccess();
+					ctx.Call.SetResult("No real roots found in the specified range. Try 'math-solve-complex' for complex roots.");
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus,
+						LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.no_roots", $"`{equation}`"));
+					return ToolExecutionResult.Succeeded;
 				}
 
 				var formatted = string.Join(", ", roots.Select(r => r.ToString("G")));
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.status", $"`{equation}`", roots.Length),
-					ResultContent = $"Roots found for '{variable}': {formatted}"
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult($"Roots found for '{variable}': {formatted}");
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus,
+					LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.status", $"`{equation}`", roots.Length));
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (MathEvaluationException mex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{equation}`",
-					ResultContent = "Error evaluating equation: " + mex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error evaluating equation: " + mex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{equation}`");
+				return ToolExecutionResult.Failed;
 			}
 			catch (ParsingException pex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{equation}`",
-					ResultContent = "Error parsing equation: " + pex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error parsing equation: " + pex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{equation}`");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private ReactiveToolResult SolveComplex(
+		private ToolExecutionResult SolveComplex(IToolExecutionContext ctx,
 			[Description("Equation to solve. Examples: 'x^2 + 1 = 0', 'x^3 - 1 = 0', 'x^2 + x + 1 = 0'")] string equation,
 			[Description("Variable to solve for. Default: 'z'")] string variable = "z",
 			[Description("Half-range for real part. Scans [-reRange, reRange]. Default: 10")] double reRange = 10.0,
@@ -217,39 +201,28 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (roots.Length == 0)
 				{
-					return new ReactiveToolResult
-					{
-						StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-						StatusTitle = $"`{equation}`",
-						ResultContent = "No complex roots found in the specified region. Try increasing reRange/imRange or decreasing gridStep."
-					}.CompleteWithSuccess();
+					ctx.Call.SetResult("No complex roots found in the specified region. Try increasing reRange/imRange or decreasing gridStep.");
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{equation}`");
+					return ToolExecutionResult.Succeeded;
 				}
 
 				var formatted = string.Join(", ", roots.Select(r => FormatComplex(r)));
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.status", $"`{equation}`", roots.Length),
-					ResultContent = $"Complex roots found for '{variable}': {formatted}"
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult($"Complex roots found for '{variable}': {formatted}");
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus,
+					LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.status", $"`{equation}`", roots.Length));
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (MathEvaluationException mex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{equation}`",
-					ResultContent = "Error evaluating equation: " + mex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error evaluating equation: " + mex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{equation}`");
+				return ToolExecutionResult.Failed;
 			}
 			catch (ParsingException pex)
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = Material.Icons.MaterialIconKind.Abacus,
-					StatusTitle = $"`{equation}`",
-					ResultContent = "Error parsing equation: " + pex.Message
-				}.CompleteWithError();
+				ctx.Call.SetResult("Error parsing equation: " + pex.Message);
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus, $"`{equation}`");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

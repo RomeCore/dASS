@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Domain;
@@ -95,6 +94,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			- The result is a structured table containing content, success status, and metadata.
 			""";
 		
+		// Kept for the P4 dispatcher: a nested call needs the chat scope to build its own context.
 		private readonly Chat _chat;
 		private readonly IToolsetCacheService _toolsetCache;
 
@@ -111,41 +111,19 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			return null;
 		}
 
-		public async Task<LuaTuple> Call(LuaCallingContext ctx, LuaValue[] args)
+		public Task<LuaTuple> Call(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1 || args[0] is not LuaString functionName)
 				throw new LuaRuntimeException("dass.tool.call(name, args): first argument must be a string (tool name).");
 
-			var arguments = args.Length > 1 ? args[1] : LuaNil.Instance;
-			if (arguments is not LuaTable)
-				arguments = new LuaTable();
-
-			if (!_toolsetCache.AvailableTools.TryGetValue(functionName.Value, out var tool))
+			if (!_toolsetCache.AvailableTools.ContainsKey(functionName.Value))
 				throw new LuaRuntimeException($"Tool '{functionName.Value}' not found.");
 
-			var jsonArgs = StructuredLuaConverter.LuaValueToJsonNode(arguments) ?? new JsonObject();
-			var context = ctx.TryGetToolExecutionContext();
-			if (context == null)
-			{
-				context = ToolExecutionContext.CreateDummy(tool, jsonArgs, _chat);
-			}
-			var reactiveResult = await tool.Executor.Invoke(jsonArgs, context, CancellationToken.None);
-
-			var success = await reactiveResult.Completion;
-			var content = reactiveResult.ResultContent;
-			var structured = StructuredLuaConverter.JsonNodeToLuaValue(reactiveResult.StructuredResult);
-
-			var resultTable = new LuaTable();
-			resultTable["content"] = new LuaString(content);
-			resultTable["structured"] = structured;
-			resultTable["success"] = LuaBoolean.FromBoolean(success);
-			resultTable["tool"] = ToolToTable(tool);
-			if (reactiveResult.StatusTitle != null)
-				resultTable["status_title"] = new LuaString(reactiveResult.StatusTitle);
-			if (reactiveResult.StatusIcon != null)
-				resultTable["status_icon"] = new LuaString(reactiveResult.StatusIcon.ToString() ?? string.Empty);
-
-			return new LuaTuple(resultTable);
+			// TODO(P4): run the nested call through the tool invocation dispatcher. The tool has to execute
+			// against its own call (ToolInvocationSource.Script) so that it does not overwrite the call of the
+			// script that is asking; no IToolCall implementation exists yet, so the context cannot be built here.
+			throw new LuaRuntimeException(
+				"dass.tool.call is unavailable until the tool invocation dispatcher lands (P4).");
 		}
 
 		public LuaTuple ListTools(LuaCallingContext ctx, LuaValue[] args)

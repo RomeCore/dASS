@@ -1,8 +1,10 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Scripting;
 using LLMDesktopAssistant.Utils;
 using Microsoft.CodeAnalysis.Scripting;
@@ -35,59 +37,56 @@ namespace LLMDesktopAssistant.Scripting.CSX
 		}
 
 		/// <inheritdoc/>
-		public Func<JsonNode?, ToolExecutionContext, CancellationToken, Task<ReactiveToolResult>> CreateExecutor(ToolInfo tool)
+		public IToolMainExecutor CreateExecutor(ToolInfo tool)
 		{
-			return (JsonNode? args, ToolExecutionContext context, CancellationToken cancellationToken) =>
+			return new DelegateMainExecutor(async (args, ctx, cancellationToken) =>
 			{
-				var reactiveResult = new ReactiveToolResult();
+				var result = new CSharpScriptToolResult(ctx.Call);
 
-				_ = Task.Run(async () =>
+				try
 				{
-					try
+					var workdir = ctx.Services.GetService<IWorkingDirectoryAccessService>()?.GetWorkingDirectory();
+
+					var globals = new CSharpScriptToolGlobals
 					{
-						var workdir = context.Chat.Services.GetService<IWorkingDirectoryAccessService>()?.GetWorkingDirectory();
+						ToolArgs = args,
+						Context = ctx,
+						Result = result,
+						Workdir = workdir ?? Directories.DefaultWorkingDirectory,
+					};
 
-						var globals = new CSharpScriptToolGlobals
+					var returnValue = await _scriptService.RunAsync(tool.Body, globals, cancellationToken);
+
+					if (ctx.Call.StructuredResult == null && returnValue != null)
+					{
+						try
 						{
-							ToolArgs = args,
-							Context = context,
-							Result = new CSharpScriptToolResult(reactiveResult),
-							Workdir = workdir ?? Directories.DefaultWorkingDirectory,
-						};
-
-						var returnValue = await _scriptService.RunAsync(tool.Body, globals, cancellationToken);
-
-						if (reactiveResult.StructuredResult == null && returnValue != null)
-						{
-							try
-							{
-								reactiveResult.StructuredResult = JsonSerializer.SerializeToNode(returnValue);
-							}
-							catch (Exception ex)
-							{
-								reactiveResult.ResultContentLines.Add("Failed to serialize return value: " + ex.Message);
-							}
+							ctx.Call.SetStructuredResult(JsonSerializer.SerializeToNode(returnValue));
 						}
+						catch (Exception ex)
+						{
+							result.Write("Failed to serialize return value: " + ex.Message);
+						}
+					}
 
-						reactiveResult.ResultContentLines.Add("Script returned: " + returnValue);
-						reactiveResult.TryCompleteWithSuccess();
-					}
-					catch (CompilationErrorException cex)
-					{
-						reactiveResult.ResultContentLines.Add("Compilation errors:");
-						foreach (var diagnostic in cex.Diagnostics)
-							reactiveResult.ResultContentLines.Add(diagnostic.ToString());
-						reactiveResult.TryCompleteWithError();
-					}
-					catch (Exception ex)
-					{
-						reactiveResult.ResultContentLines.Add("Caught error: " + ex.Message);
-						reactiveResult.TryCompleteWithError();
-					}
-				}, CancellationToken.None);
+					result.Write("Script returned: " + returnValue);
+					result.CompleteWithSuccess();
+				}
+				catch (CompilationErrorException cex)
+				{
+					result.Write("Compilation errors:");
+					foreach (var diagnostic in cex.Diagnostics)
+						result.Write(diagnostic.ToString());
+					result.CompleteWithError();
+				}
+				catch (Exception ex)
+				{
+					result.Write("Caught error: " + ex.Message);
+					result.CompleteWithError();
+				}
 
-				return Task.FromResult(reactiveResult);
-			};
+				return result.ToExecutionResult();
+			});
 		}
 	}
 }

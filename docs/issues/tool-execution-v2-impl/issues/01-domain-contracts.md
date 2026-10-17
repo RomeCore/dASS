@@ -1,6 +1,6 @@
 # P1 — Domain contracts
 
-Status: open
+Status: resolved
 Type: task
 Blocked by:
 
@@ -65,8 +65,8 @@ Tools/Execution/Support/       LLMDesktopAssistant.Tools.Execution.Support
 `AddAdditionalData` appends to `AdditionalData`.
 
 `AgentToolCall` implements `IToolCall`: unify its status on `ToolStatus` (delete `AgentToolCallStatus`),
-make `ExpectedBehaviour` nullable, add the neutral result members. Its `AddAdditionalData` applies the
-lossy task rule: `NativeAttachmentMessagePart` → attachment via
+keep `ExpectedBehaviour` aligned with the interface, add the neutral result members. Its
+`AddAdditionalData` applies the lossy task rule: `NativeAttachmentMessagePart` → attachment via
 `AgentAttachment.TryConvertFromNativeAttachment`, everything else dropped.
 
 ## Out of scope
@@ -80,3 +80,44 @@ and the four `*Creator` classes stay until P2.
 - `Domain.ToolCall` and `AgentToolCall` satisfy `IToolCall`.
 - `ToolArgumentsAccessor` has unit tests for override precedence and cache invalidation.
 - No behaviour change: the running app still executes tools exactly as before.
+
+## Answer
+
+Landed under `Tools/Execution/`:
+
+- `Domain/` — `IToolDescriptor`, `IToolCall`, `IToolExecutionContext`, `IToolCallHost`, the six executor
+  interfaces, the leaf result types, `ToolAttachment`, `ToolSyncKey`, `ToolPolicyReason`,
+  `ToolInvocationSource`, `StreamingMode`, `ApprovalHelperConfig`, `IToolArgumentStream`,
+  `IToolArgumentsAccessor`, `IConfirmationSink`, `ToolInvocationRequest`, `MissingToolDescriptor`.
+- `Contexts/` — `ToolContextCreationParams`, `IToolExecutionContextFactory`, `ChatToolExecutionContext`,
+  `AgentTaskExecutionContext`, `ChatToolContextFactory`, `TaskToolContextFactory`.
+- `Support/` — `ToolArgumentsAccessor`, `ToolCallExtensions`.
+
+Concrete projections:
+
+- `Domain.ToolCall` implements `IToolCall`. `CancellationTokenSource` and the progress range are reactive
+  runtime-only properties; `ExpectedBehaviour` keeps its persisted null and implements the interface
+  explicitly. The cancellation source is disposed with the call.
+- `AgentToolCall` implements `IToolCall`; its status is unified on `ToolStatus` and
+  `AgentToolCallStatus` is deleted. `AddAdditionalData` keeps only a `NativeAttachmentMessagePart`
+  (projected through `AgentAttachment.TryConvertFromNativeAttachment`) and drops everything else.
+- `ChatMessage` and `AgentAssistantMessage` implement `IToolCallHost`.
+
+Deviations and corrections:
+
+- `ToolContextCreationParams.Host` is `IToolCallHost?`, not the spec's `ChatMessage?`: the task's
+  `AgentAssistantMessage` does not derive from `ChatMessage`, and the core only needs the sibling calls.
+- The request's `Descriptor` is nullable; the dispatcher substitutes `MissingToolDescriptor`, so
+  `IToolExecutionContext.Descriptor` is never null and no stage null-checks it.
+- `ToolCallExtensions` mirrors the useful subset of the old reactive surface. There is no completion
+  method: the executor task is the completion.
+
+Verification:
+
+- The core project builds with zero warnings.
+- Accessor and task-projection tests are added at `tests/LLMDesktopAssistant.Tests/Tools/`.
+- A pre-existing stale test was repaired on the way: `SkillArgumentHintParserTests` referenced the
+  renamed `ArgumentHintParser` and the old `command.argument.skill.arguments` locale keys; the file is now
+  `ArgumentHintParserTests.cs` and matches the current parser.
+- The whole `LLMDesktopAssistant.Tests` suite is green: 1175 tests, 1174 passed, 1 skipped
+  (the long-standing YamlDotNet colon skip), 0 failed.

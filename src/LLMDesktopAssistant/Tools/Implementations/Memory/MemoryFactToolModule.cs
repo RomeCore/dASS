@@ -4,6 +4,9 @@ using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
 
@@ -70,29 +73,26 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 			});
 		}
 
-		private async Task StoreAsync(
+		private async Task<ToolExecutionResult> StoreAsync(
 			[Description("The memory block where the fact should be stored")] string block,
 			[Description("The fact to store in the memory block in user's language. Examples: 'User is vegetarian' or 'User likes pizza'")] string fact,
 			[Description("The importance of the fact, from 0.0 (least important) to 1.0 (most important)")] double importance,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The ID of the fact to supersede. If not provided, conflicts will be reported. If 0, the fact will be stored without superseding any existing facts.")] int? supersedeId = null,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseAdd;
-			result.StatusTitle = $"**{fact}** → *{block}*";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseAdd, $"**{fact}** → *{block}*");
 
 			var (targetBlock, error) = GetBlock(ctx, block, requireReading: false, requireWriting: true, requireFacts: true);
 			if (targetBlock is null)
 			{
-				result.ResultContent = error ?? $"Memory block '{block}' is not available.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(error ?? $"Memory block '{block}' is not available.");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
 			{
-				int messageId = ctx.FindMessageId();
+				int messageId = ((ChatToolExecutionContext)ctx).FindMessageId();
 
 				var similarFacts = await _memoryFactStore.SearchAsync(targetBlock, fact, maxCount: 10, cancellationToken: cancellationToken);
 				var highestScore = similarFacts.MaxBy(f => f.CosineScore ?? 0);
@@ -115,58 +115,53 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 							.Where(f => (f.CosineScore ?? 0) >= 0.6)
 							.Select(f => $"- **{f.CosineScore:0.00}** [id: {f.Id}] {f.Text}"));
 
-						result.StatusIcon = MaterialIconKind.DatabaseRefresh;
-						result.ResultContent = $"""
+						ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseRefresh);
+						ctx.Call.SetResult($"""
 							Conflict detected with similar facts (cosine score >= 0.6):
 							{conflicts}
 
 							Call tool again with supersedeId=<fact id> to supersede the desired fact or supersedeId=0 to append a new fact.
-							""";
-						result.CompleteWithSuccess();
-						return;
+							""");
+						return ToolExecutionResult.Succeeded;
 					}
 					else
 					{
 						if (supersedeId == 0)
 						{
 							var storedFact = await _memoryFactStore.StoreAsync(targetBlock, fact, Chat.Id, messageId, importance, cancellationToken);
-							result.StatusIcon = MaterialIconKind.DatabaseCheck;
-							result.ResultContent = $"Fact stored successfully. ID: {storedFact.Id}";
-							result.CompleteWithSuccess();
-							return;
+							ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+							ctx.Call.SetResult($"Fact stored successfully. ID: {storedFact.Id}");
+							return ToolExecutionResult.Succeeded;
 						}
 						else
 						{
 							var storedFact = await _memoryFactStore.SupersedeAsync(targetBlock, supersedeId.Value, fact, Chat.Id, messageId, importance, cancellationToken);
-							result.StatusIcon = MaterialIconKind.DatabaseEdit;
+							ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseEdit);
 							if (supersedeId.Value == highestScore.Id)
-								result.ResultContent = $"Fact stored with supersede successfully. ID: {storedFact.Id}, supersed fact [id: {highestScore.Id}]: {highestScore.Text}";
+								ctx.Call.SetResult($"Fact stored with supersede successfully. ID: {storedFact.Id}, supersed fact [id: {highestScore.Id}]: {highestScore.Text}");
 							else
-								result.ResultContent = $"Fact stored with supersede successfully. ID: {storedFact.Id}";
-							result.CompleteWithSuccess();
-							return;
+								ctx.Call.SetResult($"Fact stored with supersede successfully. ID: {storedFact.Id}");
+							return ToolExecutionResult.Succeeded;
 						}
 					}
 				}
 				else
 				{
 					var storedFact = await _memoryFactStore.StoreAsync(targetBlock, fact, Chat.Id, messageId, importance, cancellationToken);
-					result.StatusIcon = MaterialIconKind.DatabaseCheck;
-					result.ResultContent = $"Fact stored successfully. ID: {storedFact.Id}";
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+					ctx.Call.SetResult($"Fact stored successfully. ID: {storedFact.Id}");
+					return ToolExecutionResult.Succeeded;
 				}
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to store fact in memory block '{block}'. Error: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to store fact in memory block '{block}'. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task RetrieveAsync(
+		private async Task<ToolExecutionResult> RetrieveAsync(
 			[Description("The memory blocks where the fact should be retrieved. Use null to retrieve from all enabled memory blocks")] string[]? blocks,
 			[Description("""
 				The queries to retrieve by in user's language.
@@ -175,29 +170,26 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 				use hypothetical answers instead (e.g. "The user's food preferences is vegetarian or meat eater.")
 				or keywords (e.g. "food preferences" or "dietary restrictions")
 				""")] string[] queries,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The minimum importance score of facts to return, from 0.0 (any importance) to 1.0 (only the most important)")] double minImportance = 0.0,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseSearch;
+			ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseSearch);
 
 			if (queries.Length == 0)
 			{
-				result.ResultContent = "No queries blocks to search by.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult("No queries blocks to search by.");
+				return ToolExecutionResult.Failed;
 			}
 
-			result.StatusTitle = $"**{queries[0]}**";
+			ctx.Call.SetStatusTitle($"**{queries[0]}**");
 
 			var resolution = GetBlocks(ctx, blocks, requireReading: true, requireWriting: false, requireFacts: true);
 
 			if (!resolution.HasBlocks)
 			{
-				result.ResultContent = resolution.BuildError("No memory blocks with facts enabled are available to search in.");
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(resolution.BuildError("No memory blocks with facts enabled are available to search in."));
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -239,36 +231,32 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 					sb.AppendJoin(' ', resolution.Excluded.Values);
 				}
 
-				result.UseMarkdown = true;
-				result.ResultContent = sb.ToString();
-				result.CompleteWithSuccess();
+				ctx.Call.UseMarkdown = true;
+				ctx.Call.SetResult(sb.ToString());
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to retrieve facts. Error: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to retrieve facts. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task ForgetAsync(
+		private async Task<ToolExecutionResult> ForgetAsync(
 			[Description("The memory block that contains the fact")] string block,
 			[Description("The ID of the fact to forget")] int factId,
-			ReactiveToolResult result,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			[Description("The deletion mode: 'soft' (default) marks the fact as Deleted and keeps it restorable; 'hard' removes the fact permanently.")] string mode = "soft",
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseRemove;
-			result.StatusTitle = $"**{block}** [id: {factId}]";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseRemove, $"**{block}** [id: {factId}]");
 
 			var (targetBlock, error) = GetBlock(ctx, block, requireReading: false, requireWriting: true, requireFacts: true);
 			if (targetBlock is null)
 			{
-				result.ResultContent = error ?? $"Memory block '{block}' is not available.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult(error ?? $"Memory block '{block}' is not available.");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -280,17 +268,17 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 				else
 					await _memoryFactStore.SoftDeleteAsync(targetBlock, factId, cancellationToken);
 
-				result.StatusIcon = MaterialIconKind.DatabaseCheck;
-				result.ResultContent = hardDelete
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+				ctx.Call.SetResult(hardDelete
 					? $"Fact [id: {factId}] permanently deleted from memory block '{block}'."
-					: $"Fact [id: {factId}] forgotten in memory block '{block}'. It can be restored later.";
-				result.CompleteWithSuccess();
+					: $"Fact [id: {factId}] forgotten in memory block '{block}'. It can be restored later.");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to forget fact [id: {factId}] in memory block '{block}'. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to forget fact [id: {factId}] in memory block '{block}'. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

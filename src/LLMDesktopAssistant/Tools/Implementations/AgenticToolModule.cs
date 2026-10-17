@@ -15,9 +15,13 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Providers;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using RCLargeLanguageModels;
 using SixLabors.ImageSharp;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -91,7 +95,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private async Task CallAgent(
+		private async Task<ToolExecutionResult> CallAgent(
 			[Description("The title of the agent call to be visible in UI")] string? callTitle,
 			[Description("The system prompt to use in the agent's context")] string systemPrompt,
 			[Description("The user message to send to the agent")] string userMessage,
@@ -102,8 +106,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				A list of memory block names to make accessible to the agent via memory tools.
 				Memory must be enabled for the chat and the calling agent.
 				""")] string[] allowedMemoryBlocks,
-			ToolExecutionContext ctx,
-			ReactiveToolResult result,
+			IToolExecutionContext ctx,
 			[Description("""
 				If true - waits for end of execution and returns the contents of last message.
 				If false - returns agent task ID immediately, the agent will continue to run in the background.
@@ -113,10 +116,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var modelName = _chatSettings.Settings.Models.GetEffectiveSelection().AgenticToolsModel;
 			if (string.IsNullOrEmpty(modelName))
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = "No agentic model selected. Say user to select an agentic model first.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult("No agentic model selected. Say user to select an agentic model first.");
+				return ToolExecutionResult.Failed;
 			}
 
 			LLModel llm;
@@ -126,14 +128,15 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = $"Agentic model '{modelName}' is not available: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult($"Agentic model '{modelName}' is not available: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 
 			// Returns null if tool initiator is user
-			var agentDescriptor = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agentDescriptor = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 
 			var errorSb = new StringBuilder();
 
@@ -242,17 +245,16 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			if (errorSb.Length > 0)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = errorSb.ToString();
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult(errorSb.ToString());
+				return ToolExecutionResult.Failed;
 			}
 
 			var policy = agentDescriptor?.Tools.GetEffectivePolicy(_chatSettings.Settings) ?? default;
 			ToolBehaviour autoApproveBehaviours = policy.AutoApproveBehaviours,
 				disallowedBehaviours = policy.DisallowedBehaviours;
 
-			result.StatusIcon = MaterialIconKind.Robot;
+			ctx.Call.SetStatusIcon(MaterialIconKind.Robot);
 
 			try
 			{
@@ -262,7 +264,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					TaskName = callTitle,
 					TriggeredChat = ctx.Chat,
-					TriggeredMessage = ctx.Message,
+					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					Model = llm,
 					Tools = tools.ToImmutableList(),
 					Skills = skills.ToImmutableList(),
@@ -280,49 +282,46 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					await agentTask;
 
-					result.ResultContent = string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
-							"Agent did not generate any content." : agentTask.LastGeneratedContent;
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetResult(string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
+							"Agent did not generate any content." : agentTask.LastGeneratedContent);
+					return ToolExecutionResult.Succeeded;
 				}
 				else
 				{
-					result.ResultContent = $"Agent launched with task ID {agentTask.Id}.";
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetResult($"Agent launched with task ID {agentTask.Id}.");
+					return ToolExecutionResult.Succeeded;
 				}
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = "An error occurred while calling the agent: " + ex.Message;
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult("An error occurred while calling the agent: " + ex.Message);
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private async Task CallSubAgent(
+		private async Task<ToolExecutionResult> CallSubAgent(
 			[Description("The name of predefined sub-agent")] string agentName,
 			[Description("The user message to send to the agent")] string input,
-			ToolExecutionContext ctx,
-			ReactiveToolResult result,
+			IToolExecutionContext ctx,
 			[Description("""
 				If true - waits for end of execution and returns the contents of last message.
 				If false - returns agent task ID immediately, the agent will continue to run in the background.
 				""")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
-			var agentDescriptor = _agentManager.TryGetSenderAgentDescriptor(ctx.Message);
+			var agentDescriptor = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 
 			var subAgent = agentDescriptor is not null ?
 				_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).FirstOrDefault(a => a.Name == agentName) :
 				_subAgentsetCollector.GetAvailableAddons().FirstOrDefault(a => a.Name == agentName);
 			if (subAgent is null)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = $"Sub-agent '{agentName}' not found.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult($"Sub-agent '{agentName}' not found.");
+				return ToolExecutionResult.Failed;
 			}
 
 			var policy = agentDescriptor?.Tools.GetEffectivePolicy(_chatSettings.Settings) ?? default;
@@ -336,7 +335,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					TaskName = subAgent.Name,
 					TriggeredChat = ctx.Chat,
-					TriggeredMessage = ctx.Message,
+					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					InitialMessages = [],
 					AutoApproveBehaviours = autoApproveBehaviours,
 					DisallowedBehaviours = disallowedBehaviours
@@ -348,21 +347,19 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (errors.Count > 0)
 				{
-					result.StatusIcon = MaterialIconKind.RobotDead;
-					result.ResultContent = string.Join(Environment.NewLine, errors);
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+					ctx.Call.SetResult(string.Join(Environment.NewLine, errors));
+					return ToolExecutionResult.Failed;
 				}
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = "An error occurred while resolving the sub-agent: " + ex.Message;
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult("An error occurred while resolving the sub-agent: " + ex.Message);
+				return ToolExecutionResult.Failed;
 			}
 
-			result.StatusIcon = MaterialIconKind.Robot;
+			ctx.Call.SetStatusIcon(MaterialIconKind.Robot);
 
 			try
 			{
@@ -374,86 +371,77 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					await agentTask;
 
-					result.ResultContent = string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
-							"Sub-agent did not generate any content." : agentTask.LastGeneratedContent;
-					result.UseMarkdown = true;
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetResult(string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
+							"Sub-agent did not generate any content." : agentTask.LastGeneratedContent);
+					ctx.Call.UseMarkdown = true;
+					return ToolExecutionResult.Succeeded;
 				}
 
-				result.ResultContent = $"Sub-agent launched with task ID {agentTask.Id}.";
-				result.CompleteWithSuccess();
+				ctx.Call.SetResult($"Sub-agent launched with task ID {agentTask.Id}.");
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.RobotDead;
-				result.ResultContent = "An error occurred while calling the sub-agent: " + ex.Message;
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
+				ctx.Call.SetResult("An error occurred while calling the sub-agent: " + ex.Message);
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private StreamingToolArgumentsAnalysisResult DescribeImageStreaming(
+		private StreamingToolAnalysisResult DescribeImageStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Image,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult DescribeImagePreview(
+		private DomainPreviewResult DescribeImagePreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
 
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+
 			if (!File.Exists(fullPath))
 			{
-				return new PreviewToolExecutionResult
+				ctx.Call.SetResult($"File not found: {path}");
+				return new DomainPreviewResult
 				{
-					StatusIcon = MaterialIconKind.Image,
-					StatusTitle = $"**{path}**",
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
-					InterruptingSuccess = false,
-					InterruptingContent = $"File not found: {path}"
+					InterruptingSuccess = false
 				};
 			}
 
-			return new PreviewToolExecutionResult
+			return new DomainPreviewResult
 			{
-				StatusIcon = MaterialIconKind.Image,
-				StatusTitle = $"**{path}**",
 				ExpectedBehaviour = ToolBehaviour.AgentExecution | ToolBehaviour.LongRunningTask | ToolBehaviour.FileRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 			};
 		}
 
-		private async Task DescribeImage(
+		private async Task<ToolExecutionResult> DescribeImage(
 			[SharedContext] string? fullPath,
-			ReactiveToolResult result,
 			[Description("The title of the agent call to be visible in UI")] string? callTitle,
 			[Description("The path to the image file to describe")] string path,
-			ToolExecutionContext ctx,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{
-			result.StatusIcon = MaterialIconKind.Image;
-			result.StatusTitle = $"**{path}**";
-			result.UseMarkdown = true;
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+			ctx.Call.UseMarkdown = true;
 
 			var modelName = _chatSettings.Settings.Models.GetEffectiveSelection().VisionModel;
 			if (string.IsNullOrEmpty(modelName))
 			{
-				result.ResultContent = $"No vision model selected. Say user to select a vision model first.";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult($"No vision model selected. Say user to select a vision model first.");
+				return ToolExecutionResult.Failed;
 			}
 
 			if (!File.Exists(fullPath))
 			{
-				result.ResultContent = $"File not found: {path}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult($"File not found: {path}");
+				return ToolExecutionResult.Failed;
 			}
 
 			LLModel llm;
@@ -463,9 +451,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 			catch (Exception ex)
 			{
-				result.ResultContent = $"Vision model '{modelName}' is not available: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetResult($"Vision model '{modelName}' is not available: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 
 			try
@@ -482,7 +469,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					TaskName = callTitle,
 					TriggeredChat = ctx.Chat,
-					TriggeredMessage = ctx.Message,
+					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					Model = llm,
 					InitialMessages = [
 						new AgentSystemMessage { Content = _templates.GetTextTemplate("image_describer_prompt").Render().ToString()! },
@@ -497,16 +484,16 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					]
 				}, cancellationToken);
 
-				result.ResultContent = agentTask.LastGeneratedContent ?? string.Empty;
+				ctx.Call.SetResult(agentTask.LastGeneratedContent ?? string.Empty);
 
 				int tokenCounter = 0;
 				void LastResponseChanged(object? sender, PropertyChangedEventArgs e)
 				{
-					result.ResultContent = agentTask.LastGeneratedContent ?? string.Empty;
+					ctx.Call.SetResult(agentTask.LastGeneratedContent ?? string.Empty);
 					tokenCounter++;
 
 					if (tokenCounter > 1)
-						result.StatusTitle = string.Format(LocalizationManager.LocalizeStatic("tool.status.agent-describe_image.status"), tokenCounter);
+						ctx.Call.SetStatusTitle(string.Format(LocalizationManager.LocalizeStatic("tool.status.agent-describe_image.status"), tokenCounter));
 				}
 				agentTask.PropertyChanged += LastResponseChanged;
 
@@ -519,14 +506,14 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					agentTask.PropertyChanged -= LastResponseChanged;
 				}
 
-				result.StatusTitle = null;
-				result.CompleteWithSuccess();
+				ctx.Call.SetStatusTitle(null);
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.ResultContentLines.Add($"Got error: {ex.Message}. " +
+				ctx.Call.AppendResultLine($"Got error: {ex.Message}. " +
 					$"May be the model is not a vision model or API is down. Please try again later.");
-				result.CompleteWithError();
+				return ToolExecutionResult.Failed;
 			}
 		}
 	}

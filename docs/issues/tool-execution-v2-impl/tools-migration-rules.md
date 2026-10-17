@@ -64,6 +64,7 @@ work; progress and UI updates go to `ctx.Call`, which is the same object the UI 
 Recognised by the binder:
 
 - `IToolExecutionContext` — once
+- `IToolCall` — once; a shorthand for `ctx.Call` when a method only needs the call
 - `[OriginalArgs] JsonNode` — once
 - `[SharedContext] T` — once
 - `CancellationToken` — once

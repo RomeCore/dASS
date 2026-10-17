@@ -429,7 +429,7 @@ public class SkillParserTests
 		Assert.Null(skill.ArgumentHint);
 
 		var rest = Assert.IsType<SlashCommandArgument>(skill.ArgumentSchema!.RestPositional);
-		Assert.Equal("command.argument.skill.arguments", rest.Name.Key);
+		Assert.Equal("command.argument.arguments", rest.Name.Key);
 	}
 
 	[Fact]

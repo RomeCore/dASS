@@ -3,6 +3,9 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
@@ -84,7 +87,7 @@ namespace LLMDesktopAssistant.MCP
 				DescriptionGetter = _ => description,
 				ArgumentSchema = argSchema,
 				OutputSchema = mcpTool.ReturnJsonSchema?.ToNodeSafe() as JsonObject,
-				Executor = CreateExecutor(connection, mcpTool),
+				Main = CreateExecutor(connection, mcpTool),
 				ToolSource = ToolSource.MCP,
 				DefaultExpectedBehaviour = ToolBehaviour.MCP,
 				NameKey = Locale.GetConstKey(mcpTool.Title ?? mcpTool.Name),
@@ -93,60 +96,46 @@ namespace LLMDesktopAssistant.MCP
 			return toolInfo;
 		}
 
-		private static Func<JsonNode?, ToolExecutionContext, CancellationToken, Task<ReactiveToolResult>> CreateExecutor(
-			MCPConnection connection, McpClientTool mcpTool)
+		private static IToolMainExecutor CreateExecutor(MCPConnection connection, McpClientTool mcpTool)
 		{
-			async Task<ReactiveToolResult> ExecuteFunction(JsonNode? args, ToolExecutionContext context, CancellationToken cancellationToken)
+			return new DelegateMainExecutor(async (args, ctx, cancellationToken) =>
 			{
-				var reactiveResult = new ReactiveToolResult
+				try
 				{
-				};
+					var dictArgs = args.Deserialize<Dictionary<string, object?>>();
+					var result = await mcpTool.CallAsync(dictArgs, cancellationToken: cancellationToken);
 
-				_ = Task.Run(async () =>
-				{
-					try
+					var contents = string.Join("\n\n", result.Content.Select(c =>
 					{
-						var dictArgs = args.Deserialize<Dictionary<string, object?>>();
-						var result = await mcpTool.CallAsync(dictArgs, cancellationToken: cancellationToken);
-
-						var contents = string.Join("\n\n", result.Content.Select(c =>
-							{
 						if (c is TextContentBlock textCb)
 							return textCb.Text;
 						Log.Warning("MCP Tool Executor: content type {Type} is not supported.", c.Type);
 						return "";
 					}));
 
-						reactiveResult.StructuredResult = result.StructuredContent?.ToNodeSafe();
+					ctx.Call.SetStructuredResult(result.StructuredContent?.ToNodeSafe());
 
-						if (result.IsError == true)
-						{
-							if (string.IsNullOrWhiteSpace(contents))
-								reactiveResult.ResultContent = "Tool executed with an error.";
-							else
-								reactiveResult.ResultContent = contents;
-							reactiveResult.CompleteWithError();
-						}
-						else
-						{
-							if (string.IsNullOrWhiteSpace(contents))
-								reactiveResult.ResultContent = "Tool executed successfully with no output.";
-							else
-								reactiveResult.ResultContent = contents;
-							reactiveResult.CompleteWithSuccess();
-						}
-					}
-					catch (Exception ex)
+					if (result.IsError == true)
 					{
-						reactiveResult.ResultContent = $"Error calling MCP '{connection.Info.Name}' tool: {ex.Message}";
-						reactiveResult.CompleteWithError();
+						if (string.IsNullOrWhiteSpace(contents))
+							ctx.Call.SetResult("Tool executed with an error.");
+						else
+							ctx.Call.SetResult(contents);
+						return ToolExecutionResult.Failed;
 					}
-				}, CancellationToken.None);
 
-				return reactiveResult;
-			}
-
-			return ExecuteFunction;
+					if (string.IsNullOrWhiteSpace(contents))
+						ctx.Call.SetResult("Tool executed successfully with no output.");
+					else
+						ctx.Call.SetResult(contents);
+					return ToolExecutionResult.Succeeded;
+				}
+				catch (Exception ex)
+				{
+					ctx.Call.SetResult($"Error calling MCP '{connection.Info.Name}' tool: {ex.Message}");
+					return ToolExecutionResult.Failed;
+				}
+			});
 		}
 	}
 }

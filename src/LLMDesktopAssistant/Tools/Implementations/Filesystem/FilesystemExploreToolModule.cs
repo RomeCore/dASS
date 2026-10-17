@@ -5,9 +5,12 @@ using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
 using Material.Icons;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -43,18 +46,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			});
 		}
 
-		private StreamingToolArgumentsAnalysisResult ExploreStreaming(
+		private StreamingToolAnalysisResult ExploreStreaming(
+			IToolExecutionContext ctx,
 			string? path)
 		{
 			path ??= "?";
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.File,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.File, $"**{path}**");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult? ExplorePreview(string path,
+		private DomainPreviewResult? ExplorePreview(IToolExecutionContext ctx, string path,
 			[SharedContext] out string? fullPath,
 			int startLine = 0, int endLine = 0, int maxLineLength = 0,
 			[Inject] DetectSecretsSharp.Core.Scanner scanner = default!)
@@ -96,20 +97,21 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 					if (secrets.HasSecrets)
 					{
-						return new PreviewToolExecutionResult
+						ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode,
+							LocalizationManager.LocalizeStaticFormat("tool.status.fs-read_entry.secrets", $"**{path}**"));
+
+						return new DomainPreviewResult
 						{
-							StatusIcon = directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode,
-							StatusTitle = LocalizationManager.LocalizeStaticFormat("tool.status.fs-read_entry.secrets", $"**{path}**"),
 							ExpectedBehaviour = ToolBehaviour.ReadSecrets | ToolBehaviour.FileRead |
 								(directoryExists ? ToolBehaviour.DirectoryRead : 0) |
 								(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 						};
 					}
 
-					return new PreviewToolExecutionResult
+					ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode, $"**{path}**");
+
+					return new DomainPreviewResult
 					{
-						StatusIcon = directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode,
-						StatusTitle = $"**{path}**",
 						ExpectedBehaviour = ToolBehaviour.FileRead |
 							(directoryExists ? ToolBehaviour.DirectoryRead : 0) |
 							(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
@@ -118,36 +120,38 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (directoryExists)
 				{
-					return new PreviewToolExecutionResult
+					ctx.Call.SetStatus(MaterialIconKind.Folder, $"**{path}**");
+
+					return new DomainPreviewResult
 					{
-						StatusIcon = MaterialIconKind.Folder,
-						StatusTitle = $"**{path}**",
 						ExpectedBehaviour = ToolBehaviour.DirectoryRead |
 							(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 					};
 				}
 
-				return new PreviewToolExecutionResult
+				ctx.Call.SetStatus(MaterialIconKind.FileTextError, $"**{path}**");
+				ctx.Call.SetResult($"No such file or directory found: '{path}'.");
+
+				return new DomainPreviewResult
 				{
-					StatusIcon = MaterialIconKind.FileTextError,
-					StatusTitle = $"**{path}**",
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
-					InterruptingSuccess = false,
-					InterruptingContent = $"No such file or directory found: '{path}'."
+					InterruptingSuccess = false
 				};
 			}
 			catch (Exception ex)
 			{
 				fullPath = null;
-				return new PreviewToolExecutionResult
+				ctx.Call.SetResult($"Error reading file: {ex.Message}");
+
+				return new DomainPreviewResult
 				{
-					InterruptingSuccess = false,
-					InterruptingContent = $"Error reading file: {ex.Message}"
+					InterruptingSuccess = false
 				};
 			}
 		}
 
-		private async Task<ReactiveToolResult> Explore(
+		private async Task<ToolExecutionResult> Explore(
+			IToolExecutionContext ctx,
 			[Description("The path of the entry to read. Leave empty to read the current working directory.")]
 			string path, [SharedContext] string? fullPath,
 			[Description("The 1-based index of the first line to read. Only for files.")]
@@ -168,13 +172,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[DefaultValue(new string[]{ ".git", Directories.WorkingHome })]
 			string[]? ignoreDirectories = null)
 		{
-			var result = new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.FileEye,
-				StatusTitle = $"**{path}**"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FileEye, $"**{path}**");
 
-			_ = Task.Run(() =>
+			return await Task.Run(() =>
 			{
 				try
 				{
@@ -205,15 +205,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 						if (directoryExists)
 						{
-							result.StatusIcon = MaterialIconKind.FolderEye;
-							result.StatusTitle = $"**{path}**";
+							ctx.Call.SetStatus(MaterialIconKind.FolderEye, $"**{path}**");
 						}
 						else
 						{
-							result.StatusIcon = MaterialIconKind.FileEye;
-							result.StatusTitle = endShown == totalLines ?
+							ctx.Call.SetStatus(MaterialIconKind.FileEye, endShown == totalLines ?
 								(startLine == 1 ? $"**{path}**" : $"**{path}** *({startLine}~{endShown})*") :
-								$"**{path}** *({startLine}~{endShown} / {totalLines})*";
+								$"**{path}** *({startLine}~{endShown} / {totalLines})*");
 						}
 
 						if (lines.Count == 0)
@@ -334,39 +332,33 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 						if (!fileExists)
 						{
-							result.StatusIcon = MaterialIconKind.FolderEye;
+							ctx.Call.SetStatusIcon(MaterialIconKind.FolderEye);
 
 							int startEntry = offset;
 							int totalEntries = totalCount;
 							int endEntry = Math.Min(offset + maxEntries, totalEntries);
 							string boldDirName = string.IsNullOrWhiteSpace(path) ? "" : $"**{path}**";
-							result.StatusTitle = endEntry == totalEntries ?
+							ctx.Call.SetStatusTitle(endEntry == totalEntries ?
 								(startEntry == 0 ? boldDirName : $"{boldDirName} *({startEntry}~{endEntry})*") :
-								$"{boldDirName} *({startEntry}~{endEntry} / {totalEntries})*";
+								$"{boldDirName} *({startEntry}~{endEntry} / {totalEntries})*");
 						}
 					}
 					if (!anyExists)
 					{
-						result.StatusIcon = MaterialIconKind.FileDocumentError;
-						result.StatusTitle = $"**{path}**";
-						result.ResultContent = $"No such file or directory found: '{path}'.";
-						result.CompleteWithError();
-						return;
+						ctx.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
+						ctx.Call.SetResult($"No such file or directory found: '{path}'.");
+						return ToolExecutionResult.Failed;
 					}
 
-					result.ResultContent = sb.ToString();
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetResult(sb.ToString());
+					return ToolExecutionResult.Succeeded;
 				}
 				catch (Exception ex)
 				{
-					result.ResultContent = $"Error reading file: {ex.Message}";
-					result.CompleteWithError();
-					return;
+					ctx.Call.SetResult($"Error reading file: {ex.Message}");
+					return ToolExecutionResult.Failed;
 				}
 			});
-
-			return result;
 		}
 	}
 }

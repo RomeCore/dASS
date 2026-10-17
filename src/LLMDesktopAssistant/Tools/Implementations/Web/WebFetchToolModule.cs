@@ -3,6 +3,8 @@ using System.Text.Json.Nodes;
 using AngleSharp.Html.Parser;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Web;
 using Material.Icons;
@@ -74,17 +76,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 		private static WebFetchLevel ParseLevel(string fetchLevel)
 			=> Enum.TryParse<WebFetchLevel>(fetchLevel, ignoreCase: true, out var level) ? level : WebFetchLevel.HttpClient;
 
-		private StreamingToolArgumentsAnalysisResult FetchStreaming(
-			string? url)
+		private StreamingToolAnalysisResult FetchStreaming(
+			string? url,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = $"`{url}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Web, $"`{url}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private async Task<ReactiveToolResult> Fetch(
+		private async Task<ToolExecutionResult> Fetch(
+			IToolExecutionContext ctx,
 			[Description("URL to fetch HTML from")]
 			string url,
 			[Description("The starting index of character to return")]
@@ -99,63 +100,53 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			string fetchLevel = "HttpClient",
 			CancellationToken cancellationToken = default)
 		{
-			var result = new ReactiveToolResult
+			ctx.Call.SetStatus(MaterialIconKind.Web, $"`{url}`");
+
+			try
 			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = $"`{url}`"
-			};
+				var level = ParseLevel(fetchLevel);
+				var html = await _fetchContentCache.GetAsync((url, level), cancellationToken);
+				var content = contentType switch
+				{
+					"markdown" => HtmlToMarkdownConverter.Convert(html.Html),
+					"sanitized_html" => HtmlSanitizer.Sanitize(html.Html),
+					_ => html.Html
+				};
 
-			_ = Task.Run(async () =>
+				start = Math.Max(Math.Min(start, content.Length), 0);
+				count = Math.Min(count, content.Length - start);
+				int end = start + count;
+				var slice = content.Substring(start, count);
+
+				string afterTip = end < content.Length ? $"\n*Can read {content.Length - end} more characters. Call tool again with same arguments (but with new `start` and `count` values) to read more.*" : "";
+
+				ctx.Call.ResultContent = $"""
+					**Url**: *{url}*
+					**Showing slice**: *{start}-{start + count}* from *{content.Length}*
+					[CONTENT START]
+					{slice}
+					[CONTENT END]{afterTip}
+					""";
+
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (Exception ex)
 			{
-				try
-				{
-					var level = ParseLevel(fetchLevel);
-					var html = await _fetchContentCache.GetAsync((url, level), cancellationToken);
-					var content = contentType switch
-					{
-						"markdown" => HtmlToMarkdownConverter.Convert(html.Html),
-						"sanitized_html" => HtmlSanitizer.Sanitize(html.Html),
-						_ => html.Html
-					};
-
-					start = Math.Max(Math.Min(start, content.Length), 0);
-					count = Math.Min(count, content.Length - start);
-					int end = start + count;
-					var slice = content.Substring(start, count);
-
-					string afterTip = end < content.Length ? $"\n*Can read {content.Length - end} more characters. Call tool again with same arguments (but with new `start` and `count` values) to read more.*" : "";
-
-					result.ResultContent = $"""
-						**Url**: *{url}*
-						**Showing slice**: *{start}-{start + count}* from *{content.Length}*
-						[CONTENT START]
-						{slice}
-						[CONTENT END]{afterTip}
-						""";
-
-					result.CompleteWithSuccess();
-				}
-				catch (Exception ex)
-				{
-					result.ResultContent = $"Error fetching web content: {ex.Message}";
-					result.CompleteWithError();
-				}
-			});
-
-			return result;
+				ctx.Call.ResultContent = $"Error fetching web content: {ex.Message}";
+				return ToolExecutionResult.Failed;
+			}
 		}
 
-		private StreamingToolArgumentsAnalysisResult ParseHtmlStreaming(
-			string? url, string? selector)
+		private StreamingToolAnalysisResult ParseHtmlStreaming(
+			string? url, string? selector,
+			IToolExecutionContext ctx)
 		{
-			return new StreamingToolArgumentsAnalysisResult
-			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = selector != null ? $"`{url}` → `{selector}`" : $"`{url}`"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.Web, selector != null ? $"`{url}` → `{selector}`" : $"`{url}`");
+			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private async Task<ReactiveToolResult> ParseHtml(
+		private async Task<ToolExecutionResult> ParseHtml(
+			IToolExecutionContext ctx,
 			[Description("URL to fetch HTML from")]
 			string url,
 			[Description("The query selector to select values with")]
@@ -169,49 +160,40 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			int count = 10000,
 			CancellationToken cancellationToken = default)
 		{
-			var result = new ReactiveToolResult
+			ctx.Call.SetStatus(MaterialIconKind.Web, $"`{url}` → `{selector}`");
+
+			try
 			{
-				StatusIcon = MaterialIconKind.Web,
-				StatusTitle = $"`{url}` → `{selector}`"
-			};
+				var level = ParseLevel(fetchLevel);
+				var html = await _fetchContentCache.GetAsync((url, level), cancellationToken);
+				var parser = new HtmlParser();
+				var document = await parser.ParseDocumentAsync(html.Html);
+				var elements = document.QuerySelectorAll(selector);
+				var contents = elements.Select(m => m.TextContent);
 
-			_ = Task.Run(async () =>
+				var content = string.Join("\n\n", contents);
+				start = Math.Max(Math.Min(start, content.Length), 0);
+				count = Math.Min(count, content.Length - start);
+				int end = start + count;
+				var slice = content.Substring(start, count);
+
+				string afterTip = end < content.Length ? $"\n*Can read {content.Length - end} more characters. Call tool again with same arguments (but with new `start` and `count` values) to read more.*" : "";
+
+				ctx.Call.ResultContent = $"""
+					**Url**: *{url}*
+					**Selector**: *{selector}*
+					**Showing slice**: *{start}-{start + count}* from *{content.Length}*
+					[CONTENT START]
+					{slice}
+					[CONTENT END]{afterTip}
+					""";
+				return ToolExecutionResult.Succeeded;
+			}
+			catch (Exception ex)
 			{
-				try
-				{
-					var level = ParseLevel(fetchLevel);
-					var html = await _fetchContentCache.GetAsync((url, level), cancellationToken);
-					var parser = new HtmlParser();
-					var document = await parser.ParseDocumentAsync(html.Html);
-					var elements = document.QuerySelectorAll(selector);
-					var contents = elements.Select(m => m.TextContent);
-
-					var content = string.Join("\n\n", contents);
-					start = Math.Max(Math.Min(start, content.Length), 0);
-					count = Math.Min(count, content.Length - start);
-					int end = start + count;
-					var slice = content.Substring(start, count);
-
-					string afterTip = end < content.Length ? $"\n*Can read {content.Length - end} more characters. Call tool again with same arguments (but with new `start` and `count` values) to read more.*" : "";
-
-					result.ResultContent = $"""
-						**Url**: *{url}*
-						**Selector**: *{selector}*
-						**Showing slice**: *{start}-{start + count}* from *{content.Length}*
-						[CONTENT START]
-						{slice}
-						[CONTENT END]{afterTip}
-						""";
-					result.CompleteWithSuccess();
-				}
-				catch (Exception ex)
-				{
-					result.ResultContent = $"Error parsing HTML: {ex.Message}";
-					result.CompleteWithError();
-				}
-			});
-
-			return result;
+				ctx.Call.ResultContent = $"Error parsing HTML: {ex.Message}";
+				return ToolExecutionResult.Failed;
+			}
 		}
 
 	}

@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Scripting.CSX;
+using LLMDesktopAssistant.Tests.Tools;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Scripting;
 
@@ -33,18 +34,6 @@ public class CSharpScriptMetaEngineTests
 		Body = executionCode
 	};
 
-	private static ToolExecutionContext CreateDummyContext()
-	{
-		var toolInfo = new ToolInfo
-		{
-			Name = "get_weather",
-			Description = "Gets the current weather for a location.",
-			ArgumentSchema = new JsonObject { ["type"] = "object" },
-			Executor = (_, _, _) => Task.FromResult(new ReactiveToolResult())
-		};
-		return ToolExecutionContext.CreateDummy(toolInfo, null, null);
-	}
-
 	[Fact]
 	public async Task Execute_Script_StreamsResultAndReturnsStructuredValue()
 	{
@@ -56,17 +45,17 @@ public class CSharpScriptMetaEngineTests
 			""");
 		var executor = Engine.CreateExecutor(tool);
 		var args = JsonNode.Parse("""{ "city": "New York" }""");
+		var session = ToolTestContext.Create(tool, args);
 
-		var reactiveResult = await executor(args, CreateDummyContext(), CancellationToken.None);
-		var success = await reactiveResult.Completion;
+		var result = await executor.ExecuteAsync(args, session.Context, CancellationToken.None);
 
-		Assert.True(success);
-		Assert.Contains(reactiveResult.ResultContentLines, line => line == "City: New York");
+		Assert.True(result.Success);
+		Assert.Contains("City: New York", session.Call.ResultContent);
 		// Icon kinds are canonicalized to "<pack>:<data>" (a bare "Map" means the material pack).
-		Assert.Equal("material:Map", reactiveResult.StatusIcon?.ToString());
-		Assert.Equal("Looking up...", reactiveResult.StatusTitle);
-		Assert.Equal(true, reactiveResult.StructuredResult?["ok"]?.GetValue<bool>());
-		Assert.Equal("New York", reactiveResult.StructuredResult?["city"]?.GetValue<string>());
+		Assert.Equal("material:Map", session.Call.StatusIcon?.ToString());
+		Assert.Equal("Looking up...", session.Call.StatusTitle);
+		Assert.Equal(true, session.Call.StructuredResult?["ok"]?.GetValue<bool>());
+		Assert.Equal("New York", session.Call.StructuredResult?["city"]?.GetValue<string>());
 	}
 
 	[Fact]
@@ -78,13 +67,13 @@ public class CSharpScriptMetaEngineTests
 			return days;
 			""");
 		var executor = Engine.CreateExecutor(tool);
+		var session = ToolTestContext.Create(tool);
 
-		var reactiveResult = await executor(null, CreateDummyContext(), CancellationToken.None);
-		var success = await reactiveResult.Completion;
+		var result = await executor.ExecuteAsync(null, session.Context, CancellationToken.None);
 
-		Assert.True(success);
-		Assert.Contains(reactiveResult.ResultContentLines, line => line == "Days: 10");
-		Assert.Equal(10, reactiveResult.StructuredResult?.GetValue<int>());
+		Assert.True(result.Success);
+		Assert.Contains("Days: 10", session.Call.ResultContent);
+		Assert.Equal(10, session.Call.StructuredResult?.GetValue<int>());
 	}
 
 	[Fact]
@@ -92,12 +81,12 @@ public class CSharpScriptMetaEngineTests
 	{
 		var tool = CreateTool("var x = ;");
 		var executor = Engine.CreateExecutor(tool);
+		var session = ToolTestContext.Create(tool);
 
-		var reactiveResult = await executor(null, CreateDummyContext(), CancellationToken.None);
-		var success = await reactiveResult.Completion;
+		var result = await executor.ExecuteAsync(null, session.Context, CancellationToken.None);
 
-		Assert.False(success);
-		Assert.Contains(reactiveResult.ResultContentLines, line => line.Contains("Compilation errors"));
+		Assert.False(result.Success);
+		Assert.Contains("Compilation errors", session.Call.ResultContent);
 	}
 
 	[Fact]
@@ -105,11 +94,11 @@ public class CSharpScriptMetaEngineTests
 	{
 		var tool = CreateTool("throw new InvalidOperationException(\"boom\");");
 		var executor = Engine.CreateExecutor(tool);
+		var session = ToolTestContext.Create(tool);
 
-		var reactiveResult = await executor(null, CreateDummyContext(), CancellationToken.None);
-		var success = await reactiveResult.Completion;
+		var result = await executor.ExecuteAsync(null, session.Context, CancellationToken.None);
 
-		Assert.False(success);
-		Assert.Contains(reactiveResult.ResultContentLines, line => line.Contains("boom"));
+		Assert.False(result.Success);
+		Assert.Contains("boom", session.Call.ResultContent);
 	}
 }

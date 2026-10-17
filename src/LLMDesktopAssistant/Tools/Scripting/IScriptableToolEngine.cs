@@ -1,5 +1,5 @@
-using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Scripting;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Scripting
 {
@@ -27,7 +27,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		/// The executor is invoked when the LLM calls the tool.
 		/// </summary>
 		/// <param name="tool">The tool to create an executor for.</param>
-		/// <returns>A function that executes the tool with the given arguments and context.</returns>
-		Func<JsonNode?, ToolExecutionContext, CancellationToken, Task<ReactiveToolResult>> CreateExecutor(ToolInfo tool);
+		/// <returns>The main executor of the tool.</returns>
+		IToolMainExecutor CreateExecutor(ToolInfo tool);
 	}
 }

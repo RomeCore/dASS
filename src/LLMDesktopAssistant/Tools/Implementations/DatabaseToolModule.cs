@@ -4,7 +4,10 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Data.Connectors;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -98,7 +101,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			});
 		}
 
-		private Task ListAsync(ReactiveToolResult result, CancellationToken cancellationToken = default)
+		private Task<ToolExecutionResult> ListAsync(IToolExecutionContext ctx, CancellationToken cancellationToken = default)
 		{
 			var settings = _chatSettings.Settings.Databases.GetEffectiveDatabaseConnection();
 			var sb = new StringBuilder();
@@ -119,33 +122,32 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				? $"- **{settings.CustomConnectionString}** ({settings.CustomConnectorType}, active)"
 				: "- Not configured or inactive.");
 
-			result.StatusIcon = MaterialIconKind.Database;
-			result.UseMarkdown = true;
-			result.ResultContent = sb.ToString();
-			result.CompleteWithSuccess();
-			return Task.CompletedTask;
+			ctx.Call.SetStatusIcon(MaterialIconKind.Database);
+			ctx.Call.UseMarkdown = true;
+			ctx.Call.SetResult(sb.ToString());
+			return Task.FromResult(ToolExecutionResult.Succeeded);
 		}
 
-		private PreviewToolExecutionResult? ConnectPreview(string nameOrConnectionString)
+		private DomainPreviewResult? ConnectPreview(IToolExecutionContext ctx, string nameOrConnectionString)
 		{
 			var settings = _chatSettings.Settings.Databases.GetEffectiveDatabaseConnection();
 			bool isNamed = settings.Items.Any(i => i.IsEnabled &&
 				string.Equals(i.Name, nameOrConnectionString, StringComparison.OrdinalIgnoreCase));
 
-			return new PreviewToolExecutionResult
+			ctx.Call.SetStatusTitle($"**{nameOrConnectionString}**");
+
+			return new DomainPreviewResult
 			{
-				StatusTitle = $"**{nameOrConnectionString}**",
 				ExpectedBehaviour = isNamed ? ToolBehaviour.None : ToolBehaviour.DatabaseCustomConnect
 			};
 		}
 
-		private Task ConnectAsync(
+		private Task<ToolExecutionResult> ConnectAsync(
 			[Description("The name of the configured database connection (see db-list) or a raw connection string")] string nameOrConnectionString,
-			ReactiveToolResult result,
+			IToolExecutionContext ctx,
 			[Description("The connector type for a custom connection string. Ignored when connecting to a named connection.")] string? connectorType = null)
 		{
-			result.StatusIcon = MaterialIconKind.DatabaseArrowRight;
-			result.StatusTitle = $"**{nameOrConnectionString}**";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseArrowRight, $"**{nameOrConnectionString}**");
 
 			try
 			{
@@ -153,22 +155,19 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					? Enum.Parse<DatabaseConnectorType>(connectorType, true) : (DatabaseConnectorType?)null;
 				var description = _connectionManager.Activate(nameOrConnectionString, parsedConnectorType);
 
-				result.StatusIcon = MaterialIconKind.DatabaseCheck;
-				result.StatusTitle = $"**{nameOrConnectionString}**";
-				result.ResultContent = $"Database connection **{description}** is now active. The connection will be opened on the first use (db-schema or db-execute).";
-				result.CompleteWithSuccess();
+				ctx.Call.SetStatus(MaterialIconKind.DatabaseCheck, $"**{nameOrConnectionString}**");
+				ctx.Call.SetResult($"Database connection **{description}** is now active. The connection will be opened on the first use (db-schema or db-execute).");
+				return Task.FromResult(ToolExecutionResult.Succeeded);
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to activate the database connection. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to activate the database connection. Error: {ex.Message}");
+				return Task.FromResult(ToolExecutionResult.Failed);
 			}
-
-			return Task.CompletedTask;
 		}
 
-		private async Task GetSchemaAsync(ReactiveToolResult result, CancellationToken cancellationToken = default)
+		private async Task<ToolExecutionResult> GetSchemaAsync(IToolExecutionContext ctx, CancellationToken cancellationToken = default)
 		{
 			IDatabaseConnection connection;
 			try
@@ -177,51 +176,52 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to open the database connection. Error: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to open the database connection. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 
-			result.StatusIcon = MaterialIconKind.DatabaseSearch;
+			ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseSearch);
 
 			try
 			{
-				result.UseMarkdown = true;
-				result.ResultContent = await connection.GetSchemaAsync(cancellationToken);
-				result.CompleteWithSuccess();
+				ctx.Call.UseMarkdown = true;
+				ctx.Call.SetResult(await connection.GetSchemaAsync(cancellationToken));
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to load the database schema. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to load the database schema. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private PreviewToolExecutionResult? ExecutePreview(string query)
+		private DomainPreviewResult? ExecutePreview(IToolExecutionContext ctx, string query)
 		{
 			if (!_connectionManager.IsActiveConfigured)
 			{
-				return new PreviewToolExecutionResult
+				ctx.Call.SetResult("No active database connection. Call db-connect first.");
+				return new DomainPreviewResult
 				{
-					InterruptingSuccess = false,
-					InterruptingContent = "No active database connection. Call db-connect first."
+					InterruptingSuccess = false
 				};
 			}
 
 			var keyword = ExtractKeyword(query);
 			bool isRead = ReadKeywords.Contains(keyword);
-			return new PreviewToolExecutionResult
+
+			ctx.Call.SetStatusTitle($"**{keyword}**");
+
+			return new DomainPreviewResult
 			{
-				StatusTitle = $"**{keyword}**",
 				ExpectedBehaviour = isRead ? ToolBehaviour.DatabaseRead : ToolBehaviour.DatabaseChange
 			};
 		}
 
-		private async Task ExecuteAsync(
+		private async Task<ToolExecutionResult> ExecuteAsync(
 			[Description("The SQL statement to execute")] string query,
-			ReactiveToolResult result,
+			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{
 			IDatabaseConnection connection;
@@ -231,14 +231,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Failed to open the database connection. Error: {ex.Message}";
-				result.CompleteWithError();
-				return;
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Failed to open the database connection. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 
-			result.StatusIcon = MaterialIconKind.DatabaseSearch;
-			result.StatusTitle = $"**{ExtractKeyword(query)}**";
+			ctx.Call.SetStatus(MaterialIconKind.DatabaseSearch, $"**{ExtractKeyword(query)}**");
 
 			try
 			{
@@ -246,10 +244,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (queryResult.Columns.Length == 0)
 				{
-					result.StatusIcon = MaterialIconKind.DatabaseCheck;
-					result.ResultContent = $"Query executed successfully. Rows affected: {queryResult.RowsAffected}";
-					result.CompleteWithSuccess();
-					return;
+					ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseCheck);
+					ctx.Call.SetResult($"Query executed successfully. Rows affected: {queryResult.RowsAffected}");
+					return ToolExecutionResult.Succeeded;
 				}
 
 				var sb = new StringBuilder();
@@ -264,15 +261,15 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					sb.AppendLine($"> Result was truncated: only the first {queryResult.Rows.Length} rows are shown.");
 				}
 
-				result.UseMarkdown = true;
-				result.ResultContent = sb.ToString();
-				result.CompleteWithSuccess();
+				ctx.Call.UseMarkdown = true;
+				ctx.Call.SetResult(sb.ToString());
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				result.StatusIcon = MaterialIconKind.DatabaseOff;
-				result.ResultContent = $"Query execution failed. Error: {ex.Message}";
-				result.CompleteWithError();
+				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
+				ctx.Call.SetResult($"Query execution failed. Error: {ex.Message}");
+				return ToolExecutionResult.Failed;
 			}
 		}
 

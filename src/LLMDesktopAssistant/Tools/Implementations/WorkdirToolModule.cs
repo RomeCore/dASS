@@ -1,9 +1,12 @@
 using System.Text;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -36,11 +39,11 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				DescriptionKey = Locale.GetKey("tool.description.wd-switch"),
 				CategoryKey = Locale.GetKey("tool.category.workdir"),
 				DefaultExpectedBehaviour = ToolBehaviour.WorkdirChange,
-				SynchronizationGroup = "wd-switch" // Prevent parallel execution of this tool
+				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, "wd-switch")] // Prevent parallel execution of this tool
 			});
 		}
 
-		private ReactiveToolResult ListWorkingDirectories()
+		private ToolExecutionResult ListWorkingDirectories(IToolExecutionContext ctx)
 		{
 			var sb = new StringBuilder();
 
@@ -59,46 +62,38 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			sb.AppendLine().AppendLine("Note: you can directly access files without typing the entire working directory path if it is active.  ");
 			sb.Append("Example: `fs-read_entry` with path='.' will read all contents from the active working directory.");
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.FolderStar,
-				ResultContent = sb.ToString(),
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult(sb.ToString());
+			ctx.Call.SetStatusIcon(MaterialIconKind.FolderStar);
+			ctx.Call.UseMarkdown = true;
+			return ToolExecutionResult.Succeeded;
 		}
 
-		private PreviewToolExecutionResult SwitchWorkingDirectoryPreview(string name)
+		private DomainPreviewResult SwitchWorkingDirectoryPreview(
+			string name,
+			IToolExecutionContext ctx)
 		{
 			var workingDirectories = _chatSettings.Settings.Environment.GetEffectiveWorkingDirectories();
 			if (name == Directories.DefaultWorkingDirectoryName && workingDirectories.IsDefaultWorkingDirectoryEnabled)
 			{
-				return new PreviewToolExecutionResult
-				{
-					StatusIcon = MaterialIconKind.FolderArrowRight,
-					StatusTitle = $"*{name}*"
-				};
+				ctx.Call.SetStatus(MaterialIconKind.FolderArrowRight, $"*{name}*");
+				return DomainPreviewResult.Continue;
 			}
 
 			if (!workingDirectories.Items.Any(wd => wd.Name == name && wd.IsEnabled))
 			{
-				return new PreviewToolExecutionResult
-				{
-					StatusIcon = MaterialIconKind.FolderAlert,
-					StatusTitle = $"*{name}*",
-					InterruptingSuccess = false,
-					InterruptingContent = $"Working directory *{name}* not found or it's disabled.",
-					UseMarkdown = true
-				};
+				ctx.Call.SetStatus(MaterialIconKind.FolderAlert, $"*{name}*");
+				ctx.Call.SetResult($"Working directory *{name}* not found or it's disabled.");
+				ctx.Call.UseMarkdown = true;
+				return new DomainPreviewResult { InterruptingSuccess = false };
 			}
 
-			return new PreviewToolExecutionResult
-			{
-				StatusIcon = MaterialIconKind.FolderArrowRight,
-				StatusTitle = $"*{name}*"
-			};
+			ctx.Call.SetStatus(MaterialIconKind.FolderArrowRight, $"*{name}*");
+			return DomainPreviewResult.Continue;
 		}
 
-		private ReactiveToolResult SwitchWorkingDirectory(string name)
+		private ToolExecutionResult SwitchWorkingDirectory(
+			string name,
+			IToolExecutionContext ctx)
 		{
 			var workingDirectories = _chatSettings.Settings.Environment.GetEffectiveWorkingDirectories();
 			if (name == Directories.DefaultWorkingDirectoryName && workingDirectories.IsDefaultWorkingDirectoryEnabled)
@@ -107,24 +102,18 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				foreach (var wd in workingDirectories.Items)
 					wd.IsActive = false;
 
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.FolderAlert,
-					StatusTitle = $"*{name}*",
-					ResultContent = $"Working directory *{name}* not found or it's disabled.",
-					UseMarkdown = true
-				}.CompleteWithSuccess();
+				ctx.Call.SetResult($"Working directory *{name}* not found or it's disabled.");
+				ctx.Call.SetStatus(MaterialIconKind.FolderAlert, $"*{name}*");
+				ctx.Call.UseMarkdown = true;
+				return ToolExecutionResult.Succeeded;
 			}
 
 			if (!workingDirectories.Items.Any(wd => wd.Name == name && wd.IsEnabled))
 			{
-				return new ReactiveToolResult
-				{
-					StatusIcon = MaterialIconKind.FolderAlert,
-					StatusTitle = $"*{name}*",
-					ResultContent = $"Working directory *{name}* not found or it's disabled.",
-					UseMarkdown = true
-				}.CompleteWithError();
+				ctx.Call.SetResult($"Working directory *{name}* not found or it's disabled.");
+				ctx.Call.SetStatus(MaterialIconKind.FolderAlert, $"*{name}*");
+				ctx.Call.UseMarkdown = true;
+				return ToolExecutionResult.Failed;
 			}
 
 			// Prevent to activate multiple working directories with the same name.
@@ -140,13 +129,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				}
 			}
 
-			return new ReactiveToolResult
-			{
-				StatusIcon = MaterialIconKind.FolderArrowRight,
-				StatusTitle = $"*{name}*",
-				ResultContent = $"Working directory *{name}* ({path}) has been activated.",
-				UseMarkdown = true
-			}.CompleteWithSuccess();
+			ctx.Call.SetResult($"Working directory *{name}* ({path}) has been activated.");
+			ctx.Call.SetStatus(MaterialIconKind.FolderArrowRight, $"*{name}*");
+			ctx.Call.UseMarkdown = true;
+			return ToolExecutionResult.Succeeded;
 		}
 	}
 }

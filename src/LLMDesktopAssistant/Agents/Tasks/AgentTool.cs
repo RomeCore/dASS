@@ -1,10 +1,25 @@
+using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
 using LLMDesktopAssistant.Tools.Specifiers;
+using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
-	public abstract class AgentTool
+	/// <summary>
+	/// The agent-task world's tool descriptor. The abstract methods remain the authoring surface; the
+	/// carried executors below adapt them onto <see cref="IToolDescriptor"/>, so the task path and the
+	/// chat path speak the same core.
+	/// </summary>
+	/// <remarks>
+	/// The adaptation is transitional: P5 re-expresses the task path on the shared orchestrator and the
+	/// abstract methods can then move into plain executables. Until then the executor wrappers keep
+	/// both worlds on one contract without duplicating the task loop.
+	/// </remarks>
+	public abstract class AgentTool : IToolDescriptor
 	{
 		/// <summary>
 		/// The name of the tool. This should be a unique identifier for the tool within the agent's context.
@@ -64,6 +79,68 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public ImmutableList<string> SpecifierParameters { get; init; } = [];
 
 		/// <summary>
+		/// The task tool has no declared synchronization keys yet; the task path keeps its own
+		/// parallelism bound.
+		/// </summary>
+		public ImmutableList<ToolSyncKey> StaticSyncKeys => [];
+
+		/// <summary>
+		/// The task tool does not handle policy decisions itself in this phase.
+		/// </summary>
+		public ToolPolicyDecision HandledDecisions => ToolPolicyDecision.None;
+
+		/// <summary>
+		/// No approval-helper configuration on the task side yet.
+		/// </summary>
+		public ApprovalHelperConfig? ApprovalHelper => null;
+
+		/// <summary>
+		/// The task tool has no chat-scoped context factory: the task orchestrator supplies the provider.
+		/// </summary>
+		public IToolExecutionContextFactory? ContextFactory => null;
+
+		/// <summary>
+		/// No synchronization analyzer on the task side yet.
+		/// </summary>
+		public IToolSynchronizationAnalyzer? SyncAnalyzer => null;
+
+		/// <summary>
+		/// The task tool has no streaming argument analyzer: the task stream is only drained.
+		/// </summary>
+		public IToolStreamingAnalyzer? Streaming => null;
+
+		/// <summary>
+		/// No tool-owned approval interface on the task side yet.
+		/// </summary>
+		public IToolApprovalProvider? Approval => null;
+
+		private IToolMainExecutor? _main;
+		/// <summary>
+		/// The main executor, adapted from <see cref="ExecuteAsync"/>.
+		/// </summary>
+		public IToolMainExecutor Main => _main ??= new DelegateMainExecutor(async (args, ctx, ct) =>
+		{
+			var result = await ExecuteAsync(args, ctx.SharedContext, ct);
+			ctx.Call.ResultContent = result.Content;
+			foreach (var attachment in result.Attachments)
+				ProjectAttachment(ctx.Call, attachment);
+
+			return result.Success ? ToolExecutionResult.Succeeded : ToolExecutionResult.Failed;
+		});
+
+		private IToolPreviewExecutor? _preview;
+		/// <summary>
+		/// The preview executor, adapted from <see cref="PreExecuteAsync"/>.
+		/// </summary>
+		public IToolPreviewExecutor Preview => _preview ??= new DelegatingPreviewExecutor(this);
+
+		private IToolSpecifierAnalyzer? _specifier;
+		/// <summary>
+		/// The specifier analyzer, adapted from <see cref="AnalyzeSpecifier"/>.
+		/// </summary>
+		public IToolSpecifierAnalyzer Specifier => _specifier ??= new DelegatingSpecifierAnalyzer(this);
+
+		/// <summary>
 		/// Preview-executes the tool with the provided arguments to determine it's behaviour or interrupt the execution.
 		/// </summary>
 		/// <param name="arguments">The arguments to pass to the tool. This can be null if the tool does not require any arguments.</param>
@@ -85,7 +162,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <param name="args">The tool arguments, or <see langword="null"/>.</param>
 		/// <param name="context">The tool execution context. Cannot be <see langword="null"/>.</param>
 		/// <returns>The match result of the specifier against the arguments.</returns>
-		public virtual SpecifierMatchResult AnalyzeSpecifier(Specifier specifier, JsonNode? args, ToolExecutionContext context)
+		public virtual SpecifierMatchResult AnalyzeSpecifier(Specifier specifier, JsonNode? args, IToolExecutionContext context)
 		{
 			return SpecifierMatchResult.NoMatch;
 		}
@@ -98,5 +175,46 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <param name="cancellationToken">A cancellation token to allow for graceful termination of the operation.</param>
 		/// <returns>A task that represents the asynchronous operation and returns the result of the tool execution.</returns>
 		public abstract Task<AgentToolCallResult> ExecuteAsync(JsonNode? arguments, object? sharedContext, CancellationToken cancellationToken = default);
+
+		private static void ProjectAttachment(IToolCall call, AgentAttachment attachment)
+		{
+			var kind = attachment.Type switch
+			{
+				AgentAttachmentType.Image => ToolAttachmentKind.Image,
+				AgentAttachmentType.Audio => ToolAttachmentKind.Audio,
+				AgentAttachmentType.Video => ToolAttachmentKind.Video,
+				_ => throw new ArgumentOutOfRangeException(nameof(attachment), attachment.Type, "Unknown attachment type.")
+			};
+
+			call.AddAttachment(new ToolAttachment { Kind = kind, Url = attachment.Url });
+		}
+
+		private sealed class DelegatingPreviewExecutor(AgentTool tool) : IToolPreviewExecutor
+		{
+			public async Task<DomainPreviewResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
+				CancellationToken ct)
+			{
+				var result = await tool.PreExecuteAsync(args, ct);
+				ctx.SharedContext = result.SharedContext;
+
+				if (result.InterruptingContent is not null)
+					ctx.Call.ResultContent = result.InterruptingContent;
+
+				foreach (var attachment in result.InterruptingAttachments)
+					ProjectAttachment(ctx.Call, attachment);
+
+				return new DomainPreviewResult
+				{
+					InterruptingSuccess = result.InterruptingSuccess,
+					ExpectedBehaviour = result.ExpectedBehaviour
+				};
+			}
+		}
+
+		private sealed class DelegatingSpecifierAnalyzer(AgentTool tool) : IToolSpecifierAnalyzer
+		{
+			public SpecifierMatchResult Analyze(Specifier specifier, JsonNode? args, IToolExecutionContext ctx) =>
+				tool.AnalyzeSpecifier(specifier, args, ctx);
+		}
 	}
 }

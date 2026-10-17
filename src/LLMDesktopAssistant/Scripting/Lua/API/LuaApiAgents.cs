@@ -12,6 +12,7 @@ using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Utils;
 using RCLargeLanguageModels;
 
@@ -670,10 +671,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (memoryBlocksOption is LuaTable memoryBlocksOptionTable)
 			{
 				var tec = ctx.TryGetToolExecutionContext();
-				var senderAgent = tec != null && tec.Message is AssistantMessage am ?
+				var chatContext = tec as ChatToolExecutionContext;
+				var senderAgent = chatContext?.Message is AssistantMessage am ?
 					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
-				var available = tec != null && senderAgent != null
-					? TaskMemoryBlock.ResolveBlocks(tec.Chat, senderAgent)
+				var available = chatContext != null && senderAgent != null
+					? TaskMemoryBlock.ResolveBlocks(chatContext.Chat, senderAgent)
 					: [];
 				var availableMap = available.ToImmutableDictionary(b => b.Block.Name);
 
@@ -695,7 +697,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			async Task<LuaTable> ExecuteAgent()
 			{
 				var tec = ctx.TryGetToolExecutionContext();
-				var senderAgent = tec != null && tec.Message is AssistantMessage am ?
+				var chatContext = tec as ChatToolExecutionContext;
+				var senderAgent = chatContext?.Message is AssistantMessage am ?
 					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
 				var agentToolSettings = senderAgent?.Tools;
 
@@ -708,7 +711,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				{
 					TaskName = taskTitle,
 					TriggeredChat = tec?.Chat,
-					TriggeredMessage = tec?.Message,
+					TriggeredMessage = chatContext?.Message,
 					Model = llm,
 					InitialMessages = [.. messages],
 					Tools = [.. tools],

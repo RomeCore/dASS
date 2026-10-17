@@ -1,10 +1,11 @@
-using System.Text.Json.Nodes;
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Scripting;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -19,42 +20,40 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		public IScriptableToolEngineDescriptor Descriptor { get; } = new LuaToolEngineDescriptor();
 
-		public Func<JsonNode?, ToolExecutionContext, CancellationToken, Task<ReactiveToolResult>> CreateExecutor(ToolInfo tool)
+		public IToolMainExecutor CreateExecutor(ToolInfo tool)
 		{
-			return (JsonNode? args, ToolExecutionContext context, CancellationToken cancellationToken) =>
+			return new DelegateMainExecutor(async (args, ctx, cancellationToken) =>
 			{
-				var reactiveResult = new ReactiveToolResult();
+				var result = new LuaToolResult(ctx.Call);
 
-				_ = Task.Run(async () =>
+				// The execution context flows through AsyncLocal, so it does not have to live in the globals.
+				LuaExecutionContext.SetTool(ctx, result);
+
+				try
 				{
-					// The execution context flows through AsyncLocal, so it does not have to live in the globals.
-					LuaExecutionContext.Set(tool: context, reactiveResult: reactiveResult);
+					var luaService = ctx.Services.GetRequiredService<LuaService>();
+					var scriptResult = await luaService.ExecuteAsync(tool.Body, print => result.Write(print), g =>
+					{
+						g["tool_args"] = StructuredLuaConverter.JsonNodeToLuaValue(args);
+					}, cancellationToken);
+					if (ctx.Call.StructuredResult is null)
+						ctx.Call.SetStructuredResult(StructuredLuaConverter.LuaValueToJsonNode(scriptResult));
+					result.Write("Script returned: " + scriptResult.ToString());
+					result.Complete(success: true);
+				}
+				catch (LuaRuntimeException srex)
+				{
+					result.Write("Caught error: " + srex.Message);
+					result.Complete(success: false);
+				}
+				catch (Exception ex)
+				{
+					result.Write("Caught error: " + ex.Message);
+					result.Complete(success: false);
+				}
 
-					try
-					{
-						var luaService = context.Chat.Services.GetRequiredService<LuaService>();
-						var scriptResult = await luaService.ExecuteAsync(tool.Body, print => reactiveResult.ResultContentLines.Add(print), g =>
-						{
-							g["tool_args"] = StructuredLuaConverter.JsonNodeToLuaValue(args);
-						});
-						reactiveResult.StructuredResult ??= StructuredLuaConverter.LuaValueToJsonNode(scriptResult);
-						reactiveResult.ResultContentLines.Add($"Script returned: " + scriptResult.ToString());
-						reactiveResult.TryCompleteWithSuccess();
-					}
-					catch (LuaRuntimeException srex)
-					{
-						reactiveResult.ResultContentLines.Add("Caught error: " + srex.Message);
-						reactiveResult.TryCompleteWithError();
-					}
-					catch (Exception ex)
-					{
-						reactiveResult.ResultContentLines.Add("Caught error: " + ex.Message);
-						reactiveResult.TryCompleteWithError();
-					}
-				}, CancellationToken.None);
-
-				return Task.FromResult(reactiveResult);
-			};
+				return result.ToExecutionResult();
+			});
 		}
 	}
 }
