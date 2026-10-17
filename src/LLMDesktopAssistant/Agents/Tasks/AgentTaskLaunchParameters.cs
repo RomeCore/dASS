@@ -2,6 +2,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Scripting.Lua.API;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Implementations;
 using RCLargeLanguageModels;
 
@@ -66,9 +67,10 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public required ImmutableList<AgentChatMessage> InitialMessages { get; init; }
 
 		/// <summary>
-		/// The list of tools available to the agent during the task.
+		/// The list of tools available to the agent during the task. A chat <see cref="ToolInfo"/> goes in
+		/// unchanged: both worlds implement <see cref="IToolDescriptor"/>.
 		/// </summary>
-		public ImmutableList<AgentTool> Tools { get; init; } = [];
+		public ImmutableList<IToolDescriptor> Tools { get; init; } = [];
 
 		/// <summary>
 		/// The list of skills available to the agent during the task.

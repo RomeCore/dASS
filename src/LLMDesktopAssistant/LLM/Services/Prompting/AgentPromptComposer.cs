@@ -8,6 +8,7 @@ using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Hooks;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Tools;
 using Serilog;
@@ -298,7 +299,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		/// the call's result content. Compacted calls are replaced by their marker and contribute no text.
 		/// </summary>
 		private static string AppendContentParts(Domain.ToolCall toolCall) =>
-			ToolCallContentProjector.Project(toolCall);
+			ToolCallContentBuilder.Build(toolCall.ResultContent, toolCall.AdditionalData);
 
 		private static ToolResultStatus ConvertToolStatus(ToolStatus status) => status switch
 		{

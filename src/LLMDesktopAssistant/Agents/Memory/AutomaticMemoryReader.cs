@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.Agents.Memory
 				TriggeredChat = chat,
 				Model = model,
 				InitialMessages = [.. messages],
-				Tools = tools,
+				Tools = ImmutableList.CreateRange<LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor>(tools),
 				TimeOut = TimeSpan.FromMinutes(3),
 				CompletionExpiryTime = TimeSpan.FromMinutes(3)
 			}, cancellationToken);

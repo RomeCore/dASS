@@ -140,7 +140,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			var errorSb = new StringBuilder();
 
-			var tools = ImmutableList.CreateBuilder<AgentTool>();
+			var tools = ImmutableList.CreateBuilder<IToolDescriptor>();
 			if (allowedTools.Length > 0)
 			{
 				var toolMap = agentDescriptor is not null ?
@@ -152,7 +152,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					if (toolMap.TryGetValue(allowedTool, out var toolInfo))
 					{
-						tools.Add(new ChatAgentTool(toolInfo, null));
+						tools.Add(toolInfo);
 					}
 					else
 					{

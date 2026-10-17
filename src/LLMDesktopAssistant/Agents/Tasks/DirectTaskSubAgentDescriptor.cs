@@ -1,4 +1,6 @@
-﻿namespace LLMDesktopAssistant.Agents.Tasks
+using LLMDesktopAssistant.Tools.Execution.Domain;
+
+namespace LLMDesktopAssistant.Agents.Tasks
 {
 	public class DirectTaskSubAgentDescriptor : TaskSubAgentDescriptor
 	{
@@ -15,7 +17,7 @@
 		/// <summary>
 		/// The list of tools available to the agent during the task.
 		/// </summary>
-		public ImmutableList<AgentTool> Tools { get; init; } = [];
+		public ImmutableList<IToolDescriptor> Tools { get; init; } = [];
 
 		/// <summary>
 		/// The list of skills available to the agent during the task.

@@ -33,8 +33,22 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		/// <summary>
 		/// The display name of the tool being called.
 		/// </summary>
-		public string ToolDisplayName => _parentTask.LaunchParameters.Tools
-			.FirstOrDefault(t => t.Name == _toolCall.ToolName)?.DisplayName ?? ToolName;
+		public string ToolDisplayName => ResolveDisplayName(
+			_parentTask.LaunchParameters.Tools.FirstOrDefault(t => t.Name == _toolCall.ToolName)) ?? ToolName;
+
+		/// <summary>
+		/// Resolves the human-readable name of a task tool. The task toolset holds both worlds, and only
+		/// the concrete descriptors know their display name.
+		/// </summary>
+		/// <param name="descriptor">The descriptor, or <see langword="null"/> when the tool is gone.</param>
+		/// <returns>The display name, or <see langword="null"/>.</returns>
+		private static string? ResolveDisplayName(LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor? descriptor) =>
+			descriptor switch
+			{
+				ToolInfo info => info.NameKey.Value,
+				AgentTool taskTool => taskTool.DisplayName,
+				_ => descriptor?.Name
+			};
 
 		private string _arguments = string.Empty;
 		/// <summary>

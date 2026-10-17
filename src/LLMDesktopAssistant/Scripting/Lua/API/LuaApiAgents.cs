@@ -14,6 +14,7 @@ using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using RCLargeLanguageModels;
 
@@ -553,7 +554,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			// Resolve tools: mixed array of strings (registered tools) and tables (callback tools)
-			var tools = new List<AgentTool>();
+			var tools = new List<IToolDescriptor>();
 			var toolsOption = parameters.Get("tools");
 			if (toolsOption is LuaTable toolsOptionTable)
 			{
@@ -564,7 +565,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						if (!_toolsetCache.AvailableTools.TryGetValue(toolValueString.Value, out var tool))
 							throw new Exception($"tool '{toolValueString.Value}' is not available.");
 
-						tools.Add(new ChatAgentTool(tool, null));
+						tools.Add(tool);
 					}
 					else if (toolValue is LuaTable toolValueTable)
 					{

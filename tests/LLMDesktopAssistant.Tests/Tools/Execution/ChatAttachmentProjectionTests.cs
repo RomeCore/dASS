@@ -1,7 +1,7 @@
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
-using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Tests.Tools;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Messages.Attachments;
 
@@ -61,7 +61,8 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var part = Assert.Single(session.Call.AdditionalData.OfType<AdditionalMessageContentPart>());
 			Assert.False(part.IsVisible);
 			Assert.Equal("the notes", part.Content);
-			Assert.Equal("result\n\nthe notes", ToolCallContentProjector.Project(session.Call));
+			Assert.Equal("result\n\nthe notes",
+				ToolCallContentBuilder.Build(session.Call.ResultContent, session.Call.AdditionalData));
 			Assert.Empty(session.Call.GetNativeAttachments());
 		}
 

@@ -2,6 +2,7 @@ using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
 
 namespace LLMDesktopAssistant.LLM.Services.Agents
@@ -15,14 +16,14 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 	) : ISubAgentToolResolver
 	{
 		/// <inheritdoc/>
-		public IEnumerable<AgentTool> ResolveSubAgentTools(SubAgentInfo agentInfo, out List<string> errors)
+		public IEnumerable<IToolDescriptor> ResolveSubAgentTools(SubAgentInfo agentInfo, out List<string> errors)
 		{
 			errors = [];
 
 			// Tools are looked up in the aliased tool dictionary so that both primary names
 			// and aliases (e.g. Claude Code compatible names) can be used in sub-agent definitions.
 			var toolLookup = toolsetCache.AliasedTools;
-			var resolved = new Dictionary<string, AgentTool>(StringComparer.Ordinal);
+			var resolved = new Dictionary<string, IToolDescriptor>(StringComparer.Ordinal);
 
 			// Available tools are added first with the lowest priority.
 			foreach (var tool in agentInfo.AvailableTools)
@@ -48,13 +49,7 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			return resolved.Values;
 		}
 
-		private static AgentTool CreateAgentTool(ToolInfo toolInfo, ToolApprovalLevel approvalLevel)
-		{
-			return new ChatAgentTool(toolInfo, executionContext: null)
-			{
-				ApprovalLevel = approvalLevel,
-				SpecifierAggregationMode = SpecifierAggregationMode.Prioritized
-			};
-		}
+		private static IToolDescriptor CreateAgentTool(ToolInfo toolInfo, ToolApprovalLevel approvalLevel) =>
+			TaskToolProjection.Project(toolInfo, approvalLevel);
 	}
 }

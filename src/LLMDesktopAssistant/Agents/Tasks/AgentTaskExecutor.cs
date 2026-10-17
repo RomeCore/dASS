@@ -10,8 +10,14 @@ using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
-using LLMDesktopAssistant.Tools.Specifiers;
-using IToolExecutionContext = LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Dispatch;
+using LLMDesktopAssistant.Tools.Execution.Sinks;
+using LLMDesktopAssistant.Tools.Execution.Support;
+using IToolDescriptor = LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor;
+using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
+using ToolInvocationSource = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationSource;
+using ToolPolicyMask = LLMDesktopAssistant.Tools.ToolPolicyMask;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels;
@@ -29,24 +35,27 @@ namespace LLMDesktopAssistant.Agents.Tasks
 	{
 		private readonly AsyncLocal<AgentTask?> _currentTask = new();
 		private readonly IModelManager _modelManager;
-		private readonly IToolApprovalService _toolApprovalService;
 		private readonly IToolMemorizationService _toolMemorizationService;
 		private readonly IUsageStatsCollector _usageStatsCollector;
 		private readonly IAgentTaskDispatcher _dispatcher;
+		private readonly IToolInvocationDispatcher _toolDispatcher;
+		private readonly IServiceProvider _services;
 		private readonly IMemoryFactStore _memoryFactStore;
 		private readonly IMemoryLogStore _memoryLogStore;
 
 		public AgentTask? Current => _currentTask.Value;
 
-		public AgentTaskExecutor(IModelManager modelManager, IToolApprovalService toolApprovalService,
+		public AgentTaskExecutor(IModelManager modelManager,
 			IToolMemorizationService toolMemorizationService, IUsageStatsCollector usageStatsCollector, IAgentTaskDispatcher dispatcher,
+			IToolInvocationDispatcher toolDispatcher, IServiceProvider services,
 			IMemoryFactStore memoryFactStore, IMemoryLogStore memoryLogStore)
 		{
 			_modelManager = modelManager;
-			_toolApprovalService = toolApprovalService;
 			_toolMemorizationService = toolMemorizationService;
 			_usageStatsCollector = usageStatsCollector;
 			_dispatcher = dispatcher;
+			_toolDispatcher = toolDispatcher;
+			_services = services;
 			_memoryFactStore = memoryFactStore;
 			_memoryLogStore = memoryLogStore;
 		}
@@ -255,7 +264,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		private async Task ExecuteAsync(AgentTask task, LLModel model,
-			ImmutableDictionary<string, AgentTool> tools, List<IMessage> nativeMessages)
+			ImmutableDictionary<string, IToolDescriptor> tools, List<IMessage> nativeMessages)
 		{
 			var cancellationToken = task.CancellationTokenSource.Token;
 			var semaphore = new SemaphoreSlim(task.LaunchParameters.MaxParallelToolCalls, task.LaunchParameters.MaxParallelToolCalls);
@@ -461,7 +470,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		private async Task<IToolMessage> ExecuteToolAsync(IToolCall toolCall, AgentAssistantMessage message,
-			AgentTask task, ImmutableDictionary<string, AgentTool> tools, CancellationToken cancellationToken = default)
+			AgentTask task, ImmutableDictionary<string, IToolDescriptor> tools, CancellationToken cancellationToken = default)
 		{
 			if (toolCall is not IFunctionToolCall functionCall)
 				throw new ArgumentException($"Tool call '{toolCall}' is not a function tool call.");
@@ -494,221 +503,40 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				}
 			}
 
-			if (!tools.TryGetValue(toolCall.ToolName, out var tool))
+			// The task sequence has no streaming stage: the drain above is entry-point plumbing.
+			tools.TryGetValue(toolCall.ToolName, out var descriptor);
+
+			var request = new ToolInvocationRequest
 			{
-				agentToolCall.Result = new AgentToolCallResult
+				Source = ToolInvocationSource.AgentTask,
+				Call = agentToolCall,
+				Descriptor = descriptor,
+				Confirmation = new TaskConfirmationSink(task, GetExecutionStatusService(task), _toolMemorizationService),
+				ContextFactory = new TaskToolContextFactory(task.LaunchParameters.TriggeredChat,
+					task.LaunchParameters.TriggeredChat?.Services ?? _services),
+				Host = message,
+				RunningInUi = false,
+				EffectiveBehaviours = new ToolPolicyMask
 				{
-					Success = false,
-					Content = $"Tool '{toolCall.ToolName}' not found."
-				};
-				agentToolCall.Status = ToolStatus.Error;
-				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-					toolCall.Id, toolCall.ToolName);
-			}
+					AutoApproveBehaviours = task.LaunchParameters.AutoApproveBehaviours,
+					DisallowedBehaviours = task.LaunchParameters.DisallowedBehaviours
+				}
+			};
 
-			JsonNode? args;
-			try
+			await _toolDispatcher.RunAsync(request, cancellationToken);
+
+			agentToolCall.Result = new AgentToolCallResult
 			{
-				args = TolerantJsonParser.Parse(functionCall.Args);
-			}
-			catch (Exception ex)
-			{
-				agentToolCall.Result = new AgentToolCallResult
-				{
-					Success = false,
-					Content = $"Failed to parse args: " + ex.Message // Even with tolerant parser lol
-				};
-				agentToolCall.Status = ToolStatus.Error;
-				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-					toolCall.Id, toolCall.ToolName);
-			}
+				Success = agentToolCall.Status == ToolStatus.Success,
+				Content = ToolCallContentBuilder.Build(agentToolCall.ResultContent, agentToolCall.Attachments),
+				Attachments = agentToolCall.Attachments.ToImmutableList()
+			};
 
-			try
-			{
-				agentToolCall.Status = ToolStatus.PreExecuting;
-				var previewResult = await tool.PreExecuteAsync(args, cancellationToken);
-				agentToolCall.ExpectedBehaviour = previewResult.ExpectedBehaviour;
-
-				if (previewResult.InterruptingSuccess != null)
-				{
-					agentToolCall.Result = new AgentToolCallResult
-					{
-						Success = previewResult.InterruptingSuccess.Value,
-						Content = string.IsNullOrEmpty(previewResult.InterruptingContent) ?
-							(previewResult.InterruptingSuccess.Value ? "Tool execution completed." : "Tool execution failed.")
-							: previewResult.InterruptingContent,
-						Attachments = previewResult.InterruptingAttachments
-					};
-					agentToolCall.Status = previewResult.InterruptingSuccess.Value ? ToolStatus.Success : ToolStatus.Error;
-					return new ToolMessage(new ToolResult(previewResult.InterruptingSuccess.Value ? ToolResultStatus.Success : ToolResultStatus.Error,
-						agentToolCall.Result.Content, ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
-				}
-
-				var autoApproveBehaviours = task.LaunchParameters.AutoApproveBehaviours;
-				var disallowedBehaviours = task.LaunchParameters.DisallowedBehaviours;
-
-				if (tool.PolicyMask is { } policyMask)
-				{
-					autoApproveBehaviours |= policyMask.AutoApproveBehaviours;
-					disallowedBehaviours |= policyMask.DisallowedBehaviours;
-					autoApproveBehaviours &= ~policyMask.DisallowedBehaviours;
-					disallowedBehaviours &= ~policyMask.AutoApproveBehaviours;
-				}
-
-				// Specifier layer: evaluated only for policy-based approval levels.
-				SpecifierVerdict specifierVerdict = SpecifierVerdict.None;
-				string? specifierMessage = null;
-				if (tool.ApprovalLevel.IsPolicyBased() && tool.Specifiers.Count > 0 &&
-					previewResult.SharedContext is IToolExecutionContext specifierContext)
-				{
-					var specifierResult = SpecifierEngine.Evaluate(tool.Specifiers, tool.Specifier,
-						args, specifierContext, tool.SpecifierParameters, tool.SpecifierAggregationMode);
-					specifierVerdict = specifierResult.Verdict;
-					specifierMessage = specifierResult.Message;
-				}
-
-				var (decision, decisionMessage) = _toolApprovalService.ApproveTool(
-					tool.ApprovalLevel, previewResult.ExpectedBehaviour, autoApproveBehaviours, disallowedBehaviours);
-
-				// Combine the specifier verdict with the policy decision.
-				if (tool.ApprovalLevel.IsPolicyBased() && tool.Specifiers.Count > 0)
-				{
-					decision = SpecifierEngine.Combine(specifierVerdict, decision,
-						tool.SpecifierUnionMode ?? SpecifierBehaviourUnionMode.CombineSoft);
-					if (decision == ToolPolicyDecision.Disallow && specifierVerdict == SpecifierVerdict.Deny)
-						decisionMessage = specifierMessage ?? decisionMessage;
-				}
-
-				// Apply the memorized user decision (if any), unless the policy already disallowed the tool.
-				var triggeredChat = task.LaunchParameters.TriggeredChat;
-				if (tool.ApprovalLevel.IsPolicyBased() &&
-					_toolMemorizationService.TryGetMemorizedDecision(triggeredChat, agentToolCall.ToolName, out var memorizedDecision, out var memorizedMessage) &&
-					decision != ToolPolicyDecision.Disallow)
-				{
-					decision = memorizedDecision;
-					if (memorizedDecision == ToolPolicyDecision.Disallow)
-						decisionMessage = memorizedMessage ?? "The tool execution was denied by the user.";
-				}
-
-				if (decision == ToolPolicyDecision.Disallow)
-				{
-					agentToolCall.Result = new AgentToolCallResult
-					{
-						Success = false,
-						Content = decisionMessage
-					};
-					agentToolCall.Status = ToolStatus.Error;
-					return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-						toolCall.Id, toolCall.ToolName);
-				}
-
-				string? additionalNotes = null;
-
-				if (decision == ToolPolicyDecision.Ask)
-				{
-					using var confirmation = GetExecutionStatusService(task)?.WithConfirmation();
-
-					var request = new AgentToolCallConfirmationRequest
-					{
-						ToolCall = agentToolCall,
-						UserConfirmationSource = new TaskCompletionSource<ToolConsentResult>()
-					};
-
-					task.ToolCallConfirmationRequests.Add(request);
-					try
-					{
-						agentToolCall.Status = ToolStatus.WaitingForApproval;
-						var consentResult = await request.UserConfirmationSource.Task.WaitAsync(cancellationToken);
-						_toolMemorizationService.MemorizeConsent(triggeredChat, agentToolCall.ToolName, consentResult);
-						if (consentResult.Memorization == ToolApprovalMemorization.Always && triggeredChat != null)
-							MemorizeAlwaysInToolset(task, agentToolCall.ToolName, consentResult.IsApproved);
-
-						if (!consentResult.IsApproved)
-						{
-							agentToolCall.Result = new AgentToolCallResult
-							{
-								Success = false,
-								Content = !string.IsNullOrEmpty(consentResult.Notes) ?
-									$"User denied the tool execution. Reason: {consentResult.Notes}." :
-									"User denied the tool execution without the reason."
-							};
-							agentToolCall.Status = ToolStatus.Error;
-							return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-								toolCall.Id, toolCall.ToolName);
-						}
-
-						additionalNotes = consentResult.Notes;
-					}
-					finally
-					{
-						task.ToolCallConfirmationRequests.Remove(request);
-					}
-				}
-
-				agentToolCall.Status = ToolStatus.Executing;
-				var result = await tool.ExecuteAsync(args, previewResult.SharedContext, cancellationToken);
-
-				agentToolCall.Result = new AgentToolCallResult
-				{
-					Success = result.Success,
-					Content = !string.IsNullOrEmpty(additionalNotes) ?
-						$"{result.Content}\nUser has provided additional notes: {additionalNotes}." :
-						result.Content,
-					Attachments = result.Attachments
-				};
-				agentToolCall.Status = result.Success ? ToolStatus.Success : ToolStatus.Error;
-				return new ToolMessage(new ToolResult(result.Success ? ToolResultStatus.Success : ToolResultStatus.Error,
-					agentToolCall.Result.Content, ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
-			}
-			catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
-			{
-				agentToolCall.Result = new AgentToolCallResult
-				{
-					Success = false,
-					Content = $"Tool execution was canceled."
-				};
-				agentToolCall.Status = ToolStatus.Cancelled;
-				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-					toolCall.Id, toolCall.ToolName);
-			}
-			catch (OperationCanceledException)
-			{
-				agentToolCall.Result = new AgentToolCallResult
-				{
-					Success = false,
-					Content = $"Tool execution was canceled."
-				};
-				agentToolCall.Status = ToolStatus.Cancelled;
-				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-					toolCall.Id, toolCall.ToolName);
-			}
-			catch (Exception ex)
-			{
-				agentToolCall.Result = new AgentToolCallResult
-				{
-					Success = false,
-					Content = $"Tool execution failed: " + ex.Message
-				};
-				agentToolCall.Status = ToolStatus.Error;
-				return new ToolMessage(new ToolResult(ToolResultStatus.Error, agentToolCall.Result.Content),
-					toolCall.Id, toolCall.ToolName);
-			}
-		}
-
-		private static void MemorizeAlwaysInToolset(AgentTask task, string toolName, bool approved)
-		{
-			var chat = task.LaunchParameters.TriggeredChat;
-			var senderAgentId = (task.LaunchParameters.TriggeredMessage as LLM.Domain.AssistantMessage)?.SenderAgentId;
-			if (chat == null || senderAgentId == null)
-				return;
-
-			var agentManager = chat.Services.GetService<IAgentManagementService>();
-			var chatSettings = chat.Services.GetService<IChatSettingsService>();
-			if (agentManager == null || chatSettings == null)
-				return;
-
-			var agent = agentManager.GetAgentDescriptor(senderAgentId.Value);
-			ToolConsentPersister.MemorizeAlways(agent, chatSettings, toolName, approved);
+			var resultStatus = agentToolCall.Status == ToolStatus.Success
+				? ToolResultStatus.Success
+				: ToolResultStatus.Error;
+			return new ToolMessage(new ToolResult(resultStatus, agentToolCall.Result.Content,
+				ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
 		}
 
 		private static IEnumerable<IMessage> ConvertMessageFromAgent(AgentChatMessage agentMessage, ref string? additionalSysPrompt)
