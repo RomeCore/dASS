@@ -487,6 +487,17 @@ If the output is too long - just read the part you need from the streamed result
 
 Use specified memory block to store completed work inside the epizodic logs after the completed session. You also can get last 5-10 logs to view the actual state of the project.
 
+## Handoffs
+
+Session handoff documents live in `.llmassist/handoffs/`, one file per completed phase, named
+`<YYYY-MM-DD>-<effort-slug>-<phase>.md` (for example
+`.llmassist/handoffs/2026-10-17-tool-execution-v2-p3.md`). The `/handoff` skill writes there - do not save
+handoffs to the OS temporary directory. Older one-off handoffs may sit directly under `.llmassist/`; find
+the latest with `fs-glob '.llmassist/**/*handoff*'`.
+
+When continuing a multi-session effort, read the latest handoff first: it points to the spec, plan,
+tickets and commits instead of repeating them.
+
 ## Agent skills
 
 ### Issue tracker
