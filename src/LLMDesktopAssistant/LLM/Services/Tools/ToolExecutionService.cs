@@ -97,14 +97,16 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				toolCall.ExpectedBehaviour ??= descriptor.DefaultExpectedBehaviour;
 				cancellationToken.ThrowIfCancellationRequested();
 
-				var decision = EvaluatePolicy(ctx, senderAgent, out var decisionMessage);
+				var decision = EvaluatePolicy(ctx, senderAgent, out var policyReason);
+				ctx.PolicyDecision = decision;
+				ctx.PolicyReason = policyReason;
 				cancellationToken.ThrowIfCancellationRequested();
 
 				var handled = descriptor.HandledDecisions;
 				if (decision == ToolPolicyDecision.Disallow && !handled.HasFlag(ToolPolicyDecision.Disallow))
 				{
 					toolCall.Status = ToolStatus.Error;
-					toolCall.ResultContent = decisionMessage ?? "The tool execution was denied by the policy.";
+					toolCall.ResultContent = policyReason?.Message ?? "The tool execution was denied by the policy.";
 					return;
 				}
 
@@ -237,9 +239,9 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 		}
 
 		private ToolPolicyDecision EvaluatePolicy(IToolExecutionContext ctx, ChatAgentDescriptor? senderAgent,
-			out string? message)
+			out ToolPolicyReason? reason)
 		{
-			message = null;
+			reason = null;
 			var descriptor = ctx.Descriptor;
 
 			var autoApprove = ToolBehaviour.None;
@@ -252,29 +254,41 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				disallowed = policy.DisallowedBehaviours;
 			}
 
+			var source = ToolDecisionSource.ApprovalLevel;
+
 			if (descriptor.PolicyMask is { } mask)
 			{
+				var autoApproveBefore = autoApprove;
+				var disallowedBefore = disallowed;
+
 				autoApprove |= mask.AutoApproveBehaviours;
 				disallowed |= mask.DisallowedBehaviours;
 				autoApprove &= ~mask.DisallowedBehaviours;
 				disallowed &= ~mask.AutoApproveBehaviours;
+
+				if (autoApprove != autoApproveBefore || disallowed != disallowedBefore)
+					source = ToolDecisionSource.PolicyMask;
 			}
 
 			var approvalLevel = descriptor.ApprovalLevel;
 			var (decision, decisionMessage) = toolApprovalService.ApproveTool(
 				approvalLevel, ctx.Call.ExpectedBehaviour, autoApprove, disallowed);
-			message = decisionMessage;
 
 			if (approvalLevel.IsPolicyBased() && descriptor.Specifier is not null && descriptor.Specifiers.Count > 0)
 			{
 				var specifier = SpecifierEngine.Evaluate(descriptor.Specifiers, descriptor.Specifier,
 					ctx.Arguments.Effective, ctx, descriptor.SpecifierParameters, descriptor.SpecifierAggregationMode);
 
-				decision = SpecifierEngine.Combine(specifier.Verdict, decision,
+				var combined = SpecifierEngine.Combine(specifier.Verdict, decision,
 					descriptor.SpecifierUnionMode ?? SpecifierBehaviourUnionMode.CombineSoft);
 
+				if (combined != decision || specifier.Verdict == SpecifierVerdict.Deny)
+					source = ToolDecisionSource.Specifier;
+
+				decision = combined;
+
 				if (decision == ToolPolicyDecision.Disallow && specifier.Verdict == SpecifierVerdict.Deny)
-					message = specifier.Message ?? message;
+					decisionMessage = specifier.Message ?? decisionMessage;
 			}
 
 			if (approvalLevel.IsPolicyBased() &&
@@ -283,10 +297,14 @@ namespace LLMDesktopAssistant.LLM.Services.Tools
 				decision != ToolPolicyDecision.Disallow)
 			{
 				decision = memorized;
+				source = ToolDecisionSource.Memorization;
+
 				if (memorized == ToolPolicyDecision.Disallow)
-					message = memorizedMessage ?? "The tool execution was denied by the user.";
+					decisionMessage = memorizedMessage ?? "The tool execution was denied by the user.";
 			}
 
+			reason = new ToolPolicyReason(source,
+				string.IsNullOrWhiteSpace(decisionMessage) ? null : decisionMessage);
 			return decision;
 		}
 
