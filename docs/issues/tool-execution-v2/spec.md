@@ -139,9 +139,11 @@ Every stage service is Application-scoped and stateless; all per-chat state flow
 | `ChatRestart` | streaming (Once) → validation → sync{ preview → execution } → settle |
 | `Command` | streaming (Once) → validation → sync{ preview → execution } → settle |
 | `AgentTask` | streaming (drain only) → validation → sync{ preview → policy → confirmation (implicit) → execution } → settle |
-| `Script` | streaming (no-op) → validation → sync{ preview → execution } → settle |
+| `Script` | validation → preview → execution → settle |
 
 Sequences are **explicit imperative code** per orchestrator — no stage engine, no shared inner helper. Shared is only the stage services and the synchronization higher-order wrapper. Per-source: the assembled `ctx`, `EffectiveBehaviours`, the confirmation sink, the streaming mode, parallelism/cancellation, and the stage set.
+
+`Script` skips synchronization deliberately: sync keys are not reentrant, and a nested call made through `dass.tool.call` would wait on the keys its own caller already holds (see `not-implemented.md`).
 
 ### Context creation
 
@@ -247,7 +249,7 @@ Output:
 ## 13. Trust model for non-agent invocations
 
 - **Agent decisions** (`ChatRun`, `AgentTask`) — full pipeline.
-- **The user's own actions** (`Command`, `ChatRestart`) — skip policy/confirmation, honour the **hard floor** (`AlwaysDisallow`).
+- **The user's own actions** (`Command`, `ChatRestart`) — skip policy, confirmation **and the hard floor**: the user's action is trusted, and `AlwaysDisallow` is a statement about what the agent may do. The floor applies to agent decisions only.
 - **Scripts** (`Script`, nested Lua/CSX/Python calls) — **bypass the pipeline entirely** (no policy, no confirmation, no hard floor) — a deliberately powerful area.
 
 ---

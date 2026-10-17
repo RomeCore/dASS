@@ -117,7 +117,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 			try
 			{
-				int messageId = ((ChatToolExecutionContext)ctx).FindMessageId();
+				// A script invocation has no owning message; the log then records no message link.
+				int messageId = ctx is ChatToolExecutionContext chatContext ? chatContext.FindMessageId() : 0;
 
 				var log = await _memoryLogStore.AppendAsync(
 					targetBlock,

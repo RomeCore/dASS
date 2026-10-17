@@ -11,10 +11,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 	public sealed class ToolValidationService : IToolValidationService
 	{
 		/// <inheritdoc/>
-		public bool Validate(IToolExecutionContext ctx)
+		public void Validate(IToolExecutionContext ctx)
 		{
+			// The tolerant parse is materialized here; the schema check lands with the real validator.
 			_ = ctx.Arguments.Effective;
-			return true;
 		}
 	}
 }

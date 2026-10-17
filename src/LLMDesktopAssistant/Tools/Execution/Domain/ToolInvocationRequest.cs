@@ -1,3 +1,5 @@
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+
 namespace LLMDesktopAssistant.Tools.Execution.Domain
 {
 	/// <summary>
@@ -34,6 +36,14 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// factory; the stage services never construct a sink themselves.
 		/// </summary>
 		public required IConfirmationSink Confirmation { get; init; }
+
+		/// <summary>
+		/// The factory that builds the invocation context. It is resolved by the entry point, because the
+		/// world a call belongs to is a property of the entry point, not of the source tag: the chat entry
+		/// passes the descriptor's stamped factory (or the chat fallback), a script passes
+		/// <c>ScriptToolContextFactory</c>, a task passes <c>TaskToolContextFactory</c>.
+		/// </summary>
+		public required IToolExecutionContextFactory ContextFactory { get; init; }
 
 		/// <summary>
 		/// The message that owns the sibling calls, when there is one. Cascade and the approval helper

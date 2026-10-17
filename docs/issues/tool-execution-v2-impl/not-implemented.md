@@ -32,6 +32,14 @@ view) and awaits its own consent source; `ToolConsentPanel` stays the generic sh
 `IToolApprovalContent` contract rendered *inside* the panel is deferred. **Seam:** the provider is already
 a descriptor capability and receives the context.
 
+## Script-source synchronization
+
+`ScriptToolOrchestrator` skips `IToolSynchronizationService`. Sync keys are not reentrant: a tool holding
+`AllFiles` (or a directory) that calls another tool through `dass.tool.call` would wait forever on the
+keys its own caller holds. The decision between key-reentrancy tracking (via `SharedContext` / ambient
+state) and a narrower skip rule is deferred. **Seam:** the stage is a service the orchestrator chooses to
+call; adding the call back is one line.
+
 ## Real argument validation
 
 Spec §4 / ticket 07. `IToolValidationService` ships as a stub that always returns valid. The interface,

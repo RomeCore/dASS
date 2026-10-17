@@ -11,7 +11,7 @@ public enum ToolPolicyDecision
 {
 	/// <summary>
 	/// The tool does not override the standard HITL pipeline.
-	/// The <see cref="LLM.Services.Tools.IChatToolExecutionService"/> will use
+	/// The <see cref="LLMDesktopAssistant.Tools.Execution.Dispatch.IToolInvocationDispatcher"/> will use
 	/// the normal approval flow based on <see cref="ToolApprovalLevel"/>
 	/// and agent policy settings.
 	/// </summary>
@@ -29,7 +29,7 @@ public enum ToolPolicyDecision
 	/// <summary>
 	/// The tool requests user confirmation via its own UI flow
 	/// (e.g., <see cref="Forms.FormsToolModule"/> or a custom diff preview).
-	/// The <see cref="LLM.Services.Tools.IChatToolExecutionService"/> must wait
+	/// The <see cref="LLMDesktopAssistant.Tools.Execution.Dispatch.IToolInvocationDispatcher"/> must wait
 	/// for the tool's own confirmation mechanism before proceeding.
 	/// When <see cref="LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext.RunningInUi"/> is <see langword="false"/>,
 	/// this should be treated as <see cref="Approve"/>.

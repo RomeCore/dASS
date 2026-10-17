@@ -12,6 +12,9 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Dispatch;
+using LLMDesktopAssistant.Tools.Execution.Sinks;
 using Material.Icons;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Messages;
@@ -19,6 +22,9 @@ using RCLargeLanguageModels.Metadata;
 using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
 using Serilog;
+using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
+using ToolInvocationSource = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationSource;
+using ToolPolicyMask = LLMDesktopAssistant.Tools.ToolPolicyMask;
 
 #pragma warning disable CS9113 // Parameter has not been used.
 
@@ -38,7 +44,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		IChatStorageService storage,
 		IAgentPromptComposer promptComposer,
 		IModelManager modelManager,
-		IChatToolExecutionService toolExecutor,
+		IToolInvocationDispatcher dispatcher,
 		IToolMemorizationService toolMemorizer,
 		IEnumerable<IChatExecutionHook> executionHooks,
 		IToolsetCacheService toolsetCache,
@@ -53,6 +59,11 @@ namespace LLMDesktopAssistant.LLM.Services
 		private const bool EnablePrefixCompletions = false;
 
 		private readonly List<IChatExecutionHook> _executionHooks = executionHooks.OrderBy(h => h.Order).ToList();
+
+		private readonly ChatConfirmationSink _confirmationSink = new(executionStatusService);
+
+		private readonly IToolExecutionContextFactory _chatContextFactory =
+			new ChatToolContextFactory(chat, toolMemorizer, agentManager, chatSettings);
 
 		public async Task GenerateResponseAsync(CancellationToken cancellationToken = default)
 		{
@@ -251,6 +262,13 @@ namespace LLMDesktopAssistant.LLM.Services
 				List<Task> toolExecutionTasks = [];
 				var lockObj = new object();
 
+				var toolPolicy = agent.Tools.GetEffectivePolicy(chatSettings.Settings);
+				var effectiveBehaviours = new ToolPolicyMask
+				{
+					AutoApproveBehaviours = toolPolicy.AutoApproveBehaviours,
+					DisallowedBehaviours = toolPolicy.DisallowedBehaviours
+				};
+
 				void ProcessToolCall(IToolCall toolCall)
 				{
 					if (toolCall is not IFunctionToolCall funtionCall)
@@ -272,10 +290,24 @@ namespace LLMDesktopAssistant.LLM.Services
 						Title = toolInfo?.NameKey,
 						Arguments = funtionCall.Args
 					};
+					domainToolCall.CanBeCompacted = toolInfo?.CanBeCompacted ?? false;
 					domainResponseMessage.ToolCalls.Add(domainToolCall);
 
-					var toolExecTask = toolExecutor.ExecuteAsync(funtionCall as PartialFunctionToolCall,
-						domainResponseMessage, domainToolCall, toolInfo, token);
+					var toolExecTask = dispatcher.RunAsync(new ToolInvocationRequest
+					{
+						Source = ToolInvocationSource.ChatRun,
+						Call = domainToolCall,
+						Descriptor = toolInfo,
+						Confirmation = _confirmationSink,
+						ContextFactory = toolInfo?.ContextFactory ?? _chatContextFactory,
+						Host = domainResponseMessage,
+						ArgumentStream = funtionCall is PartialFunctionToolCall partialToolCall
+							? new PartialFunctionToolCallArgumentStream(partialToolCall)
+							: null,
+						EffectiveBehaviours = effectiveBehaviours,
+						RunningInUi = true
+					}, token);
+
 					lock (lockObj)
 						toolExecutionTasks.Add(toolExecTask);
 				}

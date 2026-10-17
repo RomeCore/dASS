@@ -5,6 +5,7 @@ using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Sinks;
 using LLMDesktopAssistant.Tools.Specifiers;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Tasks;
@@ -91,7 +92,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				Source = ToolInvocationSource.AgentTask,
 				Host = dummyMessage,
 				RunningInUi = false,
-				Confirmation = new RejectingConfirmationSink()
+				Confirmation = ConstantConfirmationSink.Disallow
 			};
 
 			return new ChatToolExecutionContext(dummyChat, dummyMessage, parameters, null);
@@ -152,14 +153,5 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			};
 		}
 
-		/// <summary>
-		/// The task executor owns confirmation; this sink is never expected to be reached.
-		/// </summary>
-		private sealed class RejectingConfirmationSink : IConfirmationSink
-		{
-			public Task<ToolApprovalResult> RequestAsync(IToolExecutionContext ctx, CancellationToken ct) =>
-				Task.FromResult(ToolApprovalResult.DeniedOnce(
-					"The agent task handles confirmation outside the tool."));
-		}
 	}
 }

@@ -3,6 +3,11 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Calls;
+using LLMDesktopAssistant.Tools.Execution.Contexts;
+using LLMDesktopAssistant.Tools.Execution.Dispatch;
+using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Sinks;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
@@ -40,8 +45,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - status_title: string or nil — optional status title
 			    - status_icon: string or nil — optional status icon name
 
-			  Throws an error if the tool name is not found or execution fails.
-			  Use pcall() for safe error handling.
+			  A tool-level failure is not an exception: check `success` and `content`. An error is
+			  thrown only when the tool name is not registered. A nested call is a script invocation:
+			  it skips policy and confirmation (the script is trusted) and it never asks the user.
 
 			--- dass.tool.list()
 			  Returns a table with detailed information about all registered tools.
@@ -93,15 +99,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  but use ["key-name"] for keys containing spaces or hyphens).
 			- The result is a structured table containing content, success status, and metadata.
 			""";
-		
-		// Kept for the P4 dispatcher: a nested call needs the chat scope to build its own context.
+
 		private readonly Chat _chat;
 		private readonly IToolsetCacheService _toolsetCache;
+		private readonly IToolInvocationDispatcher _dispatcher;
 
-		public LuaApiTools(Chat chat, IToolsetCacheService toolsetCache)
+		/// <summary>
+		/// A nested call has no owning chat message, so the script entry passes its own context factory
+		/// instead of the chat tool's stamped one.
+		/// </summary>
+		private readonly IToolExecutionContextFactory _contextFactory;
+
+		public LuaApiTools(Chat chat, IToolsetCacheService toolsetCache, IToolInvocationDispatcher dispatcher)
 		{
 			_chat = chat;
 			_toolsetCache = toolsetCache;
+			_dispatcher = dispatcher;
+			_contextFactory = new ScriptToolContextFactory(_chat);
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -111,19 +125,52 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			return null;
 		}
 
-		public Task<LuaTuple> Call(LuaCallingContext ctx, LuaValue[] args)
+		public async Task<LuaTuple> Call(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1 || args[0] is not LuaString functionName)
 				throw new LuaRuntimeException("dass.tool.call(name, args): first argument must be a string (tool name).");
 
-			if (!_toolsetCache.AvailableTools.ContainsKey(functionName.Value))
+			if (!_toolsetCache.AvailableTools.TryGetValue(functionName.Value, out var tool))
 				throw new LuaRuntimeException($"Tool '{functionName.Value}' not found.");
 
-			// TODO(P4): run the nested call through the tool invocation dispatcher. The tool has to execute
-			// against its own call (ToolInvocationSource.Script) so that it does not overwrite the call of the
-			// script that is asking; no IToolCall implementation exists yet, so the context cannot be built here.
-			throw new LuaRuntimeException(
-				"dass.tool.call is unavailable until the tool invocation dispatcher lands (P4).");
+			// The call is in-memory and belongs to the script, not to the tool the script is running in.
+			var call = new ScriptToolCall
+			{
+				ToolName = tool.Name,
+				Arguments = args.Length > 1
+					? StructuredLuaConverter.LuaValueToJsonNode(args[1])?.ToJsonString() ?? "{}"
+					: "{}"
+			};
+
+			await _dispatcher.RunAsync(new ToolInvocationRequest
+			{
+				Source = ToolInvocationSource.Script,
+				Call = call,
+				Descriptor = tool,
+				Confirmation = ConstantConfirmationSink.Approve,
+				ContextFactory = _contextFactory,
+
+				// A nested call is programmatic: there is no surface to render a form on and nobody to
+				// answer it. UI-requiring tools must take their non-interactive path instead of hanging.
+				RunningInUi = false
+			}, ctx.CancellationToken);
+
+			var resultTable = new LuaTable();
+			resultTable["content"] = new LuaString(call.ResultContent ?? string.Empty);
+			resultTable["success"] = LuaBoolean.FromBoolean(call.Status == ToolStatus.Success);
+
+			if (call.StructuredResult is not null)
+				resultTable["structured"] = StructuredLuaConverter.JsonNodeToLuaValue(call.StructuredResult);
+
+			resultTable["tool"] = ToolToTable(tool);
+
+			if (call.StatusTitle is not null)
+				resultTable["status_title"] = new LuaString(call.StatusTitle);
+
+			if (call.StatusIcon is { } icon)
+				resultTable["status_icon"] = new LuaString(icon.ToString());
+
+			return new LuaTuple(resultTable);
 		}
 
 		public LuaTuple ListTools(LuaCallingContext ctx, LuaValue[] args)

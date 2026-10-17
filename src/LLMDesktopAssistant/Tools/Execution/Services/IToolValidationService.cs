@@ -12,7 +12,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		/// Validates the invocation's effective arguments.
 		/// </summary>
 		/// <param name="ctx">The invocation.</param>
-		/// <returns><see langword="true"/> when the invocation may proceed.</returns>
-		bool Validate(IToolExecutionContext ctx);
+		/// <exception cref="ToolArgumentsInvalidException">
+		/// The effective arguments do not satisfy the tool's schema. The message is model-facing: the
+		/// settlement stage writes it into the call verbatim.
+		/// </exception>
+		void Validate(IToolExecutionContext ctx);
 	}
 }

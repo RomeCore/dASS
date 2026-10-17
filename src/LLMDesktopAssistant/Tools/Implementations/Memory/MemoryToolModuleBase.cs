@@ -134,7 +134,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 		protected MemoryBlockResolution GetBlocks(IToolExecutionContext ctx, string[]? names,
 			bool requireReading, bool requireWriting, bool requireFacts = false, bool requireLogs = false)
 		{
-			var agent = _agentManager.TryGetSenderAgentDescriptor(((ChatToolExecutionContext)ctx).Message);
+			// A script invocation has no owning message, so no sender agent can be resolved.
+			var agent = ctx is ChatToolExecutionContext chatContext
+				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
+				: null;
 			if (agent is null)
 				return new MemoryBlockResolution([], new Dictionary<string, string>());
 

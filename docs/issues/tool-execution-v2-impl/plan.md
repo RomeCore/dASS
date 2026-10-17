@@ -96,3 +96,17 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
     `IToolCall.AddAdditionalData` into `AddAttachment(IChatAttachment)` (P3.5a).
 11. `CompletionToken` is removed from `ToolCall` and `AssistantMessage`; completion is the terminal
     status (P3.5b).
+12. `ToolInvocationRequest` carries `ContextFactory`; the dispatcher is **Application-scoped and
+    stateless**, and routes all five sources. The entry point resolves the factory (the descriptor's
+    stamped one for chat tools, `ScriptToolContextFactory` for scripts, `TaskToolContextFactory` for
+    tasks in P5). The chat-scoped variant in the P4 plan is gone (P4).
+13. `IToolSettlementService.Finalize(ctx, Exception? exception)` — the parameter has no default. The
+    orchestrators have no `finally`; they settle at the end of the `try` or in `catch`, and settlement
+    classifies cancellation vs error (P4).
+14. `IToolValidationService.Validate` throws `ToolArgumentsInvalidException` instead of returning a
+    `bool`; one error channel for the pipeline (P4).
+15. `Script` skips the synchronization stage; key reentrancy is deferred (P4, see
+    `not-implemented.md`).
+16. The script world has its own context: `ChatScriptToolExecutionContext` + `ScriptToolContextFactory`
+    (no host message, no consent). `ChatToolContextFactory` is not branched (P4).
+17. User actions (`ChatRestart`, `Command`) do not check the hard floor; spec §13 was updated (P4).

@@ -92,7 +92,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 			try
 			{
-				int messageId = ((ChatToolExecutionContext)ctx).FindMessageId();
+				// A script invocation has no owning message; the fact then records no message link.
+				int messageId = ctx is ChatToolExecutionContext chatContext ? chatContext.FindMessageId() : 0;
 
 				var similarFacts = await _memoryFactStore.SearchAsync(targetBlock, fact, maxCount: 10, cancellationToken: cancellationToken);
 				var highestScore = similarFacts.MaxBy(f => f.CosineScore ?? 0);
