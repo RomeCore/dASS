@@ -7,6 +7,7 @@ using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.Tests.Tools
@@ -93,10 +94,10 @@ namespace LLMDesktopAssistant.Tests.Tools
 			var call = new AgentToolCall { ToolCallId = "1", ToolName = "tool" };
 			var part = new NativeAttachmentMessagePart { NativeAttachment = new ImageAttachment("data:image/png;base64,AAA") };
 
-			call.AddAdditionalData(part);
+			call.AddAttachment(part);
 
-			var attachment = Assert.Single(call.Attachments);
-			Assert.Equal(AgentAttachmentType.Image, attachment.Type);
+			var attachment = Assert.IsType<AgentNativeAttachment>(Assert.Single(call.Attachments));
+			Assert.Equal(AttachmentKind.Image, attachment.Type);
 			Assert.Equal("data:image/png;base64,AAA", attachment.Url);
 		}
 
@@ -105,7 +106,7 @@ namespace LLMDesktopAssistant.Tests.Tools
 		{
 			var call = new AgentToolCall { ToolCallId = "1", ToolName = "tool" };
 
-			call.AddAdditionalData(new AdditionalMessagePart { ChipTitle = null });
+			call.AddAttachment(new AdditionalMessagePart { ChipTitle = null });
 
 			Assert.Empty(call.Attachments);
 		}
@@ -137,15 +138,11 @@ namespace LLMDesktopAssistant.Tests.Tools
 
 			public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 
-			public void AddAttachment(ToolAttachment attachment)
+			public void AddAttachment(IChatAttachment attachment)
 			{
 			}
 
 			public void SetProgress(double? value, double min, double max)
-			{
-			}
-
-			public void AddAdditionalData(AdditionalChatData data)
 			{
 			}
 		}

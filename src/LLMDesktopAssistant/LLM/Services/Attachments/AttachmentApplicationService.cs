@@ -2,6 +2,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Utils;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.Utils.Files;
 using RCLargeLanguageModels.Messages.Attachments;
 

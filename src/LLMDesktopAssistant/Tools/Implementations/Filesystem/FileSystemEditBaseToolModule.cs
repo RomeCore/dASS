@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					ConsentContext = ctx.Consent
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				ctx.Call.AddAdditionalData(diffVM);
+				ctx.Call.AddAttachment(diffVM);
 
 				using var reg = cancellationToken.Register(() =>
 				{
@@ -86,7 +86,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					IsReadOnly = true
 				};
 				diffVM.LoadFromHunkGroups(diff);
-				ctx.Call.AddAdditionalData(diffVM);
+				ctx.Call.AddAttachment(diffVM);
 				return new DiffPostProcessResult
 				{
 					Diff = diff,

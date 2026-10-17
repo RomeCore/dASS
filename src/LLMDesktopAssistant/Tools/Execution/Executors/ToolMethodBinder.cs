@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
+using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Json;
 using RCLargeLanguageModels.Json.Schema;
 using RCLargeLanguageModels.Messages.Attachments;
@@ -252,8 +253,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		}
 
 		/// <summary>
-		/// Projects a native RCLLM attachment into the neutral call. The neutral kind is what the call
-		/// turns back into the invoking world's native form.
+		/// Projects a native RCLLM attachment into the call. The wrapped attachment keeps its subtype and
+		/// source; the call turns it into the invoking world's native form.
 		/// </summary>
 		/// <param name="call">The call to add the attachment to.</param>
 		/// <param name="attachment">The native attachment.</param>
@@ -261,14 +262,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		{
 			switch (attachment)
 			{
-				case IImageAttachment image:
-					call.AddAttachment(new ToolAttachment { Kind = ToolAttachmentKind.Image, Url = image.Url });
-					break;
-				case IAudioAttachment audio:
-					call.AddAttachment(new ToolAttachment { Kind = ToolAttachmentKind.Audio, Url = audio.Url });
-					break;
-				case IVideoAttachment video:
-					call.AddAttachment(new ToolAttachment { Kind = ToolAttachmentKind.Video, Url = video.Url });
+				case IImageAttachment or IAudioAttachment or IVideoAttachment:
+					call.AddAttachment(new ChatNativeAttachment(attachment));
 					break;
 			}
 		}

@@ -7,6 +7,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Attachments;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {

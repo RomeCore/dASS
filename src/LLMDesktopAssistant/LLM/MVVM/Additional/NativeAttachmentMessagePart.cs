@@ -1,8 +1,9 @@
+using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
-	public class NativeAttachmentMessagePart : AdditionalMessagePart
+	public class NativeAttachmentMessagePart : AdditionalMessagePart, INativeChatAttachment
 	{
 		private IAttachment? _nativeAttachment;
 		/// <summary>
@@ -13,5 +14,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			get => _nativeAttachment;
 			set => SetProperty(ref _nativeAttachment, value);
 		}
+
+		/// <inheritdoc/>
+		IAttachment? INativeChatAttachment.Native => NativeAttachment;
 	}
 }

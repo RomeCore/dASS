@@ -1,6 +1,6 @@
 # P3.5a — Attachments model
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 03
 
@@ -78,6 +78,49 @@ indistinguishable to consumers.
   `INativeChatAttachment` instead of concrete parts.
 - `AgentPromptComposer` appends the tool call's content attachments to the tool result (skipped when
   the call is compacted).
+
+## Answer
+
+### What landed
+
+`Utils/Attachments/` (next to the moved `SerializableImageAttachment`) holds `IChatAttachment`, its two
+branches `INativeChatAttachment`/`IContentChatAttachment`, `AttachmentKind`, `ChatNativeAttachment` and
+`ChatContentAttachment`. `AttachmentKind` replaces both `ToolAttachmentKind` and `AgentAttachmentType`;
+`ToolAttachment` and `AddAdditionalData` are gone.
+
+- `ChatObjectBase.AddAttachment(IChatAttachment)` is the single write path: an `AdditionalChatData` is
+  stored as is, a native/content payload becomes an invisible `NativeAttachmentMessagePart` /
+  `AdditionalMessageContentPart`, anything else throws. `IToolCall.AddAttachment` and the chat `ToolCall`
+  inherit it. `GetNativeAttachments` filters `INativeChatAttachment`.
+- `AdditionalChatData` implements the marker; `AdditionalMessageContentPart` implements the content
+  branch; `NativeAttachmentMessagePart` implements the native branch.
+- `AgentAttachment` is abstract with `Source`; `AgentNativeAttachment` carries `AttachmentKind`/`Url` and
+  materializes `Native`, `AgentContentAttachment` carries `Content`. `AgentToolCall.AddAttachment`
+  branches native → content → chat-UI-drop and throws on an unknown payload. `AgentTool` hands its
+  attachments to the call directly; `ChatAgentTool.ReadAttachments` filters the branch.
+- `ToolMethodBinder` wraps the concrete `IAttachment` it already has, so the subtype and `Source` survive
+  (the old `ToolAttachment` rebuilt the attachment from kind+url and lost them).
+- The Lua surface (`AgentNativeAttachment.FromBase64`, the attachment projection) and the task executor
+  use the split types; text contributions are filtered out of the native projection instead of throwing.
+- `ToolCallContentProjector` (mirroring `MessageContentProjector`) projects a call's content parts;
+  `AgentPromptComposer` uses it, skipped for a compacted call.
+- The task-detail XAML renders attachments with two typed `DataTemplate`s
+  (`AgentNativeAttachment` → `Url`, `AgentContentAttachment` → `Content`). No display member was added to
+  the domain: `LocaleKeyBase` was rejected for a URL, and a domain `DisplayText` would have been a UI
+  concern leaking into the model.
+
+### Tests
+
+`ChatAttachmentProjectionTests` covers the chat write path (UI part as is, native wrapper and part,
+kind+url materialization, content part + projector, unknown payload throws) and the task projection
+(native/content, chat-UI drop, unknown payload throws).
+
+### Gates
+
+- Core project: builds, 0 errors, 0 warnings.
+- Desktop project: builds, 0 errors (only the pre-existing NuGet advisory warnings).
+- `LLMDesktopAssistant.Tests`: 1209 total, 1208 passed, 1 skipped, 0 failed.
+- `LLMDesktopAssistant.Desktop.Tests`: 44 total, 44 passed, 0 failed.
 
 ## Acceptance
 

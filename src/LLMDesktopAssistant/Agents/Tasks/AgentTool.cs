@@ -122,7 +122,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			var result = await ExecuteAsync(args, ctx.SharedContext, ct);
 			ctx.Call.ResultContent = result.Content;
 			foreach (var attachment in result.Attachments)
-				ProjectAttachment(ctx.Call, attachment);
+				ctx.Call.AddAttachment(attachment);
 
 			return result.Success ? ToolExecutionResult.Succeeded : ToolExecutionResult.Failed;
 		});
@@ -175,19 +175,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <returns>A task that represents the asynchronous operation and returns the result of the tool execution.</returns>
 		public abstract Task<AgentToolCallResult> ExecuteAsync(JsonNode? arguments, object? sharedContext, CancellationToken cancellationToken = default);
 
-		private static void ProjectAttachment(IToolCall call, AgentAttachment attachment)
-		{
-			var kind = attachment.Type switch
-			{
-				AgentAttachmentType.Image => ToolAttachmentKind.Image,
-				AgentAttachmentType.Audio => ToolAttachmentKind.Audio,
-				AgentAttachmentType.Video => ToolAttachmentKind.Video,
-				_ => throw new ArgumentOutOfRangeException(nameof(attachment), attachment.Type, "Unknown attachment type.")
-			};
-
-			call.AddAttachment(new ToolAttachment { Kind = kind, Url = attachment.Url });
-		}
-
 		private sealed class DelegatingPreviewExecutor(AgentTool tool) : IToolPreviewExecutor
 		{
 			public async Task<PreviewToolExecutionResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
@@ -200,7 +187,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					ctx.Call.ResultContent = result.InterruptingContent;
 
 				foreach (var attachment in result.InterruptingAttachments)
-					ProjectAttachment(ctx.Call, attachment);
+					ctx.Call.AddAttachment(attachment);
 
 				return new PreviewToolExecutionResult
 				{

@@ -5,6 +5,7 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
@@ -186,34 +187,25 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
-		/// Adds an attachment, projected into the task's native form.
+		/// Adds a payload, projected into the task's native form: a native attachment becomes an
+		/// <see cref="AgentNativeAttachment"/>, a text contribution an <see cref="AgentContentAttachment"/>.
+		/// A chat UI payload has no task representation and is dropped.
 		/// </summary>
-		/// <param name="attachment">The neutral attachment to project.</param>
-		public void AddAttachment(ToolAttachment attachment)
+		/// <param name="attachment">The payload to add.</param>
+		public void AddAttachment(IChatAttachment attachment)
 		{
-			var type = attachment.Kind switch
+			switch (attachment)
 			{
-				ToolAttachmentKind.Image => AgentAttachmentType.Image,
-				ToolAttachmentKind.Audio => AgentAttachmentType.Audio,
-				ToolAttachmentKind.Video => AgentAttachmentType.Video,
-				_ => throw new ArgumentOutOfRangeException(nameof(attachment), attachment.Kind, "Unknown attachment kind.")
-			};
+				case INativeChatAttachment native:
+					var converted = AgentNativeAttachment.TryFromNative(native.Native);
+					if (converted is not null)
+						_attachments.Add(converted);
+					break;
 
-			_attachments.Add(new AgentAttachment { Type = type, Url = attachment.Url });
-		}
-
-		/// <summary>
-		/// The task keeps only the native attachment part of the added data; everything else is a chat
-		/// concern and is dropped.
-		/// </summary>
-		public void AddAdditionalData(AdditionalChatData data)
-		{
-			if (data is not NativeAttachmentMessagePart { NativeAttachment: not null } part)
-				return;
-
-			var attachment = AgentAttachment.TryConvertFromNativeAttachment(part.NativeAttachment);
-			if (attachment is not null)
-				_attachments.Add(attachment);
+				case IContentChatAttachment content:
+					_attachments.Add(new AgentContentAttachment { Content = content.Content });
+					break;
+			}
 		}
 	}
 }

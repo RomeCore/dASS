@@ -338,7 +338,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				uiControl.XamlChanged += OnXamlChanged;
 				additional.OnDispose += (_, _) => uiControl.XamlChanged -= OnXamlChanged;
 
-				result.AddAdditionalData(additional);
+				result.AddAttachment(additional);
 			}
 
 			return new LuaTuple(LuaNil.Instance);

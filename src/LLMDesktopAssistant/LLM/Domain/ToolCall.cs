@@ -1,11 +1,9 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using Material.Icons;
-using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.LLM.Domain
@@ -192,30 +190,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 			Progress = value;
 		}
 
-		/// <summary>
-		/// Adds an attachment, projected into the chat's native attachment part.
-		/// </summary>
-		/// <param name="attachment">The neutral attachment to project.</param>
-		public void AddAttachment(ToolAttachment attachment)
-		{
-			IAttachment native = attachment.Kind switch
-			{
-				ToolAttachmentKind.Image => new ImageAttachment(attachment.Url),
-				ToolAttachmentKind.Audio => new AudioAttachment(attachment.Url),
-				ToolAttachmentKind.Video => new VideoAttachment(attachment.Url),
-				_ => throw new ArgumentOutOfRangeException(nameof(attachment), attachment.Kind, "Unknown attachment kind.")
-			};
-
-			AdditionalData.Add(new NativeAttachmentMessagePart { NativeAttachment = native });
-		}
-
-		/// <summary>
-		/// Adds a UI part or payload produced by the tool.
-		/// </summary>
-		/// <param name="data">The part to add.</param>
-		public void AddAdditionalData(AdditionalChatData data) => AdditionalData.Add(data);
-
-		
 		/// <summary>
 		/// Gets or sets the completion token associated with this tool call.
 		/// </summary>

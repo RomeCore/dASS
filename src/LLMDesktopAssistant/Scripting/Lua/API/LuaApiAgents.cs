@@ -4,6 +4,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
@@ -781,7 +782,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			{
 				if (userData.Target is LuaImage image)
 				{
-					return AgentAttachment.FromBase64(AgentAttachmentType.Image, image.Format, image.ToBase64(), image);
+					return AgentNativeAttachment.FromBase64(AttachmentKind.Image, image.Format, image.ToBase64(), image);
 				}
 			}
 			throw new Exception("Unsupported attachment value: " + attachmentValue.ToString());
@@ -789,16 +790,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static LuaValue? TryConvertAttachmentToLua(AgentAttachment attachment)
 		{
-			switch (attachment.Type)
-			{
-				case AgentAttachmentType.Image:
-
-					// Convert back
-					if (attachment.Source is LuaImage luaImage)
-						return LuaValueConverter.ToLuaValue(luaImage);
-
-					break;
-			}
+			// Convert back: only a Lua image remembers its original userdata.
+			if (attachment is AgentNativeAttachment { Type: AttachmentKind.Image, Source: LuaImage luaImage })
+				return LuaValueConverter.ToLuaValue(luaImage);
 
 			return null;
 		}

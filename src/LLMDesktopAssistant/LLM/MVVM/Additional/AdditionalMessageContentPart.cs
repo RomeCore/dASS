@@ -1,3 +1,5 @@
+using LLMDesktopAssistant.Utils.Attachments;
+
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
 	/// <summary>
@@ -9,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	/// A slash command uses it to inject a skill body, or a sub-agent's result, into the message it produced. The part
 	/// is persisted with the message, so a reload keeps the injected text in the prompt.
 	/// </remarks>
-	public class AdditionalMessageContentPart : AdditionalMessagePart
+	public class AdditionalMessageContentPart : AdditionalMessagePart, IContentChatAttachment
 	{
 		private string _content = string.Empty;
 		/// <summary>

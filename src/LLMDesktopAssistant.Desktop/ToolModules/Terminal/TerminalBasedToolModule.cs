@@ -71,7 +71,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 					IsRunning = true
 				};
 				viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
-				call.AddAdditionalData(viewModel);
+				call.AddAttachment(viewModel);
 			}
 
 			if (!parameters.Wait)

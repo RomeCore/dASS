@@ -1,8 +1,8 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.Tools.Execution.Domain
 {
@@ -82,11 +82,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		CancellationTokenSource CancellationTokenSource { get; set; }
 
 		/// <summary>
-		/// Adds an attachment the call projects into its world's native form. The attachment is an
+		/// Adds a payload the call projects into its world's native form: a UI part is stored as is, a
+		/// native or content attachment becomes the corresponding invisible part. The payload is an
 		/// argument, not stored neutral state.
 		/// </summary>
-		/// <param name="attachment">The neutral attachment to project.</param>
-		void AddAttachment(ToolAttachment attachment);
+		/// <param name="attachment">The payload to add.</param>
+		void AddAttachment(IChatAttachment attachment);
 
 		/// <summary>
 		/// Reports progress together with the range it belongs to.
@@ -95,12 +96,5 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// <param name="min">The minimum of the range.</param>
 		/// <param name="max">The maximum of the range.</param>
 		void SetProgress(double? value, double min, double max);
-
-		/// <summary>
-		/// Adds a UI part or payload produced by the tool. The chat call stores it; the task call keeps
-		/// only the native attachment part inside it and drops everything else.
-		/// </summary>
-		/// <param name="data">The part to add.</param>
-		void AddAdditionalData(AdditionalChatData data);
 	}
 }

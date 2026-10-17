@@ -5,6 +5,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
@@ -474,9 +475,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 						new AgentSystemMessage { Content = _templates.GetTextTemplate("image_describer_prompt").Render().ToString()! },
 						new AgentUserMessage {
 							Content = "Please describe the image.",
-							Attachments = [new AgentAttachment
+							Attachments = [new AgentNativeAttachment
 							{
-								Type = AgentAttachmentType.Image,
+								Type = AttachmentKind.Image,
 								Url = url
 							}]
 						}

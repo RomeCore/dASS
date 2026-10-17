@@ -1,4 +1,5 @@
 using LiteDB;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
@@ -6,7 +7,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	/// The base class for additional message view models.
 	/// This class is required to be BSON-serializable if not temporary.
 	/// </summary>
-	public class AdditionalChatData : NotifyPropertyChanged
+	public class AdditionalChatData : NotifyPropertyChanged, IChatAttachment
 	{
 		/// <summary>
 		/// Gets the order of this additional view model. Used for sorting in the UI. Lower values appear first.

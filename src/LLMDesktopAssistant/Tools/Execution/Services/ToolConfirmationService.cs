@@ -71,7 +71,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (string.IsNullOrWhiteSpace(notes))
 				return;
 
-			ctx.Call.AddAdditionalData(new AdditionalMessageContentPart
+			ctx.Call.AddAttachment(new AdditionalMessageContentPart
 			{
 				Content = $"Additional notes from user: {notes}",
 				IsVisible = false,

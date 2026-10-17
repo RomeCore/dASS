@@ -97,7 +97,7 @@ public class FormsToolModule : ToolModule
 			CancelText = cancelText ?? "Cancel",
 			IsDanger = isDanger ?? false
 		};
-		context.Call.AddAdditionalData(viewModel);
+		context.Call.AddAttachment(viewModel);
 
 		bool confirmed;
 		try
@@ -161,7 +161,7 @@ public class FormsToolModule : ToolModule
 			MinSelect = minSelect ?? 1,
 			MaxSelect = maxSelect ?? (allowMultiple == true ? options.Length : 1)
 		};
-		context.Call.AddAdditionalData(viewModel);
+		context.Call.AddAttachment(viewModel);
 
 		ChoiceResult formResult;
 		try
@@ -231,7 +231,7 @@ public class FormsToolModule : ToolModule
 			Title = title,
 			Description = description ?? string.Empty
 		};
-		context.Call.AddAdditionalData(viewModel);
+		context.Call.AddAttachment(viewModel);
 
 		InputResult formResult;
 		try
@@ -280,7 +280,7 @@ public class FormsToolModule : ToolModule
 			AllowMultiple = allowMultiple
 		};
 
-		context.Call.AddAdditionalData(viewModel);
+		context.Call.AddAttachment(viewModel);
 
 		try
 		{

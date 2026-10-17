@@ -1,6 +1,7 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.SlashCommands;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
@@ -35,7 +36,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			};
 
 			var segments = new List<string?> { content };
-			segments.AddRange(message.AdditionalData.OfType<AdditionalMessageContentPart>().Select(part => part.Content));
+			segments.AddRange(message.AdditionalData.OfType<IContentChatAttachment>().Select(part => part.Content));
 
 			var combined = string.Join("\n\n", segments.Where(segment => !string.IsNullOrEmpty(segment)));
 			return combined.Length == 0 ? null : combined;

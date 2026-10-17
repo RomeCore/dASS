@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.Tools.Execution.Support;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -104,10 +104,10 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public void SetStructured(JsonNode? value) => _call.SetStructuredResult(value);
 
 		/// <summary>
-		/// Attaches a UI part to the call.
+		/// Attaches a payload (a UI part, a native attachment or a text contribution) to the call.
 		/// </summary>
-		/// <param name="data">The part to attach.</param>
-		public void AddAdditionalData(AdditionalChatData data) => _call.AddAdditionalData(data);
+		/// <param name="attachment">The payload to attach.</param>
+		public void AddAttachment(IChatAttachment attachment) => _call.AddAttachment(attachment);
 
 		/// <summary>
 		/// Clears the result content.

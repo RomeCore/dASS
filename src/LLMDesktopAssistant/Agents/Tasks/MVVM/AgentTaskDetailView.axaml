@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -289,8 +289,8 @@
 							<ItemsControl ItemsSource="{Binding Attachments}"
 														IsVisible="{Binding Attachments.Any}"
 														Margin="0,6,0,0">
-								<ItemsControl.ItemTemplate>
-									<DataTemplate x:DataType="tsk:AgentAttachment">
+								<ItemsControl.DataTemplates>
+									<DataTemplate DataType="tsk:AgentNativeAttachment" x:DataType="tsk:AgentNativeAttachment">
 										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
 											<ico:VisualIcon Kind="Paperclip"
 																				Width="12" Height="12"
@@ -302,7 +302,19 @@
 																 MaxWidth="400"/>
 										</StackPanel>
 									</DataTemplate>
-								</ItemsControl.ItemTemplate>
+									<DataTemplate DataType="tsk:AgentContentAttachment" x:DataType="tsk:AgentContentAttachment">
+										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2">
+											<ico:VisualIcon Kind="Paperclip"
+																				Width="12" Height="12"
+																				Opacity="0.5"/>
+											<TextBlock Text="{Binding Content}"
+																 FontSize="11"
+																 Opacity="0.5"
+																 TextTrimming="CharacterEllipsis"
+																 MaxWidth="400"/>
+										</StackPanel>
+									</DataTemplate>
+								</ItemsControl.DataTemplates>
 							</ItemsControl>
 						</StackPanel>
 					</DataTemplate>
@@ -359,8 +371,8 @@
 							<ItemsControl ItemsSource="{Binding Attachments}"
 														IsVisible="{Binding Attachments.Any}"
 														Margin="0,6,0,0">
-								<ItemsControl.ItemTemplate>
-									<DataTemplate x:DataType="tsk:AgentAttachment">
+								<ItemsControl.DataTemplates>
+									<DataTemplate DataType="tsk:AgentNativeAttachment" x:DataType="tsk:AgentNativeAttachment">
 										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2"
 																HorizontalAlignment="Left">
 											<ico:VisualIcon Kind="Paperclip"
@@ -373,7 +385,20 @@
 																 MaxWidth="400"/>
 										</StackPanel>
 									</DataTemplate>
-								</ItemsControl.ItemTemplate>
+									<DataTemplate DataType="tsk:AgentContentAttachment" x:DataType="tsk:AgentContentAttachment">
+										<StackPanel Orientation="Horizontal" Spacing="4" Margin="0,2"
+																HorizontalAlignment="Left">
+											<ico:VisualIcon Kind="Paperclip"
+																				Width="12" Height="12"
+																				Opacity="0.7"/>
+											<TextBlock Text="{Binding Content}"
+																 FontSize="11"
+																 Opacity="0.7"
+																 TextTrimming="CharacterEllipsis"
+																 MaxWidth="400"/>
+										</StackPanel>
+									</DataTemplate>
+								</ItemsControl.DataTemplates>
 							</ItemsControl>
 
 							<!-- Tool calls (compact list) -->

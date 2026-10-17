@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
+using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
 using DomainToolCall = LLMDesktopAssistant.LLM.Domain.ToolCall;
@@ -98,11 +99,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			return new ChatToolExecutionContext(dummyChat, dummyMessage, parameters, null);
 		}
 
-		private static AgentAttachment? TryConvertAttachment(AttachmentMessagePart? part)
-		{
-			return AgentAttachment.TryConvertFromNativeAttachment(part?.NativeAttachment);
-		}
-
 		private static ImmutableList<AgentAttachment> ReadAttachments(
 			LLMDesktopAssistant.Tools.Execution.Domain.IToolCall call)
 		{
@@ -110,9 +106,9 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				return [];
 
 			return [.. chatCall.AdditionalData
-				.OfType<AttachmentMessagePart>()
-				.Select(TryConvertAttachment)
-				.Where(a => a != null)!];
+				.OfType<INativeChatAttachment>()
+				.Select(a => AgentNativeAttachment.TryFromNative(a.Native))
+				.Where(a => a is not null)!];
 		}
 
 		/// <inheritdoc/>

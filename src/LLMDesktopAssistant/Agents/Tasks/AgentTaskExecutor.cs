@@ -13,6 +13,7 @@ using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Specifiers;
 using IToolExecutionContext = LLMDesktopAssistant.Tools.Execution.Domain.IToolExecutionContext;
 using LLMDesktopAssistant.Utils;
+using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Completions;
 using RCLargeLanguageModels.Messages;
@@ -289,7 +290,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						Content = responseMessage.Content
 					};
 					agentMessage.Attachments.AddRange(responseMessage.Attachments
-						.Select(a => AgentAttachment.TryConvertFromNativeAttachment(a)).Where(a => a != null)!);
+						.Select(a => AgentNativeAttachment.TryFromNative(a)).Where(a => a != null)!);
 
 					async Task<IToolMessage> ProcessToolCall(IToolCall toolCall)
 					{
@@ -333,7 +334,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 							if (delta.NewAttachments != null)
 								agentMessage.Attachments.AddRange(delta.NewAttachments
-									.Select(a => AgentAttachment.TryConvertFromNativeAttachment(a)).Where(a => a != null)!);
+									.Select(a => AgentNativeAttachment.TryFromNative(a)).Where(a => a != null)!);
 
 							if (delta.NewToolCalls != null)
 								foreach (var toolCall in delta.NewToolCalls)
@@ -430,7 +431,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 							{
 								task.Messages.Add(feedbackMessage);
 								nativeMessages.Add(new UserMessage(Senders.User, feedbackMessage.Content ?? string.Empty,
-									feedbackMessage.Attachments.Select(ConvertAttachmentFromAgent)));
+									ConvertAttachments(feedbackMessage.Attachments)));
 								task.FeedbackIterations++;
 								continue;
 							}
@@ -540,7 +541,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					};
 					agentToolCall.Status = previewResult.InterruptingSuccess.Value ? ToolStatus.Success : ToolStatus.Error;
 					return new ToolMessage(new ToolResult(previewResult.InterruptingSuccess.Value ? ToolResultStatus.Success : ToolResultStatus.Error,
-						agentToolCall.Result.Content, agentToolCall.Result.Attachments.Select(ConvertAttachmentFromAgent)), toolCall.Id, toolCall.ToolName);
+						agentToolCall.Result.Content, ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
 				}
 
 				var autoApproveBehaviours = task.LaunchParameters.AutoApproveBehaviours;
@@ -657,7 +658,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				};
 				agentToolCall.Status = result.Success ? ToolStatus.Success : ToolStatus.Error;
 				return new ToolMessage(new ToolResult(result.Success ? ToolResultStatus.Success : ToolResultStatus.Error,
-					agentToolCall.Result.Content, agentToolCall.Result.Attachments.Select(ConvertAttachmentFromAgent)), toolCall.Id, toolCall.ToolName);
+					agentToolCall.Result.Content, ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
 			}
 			catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
 			{
@@ -737,7 +738,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 				case AgentUserMessage userMessage:
 					return [new UserMessage(Senders.User, userMessage.Content ?? string.Empty,
-						userMessage.Attachments.Select(ConvertAttachmentFromAgent))];
+						ConvertAttachments(userMessage.Attachments))];
 
 				case AgentAssistantMessage assistantMessage:
 
@@ -751,7 +752,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					}
 
 					var nativeAssistantMessage = new AssistantMessage(assistantMessage.Content, assistantMessage.ReasoningContent,
-						toolCalls, assistantMessage.Attachments.Select(ConvertAttachmentFromAgent));
+						toolCalls, ConvertAttachments(assistantMessage.Attachments));
 
 					return [nativeAssistantMessage, ..toolMessages];
 
@@ -766,23 +767,16 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				return new ToolResult(ToolResultStatus.NoResult, "Tool call has given no result.");
 
 			var status = agentToolResult.Success ? ToolResultStatus.Success : ToolResultStatus.Error;
-			return new ToolResult(status, agentToolResult.Content, agentToolResult.Attachments.Select(ConvertAttachmentFromAgent));
+			return new ToolResult(status, agentToolResult.Content, ConvertAttachments(agentToolResult.Attachments));
 		}
 
-		private static IAttachment ConvertAttachmentFromAgent(AgentAttachment agentAttachment)
-		{
-			switch (agentAttachment.Type)
-			{
-				case AgentAttachmentType.Image:
-					return new ImageAttachment(agentAttachment.Url);
-				case AgentAttachmentType.Audio:
-					return new AudioAttachment(agentAttachment.Url);
-				case AgentAttachmentType.Video:
-					return new VideoAttachment(agentAttachment.Url);
-
-				default:
-					throw new ArgumentOutOfRangeException(nameof(agentAttachment), $"Unknown attachment type: {agentAttachment.Type}");
-			}
-		}
+		/// <summary>
+		/// Projects task attachments onto the native attachments the model receives. Text contributions have
+		/// no native form and are sent as content by the call's own projection instead.
+		/// </summary>
+		private static IEnumerable<IAttachment> ConvertAttachments(IEnumerable<AgentAttachment> attachments) =>
+			attachments.OfType<INativeChatAttachment>()
+				.Select(attachment => attachment.Native)
+				.OfType<IAttachment>();
 	}
 }

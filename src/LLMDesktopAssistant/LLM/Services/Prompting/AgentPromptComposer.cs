@@ -5,6 +5,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
+using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Hooks;
 using RCLargeLanguageModels.Messages;
@@ -296,15 +297,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		/// Appends the text a tool wrote onto the call (user consent notes and any other content part) to
 		/// the call's result content. Compacted calls are replaced by their marker and contribute no text.
 		/// </summary>
-		private static string AppendContentParts(Domain.ToolCall toolCall)
-		{
-			var segments = new List<string?> { toolCall.ResultContent };
-			segments.AddRange(toolCall.AdditionalData
-				.OfType<AdditionalMessageContentPart>()
-				.Select(part => part.Content));
-
-			return string.Join("\n\n", segments.Where(segment => !string.IsNullOrEmpty(segment)));
-		}
+		private static string AppendContentParts(Domain.ToolCall toolCall) =>
+			ToolCallContentProjector.Project(toolCall);
 
 		private static ToolResultStatus ConvertToolStatus(ToolStatus status) => status switch
 		{
