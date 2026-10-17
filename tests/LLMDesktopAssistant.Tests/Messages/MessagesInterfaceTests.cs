@@ -31,8 +31,7 @@ public class MessagesInterfaceTests
 			Content = content,
 			CreatedAt = DateTime.UtcNow,
 			SenderAgentId = Guid.NewGuid(),
-			AgentStageId = Guid.NewGuid(),
-			CompletionToken = new CompletionSource().Token
+			AgentStageId = Guid.NewGuid()
 		},
 		MessageId = index,
 		MessageIndex = index
@@ -46,8 +45,7 @@ public class MessagesInterfaceTests
 			CreatedAt = DateTime.UtcNow,
 			SenderAgentId = Guid.NewGuid(),
 			AgentStageId = Guid.NewGuid(),
-			IsUserLike = true,
-			CompletionToken = new CompletionSource().Token
+			IsUserLike = true
 		},
 		MessageId = index,
 		MessageIndex = index

@@ -3,8 +3,6 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
-using Material.Icons;
-using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -34,7 +32,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public string Arguments
 		{
-			get => field;
+			get;
 			set => SetProperty(ref field, value);
 		} = "{}";
 
@@ -45,7 +43,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		public ToolStatus Status
 		{
 			get => _status;
-			set => SetProperty(ref _status, value);
+			set
+			{
+				if (SetProperty(ref _status, value))
+					RaisePropertyChanged(nameof(IsCompleted));
+			}
 		}
 
 		private VisualIconKind? _statusIcon;
@@ -191,17 +193,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		}
 
 		/// <summary>
-		/// Gets or sets the completion token associated with this tool call.
-		/// </summary>
-		public required CompletionToken CompletionToken { get; init; }
-
-		/// <summary>
 		/// Gets a value indicating whether the tool call has been completed (e.g. not processing or pending).
-		/// This means this tool call has finished or been loaded from database.
+		/// This means this tool call has finished or been loaded from database. Completion is the terminal
+		/// <see cref="Status"/>; there is no separate completion handle.
 		/// </summary>
-		public bool IsCompleted => CompletionToken.IsCompleted;
-
-		public CompletionToken GetAwaiter() => CompletionToken;
+		public bool IsCompleted => Status.IsTerminal();
 
 		protected override void Dispose(bool disposing)
 		{

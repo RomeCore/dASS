@@ -77,13 +77,12 @@ namespace LLMDesktopAssistant.Tests.Tools
 			{
 				AgentStageId = Guid.Empty,
 				SenderAgentId = Guid.Empty,
-				CompletionToken = CompletionToken.Success
+				Status = AssistantMessageStatus.Success
 			};
 			chat.Messages.Add(message);
 
 			var call = new DomainToolCall
 			{
-				CompletionToken = CompletionToken.Success,
 				ToolCallId = ToolCallId.Generate(),
 				ToolName = tool.Name,
 				Arguments = args?.ToJsonString() ?? "{}"

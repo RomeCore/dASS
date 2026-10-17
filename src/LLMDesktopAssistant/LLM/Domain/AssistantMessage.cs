@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.Utils;
-using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -49,16 +48,10 @@ namespace LLMDesktopAssistant.LLM.Domain
 		}
 
 		/// <summary>
-		/// Gets or sets the completion token associated with this message.
-		/// </summary>
-		public required CompletionToken CompletionToken { get; init; }
-
-		/// <summary>
 		/// Gets a value indicating whether the message has been completed (e.g. not streaming).
-		/// This means this message has finished streaming or been loaded from database.
+		/// This means this message has finished streaming or been loaded from database. Completion is the
+		/// terminal <see cref="Status"/>; there is no separate completion handle.
 		/// </summary>
-		public bool IsCompleted => CompletionToken.IsCompleted;
-
-		public CompletionToken GetAwaiter() => CompletionToken;
+		public bool IsCompleted => Status.IsTerminal();
 	}
 }

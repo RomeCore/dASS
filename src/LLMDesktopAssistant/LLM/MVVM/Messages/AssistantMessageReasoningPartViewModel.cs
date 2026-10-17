@@ -46,17 +46,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			UpdateVisibility();
 
 			Completed = _assistantMessage.IsCompleted;
-
-			_assistantMessage.CompletionToken.OnCompleted(() =>
-			{
-				InvokeUIAsync(() =>
-				{
-					_currentUpdateOperation?.Abort();
-					_currentUpdateOperation = null;
-					Completed = true;
-					UpdateVisibility();
-				});
-			});
 		}
 
 		protected override void Dispose(bool disposing)
@@ -76,6 +65,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		}
 		void PropertyChangedHandler(object? s, PropertyChangedEventArgs e)
 		{
+			if (e.PropertyName == nameof(AssistantMessage.Status) && _assistantMessage.Status.IsTerminal())
+			{
+				_currentUpdateOperation?.Abort();
+				_currentUpdateOperation = null;
+				Completed = true;
+				InvokeUIAsync(UpdateVisibility);
+				return;
+			}
+
 			Completed = e.PropertyName != nameof(_assistantMessage.ReasoningContent);
 
 			_currentUpdateOperation?.Abort();

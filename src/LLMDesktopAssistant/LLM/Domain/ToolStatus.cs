@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.LLM.Domain
+namespace LLMDesktopAssistant.LLM.Domain
 {
 	/// <summary>
 	/// Represents the status of a tool.
@@ -49,5 +49,22 @@
 		/// The tool was cancelled by the user.
 		/// </summary>
 		Cancelled
+	}
+
+	/// <summary>
+	/// Helpers for <see cref="ToolStatus"/>.
+	/// </summary>
+	public static class ToolStatusExtensions
+	{
+		/// <summary>
+		/// Determines whether the status is terminal: the call will not change any more and its
+		/// completion state is final.
+		/// </summary>
+		/// <param name="status">The status to check.</param>
+		/// <returns><see langword="true"/> for <see cref="ToolStatus.Success"/>,
+		/// <see cref="ToolStatus.Error"/>, <see cref="ToolStatus.Cancelled"/> and
+		/// <see cref="ToolStatus.ExecutionInterrupted"/>.</returns>
+		public static bool IsTerminal(this ToolStatus status) =>
+			status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled or ToolStatus.ExecutionInterrupted;
 	}
 }

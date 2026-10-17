@@ -65,7 +65,8 @@ indistinguishable to consumers.
   `FromBase64` moves here.
 - `AgentContentAttachment : AgentAttachment, IContentChatAttachment` carries `Content`.
 - `AgentToolCall.AddAttachment` branches in this order: `INativeChatAttachment` → `AgentNativeAttachment`,
-  `IContentChatAttachment` → `AgentContentAttachment`, `AdditionalChatData` → dropped (no UI in tasks).
+  `IContentChatAttachment` → `AgentContentAttachment`; anything else (a chat UI payload or an unknown
+  payload) is silently ignored — a task has no representation for it.
 - Update `AgentToolCall`, `AgentAssistantMessage`, `AgentUserMessage`, `AgentToolCallResult`,
   `AgentToolCallPreResult`, `AgentTaskExecutor`, `ChatAgentTool` and the Lua API
   (`LuaApiAgents`, `LuaApiToolResult`) to the split types.
@@ -96,8 +97,9 @@ branches `INativeChatAttachment`/`IContentChatAttachment`, `AttachmentKind`, `Ch
   branch; `NativeAttachmentMessagePart` implements the native branch.
 - `AgentAttachment` is abstract with `Source`; `AgentNativeAttachment` carries `AttachmentKind`/`Url` and
   materializes `Native`, `AgentContentAttachment` carries `Content`. `AgentToolCall.AddAttachment`
-  branches native → content → chat-UI-drop and throws on an unknown payload. `AgentTool` hands its
-  attachments to the call directly; `ChatAgentTool.ReadAttachments` filters the branch.
+  branches native → content and silently ignores everything else (a chat UI payload or an unknown
+  payload has no task representation). `AgentTool` hands its attachments to the call directly;
+  `ChatAgentTool.ReadAttachments` filters the branch.
 - `ToolMethodBinder` wraps the concrete `IAttachment` it already has, so the subtype and `Source` survive
   (the old `ToolAttachment` rebuilt the attachment from kind+url and lost them).
 - The Lua surface (`AgentNativeAttachment.FromBase64`, the attachment projection) and the task executor
@@ -113,7 +115,7 @@ branches `INativeChatAttachment`/`IContentChatAttachment`, `AttachmentKind`, `Ch
 
 `ChatAttachmentProjectionTests` covers the chat write path (UI part as is, native wrapper and part,
 kind+url materialization, content part + projector, unknown payload throws) and the task projection
-(native/content, chat-UI drop, unknown payload throws).
+(native/content, chat-UI drop, unknown payload ignored).
 
 ### Gates
 

@@ -1,6 +1,6 @@
 # P3.5b — Remove `CompletionToken`
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 03
 
@@ -27,10 +27,39 @@ only our domain objects stop using it.
 - `MessageDatabaseSynchronizer` / `ToolCallDatabaseSynchronizer` keep setting a terminal status on load.
 - `ChatAgentTool` sets `Status` instead of a token.
 
-## Acceptance
+## Answer
 
-- `CompletionToken` no longer appears in `LLMDesktopAssistant.LLM.Domain`, the view models, the execution
-  service, the synchronizers, `ChatAgentTool` or the tests.
-- A streaming message still flips the view model to completed; a tool call still releases its
-  `PropertyChanged` subscription exactly once.
-- Core, Desktop and both test projects build and pass.
+### What landed
+
+`CompletionToken` and `GetAwaiter` are gone from `LLMDesktopAssistant.LLM.Domain.ToolCall` and
+`LLMDesktopAssistant.LLM.Domain.AssistantMessage`. `IsCompleted` stays as a thin projection over the
+terminal status: `AssistantMessageStatus.IsTerminal()` (already existed) and the new
+`ToolStatusExtensions.IsTerminal()`, which also treats `ExecutionInterrupted` as terminal so a call
+loaded after a crash keeps its completed UI state.
+
+- The message, text-part and reasoning-part view models react to the `Status` property change instead of
+  a token callback; the tool call and flyout view models unsubscribe `PropertyChanged` when the status
+  becomes terminal.
+- `ChatExecutionService` no longer creates `CompletionSource`s and no longer wraps tool execution in a
+  completion token; the tool call's status is the completion state.
+- Both database synchronizers and `ChatAgentTool` stop setting the token; the persisted status is the
+  source of truth.
+- The Blazor `AssistantMessageComponent` dropped its `OnCompleted` re-render: it already re-renders on
+  `PropertyChanged`, and completion is now a `Status` change.
+- `CompletionSource`/`CompletionToken` no longer appear anywhere in the repository's code or tests; the
+  type stays in `RCLargeLanguageModels` for its own streaming types.
+
+### Tests
+
+The token initializers were removed from the fixtures; completed fixtures now set
+`AssistantMessageStatus.Success` explicitly. No test awaits a message or a tool call.
+
+### Gates
+
+- Core project: builds, 0 errors, 0 warnings.
+- Desktop project: builds, 0 errors (only the pre-existing NuGet advisory warnings).
+- `LLMDesktopAssistant.Tests`: 1209 total, 1208 passed, 1 skipped (the YamlDotNet colon case), 0 failed.
+- `LLMDesktopAssistant.Desktop.Tests`: 44 total, 44 passed, 0 failed.
+
+One `ChatStorageServiceTests` run hit a known LiteDB unique-index flake; a clean rerun passed. It is
+unrelated to this change.

@@ -147,7 +147,6 @@ public class MessageCompactionTests
 		{
 			ToolName = "test-tool",
 			ToolCallId = "tc-1",
-			CompletionToken = new CompletionSource().Token,
 			Arguments = "{}",
 			ResultContent = "RAW TOOL RESULT",
 			Status = status,

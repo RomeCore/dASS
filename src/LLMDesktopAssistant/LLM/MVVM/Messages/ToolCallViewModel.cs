@@ -230,14 +230,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 							case nameof(ToolCall.MinProgress): MinProgress = toolCall.MinProgress; break;
 							case nameof(ToolCall.MaxProgress): MaxProgress = toolCall.MaxProgress; break;
 						}
+
+						if (toolCall.Status.IsTerminal())
+							toolCall.PropertyChanged -= OnToolCallPropertyChanged;
 					});
 				}
 
 				toolCall.PropertyChanged += OnToolCallPropertyChanged;
-				toolCall.CompletionToken.OnCompleted(() =>
-				{
-					toolCall.PropertyChanged -= OnToolCallPropertyChanged;
-				});
 			}
 		}
 

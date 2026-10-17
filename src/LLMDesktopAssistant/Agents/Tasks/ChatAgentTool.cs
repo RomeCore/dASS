@@ -73,14 +73,12 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			{
 				CreatedAt = DateTime.Now,
 				AgentStageId = Guid.Empty,
-				SenderAgentId = Guid.Empty,
-				CompletionToken = CompletionToken.Success
+				SenderAgentId = Guid.Empty
 			};
 			dummyChat.Messages.Add(dummyMessage);
 
 			var dummyToolCall = new DomainToolCall
 			{
-				CompletionToken = CompletionToken.Success,
 				ToolCallId = ToolCallId.Generate(),
 				ToolName = ChatToolInfo.Name
 			};

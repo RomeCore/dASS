@@ -202,15 +202,13 @@ namespace LLMDesktopAssistant.LLM.Services
 					await mcpManager.EnsureCurrentMCPConnectionsAsync(token);
 				}
 
-				var completionSource = new CompletionSource();
 				var domainResponseMessage = new Domain.AssistantMessage
 				{
 					CreatedAt = DateTime.Now,
 					Status = AssistantMessageStatus.Pending,
 					SenderAgentId = agentId,
 					AgentStageId = agentStageId,
-					IsUserLike = agent.Info.IdentifyAsUser,
-					CompletionToken = completionSource.Token
+					IsUserLike = agent.Info.IdentifyAsUser
 				};
 
 				string prefixReasoningContent = string.Empty;
@@ -266,32 +264,18 @@ namespace LLMDesktopAssistant.LLM.Services
 						}
 					}
 
-					var toolCallCompletionSource = new CompletionSource();
 					var domainToolCall = new Domain.ToolCall
 					{
 						Status = ToolStatus.None,
 						ToolCallId = toolCall.Id,
 						ToolName = toolInfo?.Name ?? toolCall.ToolName,
 						Title = toolInfo?.NameKey,
-						Arguments = funtionCall.Args,
-						CompletionToken = toolCallCompletionSource.Token
+						Arguments = funtionCall.Args
 					};
 					domainResponseMessage.ToolCalls.Add(domainToolCall);
 
-					async Task WrapToolExecutionTask()
-					{
-						try
-						{
-							await toolExecutor.ExecuteAsync(funtionCall as PartialFunctionToolCall,
-								domainResponseMessage, domainToolCall, toolInfo, token);
-						}
-						finally
-						{
-							toolCallCompletionSource.Complete();
-						}
-					}
-
-					var toolExecTask = WrapToolExecutionTask();
+					var toolExecTask = toolExecutor.ExecuteAsync(funtionCall as PartialFunctionToolCall,
+						domainResponseMessage, domainToolCall, toolInfo, token);
 					lock (lockObj)
 						toolExecutionTasks.Add(toolExecTask);
 				}
@@ -440,7 +424,6 @@ namespace LLMDesktopAssistant.LLM.Services
 					}
 					finally
 					{
-						completionSource.Complete();
 						token.ThrowIfCancellationRequested();
 					}
 				}

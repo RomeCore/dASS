@@ -139,17 +139,6 @@
 
 		Message.PropertyChanged += MessagePropertyChanged;
 		Message.ToolCalls.CollectionChanged += ToolCallsChanged;
-
-		if (!Message.IsCompleted)
-		{
-			Message.CompletionToken.OnCompleted(() =>
-			{
-				InvokeAsync(() =>
-				{
-					StateHasChanged();
-				});
-			});
-		}
 	}
 
 	private void LoadAvatar()

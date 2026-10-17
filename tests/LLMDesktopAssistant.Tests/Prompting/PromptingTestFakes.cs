@@ -102,8 +102,7 @@ internal static class PromptingTestHelpers
 			Content = content,
 			CreatedAt = DateTime.UtcNow,
 			SenderAgentId = senderAgentId ?? Guid.NewGuid(),
-			AgentStageId = Guid.NewGuid(),
-			CompletionToken = new CompletionSource().Token
+			AgentStageId = Guid.NewGuid()
 		},
 		MessageId = index,
 		MessageIndex = index
@@ -117,7 +116,7 @@ internal static class PromptingTestHelpers
 			CreatedAt = DateTime.UtcNow,
 			SenderAgentId = agentId,
 			AgentStageId = Guid.NewGuid(),
-			CompletionToken = CompletionToken.Success
+			Status = AssistantMessageStatus.Success
 		},
 		MessageId = index,
 		MessageIndex = index

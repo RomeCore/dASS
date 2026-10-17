@@ -299,8 +299,7 @@ public class ChatStorageServiceTests
 		message.ToolCalls.Add(new ToolCall
 		{
 			ToolName = "test-tool",
-			ToolCallId = "call-1",
-			CompletionToken = CompletionToken.Success
+			ToolCallId = "call-1"
 		});
 
 		ctx.Service.AppendMessage(message);

@@ -97,8 +97,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				},
 				StatusIcon = model.StatusIcon,
 				StatusTitle = model.StatusTitle,
-				ExpectedBehaviour = model.ExpectedBehaviour,
-				CompletionToken = CompletionToken.Success
+				ExpectedBehaviour = model.ExpectedBehaviour
 			};
 		}
 

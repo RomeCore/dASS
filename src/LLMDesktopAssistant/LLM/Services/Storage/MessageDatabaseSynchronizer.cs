@@ -122,8 +122,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 						MessageStatusModel.Error => AssistantMessageStatus.Error,
 						MessageStatusModel.Cancelled => AssistantMessageStatus.Cancelled,
 						_ => AssistantMessageStatus.Pending
-					},
-					CompletionToken = CompletionToken.Success
+					}
 				},
 				_ => throw new ArgumentOutOfRangeException(nameof(model.Role), "Invalid role"),
 			};

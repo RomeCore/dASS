@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia.Media.Imaging;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM;
@@ -85,9 +86,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		private void SubscribeToAssistantMessageEvents()
 		{
 			IsCompleted = _assistantMessage.IsCompleted;
-			if (_assistantMessage.IsCompleted) return;
+			if (IsCompleted) return;
 
-			_assistantMessage.CompletionToken.OnCompleted(() => IsCompleted = true);
+			void OnAssistantMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+			{
+				if (e.PropertyName != nameof(AssistantMessage.Status) || !_assistantMessage.Status.IsTerminal())
+					return;
+
+				_assistantMessage.PropertyChanged -= OnAssistantMessagePropertyChanged;
+				IsCompleted = true;
+			}
+
+			_assistantMessage.PropertyChanged += OnAssistantMessagePropertyChanged;
 		}
 
 		protected override void Dispose(bool disposing)

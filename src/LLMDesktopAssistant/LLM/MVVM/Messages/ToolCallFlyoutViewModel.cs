@@ -72,14 +72,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 							case nameof(ToolCall.ResultContent): Result = _toolCall.ResultContent; break;
 							case nameof(ToolCall.UseMarkdown): UseMarkdown = _toolCall.UseMarkdown; break;
 						}
+
+						if (_toolCall.Status.IsTerminal())
+							_toolCall.PropertyChanged -= OnToolCallPropertyChanged;
 					});
 				}
 
 				_toolCall.PropertyChanged += OnToolCallPropertyChanged;
-				_toolCall.CompletionToken.OnCompleted(() =>
-				{
-					_toolCall.PropertyChanged -= OnToolCallPropertyChanged;
-				});
 			}
 		}
 

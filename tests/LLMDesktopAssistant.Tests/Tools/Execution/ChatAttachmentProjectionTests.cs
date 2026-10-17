@@ -90,11 +90,13 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		}
 
 		[Fact]
-		public void AnUnknownTaskAttachment_Throws()
+		public void AnUnknownTaskAttachment_IsIgnored()
 		{
 			var call = new AgentToolCall { ToolCallId = "1", ToolName = "tool" };
 
-			Assert.Throws<InvalidOperationException>(() => call.AddAttachment(new UnknownAttachment()));
+			call.AddAttachment(new UnknownAttachment());
+
+			Assert.Empty(call.Attachments);
 		}
 
 		private sealed class UnknownAttachment : IChatAttachment
