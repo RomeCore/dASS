@@ -18,7 +18,13 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// <summary>
 		/// An opaque tool-wide key — the old synchronization group. Conflicts only with an equal key.
 		/// </summary>
-		Custom
+		Custom,
+
+		/// <summary>
+		/// Every file of the working set. Conflicts with any <see cref="File"/>, <see cref="Directory"/> or
+		/// <see cref="AllFiles"/> key; the value is ignored and normalized to an empty string.
+		/// </summary>
+		AllFiles
 	}
 
 	/// <summary>

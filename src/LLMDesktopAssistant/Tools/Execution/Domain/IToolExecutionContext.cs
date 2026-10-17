@@ -33,6 +33,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		IToolCallHost? Host { get; }
 
 		/// <summary>
+		/// The confirmation surface of the invoking world: the confirmation stage asks the user through it
+		/// and receives the decision together with the memorization. Never <see langword="null"/>.
+		/// </summary>
+		IConfirmationSink Confirmation { get; }
+
+		/// <summary>
 		/// The tool's own channel between its stages (for example, an artifact pre-computed by preview
 		/// and committed by execution), or <see langword="null"/>.
 		/// </summary>

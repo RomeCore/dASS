@@ -8,8 +8,6 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
 	public abstract class FileSystemEditBaseToolModule : ToolModule
 	{
-		protected const string SyncGroup = "fs-edit";
-
 		protected class DiffPostProcessResult
 		{
 			public required HunkGroups Diff { get; init; }

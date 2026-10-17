@@ -37,7 +37,9 @@ Between phases the tree may be red — that is expected and accepted.
 | P1 | [Domain contracts](issues/01-domain-contracts.md) | The neutral contracts, concrete chat/task contexts, factories, missing-tool descriptor, argument accessor, sugar extensions. Old execution path still alive. | — |
 | P2 | [Binder and the tool sweep](issues/02-binder-and-tool-sweep.md) | `ToolMethodBinder` + `DelegateMainExecutor`; `ToolInfo`/`AgentTool` carry executors; `ToolExecutionContext` → `IToolExecutionContext`; `ReactiveToolResult` deleted; all tool files, script engines, MCP and Desktop modules migrated by a sub-agent swarm. | P1 |
 | P3 | [Stage services](issues/03-stage-services.md) | The eight Application-scoped stage services extracted from `ToolExecutionService`; typed-key synchronization with prefix conflicts and a filesystem analyzer. | P2 |
-| P4 | [Orchestrators and dispatcher](issues/04-orchestrators-and-dispatcher.md) | Chat-scoped dispatcher, `ChatToolOrchestrator`, `ChatRestartOrchestrator`, `ToolCommandOrchestrator`, `ScriptToolOrchestrator`; `ChatExecutionService` rewired; `IToolExecutionService` deleted. | P3 |
+| P3.5a | [Attachments model](issues/03a-attachments-model.md) | One write path (`IChatAttachment` with native and content branches); `ToolAttachment`, `ToolAttachmentKind`, `AgentAttachmentType` and `AddAdditionalData` deleted; `AgentAttachment` split. | P3 |
+| P3.5b | [Remove CompletionToken](issues/03b-remove-completion-token.md) | `CompletionToken` leaves `ToolCall` and `AssistantMessage`; completion is the terminal status. | P3 |
+| P4 | [Orchestrators and dispatcher](issues/04-orchestrators-and-dispatcher.md) | Chat-scoped dispatcher, `ChatToolOrchestrator`, `ChatRestartOrchestrator`, `ToolCommandOrchestrator`, `ScriptToolOrchestrator`; `ChatExecutionService` rewired; `IToolExecutionService` deleted. | P3.5b |
 | P5 | [Agent-task path](issues/05-agent-task-path.md) | `AgentTaskToolOrchestrator`; the duplicated block in `AgentTaskExecutor` deleted; `ChatAgentTool` dissolved; `TaskConfirmationSink`; `MaxParallelToolCalls`; `OnlyResponse`. | P4 |
 | P6 | [Approval separation and argument editing](issues/06-approval-and-argument-editing.md) | Core-owned confirmation step, `IToolApprovalProvider`, `HandledDecisions`, `ToolPolicyReason`; file tools stop approving inside execution; two argument channels and the effective-arguments accessor. | P5 |
 | P7 | [Cascade approval](issues/07-cascade-approval.md) | Resolution cascade and memory reach over the sibling calls; duration from the existing memorization options. Reach picker deferred. | P6 |
@@ -85,3 +87,12 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
    generic shell. Panel-hosted custom approval content is deferred.
 6. `ToolContextCreationParams.Host` is `IToolCallHost?`, not the spec's `ChatMessage?`: the task's
    assistant message is not a `ChatMessage`, and the core only needs the sibling calls.
+7. `IToolExecutionContext` carries `IConfirmationSink Confirmation`: the sink is per-source state and a
+   stateless Application-scoped service cannot resolve it.
+8. User consent notes travel as an invisible `AdditionalMessageContentPart` on the call, not as a
+   context member; `AgentPromptComposer` appends content parts to the tool result.
+9. `IToolSynchronizationService.RunAsync` takes a `CancellationToken`; key kinds gain `AllFiles`.
+10. The attachments model replaces `ToolAttachment`/`ToolAttachmentKind` and folds
+    `IToolCall.AddAdditionalData` into `AddAttachment(IChatAttachment)` (P3.5a).
+11. `CompletionToken` is removed from `ToolCall` and `AssistantMessage`; completion is the terminal
+    status (P3.5b).

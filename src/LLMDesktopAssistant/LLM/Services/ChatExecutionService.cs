@@ -38,7 +38,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		IChatStorageService storage,
 		IAgentPromptComposer promptComposer,
 		IModelManager modelManager,
-		IToolExecutionService toolExecutor,
+		IChatToolExecutionService toolExecutor,
 		IToolMemorizationService toolMemorizer,
 		IEnumerable<IChatExecutionHook> executionHooks,
 		IToolsetCacheService toolsetCache,

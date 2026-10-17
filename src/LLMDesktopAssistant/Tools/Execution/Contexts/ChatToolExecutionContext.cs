@@ -35,6 +35,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 			Call = parameters.Call;
 			Descriptor = parameters.Descriptor;
 			Host = parameters.Host;
+			Confirmation = parameters.Confirmation;
 			Services = chat.Services;
 			Consent = consent;
 			Source = parameters.Source;
@@ -70,6 +71,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 		/// The message that owns the sibling calls.
 		/// </summary>
 		public IToolCallHost? Host { get; }
+
+		/// <summary>
+		/// The chat world's confirmation surface.
+		/// </summary>
+		public IConfirmationSink Confirmation { get; }
 
 		/// <summary>
 		/// The tool's own channel between its stages.

@@ -28,15 +28,49 @@ namespace LLMDesktopAssistant.Tests.Tools
 		}
 
 		/// <summary>
+		/// Creates a minimal tool descriptor over an empty executor, with optional metadata.
+		/// </summary>
+		/// <param name="name">The tool name.</param>
+		/// <param name="configure">Mutates the initialization info before the descriptor is frozen.</param>
+		/// <param name="streamingAnalyzer">The streaming analyzer delegate, or <see langword="null"/>.</param>
+		/// <returns>The frozen descriptor.</returns>
+		public static ToolInfo CreateTool(string name = "test-tool",
+			Action<ToolInitializationInfo>? configure = null,
+			Delegate? streamingAnalyzer = null)
+		{
+			var info = new ToolInitializationInfo
+			{
+				Name = name,
+				Description = "A test tool.",
+				Executor = (Action)(() => { }),
+				StreamingAnalyzer = streamingAnalyzer
+			};
+
+			configure?.Invoke(info);
+			return ToolInfo.Create(info);
+		}
+
+		/// <summary>
 		/// Creates a real chat context with a chat, an assistant message and the call.
 		/// </summary>
 		/// <param name="tool">The descriptor the context is created for.</param>
 		/// <param name="args">The model's arguments, or <see langword="null"/> for an empty set.</param>
+		/// <param name="autoApprove">The invocation's auto-approve behaviours.</param>
+		/// <param name="disallowed">The invocation's disallowed behaviours.</param>
+		/// <param name="confirmation">The confirmation surface, or <see langword="null"/> for a denying one.</param>
+		/// <param name="argumentStream">The model's argument stream, or <see langword="null"/>.</param>
+		/// <param name="configureServices">Registers additional services into the chat scope.</param>
 		/// <returns>The call and the context.</returns>
-		public static Session Create(ToolInfo tool, JsonNode? args = null)
+		public static Session Create(ToolInfo tool, JsonNode? args = null,
+			ToolBehaviour autoApprove = ToolBehaviour.None,
+			ToolBehaviour disallowed = ToolBehaviour.None,
+			IConfirmationSink? confirmation = null,
+			IToolArgumentStream? argumentStream = null,
+			Action<IServiceCollection>? configureServices = null)
 		{
 			var services = new ServiceCollection();
 			services.AddSingleton<IChatSettingsService, ChatSettingsService>();
+			configureServices?.Invoke(services);
 			var chat = new Chat(services.BuildServiceProvider());
 
 			var message = new AssistantMessage
@@ -63,7 +97,13 @@ namespace LLMDesktopAssistant.Tests.Tools
 				Source = ToolInvocationSource.ChatRun,
 				Host = message,
 				RunningInUi = false,
-				Confirmation = new DeniedConfirmationSink()
+				Confirmation = confirmation ?? new DeniedConfirmationSink(),
+				EffectiveBehaviours = new ToolPolicyMask
+				{
+					AutoApproveBehaviours = autoApprove,
+					DisallowedBehaviours = disallowed
+				},
+				ArgumentStream = argumentStream
 			};
 
 			return new Session

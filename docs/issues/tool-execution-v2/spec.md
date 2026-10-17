@@ -58,7 +58,7 @@ Carries: `ToolName`, `Arguments` (string, the model's intent), `Status`, `Expect
 
 Extension sugar over `IToolCall`: `SetStatusIcon`, `SetStatusTitle`, `UseMarkdown`, `SetStructuredResult`, `SetProgress`, `SetResult`, `MarkSuccess`, `MarkFailed`, `AppendResultLine`.
 
-**`ToolAttachment`** — the neutral attachment value (the promoted `AgentAttachment`): `{ ToolAttachmentKind Kind; string Url }` (url already carries base64). It is an *argument* of `AddAttachment`, never stored state; the call projects it into the world's native form (`AdditionalChatData` in chat, `AgentAttachment` in a task).
+**`IChatAttachment`** — the single write path. It is a marker implemented by everything a chat object can carry: `AdditionalChatData` (a UI payload — neither branch below), `INativeChatAttachment` (`IAttachment? Native` — the model receives an attachment) and `IContentChatAttachment` (`string Content` — the model receives text appended to the content). `AddAttachment(IChatAttachment)` is the only write method; the call projects the input into the world's native form (an invisible `AdditionalMessageContentPart` / `NativeAttachmentMessagePart` in chat, `AgentContentAttachment` / `AgentNativeAttachment` in a task). Consumers filter by the two branches. `AddAdditionalData` and the old `ToolAttachment` value are gone.
 
 ### 2.3 `IToolExecutionContext` — the per-invocation context
 
@@ -174,7 +174,7 @@ The stream is born in the invocation source (the model's `PartialFunctionToolCal
 
 ## 7. Synchronization
 
-Keys are **static** (declared on the descriptor) plus **per-invocation** (derived by `IToolSynchronizationAnalyzer`, which is the one that absolutizes paths — the synchronizer never resolves them). Keys are **typed** (`File`/`Directory`/`Custom`) and **hierarchical** (a held `Directory` conflicts with any `File` beneath it). The synchronizer canonicalizes (normalization; collapsing redundant keys) and acquires **atomically** — no hold-and-wait, hence no deadlock; conflict detection is prefix-aware.
+Keys are **static** (declared on the descriptor) plus **per-invocation** (derived by `IToolSynchronizationAnalyzer`, which is the one that absolutizes paths — the synchronizer never resolves them). Keys are **typed** (`File`/`Directory`/`Custom`/`AllFiles`) and **hierarchical** (a held `Directory` conflicts with any `File` beneath it; `AllFiles` conflicts with every file key and with itself, never with `Custom`). Path keys compare OS-aware (case-insensitive on Windows), `Custom` compares ordinally. The synchronizer canonicalizes (trimming trailing separators, dedupe, collapsing a file under a requested directory) and acquires **atomically** — no hold-and-wait, hence no deadlock; conflict detection is prefix-aware.
 
 ---
 
@@ -197,7 +197,7 @@ enum ToolDecisionSource { ApprovalLevel, PolicyMask, Specifier, Memorization, Us
 readonly record struct ToolPolicyReason(ToolDecisionSource Source, string? Message);
 ```
 
-**Outputs flow by nature:** consent → the confirmation service; tool-specific edits (enabled hunks) → `SharedContext`; argument edits → `call.Arguments`.
+**Outputs flow by nature:** consent → the confirmation service; tool-specific edits (enabled hunks) → `SharedContext`; argument edits → `call.Arguments`; the user's notes → an invisible `AdditionalMessageContentPart` on the call, which the prompt layer appends to the tool result.
 
 ---
 
@@ -336,7 +336,7 @@ public interface IToolCall
     CancellationTokenSource                  CancellationTokenSource { get; }
 
     // capability methods
-    void AddAttachment(ToolAttachment attachment);
+    void AddAttachment(IChatAttachment attachment);
     void SetProgress(double? value, double min, double max);
 }
 
@@ -349,6 +349,7 @@ public interface IToolExecutionContext
     IToolCall        Call        { get; }
     IToolDescriptor  Descriptor  { get; }
     IToolCallHost?   Host        { get; }                    // the message's sibling tool calls
+    IConfirmationSink Confirmation { get; }                  // the invoking world's confirmation surface
     object?          SharedContext { get; set; }             // a tool's own channel between its stages
     Chat?            Chat        { get; }
     IServiceProvider Services    { get; }
@@ -406,11 +407,14 @@ public sealed class ToolApprovalResult          { public required bool Approved 
 ## A.4 Support
 
 ```csharp
-public enum ToolAttachmentKind { Image, Audio, Video }
-public sealed class ToolAttachment { public required ToolAttachmentKind Kind { get; init; }
-                                     public required string Url { get; init; } }   // url carries base64
+public enum AttachmentKind { Image, Audio, Video }
+public interface IChatAttachment;                                    // a payload addable to a chat object
+public interface INativeChatAttachment : IChatAttachment { IAttachment? Native { get; } }
+public interface IContentChatAttachment : IChatAttachment { string Content { get; } }
+public sealed class ChatNativeAttachment : INativeChatAttachment { /* (IAttachment) or (AttachmentKind, url) */ }
+public sealed class ChatContentAttachment : IContentChatAttachment { /* (string content) */ }
 
-public enum ToolSyncKeyKind { File, Directory, Custom }
+public enum ToolSyncKeyKind { File, Directory, Custom, AllFiles }
 public readonly record struct ToolSyncKey(ToolSyncKeyKind Kind, string Value);
 
 public enum ToolDecisionSource { ApprovalLevel, PolicyMask, Specifier, Memorization, User }
@@ -461,7 +465,7 @@ public readonly record struct ToolContextCreationParams
 ```csharp
 public interface IToolStreamingService       { Task RunAsync(IToolExecutionContext ctx, StreamingMode mode, CancellationToken ct); }
 public interface IToolValidationService      { bool Validate(IToolExecutionContext ctx); }
-public interface IToolSynchronizationService { Task RunAsync(IToolExecutionContext ctx, Func<Task> inner); }
+public interface IToolSynchronizationService { Task RunAsync(IToolExecutionContext ctx, Func<Task> inner, CancellationToken ct); }
 public interface IToolPreviewService         { Task<bool> RunAsync(IToolExecutionContext ctx, CancellationToken ct); }      // false = interrupted
 public interface IToolPolicyService          { Task<ToolPolicyDecision> EvaluateAsync(IToolExecutionContext ctx, CancellationToken ct); }
 public interface IToolConfirmationService    { Task<bool> ConfirmAsync(IToolExecutionContext ctx, CancellationToken ct); } // true = approved
@@ -514,7 +518,7 @@ public sealed class TaskConfirmationSink : IConfirmationSink { /* drives ToolCon
 # Appendix B — Current → new map
 
 ### Deleted
-`ReactiveToolResult`; the old `PreviewToolExecutionResult` class (replaced by the new concrete one); `StreamingToolArgumentsAnalysisResult` (→ `StreamingToolAnalysisResult`); `ChatAgentTool`; `DelegateAgentTool`; `ToolExecutionService`; the four `*ExecutorCreator` classes; the duplicated tool block inside `AgentTaskExecutor.ExecuteToolAsync`.
+`ReactiveToolResult`; the old `PreviewToolExecutionResult` class (replaced by the new concrete one); `StreamingToolArgumentsAnalysisResult` (→ `StreamingToolAnalysisResult`); `ChatAgentTool`; `DelegateAgentTool`; `ToolExecutionService`; the four `*ExecutorCreator` classes; the duplicated tool block inside `AgentTaskExecutor.ExecuteToolAsync`; `ToolAttachment` / `ToolAttachmentKind`; `AgentAttachmentType`; `IToolCall.AddAdditionalData`; `CompletionToken` on `ToolCall` and `AssistantMessage`.
 
 ### Reshaped
 | Current | New |
@@ -526,12 +530,12 @@ public sealed class TaskConfirmationSink : IConfirmationSink { /* drives ToolCon
 | `ToolInfo.SynchronizationGroup` | `IToolDescriptor.StaticSyncKeys` |
 | `DefaultSelfHandledDecisions` | `HandledDecisions` |
 | `IToolApprovalService.ApproveTool` | folded into `IToolPolicyService` |
-| `AgentAttachment` | promoted to neutral `ToolAttachment` |
+| `AgentAttachment` | `AgentNativeAttachment` / `AgentContentAttachment`, both behind `IChatAttachment` |
 | `ToolChange` | gains the new overridable metadata (helper config, …) |
 | `ToolsetCollector` | `ApplyChange` copies the new metadata as it does today |
 
 ### Added
-`IToolDescriptor`, `IToolCall`(interface), `IToolExecutionContext`, `IToolCallHost`, the six executor interfaces, `IToolExecutionContextFactory` + `ToolContextCreationParams`, `ToolAttachment`, `ToolSyncKey`, `IToolArgumentStream`, `IToolArgumentsAccessor`, `ToolPolicyReason`/`ToolDecisionSource`, `ApprovalHelperConfig`/`ApprovalHelperMode`, `IConfirmationSink`, the eight stage services, the `ToolMethodBinder` + `DelegateMainExecutor`, the five orchestrators (`ChatToolOrchestrator`, `ChatRestartOrchestrator`, `ToolCommandOrchestrator`, `AgentTaskToolOrchestrator`, `ScriptToolOrchestrator`), `ToolExecutionResult`, `StreamingToolAnalysisResult`, `ToolApprovalResult`, `DerivedSlashCommandProvider<ToolInfo>`.
+`IToolDescriptor`, `IToolCall`(interface), `IToolExecutionContext`, `IToolCallHost`, the six executor interfaces, `IToolExecutionContextFactory` + `ToolContextCreationParams`, `IChatAttachment`/`INativeChatAttachment`/`IContentChatAttachment`/`AttachmentKind`, `ToolSyncKey`, `IToolArgumentStream`, `IToolArgumentsAccessor`, `ToolPolicyReason`/`ToolDecisionSource`, `ApprovalHelperConfig`/`ApprovalHelperMode`, `IConfirmationSink`, the eight stage services, the `ToolMethodBinder` + `DelegateMainExecutor`, the five orchestrators (`ChatToolOrchestrator`, `ChatRestartOrchestrator`, `ToolCommandOrchestrator`, `AgentTaskToolOrchestrator`, `ScriptToolOrchestrator`), `ToolExecutionResult`, `StreamingToolAnalysisResult`, `ToolApprovalResult`, `DerivedSlashCommandProvider<ToolInfo>`.
 
 ### Kept as-is
 `ToolApprovalLevel`, `ToolPolicyMask`, `ToolPolicyDecision`, `ToolBehaviour` + `ToolBehaviourCategoryClassifier`, `SpecifierEngine`, `IToolMemorizationService`, `ToolConsentPersister`, `ToolConsentMemorizationContext`, `ToolsetCollector`, `DerivedSlashCommandProvider<T>`, the `SlashCommand*` subsystem, `ToolConsentPanel` (extended), `AgentTask`/`AgentTaskExecutor` (tool block removed).
@@ -549,7 +553,7 @@ public sealed class TaskConfirmationSink : IConfirmationSink { /* drives ToolCon
 | **policy** | `ctx.EffectiveBehaviours`, `descriptor.PolicyMask`/`Specifiers`/`Specifier`/`ApprovalLevel`, memorization | `ctx.PolicyDecision`, `ctx.PolicyReason` |
 | **confirmation** | `ctx.PolicyDecision`/`PolicyReason`, `descriptor.HandledDecisions`/`Approval`, `ctx.Host` | `call.Status`, `call.UserConfirmationSource`, memorization, `ctx.Consent`; returns approved |
 | **execution** | `descriptor.Main`, `ctx.Arguments.Effective`, `ctx.SharedContext` | `call.Status`/`ResultContent`/… , returns `ToolExecutionResult` |
-| **settlement** | `call.Status`, `call.ResultContent` | default content, `call.CompletionToken.Complete()` |
+| **settlement** | `call.Status`, `call.ResultContent` | default content (the caller owns its completion state) |
 
 `ctx.Arguments.Effective = ArgumentsOverride ?? parsed(call.Arguments)` — recomputed when either input changes.
 

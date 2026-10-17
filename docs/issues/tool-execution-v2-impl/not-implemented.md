@@ -61,7 +61,3 @@ descriptor capability; adding one is a local change.
 Unit tests cover the pure pieces (binder, accessor, synchronizer, policy, confirmation, cascade,
 projections). No fake-LLM chat e2e. **Seam:** the dispatcher is the single entry point an e2e would call.
 
-## Prompt-layer projection of tool-call parts
-
-Spec §18: projecting a tool call's `AdditionalMessagePart`s into the tool-message content via
-`AgentPromptComposer` / `MessageQuoteRenderer` is a prompt-layer task, out of scope for this subsystem.

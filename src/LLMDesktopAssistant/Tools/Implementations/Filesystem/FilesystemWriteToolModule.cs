@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				DefaultExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.FileDirectoryCreate | ToolBehaviour.AccessOutsideWorkdir |
 					ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit,
 				HandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
-				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, FileSystemEditBaseToolModule.SyncGroup)]
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeSyncKeys
 			});
 		}
 

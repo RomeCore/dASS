@@ -2,6 +2,7 @@ using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
@@ -268,7 +269,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						|| (toolCall.CanBeCompacted && affectedCheckpoints.HasFlag(ContextCheckpointKind.ToolCompaction));
 					var resultContent = toolCompacted
 						? GetCompactedToolResultContent(toolCall.Status)
-						: toolCall.ResultContent ?? string.Empty;
+						: AppendContentParts(toolCall);
 					var toolResult = new ToolResult(status, resultContent,
 						toolCompacted ? [] : toolCall.GetNativeAttachments());
 					messages.Add(new ToolMessage(toolResult, toolCall.ToolCallId, toolCall.ToolName));
@@ -289,6 +290,20 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				effectiveMessage.Facets, effectiveMessage.Identity, effectiveMessage.AffectedCheckpoints);
 			return [new RCLargeLanguageModels.Messages.UserMessage(Senders.User,
 				renderedQuote.Content, renderedQuote.NativeAttachments)];
+		}
+
+		/// <summary>
+		/// Appends the text a tool wrote onto the call (user consent notes and any other content part) to
+		/// the call's result content. Compacted calls are replaced by their marker and contribute no text.
+		/// </summary>
+		private static string AppendContentParts(Domain.ToolCall toolCall)
+		{
+			var segments = new List<string?> { toolCall.ResultContent };
+			segments.AddRange(toolCall.AdditionalData
+				.OfType<AdditionalMessageContentPart>()
+				.Select(part => part.Content));
+
+			return string.Join("\n\n", segments.Where(segment => !string.IsNullOrEmpty(segment)));
 		}
 
 		private static ToolResultStatus ConvertToolStatus(ToolStatus status) => status switch
