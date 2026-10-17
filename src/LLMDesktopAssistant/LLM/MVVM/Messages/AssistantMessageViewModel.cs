@@ -90,11 +90,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			void OnAssistantMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
 			{
-				if (e.PropertyName != nameof(AssistantMessage.Status) || !_assistantMessage.Status.IsTerminal())
+				if (e.PropertyName != nameof(AssistantMessage.Status))
 					return;
 
-				_assistantMessage.PropertyChanged -= OnAssistantMessagePropertyChanged;
-				IsCompleted = true;
+				IsCompleted = _assistantMessage.Status.IsTerminal();
 			}
 
 			_assistantMessage.PropertyChanged += OnAssistantMessagePropertyChanged;
