@@ -6,7 +6,6 @@ using LLMDesktopAssistant.Scripting.CSX;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 using Material.Icons;
 using Microsoft.CodeAnalysis.Scripting;
 
@@ -108,10 +107,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ExecutePreview(string csharp, IToolExecutionContext ctx)
+		private PreviewToolExecutionResult ExecutePreview(string csharp, IToolExecutionContext ctx)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.LanguageCsharp, null);
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.PossiblyUnexpected
 			};

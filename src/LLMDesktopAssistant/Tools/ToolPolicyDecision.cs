@@ -1,10 +1,10 @@
 namespace LLMDesktopAssistant.Tools;
 
 /// <summary>
-/// Defines how a tool handles the policy/approval decisions on preview stage.
-/// When set on <see cref="PreviewToolExecutionResult.SelfHandledDecisions"/>,
-/// the tool overrides the standard HITL (Human-In-The-Loop) pipeline and
-/// handles the decisions itself.
+/// Defines which policy/approval decisions a tool handles itself instead of the standard
+/// HITL (Human-In-The-Loop) pipeline.
+/// When set on <see cref="LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor.HandledDecisions"/>,
+/// the tool overrides the standard pipeline and handles the decisions itself.
 /// </summary>
 [Flags]
 public enum ToolPolicyDecision

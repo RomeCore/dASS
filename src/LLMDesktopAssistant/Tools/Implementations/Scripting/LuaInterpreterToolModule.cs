@@ -5,7 +5,6 @@ using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Scripting
@@ -104,10 +103,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ExecutePreview(string lua, IToolExecutionContext ctx)
+		private PreviewToolExecutionResult ExecutePreview(string lua, IToolExecutionContext ctx)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.LanguageLua, null);
-			return new DomainPreviewResult();
+			return new PreviewToolExecutionResult();
 		}
 
 		private async Task<ToolExecutionResult> Execute(

@@ -10,7 +10,6 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
 using Material.Icons;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -55,7 +54,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult? ExplorePreview(IToolExecutionContext ctx, string path,
+		private PreviewToolExecutionResult? ExplorePreview(IToolExecutionContext ctx, string path,
 			[SharedContext] out string? fullPath,
 			int startLine = 0, int endLine = 0, int maxLineLength = 0,
 			[Inject] DetectSecretsSharp.Core.Scanner scanner = default!)
@@ -100,7 +99,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode,
 							LocalizationManager.LocalizeStaticFormat("tool.status.fs-read_entry.secrets", $"**{path}**"));
 
-						return new DomainPreviewResult
+						return new PreviewToolExecutionResult
 						{
 							ExpectedBehaviour = ToolBehaviour.ReadSecrets | ToolBehaviour.FileRead |
 								(directoryExists ? ToolBehaviour.DirectoryRead : 0) |
@@ -110,7 +109,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 					ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode, $"**{path}**");
 
-					return new DomainPreviewResult
+					return new PreviewToolExecutionResult
 					{
 						ExpectedBehaviour = ToolBehaviour.FileRead |
 							(directoryExists ? ToolBehaviour.DirectoryRead : 0) |
@@ -122,7 +121,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					ctx.Call.SetStatus(MaterialIconKind.Folder, $"**{path}**");
 
-					return new DomainPreviewResult
+					return new PreviewToolExecutionResult
 					{
 						ExpectedBehaviour = ToolBehaviour.DirectoryRead |
 							(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
@@ -132,7 +131,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				ctx.Call.SetStatus(MaterialIconKind.FileTextError, $"**{path}**");
 				ctx.Call.SetResult($"No such file or directory found: '{path}'.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -143,7 +142,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				fullPath = null;
 				ctx.Call.SetResult($"Error reading file: {ex.Message}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = false
 				};

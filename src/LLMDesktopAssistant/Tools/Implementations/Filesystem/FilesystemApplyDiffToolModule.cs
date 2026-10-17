@@ -9,7 +9,6 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -73,7 +72,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ApplyDiffPreview(
+		private PreviewToolExecutionResult ApplyDiffPreview(
 			IToolExecutionContext ctx,
 			[SharedContext] ref FSApplyDiffSharedContext? sharedCtx,
 			string path, string? deleteLines = null, string? insertBeforeLine = null, string? insertText = null)
@@ -86,7 +85,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
 				ctx.Call.SetResult($"File or directory not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = false,
 					ExpectedBehaviour = ToolBehaviour.None |
@@ -112,7 +111,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				ctx.Call.SetResult(errorMessage ??
 					"No changes were made to the file. The specified match was not found.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = true,
 					ExpectedBehaviour = ToolBehaviour.None |
@@ -130,7 +129,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |

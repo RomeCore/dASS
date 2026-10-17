@@ -6,7 +6,6 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -68,7 +67,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return ToolExecutionResult.Succeeded;
 		}
 
-		private DomainPreviewResult SwitchWorkingDirectoryPreview(
+		private PreviewToolExecutionResult SwitchWorkingDirectoryPreview(
 			string name,
 			IToolExecutionContext ctx)
 		{
@@ -76,7 +75,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			if (name == Directories.DefaultWorkingDirectoryName && workingDirectories.IsDefaultWorkingDirectoryEnabled)
 			{
 				ctx.Call.SetStatus(MaterialIconKind.FolderArrowRight, $"*{name}*");
-				return DomainPreviewResult.Continue;
+				return PreviewToolExecutionResult.Continue;
 			}
 
 			if (!workingDirectories.Items.Any(wd => wd.Name == name && wd.IsEnabled))
@@ -84,11 +83,11 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				ctx.Call.SetStatus(MaterialIconKind.FolderAlert, $"*{name}*");
 				ctx.Call.SetResult($"Working directory *{name}* not found or it's disabled.");
 				ctx.Call.UseMarkdown = true;
-				return new DomainPreviewResult { InterruptingSuccess = false };
+				return new PreviewToolExecutionResult { InterruptingSuccess = false };
 			}
 
 			ctx.Call.SetStatus(MaterialIconKind.FolderArrowRight, $"*{name}*");
-			return DomainPreviewResult.Continue;
+			return PreviewToolExecutionResult.Continue;
 		}
 
 		private ToolExecutionResult SwitchWorkingDirectory(

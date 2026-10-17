@@ -7,7 +7,6 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -128,7 +127,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return Task.FromResult(ToolExecutionResult.Succeeded);
 		}
 
-		private DomainPreviewResult? ConnectPreview(IToolExecutionContext ctx, string nameOrConnectionString)
+		private PreviewToolExecutionResult? ConnectPreview(IToolExecutionContext ctx, string nameOrConnectionString)
 		{
 			var settings = _chatSettings.Settings.Databases.GetEffectiveDatabaseConnection();
 			bool isNamed = settings.Items.Any(i => i.IsEnabled &&
@@ -136,7 +135,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			ctx.Call.SetStatusTitle($"**{nameOrConnectionString}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = isNamed ? ToolBehaviour.None : ToolBehaviour.DatabaseCustomConnect
 			};
@@ -197,12 +196,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 		}
 
-		private DomainPreviewResult? ExecutePreview(IToolExecutionContext ctx, string query)
+		private PreviewToolExecutionResult? ExecutePreview(IToolExecutionContext ctx, string query)
 		{
 			if (!_connectionManager.IsActiveConfigured)
 			{
 				ctx.Call.SetResult("No active database connection. Call db-connect first.");
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = false
 				};
@@ -213,7 +212,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			ctx.Call.SetStatusTitle($"**{keyword}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = isRead ? ToolBehaviour.DatabaseRead : ToolBehaviour.DatabaseChange
 			};

@@ -10,7 +10,6 @@ using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Tools;
 using Serilog;
 using IToolCall = LLMDesktopAssistant.Tools.Execution.Domain.IToolCall;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Execution.Executors
 {
@@ -274,22 +273,22 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 			}
 		}
 
-		private static async Task<DomainPreviewResult> MapPreview(object? value)
+		private static async Task<PreviewToolExecutionResult> MapPreview(object? value)
 		{
 			switch (value)
 			{
-				case Task<DomainPreviewResult> task:
+				case Task<PreviewToolExecutionResult> task:
 					return await task;
 
-				case DomainPreviewResult result:
+				case PreviewToolExecutionResult result:
 					return result;
 
 				case Task task:
 					await task;
-					return DomainPreviewResult.Continue;
+					return PreviewToolExecutionResult.Continue;
 
 				case null:
-					return DomainPreviewResult.Continue;
+					return PreviewToolExecutionResult.Continue;
 
 				default:
 					throw new ArgumentException($"Unsupported preview return type: {value.GetType()}.");
@@ -318,10 +317,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		}
 
 		private sealed class PreviewAdapter(
-			Func<JsonNode?, IToolExecutionContext, CancellationToken, Task<DomainPreviewResult>> preview)
+			Func<JsonNode?, IToolExecutionContext, CancellationToken, Task<PreviewToolExecutionResult>> preview)
 			: IToolPreviewExecutor
 		{
-			public Task<DomainPreviewResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
+			public Task<PreviewToolExecutionResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
 				CancellationToken ct) => preview(args, ctx, ct);
 		}
 
@@ -564,8 +563,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 						returnType == typeof(void) ||
 						returnType == typeof(Task),
 
-					Capability.Preview => returnType == typeof(DomainPreviewResult) ||
-						returnType == typeof(Task<DomainPreviewResult>) ||
+					Capability.Preview => returnType == typeof(PreviewToolExecutionResult) ||
+						returnType == typeof(Task<PreviewToolExecutionResult>) ||
 						returnType == typeof(void) ||
 						returnType == typeof(Task),
 

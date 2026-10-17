@@ -6,7 +6,6 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -46,7 +45,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult GrepPreview(IToolExecutionContext ctx,
+		private PreviewToolExecutionResult GrepPreview(IToolExecutionContext ctx,
 			string path, string pattern, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
@@ -58,7 +57,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path}** → `{pattern}`");
 				ctx.Call.SetResult($"File or directory not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -67,7 +66,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path}** → `{pattern}`");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileRead |
 					(dirExists ? ToolBehaviour.DirectoryRead : ToolBehaviour.None) |

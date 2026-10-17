@@ -11,7 +11,6 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -173,7 +172,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			});
 		}
 
-		private DomainPreviewResult PreviewGetFileInfo(IToolExecutionContext context, string path,
+		private PreviewToolExecutionResult PreviewGetFileInfo(IToolExecutionContext context, string path,
 			[SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
@@ -183,7 +182,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
 				context.Call.SetResult($"File not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -205,7 +204,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				_ => MaterialIconKind.FileQuestion
 			}, $"**{path}** *({FileUtils.BytesToDisplaySize(metrics.Size)})*");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileRead | (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 			};
@@ -257,7 +256,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 		}
 
-		private DomainPreviewResult PreviewReadBinaryFile(
+		private PreviewToolExecutionResult PreviewReadBinaryFile(
 			IToolExecutionContext context,
 			string path, [SharedContext] out string fullPath,
 			int startByte = 1,
@@ -270,7 +269,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
 				context.Call.SetResult($"File not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -284,7 +283,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileCode, $"**{path}**");
 				context.Call.SetResult("Invalid byte range.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = expectedBehaviour,
 					InterruptingSuccess = false
@@ -298,7 +297,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					? $"**{path}**"
 					: $"**{path}** *({startByte}~{Math.Min(endByte, totalBytes)} / {totalBytes})*");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = expectedBehaviour
 				};
@@ -366,7 +365,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 		}
 
-		private DomainPreviewResult PreviewReadDocumentFile(
+		private PreviewToolExecutionResult PreviewReadDocumentFile(
 			IToolExecutionContext context,
 			string path, [SharedContext] out string fullPath,
 			int startPage = 1,
@@ -379,7 +378,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
 				context.Call.SetResult($"File not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -393,7 +392,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path}**");
 				context.Call.SetResult("Invalid page range.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = expectedBehaviour,
 					InterruptingSuccess = false
@@ -402,7 +401,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path}** *({startPage}~{endPage})*");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = expectedBehaviour
 			};
@@ -489,7 +488,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewWriteBinaryFile(IToolExecutionContext context, string path, string hex,
+		private PreviewToolExecutionResult PreviewWriteBinaryFile(IToolExecutionContext context, string path, string hex,
 			[SharedContext] out WriteBinaryFileContext? ctx, bool append = false)
 		{
 			var fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Write, out var isAccessed);
@@ -511,7 +510,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					(append ? MaterialIconKind.FileEdit : MaterialIconKind.FileCheck) :
 					MaterialIconKind.FilePlus, $"**{path}**");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (fileExisted ? ToolBehaviour.FileEdit : ToolBehaviour.FileDirectoryCreate) |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -524,7 +523,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
 				context.Call.SetResult($"Error writing binary file: {ex.Message}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -606,7 +605,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewCreateDirectory(IToolExecutionContext context, string path,
+		private PreviewToolExecutionResult PreviewCreateDirectory(IToolExecutionContext context, string path,
 			[SharedContext] out CreateDirectoryContext? ctx)
 		{
 			var fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Write, out var isAccessed);
@@ -619,7 +618,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
 				context.Call.SetResult("Directory already exists.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = true
@@ -628,7 +627,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -673,7 +672,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewDeleteFile(IToolExecutionContext context, string path,
+		private PreviewToolExecutionResult PreviewDeleteFile(IToolExecutionContext context, string path,
 			[SharedContext] out DeleteFileContext? ctx)
 		{
 			var fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Write, out var isAccessed);
@@ -685,7 +684,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
 				context.Call.SetResult($"File not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
@@ -694,7 +693,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.Delete, $"**{path}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileDelete |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -738,7 +737,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewDeleteDirectory(IToolExecutionContext context, string path,
+		private PreviewToolExecutionResult PreviewDeleteDirectory(IToolExecutionContext context, string path,
 			[SharedContext] out DeleteDirectoryContext? ctx)
 		{
 			var fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Write, out var isAccessed);
@@ -750,7 +749,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
 				context.Call.SetResult("Cannot delete the root working directory.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -763,7 +762,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
 				context.Call.SetResult($"Directory not found: {path}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -773,7 +772,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.DirectoryDelete |
 					(Directory.GetFileSystemEntries(fullPath).Length > 0 ? ToolBehaviour.FileDelete : ToolBehaviour.None) |
@@ -827,7 +826,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewRenameFile(
+		private PreviewToolExecutionResult PreviewRenameFile(
 			IToolExecutionContext context,
 			string oldPath,
 			string newPath,
@@ -846,7 +845,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}**");
 				context.Call.SetResult("Source file not found.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -859,7 +858,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
 				context.Call.SetResult("Destination file already exists.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -869,7 +868,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.Pencil, $"**{oldPath}** → **{newPath}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -932,7 +931,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewMoveDirectory(
+		private PreviewToolExecutionResult PreviewMoveDirectory(
 			IToolExecutionContext context,
 			string oldPath,
 			string newPath,
@@ -951,7 +950,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}**");
 				context.Call.SetResult("Source directory not found.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -964,7 +963,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
 				context.Call.SetResult("Destination directory already exists.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -974,7 +973,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.Folder, $"**{oldPath}** → **{newPath}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.DirectoryEdit |
 					(!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -1035,7 +1034,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewCopyFile(
+		private PreviewToolExecutionResult PreviewCopyFile(
 			IToolExecutionContext context,
 			string oldPath,
 			string newPath,
@@ -1055,7 +1054,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}**");
 				context.Call.SetResult("Source file not found.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -1068,7 +1067,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
 				context.Call.SetResult("Destination file already exists.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -1078,7 +1077,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
 					(!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -1141,7 +1140,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult PreviewCopyDirectory(
+		private PreviewToolExecutionResult PreviewCopyDirectory(
 			IToolExecutionContext context,
 			string oldPath,
 			string newPath,
@@ -1161,7 +1160,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}**");
 				context.Call.SetResult("Source directory not found.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -1174,7 +1173,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
 				context.Call.SetResult("Destination directory already exists.");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = (!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 						AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -1184,7 +1183,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
 					(!isOldAccessed || !isNewAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |

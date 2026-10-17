@@ -8,7 +8,6 @@ using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -62,7 +61,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public DomainPreviewResult OpenFilePreview(IToolExecutionContext ctx,
+		public PreviewToolExecutionResult OpenFilePreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Execute, out var isAccessed);
@@ -74,7 +73,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				ctx.Call.SetResult($"File not found: {path}");
 			}
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.FileRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : 0)
@@ -130,14 +129,14 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public DomainPreviewResult OpenInExplorerPreview(IToolExecutionContext ctx,
+		public PreviewToolExecutionResult OpenInExplorerPreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Execute, out var isAccessed);
 
 			ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : 0)

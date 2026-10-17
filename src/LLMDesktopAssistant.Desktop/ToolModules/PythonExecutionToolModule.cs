@@ -13,7 +13,6 @@ using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -87,11 +86,11 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public DomainPreviewResult ExecutePreview(IToolExecutionContext ctx, string python, bool runTerminal)
+		public PreviewToolExecutionResult ExecutePreview(IToolExecutionContext ctx, string python, bool runTerminal)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.LanguagePython, null);
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
@@ -192,11 +191,11 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		public DomainPreviewResult ExecuteVenvShellPreview(IToolExecutionContext ctx, string shell, bool runTerminal)
+		public PreviewToolExecutionResult ExecuteVenvShellPreview(IToolExecutionContext ctx, string shell, bool runTerminal)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.LanguagePython, $"`{shell}`");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)

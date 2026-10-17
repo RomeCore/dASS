@@ -11,7 +11,6 @@ using LLMDesktopAssistant.Tools.Specifiers;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Addons.Management;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -78,11 +77,11 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ExecuteBashPreview(IToolExecutionContext ctx, string bash, bool runTerminal)
+		private PreviewToolExecutionResult ExecuteBashPreview(IToolExecutionContext ctx, string bash, bool runTerminal)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{bash}`");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
@@ -120,11 +119,11 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ExecuteBatchPreview(IToolExecutionContext ctx, string batch, bool runTerminal)
+		private PreviewToolExecutionResult ExecuteBatchPreview(IToolExecutionContext ctx, string batch, bool runTerminal)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{batch}`");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)
@@ -163,11 +162,11 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult ExecutePowerShellPreview(IToolExecutionContext ctx, string powershell, bool runTerminal)
+		private PreviewToolExecutionResult ExecutePowerShellPreview(IToolExecutionContext ctx, string powershell, bool runTerminal)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"`{powershell}`");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
 					(runTerminal ? ToolBehaviour.RunTerminal : 0)

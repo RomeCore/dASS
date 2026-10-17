@@ -10,7 +10,6 @@ using LLMDesktopAssistant.Utils.Files;
 using Material.Icons;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -66,7 +65,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult GlobPreview(IToolExecutionContext ctx,
+		private PreviewToolExecutionResult GlobPreview(IToolExecutionContext ctx,
 			string path, string pattern, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
@@ -79,7 +78,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.DirectoryRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)

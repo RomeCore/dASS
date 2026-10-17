@@ -8,7 +8,6 @@ using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -74,7 +73,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			public required AddonKind AddonKind { get; init; }
 		}
 
-		private DomainPreviewResult? WriteFilePreview(
+		private PreviewToolExecutionResult? WriteFilePreview(
 			IToolExecutionContext ctx,
 			[SharedContext] out WriteFileContext? sharedCtx,
 			string path,
@@ -101,7 +100,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 								LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
 							ctx.Call.SetResult($"File **{path}** already contains the same content.");
 
-							return new DomainPreviewResult
+							return new PreviewToolExecutionResult
 							{
 								ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
 									AddonKindToolBehaviourConverter.Convert(addonKind),
@@ -111,7 +110,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 						ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
 
-						return new DomainPreviewResult
+						return new PreviewToolExecutionResult
 						{
 							ExpectedBehaviour = ToolBehaviour.FileEdit |
 								(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -126,7 +125,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
@@ -138,7 +137,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				sharedCtx = null;
 				ctx.Call.SetResult($"Error writing file: {ex.Message}");
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = false
 				};

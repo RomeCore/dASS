@@ -21,7 +21,6 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using RCLargeLanguageModels;
 using SixLabors.ImageSharp;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -397,7 +396,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private DomainPreviewResult DescribeImagePreview(IToolExecutionContext ctx,
+		private PreviewToolExecutionResult DescribeImagePreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
@@ -407,14 +406,14 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			if (!File.Exists(fullPath))
 			{
 				ctx.Call.SetResult($"File not found: {path}");
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
 					InterruptingSuccess = false
 				};
 			}
 
-			return new DomainPreviewResult
+			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.AgentExecution | ToolBehaviour.LongRunningTask | ToolBehaviour.FileRead |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)

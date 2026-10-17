@@ -5,7 +5,6 @@ using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Executors;
 using LLMDesktopAssistant.Tools.Specifiers;
-using DomainPreviewResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
@@ -191,7 +190,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 		private sealed class DelegatingPreviewExecutor(AgentTool tool) : IToolPreviewExecutor
 		{
-			public async Task<DomainPreviewResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
+			public async Task<PreviewToolExecutionResult> PreviewAsync(JsonNode? args, IToolExecutionContext ctx,
 				CancellationToken ct)
 			{
 				var result = await tool.PreExecuteAsync(args, ct);
@@ -203,7 +202,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				foreach (var attachment in result.InterruptingAttachments)
 					ProjectAttachment(ctx.Call, attachment);
 
-				return new DomainPreviewResult
+				return new PreviewToolExecutionResult
 				{
 					InterruptingSuccess = result.InterruptingSuccess,
 					ExpectedBehaviour = result.ExpectedBehaviour

@@ -13,7 +13,6 @@ using RCLargeLanguageModels.Json.Schema;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
-using PreviewToolExecutionResult = LLMDesktopAssistant.Tools.Execution.Domain.PreviewToolExecutionResult;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Web
 {
