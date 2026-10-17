@@ -30,6 +30,10 @@ public class MarkdownAdditionalNodesConfigurator
 
 	private static void ConfigurePipeline(Markdig.MarkdownPipelineBuilder pipeline)
 	{
+		// Equal-length fenced code blocks cannot nest in CommonMark, so a ```csharp snippet inside a
+		// ```markdown block closes the outer block early and the rest of the message turns into code.
+		pipeline.UseNestedFencedCodeBlocks();
+
 		var linkParserIndex = pipeline.InlineParsers.FindIndex(p => p is Markdig.Parsers.Inlines.LinkInlineParser);
 
 		// Replace the stock GFM alert parser with the extended one that also supports
