@@ -91,8 +91,8 @@ Every engine wraps the same YAML in its own comment markers. `name` **must** equ
 
 - **`description`** is the user-facing pointer - it appears in the completion popup and the command card. A missing one raises a diagnostic.
 - **`argument-schema`** - the arguments the user may type; see **Arguments** for its two forms.
-- **`generate`** - `true` (default) leaves the caller's intent untouched, `false` forbids generation. It can only **lower** the caller's intent, never raise it. A command that only annotates usually sets `false`.
-- **`model-facing`** - how the message is shown to the model. `raw` (the v1 default) sends the content as typed; `neutral` and `hidden` are reserved.
+- **`generate`** - `true` (default) leaves the caller's intent untouched, `false` forbids generation. It can only **lower** the caller's intent, never raise it. A command that only annotates usually sets `false`. This is the **ceiling**: a Lua body may lower it per run by returning `false` (see **What the body gets**).
+- **`model-facing`** - how the message is shown to the model. `raw` (the default) sends the content as typed; `neutral` replaces it with the bare `/<token>` while every content part the executor appended still reaches the model - use it when the typed arguments are noise the injected content already carries; `hidden` drops the message from the model's view entirely.
 - **`namespaces`** - extra qualifiers for the token; the source pack is appended automatically. The bare `/name` still resolves.
 - Shared with every addon kind: `description` (missing → diagnostic), plus `order`, `aliases`, `enabled`, `hidden`. `title` and `category` are localizable display strings and drive no behaviour.
 
@@ -153,6 +153,7 @@ Types arrive in the body converted: `choice`/`string` → string, `number` → n
 - `command_args` - `{ positionals = {...}, keyed = {...}, rest = "...", raw = "..." }`
 - `dass.chat` (the current chat) - `get_messages()` (a snapshot array of live `chat_message` handles), `get_title()`, `get_topic()`
 - `dass.command.context.get_message()` - the handle of the message the command ran on (or `nil` outside a command)
+- **the chunk's return value** - `return false` turns generation off (`SlashCommandExecutionResult.Generate`), `return true`, `nil` or no return at all leaves it as the frontmatter declared. Use it for the runtime decision a static key cannot express: "there is nothing to work on", "the user is offline", "the result is empty". Throw an `error(...)` instead when the run *failed* - that surfaces a message error, while `return false` is a clean, quiet stop.
 - a `chat_message` handle: read/write `content`, `error`, `disabled_for_agents`; read-only `role`, `id`, `index`, `branch_index`, `branches_count`; methods `append_part(title, icon, color)`, `append_content_part(content, title, icon, color)` (the text also joins the model-facing content), `append_attachment_part(attachment, title, icon, color)`, `append_data(uicontrol, ...)`. `icon` is a `VisualIconKind` name (Material Icons), `color` a hex string; both optional.
 
 > [!WARNING]
@@ -182,6 +183,8 @@ A `commands/` folder inside an addon source: `.agents/` or `.llmassist/` in a re
 - A `: ` (colon-space) inside a YAML description in a mapping - the frontmatter fails to parse. Prefer `-` over `:` in descriptions.
 - Reading `description` as if the model saw it: a command is never exposed to the model, so `description` is for the user's popup and cards only.
 - Expecting Python to reach the chat: it has no `dass.chat`/`dass.command`, and its part carries no icon.
+- Returning a boolean from a **Python** or **C# script** command as if it were the Lua contract - only the Lua engine reads the chunk's return value; the other two always generate unless `generate`/the executor result says otherwise.
+- Injecting content and then letting the model answer anyway - a command that fully replaces a model turn ends with `return false`.
 - The trailing-call table-constructor trap in Lua (above) - a junk part that looks almost right.
 
 ## Neighbours
