@@ -40,6 +40,21 @@ keys its own caller holds. The decision between key-reentrancy tracking (via `Sh
 state) and a narrower skip rule is deferred. **Seam:** the stage is a service the orchestrator chooses to
 call; adding the call back is one line.
 
+## Approval-time argument editing
+
+`ToolApprovalResult.EditedArguments` / `OverrideModelIntent` / `ApprovalData` exist and the confirmation
+stage installs them (`call.Arguments` or `ctx.ArgumentsOverride`, plus `ctx.ApprovalData`), but no surface
+produces them yet: `ToolConsentResult` does not carry the three fields and the generic panel has no
+editor. **Seam:** extend `ToolConsentResult` and `ToolConsentPanel`; a provider (or the approval helper)
+can set the fields directly.
+
+## Preview invalidation and re-validation after an argument edit
+
+An approval edit is installed without clearing `ctx.SharedContext` and without re-running
+`IToolValidationService`; the preview artifact and the validation result therefore belong to the old
+argument set. **Seam:** `ToolConfirmationService.Apply` is the single place the edit is installed; a
+re-preview loop and a validation call belong there once the lifecycle is decided.
+
 ## Real argument validation
 
 Spec §4 / ticket 07. `IToolValidationService` ships as a stub that always returns valid. The interface,

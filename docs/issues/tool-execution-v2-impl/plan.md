@@ -110,3 +110,33 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
 16. The script world has its own context: `ChatScriptToolExecutionContext` + `ScriptToolContextFactory`
     (no host message, no consent). `ChatToolContextFactory` is not branched (P4).
 17. User actions (`ChatRestart`, `Command`) do not check the hard floor; spec §13 was updated (P4).
+18. `ToolPolicyDecision` gains `All = Approve | Ask | Disallow` for the handled-decisions mask;
+    the enum stays non-nullable. `HandledDecisions` is per-invocation
+    (`IToolExecutionContext.HandledDecisions`, initialized from the descriptor), and preview overrides
+    it through `PreviewToolExecutionResult.HandledDecisions` (`null` = keep the descriptor mask).
+19. A descriptor that declares `Ask`/`Disallow` without an `Approval` provider throws in
+    `ToolInfo.Create`. `ToolConfirmationService` repeats the check at runtime because preview may widen
+    the mask after construction.
+20. The filesystem family (`fs-edit`, `fs-apply_diff`, `fs-write_file`) is the first real
+    `IToolApprovalProvider`: preview builds one read-only `TextDiffAdditionalViewModel` and stores it in
+    `SharedContext`; the provider flips the same card interactive and awaits; `Main` only applies the
+    approved content. The read-only card is preserved for auto-approved edits.
+21. In a task (`RunningInUi == false`) the file-tool preview clears the `Ask` bit, so
+    `TaskConfirmationSink` asks instead of the policy `Ask` being silently ignored. The diff card is
+    not projected into the task world.
+22. Memorization has one owner: `ToolConfirmationService` memorizes from `ToolApprovalResult`.
+    `TextDiffAdditionalViewModel` exposes `ConsentResultTask : Task<ToolConsentResult>`; its
+    `ConsentContext` and `ConfirmationTask : Task<MemorizedDecision>` are gone.
+23. `AddonSetCollectorBase` gains `ApplyDefaults(target, setConfig, agent)`, called for every included
+    clone in both branches of `GetAddonsWithChanges`. `ToolsetCollector` uses it to stamp
+    `ContextFactory` and resolve `ApprovalLevel = tool ?? toolset default ?? PolicyBased`; the toolset
+    default now reaches untouched tools. `AvailableTools` stays default-free (P6a).
+24. The `fs-write_file` preview computes the full new content (including `append`) into the shared
+    context; `Main` no longer re-applies `append` when the context is present and falls back to
+    recomputation for direct executor calls and tests.
+25. `ToolApprovalResult` carries `EditedArguments`, `OverrideModelIntent` and `ApprovalData`.
+    `OverrideModelIntent = true` installs the edit into the persisted `call.Arguments` and clears
+    `ctx.ArgumentsOverride`; `false` installs it into the ephemeral `ctx.ArgumentsOverride`.
+    `ApprovalData` is delivered on `ctx.ApprovalData` and read by the tool. Re-validation and
+    `SharedContext` re-preview after an edit are deferred (see `not-implemented.md`); the confirmation
+    stage installs the edit without clearing the preview artifact.

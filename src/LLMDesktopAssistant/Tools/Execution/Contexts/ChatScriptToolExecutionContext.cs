@@ -31,6 +31,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 
 			Call = parameters.Call;
 			Descriptor = parameters.Descriptor;
+			HandledDecisions = parameters.Descriptor.HandledDecisions;
 			Host = parameters.Host;
 			Confirmation = parameters.Confirmation;
 			Services = chat.Services;
@@ -83,7 +84,13 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 		public ToolPolicyDecision PolicyDecision { get; set; } = ToolPolicyDecision.None;
 
 		/// <inheritdoc/>
+		public ToolPolicyDecision HandledDecisions { get; set; }
+
+		/// <inheritdoc/>
 		public ToolPolicyReason? PolicyReason { get; set; }
+
+		/// <inheritdoc/>
+		public JsonNode? ApprovalData { get; set; }
 
 		/// <inheritdoc/>
 		public ToolPolicyMask EffectiveBehaviours { get; }

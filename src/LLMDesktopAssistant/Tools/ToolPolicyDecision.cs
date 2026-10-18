@@ -42,4 +42,10 @@ public enum ToolPolicyDecision
 	/// Useful for rejecting dangerous operations (e.g., deleting system files).
 	/// </summary>
 	Disallow = 1 << 2,
+
+	/// <summary>
+	/// Every decision bit combined. For the <c>HandledDecisions</c> mask this means
+	/// "the tool handles every decision itself"; it is never a valid pipeline decision.
+	/// </summary>
+	All = Approve | Ask | Disallow
 }

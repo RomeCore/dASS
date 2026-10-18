@@ -14,41 +14,43 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		{
 			var preview = ctx.Descriptor.Preview;
 
-			ctx.Call.ExpectedBehaviour = ctx.Descriptor.DefaultExpectedBehaviour;
-			if (preview is null)
-				return true;
-
 			try
 			{
-				ctx.Call.Status = ToolStatus.PreExecuting;
-				var result = await preview.PreviewAsync(ctx.Arguments.Effective, ctx, ct);
-
-				if (result.ExpectedBehaviour is { } expectedBehaviour)
-					ctx.Call.ExpectedBehaviour = expectedBehaviour;
-
-				if (result.InterruptingSuccess is not { } success)
+				if (preview is null)
 					return true;
 
-				ctx.Call.Status = success ? ToolStatus.Success : ToolStatus.Error;
-				if (string.IsNullOrEmpty(ctx.Call.ResultContent))
+				try
 				{
-					ctx.Call.ResultContent = success
-						? "Tool successfully returned no result."
-						: "Tool failed with no result.";
-				}
+					ctx.Call.Status = ToolStatus.PreExecuting;
+					var result = await preview.PreviewAsync(ctx.Arguments.Effective, ctx, ct);
 
-				return false;
+					if (result.ExpectedBehaviour is { } expectedBehaviour)
+						ctx.Call.ExpectedBehaviour = expectedBehaviour;
+
+					if (result.HandledDecisions is { } handledDecisions)
+						ctx.HandledDecisions = handledDecisions;
+
+					if (result.InterruptingSuccess is not { } success)
+						return true;
+
+					ctx.Call.Status = success ? ToolStatus.Success : ToolStatus.Error;
+					return false;
+				}
+				catch (ArgumentException ex)
+				{
+					ctx.Call.Status = ToolStatus.Error;
+					ctx.Call.ResultContent = ex.Message;
+					return false;
+				}
+				catch (Exception ex)
+				{
+					Log.Debug(ex, "Error during preview execution of tool '{ToolName}': {Error}", ctx.Call.ToolName, ex);
+					return true;
+				}
 			}
-			catch (ArgumentException ex)
+			finally
 			{
-				ctx.Call.Status = ToolStatus.Error;
-				ctx.Call.ResultContent = ex.Message;
-				return false;
-			}
-			catch (Exception ex)
-			{
-				Log.Debug(ex, "Error during preview execution of tool '{ToolName}': {Error}", ctx.Call.ToolName, ex);
-				return true;
+				ctx.Call.ExpectedBehaviour ??= ctx.Descriptor.DefaultExpectedBehaviour;
 			}
 		}
 	}

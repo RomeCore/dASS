@@ -6,8 +6,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// Everything an entry point hands to the dispatcher to start one invocation.
 	/// </summary>
 	/// <remarks>
-	/// A plain object with init-only properties, not a record: the request is a one-way assembly of
-	/// inputs, not a value with equality. <see cref="Descriptor"/> is optional on purpose — a call whose
+	/// <see cref="Descriptor"/> is optional on purpose — a call whose
 	/// tool has disappeared from the toolset still has to be processed, and the dispatcher substitutes
 	/// <see cref="MissingToolDescriptor"/>.
 	/// </remarks>

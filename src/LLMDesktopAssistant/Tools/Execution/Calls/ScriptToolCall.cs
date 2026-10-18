@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Calls
 		public ToolStatus Status { get; set; } = ToolStatus.None;
 
 		/// <inheritdoc/>
-		public ToolBehaviour ExpectedBehaviour { get; set; }
+		public ToolBehaviour? ExpectedBehaviour { get; set; }
 
 		/// <inheritdoc/>
 		public string? ResultContent { get; set; }

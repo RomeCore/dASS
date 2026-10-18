@@ -40,7 +40,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 
 			var approvalLevel = descriptor.ApprovalLevel;
 			var (decision, decisionMessage) = approvalService.ApproveTool(
-				approvalLevel, ctx.Call.ExpectedBehaviour, autoApprove, disallowed);
+				approvalLevel, ctx.Call.ExpectedBehaviour ?? descriptor.DefaultExpectedBehaviour, autoApprove, disallowed);
 
 			if (approvalLevel.IsPolicyBased() &&
 				descriptor.Specifier is { } specifierAnalyzer &&

@@ -19,6 +19,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		public ToolBehaviour? ExpectedBehaviour { get; init; }
 
 		/// <summary>
+		/// Overrides which decisions the tool handles itself for this invocation, or <see langword="null"/>
+		/// to keep the descriptor mask. <see cref="ToolPolicyDecision.None"/> explicitly clears every bit.
+		/// </summary>
+		public ToolPolicyDecision? HandledDecisions { get; init; }
+
+		/// <summary>
 		/// A result that does not interrupt: the pipeline continues with policy and execution.
 		/// </summary>
 		public static PreviewToolExecutionResult Continue { get; } = new();

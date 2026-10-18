@@ -81,9 +81,22 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		ToolPolicyDecision PolicyDecision { get; set; }
 
 		/// <summary>
+		/// Which decisions the tool handles itself for this invocation. Initialized from
+		/// <see cref="IToolDescriptor.HandledDecisions"/> and overridden by the preview stage when it
+		/// returns <see cref="PreviewToolExecutionResult.HandledDecisions"/>.
+		/// </summary>
+		ToolPolicyDecision HandledDecisions { get; set; }
+
+		/// <summary>
 		/// The decision's source and explanation, or <see langword="null"/> when no decision was made.
 		/// </summary>
 		ToolPolicyReason? PolicyReason { get; set; }
+
+		/// <summary>
+		/// The data the approval surface collected for this invocation, or <see langword="null"/>. Written
+		/// by the confirmation stage from <see cref="ToolApprovalResult.ApprovalData"/> and read by the tool.
+		/// </summary>
+		JsonNode? ApprovalData { get; set; }
 
 		/// <summary>
 		/// The effective behaviours of this invocation, set at creation from the source.

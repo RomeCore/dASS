@@ -38,7 +38,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// The expected behaviour of the call, determined by preview or by the descriptor default. It is
 		/// the input of the policy stage.
 		/// </summary>
-		ToolBehaviour ExpectedBehaviour { get; set; }
+		ToolBehaviour? ExpectedBehaviour { get; set; }
 
 		/// <summary>
 		/// The content the tool produced. The chat prompt is built from this value on the next request,

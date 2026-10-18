@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Tools.Consents;
 
 namespace LLMDesktopAssistant.Tools.Execution.Domain
@@ -27,6 +28,26 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// result the model sees.
 		/// </summary>
 		public string? Notes { get; init; }
+
+		/// <summary>
+		/// Substitutes the effective arguments for this invocation, or <see langword="null"/> to keep the
+		/// arguments the model emitted. The channel is selected by <see cref="OverrideModelIntent"/>; the
+		/// confirmation stage validates the resulting set before execution.
+		/// </summary>
+		public JsonNode? EditedArguments { get; init; }
+
+		/// <summary>
+		/// When <see langword="true"/>, <see cref="EditedArguments"/> replaces the persisted
+		/// <c>call.Arguments</c> (the model's intent is substituted). When <see langword="false"/>, the edit
+		/// goes to the ephemeral <c>ctx.ArgumentsOverride</c> (the hook channel).
+		/// </summary>
+		public bool OverrideModelIntent { get; init; }
+
+		/// <summary>
+		/// The data the approval surface collected according to the provider's requested schema, or
+		/// <see langword="null"/>. Delivered on <c>ctx.ApprovalData</c>.
+		/// </summary>
+		public JsonNode? ApprovalData { get; init; }
 
 		/// <summary>
 		/// Creates an approval that is not remembered.

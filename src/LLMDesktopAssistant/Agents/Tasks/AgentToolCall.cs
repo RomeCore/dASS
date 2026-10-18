@@ -56,12 +56,12 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			set => SetProperty(ref _result, value);
 		}
 
-		private ToolBehaviour _expectedBehaviour;
+		private ToolBehaviour? _expectedBehaviour;
 		/// <summary>
 		/// The expected behaviour flags for this tool call, determined during pre-execution.
 		/// Used to display behaviour indicators in the confirmation UI.
 		/// </summary>
-		public ToolBehaviour ExpectedBehaviour
+		public ToolBehaviour? ExpectedBehaviour
 		{
 			get => _expectedBehaviour;
 			set => SetProperty(ref _expectedBehaviour, value);

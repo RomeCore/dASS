@@ -4,6 +4,7 @@ using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Tools.MVVM.Diff;
 using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
@@ -35,6 +36,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = WriteFile,
 				StreamingAnalyzer = WriteFileStream,
 				PreviewExecutor = WriteFilePreview,
+				Approval = ApproveWriteFile,
 				Name = "fs-write_file",
 				Description = "Writes text content to a file inside working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-write_file"),
@@ -67,10 +69,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private class WriteFileContext
+		private sealed class WriteFileContext : DiffSharedContext
 		{
-			public required string FullPath { get; init; }
-			public required AddonKind AddonKind { get; init; }
 		}
 
 		private PreviewToolExecutionResult? WriteFilePreview(
@@ -87,49 +87,46 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				var addonKind = _addonDetector.Detect(path, isFile: true,
 					fileExisted ? FileOperation.Edit : FileOperation.Create,
 					fileExisted ? null : FileUtils.GetExistingAncestorDirectory(fullPath));
-				sharedCtx = new WriteFileContext { FullPath = fullPath, AddonKind = addonKind };
 
-				if (fileExisted)
+				string oldContent;
+				try
 				{
-					try
-					{
-						var oldContent = File.ReadAllText(fullPath);
-						if (oldContent == content)
-						{
-							ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
-								LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
-							ctx.Call.SetResult($"File **{path}** already contains the same content.");
-
-							return new PreviewToolExecutionResult
-							{
-								ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-									AddonKindToolBehaviourConverter.Convert(addonKind),
-								InterruptingSuccess = true
-							};
-						}
-
-						ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
-
-						return new PreviewToolExecutionResult
-						{
-							ExpectedBehaviour = ToolBehaviour.FileEdit |
-								(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-								AddonKindToolBehaviourConverter.Convert(addonKind)
-						};
-					}
-					catch
-					{
-						return null;
-					}
+					oldContent = fileExisted ? File.ReadAllText(fullPath) : string.Empty;
 				}
+				catch
+				{
+					sharedCtx = null;
+					return null;
+				}
+
+				var newContent = append && fileExisted ? oldContent + content : content;
+
+				if (fileExisted && oldContent == newContent)
+				{
+					sharedCtx = CreateShared(fullPath, addonKind, oldContent, oldContent, EmptyDiff(), null);
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
+						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+					ctx.Call.SetResult($"File **{path}** already contains the same content.");
+
+					return new PreviewToolExecutionResult
+					{
+						ExpectedBehaviour = (!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
+							AddonKindToolBehaviourConverter.Convert(addonKind),
+						InterruptingSuccess = true
+					};
+				}
+
+				var (diffView, fullDiff) = PrepareDiff(ctx, path, oldContent, newContent);
+				sharedCtx = CreateShared(fullPath, addonKind, oldContent, newContent, fullDiff, diffView);
 
 				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
 
 				return new PreviewToolExecutionResult
 				{
-					ExpectedBehaviour = ToolBehaviour.FileDirectoryCreate |
+					ExpectedBehaviour = (fileExisted ? ToolBehaviour.FileEdit : ToolBehaviour.FileDirectoryCreate) |
 						(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-						AddonKindToolBehaviourConverter.Convert(addonKind)
+						AddonKindToolBehaviourConverter.Convert(addonKind),
+					HandledDecisions = ctx.RunningInUi ? null : ToolPolicyDecision.None
 				};
 			}
 			catch (Exception ex)
@@ -144,6 +141,23 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 		}
 
+		private static WriteFileContext CreateShared(string path, AddonKind addonKind, string originalContent,
+			string previewedContent, HunkGroups fullDiff, TextDiffAdditionalViewModel? diffView) => new()
+		{
+			Path = path,
+			AddonKind = addonKind,
+			OriginalContent = originalContent,
+			PreviewedContent = previewedContent,
+			FullDiff = fullDiff,
+			DiffView = diffView
+		};
+
+		private static Task<ToolApprovalResult> ApproveWriteFile(
+			IToolExecutionContext ctx,
+			[SharedContext] WriteFileContext? sharedCtx,
+			CancellationToken cancellationToken) =>
+			AwaitDiffConsentAsync(ctx, sharedCtx, cancellationToken);
+
 		private async Task<ToolExecutionResult> WriteFile(
 			[SharedContext] WriteFileContext? sharedCtx,
 			IToolExecutionContext ctx,
@@ -154,7 +168,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		{
 			try
 			{
-				var fullPath = sharedCtx?.FullPath ?? _fileAccess.AccessPath(path, DirectoryAccessMode.ReadWrite);
+				var fullPath = sharedCtx?.Path ?? _fileAccess.AccessPath(path, DirectoryAccessMode.ReadWrite);
 				var fileExisted = File.Exists(fullPath);
 				var addonKind = sharedCtx?.AddonKind ?? _addonDetector.Detect(path, isFile: true,
 					fileExisted ? FileOperation.Edit : FileOperation.Create,
@@ -164,93 +178,80 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				if (!Directory.Exists(dir))
 					Directory.CreateDirectory(dir!);
 
-				string oldContent = string.Empty;
+				var oldContent = sharedCtx?.OriginalContent ??
+					(fileExisted ? File.ReadAllText(fullPath) : string.Empty);
+				var newContent = sharedCtx?.PreviewedContent ??
+					(append && fileExisted ? oldContent + content : content);
 
-				if (fileExisted)
-					oldContent = File.ReadAllText(fullPath);
-				if (append && fileExisted)
-					content = oldContent + content;
-
-				if (fileExisted)
+				if (fileExisted && oldContent == newContent)
 				{
-					var postProcessResult = await PostProcessDiffAsync(fullPath, oldContent, content, ctx, cancellationToken);
-					string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
-						? string.Empty
-						: $"""
-							User has provided notes:
-							{postProcessResult.UserNotes}
-							""";
-					if (!postProcessResult.AppliedDiff.HasGroups)
-					{
-						ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDiscard, $"**{path}**");
-						ctx.Call.SetResult($"""
-							User has rejected the changes, none has applied.
-							{userNotesPostfix}
-							""");
-						return ToolExecutionResult.Succeeded;
-					}
-
-					File.WriteAllText(fullPath, postProcessResult.NewContent);
-					_addonInvalidator.Invalidate(addonKind);
-
-					var fileInfo = new FileInfo(fullPath);
-					var size = FileUtils.BytesToDisplaySize(fileInfo.Length);
-
-					var output = new StringBuilder();
-					output.AppendLine($"File: {path}");
-					output.AppendLine($"Operation: {(append ? "Append" : "Write")}");
-					output.AppendLine($"New size: {fileInfo.Length} bytes ~ ({size})");
-
-					// Compute and show diff for overwritten files
-					string changesTitlePostfix = string.Empty;
-					var diff = postProcessResult.AppliedDiff;
-					if (diff.HasGroups)
-					{
-						var (removed, added) = diff.GetChangeCounts();
-						changesTitlePostfix = $" *(-{removed} +{added})*";
-
-						output.AppendLine($"File edited successfully. *(-{removed} +{added})*");
-						output.AppendLine("[CHANGES]:");
-						output.AppendLine(diff.ToString());
-					}
-					if (postProcessResult.RejectedDiff.HasGroups)
-					{
-						output.AppendLine("[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:");
-						output.AppendLine(postProcessResult.RejectedDiff.ToString());
-					}
-					if (!postProcessResult.Diff.HasGroups)
-					{
-						output.AppendLine("No changes has been applied.");
-					}
-					if (!string.IsNullOrWhiteSpace(postProcessResult.UserNotes))
-					{
-						output.AppendLine(userNotesPostfix);
-					}
-
-					ctx.Call.SetStatus(
-						append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck,
-						$"**{path}**{changesTitlePostfix}");
-					ctx.Call.SetResult(output.ToString());
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
+						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
+					ctx.Call.SetResult($"File **{path}** already contains the same content.");
 					return ToolExecutionResult.Succeeded;
 				}
-				else
+
+				var result = sharedCtx is null
+					? BuildUnpreviewedResult(oldContent, newContent)
+					: BuildDiffResult(sharedCtx);
+
+				if (sharedCtx?.Approved == false ||
+					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
-					File.WriteAllText(fullPath, content);
-					_addonInvalidator.Invalidate(addonKind);
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetResult("User has rejected the changes, none has applied.");
+					return ToolExecutionResult.Succeeded;
+				}
 
-					var fileInfo = new FileInfo(fullPath);
-					var size = FileUtils.BytesToDisplaySize(fileInfo.Length);
+				await File.WriteAllTextAsync(fullPath, result.NewContent, cancellationToken);
+				_addonInvalidator.Invalidate(addonKind);
 
-					var output = new StringBuilder();
-					output.AppendLine($"File: {path}");
-					output.AppendLine($"Operation: Write");
-					output.AppendLine($"Size: {fileInfo.Length} bytes ~ ({size})");
+				var fileInfo = new FileInfo(fullPath);
+				var size = FileUtils.BytesToDisplaySize(fileInfo.Length);
+
+				if (!fileExisted)
+				{
+					var created = new StringBuilder();
+					created.AppendLine($"File: {path}");
+					created.AppendLine($"Operation: Write");
+					created.AppendLine($"Size: {fileInfo.Length} bytes ~ ({size})");
 
 					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
-					ctx.Call.SetResult(output.ToString());
+					ctx.Call.SetResult(created.ToString());
 					return ToolExecutionResult.Succeeded;
 				}
 
+				var output = new StringBuilder();
+				output.AppendLine($"File: {path}");
+				output.AppendLine($"Operation: {(append ? "Append" : "Write")}");
+				output.AppendLine($"New size: {fileInfo.Length} bytes ~ ({size})");
+
+				string changesTitlePostfix = string.Empty;
+				var diff = result.AppliedDiff;
+				if (diff.HasGroups)
+				{
+					var (removed, added) = diff.GetChangeCounts();
+					changesTitlePostfix = $" *(-{removed} +{added})*";
+
+					output.AppendLine($"File edited successfully. *(-{removed} +{added})*");
+					output.AppendLine("[CHANGES]:");
+					output.AppendLine(diff.ToString());
+				}
+				if (result.RejectedDiff.HasGroups)
+				{
+					output.AppendLine("[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:");
+					output.AppendLine(result.RejectedDiff.ToString());
+				}
+				if (!result.Diff.HasGroups)
+				{
+					output.AppendLine("No changes has been applied.");
+				}
+
+				ctx.Call.SetStatus(
+					append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck,
+					$"**{path}**{changesTitlePostfix}");
+				ctx.Call.SetResult(output.ToString());
+				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{

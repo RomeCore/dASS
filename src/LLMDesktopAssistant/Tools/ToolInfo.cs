@@ -310,6 +310,16 @@ namespace LLMDesktopAssistant.Tools
 			tool.SyncAnalyzer = syncAnalyzer;
 			tool.Approval = approval;
 
+			// A tool that claims to decide Ask/Disallow itself without providing the surface is an authoring
+			// error. Preview may widen the mask later, so the confirmation service keeps its runtime check.
+			if ((tool.HandledDecisions & (ToolPolicyDecision.Ask | ToolPolicyDecision.Disallow)) != 0 &&
+				tool.Approval is null)
+			{
+				throw new InvalidOperationException(
+					$"Tool '{tool.Name}' declares HandledDecisions = {tool.HandledDecisions} " +
+					$"but provides no approval provider.");
+			}
+
 			tool.Freeze();
 
 			return tool;

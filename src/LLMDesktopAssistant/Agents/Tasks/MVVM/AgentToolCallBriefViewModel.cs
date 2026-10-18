@@ -144,7 +144,9 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		/// The behaviour flags for this tool call to display as indicators.
 		/// </summary>
 		public ImmutableList<ToolBehaviourFlagInfo> BehaviourFlags =>
-			ToolBehaviourFlagInfo.CreateForFlags(_toolCall.ExpectedBehaviour);
+			_toolCall.ExpectedBehaviour is { } beh ?
+				ToolBehaviourFlagInfo.CreateForFlags(beh) :
+				[];
 
 		/// <summary>
 		/// Whether to show the standard confirmation controls.

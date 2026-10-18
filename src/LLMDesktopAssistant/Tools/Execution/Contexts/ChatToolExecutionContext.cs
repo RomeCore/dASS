@@ -34,6 +34,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 
 			Call = parameters.Call;
 			Descriptor = parameters.Descriptor;
+			HandledDecisions = parameters.Descriptor.HandledDecisions;
 			Host = parameters.Host;
 			Confirmation = parameters.Confirmation;
 			Services = chat.Services;
@@ -108,9 +109,20 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 		public ToolPolicyDecision PolicyDecision { get; set; } = ToolPolicyDecision.None;
 
 		/// <summary>
+		/// Which decisions the tool handles itself for this invocation; initialized from the descriptor
+		/// and overridable by preview.
+		/// </summary>
+		public ToolPolicyDecision HandledDecisions { get; set; }
+
+		/// <summary>
 		/// The decision's source and explanation.
 		/// </summary>
 		public ToolPolicyReason? PolicyReason { get; set; }
+
+		/// <summary>
+		/// The data the approval surface collected, or <see langword="null"/>.
+		/// </summary>
+		public JsonNode? ApprovalData { get; set; }
 
 		/// <summary>
 		/// The effective behaviours of the invocation.

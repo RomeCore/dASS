@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using Microsoft.Extensions.DependencyInjection;
@@ -33,17 +34,23 @@ namespace LLMDesktopAssistant.Tests.Tools
 		/// <param name="name">The tool name.</param>
 		/// <param name="configure">Mutates the initialization info before the descriptor is frozen.</param>
 		/// <param name="streamingAnalyzer">The streaming analyzer delegate, or <see langword="null"/>.</param>
+		/// <param name="approval">The approval provider delegate, or <see langword="null"/>.</param>
+		/// <param name="previewExecutor">The preview executor delegate, or <see langword="null"/>.</param>
 		/// <returns>The frozen descriptor.</returns>
 		public static ToolInfo CreateTool(string name = "test-tool",
 			Action<ToolInitializationInfo>? configure = null,
-			Delegate? streamingAnalyzer = null)
+			Delegate? streamingAnalyzer = null,
+			Delegate? approval = null,
+			Delegate? previewExecutor = null)
 		{
 			var info = new ToolInitializationInfo
 			{
 				Name = name,
 				Description = "A test tool.",
 				Executor = (Action)(() => { }),
-				StreamingAnalyzer = streamingAnalyzer
+				StreamingAnalyzer = streamingAnalyzer,
+				Approval = approval,
+				PreviewExecutor = previewExecutor
 			};
 
 			configure?.Invoke(info);
@@ -59,6 +66,8 @@ namespace LLMDesktopAssistant.Tests.Tools
 		/// <param name="disallowed">The invocation's disallowed behaviours.</param>
 		/// <param name="confirmation">The confirmation surface, or <see langword="null"/> for a denying one.</param>
 		/// <param name="argumentStream">The model's argument stream, or <see langword="null"/>.</param>
+		/// <param name="runningInUi">Whether the invocation has a chat interface.</param>
+		/// <param name="memorization">The memorization service, or <see langword="null"/> for no consent context.</param>
 		/// <param name="configureServices">Registers additional services into the chat scope.</param>
 		/// <returns>The call and the context.</returns>
 		public static Session Create(ToolInfo tool, JsonNode? args = null,
@@ -66,6 +75,8 @@ namespace LLMDesktopAssistant.Tests.Tools
 			ToolBehaviour disallowed = ToolBehaviour.None,
 			IConfirmationSink? confirmation = null,
 			IToolArgumentStream? argumentStream = null,
+			bool runningInUi = false,
+			IToolMemorizationService? memorization = null,
 			Action<IServiceCollection>? configureServices = null)
 		{
 			var services = new ServiceCollection();
@@ -89,13 +100,17 @@ namespace LLMDesktopAssistant.Tests.Tools
 			};
 			message.ToolCalls.Add(call);
 
+			var consent = memorization is null
+				? null
+				: new ToolConsentMemorizationContext(memorization, chat, call.ToolName);
+
 			var parameters = new ToolContextCreationParams
 			{
 				Call = call,
 				Descriptor = tool,
 				Source = ToolInvocationSource.ChatRun,
 				Host = message,
-				RunningInUi = false,
+				RunningInUi = runningInUi,
 				Confirmation = confirmation ?? new DeniedConfirmationSink(),
 				EffectiveBehaviours = new ToolPolicyMask
 				{
@@ -108,7 +123,7 @@ namespace LLMDesktopAssistant.Tests.Tools
 			return new Session
 			{
 				Call = call,
-				Context = new ChatToolExecutionContext(chat, message, parameters, null)
+				Context = new ChatToolExecutionContext(chat, message, parameters, consent)
 			};
 		}
 

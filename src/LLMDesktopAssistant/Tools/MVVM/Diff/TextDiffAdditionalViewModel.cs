@@ -180,24 +180,27 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 			}
 		}
 
-		private TaskCompletionSource<MemorizedDecision>? _confirmationTcs;
+		private TaskCompletionSource<ToolConsentResult>? _consentTcs;
+		private ToolConsentResult? _resolvedConsent;
 		/// <summary>
-		/// Gets the confirmation task that completes when the user accepts or declines the changes.
-		/// Returns <see langword="true"/> if accepted, <see langword="false"/> if declined.
+		/// Gets the consent task that completes when the user accepts or declines the changes. The full
+		/// result travels so the confirmation stage is the single owner of memorization.
 		/// </summary>
 		[BsonIgnore]
 		[ChangeTracker.Untracked]
-		public Task<MemorizedDecision> ConfirmationTask
+		public Task<ToolConsentResult> ConsentResultTask
 		{
 			get
 			{
-				if (_confirmationTcs == null)
+				if (_consentTcs == null)
 				{
-					_confirmationTcs = new TaskCompletionSource<MemorizedDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
-					if (_isConfirmed != null)
-						_confirmationTcs.TrySetResult(new MemorizedDecision(_isConfirmed.Value, _notes));
+					_consentTcs = new TaskCompletionSource<ToolConsentResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+					var resolved = _resolvedConsent ??
+						(_isConfirmed is { } confirmed ? CreateConsent(confirmed, _notes) : null);
+					if (resolved is not null)
+						_consentTcs.TrySetResult(resolved);
 				}
-				return _confirmationTcs.Task;
+				return _consentTcs.Task;
 			}
 		}
 
@@ -209,14 +212,7 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 		[ChangeTracker.Untracked]
 		public IRelayCommand ConsentCommand { get; private set; }
 
-		/// <summary>
-		/// Gets or sets the consent memorization context used to persist the user's "remember" decision,
-		/// or <see langword="null"/> when memorization is unavailable.
-		/// </summary>
-		[BsonIgnore]
-		[ChangeTracker.Untracked]
-		public ToolConsentMemorizationContext? ConsentContext { get; set; }
-
+		
 		/// <summary>
 		/// Command to enable all chunks (confirmation mode).
 		/// </summary>
@@ -249,31 +245,30 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 			if (consentResult == null)
 				return;
 
-			ConsentContext?.Memorize(consentResult);
+			_resolvedConsent = consentResult;
+			_consentTcs?.TrySetResult(consentResult);
 
-			if (consentResult.IsApproved)
-				Confirm(consentResult.Notes);
-			else
-				Decline(consentResult.Notes);
+			Notes = consentResult.Notes;
+			IsConfirmed = consentResult.IsApproved;
 		}
 
 		/// <summary>
-		/// Accepts all changes and marks the confirmation as complete.
+		/// Accepts all changes and marks the confirmation as complete. Used by programmatic paths
+		/// (cancellation), never by the consent panel, which goes through <see cref="ResolveConsent"/>.
 		/// </summary>
-		public void Confirm(string? notes)
-		{
-			IsConfirmed = true;
-			_confirmationTcs?.TrySetResult(new MemorizedDecision(true, notes));
-		}
+		public void Confirm(string? notes) => ResolveConsent(CreateConsent(true, notes));
 
 		/// <summary>
 		/// Declines all changes and marks the confirmation as complete.
 		/// </summary>
-		public void Decline(string? notes)
+		public void Decline(string? notes) => ResolveConsent(CreateConsent(false, notes));
+
+		private static ToolConsentResult CreateConsent(bool approved, string? notes) => new()
 		{
-			IsConfirmed = false;
-			_confirmationTcs?.TrySetResult(new MemorizedDecision(false, notes));
-		}
+			IsApproved = approved,
+			Memorization = ToolApprovalMemorization.Once,
+			Notes = notes
+		};
 
 		/// <summary>
 		/// Enables all chunks (checks all checkboxes).

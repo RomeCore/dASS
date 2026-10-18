@@ -122,7 +122,7 @@ namespace LLMDesktopAssistant.Tests.Tools
 
 			public ToolStatus Status { get; set; }
 
-			public ToolBehaviour ExpectedBehaviour { get; set; }
+			public ToolBehaviour? ExpectedBehaviour { get; set; }
 
 			public string? ResultContent { get; set; }
 

@@ -38,6 +38,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = Edit,
 				StreamingAnalyzer = EditStreaming,
 				PreviewExecutor = EditPreview,
+				Approval = ApproveEdit,
 				Name = "fs-edit",
 				Description = """
 					Edits a text file by applying a list of replacement patches.
@@ -144,11 +145,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return null;
 		}
 
-		private class FSWriteSharedContext
+		private sealed class FSWriteSharedContext : DiffSharedContext
 		{
-			public required string Path { get; init; }
-			public required AddonKind AddonKind { get; init; }
-			public required string NewContent { get; init; }
 			public IReadOnlyList<string> PatchErrors { get; init; } = [];
 		}
 
@@ -198,7 +196,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					Path = fullPath!,
 					AddonKind = addonKind,
-					NewContent = originalContent,
+					OriginalContent = originalContent,
+					PreviewedContent = originalContent,
+					FullDiff = EmptyDiff(),
 					PatchErrors = patchErrors
 				};
 
@@ -217,11 +217,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
+			var (diffView, fullDiff) = PrepareDiff(ctx, path, originalContent, newContent);
 			sharedCtx = new FSWriteSharedContext
 			{
 				Path = fullPath!,
 				AddonKind = addonKind,
-				NewContent = newContent,
+				OriginalContent = originalContent,
+				PreviewedContent = newContent,
+				FullDiff = fullDiff,
+				DiffView = diffView,
 				PatchErrors = patchErrors
 			};
 
@@ -231,9 +235,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-					AddonKindToolBehaviourConverter.Convert(addonKind)
+					AddonKindToolBehaviourConverter.Convert(addonKind),
+				HandledDecisions = ctx.RunningInUi ? null : ToolPolicyDecision.None
 			};
 		}
+
+		private static Task<ToolApprovalResult> ApproveEdit(
+			IToolExecutionContext ctx,
+			[SharedContext] FSWriteSharedContext? sharedCtx,
+			CancellationToken cancellationToken) =>
+			AwaitDiffConsentAsync(ctx, sharedCtx, cancellationToken);
 
 		private async Task<ToolExecutionResult> Edit(
 			[SharedContext] FSWriteSharedContext? sharedCtx,
@@ -259,8 +270,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Failed;
 				}
 
-				var originalContent = File.ReadAllText(fullPath!);
-				var newContent = sharedCtx?.NewContent;
+				var originalContent = sharedCtx?.OriginalContent ?? File.ReadAllText(fullPath!);
+				var newContent = sharedCtx?.PreviewedContent;
 				var patchErrors = sharedCtx?.PatchErrors ?? [];
 				if (newContent == null)
 				{
@@ -279,31 +290,28 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Succeeded;
 				}
 
-				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, cancellationToken);
-				string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
-					? string.Empty
-					:	$"""
-							
-							User has provided notes:
-							{postProcessResult.UserNotes}
-							""";
-				if (!postProcessResult.AppliedDiff.HasGroups)
+				var result = sharedCtx is null
+					? BuildUnpreviewedResult(originalContent, newContent)
+					: BuildDiffResult(sharedCtx);
+
+				if (sharedCtx?.Approved == false ||
+					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
 					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
-					ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
+					ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
 						[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-						{postProcessResult.RejectedDiff}{userNotesPostfix}
+						{result.RejectedDiff}
 						""" :
-						$"User has rejected the changes, none has applied.{userNotesPostfix}");
+						"User has rejected the changes, none has applied.");
 					return ToolExecutionResult.Succeeded;
 				}
 
-				File.WriteAllText(fullPath!, postProcessResult.NewContent);
+				await File.WriteAllTextAsync(fullPath!, result.NewContent, cancellationToken);
 				_addonInvalidator.Invalidate(addonKind);
 
-				var diff = postProcessResult.AppliedDiff;
+				var diff = result.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
 
 				string notAppliedText = patchErrors.Count > 0
@@ -315,18 +323,18 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					: string.Empty;
 
 				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
-				ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
+				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
 					{diff}
 					[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-					{postProcessResult.RejectedDiff}{userNotesPostfix}{notAppliedText}
+					{result.RejectedDiff}{notAppliedText}
 					""" :
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
-					{diff}{userNotesPostfix}{notAppliedText}
+					{diff}{notAppliedText}
 					""");
 				return ToolExecutionResult.Succeeded;
 			}

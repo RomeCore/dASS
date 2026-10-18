@@ -77,7 +77,9 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 
 		/// <summary>
 		/// Which policy decisions the tool handles itself instead of the confirmation service. A tool may
-		/// handle only <c>Ask</c> and leave <c>Disallow</c> to the service.
+		/// handle only <c>Ask</c> and leave <c>Disallow</c> to the service, or declare
+		/// <see cref="ToolPolicyDecision.All"/>. This is the default for an invocation: preview may
+		/// override it through <see cref="IToolExecutionContext.HandledDecisions"/>.
 		/// </summary>
 		ToolPolicyDecision HandledDecisions { get; }
 

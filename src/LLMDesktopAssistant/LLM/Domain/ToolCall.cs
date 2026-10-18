@@ -132,12 +132,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _expectedBehaviour, value);
 		}
 
-		ToolBehaviour IToolCall.ExpectedBehaviour
-		{
-			get => ExpectedBehaviour ?? ToolBehaviour.None;
-			set => ExpectedBehaviour = value;
-		}
-
 		private CancellationTokenSource _cancellationTokenSource = new();
 		/// <summary>
 		/// The per-invocation cancellation source. Runtime-only: it is never persisted and is replaced

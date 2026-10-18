@@ -31,6 +31,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = ApplyDiff,
 				StreamingAnalyzer = ApplyDiffStreaming,
 				PreviewExecutor = ApplyDiffPreview,
+				Approval = ApproveApplyDiff,
 				Name = "fs-apply_diff",
 				Description = """
 					Applies diff operations to a file.
@@ -56,11 +57,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			});
 		}
 
-		private class FSApplyDiffSharedContext
+		private sealed class FSApplyDiffSharedContext : DiffSharedContext
 		{
-			public required string Path { get; init; }
-			public required AddonKind AddonKind { get; init; }
-			public required string NewContent { get; init; }
 		}
 
 		private StreamingToolAnalysisResult ApplyDiffStreaming(
@@ -103,7 +101,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					Path = fullPath,
 					AddonKind = addonKind,
-					NewContent = originalContent
+					OriginalContent = originalContent,
+					PreviewedContent = originalContent,
+					FullDiff = EmptyDiff()
 				};
 
 				ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
@@ -120,11 +120,15 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
+			var (diffView, fullDiff) = PrepareDiff(ctx, path, originalContent, newContent);
 			sharedCtx = new FSApplyDiffSharedContext
 			{
-				Path = fullPath,
+				Path = fullPath!,
 				AddonKind = addonKind,
-				NewContent = newContent
+				OriginalContent = originalContent,
+				PreviewedContent = newContent,
+				FullDiff = fullDiff,
+				DiffView = diffView
 			};
 
 			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
@@ -133,9 +137,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				ExpectedBehaviour = ToolBehaviour.FileEdit |
 					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None) |
-					AddonKindToolBehaviourConverter.Convert(addonKind)
+					AddonKindToolBehaviourConverter.Convert(addonKind),
+				HandledDecisions = ctx.RunningInUi ? null : ToolPolicyDecision.None
 			};
 		}
+
+		private static Task<ToolApprovalResult> ApproveApplyDiff(
+			IToolExecutionContext ctx,
+			[SharedContext] FSApplyDiffSharedContext? sharedCtx,
+			CancellationToken cancellationToken) =>
+			AwaitDiffConsentAsync(ctx, sharedCtx, cancellationToken);
 
 		private async Task<ToolExecutionResult> ApplyDiff(
 			[SharedContext] FSApplyDiffSharedContext? sharedCtx,
@@ -168,8 +179,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Failed;
 				}
 
-				var originalContent = File.ReadAllText(fullPath);
-				var newContent = sharedCtx?.NewContent;
+				var originalContent = sharedCtx?.OriginalContent ?? File.ReadAllText(fullPath);
+				var newContent = sharedCtx?.PreviewedContent;
 				if (newContent == null)
 				{
 					var edited = Edit(originalContent, deleteLines, insertBeforeLine, insertText);
@@ -192,46 +203,43 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Succeeded;
 				}
 
-				var postProcessResult = await PostProcessDiffAsync(fullPath, originalContent, newContent, ctx, cancellationToken);
-				string userNotesPostfix = string.IsNullOrWhiteSpace(postProcessResult.UserNotes)
-					? string.Empty
-					: $"""
-							
-							User has provided notes:
-							{postProcessResult.UserNotes}
-							""";
-				if (!postProcessResult.AppliedDiff.HasGroups)
+				var result = sharedCtx is null
+					? BuildUnpreviewedResult(originalContent, newContent)
+					: BuildDiffResult(sharedCtx);
+
+				if (sharedCtx?.Approved == false ||
+					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
 					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
-					ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
+					ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
 						[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-						{postProcessResult.RejectedDiff}{userNotesPostfix}
+						{result.RejectedDiff}
 						""" :
-						$"User has rejected the changes, none has applied.{userNotesPostfix}");
+						"User has rejected the changes, none has applied.");
 					return ToolExecutionResult.Succeeded;
 				}
 
-				File.WriteAllText(fullPath!, postProcessResult.NewContent);
+				await File.WriteAllTextAsync(fullPath!, result.NewContent, cancellationToken);
 				_addonInvalidator.Invalidate(addonKind);
 
-				var diff = postProcessResult.AppliedDiff;
+				var diff = result.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
 
 				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
-				ctx.Call.SetResult(postProcessResult.RejectedDiff.HasGroups ?
+				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
 					{diff}
 					[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-					{postProcessResult.RejectedDiff}{userNotesPostfix}
+					{result.RejectedDiff}
 					""" :
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
-					{diff}{userNotesPostfix}
+					{diff}
 					""");
 				return ToolExecutionResult.Succeeded;
 			}
@@ -256,16 +264,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 
 			var lines = originalContent.Split(["\r\n", "\n", "\r"], StringSplitOptions.None).ToList();
-			var beforeDeletionLines = lines.ToList();
-			var beforeInsertionLines = beforeDeletionLines;
-
-			int deletedStartLine = -1;
-			int deletedEndLine = -1;
-			List<string> deletedContent = [];
-
-			int insertedStartLine = -1;
-			int insertedEndLine = -1;
-			List<string> insertedContent = [];
+			List<string> deletedContent;
 
 			if (!string.IsNullOrEmpty(deleteLines))
 			{
@@ -304,8 +303,6 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				var (startLine, endLine) = ParseLineRange(deleteLines);
 
-				deletedStartLine = startLine;
-				deletedEndLine = endLine;
 				deletedContent = lines.Skip(startLine - 1).Take(endLine - startLine + 1).ToList();
 				insertText ??= string.Join(Environment.NewLine, deletedContent);
 
@@ -328,12 +325,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (_insertBeforeLine != null && insertText != null)
 			{
-				beforeInsertionLines = lines.ToList();
-				insertedStartLine = _insertBeforeLine.Value;
 				var insertLinesList = insertText.Split(["\r\n", "\n", "\r"], StringSplitOptions.None).ToList();
-				insertedContent = insertLinesList;
-				insertedEndLine = _insertBeforeLine.Value + insertLinesList.Count - 1;
-
 				int insertPosition = _insertBeforeLine.Value - 1;
 				lines.InsertRange(insertPosition, insertLinesList);
 			}
