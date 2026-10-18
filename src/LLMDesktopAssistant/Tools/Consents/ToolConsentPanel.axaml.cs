@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Consents;
 
@@ -9,7 +10,7 @@ namespace LLMDesktopAssistant.Tools.Consents;
 /// A reusable panel for resolving tool consent: approve/reject buttons, an editable note
 /// combo box with presets (for example "wait" or "try another tool") and a "remember"
 /// combo box. Executes <see cref="ResolveConsentCommand"/> with the resulting
-/// <see cref="ToolConsentResult"/> when the user approves or rejects the tool call.
+/// <see cref="ToolApprovalResult"/> when the user approves or rejects the tool call.
 /// </summary>
 public partial class ToolConsentPanel : UserControl
 {
@@ -37,7 +38,7 @@ public partial class ToolConsentPanel : UserControl
 		AvaloniaProperty.Register<ToolConsentPanel, ICommand?>(nameof(ResolveConsentCommand));
 
 	/// <summary>
-	/// Gets or sets the command that is executed with the resulting <see cref="ToolConsentResult"/>
+	/// Gets or sets the command that is executed with the resulting <see cref="ToolApprovalResult"/>
 	/// when the user approves or rejects the tool call.
 	/// </summary>
 	public ICommand? ResolveConsentCommand
@@ -88,9 +89,9 @@ public partial class ToolConsentPanel : UserControl
 	{
 		var note = NoteComboBox.Text?.Trim();
 
-		var result = new ToolConsentResult
+		var result = new ToolApprovalResult
 		{
-			IsApproved = approved,
+			Approved = approved,
 			Memorization = (MemorizationComboBox.SelectedItem as ToolMemorizationOption)?.Memorization
 				?? ToolApprovalMemorization.Once,
 			Notes = string.IsNullOrWhiteSpace(note) ? null : note

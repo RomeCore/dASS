@@ -4,6 +4,7 @@ using LLMDesktopAssistant.LLM.MVVM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using ToolStatus = LLMDesktopAssistant.LLM.Domain.ToolStatus;
@@ -154,7 +155,7 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		public bool ShowConfirmButtons => IsConfirming;
 
 		/// <summary>
-		/// Gets the command that resolves the tool confirmation with a <see cref="ToolConsentResult"/>.
+		/// Gets the command that resolves the tool confirmation with a <see cref="ToolApprovalResult"/>.
 		/// Executed by the <see cref="ToolConsentPanel"/>.
 		/// </summary>
 		public ICommand ConsentCommand { get; }
@@ -170,7 +171,7 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			_toolCall = toolCall;
 			_parentTask = parentTask;
 
-			ConsentCommand = new RelayCommand<ToolConsentResult>(ResolveConsent);
+			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
 
 			SyncArguments();
 			SyncResult();
@@ -265,10 +266,10 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			HasResult = !string.IsNullOrEmpty(Result);
 		}
 
-		private void ResolveConsent(ToolConsentResult? consentResult)
+		private void ResolveConsent(ToolApprovalResult? approval)
 		{
-			if (consentResult != null)
-				FindConfirmationRequest()?.UserConfirmationSource.TrySetResult(consentResult);
+			if (approval != null)
+				FindConfirmationRequest()?.UserConfirmationSource.TrySetResult(approval);
 		}
 
 		private AgentToolCallConfirmationRequest? FindConfirmationRequest()

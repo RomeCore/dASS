@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Consents;
 
@@ -33,19 +34,19 @@ public sealed class ToolConsentMemorizationContext
 	}
 
 	/// <summary>
-	/// Memorizes the consent decision according to the selected <see cref="ToolConsentResult.Memorization"/>.
+	/// Memorizes the consent decision according to the selected <see cref="ToolApprovalResult.Memorization"/>.
 	/// <see cref="ToolApprovalMemorization.Always"/> is persisted into the agent toolset via the
 	/// "always" callback; other memorized options are stored in-memory by the approval service.
 	/// </summary>
-	/// <param name="consentResult">The consent result produced by the confirmation UI.</param>
-	public void Memorize(ToolConsentResult consentResult)
+	/// <param name="approval">The approval produced by the confirmation UI.</param>
+	public void Memorize(ToolApprovalResult approval)
 	{
-		if (consentResult.Memorization == ToolApprovalMemorization.Always)
+		if (approval.Memorization == ToolApprovalMemorization.Always)
 		{
-			_memorizeAlways?.Invoke(consentResult.IsApproved);
+			_memorizeAlways?.Invoke(approval.Approved);
 			return;
 		}
 
-		_memorizationService.MemorizeConsent(_chat, _toolName, consentResult);
+		_memorizationService.MemorizeConsent(_chat, _toolName, approval);
 	}
 }

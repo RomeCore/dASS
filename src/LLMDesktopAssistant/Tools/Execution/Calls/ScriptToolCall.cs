@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils.Attachments;
 
@@ -52,7 +51,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Calls
 		public string? StatusTitle { get; set; }
 
 		/// <inheritdoc/>
-		public TaskCompletionSource<ToolConsentResult>? UserConfirmationSource { get; set; }
+		public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
 
 		/// <inheritdoc/>
 		public CancellationTokenSource CancellationTokenSource { get; set; } = new();

@@ -1,7 +1,6 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
-using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.LLM.Domain
@@ -109,14 +108,13 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _structuredResult, value);
 		}
 
-		private TaskCompletionSource<ToolConsentResult>? _userConfirmationSource;
+		private TaskCompletionSource<ToolApprovalResult>? _userConfirmationSource;
 		/// <summary>
-		/// Gets or sets the task completion source for user interaction.
-		/// The result is null when user confirms this tool call, and this should be executed.
-		/// The result is empty when user cancels tool call without a reason.
-		/// The result is non-empty when user cancels tool call with a reason (and reason is provided as the result).
+		/// Gets or sets the pending confirmation the UI resolves: the approval decision with the
+		/// memorization the user selected, the optional notes and the optional argument edit.
+		/// Runtime-only; the confirmation service creates it, the consent surface completes it.
 		/// </summary>
-		public TaskCompletionSource<ToolConsentResult>? UserConfirmationSource
+		public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource
 		{
 			get => _userConfirmationSource;
 			set => SetProperty(ref _userConfirmationSource, value);

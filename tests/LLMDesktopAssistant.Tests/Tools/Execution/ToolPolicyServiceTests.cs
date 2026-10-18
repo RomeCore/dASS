@@ -78,9 +78,9 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool);
 			session.Call.ExpectedBehaviour = ToolBehaviour.FileRead;
 
-			memorization.MemorizeConsent(session.Context.Chat, tool.Name, new ToolConsentResult
+			memorization.MemorizeConsent(session.Context.Chat, tool.Name, new ToolApprovalResult
 			{
-				IsApproved = false,
+				Approved = false,
 				Memorization = ToolApprovalMemorization.Session,
 				Notes = "not today"
 			});
@@ -106,9 +106,9 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool);
 			session.Call.ExpectedBehaviour = ToolBehaviour.FileRead;
 
-			memorization.MemorizeConsent(session.Context.Chat, tool.Name, new ToolConsentResult
+			memorization.MemorizeConsent(session.Context.Chat, tool.Name, new ToolApprovalResult
 			{
-				IsApproved = true,
+				Approved = true,
 				Memorization = ToolApprovalMemorization.Session,
 				Notes = null
 			});

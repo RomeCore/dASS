@@ -134,7 +134,7 @@ namespace LLMDesktopAssistant.Tests.Tools
 
 			public string? StatusTitle { get; set; }
 
-			public TaskCompletionSource<ToolConsentResult>? UserConfirmationSource { get; set; }
+			public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
 
 			public CancellationTokenSource CancellationTokenSource { get; set; } = new();
 

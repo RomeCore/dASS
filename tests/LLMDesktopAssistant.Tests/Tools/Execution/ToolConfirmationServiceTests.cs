@@ -257,7 +257,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
 
 			var consent = Assert.Single(memorization.Consents);
-			Assert.True(consent.IsApproved);
+			Assert.True(consent.Approved);
 			Assert.Equal(ToolApprovalMemorization.Session, consent.Memorization);
 			Assert.Equal("remember it", consent.Notes);
 		}
@@ -275,14 +275,14 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 
 		private sealed class RecordingMemorization : IToolMemorizationService
 		{
-			public List<ToolConsentResult> Consents { get; } = [];
+			public List<ToolApprovalResult> Consents { get; } = [];
 
 			public void PushTaskAsyncScope()
 			{
 			}
 
-			public void MemorizeConsent(Chat? chat, string toolName, ToolConsentResult consentResult) =>
-				Consents.Add(consentResult);
+			public void MemorizeConsent(Chat? chat, string toolName, ToolApprovalResult approval) =>
+				Consents.Add(approval);
 
 			public bool TryGetMemorizedDecision(Chat? chat, string toolName, out ToolPolicyDecision decision,
 				out string? message)

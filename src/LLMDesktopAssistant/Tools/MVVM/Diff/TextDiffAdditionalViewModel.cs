@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using LiteDB;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
 
@@ -180,23 +181,23 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 			}
 		}
 
-		private TaskCompletionSource<ToolConsentResult>? _consentTcs;
-		private ToolConsentResult? _resolvedConsent;
+		private TaskCompletionSource<ToolApprovalResult>? _consentTcs;
+		private ToolApprovalResult? _resolvedConsent;
 		/// <summary>
 		/// Gets the consent task that completes when the user accepts or declines the changes. The full
 		/// result travels so the confirmation stage is the single owner of memorization.
 		/// </summary>
 		[BsonIgnore]
 		[ChangeTracker.Untracked]
-		public Task<ToolConsentResult> ConsentResultTask
+		public Task<ToolApprovalResult> ConsentResultTask
 		{
 			get
 			{
 				if (_consentTcs == null)
 				{
-					_consentTcs = new TaskCompletionSource<ToolConsentResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+					_consentTcs = new TaskCompletionSource<ToolApprovalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 					var resolved = _resolvedConsent ??
-						(_isConfirmed is { } confirmed ? CreateConsent(confirmed, _notes) : null);
+						(_isConfirmed is { } confirmed ? CreateApproval(confirmed, _notes) : null);
 					if (resolved is not null)
 						_consentTcs.TrySetResult(resolved);
 				}
@@ -205,7 +206,7 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 		}
 
 		/// <summary>
-		/// Gets the command that resolves the confirmation with a <see cref="ToolConsentResult"/>.
+		/// Gets the command that resolves the confirmation with a <see cref="ToolApprovalResult"/>.
 		/// Executed by the <see cref="ToolConsentPanel"/>.
 		/// </summary>
 		[BsonIgnore]
@@ -229,43 +230,43 @@ namespace LLMDesktopAssistant.Tools.MVVM.Diff
 
 		public TextDiffAdditionalViewModel()
 		{
-			ConsentCommand = new RelayCommand<ToolConsentResult?>(ResolveConsent);
+			ConsentCommand = new RelayCommand<ToolApprovalResult?>(ResolveConsent);
 			EnableAllCommand = new RelayCommand(EnableAll, () => ChunkViewModels.Any(vm => !vm.IsEnabled));
 			DisableAllCommand = new RelayCommand(DisableAll, () => ChunkViewModels.Any(vm => vm.IsEnabled));
 		}
 
 		/// <summary>
-		/// Resolves the confirmation from a <see cref="ToolConsentResult"/> produced by the
+		/// Resolves the confirmation from a <see cref="ToolApprovalResult"/> produced by the
 		/// <see cref="ToolConsentPanel"/>: accepts the changes when approved, declines otherwise.
-		/// The consent decision is memorized via <see cref="ConsentContext"/> when available.
+		/// The confirmation stage memorizes the decision; the card itself owns no memorization.
 		/// </summary>
-		/// <param name="consentResult">The consent result, or <see langword="null"/>.</param>
-		public void ResolveConsent(ToolConsentResult? consentResult)
+		/// <param name="approval">The approval result, or <see langword="null"/>.</param>
+		public void ResolveConsent(ToolApprovalResult? approval)
 		{
-			if (consentResult == null)
+			if (approval == null)
 				return;
 
-			_resolvedConsent = consentResult;
-			_consentTcs?.TrySetResult(consentResult);
+			_resolvedConsent = approval;
+			_consentTcs?.TrySetResult(approval);
 
-			Notes = consentResult.Notes;
-			IsConfirmed = consentResult.IsApproved;
+			Notes = approval.Notes;
+			IsConfirmed = approval.Approved;
 		}
 
 		/// <summary>
 		/// Accepts all changes and marks the confirmation as complete. Used by programmatic paths
 		/// (cancellation), never by the consent panel, which goes through <see cref="ResolveConsent"/>.
 		/// </summary>
-		public void Confirm(string? notes) => ResolveConsent(CreateConsent(true, notes));
+		public void Confirm(string? notes) => ResolveConsent(CreateApproval(true, notes));
 
 		/// <summary>
 		/// Declines all changes and marks the confirmation as complete.
 		/// </summary>
-		public void Decline(string? notes) => ResolveConsent(CreateConsent(false, notes));
+		public void Decline(string? notes) => ResolveConsent(CreateApproval(false, notes));
 
-		private static ToolConsentResult CreateConsent(bool approved, string? notes) => new()
+		private static ToolApprovalResult CreateApproval(bool approved, string? notes) => new()
 		{
-			IsApproved = approved,
+			Approved = approved,
 			Memorization = ToolApprovalMemorization.Once,
 			Notes = notes
 		};

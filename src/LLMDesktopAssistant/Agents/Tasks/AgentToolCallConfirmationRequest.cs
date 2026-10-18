@@ -1,4 +1,4 @@
-using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
@@ -12,6 +12,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <summary>
 		/// The source that will be used to confirm the tool call.
 		/// </summary>
-		public required TaskCompletionSource<ToolConsentResult> UserConfirmationSource { get; init; }
+		public required TaskCompletionSource<ToolApprovalResult> UserConfirmationSource { get; init; }
 	}
 }

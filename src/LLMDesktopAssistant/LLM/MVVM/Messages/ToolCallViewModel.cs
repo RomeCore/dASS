@@ -7,6 +7,7 @@ using LLMDesktopAssistant.LLM.MVVM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
 
@@ -183,14 +184,14 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			};
 
 		/// <summary>
-		/// Gets the command that resolves the tool confirmation with a <see cref="ToolConsentResult"/>.
+		/// Gets the command that resolves the tool confirmation with a <see cref="ToolApprovalResult"/>.
 		/// Executed by the <see cref="ToolConsentPanel"/>.
 		/// </summary>
 		public ICommand ConsentCommand { get; }
-		public void ResolveConsent(ToolConsentResult? consentResult)
+		public void ResolveConsent(ToolApprovalResult? approval)
 		{
-			if (consentResult != null)
-				toolCall.UserConfirmationSource?.TrySetResult(consentResult);
+			if (approval != null)
+				toolCall.UserConfirmationSource?.TrySetResult(approval);
 		}
 
 		public ToolCallViewModel(ToolCall toolCall, Chat chat)
@@ -212,7 +213,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			AdditionalData = new AdditionalChatDataCollectionViewModel(toolCall.AdditionalData);
 
-			ConsentCommand = new RelayCommand<ToolConsentResult>(ResolveConsent);
+			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
 
 			if (!toolCall.IsCompleted)
 			{

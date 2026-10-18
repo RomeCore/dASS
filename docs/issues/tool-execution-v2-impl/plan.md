@@ -43,6 +43,7 @@ Between phases the tree may be red — that is expected and accepted.
 | P5 | [Agent-task path](issues/05-agent-task-path.md) | `AgentTaskToolOrchestrator`; the duplicated block in `AgentTaskExecutor` deleted; `ChatAgentTool` dissolved; `TaskConfirmationSink`; `MaxParallelToolCalls`; `OnlyResponse`. | P4 |
 | P6 | [Approval separation and argument editing](issues/06-approval-and-argument-editing.md) | Core-owned confirmation step, `IToolApprovalProvider`, `HandledDecisions`, `ToolPolicyReason`; file tools stop approving inside execution; two argument channels and the effective-arguments accessor. | P5 |
 | P6a | [Default approval level](issues/06a-default-approval-level-resolution.md) | `ApplyDefaults` hook in the addon collector; the toolset default reaches every tool, not only the ones with a `ToolChange`; `AvailableTools` stays default-free. | P5 |
+| P6b | [Collapse ToolConsentResult](issues/06b-collapse-tool-consent-result.md) | `ToolConsentResult` deleted; `ToolApprovalResult` is the single decision type in the UI channel, memorization and the diff card. | P6 |
 | P7 | [Cascade approval](issues/07-cascade-approval.md) | Resolution cascade and memory reach over the sibling calls; duration from the existing memorization options. Reach picker deferred. | P6 |
 | P8 | [Restart and cancel](issues/08-restart-and-cancel.md) | Per-call CTS, `ChatRestartOrchestrator` in use, inline cancel/restart buttons on the tool call, consent cancellation, output preservation. | P6 |
 | P9 | [Tool-command source](issues/09-tool-command-source.md) | `DerivedSlashCommandProvider<ToolInfo>`, argument schema generation (designated main argument → positional/rest), run through the `Command` orchestrator. | P4 |
@@ -126,7 +127,7 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
     `TaskConfirmationSink` asks instead of the policy `Ask` being silently ignored. The diff card is
     not projected into the task world.
 22. Memorization has one owner: `ToolConfirmationService` memorizes from `ToolApprovalResult`.
-    `TextDiffAdditionalViewModel` exposes `ConsentResultTask : Task<ToolConsentResult>`; its
+    `TextDiffAdditionalViewModel` exposes `ConsentResultTask : Task<ToolApprovalResult>`; its
     `ConsentContext` and `ConfirmationTask : Task<MemorizedDecision>` are gone.
 23. `AddonSetCollectorBase` gains `ApplyDefaults(target, setConfig, agent)`, called for every included
     clone in both branches of `GetAddonsWithChanges`. `ToolsetCollector` uses it to stamp
@@ -141,3 +142,8 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
     `ApprovalData` is delivered on `ctx.ApprovalData` and read by the tool. Re-validation and
     `SharedContext` re-preview after an edit are deferred (see `not-implemented.md`); the confirmation
     stage installs the edit without clearing the preview artifact.
+26. `ToolConsentResult` is deleted (P6b). `ToolApprovalResult` is the single consent payload: the UI
+    channel (`IToolCall.UserConfirmationSource`), `IToolMemorizationService`, both sinks and
+    `TextDiffAdditionalViewModel.ConsentResultTask` speak it, and `Approved` replaces `IsApproved`.
+    The sinks pass the awaited result through without copying. `ToolApprovalMemorization` stays in
+    `Tools.Consents`.

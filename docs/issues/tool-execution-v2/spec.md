@@ -334,8 +334,8 @@ public interface IToolCall
     string?           StatusTitle       { get; set; }
 
     // runtime-only (never serialized)
-    TaskCompletionSource<ToolConsentResult>? UserConfirmationSource { get; set; }
-    CancellationTokenSource                  CancellationTokenSource { get; }
+    TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
+    CancellationTokenSource                   CancellationTokenSource { get; }
 
     // capability methods
     void AddAttachment(IChatAttachment attachment);

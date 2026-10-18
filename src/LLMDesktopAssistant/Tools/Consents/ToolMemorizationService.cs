@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Consents
 {
@@ -14,19 +15,19 @@ namespace LLMDesktopAssistant.Tools.Consents
 			ToolConsentTaskScope.Current = new();
 		}
 
-		public void MemorizeConsent(Chat? chat, string toolName, ToolConsentResult consentResult)
+		public void MemorizeConsent(Chat? chat, string toolName, ToolApprovalResult approval)
 		{
 			// "Always" is persisted into the toolset by the caller, "Once" is not memorized at all.
-			if (chat == null || consentResult.Memorization is ToolApprovalMemorization.Once or ToolApprovalMemorization.Always)
+			if (chat == null || approval.Memorization is ToolApprovalMemorization.Once or ToolApprovalMemorization.Always)
 				return;
 
-			if (consentResult.Memorization is ToolApprovalMemorization.Task && ToolConsentTaskScope.Current is { } currentScope)
+			if (approval.Memorization is ToolApprovalMemorization.Task && ToolConsentTaskScope.Current is { } currentScope)
 			{
-				currentScope.memorized[toolName] = new MemorizedDecision(consentResult.IsApproved, consentResult.Notes);
+				currentScope.memorized[toolName] = new MemorizedDecision(approval.Approved, approval.Notes);
 			}
 			else
 			{
-				_memorized[(chat.Id, toolName)] = new MemorizedDecision(consentResult.IsApproved, consentResult.Notes);
+				_memorized[(chat.Id, toolName)] = new MemorizedDecision(approval.Approved, approval.Notes);
 			}
 		}
 

@@ -102,12 +102,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 
 		private static void Memorize(IToolExecutionContext ctx, ToolApprovalResult approval)
 		{
-			ctx.Consent?.Memorize(new ToolConsentResult
-			{
-				IsApproved = approval.Approved,
-				Memorization = approval.Memorization,
-				Notes = approval.Notes
-			});
+			ctx.Consent?.Memorize(approval);
 		}
 
 		/// <summary>

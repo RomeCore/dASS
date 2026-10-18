@@ -33,7 +33,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 			var request = new AgentToolCallConfirmationRequest
 			{
 				ToolCall = call,
-				UserConfirmationSource = new TaskCompletionSource<ToolConsentResult>(
+				UserConfirmationSource = new TaskCompletionSource<ToolApprovalResult>(
 					TaskCreationOptions.RunContinuationsAsynchronously)
 			};
 
@@ -41,15 +41,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 			try
 			{
 				call.Status = ToolStatus.WaitingForApproval;
-				var consent = await request.UserConfirmationSource.Task.WaitAsync(ct);
-				Memorize(call.ToolName, consent);
+				var approval = await request.UserConfirmationSource.Task.WaitAsync(ct);
+				Memorize(call.ToolName, approval);
 
-				return new ToolApprovalResult
-				{
-					Approved = consent.IsApproved,
-					Memorization = consent.Memorization,
-					Notes = consent.Notes
-				};
+				return approval;
 			}
 			finally
 			{
@@ -57,13 +52,13 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 			}
 		}
 
-		private void Memorize(string toolName, ToolConsentResult consent)
+		private void Memorize(string toolName, ToolApprovalResult approval)
 		{
 			var chat = task.LaunchParameters.TriggeredChat;
-			memorization.MemorizeConsent(chat, toolName, consent);
+			memorization.MemorizeConsent(chat, toolName, approval);
 
-			if (consent.Memorization == ToolApprovalMemorization.Always && chat is not null)
-				MemorizeAlwaysInToolset(chat, toolName, consent.IsApproved);
+			if (approval.Memorization == ToolApprovalMemorization.Always && chat is not null)
+				MemorizeAlwaysInToolset(chat, toolName, approval.Approved);
 		}
 
 		/// <summary>

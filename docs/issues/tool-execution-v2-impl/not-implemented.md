@@ -44,9 +44,8 @@ call; adding the call back is one line.
 
 `ToolApprovalResult.EditedArguments` / `OverrideModelIntent` / `ApprovalData` exist and the confirmation
 stage installs them (`call.Arguments` or `ctx.ArgumentsOverride`, plus `ctx.ApprovalData`), but no surface
-produces them yet: `ToolConsentResult` does not carry the three fields and the generic panel has no
-editor. **Seam:** extend `ToolConsentResult` and `ToolConsentPanel`; a provider (or the approval helper)
-can set the fields directly.
+produces them yet: the generic panel has no editor. **Seam:** extend `ToolConsentPanel`; a provider
+(or the approval helper) can set the fields on the returned `ToolApprovalResult` directly.
 
 ## Preview invalidation and re-validation after an argument edit
 

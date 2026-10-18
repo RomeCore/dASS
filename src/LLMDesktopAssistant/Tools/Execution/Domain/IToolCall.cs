@@ -72,7 +72,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// The pending confirmation the UI resolves. The confirmation service creates it, the consent
 		/// panel completes it. Runtime-only.
 		/// </summary>
-		TaskCompletionSource<ToolConsentResult>? UserConfirmationSource { get; set; }
+		TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
 
 		/// <summary>
 		/// The per-invocation cancellation source. Runtime-only; it is linked with the run token when the

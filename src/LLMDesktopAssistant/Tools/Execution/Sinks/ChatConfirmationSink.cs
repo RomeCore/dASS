@@ -1,6 +1,5 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Execution.Sinks
@@ -26,17 +25,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 		{
 			using var confirmation = statusService.WithConfirmation();
 
-			var source = new TaskCompletionSource<ToolConsentResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+			var source = new TaskCompletionSource<ToolApprovalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 			ctx.Call.UserConfirmationSource = source;
 			ctx.Call.Status = ToolStatus.WaitingForApproval;
 
-			var consent = await source.Task.WaitAsync(ct);
-			return new ToolApprovalResult
-			{
-				Approved = consent.IsApproved,
-				Memorization = consent.Memorization,
-				Notes = consent.Notes
-			};
+			return await source.Task.WaitAsync(ct);
 		}
 	}
 }

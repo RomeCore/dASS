@@ -123,9 +123,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			var consent = await view.ConsentResultTask.WaitAsync(ct);
 
 			shared.UserNotes = consent.Notes;
-			shared.Approved = consent.IsApproved;
+			shared.Approved = consent.Approved;
 
-			if (consent.IsApproved)
+			if (consent.Approved)
 			{
 				shared.AppliedDiff = view.BuildEnabledHunkGroups();
 				shared.RejectedDiff = view.BuildDisabledHunkGroups();
@@ -137,12 +137,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				shared.RejectedDiff = view.BuildEnabledHunkGroups();
 			}
 
-			return new ToolApprovalResult
-			{
-				Approved = consent.IsApproved,
-				Memorization = consent.Memorization,
-				Notes = consent.Notes
-			};
+			return consent;
 		}
 
 		/// <summary>

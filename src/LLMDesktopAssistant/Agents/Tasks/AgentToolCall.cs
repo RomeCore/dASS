@@ -3,7 +3,6 @@ using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
-using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils.Attachments;
 
@@ -117,11 +116,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			set => SetProperty(ref _statusTitle, value);
 		}
 
-		private TaskCompletionSource<ToolConsentResult>? _userConfirmationSource;
+		private TaskCompletionSource<ToolApprovalResult>? _userConfirmationSource;
 		/// <summary>
 		/// The pending confirmation the task card resolves. Runtime-only.
 		/// </summary>
-		public TaskCompletionSource<ToolConsentResult>? UserConfirmationSource
+		public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource
 		{
 			get => _userConfirmationSource;
 			set => SetProperty(ref _userConfirmationSource, value);

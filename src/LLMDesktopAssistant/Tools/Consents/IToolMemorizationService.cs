@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tools.Consents
 {
@@ -6,7 +7,7 @@ namespace LLMDesktopAssistant.Tools.Consents
 	{
 		void PushTaskAsyncScope();
 
-		void MemorizeConsent(Chat? chat, string toolName, ToolConsentResult consentResult);
+		void MemorizeConsent(Chat? chat, string toolName, ToolApprovalResult approval);
 
 		bool TryGetMemorizedDecision(Chat? chat, string toolName, out ToolPolicyDecision decision, out string? message);
 
