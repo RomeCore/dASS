@@ -25,6 +25,19 @@ namespace LLMDesktopAssistant.Addons
 		{
 		}
 
+		/// <summary>
+		/// Applies the set-level defaults to every included clone, independently of whether the set has an
+		/// explicit change entry for the addon. Runs after <see cref="ApplyChange"/> and before the clone is
+		/// frozen, so a concrete collector can resolve values that must always be present on the clone.
+		/// </summary>
+		/// <param name="target">The clone about to be frozen.</param>
+		/// <param name="setConfig">The set configuration the clone belongs to.</param>
+		/// <param name="agent">The agent the set is resolved for, or <see langword="null"/>.</param>
+		protected virtual void ApplyDefaults(TAddon target, AddonSetConfigurationBase<TChange> setConfig,
+			ChatAgentDescriptor? agent)
+		{
+		}
+
 		public IEnumerable<TAddon> GetAvailableAddons()
 		{
 			List<TAddon> addons = [];
@@ -108,6 +121,7 @@ namespace LLMDesktopAssistant.Addons
 					{
 						var clone = addon.Clone();
 						ApplyChange(clone, change, agent);
+						ApplyDefaults(clone, setConfig, agent);
 						clone.Enabled = true;
 						if (addon.IsFixed)
 							clone.Hidden = false;
@@ -123,6 +137,7 @@ namespace LLMDesktopAssistant.Addons
 					if (addon.IsFixed || (addon.Enabled ?? setConfig.EnabledByDefault))
 					{
 						var clone = addon.Clone();
+						ApplyDefaults(clone, setConfig, agent);
 						clone.Enabled = true;
 						if (addon.IsFixed)
 							clone.Hidden = false;

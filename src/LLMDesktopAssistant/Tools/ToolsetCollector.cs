@@ -47,14 +47,25 @@ namespace LLMDesktopAssistant.Tools
 		protected override void ApplyChange(ToolInfo target, ToolChange change, ChatAgentDescriptor? agent)
 		{
 			base.ApplyChange(target, change, agent);
-			target.ContextFactory = ContextFactory;
 			target.ApprovalHelper = change.ApprovalHelper ?? target.ApprovalHelper;
-			target.ApprovalLevel = change.ApprovalLevel ?? target.ApprovalLevel ??
-				agent!.Tools.GetEffectiveToolset(chatSettings.Settings).GetEffectiveConfiguration().DefaultApprovalLevel;
+			target.ApprovalLevel = change.ApprovalLevel ?? target.ApprovalLevel;
 			target.PolicyMask = change.PolicyMask ?? target.PolicyMask;
 			target.SpecifierUnionMode = change.SpecifierUnionMode ?? target.SpecifierUnionMode;
 			target.SpecifierAggregationMode = change.SpecifierAggregationMode ?? target.SpecifierAggregationMode;
 			target.Specifiers = [.. target.Specifiers, .. change.Specifiers];
+		}
+
+		protected override void ApplyDefaults(ToolInfo target, AddonSetConfigurationBase<ToolChange> setConfig,
+			ChatAgentDescriptor? agent)
+		{
+			base.ApplyDefaults(target, setConfig, agent);
+
+			// The factory and the level are properties of the concrete agent toolset, so they must be stamped
+			// on every clone, not only on the ones with an explicit change entry.
+			target.ContextFactory = ContextFactory;
+			target.ApprovalLevel = target.ApprovalLevel ??
+				(setConfig as ToolsetConfiguration)?.DefaultApprovalLevel ??
+				ToolApprovalLevel.PolicyBased;
 		}
 	}
 }
