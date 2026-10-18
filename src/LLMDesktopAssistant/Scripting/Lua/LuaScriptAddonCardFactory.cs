@@ -24,10 +24,8 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LuaScriptAddonCardFactory"/> class.
 		/// </summary>
-		/// <param name="explorerOpener">The service used by the "show in explorer" action.</param>
-		/// <param name="toastService">The service used to report failures of the file actions.</param>
-		public LuaScriptAddonCardFactory(IExplorerOpener explorerOpener, IToastService toastService)
-			: base(explorerOpener, toastService)
+		public LuaScriptAddonCardFactory(IServiceProvider services)
+			: base(services)
 		{
 		}
 

@@ -35,10 +35,8 @@ namespace LLMDesktopAssistant.Tools.MVVM
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ToolAddonCardFactory"/> class.
 		/// </summary>
-		/// <param name="explorerOpener">The service used by the "show in explorer" action.</param>
-		/// <param name="toastService">The service used to report failures of the file actions.</param>
-		public ToolAddonCardFactory(IExplorerOpener explorerOpener, IToastService toastService)
-			: base(explorerOpener, toastService)
+		public ToolAddonCardFactory(IServiceProvider services)
+			: base(services)
 		{
 		}
 

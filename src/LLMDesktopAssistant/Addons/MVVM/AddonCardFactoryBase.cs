@@ -52,12 +52,10 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddonCardFactoryBase{TAddon, TChange}"/> class.
 		/// </summary>
-		/// <param name="explorerOpener">The service used by the "show in explorer" action.</param>
-		/// <param name="toastService">The service used to report failures of the file actions.</param>
-		protected AddonCardFactoryBase(IExplorerOpener? explorerOpener = null, IToastService? toastService = null)
+		protected AddonCardFactoryBase(IServiceProvider services)
 		{
-			_explorerOpener = explorerOpener;
-			_toastService = toastService;
+			_explorerOpener = services.GetService<IExplorerOpener>();
+			_toastService = services.GetService<IToastService>();
 		}
 
 		/// <inheritdoc/>

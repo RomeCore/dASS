@@ -12,7 +12,9 @@ namespace LLMDesktopAssistant.Prompting.Context.MVVM
 	/// context is shown disabled: fixed contexts are always enabled.
 	/// </summary>
 	[Service(typeof(IAddonCardFactory<PromptContextInfo, PromptContextChange>))]
-	public class PromptContextAddonCardFactory : AddonCardFactoryBase<PromptContextInfo, PromptContextChange>
+	public class PromptContextAddonCardFactory(
+		IServiceProvider services
+		) : AddonCardFactoryBase<PromptContextInfo, PromptContextChange>(services)
 	{
 		/// <inheritdoc/>
 		protected override VisualIconKind TypeIcon => MaterialIconKind.Layers;

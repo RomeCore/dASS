@@ -30,13 +30,9 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SubAgentAddonCardFactory"/> class.
 		/// </summary>
-		/// <param name="explorerOpener">The service used by the "show in explorer" action.</param>
-		/// <param name="toastService">The service used to report failures of the file actions.</param>
-		/// <param name="skills">The accessor used to check the skills referenced by a sub-agent.</param>
-		/// <param name="subAgents">The accessor used to check the sub-agents referenced by a sub-agent.</param>
-		public SubAgentAddonCardFactory(IExplorerOpener explorerOpener, IToastService toastService,
+		public SubAgentAddonCardFactory(IServiceProvider services,
 			IAddonAccessor<SkillInfo> skills, IAddonAccessor<SubAgentInfo> subAgents)
-			: base(explorerOpener, toastService)
+			: base(services)
 		{
 			_skills = skills;
 			_subAgents = subAgents;

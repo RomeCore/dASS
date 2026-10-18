@@ -29,10 +29,8 @@ namespace LLMDesktopAssistant.Prompting.Skills
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SkillAddonCardFactory"/> class.
 		/// </summary>
-		/// <param name="explorerOpener">The service used by the "show in explorer" action.</param>
-		/// <param name="toastService">The service used to report failures of the file actions.</param>
-		public SkillAddonCardFactory(IExplorerOpener explorerOpener, IToastService toastService)
-			: base(explorerOpener, toastService)
+		public SkillAddonCardFactory(IServiceProvider services)
+			: base(services)
 		{
 		}
 
