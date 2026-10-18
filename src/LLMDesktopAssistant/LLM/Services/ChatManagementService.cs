@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Storage;
 using LLMDesktopAssistant.Services;
+using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services
 {
@@ -30,8 +32,13 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		private IServiceScope OpenChatScope(ChatDatabase database, int chatId)
 		{
-			var scope = services.CreateScope();
+			var sw = new Stopwatch();
 
+			sw.Start();
+			var scope = services.CreateScope();
+			Log.Debug("Chat scope opened in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
+
+			sw.Restart();
 			var existingChat = database.Chats.FindById(chatId);
 
 			var chatConfig = scope.ServiceProvider.GetRequiredService<IChatCreationConfig>();
@@ -40,18 +47,22 @@ namespace LLMDesktopAssistant.LLM.Services
 			chatConfig.Database = database;
 
 			// Ensure at least one default agent exists for this chat
+			var chat = scope.ServiceProvider.GetRequiredService<Chat>();
 			scope.ServiceProvider.GetRequiredService<IChatSettingsService>().Settings.Agents.EnsureDefaultAgent();
 
 			var storage = scope.ServiceProvider.GetRequiredService<IChatStorageService>();
 			storage.Reload();
+			Log.Debug("Chat storage reloaded in {ElapsedMilliseconds} ms, message count: {MessageCount}", sw.ElapsedMilliseconds, chat.Messages.Count);
 
 			// Activate all chat-specific services
+			sw.Restart();
 			var collection = scope.ServiceProvider.GetRequiredKeyedService<IServiceCollection>(ServiceKeys.ChatServices);
 			foreach (var service in collection)
 			{
 				if (!service.IsKeyedService && service.Lifetime != ServiceLifetime.Transient && !service.ServiceType.ContainsGenericParameters)
 					scope.ServiceProvider.GetServices(service.ServiceType);
 			}
+			Log.Debug("Chat services activated in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
 			return scope;
 		}

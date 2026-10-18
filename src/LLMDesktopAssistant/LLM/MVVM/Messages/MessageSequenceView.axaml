@@ -10,6 +10,8 @@
 	<ItemsControl ItemsSource="{Binding MessageViewModels}">
 		<ItemsControl.ItemsPanel>
 			<ItemsPanelTemplate>
+				<!-- Virtualization is disabled due to variable message length, and it badly impacts on performance
+				(with virtualization chat loading still takes long time and adds lags during scrolling) -->
 				<StackPanel Orientation="Vertical" />
 			</ItemsPanelTemplate>
 		</ItemsControl.ItemsPanel>
