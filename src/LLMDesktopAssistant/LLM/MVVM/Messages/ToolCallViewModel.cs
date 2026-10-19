@@ -16,9 +16,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	[ViewModelFor(typeof(ToolCallView))]
 	public class ToolCallViewModel : ViewModelBase
 	{
-		private readonly ToolCall toolCall;
-
-		public ToolCall ToolCall => toolCall;
+		public ToolCall ToolCall { get; }
 
 		public string ToolName { get; }
 
@@ -179,7 +177,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public bool UserAsked =>
 			Status switch
 			{
-				ToolStatus.WaitingForApproval => true,
+				ToolStatus.WaitingForApproval => ToolCall.UserConfirmationSource is not null,
 				_ => false
 			};
 
@@ -191,12 +189,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public void ResolveConsent(ToolApprovalResult? approval)
 		{
 			if (approval != null)
-				toolCall.UserConfirmationSource?.TrySetResult(approval);
+				ToolCall.UserConfirmationSource?.TrySetResult(approval);
 		}
 
 		public ToolCallViewModel(ToolCall toolCall, Chat chat)
 		{
-			this.toolCall = toolCall;
+			ToolCall = toolCall;
 
 			ToolName = toolCall.ToolName;
 			ToolTitle = toolCall.Title ?? new ConstLocaleKey(toolCall.ToolName);
@@ -230,6 +228,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 							case nameof(ToolCall.Progress): Progress = toolCall.Progress; break;
 							case nameof(ToolCall.MinProgress): MinProgress = toolCall.MinProgress; break;
 							case nameof(ToolCall.MaxProgress): MaxProgress = toolCall.MaxProgress; break;
+							case nameof(ToolCall.UserConfirmationSource): RaisePropertyChanged(nameof(UserAsked)); break;
 						}
 
 						if (toolCall.Status.IsTerminal())
