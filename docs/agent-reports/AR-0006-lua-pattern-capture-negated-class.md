@@ -1,6 +1,6 @@
 # AR-0006 - Lua pattern captures around a negated character class silently fail to match
 
-- **Status:** open
+- **Status:** fixed
 - **Severity:** silent
 - **Lane:** agent
 - **Surface:** API (AsyncLua `string.match` / `string.gmatch`)
@@ -33,6 +33,10 @@ The rule that fits every row: **a capture `(...)` wrapping a negated class `[^..
 
 Cost in this session, concretely: `git-full-diff` parses `git diff --numstat` with `string.match(line, "^([^\t]+)\t([^\t]+)\t(.*)$")`. Every line returned `nil`, the tool fell through to "no tracked files", and it reported **"4 files changed, +831 / −0"** while the diff printed directly underneath clearly contained tracked changes. The wrong answer was well-formed and plausible; nothing warned.
 
+**Update 2026-10-20 (AsyncLua 0.7.0):** the repro rows now behave correctly:
+`string.match("abc", "([^z]+)")` returns `"abc"`, and the tab-separated pattern returns `"12"` (first
+capture) instead of `nil`.
+
 ## Why it costs
 
 Per occurrence:
@@ -51,6 +55,9 @@ print(string.match("abc", "[^z]+"))     -- abc
 ## Witnesses
 
 - 2026-10-04 - git-full-diff session - parsing `git diff --numstat` output with `string.match(line, "^([^\t]+)\t([^\t]+)\t(.*)$")`; the tool silently reported 0 tracked files out of 2.
+
+- 2026-10-20 - `lua-execute` syntax sweep - the exact repro and the tab-separated pattern were re-run on
+  AsyncLua 0.7.0.0; both match correctly. Status changed to fixed on the engine upgrade.
 
 ## What I did instead
 

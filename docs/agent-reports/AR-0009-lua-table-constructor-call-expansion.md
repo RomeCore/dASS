@@ -1,6 +1,6 @@
 # AR-0009 - A function call as the last element of a table constructor expands into extra values (parentheses do not stop it)
 
-- **Status:** open
+- **Status:** fixed
 - **Severity:** visible
 - **Lane:** agent
 - **Surface:** API (Lua / `lua-execute` and scriptable commands - AsyncLua table-constructor evaluation)
@@ -55,6 +55,9 @@ false
 
 (the `tostring(...)` calls in the second `string.format` are the nested calls that trip it).
 
+**Update 2026-10-20 (AsyncLua 0.7.0):** all four repro rows now report 2, including the nested-argument
+and parenthesised cases. The constructor no longer expands the trailing call.
+
 ## Why it costs
 
 - Any Lua addon that builds a string/array with the idiomatic `{ ..., fmt(...) }` silently acquires junk elements. In a
@@ -77,6 +80,9 @@ print(#{"h", v})                                            -- 2  (correct)
 ## Witnesses
 
 - 2026-10-12 - first scriptable-command session (`/mark` showcase command) - `lines = { header, string.format("level=%s ...", level, tostring(weight), tostring(pin), tag or "-") }` emitted the raw template and every argument as separate lines on the invoking message.
+
+- 2026-10-20 - `lua-execute` syntax sweep - the four repro lines were re-run on AsyncLua 0.7.0.0; all
+  returned 2. Status changed to fixed on the engine upgrade.
 
 ## What I did instead
 

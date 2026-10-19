@@ -1,6 +1,6 @@
 # AR-0005 - Lua `function a.b(...)` declaration crashes the parser with a bare NullReferenceException
 
-- **Status:** open
+- **Status:** fixed
 - **Severity:** visible
 - **Lane:** agent
 - **Surface:** API (`lua-execute` / AsyncLua parser)
@@ -54,6 +54,9 @@ So the crash is specific to a **function declaration whose name is a field path
 written with a dot** (`function a.b(...)`). The colon method form and plain/local
 function declarations are fine.
 
+**Update 2026-10-20 (AsyncLua 0.7.0):** the exact repro below now runs and returns
+`AR-0005 repro reached`; the parser no longer throws. The report is kept as a record of the failure mode.
+
 ## Why it costs
 
 An agent that writes idiomatic Lua hits a hard crash whose message points at the
@@ -96,6 +99,9 @@ vm.bump = function(self) end
   members declared as `function vm.bump(self)`. The tool crashed twice with the NRE
   above; the failure was first misattributed to the UI binding layer and only
   isolated to the declaration syntax after bisecting with file-traced probes.
+
+- 2026-10-20 - `lua-execute` syntax sweep - the exact repro `local vm = {}; function vm.bump(self) end`
+  now executes on AsyncLua 0.7.0.0 (the dASS package reference was bumped from 0.5.2 to 0.7.0); no NRE.
 
 ## What I did instead
 
