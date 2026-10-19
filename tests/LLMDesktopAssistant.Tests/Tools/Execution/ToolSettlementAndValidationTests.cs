@@ -52,6 +52,18 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		}
 
 		[Fact]
+		public void Finalize_KeepsThePartialOutputOfACancelledCall()
+		{
+			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
+			session.Call.ResultContent = "the half I already produced";
+
+			new ToolSettlementService().Finalize(session.Context, new OperationCanceledException());
+
+			Assert.Equal(ToolStatus.Cancelled, session.Call.Status);
+			Assert.Equal("the half I already produced\nTool execution was interrupted.", session.Call.ResultContent);
+		}
+
+		[Fact]
 		public void Finalize_MarksAnUnexpectedFailureAsError()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());

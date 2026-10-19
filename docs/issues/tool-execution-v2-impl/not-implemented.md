@@ -18,12 +18,15 @@ sequential-vs-parallel. **Seam:** each stage is a separate service, so a hook ca
 that owns the point; `ArgumentsOverride` already exists as the ephemeral channel with validation at
 install.
 
-## Cascade reach UI
+## Cascade approval (P7) — not started at all
 
-Ticket 11. The three-way choice *this tool / same kind / every tool* is implemented in the core
-(memorization reach and resolution reach), but the panel has no selector for it yet. Duration uses the
-existing `Once` / `Session` / `Task` / `Always` options. **Seam:** `ToolApprovalResult` and the
-confirmation service already carry the reach; only the panel binding is missing.
+The whole of ticket 11 is open: neither the reach model (this tool / same name / every tool) nor the
+cascade to the sibling awaiting calls of a batch exists. `ToolApprovalResult` carries only
+`Memorization` (the duration), `ToolConfirmationService` decides one call and never looks at
+`ctx.Host.ToolCalls`, and `ToolConsentPanel` has no reach selector. **Seam:** the reach is a field on
+`ToolApprovalResult` and the siblings are reachable through `IToolExecutionContext.Host`
+(`ChatMessage.ToolCalls` / the task's awaiting calls), so the cascade belongs to the confirmation
+stage and the picker to the panel.
 
 ## Panel-hosted custom approval content
 
@@ -58,6 +61,14 @@ re-preview loop and a validation call belong there once the lifecycle is decided
 
 Spec §4 / ticket 07. `IToolValidationService` ships as a stub that always returns valid. The interface,
 the two channels and the accessor are real. **Seam:** one service implementation, no call-site changes.
+
+## Restart with edited arguments
+
+A restart re-runs a finished call on the same object, and `call.Arguments` is the persisted channel for
+an edit — but no surface produces one: the call card has no argument editor and no approval surface is
+involved in a restart. **Seam:** `ChatToolCallService.RestartAsync` is the single place that starts the
+run, so an edited `JsonObject` is one parameter away; it must be installed into `call.Arguments` before
+the dispatch.
 
 ## Restart with an automatic agent turn
 

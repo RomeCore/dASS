@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			foreach (var toolCall in _message.ToolCalls)
 			{
 				if (!_toolCalls.Any(vm => ReferenceEquals(vm.ToolCall, toolCall)))
-					_toolCalls.Add(new ToolCallViewModel(toolCall, _chat) { Alignment = _alignment });
+					_toolCalls.Add(new ToolCallViewModel(toolCall, _message, _chat) { Alignment = _alignment });
 			}
 		}
 

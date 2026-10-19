@@ -7,15 +7,24 @@ using LLMDesktopAssistant.LLM.MVVM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
+using LLMDesktopAssistant.Tools.Execution;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 using Material.Icons;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
 	[ViewModelFor(typeof(ToolCallView))]
 	public class ToolCallViewModel : ViewModelBase
 	{
+		private readonly ChatMessage _message;
+		private readonly Chat _chat;
+
+		private IChatToolCallService? _toolCallService;
+		private IChatToolCallService ToolCallService =>
+			_toolCallService ??= _chat.Services.GetRequiredService<IChatToolCallService>();
+
 		public ToolCall ToolCall { get; }
 
 		public string ToolName { get; }
@@ -207,9 +216,40 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				ToolCall.UserConfirmationSource?.TrySetResult(approval);
 		}
 
-		public ToolCallViewModel(ToolCall toolCall, Chat chat)
+		/// <summary>
+		/// Whether the call can be cancelled right now: it is not finished and its own cancellation source is live.
+		/// A pure function of the call's state, like <see cref="InProgress"/>; the inline cancel button binds to it.
+		/// </summary>
+		public bool CanCancel =>
+			!ToolCall.Status.IsTerminal() && ToolCall.CancellationTokenSource is { IsCancellationRequested: false };
+
+		private bool _canRestart;
+		/// <summary>
+		/// Whether the call can be re-run in place: it is finished and its tool still exists in the chat. Unlike
+		/// <see cref="CanCancel"/> this is not a function of the call alone — the tool has to be looked up in the
+		/// chat's tools — so it is refreshed when the call's status or cancellation source changes, not on every read.
+		/// </summary>
+		public bool CanRestart
+		{
+			get => _canRestart;
+			private set => SetProperty(ref _canRestart, value);
+		}
+
+		/// <summary>
+		/// Gets the command that cancels this call alone.
+		/// </summary>
+		public ICommand CancelCommand { get; }
+
+		/// <summary>
+		/// Gets the command that re-runs this finished call in place.
+		/// </summary>
+		public ICommand RestartCommand { get; }
+
+		public ToolCallViewModel(ToolCall toolCall, ChatMessage message, Chat chat)
 		{
 			ToolCall = toolCall;
+			_message = message;
+			_chat = chat;
 
 			ToolName = toolCall.ToolName;
 			ToolTitle = toolCall.Title ?? new ConstLocaleKey(toolCall.ToolName);
@@ -227,32 +267,66 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			AdditionalData = new AdditionalChatDataCollectionViewModel(toolCall.AdditionalData);
 
 			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
+			CancelCommand = new RelayCommand(Cancel);
+			RestartCommand = new AsyncRelayCommand(RestartRunAsync);
 
-			if (!toolCall.IsCompleted)
+			// The subscription is not dropped when the call finishes: a restart re-runs a finished call on the same
+			// object, so a terminal status is not the end of what this card has to show.
+			ToolCall.PropertyChanged += OnToolCallPropertyChanged;
+
+			RefreshRestartAvailability();
+		}
+
+		private void OnToolCallPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			InvokeUI(() =>
 			{
-				void OnToolCallPropertyChanged(object? s, PropertyChangedEventArgs e)
+				switch (e.PropertyName)
 				{
-					InvokeUI(() =>
-					{
-						switch (e.PropertyName)
-						{
-							case nameof(ToolCall.Status): Status = toolCall.Status; break;
-							case nameof(ToolCall.StatusIcon): StatusIcon = toolCall.StatusIcon; break;
-							case nameof(ToolCall.StatusTitle): StatusTitle = toolCall.StatusTitle; break;
-							case nameof(ToolCall.ExpectedBehaviour): ExpectedBehaviour = toolCall.ExpectedBehaviour; break;
-							case nameof(ToolCall.Progress): Progress = toolCall.Progress; break;
-							case nameof(ToolCall.MinProgress): MinProgress = toolCall.MinProgress; break;
-							case nameof(ToolCall.MaxProgress): MaxProgress = toolCall.MaxProgress; break;
-							case nameof(ToolCall.UserConfirmationSource): RaisePropertyChanged(nameof(UserAsked)); break;
-						}
-
-						if (toolCall.Status.IsTerminal())
-							toolCall.PropertyChanged -= OnToolCallPropertyChanged;
-					});
+					case nameof(ToolCall.Status): Status = ToolCall.Status; break;
+					case nameof(ToolCall.StatusIcon): StatusIcon = ToolCall.StatusIcon; break;
+					case nameof(ToolCall.StatusTitle): StatusTitle = ToolCall.StatusTitle; break;
+					case nameof(ToolCall.ExpectedBehaviour): ExpectedBehaviour = ToolCall.ExpectedBehaviour; break;
+					case nameof(ToolCall.Progress): Progress = ToolCall.Progress; break;
+					case nameof(ToolCall.MinProgress): MinProgress = ToolCall.MinProgress; break;
+					case nameof(ToolCall.MaxProgress): MaxProgress = ToolCall.MaxProgress; break;
+					case nameof(ToolCall.UserConfirmationSource): RaisePropertyChanged(nameof(UserAsked)); break;
 				}
 
-				toolCall.PropertyChanged += OnToolCallPropertyChanged;
-			}
+				if (e.PropertyName is nameof(ToolCall.Status) or nameof(ToolCall.CancellationTokenSource))
+				{
+					RaisePropertyChanged(nameof(CanCancel));
+					RefreshRestartAvailability();
+				}
+			});
+		}
+
+		/// <summary>
+		/// Re-reads whether the call can be re-run. It is the only one of the two actions whose answer is not a
+		/// property of the call: a restart needs the tool, and the tool lives in the chat's set.
+		/// </summary>
+		private void RefreshRestartAvailability() => CanRestart = ToolCallService.CanRestart(ToolCall);
+
+		/// <summary>
+		/// Cancels this call alone. The service ignores the request for a call that is already finished, and the
+		/// cancellation state is re-read at once so the button does not stay behind a request already sent.
+		/// </summary>
+		private void Cancel()
+		{
+			ToolCallService.Cancel(ToolCall);
+			RaisePropertyChanged(nameof(CanCancel));
+		}
+
+		/// <summary>
+		/// Re-runs the finished call in place. Nothing follows: the call is rewritten, and the next model request
+		/// picks the new result up through the prompt.
+		/// </summary>
+		private async Task RestartRunAsync()
+		{
+			if (!CanRestart)
+				return;
+
+			await ToolCallService.RestartAsync(_message, ToolCall, CancellationToken.None);
 		}
 
 		protected override void Dispose(bool disposing)
@@ -261,6 +335,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 			if (disposing)
 			{
+				ToolCall.PropertyChanged -= OnToolCallPropertyChanged;
+
 				_flyout?.Dispose();
 				_flyout = null;
 				AdditionalData.Dispose();

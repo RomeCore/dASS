@@ -46,7 +46,9 @@
 
 		</Border>
 
-		<ContentControl Content="{Binding ToolCalls}"/>
+		<ContentControl Content="{Binding ToolCalls}"
+										IsVisible="{Binding ToolCalls.IsVisible}"
+										Margin="0,4,0,0"/>
 		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
 		
 		<TextBlock Text="{loc:Loc {Binding Error}}"

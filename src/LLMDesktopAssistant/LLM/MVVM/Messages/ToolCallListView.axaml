@@ -8,7 +8,7 @@
 			 x:DataType="local:ToolCallListViewModel">
 
 	<ItemsControl ItemsSource="{Binding ToolCalls}"
-				  IsVisible="{Binding IsVisible}">
+							  IsVisible="{Binding IsVisible}">
 		<ItemsControl.ItemsPanel>
 			<ItemsPanelTemplate>
 				<StackPanel Orientation="Vertical"/>

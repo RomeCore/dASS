@@ -279,6 +279,8 @@ specifier.aggregation_mode.prioritized: По приоритету (запрет 
 arguments: Аргументы:
 call.action.approve: Подтвердить
 call.action.reject: Отклонить
+call.action.cancel: Отменить этот вызов
+call.action.restart: Выполнить вызов заново
 call.note.placeholder: Пояснение или вариант...
 call.note.wait: Подожди
 call.note.try_another_tool: Попробуй другой инструмент

@@ -279,6 +279,8 @@ specifier.aggregation_mode.prioritized: Prioritized (deny > ask > allow)
 arguments: Tool arguments:
 call.action.approve: Approve
 call.action.reject: Reject
+call.action.cancel: Cancel this call
+call.action.restart: Run this call again
 call.note.placeholder: Note or option...
 call.note.wait: Wait
 call.note.try_another_tool: Try another tool

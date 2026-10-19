@@ -60,25 +60,29 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			CopyArgumentsCommand = new RelayCommand(CopyArguments);
 			CopyResultCommand = new RelayCommand(CopyResult);
 
-			if (!_toolCall.IsCompleted)
+			_toolCall.PropertyChanged += OnToolCallPropertyChanged;
+		}
+
+		void OnToolCallPropertyChanged(object? s, PropertyChangedEventArgs e)
+		{
+			InvokeUI(() =>
 			{
-				void OnToolCallPropertyChanged(object? s, PropertyChangedEventArgs e)
+				switch (e.PropertyName)
 				{
-					InvokeUI(() =>
-					{
-						switch (e.PropertyName)
-						{
-							case nameof(ToolCall.Arguments): Arguments = FormatArguments(_toolCall.Arguments); break;
-							case nameof(ToolCall.ResultContent): Result = _toolCall.ResultContent; break;
-							case nameof(ToolCall.UseMarkdown): UseMarkdown = _toolCall.UseMarkdown; break;
-						}
-
-						if (_toolCall.Status.IsTerminal())
-							_toolCall.PropertyChanged -= OnToolCallPropertyChanged;
-					});
+					case nameof(ToolCall.Arguments): Arguments = FormatArguments(_toolCall.Arguments); break;
+					case nameof(ToolCall.ResultContent): Result = _toolCall.ResultContent; break;
+					case nameof(ToolCall.UseMarkdown): UseMarkdown = _toolCall.UseMarkdown; break;
 				}
+			});
+		}
 
-				_toolCall.PropertyChanged += OnToolCallPropertyChanged;
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				_toolCall.PropertyChanged -= OnToolCallPropertyChanged;
 			}
 		}
 

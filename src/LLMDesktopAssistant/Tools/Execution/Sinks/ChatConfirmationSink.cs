@@ -30,7 +30,17 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 				var source = new TaskCompletionSource<ToolApprovalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
 				chatToolCall.UserConfirmationSource = source;
 
-				return await source.Task.WaitAsync(ct);
+				try
+				{
+					return await source.Task.WaitAsync(ct);
+				}
+				catch (OperationCanceledException)
+				{
+					// The call was cancelled while it awaited the user: nobody will answer this surface, so the
+					// runtime channel must not stay pending behind a card that is already closed.
+					chatToolCall.UserConfirmationSource = null;
+					throw;
+				}
 			}
 			return ToolApprovalResult.DeniedOnce("Invalid call type for chat confirmation. Expected a ToolCall.");
 		}

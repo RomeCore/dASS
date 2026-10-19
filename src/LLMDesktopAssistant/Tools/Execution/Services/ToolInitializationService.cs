@@ -1,4 +1,4 @@
-﻿using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 
@@ -23,6 +23,9 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			call.StructuredResult = null;
 			call.UseMarkdown = false;
 			call.ClearAttachments();
+
+			// A restart reuses the call, so the progress of the previous run must not survive it.
+			call.SetProgress(null, 0, 1);
 
 			call.CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
 			ct = call.CancellationTokenSource.Token;
