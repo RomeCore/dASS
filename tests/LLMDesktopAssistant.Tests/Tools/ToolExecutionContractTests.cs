@@ -134,13 +134,15 @@ namespace LLMDesktopAssistant.Tests.Tools
 
 			public string? StatusTitle { get; set; }
 
-			public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
+			public CancellationTokenSource? CancellationTokenSource { get; set; }
 
-			public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+			public void AddAttachment(IChatAttachment attachment) { }
 
-			public void AddAttachment(IChatAttachment attachment)
-			{
-			}
+			public bool RemoveAttachment(IChatAttachment attachment) { return false; }
+
+			public void ClearAttachments() { }
+
+			public IEnumerable<IChatAttachment> GetAttachments() => [];
 
 			public void SetProgress(double? value, double min, double max)
 			{

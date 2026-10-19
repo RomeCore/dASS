@@ -67,11 +67,13 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		}
 
 		[Fact]
-		public void AnUnknownAttachment_Throws()
+		public void AnUnknownAttachment_Ignores()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 
-			Assert.Throws<InvalidOperationException>(() => session.Call.AddAttachment(new UnknownAttachment()));
+			var attachmentsBefore = session.Call.GetAttachments().ToList();
+			session.Call.AddAttachment(new UnknownAttachment());
+			Assert.Equal(attachmentsBefore, session.Call.GetAttachments());
 		}
 
 		[Fact]

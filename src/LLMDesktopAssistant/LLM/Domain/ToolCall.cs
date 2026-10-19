@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -130,12 +131,12 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _expectedBehaviour, value);
 		}
 
-		private CancellationTokenSource _cancellationTokenSource = new();
+		private CancellationTokenSource? _cancellationTokenSource;
 		/// <summary>
 		/// The per-invocation cancellation source. Runtime-only: it is never persisted and is replaced
 		/// before a restart.
 		/// </summary>
-		public CancellationTokenSource CancellationTokenSource
+		public CancellationTokenSource? CancellationTokenSource
 		{
 			get => _cancellationTokenSource;
 			set => SetProperty(ref _cancellationTokenSource, value);
@@ -194,7 +195,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing)
-				_cancellationTokenSource.Dispose();
+				_cancellationTokenSource?.Dispose();
 
 			base.Dispose(disposing);
 		}

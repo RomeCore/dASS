@@ -23,13 +23,16 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 		/// <returns>The decision together with the memorization the user selected.</returns>
 		public async Task<ToolApprovalResult> RequestAsync(IToolExecutionContext ctx, CancellationToken ct)
 		{
-			using var confirmation = statusService.WithConfirmation();
+			if (ctx.Call is ToolCall chatToolCall)
+			{
+				using var confirmation = statusService.WithConfirmation();
 
-			var source = new TaskCompletionSource<ToolApprovalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
-			ctx.Call.UserConfirmationSource = source;
-			ctx.Call.Status = ToolStatus.WaitingForApproval;
+				var source = new TaskCompletionSource<ToolApprovalResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+				chatToolCall.UserConfirmationSource = source;
 
-			return await source.Task.WaitAsync(ct);
+				return await source.Task.WaitAsync(ct);
+			}
+			return ToolApprovalResult.DeniedOnce("Invalid call type for chat confirmation. Expected a ToolCall.");
 		}
 	}
 }

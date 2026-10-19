@@ -51,10 +51,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Calls
 		public string? StatusTitle { get; set; }
 
 		/// <inheritdoc/>
-		public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
-
-		/// <inheritdoc/>
-		public CancellationTokenSource CancellationTokenSource { get; set; } = new();
+		public CancellationTokenSource? CancellationTokenSource { get; set; }
 
 		/// <summary>
 		/// The payloads the tool added. Nothing consumes them yet; kept so a script-facing attachment
@@ -79,6 +76,15 @@ namespace LLMDesktopAssistant.Tools.Execution.Calls
 
 		/// <inheritdoc/>
 		public void AddAttachment(IChatAttachment attachment) => _attachments.Add(attachment);
+
+		/// <inheritdoc/>
+		public bool RemoveAttachment(IChatAttachment attachment) => _attachments.Remove(attachment);
+
+		/// <inheritdoc/>
+		public void ClearAttachments() => _attachments.Clear();
+
+		/// <inheritdoc/>
+		public IEnumerable<IChatAttachment> GetAttachments() => _attachments;
 
 		/// <inheritdoc/>
 		public void SetProgress(double? value, double min, double max)

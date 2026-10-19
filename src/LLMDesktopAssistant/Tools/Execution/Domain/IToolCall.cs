@@ -69,25 +69,34 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		string? StatusTitle { get; set; }
 
 		/// <summary>
-		/// The pending confirmation the UI resolves. The confirmation service creates it, the consent
-		/// panel completes it. Runtime-only.
-		/// </summary>
-		TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource { get; set; }
-
-		/// <summary>
 		/// The per-invocation cancellation source. Runtime-only; it is linked with the run token when the
 		/// invocation starts and replaced before a restart, so the UI can cancel one call without
 		/// touching its siblings.
 		/// </summary>
-		CancellationTokenSource CancellationTokenSource { get; set; }
+		CancellationTokenSource? CancellationTokenSource { get; set; }
 
 		/// <summary>
 		/// Adds a payload the call projects into its world's native form: a UI part is stored as is, a
-		/// native or content attachment becomes the corresponding invisible part. The payload is an
-		/// argument, not stored neutral state.
+		/// native or content attachment becomes the corresponding invisible part.
 		/// </summary>
 		/// <param name="attachment">The payload to add.</param>
 		void AddAttachment(IChatAttachment attachment);
+
+		/// <summary>
+		/// Removes a payload from the call.
+		/// </summary>
+		/// <param name="attachment"></param>
+		bool RemoveAttachment(IChatAttachment attachment);
+
+		/// <summary>
+		/// Clears all attachments. This is used when the call is initialized.
+		/// </summary>
+		void ClearAttachments();
+
+		/// <summary>
+		/// Gets all attachments.
+		/// </summary>
+		IEnumerable<IChatAttachment> GetAttachments();
 
 		/// <summary>
 		/// Reports progress together with the range it belongs to.

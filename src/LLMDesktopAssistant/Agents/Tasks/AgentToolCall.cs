@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Controls.Icons;
 using LLMDesktopAssistant.LLM.Domain;
@@ -5,6 +6,7 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils.Attachments;
+using WebReaper;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
@@ -116,21 +118,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			set => SetProperty(ref _statusTitle, value);
 		}
 
-		private TaskCompletionSource<ToolApprovalResult>? _userConfirmationSource;
-		/// <summary>
-		/// The pending confirmation the task card resolves. Runtime-only.
-		/// </summary>
-		public TaskCompletionSource<ToolApprovalResult>? UserConfirmationSource
-		{
-			get => _userConfirmationSource;
-			set => SetProperty(ref _userConfirmationSource, value);
-		}
-
-		private CancellationTokenSource _cancellationTokenSource = new();
+		private CancellationTokenSource? _cancellationTokenSource;
 		/// <summary>
 		/// The per-invocation cancellation source. Runtime-only.
 		/// </summary>
-		public CancellationTokenSource CancellationTokenSource
+		public CancellationTokenSource? CancellationTokenSource
 		{
 			get => _cancellationTokenSource;
 			set => SetProperty(ref _cancellationTokenSource, value);
@@ -185,6 +177,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			Progress = value;
 		}
 
+		private readonly ConditionalWeakTable<IChatAttachment, AgentAttachment> _attachmentMap = [];
+
 		/// <summary>
 		/// Adds a payload, projected into the task's native form: a native attachment becomes an
 		/// <see cref="AgentNativeAttachment"/>, a text contribution an <see cref="AgentContentAttachment"/>.
@@ -193,18 +187,56 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <param name="attachment">The payload to add.</param>
 		public void AddAttachment(IChatAttachment attachment)
 		{
+			if (attachment is AgentAttachment agent)
+			{
+				_attachments.Add(agent);
+				return;
+			}
+
+			if (_attachmentMap.TryGetValue(attachment, out var existing))
+			{
+				_attachments.Add(existing);
+				return;
+			}
+
 			switch (attachment)
 			{
 				case INativeChatAttachment native:
-					var converted = AgentNativeAttachment.TryFromNative(native.Native);
+					AgentAttachment? converted = AgentNativeAttachment.TryFromNative(native.Native);
 					if (converted is not null)
+					{
+						_attachmentMap.Add(attachment, converted);
 						_attachments.Add(converted);
+					}
 					break;
 
 				case IContentChatAttachment content:
-					_attachments.Add(new AgentContentAttachment { Content = content.Content });
+					converted = new AgentContentAttachment { Content = content.Content };
+					_attachmentMap.Add(attachment, converted);
+					_attachments.Add(converted);
 					break;
 			}
+		}
+
+		public bool RemoveAttachment(IChatAttachment attachment)
+		{
+			if (attachment is AgentAttachment agent)
+				return _attachments.Remove(agent);
+
+			if (_attachmentMap.TryGetValue(attachment, out var existing))
+				return _attachments.Remove(existing);
+
+			return false;
+		}
+
+		public void ClearAttachments()
+		{
+			_attachments.Clear();
+		}
+
+		public IEnumerable<IChatAttachment> GetAttachments()
+		{
+			return _attachments;
 		}
 	}
 }

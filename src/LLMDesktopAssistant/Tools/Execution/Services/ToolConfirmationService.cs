@@ -39,6 +39,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (decision != ToolPolicyDecision.Ask)
 				return true;
 
+			ctx.Call.Status = ToolStatus.WaitingForApproval;
+
 			if (handled.HasFlag(ToolPolicyDecision.Ask))
 				return await AskToolAsync(ctx, ct);
 
