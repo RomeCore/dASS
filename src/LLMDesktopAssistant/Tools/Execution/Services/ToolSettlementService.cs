@@ -25,6 +25,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		{
 			var call = ctx.Call;
 
+			try
+			{
+				call.CancellationTokenSource?.Dispose();
+			} catch { }
+			call.CancellationTokenSource = null;
+
 			if (exception is not null)
 				Apply(ctx, exception);
 

@@ -14,6 +14,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	/// </remarks>
 	[Service]
 	public sealed class ToolCommandOrchestrator(
+		IToolInitializationService initialization,
 		IToolStreamingService streaming,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
@@ -30,6 +31,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 		{
 			try
 			{
+				initialization.Initialize(ctx, ref ct);
 				await streaming.RunAsync(ctx, StreamingMode.Once, ct);
 				validation.Validate(ctx);
 

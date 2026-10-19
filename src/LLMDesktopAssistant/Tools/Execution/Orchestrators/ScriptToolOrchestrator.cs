@@ -15,6 +15,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	/// </remarks>
 	[Service]
 	public sealed class ScriptToolOrchestrator(
+		IToolInitializationService initialization,
 		IToolValidationService validation,
 		IToolPreviewService preview,
 		IToolExecutionService execution,
@@ -29,6 +30,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 		{
 			try
 			{
+				initialization.Initialize(ctx, ref ct);
 				validation.Validate(ctx);
 
 				if (await preview.RunAsync(ctx, ct))

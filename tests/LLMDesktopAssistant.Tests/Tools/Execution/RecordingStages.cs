@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 	/// chat, a task or a real tool: the test asserts the sequence of stage calls and the exception the
 	/// settlement stage received.
 	/// </summary>
-	internal sealed class RecordingStages : IToolStreamingService, IToolValidationService,
+	internal sealed class RecordingStages : IToolInitializationService, IToolStreamingService, IToolValidationService,
 		IToolSynchronizationService, IToolPreviewService, IToolPolicyService, IToolConfirmationService,
 		IToolExecutionService, IToolSettlementService
 	{
@@ -33,6 +33,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 
 		/// <summary>The exception the settlement stage received, or <see langword="null"/>.</summary>
 		public Exception? SettledException { get; private set; }
+
+		void IToolInitializationService.Initialize(IToolExecutionContext ctx, ref CancellationToken ct)
+		{
+			Record("initialization");
+		}
 
 		Task IToolStreamingService.RunAsync(IToolExecutionContext ctx, StreamingMode mode, CancellationToken ct)
 		{

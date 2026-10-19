@@ -15,6 +15,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	/// </remarks>
 	[Service]
 	public sealed class ChatToolOrchestrator(
+		IToolInitializationService initialization,
 		IToolStreamingService streaming,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
@@ -33,6 +34,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 		{
 			try
 			{
+				initialization.Initialize(ctx, ref ct);
 				await streaming.RunAsync(ctx, StreamingMode.Cyclic, ct);
 				validation.Validate(ctx);
 

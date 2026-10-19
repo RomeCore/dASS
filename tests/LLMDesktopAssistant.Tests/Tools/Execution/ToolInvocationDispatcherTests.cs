@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 					ToolTestContext.CreateTool()),
 				CancellationToken.None);
 
-			Assert.Equal(["validation", "preview", "execution", "settlement"], stages.Calls);
+			Assert.Equal(["initialization", "validation", "preview", "execution", "settlement"], stages.Calls);
 		}
 
 		[Fact]
@@ -91,11 +91,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		}
 
 		private static ToolInvocationDispatcher CreateDispatcher(RecordingStages stages) => new(
-			new ChatToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages),
-			new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages),
-			new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages),
-			new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages),
-			new ScriptToolOrchestrator(stages, stages, stages, stages));
+			new ChatToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages, stages),
+			new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages, stages),
+			new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages, stages),
+			new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages),
+			new ScriptToolOrchestrator(stages, stages, stages, stages, stages));
 
 		private static ToolInvocationRequest CreateRequest(ToolInvocationSource source, IToolCall call,
 			IToolExecutionContextFactory factory, IToolDescriptor? descriptor) => new()

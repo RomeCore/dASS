@@ -15,6 +15,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	/// </remarks>
 	[Service]
 	public sealed class AgentTaskToolOrchestrator(
+		IToolInitializationService initialization,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
 		IToolPreviewService preview,
@@ -32,6 +33,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 		{
 			try
 			{
+				initialization.Initialize(ctx, ref ct);
 				validation.Validate(ctx);
 
 				await synchronization.RunAsync(ctx, async () =>
