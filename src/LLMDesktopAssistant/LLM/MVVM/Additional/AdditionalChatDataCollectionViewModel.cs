@@ -20,6 +20,21 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		/// </summary>
 		public FilteredObservableCollection<AdditionalChatData> Others { get; }
 
+		private MessageAlignment _alignment = MessageAlignment.Left;
+		/// <summary>
+		/// Gets the alignment of the parts, derived from the role of the owner (the message or the tool call).
+		/// Set by the owner; forwarded to <see cref="Parts"/>. The rest of the data is left untouched.
+		/// </summary>
+		public MessageAlignment Alignment
+		{
+			get => _alignment;
+			set
+			{
+				_alignment = value;
+				Parts.Alignment = value;
+			}
+		}
+
 		public AdditionalChatDataCollectionViewModel(AdditionalChatDataCollection source)
 		{
 			Parts = new AdditionalMessagePartsViewModel(source);

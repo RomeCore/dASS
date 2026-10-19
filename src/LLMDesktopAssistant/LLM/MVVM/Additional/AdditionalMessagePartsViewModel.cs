@@ -18,6 +18,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		/// </summary>
 		public FilteredObservableCollection<AdditionalChatData> Parts { get; }
 
+		/// <summary>
+		/// Gets or sets the alignment of the parts, derived from the role of the message that owns them.
+		/// Set by <see cref="AdditionalChatDataCollectionViewModel"/>.
+		/// </summary>
+		public MessageAlignment Alignment { get; set; } = MessageAlignment.Left;
+
 		private bool _isEditing = false;
 		/// <summary>
 		/// Gets or sets a value indicating whether the parts are being edited.

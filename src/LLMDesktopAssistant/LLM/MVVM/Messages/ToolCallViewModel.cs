@@ -29,6 +29,21 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public AdditionalChatDataCollectionViewModel AdditionalData { get; }
 
+		private MessageAlignment _alignment = MessageAlignment.Left;
+		/// <summary>
+		/// Gets the alignment of the tool call, derived from the role of the message that contains it.
+		/// Set by <see cref="ToolCallListViewModel"/>; forwarded to the tool call's own additional data.
+		/// </summary>
+		public MessageAlignment Alignment
+		{
+			get => _alignment;
+			set
+			{
+				_alignment = value;
+				AdditionalData.Alignment = value;
+			}
+		}
+
 		private ToolCallFlyoutViewModel? _flyout;
 		/// <summary>
 		/// Gets the lazily-created view model backing the tool call flyout.

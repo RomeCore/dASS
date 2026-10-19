@@ -16,7 +16,7 @@
 							Opacity="{Binding ContentOpacity}">
 
 		<StackPanel Orientation="Horizontal"
-								HorizontalAlignment="Right"
+								HorizontalAlignment="{Binding Alignment}"
 								IsVisible="{Binding ShowAvatar}">
 
 			<TextBlock Text="{Binding SenderName}"
@@ -39,27 +39,23 @@
 
 		</StackPanel>
 
-		<Border HorizontalAlignment="Right"
-						VerticalAlignment="Top"
-						Padding="12,8"
-						Background="{DynamicResource MessageBackground}"
-						CornerRadius="16 16 4 16"
-						MaxWidth="500">
+		<Border Classes="MessageBubble">
 
 			<ctrl:MarkdownControl MarkdownText="{Binding Text}"
 														UsePlaintext="{Binding !RenderMarkdown}"/>
 
 		</Border>
 
-		<Label Content="{loc:Loc {Binding Error}}"
-					 HorizontalAlignment="Right"
-					 Foreground="Red"
-					 IsVisible="{Binding Error, Converter={StaticResource NotnullToBooleanConverter}}"/>
+		<ContentControl Content="{Binding ToolCalls}"/>
+		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
+		
+		<TextBlock Text="{loc:Loc {Binding Error}}"
+							 HorizontalAlignment="{Binding Alignment}"
+							 Foreground="Red"
+							 IsVisible="{Binding Error, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
-		<ContentControl Content="{Binding ToolCalls}" HorizontalAlignment="Right"/>
-		<ContentControl Content="{Binding AdditionalData}" HorizontalAlignment="Right" Margin="0,2"/>
-
-		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+		<StackPanel Orientation="Horizontal"
+								HorizontalAlignment="{Binding Alignment}"
 								Spacing="4">
 
 			<Button Command="{Binding ResendCommand}"

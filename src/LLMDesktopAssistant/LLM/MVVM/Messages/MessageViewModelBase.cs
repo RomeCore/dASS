@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using Avalonia.Controls;
+using Avalonia.Layout;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -16,6 +18,23 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// Gets the current message being displayed.
 		/// </summary>
 		public ChatMessage Message => branchedMessage.Message;
+
+		/// <summary>
+		/// Gets a value indicating whether the message belongs to the user's side of the chat: a user message, or
+		/// an agent message sent by an agent that identifies as a user.
+		/// </summary>
+		public bool IsUserRole { get; }
+
+		/// <summary>
+		/// Gets the horizontal alignment of the message content, this is based on sender's role.
+		/// </summary>
+		public HorizontalAlignment Alignment { get; }
+
+		/// <summary>
+		/// Gets the alignment of the wrapped content inside the message (chips, tool calls),
+		/// this is based on sender's role.
+		/// </summary>
+		public WrapPanelItemsAlignment WrapAlignment { get; }
 
 		private LocaleKeyBase? _error;
 		/// <summary>
@@ -112,8 +131,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			ChatViewModel = chatVM;
 			chatOperator = chatVM.Chat.Services.GetRequiredService<IChatOperationService>();
 
-			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat);
-			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData);
+			// An agent that identifies as a user speaks on the user's side of the chat.
+			IsUserRole = Message is not AssistantMessage assistantMessage || assistantMessage.IsUserLike;
+
+			var alignment = IsUserRole ? MessageAlignment.Right : MessageAlignment.Left;
+			Alignment = alignment.Horizontal;
+			WrapAlignment = alignment.Wrap;
+
+			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat) { Alignment = alignment };
+			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData) { Alignment = alignment };
 
 			Error = Message.Error;
 			Message.PropertyChanged += OnMessagePropertyChanged;

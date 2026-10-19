@@ -25,11 +25,12 @@
 	<StackPanel Orientation="Vertical" Margin="0,0,0,4">
 
 		<!-- Main tool call button -->
-		<Button Padding="2">
+		<Button Padding="2"
+						HorizontalAlignment="{Binding Alignment.Horizontal}">
 
 			<Button.Flyout>
 
-				<Flyout Placement="BottomEdgeAlignedLeft"
+				<Flyout Placement="{Binding Alignment.FlyoutPlacement}"
 								ShowMode="Standard">
 
 					<ContentControl Content="{Binding Flyout}"/>
@@ -39,7 +40,8 @@
 			</Button.Flyout>
 
 			<WrapPanel Orientation="Horizontal"
-								 ItemSpacing="4">
+								 ItemSpacing="4"
+								 ItemsAlignment="{Binding Alignment.Wrap}">
 
 				<Panel Width="28" Height="28">
 

@@ -13,7 +13,9 @@
 
 		<ItemsControl.ItemsPanel>
 			<ItemsPanelTemplate>
-				<WrapPanel Orientation="Horizontal" ItemSpacing="4"/>
+				<WrapPanel Orientation="Horizontal"
+													 ItemSpacing="4"
+													 ItemsAlignment="{Binding Alignment.Wrap}"/>
 			</ItemsPanelTemplate>
 		</ItemsControl.ItemsPanel>
 

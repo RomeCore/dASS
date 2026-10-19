@@ -15,7 +15,10 @@
 							Margin="40,8"
 							Opacity="{Binding ContentOpacity}">
 
-		<StackPanel Orientation="Horizontal" IsVisible="{Binding ShowAvatar}">
+		<ReversibleStackPanel Orientation="Horizontal"
+													HorizontalAlignment="{Binding Alignment}"
+													IsVisible="{Binding ShowAvatar}"
+													ReverseOrder="{Binding IsUserRole}">
 
 			<Panel>
 
@@ -35,20 +38,27 @@
 								 Margin="4"
 								 VerticalAlignment="Center"/>
 
-		</StackPanel>
+		</ReversibleStackPanel>
 
-		<ContentControl Content="{Binding ReasoningPart}"/>
-		<ContentControl Content="{Binding TextPart}"/>
+		<!-- The bubble is applied only on the user's side; the agent's side keeps the same markup without any chrome -->
+		<Border Classes.MessageBubble="{Binding IsUserRole}">
+			<StackPanel Orientation="Vertical">
+				<ContentControl Content="{Binding ReasoningPart}"/>
+				<ContentControl Content="{Binding TextPart}"/>
+			</StackPanel>
+		</Border>
+
 		<ContentControl Content="{Binding ToolCalls}"/>
-
-		<Label Content="{loc:Loc {Binding Error}}"
-					 Foreground="Red"
-					 IsVisible="{Binding Error, Converter={StaticResource NotnullToBooleanConverter}}"/>
+		
+		<TextBlock Text="{loc:Loc {Binding Error}}"
+							 HorizontalAlignment="{Binding Alignment}"
+							 Foreground="Red"
+							 IsVisible="{Binding Error, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
 		<ContentControl Content="{Binding AdditionalData}" Margin="0,2"/>
 
 		<StackPanel Orientation="Horizontal"
-								HorizontalAlignment="Left"
+								HorizontalAlignment="{Binding Alignment}"
 								IsVisible="{Binding IsCompleted}"
 								Spacing="4">
 

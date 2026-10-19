@@ -19,6 +19,23 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public bool HasToolCalls => _toolCalls.Count > 0;
 
+		private MessageAlignment _alignment = MessageAlignment.Left;
+		/// <summary>
+		/// Gets the alignment of the tool calls, derived from the role of the message that contains them.
+		/// Set by the owning message view model; forwarded to every tool call, including the ones added later.
+		/// </summary>
+		public MessageAlignment Alignment
+		{
+			get => _alignment;
+			init
+			{
+				_alignment = value;
+
+				foreach (var toolCall in _toolCalls)
+					toolCall.Alignment = value;
+			}
+		}
+
 		public ToolCallListViewModel(ChatMessage message, Chat chat)
 		{
 			_message = message;
@@ -57,7 +74,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			foreach (var toolCall in _message.ToolCalls)
 			{
 				if (!_toolCalls.Any(vm => ReferenceEquals(vm.ToolCall, toolCall)))
-					_toolCalls.Add(new ToolCallViewModel(toolCall, _chat));
+					_toolCalls.Add(new ToolCallViewModel(toolCall, _chat) { Alignment = _alignment });
 			}
 		}
 
