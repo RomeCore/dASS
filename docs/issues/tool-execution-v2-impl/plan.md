@@ -147,3 +147,11 @@ Android / Browser / Blazor are not dedicated gates; they are checked only if a s
     `TextDiffAdditionalViewModel.ConsentResultTask` speak it, and `Approved` replaces `IsApproved`.
     The sinks pass the awaited result through without copying. `ToolApprovalMemorization` stays in
     `Tools.Consents`.
+27. The tool-command source (§15) has **no positional argument at all**: every property of the tool's
+    JSON Schema becomes a keyed command argument, so there is no "designated main argument" to map onto
+    the rest slot. The command reads the chat's *available* tools (`GetAvailableAddons()`), not an
+    agent's toolset, and the executor supplies `ChatToolContextFactory` + `ConstantConfirmationSink`
+    because the per-agent stamps never reach it. It returns `generate: false` with `Raw`, does not check
+    the hard floor (deviation 17 applies — a command is the user's own action), attaches a real chat
+    `ToolCall` to the user message, and accepts `array`/`object` arguments as JSON literals while
+    everything the schema cannot classify degrades to an unvalidated string (P9).
