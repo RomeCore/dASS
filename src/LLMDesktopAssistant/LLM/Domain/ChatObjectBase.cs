@@ -1,7 +1,4 @@
-using System.Net.Mail;
 using System.Runtime.CompilerServices;
-using DocumentFormat.OpenXml.Wordprocessing;
-using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Messages.Attachments;

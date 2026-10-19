@@ -6,7 +6,6 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils.Attachments;
-using WebReaper;
 
 namespace LLMDesktopAssistant.Agents.Tasks
 {
