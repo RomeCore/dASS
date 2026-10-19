@@ -136,6 +136,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 					scriptResult = await _lua.ExecuteAsync(lua, print => result.Write(print), null, cancellationToken);
 				}
 
+				result.Write("Script returned: " + scriptResult.ToString());
 				result.Complete(true);
 			}
 			catch (LuaRuntimeException srex)
