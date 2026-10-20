@@ -1877,8 +1877,11 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 				{
 					_terminal.Resize(newCols, newRows);
 
-					// Also resize the PTY connection if it exists
-					_ptyConnection?.Resize(newCols, newRows);
+					try
+					{
+						// Also resize the PTY connection if it exists
+						_ptyConnection?.Resize(newCols, newRows);
+					} catch { _ptyConnection = null; }
 
 					RaisePropertyChanged(ViewportLinesProperty, default(int), ViewportLines);
 				}
