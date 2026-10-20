@@ -79,6 +79,7 @@ namespace LLMDesktopAssistant.Addons.Search
 				return null;
 
 			var addon = GetCandidates(agent)
+				.Where(Include)
 				.FirstOrDefault(candidate => string.Equals(candidate.Name, name, StringComparison.OrdinalIgnoreCase));
 
 			if (addon is null)

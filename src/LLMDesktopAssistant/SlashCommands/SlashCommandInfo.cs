@@ -92,6 +92,16 @@ namespace LLMDesktopAssistant.SlashCommands
 		} = SlashCommandSource.Unknown;
 
 		/// <summary>
+		/// Whether the command is synthesised from another addon - a skill, a sub-agent or a tool - instead of being
+		/// declared by the user, by a script or by the codebase itself.
+		/// </summary>
+		[System.Text.Json.Serialization.JsonIgnore]
+		[LiteDB.BsonIgnore]
+		[YamlDotNet.Serialization.YamlIgnore]
+		public bool IsDerived => SourceKind is SlashCommandSource.Skill
+			or SlashCommandSource.SubAgent or SlashCommandSource.Tool;
+
+		/// <summary>
 		/// The executor that runs the command's action. Never <see langword="null"/>.
 		/// </summary>
 		/// <remarks>

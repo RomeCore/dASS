@@ -18,9 +18,10 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		public bool UseDefaultDiagnosticFactory => true;
 
 		/// <summary>
-		/// Commands are not agent-searchable for now, so we don't use the default search service for them.
+		/// Commands are agent-searchable as a read-only catalogue: an agent cannot run a command, but it can tell the
+		/// user which one to type. See <see cref="SlashCommandAgenticSearchProvider"/>.
 		/// </summary>
-		public bool UseDefaultSearchService => false;
+		public bool UseDefaultSearchService => true;
 
 		public LocaleKeyBase NameKey => Locale.GetKey("addon.type.commands.name");
 

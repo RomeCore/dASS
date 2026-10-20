@@ -89,6 +89,7 @@ src/LLMDesktopAssistant/SlashCommands/
     SlashCommandInfo.cs - the slash-command addon info (namespaces, ModelFacingMode, Generate ceiling, Executor)
     SlashCommandExtractor.cs - the single owner of the leading '/' marker and the '//' escape; everything downstream is slash-free
     SlashCommandSetCollector.cs - merges ISlashCommandProvider into the chat's set + the EnableCommands gate
+    SlashCommandAgenticSearchProvider.cs - serves the chat's non-derived commands to the addon tools (a read-only catalogue: the model may suggest a token, never run it)
     SlashCommandSource.cs / SlashCommandOrderTiers.cs - source kind and the native > scriptable > derived tiers
     ModelFacingMode.cs - Raw / Neutral / Hidden (Raw by default; Neutral replaces the content with the bare token, Hidden drops it)
     Loading/ - SlashCommandAddonTypeDescriptor ('commands'), SlashCommandFileLocator (its Extensions are contributed by the registered scriptable engines), SlashCommandParser (frontmatter-based; picks the engine by file extension, which owns the frontmatter markers and builds the executor)
@@ -130,7 +131,7 @@ Addons are **frozen after collection** - `addon.Clone()` returns an unfrozen cop
 
 ## Slash commands
 
-A slash command is a **user-only** token at the very start of a message (`/skill:grilling`, `/agent:web-searcher <input>`) that triggers a runtime action before the message reaches the model. Commands are **never exposed to agents** - the model only sees the message a command produced. They are the `AddonKind.SlashCommand` kind, **chat-level and agent-agnostic**.
+A slash command is a **user-only** token at the very start of a message (`/skill:grilling`, `/agent:web-searcher <input>`) that triggers a runtime action before the message reaches the model. An agent **cannot run** a command, and does not need to: skills, sub-agents and tools are reachable directly, and a scriptable command is a user-facing action. What an agent *can* do is read the catalogue: `SlashCommandAgenticSearchProvider` serves the chat's **non-derived** commands to `addon-search` / `addon-list_available` / `addon-info`, so the model quotes the exact token (`/skill:grilling`) instead of inventing one. It only ever sees the message a command produced - never the command as an action. They are the `AddonKind.SlashCommand` kind, **chat-level and agent-agnostic**.
 
 A command has one of three sources, and `SlashCommandOrderTiers` mirrors them: **native** (`2000`) built in code, **scriptable** (`1000`) loaded from a pack's `commands/` folder, **derived** (`0`) synthesised one-per-addon for skills and sub-agents. `SlashCommandSource` says which (descriptive: it drives the card's source chip and the fingerprint), while the ordering authority stays `OverrideOrder = SlashCommandOrderTiers.ForSource(source)`.
 
