@@ -6,6 +6,7 @@
 			 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
 			 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
 			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
+			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatView"
 			 x:DataType="local:ChatViewModel">
@@ -70,20 +71,19 @@
 				</Button.Flyout>
 			</Button>
 
-			<ScrollViewer x:Name="MessagesScrollViewer"
+			<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
 										ScrollChanged="MessagesScrollViewer_ScrollChanged"
 										VerticalScrollBarVisibility="Visible"
 										AllowAutoHide="False"
 										BringIntoViewOnFocusChange="False"
-										beh:SmoothScrollBehavior.FollowEndEnabled="True"
-										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
-										beh:SmoothScrollBehavior.Step="75">
+										FollowEnd="True"
+										Step="75">
 
 				<StackPanel>
 					<ContentControl Content="{Binding MessageSequence}"/>
 					<ContentControl Content="{Binding ChatStatus}"/>
 				</StackPanel>
-			</ScrollViewer>
+			</scroll:SmoothScrollViewer>
 
 			<Button x:Name="ScrollToBottomButton"
 							Classes="BigIconButton"

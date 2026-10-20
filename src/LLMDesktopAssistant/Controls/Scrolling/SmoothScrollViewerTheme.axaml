@@ -1,0 +1,70 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+					xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling">
+
+	<!--
+		Default theme for SmoothScrollViewer.
+
+		The template is the Fluent ScrollViewer template
+		(Avalonia.Themes.Fluent/Controls/ScrollViewer.xaml) with a single difference that is the whole point
+		of this control: the content presenter is scroll:SmoothScrollContentPresenter, which animates the
+		mouse wheel instead of jumping the offset.
+
+		It has to be a full theme rather than the stock one plus a tweak: the presenter is created by the
+		template and cannot be swapped on an already templated ScrollViewer.
+	-->
+	<ControlTheme x:Key="{x:Type scroll:SmoothScrollViewer}"
+				  TargetType="scroll:SmoothScrollViewer">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+					<scroll:SmoothScrollContentPresenter Name="PART_ContentPresenter"
+														 Grid.Row="0"
+														 Grid.Column="0"
+														 Background="{TemplateBinding Background}"
+														 HorizontalSnapPointsType="{TemplateBinding HorizontalSnapPointsType}"
+														 VerticalSnapPointsType="{TemplateBinding VerticalSnapPointsType}"
+														 HorizontalSnapPointsAlignment="{TemplateBinding HorizontalSnapPointsAlignment}"
+														 VerticalSnapPointsAlignment="{TemplateBinding VerticalSnapPointsAlignment}"
+														 Padding="{TemplateBinding Padding}"
+														 ScrollViewer.IsScrollInertiaEnabled="{TemplateBinding IsScrollInertiaEnabled}">
+						<scroll:SmoothScrollContentPresenter.GestureRecognizers>
+							<ScrollGestureRecognizer CanHorizontallyScroll="{Binding CanHorizontallyScroll, ElementName=PART_ContentPresenter}"
+													 CanVerticallyScroll="{Binding CanVerticallyScroll, ElementName=PART_ContentPresenter}"
+													 IsScrollInertiaEnabled="{Binding (ScrollViewer.IsScrollInertiaEnabled), ElementName=PART_ContentPresenter}"
+													 Offset="{Binding Offset, ElementName=PART_ContentPresenter}"
+													 Viewport="{Binding Viewport, ElementName=PART_ContentPresenter}"
+													 Extent="{Binding Extent, ElementName=PART_ContentPresenter}"/>
+						</scroll:SmoothScrollContentPresenter.GestureRecognizers>
+					</scroll:SmoothScrollContentPresenter>
+					<ScrollBar Name="PART_HorizontalScrollBar"
+							   Orientation="Horizontal"
+							   Grid.Row="1"/>
+					<ScrollBar Name="PART_VerticalScrollBar"
+							   Orientation="Vertical"
+							   Grid.Column="1"/>
+					<Panel x:Name="PART_ScrollBarsSeparator"
+						   Grid.Row="1"
+						   Grid.Column="1"
+						   Background="{DynamicResource ScrollViewerScrollBarsSeparatorBackground}"
+						   Opacity="0">
+						<Panel.Transitions>
+							<Transitions>
+								<DoubleTransition Property="Opacity" Duration="0:0:0.1" />
+							</Transitions>
+						</Panel.Transitions>
+					</Panel>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^[IsExpanded=true] /template/ Panel#PART_ScrollBarsSeparator">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^[AllowAutoHide=True] /template/ scroll|SmoothScrollContentPresenter#PART_ContentPresenter">
+			<Setter Property="Grid.ColumnSpan" Value="2" />
+			<Setter Property="Grid.RowSpan" Value="2" />
+		</Style>
+	</ControlTheme>
+
+</ResourceDictionary>

@@ -8,6 +8,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
+			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.Messages.ToolCallFlyoutView"
 			 x:DataType="local:ToolCallFlyoutViewModel">
 
@@ -86,12 +87,11 @@
 									Height="1"
 									VerticalAlignment="Top"/>
 
-			<ScrollViewer Grid.Row="1"
+			<scroll:SmoothScrollViewer Grid.Row="1"
 										VerticalScrollBarVisibility="Auto"
 										HorizontalScrollBarVisibility="Auto"
-										beh:SmoothScrollBehavior.FollowEndEnabled="True"
-										beh:SmoothScrollBehavior.SmoothScrollEnabled="True"
-										beh:SmoothScrollBehavior.Step="75">
+										FollowEnd="True"
+										Step="75">
 
 				<StackPanel Orientation="Vertical"
 										Spacing="20"
@@ -140,7 +140,7 @@
 
 				</StackPanel>
 
-			</ScrollViewer>
+			</scroll:SmoothScrollViewer>
 
 		</Grid>
 

@@ -8,6 +8,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:conv="using:LLMDesktopAssistant.Converters"
 			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatSettingsView"
 			 x:DataType="local:ChatSettingsViewModel"
@@ -109,12 +110,11 @@
 			</Border>
 
 			<!-- Content area -->
-			<ScrollViewer VerticalScrollBarVisibility="Auto"
-										beh:SmoothScrollBehavior.SmoothScrollEnabled="True">
+			<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto">
 				<ContentControl Content="{Binding SelectedNode.ViewModel}"
 												HorizontalContentAlignment="Stretch"
 												VerticalContentAlignment="Stretch"/>
-			</ScrollViewer>
+			</scroll:SmoothScrollViewer>
 
 		</DockPanel>
 

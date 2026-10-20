@@ -13,6 +13,7 @@
 				<ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
 				
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Controls/ProgressRing.axaml"/>
+				<ResourceInclude Source="avares://LLMDesktopAssistant/Controls/Scrolling/SmoothScrollViewerTheme.axaml"/>
 
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/MarkdownResources.axaml"/>
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources.axaml"/>

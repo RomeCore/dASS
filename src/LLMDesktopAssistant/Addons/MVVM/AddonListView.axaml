@@ -7,6 +7,7 @@
 			 xmlns:group="using:LLMDesktopAssistant.Addons.MVVM.Grouping"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 			 x:Class="LLMDesktopAssistant.Addons.MVVM.AddonListView"
 			 x:DataType="cards:AddonListViewModel">
@@ -58,10 +59,9 @@
 						   IsVisible="{Binding !HasVisibleItems}"
 							 Margin="10"/>
 
-				<ScrollViewer MaxHeight="600"
+				<scroll:SmoothScrollViewer MaxHeight="600"
 											VerticalScrollBarVisibility="Auto"
-											HorizontalScrollBarVisibility="Disabled"
-											beh:SmoothScrollBehavior.SmoothScrollEnabled="True">
+											HorizontalScrollBarVisibility="Disabled">
 					<ItemsControl ItemsSource="{Binding Items}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
@@ -74,7 +74,7 @@
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
-				</ScrollViewer>
+				</scroll:SmoothScrollViewer>
 
 			</Panel>
 		</Border>
