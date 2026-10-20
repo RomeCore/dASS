@@ -19,7 +19,8 @@ end
 
 -- Spawn first: a PATH probe lies when the process PATH is trimmed (cmd.exe is the
 -- classic case), so only diagnose after the spawn has actually failed.
-local term, err = process.run_terminal("claude")
+local prompt = command_args.rest
+local term, err = process.run_terminal("claude", prompt and { prompt } or nil)
 if not term then
 	if process.which("claude") == nil then
 		msg.error = "Claude Code is not on PATH."
@@ -30,13 +31,6 @@ if not term then
 end
 
 msg:append_data(term)
-
-local prompt = command_args.rest
-if prompt ~= nil and prompt ~= "" then
-	-- The PTY buffers input, so seeding right after the spawn is safe: the TUI reads it
-	-- as soon as it is ready.
-	await term:write(prompt .. '\n')
-end
 
 try
 	local code = await term:wait()
