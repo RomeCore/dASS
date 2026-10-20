@@ -125,6 +125,8 @@ Rules the body has to satisfy:
 
 A namespace function can also call a tool by name - `await dass.tool.call("git-full-diff", { path = "." })` - which is a trusted, in-memory call: no policy, no confirmation, **no UI surface** (a form or a `append_data` panel from a nested call has nowhere to render). The result arrives as `content` (text), `structured` and `success`.
 
+A command (or a tool) can raise an interactive terminal with `process.run_terminal(command, [args], { cwd, env })` and attach the returned `terminal` handle with `append_data()` on any host. The handle is not attached implicitly, and the process lives exactly as long as the attachment does - removing the attachment kills it.
+
 ## Settings and visibility
 
 Scripts are the `AddonKind.LuaScript` kind, collected per chat (`ChatScriptSettings.Scriptset`, inherited app -> chat). Each one appears as a card with source, namespace chip, manuals block and an **enabled-only** toggle - there is no `hidden` mode for scripts, because they are never injected into a prompt.
