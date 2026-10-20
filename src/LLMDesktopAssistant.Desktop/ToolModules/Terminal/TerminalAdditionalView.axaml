@@ -20,30 +20,29 @@
 						RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type add:AdditionalChatDataCollectionView}}}"
 					MaxHeight="450">
 
-		<Grid>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition Height="*"/>
-				<RowDefinition Height="Auto"/>
-			</Grid.RowDefinitions>
-			
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="0.65*"/>
-				<ColumnDefinition Width="0.35*"/>
-			</Grid.ColumnDefinitions>
+		<Grid RowDefinitions="*,Auto">
 
 			<!-- Terminal Control -->
-			<term:TerminalView x:Name="TerminalHost"
-												 Grid.Row="1"
-												 FontFamily="Cascadia Mono,Consolas,monospace"
-												 FontSize="13"
-												 Background="#1E1E1E"
-												 Foreground="#D4D4D4"
-												 BufferSize="5000"/>
+			<Grid ColumnDefinitions="*,Auto">
+
+				<term:TerminalView x:Name="TerminalHost"
+								   FontFamily="Cascadia Mono,Consolas,monospace"
+								   FontSize="13"
+								   Background="#1E1E1E"
+								   Foreground="#D4D4D4"
+								   BufferSize="5000"/>
+
+				<!-- Scrollback: one notch is one line, the thumb shows how much of the buffer is visible -->
+				<ScrollBar x:Name="TerminalScrollBar"
+						   Grid.Column="1"
+						   Orientation="Vertical"
+						   AllowAutoHide="False"
+						   IsVisible="False"/>
+
+			</Grid>
 
 			<!-- Footer with controls -->
-			<Border Grid.Row="2"
-							Grid.ColumnSpan="2"
+			<Border Grid.Row="1"
 							Background="{DynamicResource CardBackground}"
 							Padding="8,4"
 							CornerRadius="0,0,6,6">
