@@ -40,7 +40,12 @@ namespace LLMDesktopAssistant.Tools.Execution
 		}
 
 		/// <inheritdoc/>
-		public bool CanRestart(IToolCall call) => FindTool(call.ToolName) is not null;
+		public bool CanRestart(IToolCall call) => call.Status switch
+		{
+			ToolStatus.None or ToolStatus.Pending or ToolStatus.PreExecuting
+				or ToolStatus.WaitingForApproval or ToolStatus.Executing => false,
+			_ => true
+		} && FindTool(call.ToolName) is not null;
 
 		/// <inheritdoc/>
 		public async Task RestartAsync(ChatMessage host, IToolCall call, CancellationToken ct)
