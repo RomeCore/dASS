@@ -10,42 +10,6 @@
 	}
 }
 
-@template uncensored
-{
-	@metadata
-	{
-		guid: 'bcea3e14-9fbe-453d-b2a8-4a29d8e519e0',
-		lang: 'ru-RU',
-		type: 'component',
-		title: 'Без цензуры',
-		localized_for: 'en-US'
-	}
-}
-
-@template no_restrictions
-{
-	@metadata
-	{
-		guid: 'c0f3b7e8-5a2d-4e9f-8b1c-7d6e5f4a3b2c',
-		lang: 'ru-RU',
-		type: 'component',
-		title: 'Без ограничений',
-		localized_for: 'en-US'
-	}
-}
-
-@template git_hints
-{
-	@metadata
-	{
-		guid: 'fb6c9a5d-8e2b-4f1a-a7b3-e0b1c2d3e4f5',
-		lang: 'ru-RU',
-		type: 'component',
-		title: 'Подсказки по Git',
-		localized_for: 'en-US'
-	}
-}
-
 @template quick_actions
 {
 	@metadata
