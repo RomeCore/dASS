@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Nodes;
+using System.Text.Json.Nodes;
 using RCParsing;
 using RCParsing.TokenPatterns;
 
@@ -84,9 +84,14 @@ namespace LLMDesktopAssistant.Utils
 
 						int codePoint = 0;
 						int consumedDigits = 0;
-						int maxCount = Math.Min(escapeChar == 'x' ? 2 : 4, maxPosition - position - 1);
+						// 'position' already points at the first hex digit, so the run starts here and its
+						// length is what is left of the input. Starting at position + 1 dropped the first
+						// digit: '\u0440' decoded from "440" (right by accident, a leading zero is free)
+						// and consumed 5 of its 6 characters, leaving the last digit to be emitted as text -
+						// 'р' became "р0", and '\u4E2D' turned into the wrong character entirely.
+						int maxCount = Math.Min(escapeChar == 'x' ? 2 : 4, maxPosition - position);
 
-						for (int i = position + 1; i < position + 1 + maxCount; i++)
+						for (int i = position; i < position + maxCount; i++)
 						{
 							var c = input[i];
 
@@ -115,7 +120,14 @@ namespace LLMDesktopAssistant.Utils
 						}
 
 						consumedLength = 2 + consumedDigits;
-						replacement = char.ConvertFromUtf32(codePoint);
+
+						// A lone surrogate half is legal in JSON only as part of a pair, and
+						// ConvertFromUtf32 throws on it. Emit the code unit as-is: two consecutive
+						// escapes then join into the pair they were escaped from. A tolerant parser must
+						// not throw on input it was built to tolerate.
+						replacement = codePoint is >= 0xD800 and <= 0xDFFF
+							? ((char)codePoint).ToString()
+							: char.ConvertFromUtf32(codePoint);
 						return true;
 				}
 
