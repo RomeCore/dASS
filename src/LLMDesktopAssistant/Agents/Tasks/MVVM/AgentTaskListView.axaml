@@ -3,15 +3,18 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 xmlns:local="using:LLMDesktopAssistant.Agents.Tasks.MVVM"
+						 xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional"
 						 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
 						 x:Class="LLMDesktopAssistant.Agents.Tasks.MVVM.AgentTaskListView"
-						 x:DataType="local:AgentTaskListViewModel">
+						 x:DataType="local:AgentTaskListViewModel"
+						 x:CompileBindings="False">
 
 	<ScrollViewer VerticalScrollBarVisibility="Auto">
 		<ItemsControl ItemsSource="{Binding Tasks}">
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
-					<WrapPanel Orientation="{Binding Orientation}" ItemSpacing="2"/>
+					<WrapPanel Orientation="{Binding Orientation}" ItemSpacing="2" ItemsAlignment="{Binding DataContext.Alignment.Wrap,
+						RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type add:AdditionalChatDataCollectionView}}}"/>
 				</ItemsPanelTemplate>
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>

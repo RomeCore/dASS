@@ -1,13 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
-             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
-             x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AgentTaskListInlineView"
-             x:DataType="local:AgentTaskListInlineViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+						 xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+						 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="60"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AgentTaskListInlineView"
+						 x:DataType="local:AgentTaskListInlineViewModel"
+						 x:CompileBindings="False">
 
-    <ContentControl Content="{Binding TaskListViewModel}"
-                    HorizontalAlignment="Left"/>
+		<ContentControl Content="{Binding TaskListViewModel}"
+										HorizontalAlignment="{Binding DataContext.Alignment.Horizontal,
+											RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type add:AdditionalChatDataCollectionView}}}"/>
 
 </UserControl>

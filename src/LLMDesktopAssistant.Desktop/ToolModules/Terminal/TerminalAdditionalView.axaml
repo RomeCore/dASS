@@ -8,7 +8,8 @@
 						 xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional"
 						 xmlns:term="using:LLMDesktopAssistant.Desktop.Execution.Terminals"
 						 x:Class="LLMDesktopAssistant.Desktop.ToolModules.Terminal.TerminalAdditionalView"
-						 x:DataType="local:TerminalAdditionalViewModel">
+						 x:DataType="local:TerminalAdditionalViewModel"
+						 x:CompileBindings="False">
 
 	<Border BorderBrush="{DynamicResource CardBorderBrush}"
 					BorderThickness="1"
