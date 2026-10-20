@@ -111,7 +111,8 @@ namespace LLMDesktopAssistant.Desktop.Execution
 
 					if (stdinAvailable)
 					{
-						await process.StandardInput.WriteLineAsync(parameters.StdIn);
+						// Write the payload verbatim: the caller owns its line endings.
+						await process.StandardInput.WriteAsync(parameters.StdIn);
 						process.StandardInput.Close();
 					}
 
