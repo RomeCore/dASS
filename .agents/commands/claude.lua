@@ -35,18 +35,17 @@ local prompt = command_args.rest
 if prompt ~= nil and prompt ~= "" then
 	-- The PTY buffers input, so seeding right after the spawn is safe: the TUI reads it
 	-- as soon as it is ready.
-	await term:write(prompt)
-	await term:write_line("")
+	await term:write(prompt .. '\n')
 end
 
 try
 	local code = await term:wait()
+	msg:append_content_part(term:text(), "Terminal contents", "Robot", "#cc9c00")
 	if code ~= 0 then
 		msg.error = string.format("Claude Code exited with code %d.", code)
 		return false
 	end
 catch _ do
-	-- skip
 end
 
 return true
