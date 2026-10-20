@@ -25,6 +25,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <param name="call">The call the script writes into.</param>
 		public LuaToolResult(IToolCall call) => _call = call;
 
+		/// <summary>The host the script attaches payloads to (the tool call itself).</summary>
+		public IChatAttachmentHost Host => _call;
+
 		/// <summary>The current accumulated output content.</summary>
 		public string Content => _call.ResultContent ?? string.Empty;
 

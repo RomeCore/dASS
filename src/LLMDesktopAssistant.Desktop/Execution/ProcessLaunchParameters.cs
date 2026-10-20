@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace LLMDesktopAssistant.Desktop.Execution
 {
@@ -54,5 +54,23 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		/// If null - it will not be removed. If zero - it will be removed immediately upon completion.
 		/// </summary>
 		public TimeSpan? CompletionExpiryTime { get; init; } = TimeSpan.FromMinutes(5);
+
+		/// <summary>
+		/// Creates a copy of these parameters with a different timeout.
+		/// </summary>
+		/// <param name="timeout">The new timeout, or <see langword="null"/> to run without one.</param>
+		public ProcessLaunchParameters WithTimeout(TimeSpan? timeout) => new()
+		{
+			ProcessName = ProcessName,
+			FileName = FileName,
+			Arguments = Arguments,
+			VerbatimArguments = VerbatimArguments,
+			WorkingDirectory = WorkingDirectory,
+			RunInTerminal = RunInTerminal,
+			EnvironmentVariables = EnvironmentVariables,
+			StdIn = StdIn,
+			TimeOut = timeout,
+			CompletionExpiryTime = CompletionExpiryTime
+		};
 	}
 }

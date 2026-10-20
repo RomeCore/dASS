@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 	/// <summary>
 	/// Represents the base class for chat objects, such as messages, tool calls and chats.
 	/// </summary>
-	public class ChatObjectBase : NotifyPropertyChanged
+	public class ChatObjectBase : NotifyPropertyChanged, IChatAttachmentHost
 	{
 		/// <summary>
 		/// Gets or sets the timestamp when the chat object was created.
@@ -69,18 +69,41 @@ namespace LLMDesktopAssistant.LLM.Domain
 
 		public bool RemoveAttachment(IChatAttachment attachment)
 		{
+			AdditionalChatData? removedPart = null;
+			bool removed;
+
 			if (attachment is AdditionalChatData data)
-				return AdditionalData.Remove(data);
+			{
+				removed = AdditionalData.Remove(data);
+				removedPart = data;
+			}
+			else if (_attachmentMap.TryGetValue(attachment, out var existing))
+			{
+				removed = AdditionalData.Remove(existing);
+				removedPart = existing;
+				if (removed)
+					_attachmentMap.Remove(attachment);
+			}
+			else
+			{
+				removed = false;
+			}
 
-			if (_attachmentMap.TryGetValue(attachment, out var existing))
-				return AdditionalData.Remove(existing);
+			// A removed payload may own a live resource (a terminal session owns a process),
+			// so detaching it is its only death signal.
+			if (removed)
+				removedPart?.Dispose();
 
-			return false;
+			return removed;
 		}
 
 		public void ClearAttachments()
 		{
+			var parts = AdditionalData.ToArray();
 			AdditionalData.Clear();
+
+			foreach (var part in parts)
+				part.Dispose();
 		}
 
 		public IEnumerable<IChatAttachment> GetAttachments()

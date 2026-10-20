@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// payload: the main executor's task is the completion, and everything it produces lands here.
 	/// The confirmation TCS and the cancellation source are runtime-only and are never persisted.
 	/// </remarks>
-	public interface IToolCall
+	public interface IToolCall : IChatAttachmentHost
 	{
 		/// <summary>
 		/// The name of the tool that is being called, as the model emitted it (after alias resolution).
@@ -75,29 +75,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// </summary>
 		CancellationTokenSource? CancellationTokenSource { get; set; }
 
-		/// <summary>
-		/// Adds a payload the call projects into its world's native form: a UI part is stored as is, a
-		/// native or content attachment becomes the corresponding invisible part.
-		/// </summary>
-		/// <param name="attachment">The payload to add.</param>
-		void AddAttachment(IChatAttachment attachment);
-
-		/// <summary>
-		/// Removes a payload from the call.
-		/// </summary>
-		/// <param name="attachment"></param>
-		bool RemoveAttachment(IChatAttachment attachment);
-
-		/// <summary>
-		/// Clears all attachments. This is used when the call is initialized.
-		/// </summary>
-		void ClearAttachments();
-
-		/// <summary>
-		/// Gets all attachments.
-		/// </summary>
-		IEnumerable<IChatAttachment> GetAttachments();
-
+		
 		/// <summary>
 		/// Reports progress together with the range it belongs to.
 		/// </summary>

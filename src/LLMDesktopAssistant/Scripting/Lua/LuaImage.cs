@@ -8,6 +8,8 @@ using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using LLMDesktopAssistant.Utils.Attachments;
+using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -15,8 +17,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// Represents an image object exposed to Lua as UserData.
 	/// Wraps SixLabors.ImageSharp.Image with disposal support.
 	/// </summary>
-	public sealed class LuaImage : IDisposable
+	public sealed class LuaImage : IDisposable, ILuaNativeAttachable
 	{
+		/// <inheritdoc/>
+		public IAttachment GetNativeAttachment() => new SerializableImageAttachment(Format, ToBase64());
+
 		private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
 		private readonly IWorkingDirectoryAccessService _fileAccess;

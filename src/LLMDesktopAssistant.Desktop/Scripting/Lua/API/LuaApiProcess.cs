@@ -1,9 +1,12 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Desktop.Execution;
+using LLMDesktopAssistant.Desktop.Scripting.Lua;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting;
@@ -71,9 +74,45 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			  Kills a process by its process ID. Returns true if successful.
 
 			  Parameters:
-			    - pid: number — The process ID to kill
+				- pid: number — The process ID to kill
 
 			  Returns: boolean — Whether the process was killed.
+
+			--- process.run_terminal(command, [args], [options]) -> terminal, error
+			  Starts an interactive terminal (a PTY) and returns a handle to it. Unlike process.exec
+			  it does NOT wait and never times out: the process lives until it exits or is killed.
+			  Nothing is attached for you: pass the handle to an append_data() of the host you want
+			  it in (chat_message:append_data, dass.chat.append_data, dass.tool.result.append_data).
+
+			  Parameters:
+				- command: string — the executable to run
+				- args: string or table (optional) — arguments
+				- options: table (optional):
+				  - cwd: string — working directory (default: the current one)
+				  - env: table — additional environment variables (key-value pairs)
+
+			  Returns: terminal, or nil plus the error message.
+				A missing executable, an inaccessible working directory or a failed spawn
+				returns nil and the reason instead of throwing.
+
+			TERMINAL HANDLE ('terminal'):
+
+			  Properties (read-only):
+				- pid: number — the OS process id
+				- is_running: boolean — whether the process is still running
+				- exit_code: number or nil — nil while the process runs
+
+			  Methods:
+				- t:text() -> string — the current buffer contents (scrollback plus the visible screen)
+				- t:write(text) — writes raw text into the terminal input
+				- t:write_line(text) — writes the text followed by a carriage return
+				- t:kill() — kills the process
+				- t:wait() -> number — waits for the exit and returns the exit code
+				  (the same value on every call; -1 when the process was killed)
+
+			  NOTES:
+				- Removing the attachment that holds a terminal kills its process.
+				- Hosts without the desktop process launcher have no 'process' namespace at all.
 
 			EXAMPLES:
 
@@ -109,21 +148,33 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			    print("Errors:", r.stderr)
 			  end
 
+			  -- Start an interactive terminal, attach it to the command's message and wait for it
+			  local term, err = process.run_terminal("claude", nil, { cwd = "/project" })
+			  if not term then
+				print("Cannot start:", err)
+			  else
+				local msg = dass.command.context.get_message()
+				if msg then msg:append_data(term) end
+				print("Exit code:", await term:wait())
+			  end
+			
 			  -- Find a command
 			  local git_path = process.which("git")
 			  if git_path then
 			    print("Git found at:", git_path)
 			  end
-
+			
 			  -- Kill a process
 			  print("Killed:", process.kill(12345))
 			""";
 
 		private readonly IWorkingDirectoryAccessService _fileAccess;
+		private readonly IProcessLauncher _processLauncher;
 
-		public LuaApiProcess(IWorkingDirectoryAccessService fileAccess)
+		public LuaApiProcess(IWorkingDirectoryAccessService fileAccess, IProcessLauncher processLauncher)
 		{
 			_fileAccess = fileAccess;
+			_processLauncher = processLauncher;
 		}
 
 		private const int DefaultTimeoutSeconds = 30;
@@ -131,6 +182,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["exec"] = new LuaCallbackFunction(ExecAsync);
+			ns["run_terminal"] = new LuaCallbackFunction(RunTerminal);
 			ns["which"] = new LuaCallbackFunction(Which);
 			ns["kill"] = new LuaCallbackFunction(Kill);
 			return null;
@@ -138,195 +190,68 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 
 		private async Task<LuaTuple> ExecAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
-			if (args.Length < 1)
-				throw new LuaRuntimeException("process.exec(command, [args], [options]): at least 1 argument expected.");
+			var invocation = ParseInvocation("process.exec", args);
 
-			if (args[0] is not LuaString commandVal)
-				throw new LuaRuntimeException("process.exec(): first argument must be a string (command).");
+			var resolvedCommand = ResolveCommandPath(invocation.Command);
+			var displayCommand = resolvedCommand ?? invocation.Command;
 
-			var command = commandVal.Value;
-			var cmdArgs = Array.Empty<string>();
-			string? cwd = null;
-			string? stdin = null;
-			int timeoutSeconds = DefaultTimeoutSeconds;
-			var envVars = new Dictionary<string, string>();
-
-			// Parse args: string or table
-			if (args.Length > 1 && args[1] is not LuaNil)
-			{
-				if (args[1] is LuaString argsString)
-				{
-					cmdArgs = TokenizeArgs(argsString.Value);
-				}
-				else if (args[1] is LuaTable argsTable)
-				{
-					cmdArgs = new string[argsTable.Entries.Count()];
-					int i = 0;
-					foreach (var kv in argsTable.Entries.OrderBy(kv => kv.Key.TryToNumber()))
-					{
-						if (kv.Value is LuaString s)
-							cmdArgs[i++] = s.Value;
-						else
-							throw new LuaRuntimeException($"process.exec(): args[{i}] must be a string.");
-					}
-				}
-				else
-				{
-					throw new LuaRuntimeException("process.exec(): second argument must be a string or table (args).");
-				}
-			}
-
-			// Parse options (may be at index 1 or 2 depending on whether args were provided)
-			var optsIndex = args.Length > 1 && args[1] is LuaTable table && !IsArgsTable(table) ? 1
-				: args.Length > 2 && args[2] is LuaTable ? 2
-				: -1;
-
-			if (optsIndex >= 0 && args[optsIndex] is LuaTable opts)
-			{
-				if (opts.Get("cwd") is LuaString cwdVal)
-					cwd = cwdVal.Value;
-
-				if (opts.Get("stdin") is LuaString stdinVal)
-					stdin = stdinVal.Value;
-
-				if (opts.Get("timeout_seconds") is LuaNumber tsVal)
-					timeoutSeconds = Math.Max(1, Math.Min(600, (int)tsVal.Value));
-
-				if (opts.Get("env") is LuaTable envTable)
-				{
-					foreach (var kv in envTable.Entries)
-					{
-						if (kv.Key is LuaString keyStr && kv.Value is LuaString valStr)
-							envVars[keyStr.Value] = valStr.Value;
-					}
-				}
-			}
-
-			var resolvedCommand = ResolveCommandPath(command);
-			var displayCommand = resolvedCommand ?? command;
-
-			var psi = new ProcessStartInfo
-			{
-				FileName = resolvedCommand ?? command,
-				RedirectStandardOutput = true,
-				RedirectStandardError = true,
-				RedirectStandardInput = stdin != null,
-				UseShellExecute = false,
-				CreateNoWindow = true,
-				StandardOutputEncoding = Encoding.UTF8,
-				StandardErrorEncoding = Encoding.UTF8
-			};
-
-			foreach (var arg in cmdArgs)
-				psi.ArgumentList.Add(arg);
-
-			cwd = _fileAccess.TryAccessPath(cwd ?? "", DirectoryAccessMode.Execute);
+			var cwd = _fileAccess.TryAccessPath(invocation.WorkingDirectory ?? "", DirectoryAccessMode.Execute);
 			if (string.IsNullOrEmpty(cwd))
 				throw new LuaRuntimeException("process.exec(): unable to access working directory.");
 			if (!Directory.Exists(cwd))
 				throw new LuaRuntimeException("process.exec(): working directory does not exist.");
-			psi.WorkingDirectory = cwd;
-
-			foreach (var envVar in envVars)
-				psi.Environment[envVar.Key] = envVar.Value;
 
 			var startTime = DateTime.UtcNow;
-			Process? process = null;
-
+			ProcessDescriptor descriptor;
 			try
 			{
-				process = Process.Start(psi);
+				descriptor = _processLauncher.Launch(new ProcessLaunchParameters
+				{
+					ProcessName = invocation.Command,
+					FileName = displayCommand,
+					Arguments = [.. invocation.Arguments],
+					WorkingDirectory = cwd,
+					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
+					StdIn = invocation.StdIn,
+					TimeOut = TimeSpan.FromSeconds(invocation.TimeoutSeconds)
+				}, ctx.CancellationToken);
 			}
 			catch (Exception ex)
 			{
-				return BuildErrorResult($"Failed to start process '{command}': {ex.Message}",
+				return BuildErrorResult($"Failed to start process '{invocation.Command}': {ex.Message}",
 					displayCommand, (int)(DateTime.UtcNow - startTime).TotalMilliseconds);
 			}
 
-			if (process == null)
+			var timedOut = false;
+			var exitCode = -1;
+			try
 			{
-				return BuildErrorResult($"Failed to start process: {command}", displayCommand,
-					(int)(DateTime.UtcNow - startTime).TotalMilliseconds);
+				exitCode = await descriptor.ExitCodeTask.ConfigureAwait(false);
+			}
+			catch (OperationCanceledException)
+			{
+				// The launcher cancels the task when the timeout fires.
+				timedOut = true;
+			}
+			catch (Exception)
+			{
+				// The process died with an error; its captured output is still readable below.
 			}
 
-			using (process)
-			{
-				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+			var output = descriptor.PlainOutput;
+			var stdout = output is null ? string.Empty : string.Join("\n", output.StdOut);
+			var stderr = output is null ? string.Empty : string.Join("\n", output.StdErr);
 
-				if (stdin != null)
-				{
-					try
-					{
-						await process.StandardInput.WriteAsync(stdin);
-						process.StandardInput.Close();
-					}
-					catch
-					{
-						// Process may have exited before we could write
-					}
-				}
+			var result = new LuaTable();
+			result["exit_code"] = new LuaNumber(timedOut ? -1 : exitCode);
+			result["stdout"] = new LuaString(stdout);
+			result["stderr"] = new LuaString(stderr);
+			result["timed_out"] = LuaBoolean.FromBoolean(timedOut);
+			result["duration_ms"] = new LuaNumber((int)(DateTime.UtcNow - startTime).TotalMilliseconds);
+			result["command"] = new LuaString(displayCommand +
+				(invocation.Arguments.Length > 0 ? " " + string.Join(" ", invocation.Arguments) : ""));
 
-				var stdoutTask = process.StandardOutput.ReadToEndAsync(cts.Token);
-				var stderrTask = process.StandardError.ReadToEndAsync(cts.Token);
-
-				bool timedOut = false;
-
-				try
-				{
-					await process.WaitForExitAsync(cts.Token);
-				}
-				catch (OperationCanceledException)
-				{
-					timedOut = true;
-					try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
-				}
-				catch (Exception)
-				{
-					try { process.Kill(entireProcessTree: true); } catch { /* best effort */ }
-				}
-
-				string stdout;
-				string stderr;
-
-				try
-				{
-					stdout = await stdoutTask;
-				}
-				catch (OperationCanceledException)
-				{
-					stdout = "";
-				}
-				catch (IOException)
-				{
-					stdout = "";
-				}
-
-				try
-				{
-					stderr = await stderrTask;
-				}
-				catch (OperationCanceledException)
-				{
-					stderr = "";
-				}
-				catch (IOException)
-				{
-					stderr = "";
-				}
-
-				var durationMs = (int)(DateTime.UtcNow - startTime).TotalMilliseconds;
-				var exitCode = timedOut ? -1 : process.ExitCode;
-
-				var result = new LuaTable();
-				result["exit_code"] = new LuaNumber(exitCode);
-				result["stdout"] = new LuaString(stdout);
-				result["stderr"] = new LuaString(stderr);
-				result["timed_out"] = LuaBoolean.FromBoolean(timedOut);
-				result["duration_ms"] = new LuaNumber(durationMs);
-				result["command"] = new LuaString(displayCommand + (cmdArgs.Length > 0 ? " " + string.Join(" ", cmdArgs) : ""));
-
-				return new LuaTuple(result);
-			}
+			return new LuaTuple(result);
 		}
 
 		/// <summary>
@@ -356,49 +281,141 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			return new LuaTuple(result);
 		}
 
-		private static LuaTuple Which(LuaCallingContext ctx, LuaValue[] args)
+		/// <summary>
+		/// Starts an interactive terminal and returns a handle to it: <c>process.run_terminal</c>.
+		/// </summary>
+		private LuaTuple RunTerminal(LuaCallingContext ctx, LuaValue[] args)
 		{
-			if (args.Length < 1)
-				throw new LuaRuntimeException("process.which(command): at least 1 argument expected.");
-
-			if (args[0] is not LuaString commandVal)
-				throw new LuaRuntimeException("process.which(): first argument must be a string.");
-
-			var resolved = ResolveCommandPath(commandVal.Value);
-			if (resolved == null)
-				return new LuaTuple(LuaNil.Instance);
-
-			return new LuaTuple(new LuaString(resolved));
-		}
-
-		private static LuaTuple Kill(LuaCallingContext ctx, LuaValue[] args)
-		{
-			if (args.Length < 1)
-				throw new LuaRuntimeException("process.kill(pid): at least 1 argument expected.");
-
-			if (args[0] is not LuaNumber pidVal)
-				throw new LuaRuntimeException("process.kill(): first argument must be a number (PID).");
-
+			Invocation invocation;
 			try
 			{
-				using var process = Process.GetProcessById((int)pidVal.Value);
-				process.Kill(entireProcessTree: true);
-				process.WaitForExit(3000);
-				return new LuaTuple(LuaBoolean.True);
+				invocation = ParseInvocation("process.run_terminal", args);
 			}
-			catch (ArgumentException)
+			catch (LuaRuntimeException ex)
 			{
-				return new LuaTuple(LuaBoolean.False);
+				return InvocationError(ex.Message);
 			}
-			catch (InvalidOperationException)
+
+			// Do NOT require PATH resolution here: the OS resolves a bare name on its own
+			// (cmd.exe is a classic case where PATH does not list System32), and a spawn
+			// failure below reports the real reason.
+			var resolved = ResolveCommandPath(invocation.Command);
+
+			var workDir = _fileAccess.TryAccessPath(invocation.WorkingDirectory ?? "", DirectoryAccessMode.Execute);
+			if (string.IsNullOrEmpty(workDir))
+				return InvocationError("process.run_terminal(): unable to access working directory.");
+			if (!Directory.Exists(workDir))
+				return InvocationError("process.run_terminal(): working directory does not exist.");
+
+			ProcessDescriptor descriptor;
+			try
 			{
-				return new LuaTuple(LuaBoolean.False);
+				// The script's own token: cancelling the command (Stop, chat closed) kills its terminal,
+				// and nothing links the two otherwise.
+				descriptor = _processLauncher.Launch(new ProcessLaunchParameters
+				{
+					ProcessName = invocation.Command,
+					FileName = resolved ?? invocation.Command,
+					Arguments = [.. invocation.Arguments],
+					WorkingDirectory = workDir,
+					RunInTerminal = true,
+					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
+					TimeOut = null
+				}, ctx.CancellationToken);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				return new LuaTuple(LuaBoolean.False);
+				return InvocationError($"Failed to start terminal '{invocation.Command}': {ex.Message}");
 			}
+
+			return new LuaTuple(LuaTerminal.Wrap(new LuaTerminal(descriptor)));
 		}
+
+		/// <summary>
+		/// Builds the <c>nil, error</c> result of a failed terminal launch.
+		/// </summary>
+		private static LuaTuple InvocationError(string message)
+			=> new(LuaNil.Instance, new LuaString(message));
+
+		/// <summary>
+		/// Parses the <c>(command, [args], [options])</c> argument shape of <c>process.run_terminal</c>.
+		/// </summary>
+		private static Invocation ParseInvocation(string functionName, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException($"{functionName}(command, [args], [options]): at least 1 argument expected.");
+
+			if (args[0] is not LuaString commandVal)
+				throw new LuaRuntimeException($"{functionName}(): first argument must be a string (command).");
+
+			var command = commandVal.Value;
+			var cmdArgs = Array.Empty<string>();
+			string? cwd = null;
+			string? stdin = null;
+			var timeoutSeconds = DefaultTimeoutSeconds;
+			var envVars = new Dictionary<string, string?>();
+
+			if (args.Length > 1 && args[1] is not LuaNil)
+			{
+				if (args[1] is LuaString argsString)
+				{
+					cmdArgs = TokenizeArgs(argsString.Value);
+				}
+				else if (args[1] is LuaTable argsTable)
+				{
+					cmdArgs = new string[argsTable.Entries.Count()];
+					var i = 0;
+					foreach (var kv in argsTable.Entries.OrderBy(kv => kv.Key.TryToNumber()))
+					{
+						if (kv.Value is LuaString s)
+							cmdArgs[i++] = s.Value;
+						else
+							throw new LuaRuntimeException($"{functionName}(): args[{i}] must be a string.");
+					}
+				}
+				else
+				{
+					throw new LuaRuntimeException($"{functionName}(): second argument must be a string or table (args).");
+				}
+			}
+
+			var optsIndex = args.Length > 1 && args[1] is LuaTable table && !IsArgsTable(table) ? 1
+				: args.Length > 2 && args[2] is LuaTable ? 2
+				: -1;
+
+			if (optsIndex >= 0 && args[optsIndex] is LuaTable opts)
+			{
+				if (opts.Get("cwd") is LuaString cwdVal)
+					cwd = cwdVal.Value;
+
+				if (opts.Get("stdin") is LuaString stdinVal)
+					stdin = stdinVal.Value;
+
+				if (opts.Get("timeout_seconds") is LuaNumber tsVal)
+					timeoutSeconds = Math.Max(1, Math.Min(600, (int)tsVal.Value));
+
+				if (opts.Get("env") is LuaTable envTable)
+				{
+					foreach (var kv in envTable.Entries)
+					{
+						if (kv.Key is LuaString keyStr && kv.Value is LuaString valStr)
+							envVars[keyStr.Value] = valStr.Value;
+					}
+				}
+			}
+
+			return new Invocation(command, cmdArgs, cwd, envVars, stdin, timeoutSeconds);
+		}
+
+		/// <summary>
+		/// The parsed <c>(command, args, options)</c> of a process or terminal launch.
+		/// </summary>
+		/// <remarks>
+		/// <paramref name="StdIn"/> and <paramref name="TimeoutSeconds"/> only make sense for
+		/// <c>process.exec</c>: a terminal has no initial stdin and never times out.
+		/// </remarks>
+		private sealed record Invocation(string Command, string[] Arguments, string? WorkingDirectory,
+			Dictionary<string, string?> Environment, string? StdIn, int TimeoutSeconds);
 
 		/// <summary>
 		/// Tokenizes a command-line string into individual arguments,
@@ -487,6 +504,50 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			}
 
 			return null;
+		}
+
+		private static LuaTuple Which(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("process.which(command): at least 1 argument expected.");
+
+			if (args[0] is not LuaString commandVal)
+				throw new LuaRuntimeException("process.which(): first argument must be a string.");
+
+			var resolved = ResolveCommandPath(commandVal.Value);
+			if (resolved == null)
+				return new LuaTuple(LuaNil.Instance);
+
+			return new LuaTuple(new LuaString(resolved));
+		}
+
+		private static LuaTuple Kill(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("process.kill(pid): at least 1 argument expected.");
+
+			if (args[0] is not LuaNumber pidVal)
+				throw new LuaRuntimeException("process.kill(): first argument must be a number (PID).");
+
+			try
+			{
+				using var process = Process.GetProcessById((int)pidVal.Value);
+				process.Kill(entireProcessTree: true);
+				process.WaitForExit(3000);
+				return new LuaTuple(LuaBoolean.True);
+			}
+			catch (ArgumentException)
+			{
+				return new LuaTuple(LuaBoolean.False);
+			}
+			catch (InvalidOperationException)
+			{
+				return new LuaTuple(LuaBoolean.False);
+			}
+			catch (Exception)
+			{
+				return new LuaTuple(LuaBoolean.False);
+			}
 		}
 	}
 }

@@ -29,6 +29,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  if msg then msg:append_part("done", "Check", "#88ff88") end
 			""";
 
+		private readonly LuaDataAttachmentDispatcher _dispatcher;
+
+		public LuaApiCommand(LuaDataAttachmentDispatcher dispatcher)
+		{
+			_dispatcher = dispatcher;
+		}
+
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			var context = new LuaTable();
@@ -48,7 +55,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (branched is null)
 				return new LuaTuple(LuaNil.Instance);
 
-			return new LuaTuple(LuaChatMessage.Wrap(branched));
+			return new LuaTuple(LuaChatMessage.Wrap(branched, _dispatcher));
 		}
 	}
 }

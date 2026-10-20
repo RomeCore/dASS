@@ -1,5 +1,6 @@
 using AsyncLua.Values;
 using LLMDesktopAssistant.MVVM.Dynamic;
+using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -14,7 +15,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// or via a plain assignment <c>ui.xaml = ...</c>) replaces the markup and re-renders every control
 	/// that was appended from this handle. The dynamic view model, by contrast, is fixed at creation.
 	/// </remarks>
-	public sealed class LuaUiControl
+	public sealed class LuaUiControl : IChatAttachment
 	{
 		private string _xaml;
 

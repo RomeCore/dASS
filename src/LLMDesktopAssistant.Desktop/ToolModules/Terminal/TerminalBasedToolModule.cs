@@ -49,10 +49,16 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 			var call = context.Call;
 			call.SetStatus(parameters.StatusIcon, parameters.StatusTitle);
 
+			// An interactive terminal lives until its process exits or the user kills it,
+			// never until a timeout: the output is not a result with a deadline.
+			var launchParameters = parameters.ProcessParameters;
+			if (launchParameters.RunInTerminal)
+				launchParameters = launchParameters.WithTimeout(null);
+
 			ProcessDescriptor descriptor;
 			try
 			{
-				descriptor = _processLauncher.Launch(parameters.ProcessParameters, cancellationToken);
+				descriptor = _processLauncher.Launch(launchParameters, cancellationToken);
 				// External process can affect addons potentially
 				_addonInvalidator.Invalidate(AddonKind.All);
 			}

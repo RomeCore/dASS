@@ -83,12 +83,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - data: table — structured data to return alongside text content
 
+			--- dass.tool.result.append_part(title, icon, color)
+			  Appends a plain chip part to the tool call. 'icon' is a VisualIconKind name,
+			  'color' is a hex string; both are optional (pass nil).
+
+			--- dass.tool.result.append_content_part(content, title, icon, color)
+			  Appends a part whose text is also appended to the model-facing tool result.
+
+			--- dass.tool.result.append_attachment_part(attachment, title, icon, color)
+			  Appends a native attachment part. 'attachment' is any handle that implements
+			  ILuaNativeAttachable (e.g. an image handle from image.load()/image.create()).
+
 			--- dass.tool.result.append_data(...)
-			  Appends custom UI to the tool result. Each argument must be a 'uicontrol' UserData
-			  created by dass.ui.create_control(). One UI element is appended per argument, in order.
-			  Appending the same control more than once is allowed.
+			  Appends one or more attachable handles to the tool result: a 'uicontrol' created by
+			  dass.ui.create_control(), or a live 'terminal' from process.run_terminal().
+			  Each argument is attached in order; appending the same handle more than once is allowed.
 			  Parameters:
-				- ...uicontrol — one or more control handles
+				- ...handle — one or more attachable handles
 			  Returns: nil
 			  No-op if not in a tool execution context.
 
@@ -109,7 +120,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Completes the tool execution with error status.
 
 			--- dass.tool.result.clear()
-			  Clears all result content lines.
+			  Clears the result content AND every attachment of the call, disposing them.
+			  Removing a terminal attachment kills the process behind it.
 
 			EXAMPLES:
 
@@ -147,6 +159,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  - Use icon.exists() and icon.list() to explore available icon names.
 			""";
 
+		private readonly LuaDataAttachmentDispatcher _dispatcher;
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LuaApiToolResult"/> class.
+		/// </summary>
+		/// <param name="dispatcher">The attachment dispatcher used by <c>append_data</c>.</param>
+		public LuaApiToolResult(LuaDataAttachmentDispatcher dispatcher)
+		{
+			_dispatcher = dispatcher;
+		}
+
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["available"] = new LuaCallbackFunction(Available);
@@ -158,6 +181,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["get_progress"] = new LuaCallbackFunction(GetProgress);
 			ns["set_status"] = new LuaCallbackFunction(SetStatus);
 			ns["set_structured"] = new LuaCallbackFunction(SetStructured);
+			ns["append_part"] = new LuaCallbackFunction(AppendPart);
+			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
+			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
 			ns["use_markdown"] = new LuaCallbackFunction(UseMarkdown);
 			ns["complete"] = new LuaCallbackFunction(Complete);
@@ -327,19 +353,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return new LuaTuple(LuaNil.Instance);
 
 			foreach (var arg in args)
-			{
-				if (arg is not LuaUserData { Target: LuaUiControl uiControl })
-					throw new LuaRuntimeException("dass.tool.result.append_data(...): arguments must be 'uicontrol' userdata created by dass.ui.create_control().");
-
-				var additional = new DynamicAxamlControlAdditionalData(uiControl.Xaml, uiControl.ViewModel);
-
-				// Follow the handle: ui:set_xaml(xaml) re-renders every control appended from it.
-				void OnXamlChanged(object? _, EventArgs __) => additional.Axaml = uiControl.Xaml;
-				uiControl.XamlChanged += OnXamlChanged;
-				additional.OnDispose += (_, _) => uiControl.XamlChanged -= OnXamlChanged;
-
-				result.AddAttachment(additional);
-			}
+				_dispatcher.Attach(result.Host, Unwrap(arg), "dass.tool.result.append_data(...)");
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -385,8 +399,49 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private LuaTuple Clear(LuaCallingContext ctx, LuaValue[] args)
 		{
 			var result = GetResult(ctx);
-			result?.Clear();
+			if (result is null)
+				return new LuaTuple(LuaNil.Instance);
+
+			result.Clear();
+			// Attachments go too, and disposing them is what kills a live terminal.
+			result.Host.ClearAttachments();
 			return new LuaTuple(LuaNil.Instance);
 		}
+
+		private LuaTuple AppendPart(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var host = GetResult(ctx)?.Host;
+			host?.AddAttachment(LuaAttachmentParts.CreatePart(Str(args, 0), Str(args, 1), Str(args, 2)));
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple AppendContentPart(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var host = GetResult(ctx)?.Host;
+			host?.AddAttachment(LuaAttachmentParts.CreateContentPart(Str(args, 0), Str(args, 1), Str(args, 2), Str(args, 3)));
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple AppendAttachmentPart(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var host = GetResult(ctx)?.Host;
+			if (host is null)
+				return new LuaTuple(LuaNil.Instance);
+
+			if (args.Length == 0 || Unwrap(args[0]) is not ILuaNativeAttachable attachable)
+				throw new LuaRuntimeException(
+					"dass.tool.result.append_attachment_part(attachment, ...): 'attachment' must implement " +
+					"ILuaNativeAttachable (e.g. an image handle created by image.load()/image.create()).");
+
+			host.AddAttachment(LuaAttachmentParts.CreateNativePart(
+				attachable.GetNativeAttachment(), Str(args, 1), Str(args, 2), Str(args, 3)));
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private static string? Str(LuaValue[] args, int index)
+			=> args.Length > index && args[index] is LuaString value ? value.Value : null;
+
+		private static object? Unwrap(LuaValue value)
+			=> value is LuaUserData userData ? userData.Target : value;
 	}
 }
