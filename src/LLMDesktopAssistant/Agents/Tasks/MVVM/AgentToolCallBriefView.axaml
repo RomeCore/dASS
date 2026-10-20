@@ -68,6 +68,15 @@
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
 
+				<!-- Cancel this call alone; shown while it runs or waits for the user. -->
+				<Button Classes="MiniIconButton"
+								Command="{Binding CancelCommand}"
+								IsVisible="{Binding CanCancel}"
+								VerticalAlignment="Center"
+								ToolTip.Tip="{loc:Loc tool.call.action.cancel}">
+					<ico:VisualIcon Kind="Cancel" Foreground="Red"/>
+				</Button>
+
 			</WrapPanel>
 
 			<!-- Arguments preview (compact, one line) -->

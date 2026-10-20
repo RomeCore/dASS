@@ -155,6 +155,18 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		public bool ShowConfirmButtons => IsConfirming;
 
 		/// <summary>
+		/// Whether the call can be cancelled right now: it is not finished and its own cancellation source is live.
+		/// </summary>
+		public bool CanCancel =>
+			_toolCall.Status is not (ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled)
+			&& _toolCall.CancellationTokenSource is { IsCancellationRequested: false };
+
+		/// <summary>
+		/// Gets the command that cancels this call alone.
+		/// </summary>
+		public ICommand CancelCommand { get; }
+
+		/// <summary>
 		/// Gets the command that resolves the tool confirmation with a <see cref="ToolApprovalResult"/>.
 		/// Executed by the <see cref="ToolConsentPanel"/>.
 		/// </summary>
@@ -172,6 +184,7 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			_parentTask = parentTask;
 
 			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
+			CancelCommand = new RelayCommand(Cancel);
 
 			SyncArguments();
 			SyncResult();
@@ -208,6 +221,10 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 					case nameof(AgentToolCall.ExpectedBehaviour):
 						RaisePropertyChanged(nameof(BehaviourFlags));
 						break;
+
+					case nameof(AgentToolCall.CancellationTokenSource):
+						RaisePropertyChanged(nameof(CanCancel));
+						break;
 				}
 			});
 		}
@@ -242,6 +259,7 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			};
 
 			RaisePropertyChanged(nameof(ShowConfirmButtons));
+			RaisePropertyChanged(nameof(CanCancel));
 		}
 
 		private void SyncArguments()
@@ -264,6 +282,19 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		{
 			Result = _toolCall.Result?.Content;
 			HasResult = !string.IsNullOrEmpty(Result);
+		}
+
+		/// <summary>
+		/// Cancels this call alone. The execution pipeline settles the call as <see cref="ToolStatus.Cancelled"/>
+		/// and the rest of the task keeps running.
+		/// </summary>
+		private void Cancel()
+		{
+			if (!CanCancel)
+				return;
+
+			_toolCall.CancellationTokenSource!.Cancel();
+			RaisePropertyChanged(nameof(CanCancel));
 		}
 
 		private void ResolveConsent(ToolApprovalResult? approval)
