@@ -88,7 +88,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					: JsonNode.Parse(model.StructuredResult),
 				Status = model.Status switch
 				{
-					ToolStatusModel.NotExecuted => ToolStatus.None,
+					ToolStatusModel.NotExecuted => ToolStatus.ExecutionInterrupted,
 					ToolStatusModel.ExecutionBegin => ToolStatus.ExecutionInterrupted,
 					ToolStatusModel.Success => ToolStatus.Success,
 					ToolStatusModel.Cancelled => ToolStatus.Cancelled,
