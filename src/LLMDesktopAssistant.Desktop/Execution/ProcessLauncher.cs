@@ -239,6 +239,21 @@ namespace LLMDesktopAssistant.Desktop.Execution
 					Complete(e.ExitCode);
 				}
 
+				// Writes a chunk into the emulation and keeps the viewport on the end - but only when it was
+				// already there. A user who scrolled up to read earlier output must not be yanked back down by
+				// new output, otherwise the scrollback is unusable while the process keeps writing.
+				void WriteToTerminal(string text)
+				{
+					var terminalBuffer = terminal.Buffer;
+					var wasFollowingEnd = terminalBuffer.ViewportY >= terminalBuffer.Length - terminal.Rows;
+
+					terminal.Write(text);
+
+					// A full-screen app (alternate buffer) drives its own viewport.
+					if (wasFollowingEnd && terminal.ActiveBuffer != XTerm.Common.BufferType.Alternate)
+						terminalBuffer.ScrollToBottom();
+				}
+
 				try
 				{
 					pty.ProcessExited += OnPtyExited;
@@ -283,7 +298,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 							var trailingChars = decoder.GetChars(buffer, 0, 0, chars, 0, flush: true);
 							if (trailingChars > 0)
 							{
-								terminal.Write(new string(chars, 0, trailingChars));
+								WriteToTerminal(new string(chars, 0, trailingChars));
 								session.RaiseOutputUpdated();
 							}
 							break;
@@ -293,12 +308,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 						if (charCount == 0)
 							continue;
 
-						terminal.Write(new string(chars, 0, charCount));
-
-						// Keep the viewport pinned to the bottom unless a full-screen app
-						// (alternate buffer) is controlling the cursor itself.
-						if (terminal.ActiveBuffer != XTerm.Common.BufferType.Alternate)
-							terminal.Buffer.ScrollToBottom();
+						WriteToTerminal(new string(chars, 0, charCount));
 
 						// Notify views so they can repaint — XTerm.Terminal.BufferChanged
 						// only fires on buffer switches, not on writes.
