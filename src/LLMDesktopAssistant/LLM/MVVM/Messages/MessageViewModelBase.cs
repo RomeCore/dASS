@@ -46,6 +46,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			private set => SetProperty(ref _error, value);
 		}
 
+		/// <summary>
+		/// Gets the working directory snapshot at the moment that message is created.
+		/// </summary>
+		public string WorkingDirectorySnapshot { get; }
+
 		public ICommand RegenerateCommand { get; }
 		public ICommand ResendCommand { get; }
 		public ICommand DeleteCommand { get; }
@@ -90,11 +95,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public bool RenderMarkdown
 		{
 			get => _renderMarkdown;
-			set
-			{
-				if (SetProperty(ref _renderMarkdown, value))
-					OnRenderMarkdownChanged();
-			}
+			set => SetProperty(ref _renderMarkdown, value);
 		}
 
 		private bool _isDisabledForAgents;
@@ -130,6 +131,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			this.branchedMessage = branchedMessage;
 			ChatViewModel = chatVM;
 			chatOperator = chatVM.Chat.Services.GetRequiredService<IChatOperationService>();
+			var wdAccess = chatVM.Chat.Services.GetRequiredService<IWorkingDirectoryAccessService>();
 
 			// An agent that identifies as a user speaks on the user's side of the chat.
 			IsUserRole = Message is not AssistantMessage assistantMessage || assistantMessage.IsUserLike;
@@ -137,6 +139,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			var alignment = IsUserRole ? MessageAlignment.Right : MessageAlignment.Left;
 			Alignment = alignment.Horizontal;
 			WrapAlignment = alignment.Wrap;
+
+			WorkingDirectorySnapshot = Message.AdditionalData.TryGet<WorkingDirectorySnapshotData>()?.Workdir
+				?? wdAccess.GetWorkingDirectory();
 
 			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat) { Alignment = alignment };
 			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData) { Alignment = alignment };
@@ -190,13 +195,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					RaisePropertyChanged(nameof(IsDisabledForAgents));
 					RaisePropertyChanged(nameof(ContentOpacity));
 				});
-		}
-
-		/// <summary>
-		/// Called when <see cref="RenderMarkdown"/> changes; used to propagate the mode to the textual parts.
-		/// </summary>
-		protected virtual void OnRenderMarkdownChanged()
-		{
 		}
 
 		protected override void Dispose(bool disposing)

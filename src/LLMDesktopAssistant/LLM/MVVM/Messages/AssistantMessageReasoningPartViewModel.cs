@@ -11,6 +11,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		private readonly AssistantMessage _assistantMessage;
 		private DispatcherOperation? _currentUpdateOperation;
 
+		public AssistantMessageViewModel Owner { get; }
+
 		private string _reasoningText = string.Empty;
 		public string ReasoningText
 		{
@@ -25,21 +27,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _completed, value);
 		}
 
-		private bool _renderMarkdown = true;
-		/// <summary>
-		/// Gets or sets a value indicating whether the reasoning is rendered as Markdown
-		/// (otherwise it is rendered as plaintext).
-		/// </summary>
-		public bool RenderMarkdown
+		public AssistantMessageReasoningPartViewModel(AssistantMessageViewModel owner)
 		{
-			get => _renderMarkdown;
-			set => SetProperty(ref _renderMarkdown, value);
-		}
-
-		public AssistantMessageReasoningPartViewModel(AssistantMessage message)
-		{
-			_assistantMessage = message;
-
+			Owner = owner;
+			_assistantMessage = Owner.AssistantMessage;
 			_assistantMessage.ToolCalls.CollectionChanged += ToolCallsChanged;
 			_assistantMessage.PropertyChanged += PropertyChangedHandler;
 			ReasoningText = _assistantMessage.ReasoningContent ?? string.Empty;

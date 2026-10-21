@@ -10,6 +10,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		private readonly AssistantMessage _assistantMessage;
 		private DispatcherOperation? _currentUpdateOperation;
 
+		public AssistantMessageViewModel Owner { get; }
+
 		private string _text = string.Empty;
 		public string Text
 		{
@@ -25,20 +27,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		}
 		public bool NotCompleted => !_completed;
 
-		private bool _renderMarkdown = true;
-		/// <summary>
-		/// Gets or sets a value indicating whether the text is rendered as Markdown
-		/// (otherwise it is rendered as plaintext).
-		/// </summary>
-		public bool RenderMarkdown
+		public AssistantMessageTextPartViewModel(AssistantMessageViewModel owner)
 		{
-			get => _renderMarkdown;
-			set => SetProperty(ref _renderMarkdown, value);
-		}
-
-		public AssistantMessageTextPartViewModel(AssistantMessage message)
-		{
-			_assistantMessage = message;
+			Owner = owner;
+			_assistantMessage = Owner.AssistantMessage;
 			_assistantMessage.PropertyChanged += PropertyChangedHandler;
 			Text = _assistantMessage.Content ?? string.Empty;
 			UpdateVisibility();

@@ -70,17 +70,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				ShowAvatar = true;
 			}
 
-			ReasoningPart = new AssistantMessageReasoningPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
-			TextPart = new AssistantMessageTextPartViewModel(assistantMessage) { RenderMarkdown = RenderMarkdown };
+			ReasoningPart = new AssistantMessageReasoningPartViewModel(this);
+			TextPart = new AssistantMessageTextPartViewModel(this);
 			Extensions = MessageExtensionManager.CreateExtensions(this, chatVM.Chat);
 
 			SubscribeToAssistantMessageEvents();
-		}
-
-		protected override void OnRenderMarkdownChanged()
-		{
-			ReasoningPart.RenderMarkdown = RenderMarkdown;
-			TextPart.RenderMarkdown = RenderMarkdown;
 		}
 
 		private void SubscribeToAssistantMessageEvents()

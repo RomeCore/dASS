@@ -155,7 +155,8 @@
 
 		<!-- Content -->
 		<ctrl:MarkdownControl MarkdownText="{Binding ReasoningText}"
-													UsePlaintext="{Binding !RenderMarkdown}"
+													UsePlaintext="{Binding !Owner.RenderMarkdown}"
+													ImageBasePath="{Binding Owner.WorkingDirectorySnapshot}"
 													AnimateBlocks="{Binding !Completed}"
 													Opacity="0.6"
 													Margin="0,0,0,8"/>

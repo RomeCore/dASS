@@ -42,7 +42,8 @@
 		<Border Classes="MessageBubble">
 
 			<ctrl:MarkdownControl MarkdownText="{Binding Text}"
-														UsePlaintext="{Binding !RenderMarkdown}"/>
+														UsePlaintext="{Binding !RenderMarkdown}"
+														ImageBasePath="{Binding WorkingDirectorySnapshot}"/>
 
 		</Border>
 

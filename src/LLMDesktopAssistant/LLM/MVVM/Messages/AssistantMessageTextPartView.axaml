@@ -11,7 +11,8 @@
 			 x:DataType="local:AssistantMessageTextPartViewModel">
 
 	<ctrl:MarkdownControl MarkdownText="{Binding Text}"
-											  UsePlaintext="{Binding !RenderMarkdown}"
+											  UsePlaintext="{Binding !Owner.RenderMarkdown}"
+												ImageBasePath="{Binding Owner.WorkingDirectorySnapshot}"
 											  AnimateBlocks="{Binding !Completed}"
 											  IsVisible="{Binding IsVisible}"
 											  Margin="0,5"/>
