@@ -18,19 +18,15 @@ public partial class MarkdownControl : UserControl
 		AvaloniaProperty.Register<MarkdownControl, string>(
 			nameof(MarkdownText));
 
-	public static readonly StyledProperty<bool> UsePlaintextProperty =
-		AvaloniaProperty.Register<MarkdownControl, bool>(
-			nameof(UsePlaintext));
-
-	public static readonly StyledProperty<Func<Uri, bool>?> OpenLinkProperty =
-		AvaloniaProperty.Register<MarkdownControl, Func<Uri, bool>?>(
-			nameof(OpenLink));
-
 	public string MarkdownText
 	{
 		get => GetValue(MarkdownTextProperty);
 		set => SetValue(MarkdownTextProperty, value);
 	}
+
+	public static readonly StyledProperty<bool> UsePlaintextProperty =
+		AvaloniaProperty.Register<MarkdownControl, bool>(
+			nameof(UsePlaintext));
 
 	public bool UsePlaintext
 	{
@@ -38,10 +34,24 @@ public partial class MarkdownControl : UserControl
 		set => SetValue(UsePlaintextProperty, value);
 	}
 
+	public static readonly StyledProperty<Func<Uri, bool>?> OpenLinkProperty =
+		AvaloniaProperty.Register<MarkdownControl, Func<Uri, bool>?>(
+			nameof(OpenLink));
+
 	public Func<Uri, bool>? OpenLink
 	{
 		get => GetValue(OpenLinkProperty);
 		set => SetValue(OpenLinkProperty, value);
+	}
+
+	public static readonly StyledProperty<string> ImageBasePathProperty =
+		AvaloniaProperty.Register<MarkdownControl, string>(
+			nameof(ImageBasePath));
+
+	public string ImageBasePath
+	{
+		get => GetValue(ImageBasePathProperty);
+		set => SetValue(ImageBasePathProperty, value);
 	}
 
 	public static readonly StyledProperty<bool> AnimateBlocksProperty =
@@ -58,24 +68,11 @@ public partial class MarkdownControl : UserControl
 		set => SetValue(AnimateBlocksProperty, value);
 	}
 
-	public static readonly StyledProperty<bool> ShowCaretProperty =
-		AvaloniaProperty.Register<MarkdownControl, bool>(
-			nameof(ShowCaret));
-
-	/// <summary>
-	/// Gets or sets a value indicating whether a blinking caret is shown at the end of the last
-	/// rendered Markdown block. Intended to be enabled while a message is streaming.
-	/// </summary>
-	public bool ShowCaret
-	{
-		get => GetValue(ShowCaretProperty);
-		set => SetValue(ShowCaretProperty, value);
-	}
-
 	static MarkdownControl()
 	{
 		MarkdownTextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(e.NewValue as string, o.UsePlaintext));
 		UsePlaintextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(o.MarkdownText, (bool)e.NewValue!));
+		ImageBasePathProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownRenderer.ImageBasePath = e.GetNewValue<string?>());
 	}
 
 	private readonly ObservableStringBuilder _markdownBuilder = new();

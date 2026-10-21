@@ -19,7 +19,6 @@ using Material.Icons;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Metadata;
-using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
 using Serilog;
 using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
