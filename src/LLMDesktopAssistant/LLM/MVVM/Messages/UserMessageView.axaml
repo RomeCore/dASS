@@ -44,7 +44,8 @@
 			<ctrl:MarkdownControl MarkdownText="{Binding Text}"
 														UsePlaintext="{Binding !RenderMarkdown}"
 														ImageBasePath="{Binding WorkingDirectorySnapshot}"
-														SelectionProcessorsProvider="{Binding SelectionProcessorsProvider}"/>
+														SelectionProcessorsProvider="{Binding SelectionProcessorsProvider}"
+														Owner="{Binding UserMessage}"/>
 
 		</Border>
 

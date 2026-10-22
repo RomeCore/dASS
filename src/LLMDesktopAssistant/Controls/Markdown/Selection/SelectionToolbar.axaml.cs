@@ -32,13 +32,39 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 	/// </remarks>
 	public partial class SelectionToolbar : UserControl
 	{
-		/// <summary>Defines the <see cref="Renderer"/> property.</summary>
 		public static readonly StyledProperty<MarkdownRenderer?> RendererProperty =
 			AvaloniaProperty.Register<SelectionToolbar, MarkdownRenderer?>(nameof(Renderer));
 
-		/// <summary>Defines the <see cref="ProcessorsProvider"/> property.</summary>
-		public static readonly StyledProperty<IMarkdownSelectionProcessorsProvider?> ProcessorsProviderProperty =
-			AvaloniaProperty.Register<SelectionToolbar, IMarkdownSelectionProcessorsProvider?>(nameof(ProcessorsProvider));
+		/// <summary>
+		/// Gets or sets the renderer whose selection this toolbar serves.
+		/// </summary>
+		public MarkdownRenderer? Renderer
+		{
+			get => GetValue(RendererProperty);
+			set => SetValue(RendererProperty, value);
+		}
+
+		public static readonly StyledProperty<IMarkdownSelectionProcessorsProvider?> SelectionProcessorsProviderProperty =
+			MarkdownControl.SelectionProcessorsProviderProperty.AddOwner<SelectionToolbar>();
+
+		/// <summary>
+		/// Gets or sets the provider of the actions offered for a selection. A <see langword="null"/> provider
+		/// disables the toolbar entirely.
+		/// </summary>
+		public IMarkdownSelectionProcessorsProvider? SelectionProcessorsProvider
+		{
+			get => GetValue(SelectionProcessorsProviderProperty);
+			set => SetValue(SelectionProcessorsProviderProperty, value);
+		}
+
+		public static readonly StyledProperty<object?> OwnerProperty =
+			MarkdownControl.OwnerProperty.AddOwner<SelectionToolbar>();
+
+		public object? Owner
+		{
+			get => GetValue(OwnerProperty);
+			set => SetValue(OwnerProperty, value);
+		}
 
 		private readonly SelectionToolbarViewModel _viewModel = new();
 
@@ -59,25 +85,6 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 			DataContext = _viewModel;
 			_viewModel.ProcessCommand = new AsyncRelayCommand<IMarkdownSelectionProcessor>(ExecuteAsync);
 			ToolbarPopup.Closed += OnPopupClosed;
-		}
-
-		/// <summary>
-		/// Gets or sets the renderer whose selection this toolbar serves.
-		/// </summary>
-		public MarkdownRenderer? Renderer
-		{
-			get => GetValue(RendererProperty);
-			set => SetValue(RendererProperty, value);
-		}
-
-		/// <summary>
-		/// Gets or sets the provider of the actions offered for a selection. A <see langword="null"/> provider
-		/// disables the toolbar entirely.
-		/// </summary>
-		public IMarkdownSelectionProcessorsProvider? ProcessorsProvider
-		{
-			get => GetValue(ProcessorsProviderProperty);
-			set => SetValue(ProcessorsProviderProperty, value);
 		}
 
 		/// <summary>
@@ -198,10 +205,10 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 			if (ToolbarPopup.IsOpen)
 				return;
 
-			if (Renderer is not { } renderer || ProcessorsProvider is not { } provider)
+			if (Renderer is not { } renderer || SelectionProcessorsProvider is not { } provider)
 				return;
 
-			if (CreateContext(renderer) is not { } context)
+			if (CreateContext(renderer, Owner) is not { } context)
 				return;
 
 			if (!_viewModel.Populate(context, provider))
@@ -267,7 +274,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 		/// Snapshots the selection of every visible block of the renderer. Blocks are visited in document order,
 		/// which is the order the renderer joins them in for the clipboard as well.
 		/// </summary>
-		private static MarkdownSelectionContext? CreateContext(MarkdownRenderer renderer)
+		private static MarkdownSelectionContext? CreateContext(MarkdownRenderer renderer, object? owner)
 		{
 			var ranges = new List<MarkdownSelectedRange>();
 
@@ -296,6 +303,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 				Text = text,
 				Ranges = ranges,
 				Renderer = renderer,
+				MarkdownOwner = owner
 			};
 		}
 

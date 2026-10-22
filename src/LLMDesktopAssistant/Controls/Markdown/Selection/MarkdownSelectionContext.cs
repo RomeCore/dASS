@@ -3,14 +3,6 @@ using LiveMarkdown.Avalonia;
 namespace LLMDesktopAssistant.Controls.Markdown.Selection
 {
 	/// <summary>
-	/// One selected range inside a single markdown text block. <see cref="Start"/> and <see cref="Length"/> are
-	/// UTF-16 offsets local to the block's layout text (the same coordinates the library's
-	/// <c>GetTextRangeBoundsInControl</c> and text search use), and <see cref="Text"/> is the selected text
-	/// of that block as the user sees it.
-	/// </summary>
-	public readonly record struct MarkdownSelectedRange(MarkdownTextBlock Block, int Start, int Length, string Text);
-
-	/// <summary>
 	/// An immutable snapshot of the text the user selected inside one <see cref="MarkdownRenderer"/>.
 	/// </summary>
 	/// <remarks>
@@ -35,5 +27,10 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 		/// Gets the renderer the selection belongs to (its top level hosts the clipboard and the popup).
 		/// </summary>
 		public required MarkdownRenderer Renderer { get; init; }
+
+		/// <summary>
+		/// Gets the target meta-object that owns the markdown content. This can be a message, a tool call, etc.
+		/// </summary>
+		public required object? MarkdownOwner { get; init; }
 	}
 }

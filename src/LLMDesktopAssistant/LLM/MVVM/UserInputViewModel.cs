@@ -188,7 +188,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		}
 
 		private string _editText = string.Empty;
-
 		/// <summary>
 		/// Gets or sets the text shown in the input.
 		/// While editing it is the edited message content (in memory); otherwise it is the persisted draft text.

@@ -159,6 +159,7 @@
 													ImageBasePath="{Binding Owner.WorkingDirectorySnapshot}"
 													AnimateBlocks="{Binding !Completed}"
 													SelectionProcessorsProvider="{Binding Owner.SelectionProcessorsProvider}"
+													Owner="{Binding Owner.AssistantMessage}"
 													Opacity="0.6"
 													Margin="0,0,0,8"/>
 

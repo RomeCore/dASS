@@ -16,6 +16,7 @@
 												AnimateBlocks="{Binding !Completed}"
 												IsVisible="{Binding IsVisible}"
 												SelectionProcessorsProvider="{Binding Owner.SelectionProcessorsProvider}"
+												Owner="{Binding Owner.AssistantMessage}"
 												Margin="0,5"/>
 
 </UserControl>

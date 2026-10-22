@@ -135,6 +135,7 @@
 																	UsePlaintext="{Binding !UseMarkdown}"
 																	AnimateBlocks="{Binding Parent.InProgress}"
 																	SelectionProcessorsProvider="{Binding Parent.SelectionProcessorsProvider}"
+																	Owner="{Binding Parent.ToolCall}"
 																	Background="Transparent"/>
 
 					</StackPanel>

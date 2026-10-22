@@ -61,7 +61,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public ToolCallFlyoutViewModel Flyout => _flyout ??= new ToolCallFlyoutViewModel(this);
 
 		private IMarkdownSelectionProcessorsProvider? _selectionProcessorsProvider;
-
 		/// <summary>
 		/// Gets the actions the markdown selection toolbar offers for this tool call's content.
 		/// </summary>

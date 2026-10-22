@@ -74,7 +74,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public ChatViewModel ChatViewModel { get; }
 
 		private IMarkdownSelectionProcessorsProvider? _selectionProcessorsProvider;
-
 		/// <summary>
 		/// Gets the actions the message's markdown selection toolbar offers: copying the selection and quoting it
 		/// into this chat's input as a quote part.
@@ -83,7 +82,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			_selectionProcessorsProvider ??= new CompositeSelectionProcessorsProvider(
 				MarkdownSelectionProcessorProviders.Resolve(ChatViewModel.Chat.Services, MarkdownSelectionProcessorScope.Message),
 				new MarkdownSelectionProcessorsProvider(
-					new QuoteSelectionProcessor(ChatViewModel.ChatBottomPanel.UserInput, () => Message)));
+					new QuoteSelectionProcessor(ChatViewModel.ChatBottomPanel.UserInput)));
 
 		/// <summary>
 		/// The tool-call list part of the message. Always created; visibility is managed internally.
