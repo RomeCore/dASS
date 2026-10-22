@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 	/// <c>generate</c> and <c>argument-schema</c>.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<SlashCommandInfo>))]
-	public class SlashCommandParser : FrontmatterBasedAddonParser<SlashCommandInfo>
+	public class SlashCommandParser : FrontmatterBasedAddonParser<SlashCommandInfo, SlashCommandChange>
 	{
 		private static readonly StringComparer _extensionComparer =
 			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
@@ -55,9 +55,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 			{
 				FrontmatterStart = descriptor.FrontmatterStart,
 				FrontmatterEnd = descriptor.FrontmatterEnd,
-				// A command is useless without its body and metadata.
 				RequiresFrontmatter = true,
-				// The body is code, not markdown.
 				UseMarkdownFallback = false
 			};
 		}
@@ -65,6 +63,8 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		/// <inheritdoc/>
 		protected override void Populate(SlashCommandInfo addon, AddonFrontmatterDocument frontmatter, ref AddonDiagnostic? diagnostic)
 		{
+			base.Populate(addon, frontmatter, ref diagnostic);
+
 			var engine = GetEngine(addon.Path ?? throw new InvalidOperationException("The command path is not set."));
 
 			// Namespaces are custom qualifiers; the only one filled in for the author is the source pack.
