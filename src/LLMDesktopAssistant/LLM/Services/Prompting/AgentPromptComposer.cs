@@ -2,10 +2,8 @@ using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
-using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Hooks;
 using LLMDesktopAssistant.Tools.Execution.Support;
@@ -101,8 +99,19 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			// SCM stamps: walk up beyond effective message history (but including one effective message)
 			// to find the most recent stamp of each type.
 			Dictionary<string, (int MsgId, int Order, PromptSupersedeStampBase Stamp)>? seenStamps = [];
+			int indexOfFirstSenderMessage = effectiveContext.EffectiveMessagesStartIndex;
+			for (int i = 0; i < effectiveContext.Messages.Count; i++)
+			{
+				var branchedMessage = effectiveContext.Messages[i].BranchedMessage;
+				if (branchedMessage.Message is Domain.AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
+				{
+					indexOfFirstSenderMessage = branchedMessage.MessageIndex;
+					break;
+				}
+			}
+
 			// Clamp the start: an empty chat reports a start index of 0 with no messages behind it.
-			for (int i = Math.Min(effectiveContext.EffectiveMessagesStartIndex, chat.Messages.Count - 1); i >= 0; i--)
+			for (int i = Math.Min(indexOfFirstSenderMessage, chat.Messages.Count - 1); i >= 0; i--)
 			{
 				var branchedMessage = chat.Messages[i];
 
@@ -135,7 +144,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 				IEnumerable<IMessage> messages;
 				bool isPendingAssistant = false;
-				if (branchedMessage.Message is Domain.AssistantMessage assistantMessage && !assistantMessage.IsCompleted)
+				if (branchedMessage.Message is Domain.AssistantMessage _assistantMessage && !_assistantMessage.IsCompleted)
 				{
 					isPendingAssistant = true;
 					messages = [];
@@ -152,7 +161,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						messages = editedMessages;
 				}
 
-				if (branchedMessage.Message is Domain.AssistantMessage)
+				if (branchedMessage.Message is Domain.AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
 				{
 					var systemReminderSb = new StringBuilder();
 					systemReminderSb.Append($"<{systemReminderTag}>").Append('\n');
@@ -187,8 +196,11 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							.OrderBy(s => s.MsgId)
 							.ThenBy(s => s.Order))
 						{
-							systemReminderSb.Append(stamp.Snapshot).Append('\n');
-							dataCounter++;
+							if (!string.IsNullOrWhiteSpace(stamp.Snapshot))
+							{
+								systemReminderSb.Append(stamp.Snapshot).Append('\n');
+								dataCounter++;
+							}
 						}
 						seenStamps = null;
 					}
@@ -196,8 +208,11 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					{
 						foreach (var stamp in stamps.Stamps)
 						{
-							systemReminderSb.Append(stamp.Snapshot).Append('\n');
-							dataCounter++;
+							if (!string.IsNullOrWhiteSpace(stamp.Snapshot))
+							{
+								systemReminderSb.Append(stamp.Snapshot).Append('\n');
+								dataCounter++;
+							}
 						}
 					}
 
