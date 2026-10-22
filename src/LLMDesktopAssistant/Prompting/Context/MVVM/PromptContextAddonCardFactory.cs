@@ -31,9 +31,19 @@ namespace LLMDesktopAssistant.Prompting.Context.MVVM
 		protected override void AddTypeChips(AddonCardContext<PromptContextInfo, PromptContextChange> context,
 			List<IAddonCardElement> elements, int order)
 		{
+			// What produces the text and where it lands: anchored into the frozen header, the current request
+			// only, or a persisted stamp.
 			elements.Add(new AddonCardChip
 			{
 				Order = order,
+				Label = Locale.GetKey($"prompt.context.kind.{context.Addon.Kind.ToString().ToLowerInvariant()}"),
+				ToolTip = Locale.GetKey("prompt.context.kind.hint")
+			});
+
+			// How often the content itself changes - orthogonal to the kind.
+			elements.Add(new AddonCardChip
+			{
+				Order = order + 1,
 				Label = Locale.GetKey($"prompt.context.variability.{context.Addon.Variability.ToString().ToLowerInvariant()}"),
 				ToolTip = Locale.GetKey("prompt.context.variability.hint")
 			});

@@ -26,3 +26,7 @@ variability.rare: Rare
 variability.frequent: Frequent
 variability.perrequest: Per request
 variability.hint: How often the content of this prompt context changes.
+kind.anchored: Anchored
+kind.livetail: Live tail
+kind.supersede: Supersede
+kind.hint: Where the text of this prompt context lands: the frozen system prompt header, the current request only, or a persisted stamp.

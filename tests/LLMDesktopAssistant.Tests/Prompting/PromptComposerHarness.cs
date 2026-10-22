@@ -97,8 +97,8 @@ internal sealed class PromptComposerHarness
 
 	private sealed class FakeLiveTailProvider(string text) : IPromptLiveTailContextProvider
 	{
-		public Task<string> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default)
-			=> Task.FromResult(text);
+		public Task<string?> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default)
+			=> Task.FromResult<string?>(text);
 	}
 
 	private sealed class FakeSupersedeProvider(string discriminator, string text) : IPromptSupersedeContextProvider

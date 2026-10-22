@@ -26,3 +26,7 @@ variability.rare: Редко
 variability.frequent: Часто
 variability.perrequest: Каждый запрос
 variability.hint: Как часто меняется содержимое этого промпт-контекста.
+kind.anchored: Anchored
+kind.livetail: Live tail
+kind.supersede: Supersede
+kind.hint: Куда попадает текст этого промпт-контекста: в замороженный системный промпт, только в текущий запрос или в сохраняемый штамп.

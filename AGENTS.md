@@ -120,7 +120,7 @@ A pack is a directory scanned for one folder per kind:
 | `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`, `.csx`) |
 | `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
 | `Template` | `templates/` | LLT template extensions |
-| `PromptContext` | `context/` | extensions not implemented yet |
+| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`), `.csx`, `.py` - one script per context; the extension picks the engine |
 | `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder format; the extension picks the scripting engine (`.lua`/`.alua`, `.csx`, `.py` - Python only in the Desktop build) |
 
 Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`. `AddonPackSearchFoldersProvider` also scans other agent runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, `.windsurf`, `.opencode`, `.cline`, `.roocode`, `.lmstudio`, `.junie`, `.everywhere`, ...), so third-party skills and sub-agents are picked up as-is - expect addons you did not create.
@@ -178,6 +178,19 @@ In `Hybrid` a live anchor pins rendered bytes and section states to a message; o
 A *section* is one tracked unit of prompt state (identity, system slot, system reminder, tools, skills, sub-agents, memory blocks), implemented as a `state provider + state renderer + delta provider + delta renderer` quartet under `Prompting/Context/Providers/<Name>/`. Addon-backed sections share `AddonSectionDeltaEngine`: a new item is announced in full, an unchanged one by name, a changed one field-by-field, and hiding an item is silent.
 
 Checkpoints are `ContextCheckpoint` carrying the `[Flags]` kind `ContextCheckpointKind` (`Shield`, `Summary`, `ToolCompaction`, `ForcedToolCompaction`, `ReasoningCompaction`). `AgentContextSettings` carries `PromptMode`, `MaxVisibleRounds`, `DisabledFlags`, `Snapshot` and `ContextSet`.
+
+### Scriptable prompt contexts
+
+A prompt context addon can be a **script** instead of native code: `context/<name>.lua|.alua|.csx|.py` with YAML frontmatter (`--[[ ]]`, `/* */`, `"""` respectively - the engine's descriptor owns the markers). Native sections are `anchored` (the enum default); a script is `kind:` `live-tail` (the default) or `supersede`:
+
+| Kind | What the script receives | Where its text lands |
+|---|---|---|
+| `live-tail` | — | the current request only (`<system-reminder>` next to the pending assistant) |
+| `supersede` | `previous` = the previously injected rendered text | a persisted stamp, re-injected when the old one goes stale |
+
+The contract is one line: the script's stdout is the context text (the C# script's return value instead, it has no captured stdout), an empty/whitespace result means "no context", and the engine never compares anything - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a digit-leading name gets an `_` prefix). `timeout:` in frontmatter, default 2000 ms, ceiling 10 s; a timeout or an error is a warning in the log and an absent section - never a broken request. Scripts get no chat API and no UI: they are prompt content, not actions, and are hidden from `addon-search`.
+
+Engines are a third family next to tool and slash-command engines: `IScriptablePromptContextEngine` + `...Descriptor` (`Language`, `Extensions`, `FrontmatterStart/End`) and `Task<string> RunAsync(services, body, previous, ct)`; `PromptContextFileLocator` takes its `Extensions` from them and `PromptContextParser` picks the engine by extension. `LiveTailScriptContext` / `SupersedeScriptContext` are the providers; they resolve chat services from `EffectiveChatContext.Services` (the parsed addon is cached app-wide, so it must not capture them). Discriminators are `script:<name>`, so a script can never shadow a native section.
 
 ## Dependency Injection
 

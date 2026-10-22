@@ -17,6 +17,6 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <param name="context">The chat context to provide the live-tail context for.</param>
 		/// <param name="cancellationToken">The cancellation token that aborts the provider (for example, a script timeout).</param>
 		/// <returns>The live-tail context for the given chat context.</returns>
-		Task<string> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default);
+		Task<string?> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default);
 	}
 }

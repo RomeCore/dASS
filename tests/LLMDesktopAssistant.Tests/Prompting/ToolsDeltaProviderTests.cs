@@ -25,6 +25,8 @@ public class ToolsDeltaProviderTests
 
 	private static EffectiveChatContext CreateContext() => new()
 	{
+		Chat = PromptingTestHelpers.CreateChat(),
+		Services = new EmptyServiceProvider(),
 		Agent = new ChatAgentDescriptor(),
 		Messages = [],
 		Checkpoints = [],

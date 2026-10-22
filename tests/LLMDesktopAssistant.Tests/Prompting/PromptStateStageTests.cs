@@ -31,8 +31,12 @@ public class PromptStateStageTests
 	/// Creates an effective context of the given messages with no cuts and no checkpoints.
 	/// </summary>
 	private static EffectiveChatContext CreateEffectiveContext(params BranchedMessage[] messages)
-		=> new()
+	{
+		var chat = PromptingTestHelpers.CreateChat(messages);
+		return new EffectiveChatContext
 		{
+			Chat = chat,
+			Services = chat.Services,
 			Agent = new ChatAgentDescriptor(),
 			Messages = [.. messages.Select(ToEffective)],
 			Checkpoints = [],
@@ -40,6 +44,7 @@ public class PromptStateStageTests
 			LastCutIndex = -1,
 			LastCheckpointIndex = -1,
 		};
+	}
 
 	private static EffectiveMessage ToEffective(BranchedMessage message)
 		=> new(message, MessagePartsFacet.All, ContextCheckpointKind.None, MessageAuthorIdentity.Default);
@@ -107,6 +112,8 @@ public class PromptStateStageTests
 		var cut = PromptingTestHelpers.AddCheckpoint(u0, ContextCheckpointKind.Shield);
 		var effectiveAfterCut = new EffectiveChatContext
 		{
+			Chat = chat,
+			Services = chat.Services,
 			Agent = new ChatAgentDescriptor(),
 			Messages = [.. new[] { u0, u1, pending }.Select(ToEffective)],
 			Checkpoints = [new EffectiveCheckpoint(cut, 0)],

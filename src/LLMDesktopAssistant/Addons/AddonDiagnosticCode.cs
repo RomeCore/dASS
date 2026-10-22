@@ -40,6 +40,11 @@ namespace LLMDesktopAssistant.Addons
 		/// <summary>
 		/// The addon's <c>argument-hint</c> starts with an argument but could not be parsed.
 		/// </summary>
-		InvalidArgumentHint = 1UL << 12
+		InvalidArgumentHint = 1UL << 12,
+
+		/// <summary>
+		/// The addon's <c>kind</c> has invalid value.
+		/// </summary>
+		InvalidKind = 1UL << 13,
 	}
 }

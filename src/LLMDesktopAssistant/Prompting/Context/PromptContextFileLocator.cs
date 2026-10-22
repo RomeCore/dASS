@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons.Loading;
+using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Services;
 
 namespace LLMDesktopAssistant.Prompting.Context
@@ -9,9 +10,14 @@ namespace LLMDesktopAssistant.Prompting.Context
 	[Service(typeof(IAddonFileLocator<PromptContextInfo>))]
 	public class PromptContextFileLocator : AddonFileLocatorBase<PromptContextInfo>
 	{
+		private readonly IScriptablePromptContextEngine[] _engines;
+
+		public PromptContextFileLocator(IEnumerable<IScriptablePromptContextEngine> engines) => _engines = [.. engines];
+
 		public override string[] Folders => ["context"];
 
-		public override string[] Extensions => []; // TODO: Implement
+		public override string[] Extensions =>
+			field ??= [.. _engines.SelectMany(e => e.Descriptor.Extensions).Distinct()];
 
 		public override bool AllowShortFormat => true;
 

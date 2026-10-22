@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Prompting.Context
@@ -22,6 +23,26 @@ namespace LLMDesktopAssistant.Prompting.Context
 			get;
 			set => SetProperty(ref field, value);
 		} = null!;
+
+		/// <summary>
+		/// The kind of the scriptable provider: how the script is executed and where its text lands.
+		/// </summary>
+		public PromptContextProviderKind Kind => Provider switch
+		{
+			IPromptAnchoredSectionProvider => PromptContextProviderKind.Anchored,
+			IPromptSupersedeContextProvider => PromptContextProviderKind.Supersede,
+			IPromptLiveTailContextProvider => PromptContextProviderKind.LiveTail,
+			_ => PromptContextProviderKind.Unknown
+		};
+
+		/// <summary>
+		/// The timeout of a scriptable provider, in milliseconds.
+		/// </summary>
+		public int TimeoutMs
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = ScriptPromptContextHelper.DefaultTimeoutMs;
 
 		protected override void ValidatePropertiesCore(AppendOnlyList<string> errors)
 		{
