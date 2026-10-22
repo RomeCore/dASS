@@ -248,7 +248,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					Cycle = cycle
 				}, token);
 
-				var promptBundle = promptComposer.Build(agent);
+				var promptBundle = await promptComposer.BuildAsync(agent, token);
 				var inputMessages = promptBundle.Messages;
 				var toolset = promptBundle.Tools;
 

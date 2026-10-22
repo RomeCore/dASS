@@ -16,7 +16,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Skills
 		) : IPromptSectionStateProvider<SkillsSectionState>
 	{
 		/// <inheritdoc/>
-		public SkillsSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<SkillsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var items = new List<SkillItem>();
 			var hiddenNames = new List<string>();
@@ -42,11 +43,11 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Skills
 				}
 			}
 
-			return new SkillsSectionState
+			return Task.FromResult<SkillsSectionState?>(new SkillsSectionState
 			{
 				Items = [.. items.OrderBy(s => s.Name, StringComparer.Ordinal)],
 				HiddenNames = [.. hiddenNames.OrderBy(n => n, StringComparer.Ordinal)]
-			};
+			});
 		}
 	}
 }

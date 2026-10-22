@@ -15,7 +15,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 		IToolsetCacheService toolsetCache) : IPromptSectionStateProvider<ToolsSectionState>
 	{
 		/// <inheritdoc/>
-		public ToolsSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<ToolsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var items = new List<ToolItem>();
 			var hiddenNames = new List<string>();
@@ -42,11 +43,11 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 				}
 			}
 
-			return new ToolsSectionState
+			return Task.FromResult<ToolsSectionState?>(new ToolsSectionState
 			{
 				Items = [.. items.OrderBy(t => t.Name, StringComparer.Ordinal)],
 				HiddenNames = [.. hiddenNames.OrderBy(n => n, StringComparer.Ordinal)]
-			};
+			});
 		}
 	}
 }

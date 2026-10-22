@@ -32,14 +32,15 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// The discriminator of the section is stamped onto the captured state, so that the state
 		/// can be matched back to its section later (header rendering and anchor rebaselining).
 		/// </summary>
-		public static IReadOnlyList<PromptSectionStateBase> CaptureStates(this IEnumerable<IPromptAnchoredSectionProvider> sections,
-			ChatAgentDescriptor agent)
+		public static async Task<IReadOnlyList<PromptSectionStateBase>> CaptureStatesAsync(
+			this IEnumerable<IPromptAnchoredSectionProvider> sections, ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			List<PromptSectionStateBase> result = [];
 
 			foreach (var section in sections)
 			{
-				var state = section.CaptureState(agent);
+				var state = await section.CaptureStateAsync(agent, cancellationToken);
 				if (state == null)
 					continue;
 
@@ -90,8 +91,9 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <summary>
 		/// Captures and renders the merged system prompt header for the given agent.
 		/// </summary>
-		public static SystemPromptSnapshot RenderHeader(this IEnumerable<IPromptAnchoredSectionProvider> sections,
-			ChatAgentDescriptor agent)
-			=> sections.RenderHeader(sections.CaptureStates(agent));
+		public static async Task<SystemPromptSnapshot> RenderHeaderAsync(
+			this IEnumerable<IPromptAnchoredSectionProvider> sections, ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
+			=> sections.RenderHeader(await sections.CaptureStatesAsync(agent, cancellationToken));
 	}
 }

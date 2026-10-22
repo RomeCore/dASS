@@ -12,7 +12,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.MemoryBlocks
 		) : IPromptSectionStateProvider<MemoryBlocksSectionState>
 	{
 		/// <inheritdoc/>
-		public MemoryBlocksSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<MemoryBlocksSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var options = chatSettings.Settings.Memory.GetEffectiveMemoryOptions();
 			var items = options.EnableMemory && options.ManualControlEnabled && agent.Memory.EnableMemory
@@ -29,10 +30,10 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.MemoryBlocks
 					.ToList()
 				: [];
 
-			return new MemoryBlocksSectionState
+			return Task.FromResult<MemoryBlocksSectionState?>(new MemoryBlocksSectionState
 			{
 				Items = [.. items.OrderBy(b => b.Name, StringComparer.Ordinal)]
-			};
+			});
 		}
 	}
 }

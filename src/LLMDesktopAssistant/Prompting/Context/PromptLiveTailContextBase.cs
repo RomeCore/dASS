@@ -3,12 +3,12 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 namespace LLMDesktopAssistant.Prompting.Context
 {
 	/// <summary>
-	/// Base class for live-tail contexts: delegates all work to the two typed services:
-	/// state provider and state renderer.
+	/// Base class for live-tail contexts.
 	/// </summary>
 	public abstract class PromptLiveTailContextBase : IPromptLiveTailContextProvider
 	{
 		/// <inheritdoc/>
-		public abstract string Provide(EffectiveChatContext context);
+		public abstract Task<string> ProvideAsync(EffectiveChatContext context,
+			CancellationToken cancellationToken = default);
 	}
 }

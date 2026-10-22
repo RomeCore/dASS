@@ -16,16 +16,19 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Reminder
 
 		public string Discriminator => "system-reminder";
 
-		public PromptSectionStateBase? CaptureState(ChatAgentDescriptor agent)
+		public Task<PromptSectionStateBase?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			// Return the placeholder, because rendering not depends on data.
-			return new PromptSectionStateBase();
+			return Task.FromResult<PromptSectionStateBase?>(new PromptSectionStateBase());
 		}
 
-		public PromptSectionDeltaBase? CalculateDelta(PromptSectionStateBase? anchorState, IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context)
+		public Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			CancellationToken cancellationToken = default)
 		{
 			// No deltas, just the anchor.
-			return null;
+			return Task.FromResult<PromptSectionDeltaBase?>(null);
 		}
 
 		public SystemPromptSnapshot RenderState(PromptSectionStateBase state)

@@ -1,4 +1,4 @@
-﻿using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting.ContextExpanders;
 using LLMDesktopAssistant.Prompting.Management;
@@ -15,8 +15,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 	) : IPromptSectionDeltaProvider<IdentitySectionState, IdentitySectionDelta>
 	{
 		/// <inheritdoc/>
-		public IdentitySectionDelta? CalculateDelta(IdentitySectionState? anchorState,
-			IEnumerable<IdentitySectionDelta> existingDeltas, EffectiveChatContext context)
+		public async Task<IdentitySectionDelta?> CalculateDeltaAsync(IdentitySectionState? anchorState,
+			IEnumerable<IdentitySectionDelta> existingDeltas, EffectiveChatContext context,
+			CancellationToken cancellationToken = default)
 		{
 			string? currentPersona = anchorState?.Persona;
 			string? currentSpecialization = anchorState?.Specialization;
@@ -32,7 +33,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 					currentNickname = delta.NewAssistantNickname;
 			}
 
-			var currentState = stateProvider.CaptureState(context.Agent);
+			var currentState = await stateProvider.CaptureStateAsync(context.Agent, cancellationToken);
 
 			bool personaChanged = currentState?.Persona != currentPersona;
 			bool specializationChanged = currentState?.Specialization != currentSpecialization;

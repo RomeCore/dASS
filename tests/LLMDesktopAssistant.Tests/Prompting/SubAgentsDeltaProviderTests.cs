@@ -16,7 +16,7 @@ public class SubAgentsDeltaProviderTests
 	{
 		public SubAgentsSectionState? State { get; init; }
 
-		public SubAgentsSectionState? CaptureState(ChatAgentDescriptor agent) => State;
+		public Task<SubAgentsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent, CancellationToken cancellationToken = default) => Task.FromResult(State);
 	}
 
 	private static SubAgentsDeltaProvider CreateProvider(SubAgentsSectionState? state)
@@ -42,21 +42,21 @@ public class SubAgentsDeltaProviderTests
 		=> new() { Items = [.. subAgents] };
 
 	[Fact]
-	public void NothingChanged_ReturnsNull()
+	public async Task NothingChanged_ReturnsNull()
 	{
 		var provider = CreateProvider(State(SubAgent("web-searcher")));
 
-		var delta = provider.CalculateDelta(State(SubAgent("web-searcher")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(SubAgent("web-searcher")), [], CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void ChangedDescription_IsReported()
+	public async Task ChangedDescription_IsReported()
 	{
 		var provider = CreateProvider(State(SubAgent("web-searcher", "new description")));
 
-		var delta = provider.CalculateDelta(State(SubAgent("web-searcher", "old description")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(SubAgent("web-searcher", "old description")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -65,11 +65,11 @@ public class SubAgentsDeltaProviderTests
 	}
 
 	[Fact]
-	public void NewSubAgent_CarriesFullDefinition()
+	public async Task NewSubAgent_CarriesFullDefinition()
 	{
 		var provider = CreateProvider(State(SubAgent("web-searcher")));
 
-		var delta = provider.CalculateDelta(null, [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(null, [], CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);

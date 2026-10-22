@@ -17,7 +17,7 @@ public class ToolsDeltaProviderTests
 	{
 		public ToolsSectionState? State { get; init; }
 
-		public ToolsSectionState? CaptureState(ChatAgentDescriptor agent) => State;
+		public Task<ToolsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent, CancellationToken cancellationToken = default) => Task.FromResult(State);
 	}
 
 	private static ToolsDeltaProvider CreateProvider(ToolsSectionState? state)
@@ -49,22 +49,22 @@ public class ToolsDeltaProviderTests
 		=> new() { Items = [.. tools], HiddenNames = [.. hidden] };
 
 	[Fact]
-	public void NothingChanged_ReturnsNull()
+	public async Task NothingChanged_ReturnsNull()
 	{
 		var tool = Tool("fs-edit");
 		var provider = CreateProvider(State(tool));
 
-		var delta = provider.CalculateDelta(State(tool), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(tool), [], CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void NewTool_CarriesFullDefinition()
+	public async Task NewTool_CarriesFullDefinition()
 	{
 		var provider = CreateProvider(State(Tool("fs-edit", "edits files", "{\"type\":\"object\"}")));
 
-		var delta = provider.CalculateDelta(null, [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(null, [], CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);
@@ -80,11 +80,11 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void DisabledTool_IsRemoved()
+	public async Task DisabledTool_IsRemoved()
 	{
 		var provider = CreateProvider(State());
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var removed = Assert.Single(delta!.RemovedItems);
@@ -95,7 +95,7 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void ReEnabledUnchangedTool_IsAnnouncedByNameOnly()
+	public async Task ReEnabledUnchangedTool_IsAnnouncedByNameOnly()
 	{
 		// The tool was seen at the anchor, disabled by an earlier delta and is now re-enabled unchanged.
 		var provider = CreateProvider(State(Tool("fs-edit")));
@@ -104,7 +104,7 @@ public class ToolsDeltaProviderTests
 			new ToolsSectionDelta { RemovedItems = [new AddonItemRemoval { Name = "fs-edit" }] }
 		};
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit")), existing, CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit")), existing, CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);
@@ -116,7 +116,7 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void ReEnabledChangedTool_CarriesFieldChangesOnly()
+	public async Task ReEnabledChangedTool_CarriesFieldChangesOnly()
 	{
 		// The tool was disabled and changed while it was away: only the changes are reported.
 		var provider = CreateProvider(State(Tool("fs-edit", "new description", "schema")));
@@ -125,7 +125,7 @@ public class ToolsDeltaProviderTests
 			new ToolsSectionDelta { RemovedItems = [new AddonItemRemoval { Name = "fs-edit" }] }
 		};
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit", "old description", "schema")), existing, CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit", "old description", "schema")), existing, CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);
@@ -139,11 +139,11 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void UpdatedTool_ReportsOnlyChangedFields()
+	public async Task UpdatedTool_ReportsOnlyChangedFields()
 	{
 		var provider = CreateProvider(State(Tool("fs-edit", "same description", "{\"new\":true}")));
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit", "same description", "{\"old\":true}")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit", "same description", "{\"old\":true}")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -159,11 +159,11 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void UpdatedTool_DescriptionOnlyChange()
+	public async Task UpdatedTool_DescriptionOnlyChange()
 	{
 		var provider = CreateProvider(State(Tool("fs-edit", "new description", "schema")));
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit", "old description", "schema")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit", "old description", "schema")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -174,7 +174,7 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void FoldedUpdate_SuppressesRepeatedDeltas()
+	public async Task FoldedUpdate_SuppressesRepeatedDeltas()
 	{
 		// The anchor has v1, an earlier delta updated it to v2 and the current state is still v2.
 		var provider = CreateProvider(State(Tool("fs-edit", "v2", "s2")));
@@ -199,17 +199,17 @@ public class ToolsDeltaProviderTests
 			}
 		};
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit", "v1", "s1")), existing, CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit", "v1", "s1")), existing, CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void HiddenToolAppearing_IsAnnouncedByNameOnly()
+	public async Task HiddenToolAppearing_IsAnnouncedByNameOnly()
 	{
 		var provider = CreateProvider(StateWithHidden(["mystery"], Tool("visible")));
 
-		var delta = provider.CalculateDelta(State(Tool("visible")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("visible")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);
@@ -220,22 +220,22 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void VisibleToolBecomingHidden_IsSilent()
+	public async Task VisibleToolBecomingHidden_IsSilent()
 	{
 		// The tool stays available when it becomes hidden, so nothing is announced.
 		var provider = CreateProvider(StateWithHidden(["fs-edit"]));
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit")), [], CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void HiddenToolBecomingVisible_IsAnnouncedWithDefinition()
+	public async Task HiddenToolBecomingVisible_IsAnnouncedWithDefinition()
 	{
 		var provider = CreateProvider(State(Tool("fs-edit", "description", "schema")));
 
-		var delta = provider.CalculateDelta(StateWithHidden(["fs-edit"]), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(StateWithHidden(["fs-edit"]), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var becameVisible = Assert.Single(delta!.BecameVisibleItems);
@@ -248,7 +248,7 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void FoldedBecameVisible_SuppressesRepeatedDeltas()
+	public async Task FoldedBecameVisible_SuppressesRepeatedDeltas()
 	{
 		var definition = Tool("fs-edit", "description", "schema");
 		var provider = CreateProvider(State(definition));
@@ -263,19 +263,19 @@ public class ToolsDeltaProviderTests
 			}
 		};
 
-		var delta = provider.CalculateDelta(StateWithHidden(["fs-edit"]), existing, CreateContext());
+		var delta = await provider.CalculateDeltaAsync(StateWithHidden(["fs-edit"]), existing, CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void SilentlyHiddenTool_WithChangedDefinition_ReportsOnlyUpdate()
+	public async Task SilentlyHiddenTool_WithChangedDefinition_ReportsOnlyUpdate()
 	{
 		// The tool was silently hidden, its definition changed and it is visible again:
 		// from the agent's point of view only the definition has changed.
 		var provider = CreateProvider(State(Tool("fs-edit", "new description", "schema")));
 
-		var delta = provider.CalculateDelta(State(Tool("fs-edit", "old description", "schema")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Tool("fs-edit", "old description", "schema")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -286,11 +286,11 @@ public class ToolsDeltaProviderTests
 	}
 
 	[Fact]
-	public void HiddenToolDisappearing_IsRemoved()
+	public async Task HiddenToolDisappearing_IsRemoved()
 	{
 		var provider = CreateProvider(State(Tool("visible")));
 
-		var delta = provider.CalculateDelta(StateWithHidden(["mystery"], Tool("visible")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(StateWithHidden(["mystery"], Tool("visible")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var removed = Assert.Single(delta!.RemovedItems);

@@ -34,7 +34,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		private const string systemReminderTag = "system-reminder";
 
 		/// <inheritdoc/>
-		public AgentPromptBundle Build(ChatAgentDescriptor agent)
+		public async Task<AgentPromptBundle> BuildAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			// The composer owns the toolset cache: it must be fresh for both the tool definitions
 			// and the tool call resolution performed by the execution service.
@@ -51,8 +52,10 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			var promptContextProviders = promptContextInfos.Select(i => i.Provider).ToArray();
 
 			var promptMode = agent.Context.PromptMode;
-			var anchor = promptAnchoredSectionProcessor.Process(agent, effectiveContext, promptContextProviders.Anchored());
-			promptSupersedeContextProcessor.Process(agent, effectiveContext, promptContextProviders.Supersede());
+			var anchor = await promptAnchoredSectionProcessor.ProcessAsync(agent, effectiveContext,
+				promptContextProviders.Anchored(), cancellationToken);
+			await promptSupersedeContextProcessor.ProcessAsync(agent, effectiveContext,
+				promptContextProviders.Supersede(), cancellationToken);
 
 			SystemPromptSnapshot header;
 			string headerSource;
@@ -62,7 +65,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					var settings = agent.Context;
 					if (settings.Snapshot is null)
 					{
-						settings.Snapshot = promptContextProviders.Anchored().RenderHeader(agent);
+						settings.Snapshot = await promptContextProviders.Anchored()
+							.RenderHeaderAsync(agent, cancellationToken);
 						Log.Information("Froze static system prompt snapshot for agent {AgentId}.", agent.Id);
 					}
 
@@ -76,7 +80,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					break;
 
 				default:
-					header = promptContextProviders.Anchored().RenderHeader(agent);
+					header = await promptContextProviders.Anchored().RenderHeaderAsync(agent, cancellationToken);
 					headerSource = "live";
 					break;
 			}
@@ -206,7 +210,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							var sb = new StringBuilder();
 							foreach (var provider in liveContextProviders)
 							{
-								var liveContext = provider.Provide(effectiveContext);
+								var liveContext = await provider.ProvideAsync(effectiveContext, cancellationToken);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{
 									systemReminderSb.Append(liveContext).Append('\n');

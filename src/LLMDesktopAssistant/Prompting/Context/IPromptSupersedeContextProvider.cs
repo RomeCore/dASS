@@ -21,8 +21,10 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// </summary>
 		/// <param name="previousStamp">The previous stamp associated with the prompt context. Can be null.</param>
 		/// <param name="context">The effective chat context associated with the prompt context. Can be null.</param>
+		/// <param name="cancellationToken">The cancellation token that aborts the provider (for example, a script timeout).</param>
 		/// <returns>The new stamp for the prompt context. Can be null when no new stamp is needed.</returns>
-		PromptSupersedeStampBase? GetNewStamp(PromptSupersedeStampBase? previousStamp, EffectiveChatContext context);
+		Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
+			EffectiveChatContext context, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Renders the stamp into a compact text fragment that is injected into a system reminder.

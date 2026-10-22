@@ -16,7 +16,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SubAgents
 		) : IPromptSectionStateProvider<SubAgentsSectionState>
 	{
 		/// <inheritdoc/>
-		public SubAgentsSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<SubAgentsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var items = new List<SubAgentItem>();
 			var hiddenNames = new List<string>();
@@ -40,11 +41,11 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SubAgents
 				}
 			}
 
-			return new SubAgentsSectionState
+			return Task.FromResult<SubAgentsSectionState?>(new SubAgentsSectionState
 			{
 				Items = [.. items.OrderBy(s => s.Name, StringComparer.Ordinal)],
 				HiddenNames = [.. hiddenNames.OrderBy(n => n, StringComparer.Ordinal)]
-			};
+			});
 		}
 	}
 }

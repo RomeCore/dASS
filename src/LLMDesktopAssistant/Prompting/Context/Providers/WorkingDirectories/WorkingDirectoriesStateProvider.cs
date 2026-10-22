@@ -14,7 +14,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.WorkingDirectories
 	) : IPromptSectionStateProvider<WorkingDirectoriesSectionState>
 	{
 		/// <inheritdoc/>
-		public WorkingDirectoriesSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<WorkingDirectoriesSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var settings = chatSettings.Settings.Environment.GetEffectiveWorkingDirectories();
 			var activePath = settings.GetWorkingDirectory();
@@ -61,10 +62,10 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.WorkingDirectories
 					});
 			}
 
-			return new WorkingDirectoriesSectionState
+			return Task.FromResult<WorkingDirectoriesSectionState?>(new WorkingDirectoriesSectionState
 			{
 				Items = items
-			};
+			});
 		}
 
 		/// <summary>

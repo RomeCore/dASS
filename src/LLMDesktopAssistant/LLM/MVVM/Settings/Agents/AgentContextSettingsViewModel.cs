@@ -86,7 +86,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			};
 			List.Update();
 
-			RefreshSnapshotCommand = new RelayCommand(RefreshSnapshot);
+			RefreshSnapshotCommand = new AsyncRelayCommand(RefreshSnapshotAsync);
 
 			_selectedMaxVisibleRoundsInheritance = InheritanceLevelItem.AllAgent.First(i => i.Value == settings.MaxVisibleRoundsInheritance);
 			_selectedDisabledFlagsInheritance = InheritanceLevelItem.AllAgent.First(i => i.Value == settings.DisabledFlagsInheritance);
@@ -141,9 +141,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		/// </summary>
 		public ICommand RefreshSnapshotCommand { get; }
 
-		private void RefreshSnapshot()
+		private async Task RefreshSnapshotAsync()
 		{
-			Settings.Snapshot = _promptContextCollector.GetAddonsForAgent(_agent).Select(c => c.Provider).Anchored().RenderHeader(_agent);
+			Settings.Snapshot = await _promptContextCollector.GetAddonsForAgent(_agent)
+				.Select(c => c.Provider).Anchored().RenderHeaderAsync(_agent);
 		}
 
 		public int MaxVisibleRounds

@@ -16,7 +16,7 @@ public class SkillsDeltaProviderTests
 	{
 		public SkillsSectionState? State { get; init; }
 
-		public SkillsSectionState? CaptureState(ChatAgentDescriptor agent) => State;
+		public Task<SkillsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent, CancellationToken cancellationToken = default) => Task.FromResult(State);
 	}
 
 	private static SkillsDeltaProvider CreateProvider(SkillsSectionState? state)
@@ -47,21 +47,21 @@ public class SkillsDeltaProviderTests
 		=> new() { Items = [.. skills] };
 
 	[Fact]
-	public void NothingChanged_ReturnsNull()
+	public async Task NothingChanged_ReturnsNull()
 	{
 		var provider = CreateProvider(State(Skill("code-review")));
 
-		var delta = provider.CalculateDelta(State(Skill("code-review")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Skill("code-review")), [], CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void ChangedPath_IsReported()
+	public async Task ChangedPath_IsReported()
 	{
 		var provider = CreateProvider(State(Skill("code-review", path: "new/path.md")));
 
-		var delta = provider.CalculateDelta(State(Skill("code-review", path: "old/path.md")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Skill("code-review", path: "old/path.md")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -72,11 +72,11 @@ public class SkillsDeltaProviderTests
 	}
 
 	[Fact]
-	public void ChangedBody_IsReported()
+	public async Task ChangedBody_IsReported()
 	{
 		var provider = CreateProvider(State(Skill("code-review", body: "new body")));
 
-		var delta = provider.CalculateDelta(State(Skill("code-review", body: "old body")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Skill("code-review", body: "old body")), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -85,11 +85,11 @@ public class SkillsDeltaProviderTests
 	}
 
 	[Fact]
-	public void NewSkill_CarriesFullDefinition()
+	public async Task NewSkill_CarriesFullDefinition()
 	{
 		var provider = CreateProvider(State(Skill("code-review")));
 
-		var delta = provider.CalculateDelta(State(), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);

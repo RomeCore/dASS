@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Tests.Prompting;
 public class PromptSectionExtensionsTests
 {
 	[Fact]
-	public void RenderHeader_RespectsSectionOrder_AndJoinsNonEmptyTextFragments()
+	public async Task RenderHeader_RespectsSectionOrder_AndJoinsNonEmptyTextFragments()
 	{
 		FakeSection[] sections =
 		[
@@ -20,13 +20,13 @@ public class PromptSectionExtensionsTests
 		var agent = PromptingTestHelpers.CreateAgent();
 
 		// Ordering is the responsibility of the section collector: the merge rules follow the order of the incoming collection.
-		var header = sections.OrderBy(s => s.Order).RenderHeader(agent);
+		var header = await sections.OrderBy(s => s.Order).RenderHeaderAsync(agent);
 
 		Assert.Equal("first\nsecond", header.Text);
 	}
 
 	[Fact]
-	public void RenderHeader_ConcatenatesTools_AndSortsByName()
+	public async Task RenderHeader_ConcatenatesTools_AndSortsByName()
 	{
 		FakeSection[] sections =
 		[
@@ -35,13 +35,13 @@ public class PromptSectionExtensionsTests
 		];
 		var agent = PromptingTestHelpers.CreateAgent();
 
-		var header = sections.RenderHeader(agent);
+		var header = await sections.RenderHeaderAsync(agent);
 
 		Assert.Equal(["a", "m", "z"], header.Tools.Select(t => t.Name).ToArray());
 	}
 
 	[Fact]
-	public void RenderHeader_IsByteStable_AcrossRepeatedRenders()
+	public async Task RenderHeader_IsByteStable_AcrossRepeatedRenders()
 	{
 		FakeSection[] sections =
 		[
@@ -50,15 +50,15 @@ public class PromptSectionExtensionsTests
 		];
 		var agent = PromptingTestHelpers.CreateAgent();
 
-		var first = sections.RenderHeader(agent);
-		var second = sections.RenderHeader(agent);
+		var first = await sections.RenderHeaderAsync(agent);
+		var second = await sections.RenderHeaderAsync(agent);
 
 		Assert.Equal(first.Text, second.Text);
 		Assert.Equal(first, second);
 	}
 
 	[Fact]
-	public void RenderHeader_MatchesStates_BySectionDiscriminator()
+	public async Task RenderHeader_MatchesStates_BySectionDiscriminator()
 	{
 		FakeSection[] sections =
 		[
@@ -69,7 +69,7 @@ public class PromptSectionExtensionsTests
 
 		// The captured states are matched back to their sections by the stamped discriminator:
 		// a mismatch would silently drop the fragment from the merged header.
-		var states = sections.CaptureStates(agent);
+		var states = await sections.CaptureStatesAsync(agent);
 		var header = sections.RenderHeader(states);
 
 		Assert.Equal(2, states.Count);
@@ -77,7 +77,7 @@ public class PromptSectionExtensionsTests
 	}
 
 	[Fact]
-	public void CaptureStates_PassesAgentToEverySection()
+	public async Task CaptureStates_PassesAgentToEverySection()
 	{
 		FakeSection[] sections =
 		[
@@ -86,7 +86,7 @@ public class PromptSectionExtensionsTests
 		];
 		var agent = PromptingTestHelpers.CreateAgent();
 
-		var states = sections.CaptureStates(agent);
+		var states = await sections.CaptureStatesAsync(agent);
 
 		Assert.Equal(2, states.Count);
 		Assert.Same(agent, sections[0].LastCaptureAgent);
@@ -94,9 +94,9 @@ public class PromptSectionExtensionsTests
 	}
 
 	[Fact]
-	public void RenderHeader_NoSections_ReturnsEmptySnapshot()
+	public async Task RenderHeader_NoSections_ReturnsEmptySnapshot()
 	{
-		var header = Array.Empty<FakeSection>().RenderHeader(PromptingTestHelpers.CreateAgent());
+		var header = await Array.Empty<FakeSection>().RenderHeaderAsync(PromptingTestHelpers.CreateAgent());
 
 		Assert.Equal(string.Empty, header.Text);
 		Assert.Empty(header.Tools);

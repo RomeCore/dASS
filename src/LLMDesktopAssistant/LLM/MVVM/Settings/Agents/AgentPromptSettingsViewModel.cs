@@ -376,11 +376,15 @@ public class AgentPromptSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Regenerates the system prompt preview from the prompt sections.
 	/// </summary>
-	public void RegeneratePreview()
+	public void RegeneratePreview() => _ = RegeneratePreviewAsync();
+
+	private async Task RegeneratePreviewAsync()
 	{
 		try
 		{
-			SystemPromptPreview = _promptContextCollector.GetAddonsForAgent(_agent).Select(c => c.Provider).Anchored().RenderHeader(_agent).Text;
+			var header = await _promptContextCollector.GetAddonsForAgent(_agent)
+				.Select(c => c.Provider).Anchored().RenderHeaderAsync(_agent);
+			SystemPromptPreview = header.Text;
 		}
 		catch (Exception ex)
 		{

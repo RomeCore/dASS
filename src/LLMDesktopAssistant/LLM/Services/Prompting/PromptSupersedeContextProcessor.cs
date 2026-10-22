@@ -11,8 +11,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		Chat chat
 	) : IPromptSupersedeContextProcessor
 	{
-		public void Process(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
-			IEnumerable<IPromptSupersedeContextProvider> contextProviders)
+		public async Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
+			IEnumerable<IPromptSupersedeContextProvider> contextProviders, CancellationToken cancellationToken = default)
 		{
 			if (chat.Messages.Count == 0 ||
 				chat.Messages[^1].Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
@@ -55,7 +55,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			foreach (var provider in contextProviders)
 			{
-				var stamp = provider.GetNewStamp(lastStamps.GetValueOrDefault(provider.Discriminator), effectiveContext);
+				var stamp = await provider.GetNewStampAsync(lastStamps.GetValueOrDefault(provider.Discriminator),
+					effectiveContext, cancellationToken);
 				if (stamp is not null)
 				{
 					stamp.Discriminator = provider.Discriminator;
@@ -67,7 +68,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			if (stamps.Count > 0)
 			{
-				pendingAssistantMessage.AdditionalData.Add(new PromptSupersedeStampMessageData
+				// Rebuilding the same pending message must not stack a second copy of the stamps.
+				pendingAssistantMessage.AdditionalData.TryReplace(new PromptSupersedeStampMessageData
 				{
 					Stamps = [.. stamps]
 				});

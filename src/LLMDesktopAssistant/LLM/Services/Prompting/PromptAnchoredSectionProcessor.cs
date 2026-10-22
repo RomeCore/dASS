@@ -15,8 +15,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	) : IPromptAnchoredSectionProcessor
 	{
 		/// <inheritdoc/>
-		public PromptStateAnchorMessageData? Process(ChatAgentDescriptor agent,
-			EffectiveChatContext effectiveContext, IEnumerable<IPromptAnchoredSectionProvider> sections)
+		public async Task<PromptStateAnchorMessageData?> ProcessAsync(ChatAgentDescriptor agent,
+			EffectiveChatContext effectiveContext, IEnumerable<IPromptAnchoredSectionProvider> sections,
+			CancellationToken cancellationToken = default)
 		{
 			var promptMode = agent.Context.PromptMode;
 			if (promptMode != PromptContextMode.Hybrid)
@@ -97,7 +98,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						var anchorState = anchor.Sections.FirstOrDefault(s => s.Discriminator == section.Discriminator);
 						var existingDeltas = deltasPerAnchor.GetValueOrDefault(section.Discriminator) ?? [];
 
-						var newDelta = section.CalculateDelta(anchorState, existingDeltas, effectiveContext);
+						var newDelta = await section.CalculateDeltaAsync(anchorState, existingDeltas, effectiveContext, cancellationToken);
 						if (newDelta is not null)
 						{
 							newDelta.Discriminator = section.Discriminator;
@@ -134,7 +135,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			}
 
 			var target = chat.Messages[targetIndex];
-			var states = sections.CaptureStates(agent);
+			var states = await sections.CaptureStatesAsync(agent, cancellationToken);
 			var snapshot = sections.RenderHeader(states);
 
 			anchor = new PromptStateAnchorMessageData

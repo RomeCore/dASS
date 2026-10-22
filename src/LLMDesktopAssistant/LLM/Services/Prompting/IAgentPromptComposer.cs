@@ -10,8 +10,10 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	{
 		/// <summary>
 		/// Builds the prompt bundle for the given agent.
+		/// The build is asynchronous because prompt context providers may execute scripts.
 		/// </summary>
 		/// <param name="agent">The agent to build the prompt for.</param>
-		AgentPromptBundle Build(ChatAgentDescriptor agent);
+		/// <param name="cancellationToken">The cancellation token forwarded to prompt context providers.</param>
+		Task<AgentPromptBundle> BuildAsync(ChatAgentDescriptor agent, CancellationToken cancellationToken = default);
 	}
 }

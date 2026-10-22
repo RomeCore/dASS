@@ -90,23 +90,24 @@ internal sealed class PromptComposerHarness
 
 	private sealed class FakeSupersedeProcessor : IPromptSupersedeContextProcessor
 	{
-		public void Process(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
-			IEnumerable<IPromptSupersedeContextProvider> providers)
-		{
-		}
+		public Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
+			IEnumerable<IPromptSupersedeContextProvider> providers, CancellationToken cancellationToken = default)
+			=> Task.CompletedTask;
 	}
 
 	private sealed class FakeLiveTailProvider(string text) : IPromptLiveTailContextProvider
 	{
-		public string Provide(EffectiveChatContext context) => text;
+		public Task<string> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default)
+			=> Task.FromResult(text);
 	}
 
 	private sealed class FakeSupersedeProvider(string discriminator, string text) : IPromptSupersedeContextProvider
 	{
 		public string Discriminator => discriminator;
 
-		public PromptSupersedeStampBase? GetNewStamp(PromptSupersedeStampBase? previousStamp, EffectiveChatContext context)
-			=> null;
+		public Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
+			EffectiveChatContext context, CancellationToken cancellationToken = default)
+			=> Task.FromResult<PromptSupersedeStampBase?>(null);
 
 		public string Render(PromptSupersedeStampBase stamp) => text;
 	}

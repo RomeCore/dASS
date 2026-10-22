@@ -60,10 +60,11 @@ internal sealed class FakeSection(int order, string text, params SerializableToo
 
 	public ChatAgentDescriptor? LastCaptureAgent { get; private set; }
 
-	public PromptSectionStateBase CaptureState(ChatAgentDescriptor agent)
+	public Task<PromptSectionStateBase?> CaptureStateAsync(ChatAgentDescriptor agent,
+		CancellationToken cancellationToken = default)
 	{
 		LastCaptureAgent = agent;
-		return new FakeSectionState();
+		return Task.FromResult<PromptSectionStateBase?>(new FakeSectionState());
 	}
 
 	public SystemPromptSnapshot RenderState(PromptSectionStateBase state) => new()
@@ -72,8 +73,9 @@ internal sealed class FakeSection(int order, string text, params SerializableToo
 		Tools = [..tools]
 	};
 
-	public PromptSectionDeltaBase? CalculateDelta(PromptSectionStateBase? anchorState,
-		IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context) => null;
+	public Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
+		IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+		CancellationToken cancellationToken = default) => Task.FromResult<PromptSectionDeltaBase?>(null);
 
 	public string RenderDelta(PromptSectionDeltaBase delta) => string.Empty;
 }

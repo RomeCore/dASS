@@ -23,8 +23,10 @@ namespace LLMDesktopAssistant.Prompting.Context
 		public abstract string Discriminator { get; }
 
 		/// <inheritdoc/>
-		public PromptSupersedeStampBase? GetNewStamp(PromptSupersedeStampBase? previousStamp, EffectiveChatContext context)
-			=> _stampProvider.CaptureStamp((TStamp?)previousStamp, context);
+		public Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
+			EffectiveChatContext context, CancellationToken cancellationToken = default)
+			=> Task.FromResult<PromptSupersedeStampBase?>(
+				_stampProvider.CaptureStamp((TStamp?)previousStamp, context));
 
 		/// <inheritdoc/>
 		public string Render(PromptSupersedeStampBase stamp) => _stampRenderer.Render((TStamp)stamp);

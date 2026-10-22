@@ -1,4 +1,4 @@
-﻿using LLMDesktopAssistant.Agents;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Prompting.ContextExpanders;
 using LLMDesktopAssistant.Prompting.Management;
@@ -21,7 +21,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 		) : IPromptSectionStateProvider<IdentitySectionState>
 	{
 		/// <inheritdoc/>
-		public IdentitySectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<IdentitySectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var functions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
 			var promptSettings = agent.Prompts;
@@ -50,14 +51,14 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Identity
 				return result;
 			}
 
-			return new IdentitySectionState
+			return Task.FromResult<IdentitySectionState?>(new IdentitySectionState
 			{
 				Persona = effectivePersona.UseCustomPersona ? effectivePersona.CustomPersona :
 					RenderPromptPart(slotElementManager, effectivePersona, (effectivePersona.Id, PromptSlotKind.Persona)),
 				Specialization = effectiveSpecialization.UseCustomSpecialization ? effectiveSpecialization.CustomSpecialization :
 					RenderPromptPart(slotElementManager, effectiveSpecialization, (effectiveSpecialization.Id, PromptSlotKind.Specialization)),
 				AssistantNickname = effectivePersona.Nickname
-			};
+			});
 		}
 	}
 }

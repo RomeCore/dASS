@@ -27,7 +27,9 @@ namespace LLMDesktopAssistant.Prompting.Context
 		public abstract string Discriminator { get; }
 
 		/// <inheritdoc/>
-		public PromptSectionStateBase? CaptureState(ChatAgentDescriptor agent) => _stateProvider.CaptureState(agent);
+		public async Task<PromptSectionStateBase?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
+			=> await _stateProvider.CaptureStateAsync(agent, cancellationToken);
 
 		/// <inheritdoc/>
 		public SystemPromptSnapshot RenderState(PromptSectionStateBase state) => _stateRenderer.Render((TState)state);
@@ -36,8 +38,10 @@ namespace LLMDesktopAssistant.Prompting.Context
 		public string RenderDelta(PromptSectionDeltaBase delta) => _deltaRenderer.Render((TDelta)delta);
 
 		/// <inheritdoc/>
-		public PromptSectionDeltaBase? CalculateDelta(PromptSectionStateBase? anchorState,
-			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context)
-			=> _deltaProvider.CalculateDelta((TState?)anchorState, existingDeltas.Cast<TDelta>(), context);
+		public async Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			CancellationToken cancellationToken = default)
+			=> await _deltaProvider.CalculateDeltaAsync((TState?)anchorState, existingDeltas.Cast<TDelta>(), context,
+				cancellationToken);
 	}
 }

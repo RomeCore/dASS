@@ -16,10 +16,11 @@ namespace LLMDesktopAssistant.Prompting.Context.AddonItems
 		where TDelta : AddonSectionDelta<TItem, TChange>, new()
 	{
 		/// <inheritdoc/>
-		public TDelta? CalculateDelta(TState? anchorState,
-			IEnumerable<TDelta> existingDeltas, EffectiveChatContext context)
+		public async Task<TDelta?> CalculateDeltaAsync(TState? anchorState,
+			IEnumerable<TDelta> existingDeltas, EffectiveChatContext context,
+			CancellationToken cancellationToken = default)
 		{
-			var currentState = stateProvider.CaptureState(context.Agent);
+			var currentState = await stateProvider.CaptureStateAsync(context.Agent, cancellationToken);
 			if (currentState is null)
 				return null;
 

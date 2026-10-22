@@ -4,11 +4,11 @@ using LLMDesktopAssistant.Prompting.Context;
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
 	/// <summary>
-	/// 
+	/// Captures and persists the supersede stamps for the pending assistant message.
 	/// </summary>
 	public interface IPromptSupersedeContextProcessor
 	{
-		void Process(ChatAgentDescriptor agent,
-			EffectiveChatContext effectiveContext, IEnumerable<IPromptSupersedeContextProvider> providers);
+		Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
+			IEnumerable<IPromptSupersedeContextProvider> providers, CancellationToken cancellationToken = default);
 	}
 }

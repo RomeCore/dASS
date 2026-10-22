@@ -24,7 +24,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SystemSlot
 		) : IPromptSectionStateProvider<SystemSlotSectionState>
 	{
 		/// <inheritdoc/>
-		public SystemSlotSectionState CaptureState(ChatAgentDescriptor agent)
+		public Task<SystemSlotSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default)
 		{
 			var template = templates.GetTextTemplate("system_slot_system_section");
 			var functions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
@@ -63,10 +64,10 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SystemSlot
 				.Where(c => !string.IsNullOrWhiteSpace(c))
 				.ToArray();
 
-			return new SystemSlotSectionState
+			return Task.FromResult<SystemSlotSectionState?>(new SystemSlotSectionState
 			{
 				Text = template.Render(generalContext, functions)
-			};
+			});
 		}
 	}
 }

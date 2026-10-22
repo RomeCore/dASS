@@ -15,9 +15,11 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		/// </summary>
 		/// <param name="agent">The agent to process.</param>
 		/// <param name="effectiveContext">The effective chat context of the agent.</param>
-		/// <param name="providers">The providers of prompt context.</param>
+		/// <param name="sections">The anchored sections of the prompt context.</param>
+		/// <param name="cancellationToken">The cancellation token forwarded to the sections.</param>
 		/// <returns>The active anchor, or null outside of hybrid mode.</returns>
-		PromptStateAnchorMessageData? Process(ChatAgentDescriptor agent,
-			EffectiveChatContext effectiveContext, IEnumerable<IPromptAnchoredSectionProvider> providers);
+		Task<PromptStateAnchorMessageData?> ProcessAsync(ChatAgentDescriptor agent,
+			EffectiveChatContext effectiveContext, IEnumerable<IPromptAnchoredSectionProvider> sections,
+			CancellationToken cancellationToken = default);
 	}
 }

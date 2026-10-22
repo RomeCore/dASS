@@ -28,7 +28,7 @@ public class AgentPromptComposerTests
 	// =====================================================
 
 	[Fact]
-	public void DynamicMode_RendersTheLiveHeaderFromTheSections()
+	public async Task DynamicMode_RendersTheLiveHeaderFromTheSections()
 	{
 		var agent = PromptingTestHelpers.CreateAgent(); // Dynamic by default
 		var harness = new PromptComposerHarness(
@@ -36,7 +36,7 @@ public class AgentPromptComposerTests
 				PromptingTestHelpers.Assistant(string.Empty, 1, agent.Id))
 			.WithSection(new FakeSection(0, "core"));
 
-		var bundle = harness.CreateComposer().Build(agent);
+		var bundle = (await harness.CreateComposer().BuildAsync(agent));
 
 		Assert.IsType<RCMessages.SystemMessage>(bundle.Messages[0]);
 		Assert.Equal("core", bundle.Messages[0].Content);
@@ -44,7 +44,7 @@ public class AgentPromptComposerTests
 	}
 
 	[Fact]
-	public void HybridMode_FreezesTheHeaderFromANewAnchor_AndReusesIt()
+	public async Task HybridMode_FreezesTheHeaderFromANewAnchor_AndReusesIt()
 	{
 		var agent = HybridAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -53,11 +53,11 @@ public class AgentPromptComposerTests
 		var composer = harness.CreateComposer();
 
 		Assert.Empty(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
-		var first = composer.Build(agent);
+		var first = (await composer.BuildAsync(agent));
 
 		// The anchor was created once (append-only) and reused on the second build.
 		var anchor1 = Assert.Single(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
-		var second = composer.Build(agent);
+		var second = (await composer.BuildAsync(agent));
 
 		Assert.Equal("core", first.Messages[0].Content);
 		Assert.Equal("core", second.Messages[0].Content);
@@ -67,7 +67,7 @@ public class AgentPromptComposerTests
 	}
 
 	[Fact]
-	public void StaticMode_FreezesTheSnapshot_AndReusesIt()
+	public async Task StaticMode_FreezesTheSnapshot_AndReusesIt()
 	{
 		var agent = PromptingTestHelpers.CreateAgent();
 		agent.Context.PromptMode = PromptContextMode.Static;
@@ -75,7 +75,7 @@ public class AgentPromptComposerTests
 			.WithSection(new FakeSection(0, "core"));
 		var composer = harness.CreateComposer();
 
-		var bundle = composer.Build(agent);
+		var bundle = (await composer.BuildAsync(agent));
 
 		Assert.Equal("core", bundle.Messages[0].Content);
 		Assert.NotNull(agent.Context.Snapshot);
@@ -87,7 +87,7 @@ public class AgentPromptComposerTests
 	// =====================================================
 
 	[Fact]
-	public void SummaryCheckpoint_IsInjectedAsASummaryUserMessage()
+	public async Task SummaryCheckpoint_IsInjectedAsASummaryUserMessage()
 	{
 		var agent = PromptingTestHelpers.CreateAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -98,7 +98,7 @@ public class AgentPromptComposerTests
 		var checkpoint = PromptingTestHelpers.AddCheckpoint(u2, ContextCheckpointKind.Summary);
 		checkpoint.Context = "SUM";
 
-		var bundle = harness.CreateComposer().Build(agent);
+		var bundle = (await harness.CreateComposer().BuildAsync(agent));
 
 		Assert.Contains(Texts(bundle), t => t.Contains("<summary>") && t.Contains("SUM"));
 		Assert.DoesNotContain(Texts(bundle), t => t.Contains("u0"));
@@ -110,7 +110,7 @@ public class AgentPromptComposerTests
 	// =====================================================
 
 	[Fact]
-	public void DeltaMatchingTheLiveAnchor_IsAnnouncedInTheSystemReminder()
+	public async Task DeltaMatchingTheLiveAnchor_IsAnnouncedInTheSystemReminder()
 	{
 		var agent = HybridAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -119,17 +119,17 @@ public class AgentPromptComposerTests
 		var harness = new PromptComposerHarness(u0, a1, pending).WithSection(new FakeSection(0, "core"));
 		var composer = harness.CreateComposer();
 
-		composer.Build(agent); // creates the anchor
+		await composer.BuildAsync(agent); // creates the anchor
 		var anchor = Assert.Single(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
 		a1.Message.AdditionalData.Add(new PromptStateDeltaMessageData { AnchorId = anchor.Id, Snapshot = "DELTA" });
 
-		var bundle = composer.Build(agent);
+		var bundle = (await composer.BuildAsync(agent));
 
 		Assert.Contains(Texts(bundle), t => t.Contains("DELTA"));
 	}
 
 	[Fact]
-	public void SupersedeStamp_IsAnnouncedInTheSystemReminder()
+	public async Task SupersedeStamp_IsAnnouncedInTheSystemReminder()
 	{
 		var agent = HybridAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -142,13 +142,13 @@ public class AgentPromptComposerTests
 		});
 		var harness = new PromptComposerHarness(u0, a1, a2, pending).WithSection(new FakeSection(0, "core"));
 
-		var bundle = harness.CreateComposer().Build(agent);
+		var bundle = (await harness.CreateComposer().BuildAsync(agent));
 
 		Assert.Contains(Texts(bundle), t => t.Contains("STAMP"));
 	}
 
 	[Fact]
-	public void DeltaOfAHiddenCarrier_IsStillAnnounced()
+	public async Task DeltaOfAHiddenCarrier_IsStillAnnounced()
 	{
 		var agent = HybridAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -157,12 +157,12 @@ public class AgentPromptComposerTests
 		var harness = new PromptComposerHarness(u0, hidden, pending).WithSection(new FakeSection(0, "core"));
 		var composer = harness.CreateComposer();
 
-		composer.Build(agent); // creates the anchor
+		await composer.BuildAsync(agent); // creates the anchor
 		var anchor = Assert.Single(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
 		hidden.Message.AdditionalData.Add(new PromptStateDeltaMessageData { AnchorId = anchor.Id, Snapshot = "HIDDEN-DELTA" });
 		hidden.Message.IsDisabledForAgents = true; // hidden from the agent, but its announcement must survive
 
-		var bundle = composer.Build(agent);
+		var bundle = (await composer.BuildAsync(agent));
 
 		Assert.Contains(Texts(bundle), t => t.Contains("HIDDEN-DELTA"));
 	}
@@ -172,7 +172,7 @@ public class AgentPromptComposerTests
 	// =====================================================
 
 	[Fact]
-	public void LiveTail_IsInjectedIntoThePendingAssistantReminder()
+	public async Task LiveTail_IsInjectedIntoThePendingAssistantReminder()
 	{
 		var agent = HybridAgent();
 		var u0 = PromptingTestHelpers.User("u0", 0);
@@ -181,30 +181,30 @@ public class AgentPromptComposerTests
 			.WithSection(new FakeSection(0, "core"))
 			.WithLiveTail("LIVE");
 
-		var bundle = harness.CreateComposer().Build(agent);
+		var bundle = (await harness.CreateComposer().BuildAsync(agent));
 
 		Assert.Contains(Texts(bundle), t => t.Contains("LIVE"));
 	}
 
 	[Fact]
-	public void ToolDefinitionsFromTheHeader_AreExposedInTheBundle()
+	public async Task ToolDefinitionsFromTheHeader_AreExposedInTheBundle()
 	{
 		var agent = PromptingTestHelpers.CreateAgent();
 		var harness = new PromptComposerHarness(PromptingTestHelpers.User("u0", 0))
 			.WithSection(new FakeSection(0, "core", PromptingTestHelpers.Tool("my-tool")));
 
-		var bundle = harness.CreateComposer().Build(agent);
+		var bundle = (await harness.CreateComposer().BuildAsync(agent));
 
 		Assert.Contains(bundle.Tools, t => t.Name == "my-tool");
 	}
 
 	[Fact]
-	public void Build_InvalidatesTheToolsetCache()
+	public async Task Build_InvalidatesTheToolsetCache()
 	{
 		var agent = PromptingTestHelpers.CreateAgent();
 		var harness = new PromptComposerHarness(PromptingTestHelpers.User("u0", 0));
 
-		harness.CreateComposer().Build(agent);
+		await harness.CreateComposer().BuildAsync(agent);
 
 		Assert.Equal(1, harness.ToolsetCache.InvalidateCount);
 	}

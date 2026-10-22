@@ -17,14 +17,16 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <summary>
 		/// Captures the current, and initial state of this section for the given agent.
 		/// </summary>
-		PromptSectionStateBase? CaptureState(ChatAgentDescriptor agent);
+		Task<PromptSectionStateBase?> CaptureStateAsync(ChatAgentDescriptor agent,
+			CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Calculates the delta between the recorded state (anchor + deltas) and the actual state (should be calculated implicitly).
 		/// </summary>
 		/// <returns>The calculated delta, or null if no changes were detected.</returns>
-		PromptSectionDeltaBase? CalculateDelta(PromptSectionStateBase? anchorState,
-			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context);
+		Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Renders the captured state into a system prompt snapshot fragment (text and/or tools).

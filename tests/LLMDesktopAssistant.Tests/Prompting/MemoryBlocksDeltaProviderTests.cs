@@ -16,7 +16,7 @@ public class MemoryBlocksDeltaProviderTests
 	{
 		public MemoryBlocksSectionState? State { get; init; }
 
-		public MemoryBlocksSectionState? CaptureState(ChatAgentDescriptor agent) => State;
+		public Task<MemoryBlocksSectionState?> CaptureStateAsync(ChatAgentDescriptor agent, CancellationToken cancellationToken = default) => Task.FromResult(State);
 	}
 
 	private static MemoryBlocksDeltaProvider CreateProvider(MemoryBlocksSectionState? state)
@@ -51,21 +51,21 @@ public class MemoryBlocksDeltaProviderTests
 		=> new() { Items = [.. blocks] };
 
 	[Fact]
-	public void NothingChanged_ReturnsNull()
+	public async Task NothingChanged_ReturnsNull()
 	{
 		var provider = CreateProvider(State(Block("Проект dASS")));
 
-		var delta = provider.CalculateDelta(State(Block("Проект dASS")), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Block("Проект dASS")), [], CreateContext());
 
 		Assert.Null(delta);
 	}
 
 	[Fact]
-	public void ChangedAccess_IsReported()
+	public async Task ChangedAccess_IsReported()
 	{
 		var provider = CreateProvider(State(Block("Проект dASS", canRead: true, canWrite: false)));
 
-		var delta = provider.CalculateDelta(State(Block("Проект dASS", canRead: true, canWrite: true)), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Block("Проект dASS", canRead: true, canWrite: true)), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -77,11 +77,11 @@ public class MemoryBlocksDeltaProviderTests
 	}
 
 	[Fact]
-	public void ChangedTypes_IsReported()
+	public async Task ChangedTypes_IsReported()
 	{
 		var provider = CreateProvider(State(Block("Проект dASS", facts: false, logs: true)));
 
-		var delta = provider.CalculateDelta(State(Block("Проект dASS", facts: true, logs: true)), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(Block("Проект dASS", facts: true, logs: true)), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var updated = Assert.Single(delta!.UpdatedItems);
@@ -92,11 +92,11 @@ public class MemoryBlocksDeltaProviderTests
 	}
 
 	[Fact]
-	public void NewBlock_CarriesFullDefinition()
+	public async Task NewBlock_CarriesFullDefinition()
 	{
 		var provider = CreateProvider(State(Block("Проект dASS")));
 
-		var delta = provider.CalculateDelta(State(), [], CreateContext());
+		var delta = await provider.CalculateDeltaAsync(State(), [], CreateContext());
 
 		Assert.NotNull(delta);
 		var added = Assert.Single(delta!.AddedItems);

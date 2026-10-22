@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Tests.Prompting;
 public class PromptStateStageTests
 {
 	/// <summary>
-	/// Creates a stage. Sections are passed per <see cref="PromptAnchoredSectionProcessor.Process"/> call.
+	/// Creates a stage. Sections are passed per <see cref="PromptAnchoredSectionProcessor.ProcessAsync"/> call.
 	/// </summary>
 	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat, new FakeChatSettingsService());
 
@@ -45,14 +45,14 @@ public class PromptStateStageTests
 		=> new(message, MessagePartsFacet.All, ContextCheckpointKind.None, MessageAuthorIdentity.Default);
 
 	[Fact]
-	public void CreatesAnchor_OnFirstHybridPrep()
+	public async Task CreatesAnchor_OnFirstHybridPrep()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var pending = PromptingTestHelpers.Assistant(string.Empty, 1);
 		var chat = PromptingTestHelpers.CreateChat(u0, pending);
 		var stage = CreateStage(chat);
 
-		var anchor = stage.Process(CreateHybridAgent(), CreateEffectiveContext(u0, pending), CreateSections());
+		var anchor = await stage.ProcessAsync(CreateHybridAgent(), CreateEffectiveContext(u0, pending), CreateSections());
 
 		Assert.NotNull(anchor);
 		Assert.Equal(1, anchor!.Id);
@@ -66,7 +66,7 @@ public class PromptStateStageTests
 	}
 
 	[Fact]
-	public void ReusesAnchor_OnSecondPrep()
+	public async Task ReusesAnchor_OnSecondPrep()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var pending = PromptingTestHelpers.Assistant(string.Empty, 1);
@@ -76,8 +76,8 @@ public class PromptStateStageTests
 		var effective = CreateEffectiveContext(u0, pending);
 		var sections = CreateSections();
 
-		var first = stage.Process(agent, effective, sections);
-		var second = stage.Process(agent, effective, sections);
+		var first = await stage.ProcessAsync(agent, effective, sections);
+		var second = await stage.ProcessAsync(agent, effective, sections);
 
 		Assert.NotNull(first);
 		Assert.Same(first, second);
@@ -87,7 +87,7 @@ public class PromptStateStageTests
 	}
 
 	[Fact]
-	public void Rebaselines_WhenAnchorIsBeforeNewCut()
+	public async Task Rebaselines_WhenAnchorIsBeforeNewCut()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var u1 = PromptingTestHelpers.User("u1", 1);
@@ -97,7 +97,7 @@ public class PromptStateStageTests
 		var agent = CreateHybridAgent();
 		var sections = CreateSections();
 
-		var first = stage.Process(agent, CreateEffectiveContext(u0, u1, pending), sections);
+		var first = await stage.ProcessAsync(agent, CreateEffectiveContext(u0, u1, pending), sections);
 		Assert.NotNull(first);
 		Assert.Equal(1, first!.Id);
 		Assert.Same(first, Assert.Single(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>()));
@@ -115,7 +115,7 @@ public class PromptStateStageTests
 			LastCheckpointIndex = 0,
 		};
 
-		var second = stage.Process(agent, effectiveAfterCut, sections);
+		var second = await stage.ProcessAsync(agent, effectiveAfterCut, sections);
 
 		Assert.NotNull(second);
 		Assert.Equal(2, second!.Id);
@@ -125,7 +125,7 @@ public class PromptStateStageTests
 	}
 
 	[Fact]
-	public void AgentsDoNotShareAnchors()
+	public async Task AgentsDoNotShareAnchors()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var pending = PromptingTestHelpers.Assistant(string.Empty, 1);
@@ -136,8 +136,8 @@ public class PromptStateStageTests
 		var effective = CreateEffectiveContext(u0, pending);
 		var sections = CreateSections();
 
-		var anchorA = stage.Process(agentA, effective, sections);
-		var anchorB = stage.Process(agentB, effective, sections);
+		var anchorA = await stage.ProcessAsync(agentA, effective, sections);
+		var anchorB = await stage.ProcessAsync(agentB, effective, sections);
 
 		Assert.NotNull(anchorA);
 		Assert.NotNull(anchorB);
@@ -150,14 +150,14 @@ public class PromptStateStageTests
 	}
 
 	[Fact]
-	public void NonHybridMode_ReturnsNull_AndCreatesNothing()
+	public async Task NonHybridMode_ReturnsNull_AndCreatesNothing()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var pending = PromptingTestHelpers.Assistant(string.Empty, 1);
 		var chat = PromptingTestHelpers.CreateChat(u0, pending);
 		var stage = CreateStage(chat);
 
-		var anchor = stage.Process(PromptingTestHelpers.CreateAgent(), CreateEffectiveContext(u0, pending), CreateSections());
+		var anchor = await stage.ProcessAsync(PromptingTestHelpers.CreateAgent(), CreateEffectiveContext(u0, pending), CreateSections());
 
 		Assert.Null(anchor);
 		Assert.Empty(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
@@ -165,23 +165,23 @@ public class PromptStateStageTests
 	}
 
 	[Fact]
-	public void NoPendingAssistantMessage_Throws()
+	public async Task NoPendingAssistantMessage_Throws()
 	{
 		var chat = PromptingTestHelpers.CreateChat();
 		var stage = CreateStage(chat);
 
-		Assert.Throws<InvalidOperationException>(() =>
-			stage.Process(CreateHybridAgent(), CreateEffectiveContext(), CreateSections()));
+		await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			stage.ProcessAsync(CreateHybridAgent(), CreateEffectiveContext(), CreateSections()));
 	}
 
 	[Fact]
-	public void LastMessageIsNotPendingAssistant_Throws()
+	public async Task LastMessageIsNotPendingAssistant_Throws()
 	{
 		var u0 = PromptingTestHelpers.User("u0", 0);
 		var chat = PromptingTestHelpers.CreateChat(u0);
 		var stage = CreateStage(chat);
 
-		Assert.Throws<InvalidOperationException>(() =>
-			stage.Process(CreateHybridAgent(), CreateEffectiveContext(u0), CreateSections()));
+		await Assert.ThrowsAsync<InvalidOperationException>(() =>
+			stage.ProcessAsync(CreateHybridAgent(), CreateEffectiveContext(u0), CreateSections()));
 	}
 }
