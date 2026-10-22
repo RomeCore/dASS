@@ -68,10 +68,15 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			if (stamps.Count > 0)
 			{
-				// Rebuilding the same pending message must not stack a second copy of the stamps.
+				// A message carries one container: rebuild it by merging, so a provider that reported "unchanged"
+				// keeps its already announced stamp instead of being silently dropped by the rewrite.
+				var existing = pendingAssistantMessage.AdditionalData.TryGet<PromptSupersedeStampMessageData>()?.Stamps ?? [];
+				var merged = existing.Where(old => stamps.All(fresh => fresh.Discriminator != old.Discriminator))
+					.Concat(stamps);
+
 				pendingAssistantMessage.AdditionalData.TryReplace(new PromptSupersedeStampMessageData
 				{
-					Stamps = [.. stamps]
+					Stamps = [.. merged]
 				});
 			}
 		}
