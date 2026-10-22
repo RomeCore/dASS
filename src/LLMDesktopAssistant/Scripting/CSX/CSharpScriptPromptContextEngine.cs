@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Scripting.CSX
 {
 	/// <summary>
 	/// C# script implementation of <see cref="IScriptablePromptContextEngine"/>.
-	/// The body is compiled with Roslyn; the script's return value is the context text and the previous
+	/// The body is compiled with Roslyn; the script writes the context text into <c>Output</c> and the previous
 	/// rendered text is exposed as the <c>Previous</c> global.
 	/// </summary>
 	[Service(typeof(IScriptablePromptContextEngine))]
