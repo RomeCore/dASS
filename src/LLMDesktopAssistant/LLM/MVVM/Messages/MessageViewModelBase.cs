@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
@@ -71,6 +72,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public bool BranchSelectionAvailable => branchedMessage.AvailableBranchesCount > 1;
 
 		public ChatViewModel ChatViewModel { get; }
+
+		private IMarkdownSelectionProcessorsProvider? _selectionProcessorsProvider;
+
+		/// <summary>
+		/// Gets the actions the message's markdown selection toolbar offers: copying the selection and quoting it
+		/// into this chat's input as a quote part.
+		/// </summary>
+		public IMarkdownSelectionProcessorsProvider SelectionProcessorsProvider =>
+			_selectionProcessorsProvider ??= new CompositeSelectionProcessorsProvider(
+				MarkdownSelectionProcessorProviders.Resolve(ChatViewModel.Chat.Services, MarkdownSelectionProcessorScope.Message),
+				new MarkdownSelectionProcessorsProvider(
+					new QuoteSelectionProcessor(ChatViewModel.ChatBottomPanel.UserInput, () => Message)));
 
 		/// <summary>
 		/// The tool-call list part of the message. Always created; visibility is managed internally.

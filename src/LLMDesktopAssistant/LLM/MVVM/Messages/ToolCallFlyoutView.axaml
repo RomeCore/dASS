@@ -134,6 +134,7 @@
 						<ctrl:MarkdownControl MarkdownText="{Binding Result}"
 																	UsePlaintext="{Binding !UseMarkdown}"
 																	AnimateBlocks="{Binding Parent.InProgress}"
+																	SelectionProcessorsProvider="{Binding SelectionProcessorsProvider}"
 																	Background="Transparent"/>
 
 					</StackPanel>

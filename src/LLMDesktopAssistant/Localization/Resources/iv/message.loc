@@ -43,3 +43,9 @@ summarization.unavailable.title: Summarization unavailable
 summarization.unavailable.description: No summarizer model is selected or found
 summarization.failed.title: Summarization failed
 summarization.failed.description: An error occurred while generating the summary
+selection.copy: Copy
+selection.quote: Quote
+selection.quote_chip: Quote
+selection.author.assistant: Assistant
+selection.author.unknown: Unknown
+selection.failed.title: Selection action failed

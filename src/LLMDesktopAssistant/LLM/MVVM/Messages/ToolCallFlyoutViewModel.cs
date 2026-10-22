@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Input.Platform;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Utils;
@@ -41,6 +42,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			get => _useMarkdown;
 			set => SetProperty(ref _useMarkdown, value);
 		}
+
+		/// <summary>
+		/// Gets the actions the markdown selection toolbar offers for the result. Tool output is not something a
+		/// participant said, so there is nobody to attribute a quote to - the tool-call scope has no quote
+		/// processor, only the shared ones.
+		/// </summary>
+		public IMarkdownSelectionProcessorsProvider SelectionProcessorsProvider => Parent.SelectionProcessorsProvider;
 
 		public ICommand CopyArgumentsCommand { get; }
 		public ICommand CopyResultCommand { get; }

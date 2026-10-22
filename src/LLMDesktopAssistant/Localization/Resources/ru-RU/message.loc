@@ -43,3 +43,9 @@ summarization.unavailable.title: Суммаризация недоступна
 summarization.unavailable.description: Модель-суммаризатор не выбрана или не найдена
 summarization.failed.title: Не удалось суммаризировать
 summarization.failed.description: Во время генерации суммаризации произошла ошибка
+selection.copy: Копировать
+selection.quote: Цитировать
+selection.quote_chip: Цитата
+selection.author.assistant: Ассистент
+selection.author.unknown: Неизвестно
+selection.failed.title: Не удалось выполнить действие

@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.MVVM.Settings;
@@ -58,6 +59,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// Gets the lazily-created view model backing the tool call flyout.
 		/// </summary>
 		public ToolCallFlyoutViewModel Flyout => _flyout ??= new ToolCallFlyoutViewModel(this);
+
+		private IMarkdownSelectionProcessorsProvider? _selectionProcessorsProvider;
+
+		/// <summary>
+		/// Gets the actions the markdown selection toolbar offers for this tool call's content.
+		/// </summary>
+		public IMarkdownSelectionProcessorsProvider SelectionProcessorsProvider =>
+			_selectionProcessorsProvider ??= MarkdownSelectionProcessorProviders.Resolve(
+				_chat.Services, MarkdownSelectionProcessorScope.ToolCall);
 
 		private ToolStatus _status = ToolStatus.None;
 		public ToolStatus Status

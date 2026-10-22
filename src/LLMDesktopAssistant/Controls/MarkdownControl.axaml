@@ -4,11 +4,13 @@
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 xmlns:md="using:LiveMarkdown.Avalonia"
+			 xmlns:sel="using:LLMDesktopAssistant.Controls.Markdown.Selection"
 			 x:Class="LLMDesktopAssistant.Controls.MarkdownControl">
 	
 	<Panel>
 		<md:MarkdownRenderer x:Name="MarkdownRenderer"/>
 		<md:MarkdownTextBlock x:Name="MarkdownTextBlock"/>
+		<sel:SelectionToolbar x:Name="SelectionToolbar"/>
 	</Panel>
 
 </UserControl>

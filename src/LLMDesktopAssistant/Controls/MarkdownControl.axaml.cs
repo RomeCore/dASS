@@ -7,6 +7,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using LiveMarkdown.Avalonia;
+using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
 
@@ -58,6 +59,10 @@ public partial class MarkdownControl : UserControl
 		AvaloniaProperty.Register<MarkdownControl, bool>(
 			nameof(AnimateBlocks));
 
+	public static readonly StyledProperty<IMarkdownSelectionProcessorsProvider?> SelectionProcessorsProviderProperty =
+		AvaloniaProperty.Register<MarkdownControl, IMarkdownSelectionProcessorsProvider?>(
+			nameof(SelectionProcessorsProvider));
+
 	/// <summary>
 	/// Gets or sets a value indicating whether newly rendered Markdown blocks fade in
 	/// instead of appearing instantly. Intended to be enabled while a message is streaming.
@@ -68,11 +73,26 @@ public partial class MarkdownControl : UserControl
 		set => SetValue(AnimateBlocksProperty, value);
 	}
 
+	/// <summary>
+	/// Gets or sets the actions offered by the selection toolbar: the floating toolbar that appears above the
+	/// text the user selected inside this control's Markdown content.
+	/// </summary>
+	/// <remarks>
+	/// The provider is supplied by the consumer of this control and is never resolved from the container: the
+	/// control knows nothing about chats or services, and a <see langword="null"/> provider disables the toolbar.
+	/// </remarks>
+	public IMarkdownSelectionProcessorsProvider? SelectionProcessorsProvider
+	{
+		get => GetValue(SelectionProcessorsProviderProperty);
+		set => SetValue(SelectionProcessorsProviderProperty, value);
+	}
+
 	static MarkdownControl()
 	{
 		MarkdownTextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(e.NewValue as string, o.UsePlaintext));
 		UsePlaintextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(o.MarkdownText, (bool)e.NewValue!));
 		ImageBasePathProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownRenderer.ImageBasePath = e.GetNewValue<string?>());
+		SelectionProcessorsProviderProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.SelectionToolbar.ProcessorsProvider = e.GetNewValue<IMarkdownSelectionProcessorsProvider?>());
 	}
 
 	private readonly ObservableStringBuilder _markdownBuilder = new();
@@ -109,6 +129,8 @@ public partial class MarkdownControl : UserControl
 		MarkdownRenderer.ImageBasePath = null;
 		MarkdownRenderer.CodeBlockColorTheme = TextMateSharp.Grammars.ThemeName.Monokai;
 		MarkdownRenderer.MarkdownBuilder = _markdownBuilder;
+		SelectionToolbar.Renderer = MarkdownRenderer;
+		SelectionToolbar.ProcessorsProvider = SelectionProcessorsProvider;
 
 		// The root block container ("MarkdownDocument") already exists at this point.
 		foreach (var panel in MarkdownRenderer.GetVisualChildren().OfType<Panel>())
@@ -175,6 +197,9 @@ public partial class MarkdownControl : UserControl
 	private void MarkdownTextChanged(string? newText, bool usePlaintext)
 	{
 		newText ??= string.Empty;
+
+		// Streaming rebuilds the blocks the selection points at, so a floating toolbar would be left behind.
+		SelectionToolbar.NotifyDocumentChanged();
 
 		if (usePlaintext)
 		{
