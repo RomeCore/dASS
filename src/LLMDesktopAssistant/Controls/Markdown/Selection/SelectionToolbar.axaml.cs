@@ -217,7 +217,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 			}
 
 			_context = context;
-			ToolbarPopup.PlacementTarget = context.Ranges[0].Block;
+			ToolbarPopup.PlacementTarget = context.Renderer;
 			ToolbarPopup.PlacementRect = anchor;
 			ToolbarPopup.IsOpen = true;
 		}
@@ -312,41 +312,33 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 		/// </remarks>
 		private static Rect? GetAnchorRect(MarkdownSelectionContext context)
 		{
-			var anchorBlock = context.Ranges[0].Block;
+			var anchorCtrl = context.Renderer;
 
 			var left = double.MaxValue;
 			var right = double.MinValue;
 			var top = double.MaxValue;
-			var height = 0d;
+			var bottom = double.MinValue;
 
 			foreach (var range in context.Ranges)
 			{
 				foreach (var rect in range.Block.GetTextRangeBoundsInControl(range.Start, range.Length))
 				{
-					// Blocks are separate controls with their own origins, so every rectangle is brought into the
-					// anchor block's space before the union is measured.
-					var origin = ReferenceEquals(range.Block, anchorBlock)
-						? rect.TopLeft
-						: range.Block.TranslatePoint(rect.TopLeft, anchorBlock);
+					var origin = range.Block.TranslatePoint(rect.TopLeft, anchorCtrl);
 
 					if (origin is not { } point)
 						continue;
 
 					left = Math.Min(left, point.X);
 					right = Math.Max(right, point.X + rect.Width);
-
-					if (point.Y < top)
-					{
-						top = point.Y;
-						height = rect.Height;
-					}
+					top = Math.Min(top, point.Y);
+					bottom = Math.Max(bottom, point.Y + rect.Height);
 				}
 			}
 
-			if (left > right)
+			if (left > right || top > bottom)
 				return null;
 
-			return new Rect(left, top, Math.Max(0d, right - left), height);
+			return new Rect(left, top, Math.Max(0d, right - left), Math.Max(0d, bottom - top));
 		}
 	}
 }

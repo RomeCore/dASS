@@ -7,7 +7,7 @@
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="40"
 			 x:Class="LLMDesktopAssistant.Controls.Markdown.Selection.SelectionToolbar"
-			 x:CompileBindings="False">
+			 x:DataType="sel:SelectionToolbarViewModel">
 
 	<UserControl.Styles>
 		<Style Selector="Border.selectionToolbar">
@@ -36,11 +36,11 @@
 		therefore Focusable="False" - the click still works, the focus never moves.
 	-->
 	<Popup x:Name="ToolbarPopup"
-		   Placement="Top"
-		   PlacementConstraintAdjustment="FlipY"
-		   VerticalOffset="-6"
-		   IsLightDismissEnabled="True"
-		   Focusable="False">
+				 Placement="Bottom"
+				 PlacementConstraintAdjustment="FlipY"
+				 VerticalOffset="-6"
+				 IsLightDismissEnabled="True"
+				 Focusable="False">
 		<Border Classes="selectionToolbar">
 			<ItemsControl ItemsSource="{Binding Items}" Focusable="False">
 				<ItemsControl.ItemsPanel>
@@ -51,9 +51,9 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate>
 						<Button Classes="selectionToolbarItem"
-								Command="{Binding Command}"
-								CommandParameter="{Binding Processor}"
-								ToolTip.Tip="{loc:Loc {Binding Title}}">
+										Command="{Binding Command}"
+										CommandParameter="{Binding Processor}"
+										ToolTip.Tip="{loc:Loc {Binding Title}}">
 							<ico:VisualIcon Kind="{Binding Icon}" Width="16" Height="16" />
 						</Button>
 					</DataTemplate>
