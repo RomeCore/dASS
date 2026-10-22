@@ -43,7 +43,7 @@ namespace LLMDesktopAssistant.SlashCommands
 		/// <inheritdoc/>
 		public override string UsageHint =>
 			"typed by the user at the start of a message; tell the user about them, never try to run one; " +
-			"derived commands (tools, skills, sub-agents) are not shown.";
+			"derived commands (tools, skills, sub-agents) are not shown";
 
 		/// <inheritdoc/>
 		protected override IEnumerable<SlashCommandInfo> GetCandidates(ChatAgentDescriptor? agent)
@@ -62,6 +62,8 @@ namespace LLMDesktopAssistant.SlashCommands
 		{
 			AddonSearchFormatting.AppendItem(builder, "/" + command.CanonicalToken, command.Description,
 				BuildSuffix(command));
+
+			builder.Append("  - source kind: ").AppendLine(command.SourceKind.ToString().ToLowerInvariant());
 
 			if (!detailed)
 				return;

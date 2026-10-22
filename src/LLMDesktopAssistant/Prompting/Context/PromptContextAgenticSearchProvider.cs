@@ -38,17 +38,19 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <inheritdoc/>
 		public override string UsageHint =>
 			"injected into the prompt automatically; you cannot run, load or refresh one - " +
-			"describe them to the user, never try to invoke them.";
+			"describe them to the user, never try to invoke them";
 
 		/// <inheritdoc/>
 		protected override void AppendAddon(StringBuilder builder, PromptContextInfo context, bool detailed)
 		{
 			AddonSearchFormatting.AppendItem(builder, context.Name, context.Description, BuildSuffix(context));
 
+			builder.Append("  - kind: ").AppendLine(context.Kind.ToString().ToLowerInvariant());
+
 			if (!detailed)
 				return;
 
-			builder.Append("  - variability: ").AppendLine(context.Variability.ToString());
+			builder.Append("  - variability: ").AppendLine(context.Variability.ToString().ToLowerInvariant());
 
 			if (IsScript(context))
 				builder.Append("  - timeout: ").Append(context.TimeoutMs).AppendLine(" ms");
