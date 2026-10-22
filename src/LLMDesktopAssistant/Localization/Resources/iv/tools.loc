@@ -82,8 +82,8 @@ name.web-status: Check web status
 
 // Tool descriptions
 description.addon-info: Shows the detailed information about one available addon, looked up by its exact name: kind, description, tags, source pack, path and kind-specific details such as the tool argument schema, the sub-agent model override, the Lua namespace and manuals, or the slash-command token, argument shape, aliases and command file path.
-description.addon-list_available: Lists the names of all addons available to you (skills, sub-agents, tools, Lua scripts and slash commands), grouped by kind and with no additional details.
-description.addon-search: Searches the available addons (skills, sub-agents, tools, Lua scripts and slash commands) by a free-form query and returns the best matches with usage hints. Slash commands are a read-only catalogue: the user types them, an agent can only suggest them.
+description.addon-list_available: Lists the names of all addons available to you (skills, sub-agents, tools, prompt contexts, Lua scripts and slash commands), grouped by kind and with no additional details.
+description.addon-search: Searches the available addons (skills, sub-agents, tools, prompt contexts, Lua scripts and slash commands) by a free-form query and returns the best matches with usage hints. Slash commands and prompt contexts are a read-only catalogue: the user types the former and the latter are injected automatically, an agent can only describe them.
 description.agent-call: Runs another AI agent with a custom instruction, user message and a set of allowed tools, skills, sub-agents and memory blocks.
 description.agent-callsub: Runs a predefined sub-agent using its name and input.
 description.agent-describe_image: Describes the content of an image using a separate vision-capable AI agent.
