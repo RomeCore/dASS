@@ -403,7 +403,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return new LuaTuple(LuaNil.Instance);
 
 			result.Clear();
-			// Attachments go too, and disposing them is what kills a live terminal.
 			result.Host.ClearAttachments();
 			return new LuaTuple(LuaNil.Instance);
 		}
