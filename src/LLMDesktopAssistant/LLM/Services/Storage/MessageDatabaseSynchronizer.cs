@@ -3,12 +3,9 @@ using System.ComponentModel;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
-using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.LLM.Services.Storage
 {
-
 	/// <summary>
 	/// Synchronizes ONE chat message (domain object) with its <see cref="MessageModel"/> and everything
 	/// nested inside it (tool calls with their additional view models, message additional view models).
