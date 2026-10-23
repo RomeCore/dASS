@@ -49,6 +49,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		{
 			_database = database;
 			Target = target;
+			_order = model?.Order ?? 0;
 			_model = model;
 
 			bool prevTemporary = target.IsTemporary;
