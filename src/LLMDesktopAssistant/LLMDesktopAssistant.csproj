@@ -179,6 +179,9 @@
 		  <SubType>Code</SubType>
 		  <DependentUpon>%(Filename)</DependentUpon>
 		</Compile>
+		<Compile Update="Markdown\Controls\ExtendedCodeBlock.axaml.cs">
+		  <DependentUpon>ExtendedCodeBlock.axaml</DependentUpon>
+		</Compile>
 		<Compile Update="MCP\MCPManagerView.axaml.cs">
 		  <SubType>Code</SubType>
 		  <DependentUpon>%(Filename)</DependentUpon>

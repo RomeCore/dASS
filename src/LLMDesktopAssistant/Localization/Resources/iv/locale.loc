@@ -26,7 +26,13 @@ remove: Remove
 rename: Rename
 duplicate: Duplicate
 reset: Reset
+code: Code
+copy: Copy
+split: Split view
+wrap: Wrap
 save: Save
+diagram: Diagram
+preview: Preview
 search: Search
 settings: Settings
 help: Help

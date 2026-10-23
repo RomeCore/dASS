@@ -2,6 +2,8 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Markdown;
+using LLMDesktopAssistant.Controls.Markdown.CodeBlocks;
 using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -80,9 +82,26 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public IMarkdownSelectionProcessorsProvider SelectionProcessorsProvider =>
 			_selectionProcessorsProvider ??= new CompositeSelectionProcessorsProvider(
-				MarkdownSelectionProcessorProviders.Resolve(ChatViewModel.Chat.Services, MarkdownSelectionProcessorScope.Message),
+				MarkdownSelectionProcessorProviders.Resolve(ChatViewModel.Chat.Services, MarkdownExtensionScope.Message),
 				new MarkdownSelectionProcessorsProvider(
 					new QuoteSelectionProcessor(ChatViewModel.ChatBottomPanel.UserInput)));
+
+		private IReadOnlyList<ICodeBlockPreviewProvider>? _codeBlockPreviewProviders;
+		/// <summary>
+		/// Gets the preview tabs the code blocks of this message offer (a diagram, a page, a formula), resolved for
+		/// the message surface.
+		/// </summary>
+		public IReadOnlyList<ICodeBlockPreviewProvider> CodeBlockPreviewProviders =>
+			_codeBlockPreviewProviders ??= MarkdownExtensionProviders.Resolve<ICodeBlockPreviewProvider>(
+				ChatViewModel.Chat.Services, MarkdownExtensionScope.Message);
+
+		private IReadOnlyList<IMarkdownCodeBlockActionProvider>? _codeBlockActionProviders;
+		/// <summary>
+		/// Gets the buttons the code blocks of this message offer (copy, save, ...), resolved for the message surface.
+		/// </summary>
+		public IReadOnlyList<IMarkdownCodeBlockActionProvider> CodeBlockActionProviders =>
+			_codeBlockActionProviders ??= MarkdownExtensionProviders.Resolve<IMarkdownCodeBlockActionProvider>(
+				ChatViewModel.Chat.Services, MarkdownExtensionScope.Message);
 
 		/// <summary>
 		/// The tool-call list part of the message. Always created; visibility is managed internally.

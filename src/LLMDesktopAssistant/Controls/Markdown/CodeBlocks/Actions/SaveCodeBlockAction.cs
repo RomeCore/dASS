@@ -1,17 +1,73 @@
-﻿using Avalonia.Platform.Storage;
-using CommunityToolkit.Mvvm.Input;
-using LiveMarkdown.Avalonia;
+using Avalonia.Controls;
+using Avalonia.Platform.Storage;
+using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Services;
 using Material.Icons;
 
-namespace LLMDesktopAssistant.UIExtensions.CodeBlockExtensions
+namespace LLMDesktopAssistant.Controls.Markdown.CodeBlocks.Actions
 {
-	[CodeBlockExtension]
-	public class SaveCodeBlockExtension : CodeBlockExtension
+	/// <summary>
+	/// Offers the save button for every fenced code block.
+	/// </summary>
+	[Service(typeof(IMarkdownCodeBlockActionProvider))]
+	public sealed class SaveCodeBlockActionProvider : IMarkdownCodeBlockActionProvider
 	{
-		// ЕЕЕ НЕЙРОНКИ ЖГУТ
-		private static FilePickerFileType GetFilePickerTypeFromLanguage(string language)
+		/// <inheritdoc />
+		public IReadOnlyList<IMarkdownCodeBlockAction> GetActions(MarkdownCodeBlockContext context)
+			=> [new SaveCodeBlockAction()];
+	}
+
+	/// <summary>
+	/// Writes the source of the block to a file the user picks, suggesting the extension of the block's language.
+	/// </summary>
+	public sealed class SaveCodeBlockAction : MarkdownCodeBlockAction
+	{
+		/// <summary>
+		/// Creates the action with its icon already set.
+		/// </summary>
+		public SaveCodeBlockAction()
 		{
-			return language.Trim().ToLowerInvariant() switch
+			Icon = MaterialIconKind.ContentSave;
+		}
+
+		/// <inheritdoc />
+		public override LocaleKeyBase Title => Locale.GetKey("common.save");
+
+		/// <inheritdoc />
+		public override int Order => 1;
+
+		/// <inheritdoc />
+		public override async Task ExecuteAsync(MarkdownCodeBlockContext context, CancellationToken cancellationToken)
+		{
+			if (TopLevel.GetTopLevel(context.Renderer)?.StorageProvider is not { } storage)
+				return;
+
+			var (language, text) = (context.Content.Language, context.Content.Text);
+
+			var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
+			{
+				FileTypeChoices =
+				[
+					GetFilePickerType(language),
+					new FilePickerFileType("Any files") { Patterns = ["*.*"] }
+				],
+				ShowOverwritePrompt = true
+			});
+
+			if (file is null)
+				return;
+
+			await File.WriteAllTextAsync(file.Path.LocalPath, text, cancellationToken);
+		}
+
+		/// <summary>
+		/// Maps the info string of a block to a file type: the language as typed, with the usual aliases resolved.
+		/// </summary>
+		private static FilePickerFileType GetFilePickerType(string? language)
+		{
+			var name = string.IsNullOrWhiteSpace(language) ? "txt" : language.Trim().ToLowerInvariant();
+
+			return name switch
 			{
 				// === Web Development ===
 				"javascript" or "js" => new FilePickerFileType("JavaScript files") { Patterns = ["*.js"] },
@@ -100,34 +156,8 @@ namespace LLMDesktopAssistant.UIExtensions.CodeBlockExtensions
 				"makefile" or "make" => new FilePickerFileType("Makefiles") { Patterns = ["Makefile", "*.mk"] },
 				"nginx" => new FilePickerFileType("Nginx config files") { Patterns = ["*.conf"] },
 
-				// Fallback
-				_ => new FilePickerFileType($"{language} files") { Patterns = [$"*.{language}"] }
+				_ => new FilePickerFileType($"{name} files") { Patterns = [$"*.{name}"] }
 			};
-		}
-
-		public SaveCodeBlockExtension(CodeBlock codeBlock)
-		{
-			Icon = MaterialIconKind.ContentSave;
-
-			Tooltip = "save";
-
-			Command = new AsyncRelayCommand(async () =>
-			{
-				var result = await App.MainTopLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
-				{
-					FileTypeChoices = [
-						GetFilePickerTypeFromLanguage(codeBlock.Language ?? "txt"),
-						new FilePickerFileType("Any files") { Patterns = ["*.*"] }
-					],
-					ShowOverwritePrompt = true
-				});
-
-				if (result != null)
-				{
-					var path = result.Path.LocalPath;
-					File.WriteAllText(path, codeBlock.Code);
-				}
-			});
 		}
 	}
 }

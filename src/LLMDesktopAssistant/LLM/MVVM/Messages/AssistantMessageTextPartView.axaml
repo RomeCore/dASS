@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -14,8 +14,11 @@
 												UsePlaintext="{Binding !Owner.RenderMarkdown}"
 												ImageBasePath="{Binding Owner.WorkingDirectorySnapshot}"
 												AnimateBlocks="{Binding !Completed}"
+												IsStreaming="{Binding !Completed}"
 												IsVisible="{Binding IsVisible}"
 												SelectionProcessorsProvider="{Binding Owner.SelectionProcessorsProvider}"
+												CodeBlockPreviewProviders="{Binding Owner.CodeBlockPreviewProviders}"
+												CodeBlockActionProviders="{Binding Owner.CodeBlockActionProviders}"
 												Owner="{Binding Owner.AssistantMessage}"
 												Margin="0,5"/>
 

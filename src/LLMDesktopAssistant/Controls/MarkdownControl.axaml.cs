@@ -7,6 +7,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using LiveMarkdown.Avalonia;
+using LLMDesktopAssistant.Controls.Markdown.CodeBlocks;
 using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
@@ -88,9 +89,65 @@ public partial class MarkdownControl : UserControl
 		set => SetValue(SelectionProcessorsProviderProperty, value);
 	}
 
+	public static readonly StyledProperty<IReadOnlyList<ICodeBlockPreviewProvider>?> CodeBlockPreviewProvidersProperty =
+		AvaloniaProperty.Register<MarkdownControl, IReadOnlyList<ICodeBlockPreviewProvider>?>(
+			nameof(CodeBlockPreviewProviders), inherits: true);
+
+	/// <summary>
+	/// Gets or sets the preview tabs code blocks of this control offer (a rendered diagram, a page, a formula).
+	/// Supplied by the consumer, never resolved from the container: the control knows nothing about chats.
+	/// </summary>
+	public IReadOnlyList<ICodeBlockPreviewProvider>? CodeBlockPreviewProviders
+	{
+		get => GetValue(CodeBlockPreviewProvidersProperty);
+		set => SetValue(CodeBlockPreviewProvidersProperty, value);
+	}
+
+	public static readonly StyledProperty<IReadOnlyList<IMarkdownCodeBlockActionProvider>?> CodeBlockActionProvidersProperty =
+		AvaloniaProperty.Register<MarkdownControl, IReadOnlyList<IMarkdownCodeBlockActionProvider>?>(
+			nameof(CodeBlockActionProviders), inherits: true);
+
+	/// <summary>
+	/// Gets or sets the action providers behind the buttons of code blocks (copy, save, run).
+	/// Supplied by the consumer, never resolved from the container.
+	/// </summary>
+	public IReadOnlyList<IMarkdownCodeBlockActionProvider>? CodeBlockActionProviders
+	{
+		get => GetValue(CodeBlockActionProvidersProperty);
+		set => SetValue(CodeBlockActionProvidersProperty, value);
+	}
+
+	public static readonly StyledProperty<bool> IsStreamingProperty =
+		AvaloniaProperty.Register<MarkdownControl, bool>(
+			nameof(IsStreaming), inherits: true);
+
+	/// <summary>
+	/// Gets or sets a value indicating whether the markdown is still being generated. Code blocks use it to decide
+	/// whether a fenced block is final (a closed fence or the end of the stream).
+	/// </summary>
+	public bool IsStreaming
+	{
+		get => GetValue(IsStreamingProperty);
+		set => SetValue(IsStreamingProperty, value);
+	}
+
+	public static readonly StyledProperty<bool> CompactCodeBlocksProperty =
+		AvaloniaProperty.Register<MarkdownControl, bool>(
+			nameof(CompactCodeBlocks), inherits: true);
+
+	/// <summary>
+	/// Gets or sets a value indicating whether code blocks render as bare source: no top bar, no tabs, no actions.
+	/// Intended for one-line surfaces such as tool statuses.
+	/// </summary>
+	public bool CompactCodeBlocks
+	{
+		get => GetValue(CompactCodeBlocksProperty);
+		set => SetValue(CompactCodeBlocksProperty, value);
+	}
+
 	public static readonly StyledProperty<object?> OwnerProperty =
 		AvaloniaProperty.Register<MarkdownControl, object?>(
-			nameof(Owner));
+			nameof(Owner), inherits: true);
 
 	/// <summary>
 	/// Gets or sets the owner domain object of this control. This can be a <see cref="ChatMessage"/>, a <see cref="ToolCall"/>, etc.
@@ -103,12 +160,25 @@ public partial class MarkdownControl : UserControl
 
 	static MarkdownControl()
 	{
+		CodeBlockPreviewProvidersProperty.AddOwner<MarkdownRenderer>();
+		CodeBlockActionProvidersProperty.AddOwner<MarkdownRenderer>();
+		IsStreamingProperty.AddOwner<MarkdownRenderer>();
+		CompactCodeBlocksProperty.AddOwner<MarkdownRenderer>();
+		OwnerProperty.AddOwner<MarkdownRenderer>();
+
 		MarkdownTextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(e.NewValue as string, o.UsePlaintext));
 		UsePlaintextProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownTextChanged(o.MarkdownText, (bool)e.NewValue!));
 		ImageBasePathProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.MarkdownRenderer.ImageBasePath = e.GetNewValue<string?>());
 		SelectionProcessorsProviderProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.SelectionToolbar.SelectionProcessorsProvider = e.GetNewValue<IMarkdownSelectionProcessorsProvider?>());
+		
 		OwnerProperty.Changed.AddClassHandler<MarkdownControl>((o, e) => o.SelectionToolbar.Owner = e.NewValue);
 	}
+
+	/// <summary>
+	/// Reads the streaming flag from the control or from the document inside it.
+	/// </summary>
+	public static bool GetIsStreaming(AvaloniaObject target)
+		=> target.GetValue(IsStreamingProperty);
 
 	private readonly ObservableStringBuilder _markdownBuilder = new();
 

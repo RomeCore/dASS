@@ -6,9 +6,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 	public sealed class MarkdownSelectionProcessorsProvider(params IMarkdownSelectionProcessor[] processors)
 		: IMarkdownSelectionProcessorsProvider
 	{
-		/// <inheritdoc />
-		public MarkdownSelectionProcessorScope Scope => MarkdownSelectionProcessorScope.Default;
-
+		
 		/// <inheritdoc />
 		public IReadOnlyList<IMarkdownSelectionProcessor> GetProcessors(MarkdownSelectionContext context) => processors;
 	}

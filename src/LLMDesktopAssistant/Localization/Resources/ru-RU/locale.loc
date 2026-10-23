@@ -21,7 +21,13 @@ remove: Удалить
 rename: Переименовать
 duplicate: Дублировать
 reset: Сбросить
+code: Код
+copy: Копировать
+split: Разделённый вид
+wrap: Перенос
 save: Сохранить
+diagram: Диаграмма
+preview: Предпросмотр
 search: Поиск
 settings: Настройки
 help: Справка

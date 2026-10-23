@@ -8,14 +8,8 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 	/// container by the control itself: the control knows nothing about chats, messages or services, and the
 	/// consumer owns the lifetime and the composition of the actions.
 	/// </remarks>
-	public interface IMarkdownSelectionProcessorsProvider
+	public interface IMarkdownSelectionProcessorsProvider : IMarkdownExtensionProvider
 	{
-		/// <summary>
-		/// Gets the surfaces this provider serves. A provider is usually registered as a service next to the
-		/// others, and the consumer composes the ones matching its surface - see
-		/// <see cref="MarkdownSelectionProcessorProviders.ForScope"/>.
-		/// </summary>
-		MarkdownSelectionProcessorScope Scope => MarkdownSelectionProcessorScope.Default;
 
 		/// <summary>
 		/// Gets the processors of this provider for one selection, in their insertion order. The context lets a

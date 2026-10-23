@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Markdown;
+using LLMDesktopAssistant.Controls.Markdown.CodeBlocks;
 using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -66,7 +68,23 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public IMarkdownSelectionProcessorsProvider SelectionProcessorsProvider =>
 			_selectionProcessorsProvider ??= MarkdownSelectionProcessorProviders.Resolve(
-				_chat.Services, MarkdownSelectionProcessorScope.ToolCall);
+				_chat.Services, MarkdownExtensionScope.ToolCall);
+
+		private IReadOnlyList<ICodeBlockPreviewProvider>? _codeBlockPreviewProviders;
+		/// <summary>
+		/// Gets the preview tabs the code blocks of this tool call offer, resolved for the tool call surface.
+		/// </summary>
+		public IReadOnlyList<ICodeBlockPreviewProvider> CodeBlockPreviewProviders =>
+			_codeBlockPreviewProviders ??= MarkdownExtensionProviders.Resolve<ICodeBlockPreviewProvider>(
+				_chat.Services, MarkdownExtensionScope.ToolCall);
+
+		private IReadOnlyList<IMarkdownCodeBlockActionProvider>? _codeBlockActionProviders;
+		/// <summary>
+		/// Gets the buttons the code blocks of this tool call offer (copy, save, ...), resolved for the tool call surface.
+		/// </summary>
+		public IReadOnlyList<IMarkdownCodeBlockActionProvider> CodeBlockActionProviders =>
+			_codeBlockActionProviders ??= MarkdownExtensionProviders.Resolve<IMarkdownCodeBlockActionProvider>(
+				_chat.Services, MarkdownExtensionScope.ToolCall);
 
 		private ToolStatus _status = ToolStatus.None;
 		public ToolStatus Status

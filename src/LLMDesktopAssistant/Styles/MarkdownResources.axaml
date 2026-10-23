@@ -1,6 +1,24 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
 					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+	<ResourceDictionary.ThemeDictionaries>
+
+		<ResourceDictionary x:Key="Light">
+			<SolidColorBrush x:Key="CodeBlockBackground" Color="#FFF6F8FA"/>
+			<SolidColorBrush x:Key="CodeBlockBarBackground" Color="#FFEAEEF2"/>
+			<SolidColorBrush x:Key="CodeBlockBorderBrush" Color="#FFD0D7DE"/>
+			<SolidColorBrush x:Key="CodeBlockTabSelectedBackground" Color="#FFD0D7DE"/>
+		</ResourceDictionary>
+
+		<ResourceDictionary x:Key="Dark">
+			<SolidColorBrush x:Key="CodeBlockBackground" Color="#FF151515"/>
+			<SolidColorBrush x:Key="CodeBlockBarBackground" Color="#FF232326"/>
+			<SolidColorBrush x:Key="CodeBlockBorderBrush" Color="#FF38383E"/>
+			<SolidColorBrush x:Key="CodeBlockTabSelectedBackground" Color="#FF38383E"/>
+		</ResourceDictionary>
+
+	</ResourceDictionary.ThemeDictionaries>
+
 	<x:Double x:Key="FontSizeS">14</x:Double>
 	<x:Double x:Key="FontSizeM">17</x:Double>
 	<x:Double x:Key="FontSizeL">20</x:Double>

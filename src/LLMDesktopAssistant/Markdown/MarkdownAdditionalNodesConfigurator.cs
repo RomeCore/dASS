@@ -21,9 +21,16 @@ public class MarkdownAdditionalNodesConfigurator
 		MarkdownNode.Register<QuickActionUiNode>();
 		MarkdownNode.Register<QuickExplanationUiNode>();
 
+		// Fenced code blocks render through our node: it owns the preview tabs, the split view and the actions.
+		MarkdownNode.Register<ExtendedCodeBlockNode>();
+
 		MarkdownNode.Edit(builder => builder
 			.Unregister<AlertBlockNode>()
-			.Register<AlertBlockUiNode>());
+			.Register<AlertBlockUiNode>()
+			// Fenced blocks are handled by PreviewCodeBlockNode; the stock node is dropped so the two cannot
+			// fight over a block. TODO: indented code blocks (a CodeBlock without a fence) are left without a
+			// node until the nested fence parser is moved onto them.
+			.Unregister<CodeBlockNode>());
 
 		AsyncImageLoader.DefaultCache = new RamBasedAsyncImageLoaderCache();
 	}

@@ -1,0 +1,140 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:md="using:LiveMarkdown.Avalonia"
+						 xmlns:local="using:LLMDesktopAssistant.Markdown.Controls"
+						 x:Class="LLMDesktopAssistant.Markdown.Controls.ExtendedCodeBlock"
+						 x:DataType="local:ExtendedCodeBlockViewModel"
+						 x:Name="ControlRoot">
+
+	<StackPanel Orientation="Vertical" Spacing="0">
+
+		<Border Background="{DynamicResource CodeBlockBarBackground}"
+						BorderBrush="{DynamicResource CodeBlockBorderBrush}"
+						BorderThickness="1" CornerRadius="4,4,0,0"
+						IsVisible="{Binding IsBarVisible}">
+
+			<DockPanel Margin="4,2" LastChildFill="True">
+
+				<TextBlock DockPanel.Dock="Left"
+									 VerticalAlignment="Center"
+									 Margin="6,0,8,0"
+									 FontSize="{DynamicResource FontSizeS}"
+									 Foreground="{DynamicResource DefaultForeground}"
+									 Text="{Binding #ControlRoot.Language}"/>
+
+				<StackPanel DockPanel.Dock="Right"
+										HorizontalAlignment="Right"
+										Orientation="Horizontal"
+										Spacing="2">
+
+					<ItemsControl ItemsSource="{Binding Actions}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Horizontal" Spacing="2"/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+								<Button Classes="IconButton" Focusable="False"
+												Command="{Binding Command}"
+												IsVisible="{Binding IsVisible}"
+												ToolTip.Tip="{loc:Loc {Binding Title}}">
+									<ico:VisualIcon Kind="{Binding Icon}"/>
+								</Button>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+					
+					<ToggleButton Classes="IconButton" Focusable="False"
+												IsChecked="{Binding IsSplit, Mode=TwoWay}"
+												IsVisible="{Binding CanSplit}"
+												ToolTip.Tip="{loc:Loc common.split}">
+						<ico:VisualIcon Kind="ViewSplitVertical"/>
+					</ToggleButton>
+
+					<ToggleButton Classes="IconButton" Focusable="False"
+												IsChecked="{Binding #ControlRoot.IsCodeWrapped, Mode=TwoWay}"
+												ToolTip.Tip="{loc:Loc common.wrap}">
+						<ico:VisualIcon Kind="Wrap"/>
+					</ToggleButton>
+
+				</StackPanel>
+
+				<ItemsControl ItemsSource="{Binding Tabs}" IsVisible="{Binding AreTabsVisible}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<StackPanel Orientation="Horizontal" Spacing="2"/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<Button Classes="CodeBlockTab"
+											Classes.Selected="{Binding IsSelected}"
+											Command="{Binding SelectCommand}"
+											Content="{Binding Title}"
+											VerticalContentAlignment="Bottom"
+											Focusable="False"/>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+
+			</DockPanel>
+		</Border>
+
+		<Grid x:Name="ContentGrid">
+
+			<Border x:Name="ContentGrid_SourcePart"
+							Background="{DynamicResource CodeBlockBackground}"
+							BorderBrush="{DynamicResource CodeBlockBorderBrush}"
+							BorderThickness="1" CornerRadius="0,0,4,4"
+							IsVisible="{Binding IsSourceVisible}">
+				
+				<ScrollViewer x:Name="SourceScrollViewer"
+											HorizontalScrollBarVisibility="{Binding #ControlRoot.HorizontalScrollBarVisibility}"
+											VerticalScrollBarVisibility="Auto">
+
+					<md:MarkdownTextBlock x:Name="SourceTextBlock" Margin="4"
+																FontFamily="{Binding #ControlRoot.FontFamily}"
+																TextWrapping="{Binding #ControlRoot.TextWrapping}"/>
+
+				</ScrollViewer>
+
+			</Border>
+
+			<GridSplitter Width="4"
+										Background="Transparent"
+										x:Name="ContentGrid_SplitterPart"
+										ResizeDirection="Columns"
+										ResizeBehavior="PreviousAndNext"
+										IsVisible="{Binding IsSplitterVisible}"/>
+
+			<Border x:Name="ContentGrid_PreviewPart"
+							BorderBrush="{DynamicResource CodeBlockBorderBrush}"
+							BorderThickness="1" CornerRadius="0,0,4,4"
+							IsVisible="{Binding IsPreviewVisible}">
+
+				<ContentControl Content="{Binding PreviewContent}"/>
+
+			</Border>
+
+		</Grid>
+
+		<ItemsControl ItemsSource="{Binding Actions}">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical" Spacing="0"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+			<ItemsControl.ItemTemplate>
+				<DataTemplate>
+					<ContentControl Content="{Binding AdditionalContent}"
+													IsVisible="{Binding HasAdditionalContent}"/>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+
+	</StackPanel>
+
+</UserControl>

@@ -21,9 +21,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 		public CompositeSelectionProcessorsProvider(IEnumerable<IMarkdownSelectionProcessorsProvider> providers)
 			=> _providers = [.. providers];
 
-		/// <inheritdoc />
-		public MarkdownSelectionProcessorScope Scope => MarkdownSelectionProcessorScope.Default;
-
+		
 		/// <inheritdoc />
 		public IReadOnlyList<IMarkdownSelectionProcessor> GetProcessors(MarkdownSelectionContext context)
 			=> [.. _providers.SelectMany(provider => provider.GetProcessors(context))];

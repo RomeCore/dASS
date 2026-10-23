@@ -2,6 +2,7 @@ using System.Collections;
 using System.Reflection;
 using Avalonia;
 using LiveMarkdown.Avalonia;
+using LLMDesktopAssistant.Markdown.Controls;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
 using Serilog;
@@ -14,7 +15,7 @@ public class MarkdownCodeBlockHighlightConfigurator
 {
 	public MarkdownCodeBlockHighlightConfigurator(TextMateLoader loader)
 	{
-		CodeBlock.LanguageProperty.Changed.AddClassHandler<CodeBlock>((block, e) =>
+		ExtendedCodeBlock.LanguageProperty.Changed.AddClassHandler<ExtendedCodeBlock>((block, e) =>
 		{
 			var lang = block.Language?.ToLowerInvariant();
 			block.ColorTheme = lang switch

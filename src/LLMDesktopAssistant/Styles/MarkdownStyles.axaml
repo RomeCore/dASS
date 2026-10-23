@@ -2,7 +2,8 @@
 				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 				xmlns:md="using:LiveMarkdown.Avalonia"
 				xmlns:loc="using:LLMDesktopAssistant.Localization"
-				xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+				
+				xmlns:ctrls="using:LLMDesktopAssistant.Markdown.Controls"
 				xmlns:nodes="using:LLMDesktopAssistant.Markdown.UINodes"
 				xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 	
@@ -20,102 +21,31 @@
 		
 	</Style>
 	
-	<Style Selector="md|CodeBlock">
+	<Style Selector="ctrls|ExtendedCodeBlock">
+		<Setter Property="FontFamily" Value="Consolas, 'Courier New', monospace"/>
+	</Style>
 
-		<Setter Property="beh:MarkdownCodeBlockBehaviour.IsExtendedCodeBlock" Value="True"/>
-		
-		<Setter Property="Template">
-			<ControlTemplate TargetType="md:CodeBlock">
-				<StackPanel Orientation="Vertical" Spacing="0">
+	<!-- Code block tab chip: a flat label, the active one filled -->
+	<Style Selector="Button.CodeBlockTab">
+		<Setter Property="Padding" Value="8,2"/>
+		<Setter Property="MinHeight" Value="24"/>
+		<Setter Property="BorderThickness" Value="0"/>
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="Foreground" Value="{DynamicResource DefaultForeground}"/>
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
+	</Style>
 
-					<Border Background="{DynamicResource BorderColor}"
-									BorderBrush="{DynamicResource BorderBrush}"
-									BorderThickness="1" CornerRadius="4,4,0,0">
+	<Style Selector="Button.CodeBlockTab /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="Transparent"/>
+		<Setter Property="CornerRadius" Value="4"/>
+	</Style>
 
-						<DockPanel Margin="4,2" LastChildFill="True">
+	<Style Selector="Button.CodeBlockTab.Selected /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource CodeBlockTabSelectedBackground}"/>
+	</Style>
 
-							<TextBlock x:Name="PART_LanguageTextBlock"
-												 DockPanel.Dock="Left"
-												 VerticalAlignment="Center"
-												 Text="{TemplateBinding Language}"/>
-
-							<StackPanel DockPanel.Dock="Right"
-													HorizontalAlignment="Right"
-													Orientation="Horizontal"
-													Spacing="2">
-
-								<ToggleButton x:Name="PART_ToggleTextWrapButton"
-															Focusable="False"
-															Classes="IconButton"
-															IsChecked="{TemplateBinding IsCodeWrapped, Mode=TwoWay}">
-
-									<ico:VisualIcon Kind="Wrap"/>
-								</ToggleButton>
-
-								<ItemsControl ItemsSource="{TemplateBinding (beh:MarkdownCodeBlockBehaviour.CodeBlockExtensions)}"
-															x:CompileBindings="False">
-									
-									<ItemsControl.ItemsPanel>
-										<ItemsPanelTemplate>
-											<StackPanel Orientation="Horizontal" Spacing="2"/>
-										</ItemsPanelTemplate>
-									</ItemsControl.ItemsPanel>
-
-									<ItemsControl.ItemTemplate>
-										<DataTemplate>
-											<Button Classes="IconButton"
-															Focusable="False"
-															Command="{Binding Command}"
-															ToolTip.Tip="{loc:Loc {Binding Tooltip}}"
-															IsVisible="{Binding IsButtonVisible}">
-
-												<ico:VisualIcon Kind="{Binding Icon}"/>
-											</Button>
-										</DataTemplate>
-									</ItemsControl.ItemTemplate>
-
-								</ItemsControl>
-								
-							</StackPanel>
-						</DockPanel>
-					</Border>
-
-					<Border Background="{DynamicResource SecondaryCardBackgroundColor}"
-									BorderBrush="{DynamicResource BorderBrush}"
-									BorderThickness="1,0,1,1" CornerRadius="0,0,4,4">
-
-						<ScrollViewer x:Name="PART_ScrollViewer"
-													HorizontalScrollBarVisibility="{TemplateBinding HorizontalScrollBarVisibility}"
-													VerticalScrollBarVisibility="Auto">
-
-							<md:MarkdownTextBlock x:Name="PART_CodeTextBlock" Margin="4"
-																		FontFamily="{TemplateBinding FontFamily}"
-																		TextWrapping="{TemplateBinding TextWrapping}"/>
-						</ScrollViewer>
-
-					</Border>
-					
-					<ItemsControl ItemsSource="{TemplateBinding (beh:MarkdownCodeBlockBehaviour.CodeBlockExtensions)}"
-												x:CompileBindings="False">
-									
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<StackPanel Orientation="Vertical" Spacing="0"/>
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
-
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
-								<ContentControl Content="{Binding AdditionalViewModel}"/>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-
-					</ItemsControl>
-
-				</StackPanel>
-			</ControlTemplate>
-		</Setter>
-
+	<Style Selector="Button.CodeBlockTab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="{DynamicResource CodeBlockTabSelectedBackground}"/>
 	</Style>
 
 	<!-- Quick Action Button -->
