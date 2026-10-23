@@ -44,8 +44,10 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 			var loaded = new List<AdditionalChatData>();
 			var syncs = new Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer>();
 
+			// Осторожно ребятки: если поменять оба выражения в Find местами, то будет пиздос
+			// (x45 медленнее загрузка чата станет, а я с этим месяц жил и очень долго ждал).
 			foreach (var model in database.AdditionalChatData
-				.Find(d => d.ParentKind == parentKind && d.ParentId == parentId)
+				.Find(d => d.ParentId == parentId && d.ParentKind == parentKind)
 				.OrderBy(d => d.Order).ThenBy(d => d.Id))
 			{
 				var sync = AdditionalChatDataSynchronizer.FromModel(database, model);

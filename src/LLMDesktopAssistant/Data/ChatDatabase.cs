@@ -33,6 +33,7 @@ namespace LLMDesktopAssistant.Data
 
 			MessageNodes.EnsureIndex(x => x.ParentId);
 			MessageNodes.EnsureIndex(x => x.SelectedNodeId);
+			MessageNodes.EnsureIndex(x => x.IsRootNode);
 			ToolCalls.EnsureIndex(x => x.MessageId);
 			ToolCalls.EnsureIndex(x => x.ToolCallId);
 			AdditionalChatData.EnsureIndex(x => x.ParentKind);
