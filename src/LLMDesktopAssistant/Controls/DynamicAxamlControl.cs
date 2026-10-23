@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 using Serilog;
 
 namespace LLMDesktopAssistant.Controls
@@ -56,7 +57,11 @@ namespace LLMDesktopAssistant.Controls
 					UseCompiledBindingsByDefault = false,
 				};
 
-				Content = AvaloniaRuntimeXamlLoader.Load(document, configuration);
+				var control = AvaloniaRuntimeXamlLoader.Load(document, configuration);
+				if (control is Visual visual && visual.IsAttachedToVisualTree())
+					throw new InvalidOperationException("Cannot render a control that is already attached to the visual tree " +
+						"(Window, or any other control that creates TopLevel).");
+				Content = control;
 			}
 			catch (Exception ex)
 			{
