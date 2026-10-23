@@ -36,6 +36,13 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 		private int _bufferSize = 1000;
 		private bool _isAlternateBuffer;
 
+		// Wheel handling: how many scrollback lines / arrow-key presses one wheel notch is worth.
+		private const int WheelScrollLines = 3;
+		private const int WheelArrowLines = 3;
+		// Fractional wheel deltas (trackpads, precision wheels) accumulate here instead of
+		// being truncated to zero lines on every event.
+		private double _wheelResidual;
+
 		// Process state (owned by the launcher, mirrored here for input routing only)
 		private IPtyConnection? _ptyConnection;
 		private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
@@ -1330,54 +1337,141 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 			}
 		}
 
+		/// <summary>
+		/// Routes the wheel to the owner that can actually act on it, in the xterm order:
+		/// application mouse reporting &gt; alternate-scroll (arrow keys in the alternate buffer)
+		/// &gt; local scrollback. The event is claimed only when one of them did something,
+		/// so that at the edges of the buffer the wheel bubbles up to the hosting ScrollViewer
+		/// (e.g. the chat) instead of being swallowed. Shift always bypasses the application
+		/// and reaches the local scrollback, as in xterm.
+		/// </summary>
 		protected override async void OnPointerWheelChanged(PointerWheelEventArgs e)
 		{
 			base.OnPointerWheelChanged(e);
 
-			// Number of lines to scroll per wheel notch
-			const int scrollLines = 3;
-
 			// Delta.Y is positive when scrolling up (towards user), negative when scrolling down
 			var delta = e.Delta.Y;
 
-			if (_ptyConnection != null && _terminal != null && _terminal.MouseTrackingMode != XT.Input.MouseTrackingMode.None)
+			// Horizontal wheel motion has no owner here - let it bubble.
+			if (delta == 0)
+				return;
+
+			var bypassApplication = e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+			var modifiers = ConvertAvaloniaModifiers(e.KeyModifiers);
+
+			if (_ptyConnection != null && _terminal != null)
 			{
-				var point = e.GetPosition(this);
-				var col = (int)(point.X / _charWidth);
-				var row = (int)(point.Y / _charHeight);
-				var modifiers = ConvertAvaloniaModifiers(e.KeyModifiers);
-
-				var button = delta > 0 ? XT.Input.MouseButton.WheelUp : XT.Input.MouseButton.WheelDown;
-				var eventType = delta > 0 ? XT.Input.MouseEventType.WheelUp : XT.Input.MouseEventType.WheelDown;
-
-				var sequence = _terminal.GenerateMouseEvent(button, col, row, eventType, modifiers);
-				if (!string.IsNullOrEmpty(sequence))
+				// 1. The application owns the mouse: forward the wheel as a mouse report.
+				if (!bypassApplication && _terminal.MouseTrackingMode != XT.Input.MouseTrackingMode.None)
 				{
-					await SendToPtyAsync(sequence).ConfigureAwait(false);
+					var point = e.GetPosition(this);
+					var col = (int)(point.X / _charWidth);
+					var row = (int)(point.Y / _charHeight);
+
+					var button = delta > 0 ? XT.Input.MouseButton.WheelUp : XT.Input.MouseButton.WheelDown;
+					var eventType = delta > 0 ? XT.Input.MouseEventType.WheelUp : XT.Input.MouseEventType.WheelDown;
+
+					var sequence = _terminal.GenerateMouseEvent(button, col, row, eventType, modifiers);
+					if (!string.IsNullOrEmpty(sequence))
+					{
+						// Claim the event BEFORE the first await: an async void handler that awaits
+						// returns to the router with Handled still false, and the parent ScrollViewer
+						// would scroll the page as well.
+						e.Handled = true;
+						await SendToPtyAsync(sequence).ConfigureAwait(false);
+						return;
+					}
+				}
+
+				// 2. Full-screen TUI without mouse reporting: alternate scroll (xterm DECSET 1007).
+				//    There is no scrollback in the alternate buffer, so the only way to make
+				//    less/vim/nano react to the wheel is to send them cursor keys.
+				if (!bypassApplication && _isAlternateBuffer)
+				{
 					e.Handled = true;
+					await SendWheelAsArrowKeysAsync(delta, modifiers).ConfigureAwait(false);
 					return;
 				}
 			}
 
-			if (delta != 0)
-			{
-				// Scroll up (negative delta to ViewportY) when wheel scrolls up (positive delta)
-				// Scroll down (positive delta to ViewportY) when wheel scrolls down (negative delta)
-				int linesToScroll = (int)(-delta * scrollLines);
-
-				// Calculate new viewport position
-				int newViewportY = Math.Clamp(
-					ViewportY + linesToScroll,
-					0,
-					MaxScrollback);
-
-				if (newViewportY != ViewportY)
-				{
-					ViewportY = newViewportY;
-				}
-
+			// 3. Normal buffer: scroll our own scrollback, but only claim the event if the
+			//    viewport could actually move. Otherwise it bubbles to the parent ScrollViewer.
+			if (TryScrollViewportBy(delta))
 				e.Handled = true;
+		}
+
+		/// <summary>
+		/// Scrolls the local scrollback by a wheel delta and reports whether the wheel was
+		/// consumed. Returns <c>false</c> when the viewport cannot move in the requested
+		/// direction (no scrollback, already at the top/bottom, alternate buffer), which is the
+		/// signal for the caller to leave the event unhandled so that it bubbles up.
+		/// </summary>
+		private bool TryScrollViewportBy(double delta)
+		{
+			if (_terminal == null || _isAlternateBuffer)
+				return false;
+
+			// Positive = towards older lines (wheel up). Trackpads and precision wheels send
+			// fractional deltas, so accumulate them instead of truncating every event to 0 lines.
+			var step = -delta;
+			if (_wheelResidual != 0 && Math.Sign(_wheelResidual) != Math.Sign(step))
+				_wheelResidual = 0;
+			_wheelResidual += step;
+
+			var viewportY = ViewportY;
+			var maxScrollback = MaxScrollback;
+
+			// Is there anything left to scroll in this direction? If not, the wheel is not ours.
+			// step < 0 moves towards older lines (ViewportY decreases), so it needs lines above the
+			// viewport; step > 0 moves towards newer lines and needs lines below it. Note that the
+			// buffer follows the output at the BOTTOM of the scrollback (viewportY == maxScrollback),
+			// which is exactly the state in which the wheel must still scroll up.
+			var canScroll = step < 0
+				? viewportY > 0
+				: viewportY < maxScrollback;
+			if (!canScroll)
+			{
+				_wheelResidual = 0;
+				return false;
 			}
+
+			var lines = (int)Math.Truncate(_wheelResidual * WheelScrollLines);
+			if (lines != 0)
+			{
+				var target = Math.Clamp(viewportY + lines, 0, maxScrollback);
+				if (target != viewportY)
+				{
+					ViewportY = target;
+					// Subtract what was actually scrolled, not what was requested: clamped at an edge
+					// the leftover would otherwise keep pushing against the wall on later notches.
+					_wheelResidual -= (double)(target - viewportY) / WheelScrollLines;
+				}
+			}
+
+			// Even a sub-line delta counts as consumed: releasing it here would let the page
+			// jump while the user is wheel-scrolling inside the terminal.
+			return true;
+		}
+
+		/// <summary>
+		/// Translates a wheel notch into cursor keys for a full-screen application that does not
+		/// track the mouse (the alternate buffer has no scrollback to scroll).
+		/// </summary>
+		private async Task SendWheelAsArrowKeysAsync(double delta, XT.Input.KeyModifiers modifiers)
+		{
+			if (_terminal == null || _ptyConnection == null)
+				return;
+
+			var key = delta > 0 ? XT.Input.Key.UpArrow : XT.Input.Key.DownArrow;
+
+			// GenerateKeyInput, not a literal "\x1b[A": the sequence depends on DECCKM
+			// (application cursor keys), which the terminal tracks.
+			var sequence = _terminal.GenerateKeyInput(key, modifiers);
+			if (string.IsNullOrEmpty(sequence))
+				return;
+
+			for (var i = 0; i < WheelArrowLines; i++)
+				await SendToPtyAsync(sequence).ConfigureAwait(false);
 		}
 
 		protected override async void OnGotFocus(FocusChangedEventArgs e)
@@ -1441,6 +1535,10 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 			{
 				var oldValue = _isAlternateBuffer;
 				_isAlternateBuffer = e.Buffer == XT.Common.BufferType.Alternate;
+
+				// Buffers have independent scroll positions; a leftover fractional wheel delta
+				// would make the first notch in the other buffer jump.
+				_wheelResidual = 0;
 
 				if (oldValue != _isAlternateBuffer)
 				{
