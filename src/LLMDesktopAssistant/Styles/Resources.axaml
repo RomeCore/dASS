@@ -4,18 +4,28 @@
 	<ResourceDictionary.ThemeDictionaries>
 		
 		<ResourceDictionary x:Key="Light">
-		
+
 			<Brush x:Key="DefaultForeground">Black</Brush>
 			<Brush x:Key="TopBarBackground">#FFE5E5E5</Brush>
 			<Brush x:Key="MessageBackground">#FFDEDEDE</Brush>
 
+			<!-- Card chrome: the shared frame of every card-like view (dialogs, forms, tool attachments). -->
+			<Brush x:Key="CardBackground">#FFF7F7F9</Brush>
+			<Brush x:Key="CardBackgroundBrush">#FFF7F7F9</Brush>
+			<Brush x:Key="CardBorderBrush">#FFD5D5DE</Brush>
+
 		</ResourceDictionary>
 		
 		<ResourceDictionary x:Key="Dark">
-			
+
 			<Brush x:Key="DefaultForeground">White</Brush>
 			<Brush x:Key="TopBarBackground">#FF2F2F30</Brush>
 			<Brush x:Key="MessageBackground">#FF414141</Brush>
+
+			<!-- Card chrome: the shared frame of every card-like view (dialogs, forms, tool attachments). -->
+			<Brush x:Key="CardBackground">#FF2B2B2F</Brush>
+			<Brush x:Key="CardBackgroundBrush">#FF2B2B2F</Brush>
+			<Brush x:Key="CardBorderBrush">#FF3C3C44</Brush>
 
 		</ResourceDictionary>
 		

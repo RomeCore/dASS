@@ -144,7 +144,7 @@
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
 			<Button Content="{loc:Loc common.close}"
 							Command="{Binding CloseCommand}"
-							Classes="Secondary"/>
+							Classes="secondary"/>
 		</StackPanel>
 
 	</StackPanel>

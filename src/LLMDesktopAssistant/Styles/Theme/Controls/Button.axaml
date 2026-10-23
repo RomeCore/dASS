@@ -112,4 +112,64 @@
     <Setter Property="Foreground" Value="#999999" />
   </Style>
 
+  <!-- Secondary variant: the quiet action next to a primary one -->
+  <Style Selector="Button.secondary">
+    <Setter Property="Background" Value="#1A1A26" />
+    <Setter Property="BorderBrush" Value="#3A3A5E" />
+    <Setter Property="Foreground" Value="#C8C8D8" />
+  </Style>
+
+  <Style Selector="Button.secondary /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1A1A26" />
+    <Setter Property="BorderBrush" Value="#3A3A5E" />
+    <Setter Property="Foreground" Value="#C8C8D8" />
+  </Style>
+
+  <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#2E2E44" />
+    <Setter Property="BorderBrush" Value="#6C5CE7" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="Button.secondary:pointerover">
+    <Setter Property="BorderBrush" Value="#6C5CE7" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="Button.secondary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1A1A22" />
+    <Setter Property="BorderBrush" Value="#2A2A3E" />
+    <Setter Property="Foreground" Value="#666666" />
+  </Style>
+
+  <!-- Danger variant: the destructive action (kill, delete) -->
+  <Style Selector="Button.danger">
+    <Setter Property="Background" Value="#2A1618" />
+    <Setter Property="BorderBrush" Value="#7A2A2E" />
+    <Setter Property="Foreground" Value="#FF8A8A" />
+  </Style>
+
+  <Style Selector="Button.danger /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#2A1618" />
+    <Setter Property="BorderBrush" Value="#7A2A2E" />
+    <Setter Property="Foreground" Value="#FF8A8A" />
+  </Style>
+
+  <Style Selector="Button.danger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#7A2A2E" />
+    <Setter Property="BorderBrush" Value="#FF4444" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="Button.danger:pointerover">
+    <Setter Property="BorderBrush" Value="#FF4444" />
+    <Setter Property="Foreground" Value="#FFFFFF" />
+  </Style>
+
+  <Style Selector="Button.danger:disabled /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#1A1A22" />
+    <Setter Property="BorderBrush" Value="#2A2A3E" />
+    <Setter Property="Foreground" Value="#666666" />
+  </Style>
+
 </Styles>

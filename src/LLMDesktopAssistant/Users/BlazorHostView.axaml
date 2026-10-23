@@ -120,12 +120,12 @@
 			<Button Content="{loc:Loc webui.host.start}"
 					Command="{Binding StartCommand}"
 					IsVisible="{Binding IsRunning, Converter={StaticResource InverseBooleanConverter}}"
-					Classes="Primary"/>
+					Classes="accent"/>
 
 			<Button Content="{loc:Loc webui.host.stop}"
 					Command="{Binding StopCommand}"
 					IsVisible="{Binding IsRunning}"
-					Classes="Danger"/>
+					Classes="danger"/>
 
 		</Panel>
 

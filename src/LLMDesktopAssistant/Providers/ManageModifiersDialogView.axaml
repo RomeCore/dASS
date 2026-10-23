@@ -27,7 +27,7 @@
     <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4"
                 HorizontalAlignment="Left">
       <Button Command="{Binding AddCommand}"
-              Classes="Primary">
+              Classes="accent">
         <StackPanel Orientation="Horizontal" Spacing="4">
           <ico:VisualIcon Kind="AddCircle" Width="14" Height="14"/>
           <TextBlock Text="{loc:Loc model.modifier.add}"/>
@@ -44,7 +44,7 @@
 
       <Button Command="{Binding DeleteCommand}"
               IsEnabled="{Binding IsModifierSelected}"
-              Classes="Danger">
+              Classes="danger">
         <StackPanel Orientation="Horizontal" Spacing="4">
           <ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
           <TextBlock Text="{loc:Loc model.modifier.delete}"/>

@@ -62,7 +62,7 @@
 			<!-- Test Connection + Refresh Models -->
 			<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4">
 				<Button Command="{Binding TestConnectionCommand}"
-						Classes="Primary">
+						Classes="accent">
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<ico:VisualIcon Kind="Link" Width="16" Height="16"/>
 						<TextBlock Text="{loc:Loc settings.provider.test_connection}"/>
@@ -260,7 +260,7 @@
 							 Width="180"
 							 PlaceholderText="{loc:Loc settings.provider.custom.displayname.placeholder}"/>
 					<Button Command="{Binding AddCustomModelCommand}"
-							Classes="Primary"
+							Classes="accent"
 							VerticalAlignment="Stretch">
 						<StackPanel Orientation="Horizontal" Spacing="4">
 							<ico:VisualIcon Kind="Add" Width="14" Height="14"/>
@@ -346,7 +346,7 @@
 
 				<Button Content="{loc:Loc common.close}"
 								Command="{Binding CloseCommand}"
-								Classes="Primary"/>
+								Classes="accent"/>
 
 			</StackPanel>
 

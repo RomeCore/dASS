@@ -44,7 +44,7 @@
 				<Button Content="{Binding CancelText}"
 								Command="{Binding CancelCommand}"
 								IsVisible="{Binding IsResultSet, Converter={StaticResource InverseBooleanConverter}}"
-								Classes="Secondary"
+								Classes="secondary"
 								MinWidth="80"/>
 
 				<!-- Confirm button -->

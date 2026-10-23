@@ -109,10 +109,10 @@
 			<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
 				<Button Content="{loc:Loc common.cancel}"
 						Command="{Binding CancelCommand}"
-						Classes="Secondary"/>
+						Classes="secondary"/>
 				<Button Content="{Binding ConfirmButtonText}"
 						Command="{Binding SaveCommand}"
-						Classes="Primary"/>
+						Classes="accent"/>
 			</StackPanel>
 
 		</StackPanel>

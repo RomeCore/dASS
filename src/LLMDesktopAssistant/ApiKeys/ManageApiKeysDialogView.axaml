@@ -25,7 +25,7 @@
 		<!-- Toolbar -->
 		<StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,0,4">
 			<Button Command="{Binding AddCommand}"
-							Classes="Primary">
+							Classes="accent">
 				<Button.Content>
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<ico:VisualIcon Kind="AddCircle" Width="14" Height="14"/>
@@ -46,7 +46,7 @@
 
 			<Button Command="{Binding DeleteCommand}"
 							IsEnabled="{Binding IsKeySelected}"
-							Classes="Danger">
+							Classes="danger">
 				<Button.Content>
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<ico:VisualIcon Kind="Delete" Width="14" Height="14"/>
