@@ -3,7 +3,6 @@ using LLMDesktopAssistant.Controls.Markdown;
 using LLMDesktopAssistant.Controls.Markdown.CodeBlocks;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
-using Serilog;
 
 namespace LLMDesktopAssistant.Desktop.Markdown
 {
@@ -65,10 +64,7 @@ namespace LLMDesktopAssistant.Desktop.Markdown
 		public ValueTask UpdateAsync(CodeBlockContent content, bool isFinal, CancellationToken cancellationToken)
 		{
 			if (isFinal)
-			{
 				_presenter.Text = content.Text;
-				Log.Information("Mermaid diagram updated: {Content}", content.Text);
-			}
 			return ValueTask.CompletedTask;
 		}
 

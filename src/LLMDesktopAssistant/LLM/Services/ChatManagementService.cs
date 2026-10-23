@@ -36,7 +36,6 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			sw.Start();
 			var scope = services.CreateScope();
-			Log.Debug("Chat scope opened in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
 			sw.Restart();
 			var existingChat = database.Chats.FindById(chatId);

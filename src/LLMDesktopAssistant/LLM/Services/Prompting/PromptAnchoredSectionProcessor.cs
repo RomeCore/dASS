@@ -3,7 +3,6 @@ using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
-using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
@@ -56,8 +55,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					if (candidate.AgentId != agent.Id)
 						continue;
 
-					Log.Debug("Reusing prompt state anchor #{AnchorId} for agent {AgentId} (message index {Index}).",
-						candidate.Id, agent.Id, i);
 					anchor = candidate;
 					messageWithAnchor = i;
 					break;
@@ -128,11 +125,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			// Rebaseline: create a new anchor on the first raw message after the boundary.
 			int targetIndex = boundaryIndex + 1;
 			if (targetIndex >= chat.Messages.Count)
-			{
-				Log.Debug("Skipped prompt state anchor creation for agent {AgentId}: no target message after the last checkpoint.",
-					agent.Id);
 				return null;
-			}
 
 			var target = chat.Messages[targetIndex];
 			var states = await sections.CaptureStatesAsync(agent, cancellationToken);
@@ -147,8 +140,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			};
 
 			target.Message.AdditionalData.Add(anchor);
-			Log.Information("Created prompt state anchor #{AnchorId} for agent {AgentId} on message {MessageId} (raw index {Index}).",
-				anchor.Id, agent.Id, target.MessageId, targetIndex);
 			return anchor;
 		}
 
