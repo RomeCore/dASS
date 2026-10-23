@@ -2,7 +2,6 @@ using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Storage;
-using LLMDesktopAssistant.Utils;
 using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services

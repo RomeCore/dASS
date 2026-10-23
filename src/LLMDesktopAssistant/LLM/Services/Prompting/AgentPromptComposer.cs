@@ -65,7 +65,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					{
 						settings.Snapshot = await promptContextProviders.Anchored()
 							.RenderHeaderAsync(agent, cancellationToken);
-						Log.Information("Froze static system prompt snapshot for agent {AgentId}.", agent.Id);
 					}
 
 					header = settings.Snapshot;
@@ -82,8 +81,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					headerSource = "live";
 					break;
 			}
-
-			Log.Debug("Prompt header for agent {AgentId}: mode={Mode}, source={Source}.", agent.Id, promptMode, headerSource);
 
 			var summaryCheckpoint = effectiveContext.Checkpoints.LastOrDefault(c =>
 				(c.Checkpoint.Kind & ~disabledCheckpoints).HasFlag(ContextCheckpointKind.Summary));
