@@ -62,5 +62,12 @@ namespace LLMDesktopAssistant.Utils
 		{
 			return MarkdownEscaper.Escape(text) ?? string.Empty;
 		}
+
+		public static string TruncateEnd(this string text, int maxLength, string suffix = "...")
+		{
+			if (text.Length <= maxLength)
+				return text;
+			return string.Concat(text.AsSpan(0, maxLength - suffix.Length), suffix);
+		}
 	}
 }

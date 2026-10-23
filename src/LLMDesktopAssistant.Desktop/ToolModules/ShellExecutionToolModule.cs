@@ -1,16 +1,15 @@
 using System.ComponentModel;
+using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.ToolModules.Terminal;
-using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Specifiers;
-
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
-using LLMDesktopAssistant.Localization;
-using LLMDesktopAssistant.Addons.Management;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules
 {
@@ -71,16 +70,25 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			});
 		}
 
-		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string bash)
+		// Previously, main arguments were called 'bash', 'batch', 'powershell' instead of 'command'.
+		// If arguments are named corresponding to their languages, the arguments syntax highlighting will work,
+		// but LLM will hallicunate wrong argument names ('command', for example), so it is renamed now
+		// and syntax highlighting will not work.
+
+		// Streaming analyzers leave blocks unclosed, so incremental rendering will work
+		const int TruncationLength = 500;
+
+		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string command)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{bash}`");
-			return StreamingToolAnalysisResult.Continue;
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"""
+				```bash
+				{command.TruncateEnd(TruncationLength)}
+				""");
+			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecuteBashPreview(IToolExecutionContext ctx, string bash, bool runTerminal)
+		private PreviewToolExecutionResult ExecuteBashPreview(bool runTerminal)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{bash}`");
-
 			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
@@ -90,7 +98,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecuteBash(
 			IToolExecutionContext context,
-			[Description("The bash command to run.")] string bash,
+			[Description("The bash command to run.")] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -99,30 +107,29 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 			return Run(new TerminalToolRunParameters
 			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{bash}`",
 				Wait = wait,
 				ProcessParameters = new ProcessLaunchParameters
 				{
 					ProcessName = "Bash",
 					RunInTerminal = runTerminal,
 					FileName = "/bin/bash",
-					Arguments = ["-c", bash],
+					Arguments = ["-c", command],
 					WorkingDirectory = workDir
 				}
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolAnalysisResult ExecuteBatchStreaming(IToolExecutionContext ctx, string batch)
+		private StreamingToolAnalysisResult ExecuteBatchStreaming(IToolExecutionContext ctx, string command)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{batch}`");
-			return StreamingToolAnalysisResult.Continue;
+			ctx.Call.SetStatus(MaterialIconKind.Console, $"""
+				```batch
+				{command.TruncateEnd(TruncationLength)}
+				""");
+			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecuteBatchPreview(IToolExecutionContext ctx, string batch, bool runTerminal)
+		private PreviewToolExecutionResult ExecuteBatchPreview(bool runTerminal)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Console, $"`{batch}`");
-
 			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
@@ -132,7 +139,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecuteBatch(
 			IToolExecutionContext context,
-			[Description("The batch command to run.")] string batch,
+			[Description("The batch command to run.")] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -141,31 +148,30 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 			return Run(new TerminalToolRunParameters
 			{
-				StatusIcon = MaterialIconKind.Console,
-				StatusTitle = $"`{batch}`",
 				Wait = wait,
 				ProcessParameters = new ProcessLaunchParameters
 				{
 					ProcessName = "Batch",
 					RunInTerminal = runTerminal,
 					FileName = "cmd.exe",
-					Arguments = ["/c", $"\"{batch}\""],
+					Arguments = ["/c", $"\"{command}\""],
 					VerbatimArguments = true,
 					WorkingDirectory = workDir
 				}
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolAnalysisResult ExecutePowerShellStreaming(IToolExecutionContext ctx, string powershell)
+		private StreamingToolAnalysisResult ExecutePowerShellStreaming(IToolExecutionContext ctx, string command)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"`{powershell}`");
-			return StreamingToolAnalysisResult.Continue;
+			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"""
+				```powershell
+				{command.TruncateEnd(TruncationLength)}
+				""");
+			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult ExecutePowerShellPreview(IToolExecutionContext ctx, string powershell, bool runTerminal)
+		private PreviewToolExecutionResult ExecutePowerShellPreview(bool runTerminal)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"`{powershell}`");
-
 			return new PreviewToolExecutionResult
 			{
 				ExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
@@ -175,7 +181,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecutePowerShell(
 			IToolExecutionContext context,
-			[Description("The powershell command to run.")] string powershell,
+			[Description("The powershell command to run.")] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -184,15 +190,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 			return Run(new TerminalToolRunParameters
 			{
-				StatusIcon = MaterialIconKind.Powershell,
-				StatusTitle = $"`{powershell}`",
 				Wait = wait,
 				ProcessParameters = new ProcessLaunchParameters
 				{
 					ProcessName = "PowerShell",
 					RunInTerminal = runTerminal,
 					FileName = "powershell",
-					Arguments = ["-Command", powershell],
+					Arguments = ["-Command", command],
 					WorkingDirectory = workDir
 				}
 			}, context, cancellationToken);

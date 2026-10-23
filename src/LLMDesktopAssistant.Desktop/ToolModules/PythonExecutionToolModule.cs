@@ -152,8 +152,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				// Run in terminal
 				var result = Run(new TerminalToolRunParameters
 				{
-					StatusIcon = MaterialIconKind.LanguagePython,
-					StatusTitle = null,
 					ProcessParameters = _pythonHelperService.CreateLaunchParameters(_chatSettings.Settings.Environment,
 						$"python \"{pyFile}\"", "Python", runTerminal, false)
 				}, context, cancellationToken);
@@ -212,10 +210,9 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			IToolExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
+			context.Call.SetStatus(MaterialIconKind.LanguagePython, null);
 			return Run(new TerminalToolRunParameters
 			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = null,
 				ProcessParameters = _pythonHelperService.CreateLaunchParameters(_chatSettings.Settings.Environment,
 					shell, "Python Shell", runTerminal, false)
 			}, context, cancellationToken);
@@ -228,10 +225,9 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		public Task<ToolExecutionResult> GetInstalledPackagesList(
 			IToolExecutionContext context, CancellationToken cancellationToken = default)
 		{
+			context.Call.SetStatus(MaterialIconKind.LanguagePython, null);
 			return Run(new TerminalToolRunParameters
 			{
-				StatusIcon = MaterialIconKind.LanguagePython,
-				StatusTitle = null,
 				ProcessParameters = _pythonHelperService.CreateLaunchParameters(_chatSettings.Settings.Environment,
 					"pip list", "Python Shell", false, false)
 			}, context, cancellationToken);

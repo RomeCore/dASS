@@ -113,7 +113,8 @@
 						</Border>
 
 						<ctrl:MarkdownControl MarkdownText="{Binding Arguments}"
-																	Background="Transparent"/>
+																	Background="Transparent"
+																	CompactCodeBlocks="True"/>
 
 					</StackPanel>
 

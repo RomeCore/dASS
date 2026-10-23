@@ -47,7 +47,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 			ArgumentNullException.ThrowIfNull(context);
 
 			var call = context.Call;
-			call.SetStatus(parameters.StatusIcon, parameters.StatusTitle);
 
 			// An interactive terminal lives until its process exits or the user kills it,
 			// never until a timeout: the output is not a result with a deadline.

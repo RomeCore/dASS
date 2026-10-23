@@ -200,6 +200,7 @@
 				<ctrl:MarkdownControl MarkdownText="{Binding StatusTitle}"
 															Margin="2,3"
 															VerticalAlignment="Bottom"
+															CompactCodeBlocks="True"
 															IsVisible="{Binding StatusTitle, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
 
 				<GridSplitter Width="2" MinWidth="2" ResizeDirection="Columns" IsEnabled="False"
