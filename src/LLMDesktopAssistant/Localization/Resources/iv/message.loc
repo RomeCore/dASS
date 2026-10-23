@@ -49,3 +49,16 @@ selection.quote_chip: Quote
 selection.author.assistant: Assistant
 selection.author.unknown: Unknown
 selection.failed.title: Selection action failed
+
+// The terminal card attached to a terminal-based tool call (shell-bash, shell-powershell, python-execute...).
+terminal.action.leave: Leave
+terminal.action.kill: Kill
+terminal.status.running: Running · pid {0} · {1}
+terminal.status.left: Running (left) · pid {0} · {1}
+terminal.status.exited: Exited with code {0} · {1}
+terminal.status.killed: Killed · {0}
+terminal.status.failed: Failed to launch
+terminal.error.no_session: No terminal session available.
+terminal.tooltip.expand: Expand terminal
+terminal.tooltip.collapse: Collapse terminal
+terminal.tooltip.resize: Drag to resize the terminal

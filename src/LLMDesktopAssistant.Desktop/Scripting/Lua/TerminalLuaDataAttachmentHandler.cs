@@ -30,7 +30,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua
 			var viewModel = new TerminalAdditionalViewModel
 			{
 				Descriptor = descriptor,
-				IsRunning = descriptor.IsRunning
+				// A Lua script's terminal is not a pending tool call: there is nothing to leave, and a
+				// process that already exited shows its result instead of a live session.
+				State = descriptor.IsRunning ? TerminalState.Running : TerminalState.Completed
 			};
 			viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
 
@@ -49,7 +51,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua
 			}
 			catch (OperationCanceledException)
 			{
-				viewModel.Complete(-1);
+				viewModel.MarkKilled();
 			}
 			catch (Exception ex)
 			{

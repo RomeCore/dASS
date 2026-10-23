@@ -549,22 +549,16 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 		}
 
 		/// <summary>
-		/// Maximum scroll position (total buffer lines - viewport lines).
-		/// This is the maximum value ViewportY can be.
+		/// Maximum scroll position: the line the screen starts at when it is scrolled all the way down,
+		/// i.e. the maximum value <see cref="ViewportY"/> can be.
 		/// </summary>
-		public int MaxScrollback
-		{
-			get
-			{
-				if (_terminal == null)
-					return 0;
-
-				// Simple: total lines in buffer minus how many we can see
-				var totalLines = _terminal.Buffer.Length;
-				var viewportLines = _terminal.Rows;
-				return Math.Max(0, totalLines - viewportLines);
-			}
-		}
+		/// <remarks>
+		/// Deliberately the buffer's own scroll base rather than <c>Length - Rows</c>. The buffer can keep
+		/// lines past the screen - growing the terminal and shrinking it again leaves them behind, measured
+		/// in the running app as <c>Length - Rows = 34</c> while the viewport stopped at 25 - and a range
+		/// derived from the length would then promise scroll positions that do not exist.
+		/// </remarks>
+		public int MaxScrollback => _terminal == null ? 0 : Math.Max(0, _terminal.Buffer.YBase);
 
 		public int ViewportLines => _terminal?.Rows ?? 0;
 
@@ -1973,6 +1967,9 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 				// Only resize if dimensions have changed
 				if (newCols != _terminal.Cols || newRows != _terminal.Rows)
 				{
+					// The buffer keeps its length while the number of visible rows changes, so the bottom line
+					// index moves under the viewport. XTerm re-anchors a viewport that sits at the end by itself
+					// (measured: 37 -> 51 -> 21 for rows 24 -> 10 -> 40), so nothing is restored here.
 					_terminal.Resize(newCols, newRows);
 
 					try

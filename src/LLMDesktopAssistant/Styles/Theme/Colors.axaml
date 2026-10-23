@@ -21,6 +21,14 @@
 	<SolidColorBrush x:Key="WarningBrush"
 									 Color="{StaticResource WarningColor}" />
 
+	<!-- Terminal card: a terminal is dark in every app theme, so its palette is fixed rather than themed. -->
+	<SolidColorBrush x:Key="TerminalBackground" Color="#FF1E1E1E" />
+	<SolidColorBrush x:Key="TerminalForeground" Color="#FFD4D4D4" />
+	<SolidColorBrush x:Key="TerminalBarBackground" Color="#FF252528" />
+	<SolidColorBrush x:Key="TerminalBarForeground" Color="#FFB8B8C0" />
+	<SolidColorBrush x:Key="TerminalBarBorderBrush" Color="#FF3A3A42" />
+	<SolidColorBrush x:Key="TerminalCardBorderBrush" Color="#FF3A3A42" />
+
 	<!-- Error / danger -->
 	<Color x:Key="ErrorColor">#FF4444</Color>
 	<SolidColorBrush x:Key="ErrorBrush"

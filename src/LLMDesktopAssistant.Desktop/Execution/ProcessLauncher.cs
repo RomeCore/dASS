@@ -245,7 +245,11 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				void WriteToTerminal(string text)
 				{
 					var terminalBuffer = terminal.Buffer;
-					var wasFollowingEnd = terminalBuffer.ViewportY >= terminalBuffer.Length - terminal.Rows;
+
+					// The end of the scrollback is the buffer's scroll base, not Length - Rows: a buffer that
+					// was grown and shrunk again keeps lines past the screen, and comparing against them would
+					// stop the auto-follow for good.
+					var wasFollowingEnd = terminalBuffer.ViewportY >= terminalBuffer.YBase;
 
 					terminal.Write(text);
 
