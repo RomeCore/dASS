@@ -1,11 +1,9 @@
-using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
-using Serilog;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 {
@@ -75,159 +73,28 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 				return ToolExecutionResult.Failed;
 			}
 
-			TerminalAdditionalViewModel? viewModel = null;
-			if (runInTerminal)
+			var outcome = await TerminalRun.RunAsync(descriptor, call, runInTerminal, parameters.Wait,
+				leaveAllowed: parameters.Wait, cancellationToken);
+
+			if (outcome.Cancelled)
 			{
-				viewModel = new TerminalAdditionalViewModel
-				{
-					Descriptor = descriptor,
-					// A call the model ran fire-and-forget has nothing left to detach: it returned already.
-					IsLeaveAllowed = parameters.Wait
-				};
-				viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
-				viewModel.SetKillHandler(RegisterKill(descriptor, viewModel, cancellationToken));
-				call.AddAttachment(viewModel);
-			}
-
-			if (!parameters.Wait)
-			{
-				CompleteInBackground(descriptor, viewModel);
-				return ToolExecutionResult.Succeeded;
-			}
-
-			bool left;
-			int exitCode;
-			try
-			{
-				if (viewModel is null)
-				{
-					exitCode = await descriptor.ExitCodeTask.WaitAsync(cancellationToken);
-					left = false;
-				}
-				else
-				{
-					// Whichever comes first ends the wait. On Leave the process keeps running and its
-					// background continuation reports the exit code to the card when it really happens.
-					var winner = await Task
-						.WhenAny(descriptor.ExitCodeTask, viewModel.LeftTask)
-						.WaitAsync(cancellationToken);
-
-					left = winner == viewModel.LeftTask;
-					exitCode = left ? 0 : await descriptor.ExitCodeTask;
-				}
-			}
-			catch (OperationCanceledException)
-			{
-				viewModel?.Kill();
-
-				// A killed process completes its exit task as cancelled, never as "exited with code N",
-				// so this is the only place that can tell the card the process is gone.
-				viewModel?.MarkKilled();
-
 				call.SetResult(descriptor.Output);
 				return ToolExecutionResult.Failed;
 			}
 
-			if (left)
+			if (outcome.Left)
 			{
-				call.SetResult(BuildLeftRunningResult(descriptor));
-				CompleteInBackground(descriptor, viewModel);
+				call.SetResult(TerminalRun.BuildLeftRunningResult(descriptor));
 				return ToolExecutionResult.Succeeded;
 			}
 
-			viewModel?.Complete(exitCode);
 			call.SetResult(descriptor.Output);
 
-			if (exitCode == 0)
+			if (outcome.ExitCode is null or 0)
 				return ToolExecutionResult.Succeeded;
 
-			call.ResultContent += $"\nProcess exited with code {exitCode}. Check terminal output above for details.";
+			call.ResultContent += $"\nProcess exited with code {outcome.ExitCode}. Check terminal output above for details.";
 			return ToolExecutionResult.Failed;
-		}
-
-		/// <summary>
-		/// Registers the kill of the running process against the call's cancellation. The card owns the
-		/// registration, so <see cref="TerminalAdditionalViewModel.Leave"/> can release it and let the
-		/// process outlive the call.
-		/// </summary>
-		private static CancellationTokenRegistration RegisterKill(
-			ProcessDescriptor descriptor,
-			TerminalAdditionalViewModel viewModel,
-			CancellationToken cancellationToken)
-		{
-			try
-			{
-				return cancellationToken.Register(() =>
-				{
-					// A left process is none of the call's business any more.
-					if (viewModel.IsLeft)
-						return;
-
-					try
-					{
-						descriptor.CancellationTokenSource.Cancel();
-					}
-					catch (Exception ex)
-					{
-						Log.Error(ex, "Failed to kill terminal process: {Error}", ex.Message);
-					}
-				});
-			}
-			catch (ObjectDisposedException)
-			{
-				// The call is already over; nothing can cancel it any more.
-				return default;
-			}
-		}
-
-		/// <summary>
-		/// Keeps watching a process whose call has already returned, so the card can still report the
-		/// exit code once it really exits.
-		/// </summary>
-		private static void CompleteInBackground(ProcessDescriptor descriptor, TerminalAdditionalViewModel? viewModel)
-		{
-			if (viewModel is null)
-				return;
-
-			async void WaitForExit()
-			{
-				try
-				{
-					viewModel.Complete(await descriptor.ExitCodeTask);
-				}
-				catch (OperationCanceledException)
-				{
-					// Killed on purpose: the process never reports an exit code, only the cancellation.
-					viewModel.MarkKilled();
-				}
-				catch (Exception ex)
-				{
-					Log.Error(ex, "Error waiting for process exit code: {Error}", ex.Message);
-				}
-			}
-
-			WaitForExit();
-		}
-
-		/// <summary>
-		/// Builds the model-facing result of a call the user detached: what the terminal showed at that
-		/// moment, plus the fact that later output will never reach the model.
-		/// </summary>
-		private static string BuildLeftRunningResult(ProcessDescriptor descriptor)
-		{
-			var builder = new StringBuilder();
-			builder.AppendLine($"Process left running (pid {descriptor.ProcessId}): the user detached it from this call.");
-			builder.AppendLine("It keeps running outside this tool call, so anything it prints from now on is not visible to you.");
-			builder.AppendLine("The output below is what the terminal showed at the moment of detaching.");
-
-			var output = descriptor.Output;
-			if (!string.IsNullOrEmpty(output))
-			{
-				builder.AppendLine();
-				builder.Append(output);
-			}
-
-			return builder.ToString();
 		}
 	}
 }
