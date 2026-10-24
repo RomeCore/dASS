@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	/// Successor of the late <c>IMetaToolEngine</c> - see the epitaph in <c>ScriptableToolParser.cs</c>.
 	/// </para>
 	/// </summary>
-	public interface IScriptableToolEngine
+	public interface IScriptableToolEngine : IScriptableAddonEngine
 	{
 		/// <summary>
 		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per

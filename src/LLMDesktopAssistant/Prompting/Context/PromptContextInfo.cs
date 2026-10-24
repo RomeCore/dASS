@@ -1,10 +1,11 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Prompting.Context
 {
-	public class PromptContextInfo : AddonChangedBase<PromptContextInfo, PromptContextChange>
+	public class PromptContextInfo : ScriptableAddonBase<PromptContextInfo, PromptContextChange>
 	{
 		/// <summary>
 		/// The variability of this prompt context.

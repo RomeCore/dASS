@@ -45,7 +45,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public string? FrontmatterLinePrefix => null;
 
 		/// <inheritdoc/>
-		public ScriptEngineCapabilities Capabilities =>
-			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput;
+		public ScriptEngineCapabilities Capabilities => ScriptEngineCapabilities.StructuredInput;
 	}
 }

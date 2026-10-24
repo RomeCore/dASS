@@ -21,7 +21,7 @@ namespace LLMDesktopAssistant.Tools
 	/// possibly with a scripting engine behind it. See the epitaph in
 	/// <c>Tools/Scripting/ScriptableToolParser.cs</c>.
 	/// </remarks>
-	public class ToolInfo : AddonChangedBase<ToolInfo, ToolChange>, IToolDescriptor
+	public class ToolInfo : ScriptableAddonBase<ToolInfo, ToolChange>, IToolDescriptor
 	{
 		private JsonObject? _argumentSchema;
 		/// <summary>
@@ -254,15 +254,6 @@ namespace LLMDesktopAssistant.Tools
 			get; 
 			set => SetProperty(ref field, value);
 		} = ToolSource.Native;
-
-		/// <summary>
-		/// The language of the script if the tool based on script.
-		/// </summary>
-		public ScriptLanguageType? ScriptLanguage
-		{
-			get;
-			set => SetProperty(ref field, value);
-		}
 
 		/// <summary>
 		/// Creates a new instance of the <see cref="ToolInfo"/> class with the specified executor and initialization information.

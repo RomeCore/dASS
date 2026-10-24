@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.Utils;
@@ -15,7 +16,7 @@ namespace LLMDesktopAssistant.SlashCommands
 	/// (the type first, then the source pack) that make up the fully-qualified token
 	/// (<c>/skill:matt-pocock:grilling</c>). Commands are never exposed to agents.
 	/// </remarks>
-	public class SlashCommandInfo : AddonChangedBase<SlashCommandInfo, SlashCommandChange>
+	public class SlashCommandInfo : ScriptableAddonBase<SlashCommandInfo, SlashCommandChange>
 	{
 		/// <summary>
 		/// The namespace qualifiers of the command, ordered: the type first, then the source pack.

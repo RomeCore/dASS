@@ -8,7 +8,9 @@ namespace LLMDesktopAssistant.Scripting
 	[Flags]
 	public enum ScriptEngineCapabilities
 	{
-		/// <summary>Nothing beyond running a body.</summary>
+		/// <summary>
+		/// Nothing beyond running a body.
+		/// </summary>
 		None = 0,
 
 		/// <summary>
@@ -17,10 +19,15 @@ namespace LLMDesktopAssistant.Scripting
 		/// </summary>
 		StructuredInput = 1,
 
-		/// <summary>The engine can run a script in an interactive terminal (PTY) instead of a managed process.</summary>
+		/// <summary>
+		/// The engine can run a script in an interactive terminal (PTY) instead of a managed process.
+		/// </summary>
 		Terminal = 2,
 
-		/// <summary>The engine can report a structured result taken from the script's output.</summary>
-		StructuredOutput = 4,
+		/// <summary>
+		/// The engine can honour a promised <c>json-output</c>: it reads the script's standard output and takes a
+		/// structure out of it.
+		/// </summary>
+		JsonOutput = 4,
 	}
 }

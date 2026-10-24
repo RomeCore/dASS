@@ -3,6 +3,9 @@ using System.Text;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.StructuredValues.Converters;
+using LLMDesktopAssistant.Scripting;
+using LLMDesktopAssistant.StructuredValues;
+using LLMDesktopAssistant.StructuredValues.Const;
 using RCParsing;
 using RCParsing.Building;
 using YamlDotNet.RepresentationModel;
@@ -53,13 +56,17 @@ namespace LLMDesktopAssistant.Addons.Parsers
 			{
 				return other != null
 					&& FrontmatterStart == other.FrontmatterStart && FrontmatterEnd == other.FrontmatterEnd
+					&& FrontmatterLinePrefix == other.FrontmatterLinePrefix
 					&& RequiresFrontmatter == other.RequiresFrontmatter
 					&& UseMarkdownFallback == other.UseMarkdownFallback;
 			}
 
 			public override int GetHashCode()
 			{
-				return HashCode.Combine(FrontmatterStart, FrontmatterEnd, RequiresFrontmatter, UseMarkdownFallback);
+				// The cache is keyed by the descriptor, so a field that changes the parse (the line prefix) must be here,
+				// or two kinds whose markers differ only by prefix would share a compiled parser.
+				return HashCode.Combine(FrontmatterStart, FrontmatterEnd, FrontmatterLinePrefix, RequiresFrontmatter,
+					UseMarkdownFallback);
 			}
 		}
 
@@ -450,4 +457,202 @@ namespace LLMDesktopAssistant.Addons.Parsers
 				addon.Hidden = hidden;
 		}
 	}
+
+	/// <summary>
+	/// The parser of a scriptable kind: it resolves the language from the file extension and reads the frontmatter keys
+	/// that describe how the script is invoked.
+	/// </summary>
+	/// <remarks>
+	/// The third arity exists so the three scriptable kinds share one implementation of the extension table, the
+	/// frontmatter syntax and the invocation flags. A concrete parser adds only what its kind means.
+	/// </remarks>
+	public abstract class FrontmatterBasedAddonParser<TAddon, TChange, TEngine> : FrontmatterBasedAddonParser<TAddon, TChange>
+		where TAddon : ScriptableAddonBase<TAddon, TChange>, new()
+		where TChange : AddonChangeBase
+		where TEngine : IScriptableAddonEngine
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FrontmatterBasedAddonParser{TAddon, TChange, TEngine}"/> class.
+		/// </summary>
+		/// <param name="engines">The engines of the kind.</param>
+		/// <param name="descriptors">Reads the descriptors of one engine.</param>
+		protected FrontmatterBasedAddonParser(IEnumerable<TEngine> engines,
+			Func<TEngine, IReadOnlyList<IScriptEngineDescriptor>> descriptors)
+			=> Engines = new ScriptEngineResolver<TEngine>(engines, descriptors);
+
+		/// <summary>
+		/// The extension table of the kind's engines.
+		/// </summary>
+		protected ScriptEngineResolver<TEngine> Engines { get; }
+
+		/// <summary>
+		/// Which result channels this kind consumes.
+		/// </summary>
+		protected abstract ScriptFeaturePolicy Features { get; }
+
+		/// <inheritdoc/>
+		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
+		{
+			var descriptor = Engines.Resolve(fileInfo.Path).Descriptor;
+
+			return new AddonParserDescriptor
+			{
+				FrontmatterStart = descriptor.FrontmatterStart,
+				FrontmatterEnd = descriptor.FrontmatterEnd,
+				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
+				RequiresFrontmatter = true,
+				UseMarkdownFallback = false
+			};
+		}
+
+		/// <summary>
+		/// Resolves the engine and the descriptor that own the addon's file.
+		/// </summary>
+		protected (TEngine Engine, IScriptEngineDescriptor Descriptor) Resolve(TAddon addon)
+			=> Engines.Resolve(addon.Path ?? throw new InvalidOperationException($"The path of '{addon.Name}' is not set."));
+
+		/// <inheritdoc/>
+		protected override void Populate(TAddon addon, AddonFrontmatterDocument frontmatter, ref AddonDiagnostic? diagnostic)
+		{
+			base.Populate(addon, frontmatter, ref diagnostic);
+
+			IScriptEngineDescriptor descriptor;
+			try
+			{
+				(_, descriptor) = Resolve(addon);
+			}
+			catch (Exception ex)
+			{
+				diagnostic = diagnostic.Combine(new AddonDiagnostic
+				{
+					IsFatal = true,
+					Codes = AddonDiagnosticCode.GeneralParsingError,
+					Exceptions = [ex]
+				});
+				return;
+			}
+
+			addon.ScriptLanguage = descriptor.Language;
+
+			if (frontmatter.Get<ConstNodeValue>("json-input") is { } input)
+				ReadInputMode(addon, input, ref diagnostic);
+
+			if (frontmatter.Get<ConstNodeValue>("json-output") is { } output)
+				ReadOutputMode(addon, output, ref diagnostic);
+
+			if (frontmatter.TryRequest("run-terminal", ref diagnostic, out bool runTerminal))
+				addon.RunTerminal = runTerminal;
+
+			if (frontmatter.TryRequest("wait", ref diagnostic, out bool wait))
+				addon.TerminalWait = wait;
+
+			Validate(addon, descriptor, Features, ref diagnostic);
+		}
+
+		private static void ReadInputMode(TAddon addon, ConstNodeValue node, ref AddonDiagnostic? diagnostic)
+		{
+			switch (node)
+			{
+				case INodeBooleanValue boolean:
+					addon.InputMode = boolean.Value ? ScriptInputMode.Json : ScriptInputMode.Structured;
+					break;
+
+				case INodeStringValue text when string.Equals(text.Value, "auto", StringComparison.OrdinalIgnoreCase):
+					addon.InputMode = ScriptInputMode.Auto;
+					break;
+
+				default:
+					Fatal(ref diagnostic, "'json-input' must be true, false or auto.");
+					break;
+			}
+		}
+
+		private static void ReadOutputMode(TAddon addon, ConstNodeValue node, ref AddonDiagnostic? diagnostic)
+		{
+			switch (node)
+			{
+				case INodeBooleanValue boolean:
+					addon.OutputMode = boolean.Value ? ScriptOutputMode.Whole : ScriptOutputMode.None;
+					break;
+
+				case INodeStringValue text when CountUnescapedStars(text.Value ?? string.Empty) == 1:
+					addon.OutputMode = ScriptOutputMode.Pattern;
+					addon.OutputPattern = text.Value;
+					break;
+
+				case INodeStringValue:
+					Fatal(ref diagnostic,
+						"'json-output' needs exactly one unescaped '*'; a literal asterisk is written '\\*'.");
+					break;
+
+				default:
+					Fatal(ref diagnostic, "'json-output' must be true or a pattern.");
+					break;
+			}
+		}
+
+		private static int CountUnescapedStars(string pattern)
+		{
+			var count = 0;
+
+			for (int i = 0; i < pattern.Length; i++)
+			{
+				if (pattern[i] is '\\')
+				{
+					i++;
+					continue;
+				}
+
+				if (pattern[i] is '*')
+					count++;
+			}
+
+			return count;
+		}
+
+		private static void Validate(TAddon addon, IScriptEngineDescriptor descriptor, ScriptFeaturePolicy features,
+			ref AddonDiagnostic? diagnostic)
+		{
+			// Two independent questions, both required: does the kind consume this channel, and can the language produce it.
+
+			var structured = addon.OutputMode is not ScriptOutputMode.None;
+
+			if (structured && !features.HasFlag(ScriptFeaturePolicy.JsonOutput))
+				Fatal(ref diagnostic, "This addon kind has no structured result; 'json-output' is not accepted here.");
+
+			if (addon.RunTerminal && !features.HasFlag(ScriptFeaturePolicy.Terminal))
+				Fatal(ref diagnostic, "This addon kind cannot run in a terminal.");
+
+			if (!features.HasFlag(ScriptFeaturePolicy.PlainOutput) && !structured)
+				Fatal(ref diagnostic, "This addon kind has no plain result; 'json-output' is required.");
+
+			if (addon.InputMode is ScriptInputMode.Structured &&
+				!descriptor.Capabilities.HasFlag(ScriptEngineCapabilities.StructuredInput))
+			{
+				Fatal(ref diagnostic,
+					$"'{descriptor.Language}' cannot pass a structured value; declare 'json-input: true'.");
+			}
+
+			if (structured && !descriptor.Capabilities.HasFlag(ScriptEngineCapabilities.JsonOutput))
+				Fatal(ref diagnostic, $"'{descriptor.Language}' cannot report a structured result.");
+
+			if (!addon.RunTerminal)
+				return;
+
+			if (!descriptor.Capabilities.HasFlag(ScriptEngineCapabilities.Terminal))
+				Fatal(ref diagnostic, $"'{descriptor.Language}' cannot run in a terminal.");
+
+			if (structured)
+				Fatal(ref diagnostic, "'run-terminal' cannot be combined with 'json-output'.");
+		}
+
+		private static void Fatal(ref AddonDiagnostic? diagnostic, string message)
+			=> diagnostic = diagnostic.Combine(new AddonDiagnostic
+			{
+				IsFatal = true,
+				Codes = AddonDiagnosticCode.InvalidKind,
+				Messages = [message]
+			});
+	}
+
 }

@@ -13,10 +13,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public string? FrontmatterLinePrefix => null;
 
 		/// <remarks>
-		/// Lua runs in-process, so there is no terminal to hand it to; it passes a native structure and can report a
-		/// structured result.
+		/// Lua runs in-process, so it has no terminal and no output channel to take a structure from: a <c>json-output</c>
+		/// or <c>run-terminal</c> promise cannot be honoured here and is refused at load. It does pass a native structure.
 		/// </remarks>
-		public ScriptEngineCapabilities Capabilities =>
-			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput;
+		public ScriptEngineCapabilities Capabilities => ScriptEngineCapabilities.StructuredInput;
 	}
 }

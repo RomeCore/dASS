@@ -20,54 +20,29 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 	/// <c>generate</c> and <c>argument-schema</c>.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<SlashCommandInfo>))]
-	public class SlashCommandParser : FrontmatterBasedAddonParser<SlashCommandInfo, SlashCommandChange>
+	public class SlashCommandParser : FrontmatterBasedAddonParser<SlashCommandInfo, SlashCommandChange, IScriptableSlashCommandEngine>
 	{
-		private static readonly StringComparer _extensionComparer =
-			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-
-		private readonly Dictionary<string, (IScriptableSlashCommandEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
-
 		/// <summary>Initializes a new instance of the <see cref="SlashCommandParser"/> class.</summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
 		public SlashCommandParser(IEnumerable<IScriptableSlashCommandEngine> engines)
+			: base(engines, engine => engine.Descriptors)
 		{
-			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
-				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
-		}
-
-		private (IScriptableSlashCommandEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
-		{
-			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var entry))
-				return entry;
-
-			throw new NotSupportedException(
-				$"No scriptable slash-command engine is registered for the '{extension}' extension (file: '{path}'). " +
-				$"Supported extensions: {string.Join(", ", _enginesByExtension.Keys)}.");
 		}
 
 		/// <inheritdoc/>
-		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
-		{
-			var descriptor = GetEntry(fileInfo.Path).Descriptor;
-
-			return new AddonParserDescriptor
-			{
-				FrontmatterStart = descriptor.FrontmatterStart,
-				FrontmatterEnd = descriptor.FrontmatterEnd,
-				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
-				RequiresFrontmatter = true,
-				UseMarkdownFallback = false
-			};
-		}
+		protected override ScriptFeaturePolicy Features =>
+			ScriptFeaturePolicy.PlainOutput | ScriptFeaturePolicy.JsonOutput | ScriptFeaturePolicy.Terminal;
 
 		/// <inheritdoc/>
 		protected override void Populate(SlashCommandInfo addon, AddonFrontmatterDocument frontmatter, ref AddonDiagnostic? diagnostic)
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			var engine = GetEntry(addon.Path ?? throw new InvalidOperationException("The command path is not set.")).Engine;
+			// A command whose extension no engine owns was already reported as fatal by the base.
+			if (addon.ScriptLanguage is null)
+				return;
+
+			var engine = Resolve(addon).Engine;
 
 			// Namespaces are custom qualifiers; the only one filled in for the author is the source pack.
 			if (!frontmatter.TryRequest("namespaces", ref diagnostic, out ImmutableList<string> namespaces))

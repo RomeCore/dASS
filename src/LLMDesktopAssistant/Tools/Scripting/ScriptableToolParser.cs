@@ -52,78 +52,31 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	/// <see cref="IScriptableToolEngine.CreateExecutor"/>.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<ToolInfo>))]
-	public class ScriptableToolParser : FrontmatterBasedAddonParser<ToolInfo, ToolChange>
+	public class ScriptableToolParser : FrontmatterBasedAddonParser<ToolInfo, ToolChange, IScriptableToolEngine>
 	{
-		private static readonly StringComparer _extensionComparer =
-			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-
-		private readonly Dictionary<string, (IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ScriptableToolParser"/> class.
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
 		public ScriptableToolParser(IEnumerable<IScriptableToolEngine> engines)
+			: base(engines, engine => engine.Descriptors)
 		{
-			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
-				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
-		}
-
-		/// <summary>
-		/// Gets the scripting engine that handles files with the given path extension.
-		/// </summary>
-		/// <exception cref="NotSupportedException">Thrown when no engine is registered for the extension.</exception>
-		private (IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
-		{
-			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var entry))
-				return entry;
-
-			throw new NotSupportedException(
-				$"No scriptable tool engine is registered for the '{extension}' extension (file: '{path}'). " +
-				$"Supported extensions: {string.Join(", ", _enginesByExtension.Keys)}.");
 		}
 
 		/// <inheritdoc/>
-		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
-		{
-			var descriptor = GetEntry(fileInfo.Path).Descriptor;
-
-			return new AddonParserDescriptor
-			{
-				FrontmatterStart = descriptor.FrontmatterStart,
-				FrontmatterEnd = descriptor.FrontmatterEnd,
-				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
-				// Scriptable tools are useless without metadata (description, argument schema, ...).
-				RequiresFrontmatter = true,
-				// The body is code, not markdown, so '#'-heading fallbacks must not be used here.
-				UseMarkdownFallback = false
-			};
-		}
+		protected override ScriptFeaturePolicy Features =>
+			ScriptFeaturePolicy.PlainOutput | ScriptFeaturePolicy.JsonOutput | ScriptFeaturePolicy.Terminal;
 
 		/// <inheritdoc/>
 		protected override void Populate(ToolInfo addon, AddonFrontmatterDocument frontmatter, ref AddonDiagnostic? diagnostic)
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			(IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor) entry;
-			try
-			{
-				entry = GetEntry(addon.Path ?? throw new InvalidOperationException("The tool path is not set."));
-			}
-			catch (Exception ex)
-			{
-				diagnostic = diagnostic.Combine(new AddonDiagnostic
-				{
-					IsFatal = true,
-					Codes = AddonDiagnosticCode.GeneralParsingError,
-					Exceptions = [ex]
-				});
+			// A tool whose extension no engine owns was already reported as fatal by the base.
+			if (addon.ScriptLanguage is null)
 				return;
-			}
 
-			addon.ScriptLanguage = entry.Descriptor.Language;
+			var engine = Resolve(addon).Engine;
 
 			// === Tool-specific metadata ===
 
@@ -149,7 +102,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 			// === Execution ===
 
 			addon.ToolSource = ToolSource.Meta;
-			addon.Main = entry.Engine.CreateExecutor(addon);
+			addon.Main = engine.CreateExecutor(addon);
 		}
 
 		/// <inheritdoc/>

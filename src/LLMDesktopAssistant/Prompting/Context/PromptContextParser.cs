@@ -21,54 +21,20 @@ namespace LLMDesktopAssistant.Prompting.Context
 	/// safe in the global cache.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<PromptContextInfo>))]
-	public class PromptContextParser : FrontmatterBasedAddonParser<PromptContextInfo, PromptContextChange>
+	public class PromptContextParser : FrontmatterBasedAddonParser<PromptContextInfo, PromptContextChange, IScriptablePromptContextEngine>
 	{
-		private static readonly StringComparer _extensionComparer =
-			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
-
-		private readonly Dictionary<string, (IScriptablePromptContextEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="PromptContextParser"/> class.
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and execution.</param>
 		public PromptContextParser(IEnumerable<IScriptablePromptContextEngine> engines)
+			: base(engines, engine => engine.Descriptors)
 		{
-			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
-				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
-		}
-
-		/// <summary>
-		/// Gets the scripting engine that handles files with the given path extension.
-		/// </summary>
-		/// <exception cref="NotSupportedException">Thrown when no engine is registered for the extension.</exception>
-		private (IScriptablePromptContextEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
-		{
-			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var entry))
-				return entry;
-
-			throw new NotSupportedException(
-				$"No scriptable prompt context engine is registered for the '{extension}' extension (file: '{path}'). " +
-				$"Supported extensions: {string.Join(", ", _enginesByExtension.Keys)}.");
 		}
 
 		/// <inheritdoc/>
-		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
-		{
-			var descriptor = GetEntry(fileInfo.Path).Descriptor;
-
-			return new AddonParserDescriptor
-			{
-				FrontmatterStart = descriptor.FrontmatterStart,
-				FrontmatterEnd = descriptor.FrontmatterEnd,
-				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
-				// A context is useless without metadata, and its body is code, not markdown.
-				RequiresFrontmatter = true,
-				UseMarkdownFallback = false
-			};
-		}
+		/// <remarks>A context yields text, so a plain result is the only channel it consumes.</remarks>
+		protected override ScriptFeaturePolicy Features => ScriptFeaturePolicy.PlainOutput;
 
 		/// <inheritdoc/>
 		protected override void Populate(PromptContextInfo addon, AddonFrontmatterDocument frontmatter,
@@ -76,7 +42,11 @@ namespace LLMDesktopAssistant.Prompting.Context
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			var engine = GetEntry(addon.Path ?? throw new InvalidOperationException("The context path is not set.")).Engine;
+			// A context whose extension no engine owns was already reported as fatal by the base.
+			if (addon.ScriptLanguage is null)
+				return;
+
+			var engine = Resolve(addon).Engine;
 
 			if (!frontmatter.TryRequest("kind", ref diagnostic, out PromptContextProviderKind kind))
 				kind = PromptContextProviderKind.Supersede;

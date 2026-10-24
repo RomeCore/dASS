@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.SlashCommands.Scripting
 	/// mirror <c>IScriptableToolEngine</c>; unlike it, there is no <c>Template</c>/<c>Examples</c>, and the argument
 	/// schema is passed in (for a command it lives on the executor, not on the addon).
 	/// </remarks>
-	public interface IScriptableSlashCommandEngine
+	public interface IScriptableSlashCommandEngine : IScriptableAddonEngine
 	{
 		/// <summary>
 		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per

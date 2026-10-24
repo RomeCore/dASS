@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 	/// the prompt. The provider owns the run; the timeout budget and the failure isolation belong to the caller
 	/// (<c>PromptContextBudget</c>), not to the engine.
 	/// </remarks>
-	public interface IScriptablePromptContextEngine
+	public interface IScriptablePromptContextEngine : IScriptableAddonEngine
 	{
 		/// <summary>
 		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
