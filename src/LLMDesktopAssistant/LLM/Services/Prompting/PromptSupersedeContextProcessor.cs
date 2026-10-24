@@ -1,4 +1,3 @@
-using System.Text;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Prompting.Context;
@@ -12,14 +11,22 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	) : IPromptSupersedeContextProcessor
 	{
 		public async Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
-			IEnumerable<IPromptSupersedeContextProvider> contextProviders, CancellationToken cancellationToken = default)
+			IEnumerable<PromptContextInfo> contexts, CancellationToken cancellationToken = default)
 		{
 			if (chat.Messages.Count == 0 ||
 				chat.Messages[^1].Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
 				throw new InvalidOperationException("Expected a pending assistant message, but none was found.");
 
-			Dictionary<string, IPromptSupersedeContextProvider> uncheckedProviders = contextProviders.ToDictionary(c => c.Discriminator);
+			var providers = contexts
+				.Where(context => context.Provider is IPromptSupersedeContextProvider)
+				.Select(context => (Addon: context, Provider: (IPromptSupersedeContextProvider)context.Provider))
+				.ToArray();
+
+			if (providers.Length == 0)
+				return;
+
 			Dictionary<string, PromptSupersedeStampBase> lastStamps = [];
+			var discriminators = providers.Select(p => p.Provider.Discriminator).ToHashSet(StringComparer.Ordinal);
 
 			// Since prompt supersede stamps can survive any compactions, we are not using the effective context.
 			for (int i = chat.Messages.Count - 2; i >= 0; i--)
@@ -31,32 +38,22 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				if (assistantMessage.AdditionalData.TryGet<PromptSupersedeStampMessageData>() is not { } stampData)
 					continue;
 
-				bool foundAll = false;
 				foreach (var stamp in stampData.Stamps)
 				{
-					if (uncheckedProviders.TryGetValue(stamp.Discriminator, out var provider))
-					{
-						lastStamps.Add(stamp.Discriminator, stamp);
-						uncheckedProviders.Remove(stamp.Discriminator);
-
-						if (uncheckedProviders.Count == 0)
-						{
-							foundAll = true;
-							break;
-						}
-					}
+					if (discriminators.Contains(stamp.Discriminator))
+						lastStamps.TryAdd(stamp.Discriminator, stamp);
 				}
 
-				if (foundAll)
+				if (lastStamps.Count == discriminators.Count)
 					break;
 			}
 
 			var stamps = new List<PromptSupersedeStampBase>();
 
-			foreach (var provider in contextProviders)
+			foreach (var (addon, provider) in providers)
 			{
 				var stamp = await provider.GetNewStampAsync(lastStamps.GetValueOrDefault(provider.Discriminator),
-					effectiveContext, cancellationToken);
+					PromptContextExecutionContext.From(effectiveContext, addon, chat.Services), cancellationToken);
 				if (stamp is not null)
 				{
 					stamp.Discriminator = provider.Discriminator;

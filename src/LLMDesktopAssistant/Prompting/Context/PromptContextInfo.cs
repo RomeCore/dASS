@@ -25,15 +25,16 @@ namespace LLMDesktopAssistant.Prompting.Context
 		} = null!;
 
 		/// <summary>
-		/// The kind of the scriptable provider: how the script is executed and where its text lands.
+		/// The kind of the context: how it is executed and where its text lands. A scriptable context parses it
+		/// from its frontmatter; a native section declares it when it builds its info. It is never derived from
+		/// the provider type — the engine that creates the provider reads this value, so deriving it from the
+		/// provider would be circular.
 		/// </summary>
-		public PromptContextProviderKind Kind => Provider switch
+		public PromptContextProviderKind Kind
 		{
-			IPromptAnchoredSectionProvider => PromptContextProviderKind.Anchored,
-			IPromptSupersedeContextProvider => PromptContextProviderKind.Supersede,
-			IPromptLiveTailContextProvider => PromptContextProviderKind.LiveTail,
-			_ => PromptContextProviderKind.Unknown
-		};
+			get;
+			set => SetProperty(ref field, value);
+		} = PromptContextProviderKind.Unknown;
 
 		/// <summary>
 		/// The timeout of a scriptable provider, in milliseconds.

@@ -15,10 +15,10 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.WorkingDirectories
 	{
 		/// <inheritdoc/>
 		public async Task<WorkingDirectoriesSectionDelta?> CalculateDeltaAsync(WorkingDirectoriesSectionState? anchorState,
-			IEnumerable<WorkingDirectoriesSectionDelta> existingDeltas, EffectiveChatContext context,
+			IEnumerable<WorkingDirectoriesSectionDelta> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
-			var currentState = await stateProvider.CaptureStateAsync(context.Agent, cancellationToken);
+			var currentState = await stateProvider.CaptureStateAsync(context.Context.Agent, cancellationToken);
 			if (currentState is null)
 				return null;
 

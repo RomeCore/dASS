@@ -22,10 +22,10 @@ public class MemoryBlocksDeltaProviderTests
 	private static MemoryBlocksDeltaProvider CreateProvider(MemoryBlocksSectionState? state)
 		=> new(new FakeStateProvider { State = state });
 
-	private static EffectiveChatContext CreateContext() => new()
+	private static PromptContextExecutionContext CreateContext() => MakeContext().ToExecutionContext();
+	private static EffectiveChatContext MakeContext() => new()
 	{
 		Chat = PromptingTestHelpers.CreateChat(),
-		Services = new EmptyServiceProvider(),
 		Agent = new ChatAgentDescriptor(),
 		Messages = [],
 		Checkpoints = [],

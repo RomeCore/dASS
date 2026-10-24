@@ -1,11 +1,13 @@
-using Serilog;
-
 namespace LLMDesktopAssistant.Prompting.Context.Scripting
 {
 	/// <summary>
-	/// Shared rules of the scriptable prompt contexts: the XML wrapper, the discriminator and the guarded
-	/// execution of a script (timeout, failure isolation).
+	/// Shared rules of the scriptable prompt contexts: how the text is wrapped, how a script can never shadow a
+	/// native section, and the timeout budget a context declares.
 	/// </summary>
+	/// <remarks>
+	/// There is no runner here: a provider <em>is</em> the run, so the timeout and the failure isolation live in
+	/// the provider the engine creates, next to the language that executes the body.
+	/// </remarks>
 	public static class ScriptPromptContextHelper
 	{
 		/// <summary>The timeout applied when the addon does not declare one.</summary>
@@ -34,34 +36,6 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 		{
 			var tag = GetTagName(name);
 			return $"<{tag}>\n{content}\n</{tag}>";
-		}
-
-		/// <summary>
-		/// Runs a context body under the configured timeout and turns any failure into "no context":
-		/// a script must never break the prompt build or leak its errors into the prompt.
-		/// </summary>
-		public static async Task<string?> RunAsync(IScriptablePromptContextEngine engine, IServiceProvider services,
-			string body, string? previous, int timeoutMs, CancellationToken cancellationToken)
-		{
-			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(Math.Clamp(timeoutMs, 1, MaxTimeoutMs));
-
-			try
-			{
-				return await engine.RunAsync(services, body, previous, timeout.Token);
-			}
-			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-			{
-				Log.Warning("Prompt context script timed out after {Timeout} ms ({Language}).",
-					timeoutMs, engine.Language);
-				return null;
-			}
-			catch (Exception ex)
-			{
-				Log.Warning(ex, "Prompt context script failed ({Language}): {Message}",
-					engine.Language, ex.Message);
-				return null;
-			}
 		}
 	}
 }

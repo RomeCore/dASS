@@ -18,6 +18,6 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// The last known stamp of this section, or null when the section was never stamped before.
 		/// </param>
 		/// <param name="context">The effective chat context to consider when calculating the stamp.</param>
-		TStamp? CaptureStamp(TStamp? previousStamp, EffectiveChatContext context);
+		TStamp? CaptureStamp(TStamp? previousStamp, PromptContextExecutionContext context);
 	}
 }

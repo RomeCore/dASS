@@ -91,13 +91,13 @@ internal sealed class PromptComposerHarness
 	private sealed class FakeSupersedeProcessor : IPromptSupersedeContextProcessor
 	{
 		public Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
-			IEnumerable<IPromptSupersedeContextProvider> providers, CancellationToken cancellationToken = default)
+			IEnumerable<PromptContextInfo> contexts, CancellationToken cancellationToken = default)
 			=> Task.CompletedTask;
 	}
 
 	private sealed class FakeLiveTailProvider(string text) : IPromptLiveTailContextProvider
 	{
-		public Task<string?> ProvideAsync(EffectiveChatContext context, CancellationToken cancellationToken = default)
+		public Task<string?> ProvideAsync(PromptContextExecutionContext context, CancellationToken cancellationToken = default)
 			=> Task.FromResult<string?>(text);
 	}
 
@@ -106,7 +106,7 @@ internal sealed class PromptComposerHarness
 		public string Discriminator => discriminator;
 
 		public Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
-			EffectiveChatContext context, CancellationToken cancellationToken = default)
+			PromptContextExecutionContext context, CancellationToken cancellationToken = default)
 			=> Task.FromResult<PromptSupersedeStampBase?>(null);
 
 		public string Render(PromptSupersedeStampBase stamp) => text;

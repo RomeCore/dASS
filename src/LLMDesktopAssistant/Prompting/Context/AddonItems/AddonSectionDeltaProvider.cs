@@ -17,10 +17,10 @@ namespace LLMDesktopAssistant.Prompting.Context.AddonItems
 	{
 		/// <inheritdoc/>
 		public async Task<TDelta?> CalculateDeltaAsync(TState? anchorState,
-			IEnumerable<TDelta> existingDeltas, EffectiveChatContext context,
+			IEnumerable<TDelta> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
-			var currentState = await stateProvider.CaptureStateAsync(context.Agent, cancellationToken);
+			var currentState = await stateProvider.CaptureStateAsync(context.Context.Agent, cancellationToken);
 			if (currentState is null)
 				return null;
 

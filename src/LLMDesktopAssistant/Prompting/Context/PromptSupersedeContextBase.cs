@@ -24,7 +24,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 
 		/// <inheritdoc/>
 		public Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
-			EffectiveChatContext context, CancellationToken cancellationToken = default)
+			PromptContextExecutionContext context, CancellationToken cancellationToken = default)
 			=> Task.FromResult<PromptSupersedeStampBase?>(
 				_stampProvider.CaptureStamp((TStamp?)previousStamp, context));
 

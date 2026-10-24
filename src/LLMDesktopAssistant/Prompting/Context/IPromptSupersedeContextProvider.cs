@@ -24,7 +24,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <param name="cancellationToken">The cancellation token that aborts the provider (for example, a script timeout).</param>
 		/// <returns>The new stamp for the prompt context. Can be null when no new stamp is needed.</returns>
 		Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
-			EffectiveChatContext context, CancellationToken cancellationToken = default);
+			PromptContextExecutionContext context, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Renders the stamp into a compact text fragment that is injected into a system reminder.

@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// </summary>
 		/// <returns>The calculated delta, or null if no changes were detected.</returns>
 		Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
-			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default);
 
 		/// <summary>

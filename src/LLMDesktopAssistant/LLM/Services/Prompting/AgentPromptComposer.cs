@@ -51,9 +51,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			var promptMode = agent.Context.PromptMode;
 			var anchor = await promptAnchoredSectionProcessor.ProcessAsync(agent, effectiveContext,
-				promptContextProviders.Anchored(), cancellationToken);
+				promptContextInfos, cancellationToken);
 			await promptSupersedeContextProcessor.ProcessAsync(agent, effectiveContext,
-				promptContextProviders.Supersede(), cancellationToken);
+				promptContextInfos, cancellationToken);
 
 			SystemPromptSnapshot header;
 			string headerSource;
@@ -216,13 +216,15 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					// Process SCM live tails.
 					if (isPendingAssistant)
 					{
-						var liveContextProviders = promptContextProviders.LiveTails().ToArray();
-						if (liveContextProviders.Length > 0)
+						var liveContextAddons = promptContextInfos.Where(i => i.Provider is IPromptLiveTailContextProvider).ToArray();
+						if (liveContextAddons.Length > 0)
 						{
 							var sb = new StringBuilder();
-							foreach (var provider in liveContextProviders)
+							foreach (var addon in liveContextAddons)
 							{
-								var liveContext = await provider.ProvideAsync(effectiveContext, cancellationToken);
+								var liveProvider = (IPromptLiveTailContextProvider)addon.Provider;
+								var liveExecution = PromptContextExecutionContext.From(effectiveContext, addon, chat.Services);
+								var liveContext = await liveProvider.ProvideAsync(liveExecution, cancellationToken);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{
 									systemReminderSb.Append(liveContext).Append('\n');

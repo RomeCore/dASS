@@ -1,9 +1,7 @@
-using System.Text;
-using AsyncLua.Values;
+using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -22,20 +20,10 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public IScriptablePromptContextEngineDescriptor Descriptor { get; } = new LuaPromptContextEngineDescriptor();
 
 		/// <inheritdoc/>
-		public async Task<string?> RunAsync(IServiceProvider services, string body, string? previous,
-			CancellationToken cancellationToken = default)
-		{
-			var luaService = services.GetRequiredService<LuaService>();
-			var output = new StringBuilder();
-
-			await luaService.ExecuteAsync(body, text => output.AppendLine(text),
-				globals => globals["previous"] = previous is null
-					? LuaNil.Instance
-					: LuaValueConverter.ToLuaValue(previous),
-				cancellationToken);
-
-			return output.ToString();
-		}
+		public IPromptContextProvider CreateProvider(PromptContextInfo context)
+			=> context.Kind is PromptContextProviderKind.LiveTail
+				? new LuaLiveTailScriptContextProvider(context)
+				: new LuaSupersedeScriptContextProvider(context);
 	}
 
 	/// <summary>The descriptor of the Lua scriptable prompt-context engine.</summary>

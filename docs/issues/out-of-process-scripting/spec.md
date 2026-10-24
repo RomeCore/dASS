@@ -282,33 +282,43 @@ The engine creates `TerminalAdditionalViewModel`, attaches it to the `IChatAttac
 
 ## 10. Scriptable prompt contexts
 
-The context engine is reshaped to mirror tools and commands:
+The context engine is reshaped to mirror tools and commands — it is **only a creator**:
 
 ```csharp
 public interface IScriptablePromptContextEngine
 {
-    IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
+    ScriptLanguageType Language { get; }
+    IScriptablePromptContextEngineDescriptor Descriptor { get; }
     IPromptContextProvider CreateProvider(PromptContextInfo context);
 }
 ```
 
-Consequences:
+(`Language`/`Descriptor` disappear with the `Descriptors` change of ticket 01, exactly like the other two kinds.)
 
-- `PromptContextInfo.Kind` is **parsed from the frontmatter** (`kind:`), not derived from the provider type —
-  otherwise `CreateProvider` and `Kind` are circular. `PromptContextProviderKind.Anchored` already exists for
-  the future scriptable anchored section.
-- The providers themselves stay in core (they depend only on the core interface); only the engine that builds
-  them is in Desktop.
-- `LiveTailScriptContextProvider` / `SupersedeScriptContextProvider` build the parameters and call
-  `RunAsync`; on a non-successful result they return "no context" (the current failure isolation is kept).
+**The provider is the run.** There is no runner member on the engine and no delegate seam: the engine builds a
+provider of its own language and that provider executes the body. The providers therefore live next to their
+engine — Lua's in `Scripting/Lua/`, Python's in `Desktop/Scripting/Python/` — and only the formatting rules stay
+shared.
+
+- `PromptContextInfo.Kind` is **parsed from the frontmatter** (`kind:`), never derived from the provider type —
+  otherwise `CreateProvider` and `Kind` are circular. Native sections declare `Anchored` through
+  `PromptContextNativeProvider.AddContext`, which fills the default.
+- Four script providers: `LuaLiveTailScriptContextProvider`, `LuaSupersedeScriptContextProvider`,
+  `PythonLiveTailScriptContextProvider`, `PythonSupersedeScriptContextProvider`. Each language has one base class
+  (`LuaScriptContextProviderBase`, `PythonScriptContextProviderBase`) that owns the timeout — a linked CTS armed
+  with `PromptContextInfo.TimeoutMs` — and the failure isolation: a timeout, an error and invalid output all mean
+  "no context" and only log a warning.
+- `ScriptPromptContextHelper` survives as the **formatting** rules only: `Wrap`, `GetTagName`,
+  `GetDiscriminator`, `DefaultTimeoutMs`, `MaxTimeoutMs`. Its `RunAsync` is gone with the runner.
+- The supersede comparison stays byte-exact on the wrapped text, inside the provider.
 
 ### 10.1 `PromptContextExecutionContext`
 
 ```csharp
 public sealed class PromptContextExecutionContext
 {
-    public required EffectiveChatContext Context { get; init; }
-    public required PromptContextInfo? Addon { get; init; }   // null for native sections
+    public required EffectiveChatContext Context { get; init; }   // contained, not inherited
+    public required PromptContextInfo? Addon { get; init; }
     public required Chat Chat { get; init; }
     public required IServiceProvider Services { get; init; }
 }
@@ -324,19 +334,19 @@ It replaces `EffectiveChatContext` in **every** `IPrompt*Provider` method, with 
 
 Implementations: `PromptLiveTailContextBase`, `PromptSupersedeContextBase<TStamp>`,
 `PromptAnchoredSectionBase<TState, TDelta>`, `AddonSectionDeltaProvider<TAddon, TDelta>`, every native delta
-provider under `Prompting/Context/Providers/<Name>/`, and the two script providers.
+provider under `Prompting/Context/Providers/<Name>/`, and the four script providers.
 
 Builders: `PromptAnchoredSectionProcessor`, `PromptSupersedeContextProcessor`, their interfaces, and
-`AgentPromptComposer`. For scriptable families the processors receive the **addons** (not bare providers) so
-`Addon` can be filled; native sections pass `null`.
+`AgentPromptComposer`. They receive **addons** (`IEnumerable<PromptContextInfo>`), pick the providers of their
+family and hand each provider `PromptContextExecutionContext.From(context, addon, chat.Services)`, so `Addon` is
+always filled — every context, native or scriptable, is a `PromptContextInfo` addon.
 
-`EffectiveChatContext.Services` is **removed**. It is written in exactly one place
-(`AgentEffectiveMessagesProvider`) and read in exactly two (the script providers), so the removal is three
-lines plus the plumbing above. Services are reachable from `Chat.Services` for whoever builds the execution
-context.
+`EffectiveChatContext.Services` is **removed**: it was written in one place and read in two, both of them script
+providers. Services are reachable through `Chat.Services` for whoever builds the execution context.
 
 Known latent landmine, recorded not fixed: `IPromptSupersedeStampProvider.CaptureStamp` is synchronous; a
 scriptable anchored section will need a `Task` form.
+
 
 ## 11. Frontmatter in shell files
 

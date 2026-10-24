@@ -1,6 +1,6 @@
 # Prompt context refactor
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 01
 

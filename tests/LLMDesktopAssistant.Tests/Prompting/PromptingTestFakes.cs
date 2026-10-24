@@ -74,7 +74,7 @@ internal sealed class FakeSection(int order, string text, params SerializableToo
 	};
 
 	public Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
-		IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+		IEnumerable<PromptSectionDeltaBase> existingDeltas, PromptContextExecutionContext context,
 		CancellationToken cancellationToken = default) => Task.FromResult<PromptSectionDeltaBase?>(null);
 
 	public string RenderDelta(PromptSectionDeltaBase delta) => string.Empty;
@@ -131,6 +131,26 @@ internal static class PromptingTestHelpers
 			chat.Messages.Add(message);
 		return chat;
 	}
+
+	/// <summary>
+	/// Wraps a provider into the context addon the processors expect: they receive addons, not bare providers,
+	/// so that every provider knows which context it belongs to.
+	/// </summary>
+	public static PromptContextInfo Section(IPromptContextProvider provider, string name = "section") => new()
+	{
+		Name = name,
+		Description = name,
+		Provider = provider,
+		Kind = PromptContextProviderKind.Anchored
+	};
+
+	/// <summary>
+	/// Projects an effective context onto the execution context a provider receives, taking the chat-scoped
+	/// services from the chat itself.
+	/// </summary>
+	public static PromptContextExecutionContext ToExecutionContext(this EffectiveChatContext context,
+		PromptContextInfo? addon = null)
+		=> PromptContextExecutionContext.From(context, addon, context.Chat.Services);
 
 	/// <summary>
 	/// Creates an agent with all context settings inheriting from the agent level (own values),

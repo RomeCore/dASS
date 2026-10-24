@@ -115,7 +115,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			return new EffectiveChatContext
 			{
 				Chat = chat,
-				Services = chat.Services,
 				Agent = agent,
 				Messages = result,
 				Checkpoints = checkpoints,

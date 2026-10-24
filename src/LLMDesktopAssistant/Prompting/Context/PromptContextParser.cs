@@ -15,8 +15,9 @@ namespace LLMDesktopAssistant.Prompting.Context
 	/// <see cref="IScriptablePromptContextEngineDescriptor.FrontmatterEnd"/>) and the way the body is executed.
 	/// </summary>
 	/// <remarks>
-	/// The provider is created here without services: scriptable contexts resolve their chat-scoped services
-	/// from the <c>EffectiveChatContext</c> at execution time, so the parsed addon stays safe in the global cache.
+	/// The provider is created here without services: a scriptable context resolves its chat-scoped services
+	/// from the <see cref="PromptContextExecutionContext"/> passed to it at run time, so the parsed addon stays
+	/// safe in the global cache.
 	/// </remarks>
 	[Service(typeof(IAddonFileParser<PromptContextInfo>))]
 	public class PromptContextParser : FrontmatterBasedAddonParser<PromptContextInfo, PromptContextChange>
@@ -100,9 +101,10 @@ namespace LLMDesktopAssistant.Prompting.Context
 			else
 				addon.Variability = variability;
 
-			addon.Provider = kind is PromptContextProviderKind.LiveTail
-				? new LiveTailScriptContextProvider(engine, addon)
-				: new SupersedeScriptContextProvider(engine, addon);
+			// The kind is parsed, not derived from the provider type: the engine reads it to decide which
+			// provider to build, so deriving it from the provider would be circular.
+			addon.Kind = kind;
+			addon.Provider = engine.CreateProvider(addon);
 		}
 
 		/// <inheritdoc/>

@@ -18,7 +18,7 @@ public class PromptStateStageTests
 	/// </summary>
 	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat, new FakeChatSettingsService());
 
-	private static FakeSection[] CreateSections() => [new FakeSection(0, "core")];
+	private static PromptContextInfo[] CreateSections() => [PromptingTestHelpers.Section(new FakeSection(0, "core"))];
 
 	private static ChatAgentDescriptor CreateHybridAgent()
 	{
@@ -36,7 +36,6 @@ public class PromptStateStageTests
 		return new EffectiveChatContext
 		{
 			Chat = chat,
-			Services = chat.Services,
 			Agent = new ChatAgentDescriptor(),
 			Messages = [.. messages.Select(ToEffective)],
 			Checkpoints = [],
@@ -113,7 +112,6 @@ public class PromptStateStageTests
 		var effectiveAfterCut = new EffectiveChatContext
 		{
 			Chat = chat,
-			Services = chat.Services,
 			Agent = new ChatAgentDescriptor(),
 			Messages = [.. new[] { u0, u1, pending }.Select(ToEffective)],
 			Checkpoints = [new EffectiveCheckpoint(cut, 0)],

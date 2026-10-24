@@ -22,10 +22,10 @@ public class SubAgentsDeltaProviderTests
 	private static SubAgentsDeltaProvider CreateProvider(SubAgentsSectionState? state)
 		=> new(new FakeStateProvider { State = state });
 
-	private static EffectiveChatContext CreateContext() => new()
+	private static PromptContextExecutionContext CreateContext() => MakeContext().ToExecutionContext();
+	private static EffectiveChatContext MakeContext() => new()
 	{
 		Chat = PromptingTestHelpers.CreateChat(),
-		Services = new EmptyServiceProvider(),
 		Agent = new ChatAgentDescriptor(),
 		Messages = [],
 		Checkpoints = [],

@@ -15,6 +15,6 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <param name="cancellationToken">The cancellation token forwarded to the state provider.</param>
 		/// <returns>The calculated delta, or null if no changes were detected.</returns>
 		Task<TDelta?> CalculateDeltaAsync(TState? anchorState, IEnumerable<TDelta> existingDeltas,
-			EffectiveChatContext context, CancellationToken cancellationToken = default);
+			PromptContextExecutionContext context, CancellationToken cancellationToken = default);
 	}
 }

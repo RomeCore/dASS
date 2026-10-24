@@ -15,12 +15,18 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	{
 		/// <inheritdoc/>
 		public async Task<PromptStateAnchorMessageData?> ProcessAsync(ChatAgentDescriptor agent,
-			EffectiveChatContext effectiveContext, IEnumerable<IPromptAnchoredSectionProvider> sections,
+			EffectiveChatContext effectiveContext, IEnumerable<PromptContextInfo> contexts,
 			CancellationToken cancellationToken = default)
 		{
 			var promptMode = agent.Context.PromptMode;
 			if (promptMode != PromptContextMode.Hybrid)
 				return null;
+
+			var sections = contexts
+				.Where(context => context.Provider is IPromptAnchoredSectionProvider)
+				.Select(context => (Addon: context, Provider: (IPromptAnchoredSectionProvider)context.Provider))
+				.ToArray();
+			var sectionProviders = sections.Select(section => section.Provider).ToArray();
 
 			if (chat.Messages.Count == 0 ||
 				chat.Messages[^1].Message is not AssistantMessage { IsCompleted: false } pendingAssistantMessage)
@@ -90,12 +96,13 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					var deltas = new List<PromptSectionDeltaBase>();
 					var sb = new StringBuilder();
 
-					foreach (var section in sections)
+					foreach (var (addon, section) in sections)
 					{
 						var anchorState = anchor.Sections.FirstOrDefault(s => s.Discriminator == section.Discriminator);
 						var existingDeltas = deltasPerAnchor.GetValueOrDefault(section.Discriminator) ?? [];
 
-						var newDelta = await section.CalculateDeltaAsync(anchorState, existingDeltas, effectiveContext, cancellationToken);
+						var execution = PromptContextExecutionContext.From(effectiveContext, addon, chat.Services);
+						var newDelta = await section.CalculateDeltaAsync(anchorState, existingDeltas, execution, cancellationToken);
 						if (newDelta is not null)
 						{
 							newDelta.Discriminator = section.Discriminator;
@@ -128,8 +135,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				return null;
 
 			var target = chat.Messages[targetIndex];
-			var states = await sections.CaptureStatesAsync(agent, cancellationToken);
-			var snapshot = sections.RenderHeader(states);
+			var states = await sectionProviders.CaptureStatesAsync(agent, cancellationToken);
+			var snapshot = sectionProviders.RenderHeader(states);
 
 			anchor = new PromptStateAnchorMessageData
 			{

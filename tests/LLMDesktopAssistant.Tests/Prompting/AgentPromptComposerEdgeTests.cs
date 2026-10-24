@@ -540,7 +540,7 @@ public class AgentPromptComposerEdgeTests
 		public SystemPromptSnapshot RenderState(PromptSectionStateBase state) => new() { Text = Text, Tools = [] };
 
 		public Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
-			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default)
 			=> Task.FromResult<PromptSectionDeltaBase?>(
 				EmitDelta && !existingDeltas.Any() ? new FakeSectionDelta() : null);

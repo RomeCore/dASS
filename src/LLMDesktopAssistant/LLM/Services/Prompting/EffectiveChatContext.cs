@@ -14,11 +14,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		/// </summary>
 		public required Chat Chat { get; init; }
 
-		/// <summary>
-		/// The chat-scoped service provider. Prompt context providers (scriptable contexts in particular)
-		/// resolve their engine services through it — the same door tools get through their call context.
-		/// </summary>
-		public required IServiceProvider Services { get; init; }
+		
 
 		/// <summary>
 		/// The agent descriptor for which this context is effective.

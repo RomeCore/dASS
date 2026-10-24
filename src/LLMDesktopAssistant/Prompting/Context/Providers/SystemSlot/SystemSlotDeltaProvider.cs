@@ -15,14 +15,14 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.SystemSlot
 	{
 		/// <inheritdoc/>
 		public async Task<SystemSlotSectionDelta?> CalculateDeltaAsync(SystemSlotSectionState? anchorState,
-			IEnumerable<SystemSlotSectionDelta> existingDeltas, EffectiveChatContext context,
+			IEnumerable<SystemSlotSectionDelta> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default)
 		{
 			var knownText = anchorState?.Text ?? string.Empty;
 			foreach (var delta in existingDeltas)
 				knownText = delta.Diff.ApplyToText(knownText);
 
-			var currentState = await stateProvider.CaptureStateAsync(context.Agent, cancellationToken);
+			var currentState = await stateProvider.CaptureStateAsync(context.Context.Agent, cancellationToken);
 			if (currentState is null)
 				return null;
 

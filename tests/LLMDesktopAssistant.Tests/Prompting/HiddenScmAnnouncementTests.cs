@@ -17,7 +17,6 @@ public class HiddenScmAnnouncementTests
 	private static EffectiveChatContext Effective(params BranchedMessage[] messages) => new()
 	{
 		Chat = PromptingTestHelpers.CreateChat(messages),
-		Services = new EmptyServiceProvider(),
 		Agent = new ChatAgentDescriptor(),
 		Messages = [.. messages.Select(ToEffective)],
 		Checkpoints = [],

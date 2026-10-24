@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 	public abstract class PromptLiveTailContextBase : IPromptLiveTailContextProvider
 	{
 		/// <inheritdoc/>
-		public abstract Task<string?> ProvideAsync(EffectiveChatContext context,
+		public abstract Task<string?> ProvideAsync(PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default);
 	}
 }

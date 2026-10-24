@@ -39,7 +39,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 
 		/// <inheritdoc/>
 		public async Task<PromptSectionDeltaBase?> CalculateDeltaAsync(PromptSectionStateBase? anchorState,
-			IEnumerable<PromptSectionDeltaBase> existingDeltas, EffectiveChatContext context,
+			IEnumerable<PromptSectionDeltaBase> existingDeltas, PromptContextExecutionContext context,
 			CancellationToken cancellationToken = default)
 			=> await _deltaProvider.CalculateDeltaAsync((TState?)anchorState, existingDeltas.Cast<TDelta>(), context,
 				cancellationToken);
