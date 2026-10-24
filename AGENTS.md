@@ -1,530 +1,346 @@
-# dASS - Desktop Assistant (AGENTS.md context)
+# dASS - Desktop Assistant
 
-The project is cross-platform C#/Avalonia application for universal LLM/agentic interactions.
+dASS is a cross-platform C#/Avalonia application for LLM and agentic interactions. This repository is
+its source: your edits need a rebuild and never affect the running instance.
 
-## Agents
+Two agentic systems coexist: **chat agents** (live in a chat, triggered by user messages, ordered by
+*execution stages*, never parallel) and **agentic tasks** (run once: chat naming, memory recording,
+`agent-call`, predefined *sub-agents*).
 
-The project has **2** separate agentic execution systems:
+## Build & verify
 
-1. *Chat agents* - agents that live in a chat, triggered by user messages, ordered by consecutive *execution stages*, and cannot execute in parallel.
-2. *Agentic tasks* - agents that runs once for doing specific tasks
-    - Internal system tasks, such as chat naming, automatic memory recording/retrieval, etc.
-    - Explicit invokation via `agent-call` tool or via `dass.agent.call` Lua API
-    - Predefined *sub-agents* - markdown addons (`agents/<name>.md` / `agents/<name>/AGENT.md`) loaded from addon packs, see **Addons**
+Do not read source files to learn signatures - write the call, build, and fix the errors. Even when you
+have to invent a signature first, that is cheaper than observing.
 
-### Directories
+```powershell
+dotnet build 'src/LLMDesktopAssistant/LLMDesktopAssistant.csproj'
+$a = Join-Path $env:TEMP 'dass-temp-build'   # $env:TEMP does NOT expand inside single quotes
+dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
+```
+
+Build each project separately, never the whole solution, and **never pipe the build output**
+(`| Select-Object -Last 40`): it breaks the console encoding (Cyrillic becomes mojibake) and kills the
+live streaming of the shell tool.
+
+## Code style
+
+Tabs for indentation, Allman braces, block-scoped `namespace X { }`. `net10.0` with `Nullable` and
+`ImplicitUsings` enabled, `LangVersion=latest`; `LLMDesktopAssistant.Controls.Icons` is a global using.
+
+- Injected dependencies -> primary constructor parameters, used by name, **no backing field**:
+  `public class Foo(IBar bar) : IFoo`. Real state -> `private readonly _camelCase = ...`.
+  Private `const` -> `camelCase`, no prefix.
+- Properties go through the `field` keyword: `set => SetProperty(ref field, value);`. Never hand-write
+  backing fields and never use `[ObservableProperty]`.
+- Collection expressions `[]` everywhere. `var` when the type is obvious from the right side, an
+  explicit type when it is not or when it documents intent.
+- `Async` suffix and a trailing `CancellationToken cancellationToken = default` on every
+  `Task`-returning method.
+- `I`-prefixed interfaces. `#region` only to group one interface's members
+  (`#region IList (read-only adapter)`), never to split a class into halves. No `this.`.
+- Comments are English one-liners that explain *why*, not *what*.
+- Domain suffixes are load-bearing, do not invent synonyms: `*Info` addon model, `*Descriptor` agent
+  configuration, `*Instance` GUID reference, `*Service`/`*Provider`/`*Processor` DI behaviour,
+  `*Settings` a category carrying `[SettingsRoute]`.
+- No user-facing string literals - `Locale` keys and `.loc` resources (see **Localization**). No manual
+  `services.AddScoped` in feature code - use the attributes (see **Dependency injection**).
+
+XML docs: every public member gets one, and so does a private member when it needs an explanation or
+when the algorithm is non-obvious. `<summary>` is **always multi-line** - never
+`<summary>One line.</summary>`, and never hide a real explanation behind a bare `<inheritdoc/>`:
+
+```csharp
+/// <summary>
+/// The name used to identify the addon for deduplication and agent selection purposes.
+/// </summary>
+public string Name { get; set; }
+```
+
+## Where things live
+
+| Need | Entry point |
+|---|---|
+| Chat turn pipeline | `LLM/Services/ChatExecutionService.cs` |
+| Prompt for one agent | `LLM/Services/Prompting/AgentPromptComposer.cs` -> `AgentEffectiveMessagesProvider` -> `PromptAnchoredSectionProcessor` |
+| One SCM section | `Prompting/Context/Providers/<Name>/` (state provider, state renderer, delta provider, delta renderer) |
+| Message visibility / quoting | `LLM/Services/Prompting/MessageVisibilityService.cs`, `ChatMessageQuoteRenderer.cs` |
+| Toolset for an agent | `LLM/Services/Tools/ToolsetBuildingService.cs` |
+| Slash command | `SlashCommands/SlashCommandResolver.cs`, input side in `SlashCommands/Input/` |
+| Addon loading | `Addons/Loading/`, per-kind folders in their own domain (`Agents/SubAgents/`, `Prompting/Skills/`, `SlashCommands/`) |
+| Chat agent | `Agents/ChatAgentDescriptor.cs` (configuration) vs `Agents/ChatAgentInstance.cs` (a GUID reference held by execution stages) |
+
+### Desktop project
+
+Anything that touches an OS process or a real window lives in `src/LLMDesktopAssistant.Desktop`, not
+in the core project: `Execution/` (`ProcessLauncher`, `TerminalRun`, `Terminals/TerminalView`),
+`Scripting/ExternalProcess/` (the out-of-process script engines - Python plus the tool, slash-command
+and prompt-context flavours), `Scripting/Python/`, `Scripting/Lua/API/LuaApiProcess.cs`,
+`ToolModules/` (`shell-execute`, `python-execute`, `DesktopFilesystemToolModule`), `Services/`
+(explorer and link openers), `Markdown/MermaidPreviewProvider`.
+
+A feature that shells out, spawns an interpreter or paints a terminal belongs there - the core project
+must stay portable (`.Android`, `.Browser`, `.Blazor` builds reference it).
+
+## Localization
+
+`.loc` files are embedded resources under `src/LLMDesktopAssistant/Localization/Resources/<locale>/`
+and are auto-imported by `LocFileLocalizationManager` - drop the file in, nothing to register.
 
 ```
-src/LLMDesktopAssistant/Addons/
-    AddonBase.cs - base of every agentic addon (name, order, aliases, description/body, paths, diagnostics)
-    AddonKind.cs - [Flags] kinds: Pack, Skill, SubAgent, Tool, PromptContext, Template, LuaScript, SlashCommand (+ MemoryBlock reserved)
-    IAddonTypeDescriptor.cs - per-kind descriptor marked with [AddonTypeDescriptor]
-    AddonSetCollectorBase.cs - merges addons across packs, applies per-agent changes, freezes clones
-    Loading/ - AddonFileLocatorBase<T>, pack locators (App/Chat/Combined), AddonPackSearchFoldersProvider
-    Management/ - addon managers, invalidators, settings watchers
-    Parsers/ - FrontmatterBasedAddonParser + YAML-frontmatter property parsers
-    Search/ - BM25 search over the addons available to an agent
-    MVVM/ - addon list/card UI (AddonListView, AddonCardView, card factory)
-    ... per-kind models and parsers live in their own domain folders, not here (see **Addons**)
+// Comments are single-line and must start with '//'
+%locale:
+%namespace: model
 
-src/LLMDesktopAssistant/Agents/
-    ChatAgentDescriptor.cs - the descriptor/configuration object for the chat agent
-    ChatAgentInstance.cs - the agent reference (by agent's GUID) used in execution stages ONLY
-    ... other root files used mostly for ChatAgentDescriptor's configuration
-    ExecutionStages/
-        AgentExecutionStage.cs - abstract base class for execution stages
-        AgentPreExecutionContext.cs - context that taken by execution stages to select next agent
-        AdaptiveAgentExecutionStage.cs - the adaptive execution stage that uses LLM-based router for selecting next agent
-        ...
-    Memory/ - agentic memory-related directory (facts/episodic logs)
-        IMemoryFactStore.cs
-        IMemoryLogStore.cs
-        ...
-    SubAgents/ - the sub-agent addon kind: info object, parser, loader, file locator, type descriptor
-        SubAgentInfo.cs - the main sub-agent information object, contains name, description, metadata, used tools, skill, memory blocks, inner sub-agents
-        ...
-    Tasks/
-        AgentTask.cs - agentic task object, produced by AgentTaskExecutor
-        AgentTaskExecutor.cs - the implementation of IAgentTaskExecutor
-        AgentTool.cs - abstract definition of tool, used by agent inside task
-        ChatAgentTool.cs - wrapper for chat's ToolInfo that inherits AgentTool
-        ...
-
-src/LLMDesktopAssistant/Prompting/
-    Context/ - SCM: anchors, deltas, sections, checkpoint kinds (see **Prompting & SCM**)
-        Providers/<Name>/ - one folder per section (state/delta provider and renderer quartets)
-    Management/ - LLT template importers and prompt part managers (personas, specializations, slots, skills, sub-agents)
-    Resources/ - built-in *.llt templates (core_prompt, components, sliders, message_prompt, naming, router, summarizer)
-    LLT/ - LLT editor control, tokenizer, diagnostics
-    Skills/ - the skill addon kind (SkillInfo, parser, locator, type descriptor)
-    ContextCheckpoint.cs, ContextCheckpointKind.cs, SystemPromptSnapshot.cs
-
-src/LLMDesktopAssistant/LLM/
-    Domain/
-        Chat.cs - the chat instance itself, contains a messages sequence
-        ChatMessage.cs - abstract base class for messages
-        ...
-    Services/
-        ChatExecutionService.cs - **central** service for chat execution pipeline
-        ...
-        Agents/
-            AgentManagementService.cs - service for chat agents retrieval
-            AgentOrderingService.cs - service for getting next chat agent for execution
-            ...
-        Prompting/
-            AgentPromptComposer.cs - **central** per-agent prompt entry point: builds the (messages + tools) bundle, owns header mode and toolset-cache invalidation
-            AgentEffectiveMessagesProvider.cs - effective message set for an agent plus its active checkpoints
-            PromptAnchoredSectionProcessor.cs - SCM anchor lifecycle and delta emission
-            MessageVisibilityService.cs - per-agent message visibility
-            ChatMessageQuoteRenderer.cs - neutral content quote of a message (naming, summarizer, router)
-            ...
-        Tools/
-            ToolExecutionService.cs - service for chat-related tool execution
-            ToolsetBuildingService.cs - service for collecting and building toolset from all sources for each agent
-            ...
-    MVVM/
-        Additional/ - AdditionalData, the point of persisted/visual extension, carried by chats, messages and tool calls (AdditionalChatData, AdditionalMessagePart, DynamicAxamlControlAdditionalData + their views); a message's AdditionalData also holds the slash-command fingerprint and the executor-added message content parts
-
-src/LLMDesktopAssistant/SlashCommands/
-    SlashCommandInfo.cs - the slash-command addon info (namespaces, ModelFacingMode, Generate ceiling, Executor)
-    SlashCommandExtractor.cs - the single owner of the leading '/' marker and the '//' escape; everything downstream is slash-free
-    SlashCommandSetCollector.cs - merges ISlashCommandProvider into the chat's set + the EnableCommands gate
-    SlashCommandAgenticSearchProvider.cs - serves the chat's non-derived commands to the addon tools (a read-only catalogue: the model may suggest a token, never run it)
-    SlashCommandSource.cs / SlashCommandOrderTiers.cs - source kind and the native > scriptable > derived tiers
-    ModelFacingMode.cs - Raw / Neutral / Hidden (Raw by default; Neutral replaces the content with the bare token, Hidden drops it)
-    Loading/ - SlashCommandAddonTypeDescriptor ('commands'), SlashCommandFileLocator (its Extensions are contributed by the registered scriptable engines), SlashCommandParser (frontmatter-based; picks the engine by file extension, which owns the frontmatter markers and builds the executor)
-    Providers/ - DerivedSlashCommandProvider<T>, the Skill/SubAgent/Tool providers and their executors (SkillCommandExecutor, SubAgentCommandExecutor, ToolCommandExecutor + ToolArgumentSchemaMapper), NativeSlashCommandProvider (+Attribute) with the built-in /addon-reload and /call, SlashCommandVariableExpander
-    Scripting/ - IScriptableSlashCommandEngine (+Descriptor) and CommandArgsNode; the engines themselves sit next to the tool engines (Scripting/Lua, Desktop/Scripting/Python)
-    Resolution/ - SlashCommandResolver, SlashCommandMatcher (exact match), SlashCommandToken
-    Arguments/ - SlashCommandArgumentParser/Binder/Schema, ISlashCommandArgumentFormatProvider
-    Execution/ - ISlashCommandExecutor, execution context/result, SlashCommandIntent, SlashCommandFingerprint
-    Input/ - SlashCommandCompletionSource, InputAnalyzer, PrefixMatcher, HighlightPalette
-
-src/LLMDesktopAssistant/InputCompletion/
-    IInputCompletionSource.cs - generic source (Priority, TryCompute, TryHighlight); the first source that claims the caret wins
-    InputCompletionService.cs - picks the owning source, keeps the result, raises ResultChanged/SelectedIndexChanged
-    InputCompletionResult/Item/State/Span/Kind - the completion snapshot (span to replace, continuations, popup state)
-
+capability.chat: Chat completions    // full key is 'model.capability.chat'
 ```
+
+`%locale:` empty means the invariant `iv` locale; `%namespace:` prefixes every key in the file.
+
+**Trap**: in `fs-grep`, search for the *key body* (`capability.chat`), never for the full
+`model.capability.chat` - the namespace is declared separately, so the full key matches nothing. The
+file name is not the namespace either (`tools.loc` holds the `tool` namespace).
+
+```csharp
+LocaleKeyBase dynamicKey = Locale.GetKey("tool.name.fs-edit");   // localized lazily
+LocaleKeyBase constKey = Locale.GetConstKey("Edit file");        // static text, no lookup
+string text = Locale.Get("tool.name.fs-edit");
+```
+
+```xml
+<Button Content="{loc:Loc common.save}"/>          <!-- static key -->
+<TextBlock Text="{loc:Loc {Binding TitleKey}}"/>   <!-- reactive LocaleKeyBase -->
+```
+
+## Settings
+
+`SettingsManager` works with `SettingsCategory<TObject>` where `TObject : SettingsObject`. A category
+carries `[SettingsAttribute("file-name")]` for its JSON file, is serialized with `System.Text.Json`
+(string enums, own derived-type resolution through `[JsonDerivedAttribute(typeof(Base), "discriminator")]`)
+and auto-saves on even deep changes via `ChangeTracker` - mark properties it must not walk with
+`[ChangeTracker.Untracked]` (complex objects, `Task`).
+
+- App settings: inject `ApplicationSettingsAccessor` and use its `ApplicationSettings`. **Always** the
+  accessor, never a fresh instance - it is the seam tests replace.
+- Chat settings: inject `IChatSettingsService`, use its `.Settings`.
+
+### Inheritance
+
+`Chat` settings inherit from `Application`, `Agent` settings from both levels. Every category needs
+`[SettingsRoute(nameof(Route))]`, every inheritable property needs `[InheritedChatSetting]` (Chat) or
+`[InheritedChatAgentSetting]` (Agent). The generator then adds `<Prop>Inheritance`
+(`ChatSettingsInheritanceLevel`: `Application` | `Profile` | `Agent`), `GetEffective<Prop>(chatSettings)`
+and `SetEffective<Prop>(chatSettings, value)` - the Chat-side getters take no argument.
+
+```csharp
+var readPerms = agent.Read.GetEffectiveReadPermissions(chatSettings.Settings);
+var skillSources = chatSettings.Skills.GetEffectiveSources();
+```
+
+Read the *effective* value, and set through the inheritance level: assigning the raw property while
+the level is still `Application` is silently ignored by the getter.
 
 ## Addons
 
-Skills, sub-agents, tools, prompt contexts, templates and Lua scripts are all *addons*, discovered from *addon packs* on disk. Infra lives in `src/LLMDesktopAssistant/Addons/`; each kind's model, parser and locator live in that kind's domain folder.
+Skills, sub-agents, tools, prompt contexts, templates, Lua scripts and slash commands are all *addons*,
+discovered from *addon packs* on disk. Infra is in `src/LLMDesktopAssistant/Addons/`; each kind's model,
+parser and locator live in that kind's domain folder. A pack is a directory scanned for one folder per
+kind:
 
-A pack is a directory scanned for one folder per kind:
-
-| Kind | Folder in pack | Layout |
+| Kind | Folder | Layout |
 |---|---|---|
 | `Skill` | `skills/` | `skills/<name>/SKILL.md` or `skills/<name>.md` (`.md`, `.mdx`) |
 | `SubAgent` | `agents/` | `agents/<name>/AGENT.md` or `agents/<name>.md` |
 | `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`) |
 | `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
 | `Template` | `templates/` | LLT template extensions |
-| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`), `.py` - one script per context; the extension picks the engine |
-| `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder format; the extension picks the scripting engine (`.lua`/`.alua`, `.py` - Python only in the Desktop build) |
+| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`, `.py`) - one script per context |
+| `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder form |
 
-Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`. `AddonPackSearchFoldersProvider` also scans other agent runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, `.windsurf`, `.opencode`, `.cline`, `.roocode`, `.lmstudio`, `.junie`, `.everywhere`, ...), so third-party skills and sub-agents are picked up as-is - expect addons you did not create.
+Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`, plus
+other runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, ...) -
+**expect addons you did not create**.
 
-Adding a kind = `<X>Info : AddonBase<X>` + parser + `IAddonFileLocator<X>` (`Folders`, `Extensions` ordered by priority, `AllowShortFormat`, `FullFormatName`) + `IAddonTypeDescriptor` marked `[AddonTypeDescriptor]` + `AddonSetCollectorBase<X, TChange>`, plus an optional card factory and search provider. `MemoryBlock` is declared but reserved; `SlashCommand` is an active kind with three sources - native, scriptable (files) and derived from other addons (see **Slash commands**).
+**Trap**: addons are **frozen after collection**; mutating one throws. `addon.Clone()` returns an
+unfrozen copy to change.
 
-Addons are **frozen after collection** - `addon.Clone()` returns an unfrozen copy to mutate.
+Adding a kind = `<X>Info : AddonBase<X>` + parser + `IAddonFileLocator<X>` (`Folders`, `Extensions`,
+`AllowShortFormat`, `FullFormatName`) + `IAddonTypeDescriptor` marked `[AddonTypeDescriptor]` +
+`AddonSetCollectorBase<X, TChange>`, plus an optional card factory and search provider. `MemoryBlock`
+is declared but reserved.
 
 ## Slash commands
 
-A slash command is a **user-only** token at the very start of a message (`/skill:grilling`, `/agent:web-searcher <input>`, `/tool:fs-read path=README.md`) that triggers a runtime action before the message reaches the model. An agent **cannot run** a command, and does not need to: skills, sub-agents and tools are reachable directly, and a scriptable command is a user-facing action. What an agent *can* do is read the catalogue: `SlashCommandAgenticSearchProvider` serves the chat's **non-derived** commands to `addon-search` / `addon-list_available` / `addon-info`, so the model quotes the exact token (`/skill:grilling`) instead of inventing one. It only ever sees the message a command produced - never the command as an action. They are the `AddonKind.SlashCommand` kind, **chat-level and agent-agnostic**.
+A slash command is a **user-only** token at the very start of a message (`/skill:grilling`,
+`/agent:web-searcher <input>`, `/tool:fs-read path=README.md`) that runs a runtime action before the
+message reaches the model. An agent cannot run one and does not need to: skills, sub-agents and tools
+are reachable directly. What it *can* do is read the catalogue served to `addon-search` /
+`addon-list_available` / `addon-info`, so it quotes the exact token instead of inventing one.
 
-A command has one of three sources, and `SlashCommandOrderTiers` mirrors them: **native** (`2000`) built in code, **scriptable** (`1000`) loaded from a pack's `commands/` folder, **derived** (`0`) synthesised one-per-addon for skills, sub-agents **and tools**. `SlashCommandSource` says which (descriptive: it drives the card's source chip and the fingerprint), while the ordering authority stays `OverrideOrder = SlashCommandOrderTiers.ForSource(source)`.
+Three sources, mirrored by `SlashCommandOrderTiers`: **native** `2000` (built in code) > **scriptable**
+`1000` (files in `commands/`) > **derived** `0` (one per skill, sub-agent and tool).
 
-Wiring (all chat-scoped):
-- `ISlashCommandProvider` contributes commands; `DerivedSlashCommandProvider<TSource>` builds one per addon of a kind (`SkillSlashCommandProvider` -> `/skill:<name>`, `SubAgentSlashCommandProvider` -> `/agent:<name>`, `ToolSlashCommandProvider` -> `/tool:<name>`), stamping `SlashCommandSource` and an executor; namespaces are the type first, then the source pack.
-- The three derived providers read `GetAvailableAddons()` (filtered by `IsValid`), deliberately **not** `GetAddonsForChat()` nor an agent's toolset. For `/tool:<name>` that means the chat's own tool surface - native modules, the chat's additional tools, MCP - so a tool may be missing from every agent's toolset and still be runnable by hand: a command is the user's own action, and the per-agent approval level, policy mask and specifiers never apply to it.
-- `NativeSlashCommandProvider` builds its commands in the constructor through `AddCommand` (base class stamps `Native` + the native tier and freezes them); `[NativeSlashCommandProvider]` auto-registers a provider, `chatScoped` deciding the scope. Built-ins: `/addon-reload` (alias `/reload`, `IsFixed` so it cannot be disabled; `Generate = false`, `ModelFacingMode.Neutral`) and `/call <agent>` (forces the selected agent to run, bypassing the router and the execution-stage pipeline).
-- Scriptable commands ride the ordinary addon machinery: `SlashCommandFileLocator` scans `commands/` and takes its `Extensions` from the registered `IScriptableSlashCommandEngine`s (a new engine/language plugs in without touching the locator), `SlashCommandParser` picks the engine by file extension and requires frontmatter (`RequiresFrontmatter`, no markdown fallback - the body is code); it applies `namespaces` (plus the source pack), `model-facing`, `generate` and `argument-schema` (the command flavour - a bracket hint or the keyed DSL, *not* a tool's JSON schema), then stamps `Script` + `SlashCommandOrderTiers.Scriptable` and asks the engine for the executor. `SlashCommandInfo.Source` is `null` for native and scriptable commands.
-- `SlashCommandSetCollector : AddonSetCollectorBase<SlashCommandInfo, SlashCommandChange>` merges the providers into the chat's set. `GetAddonsForChat()` is the only consumer path; `GetAddonsForAgent` is deliberately left unimplemented.
-- `SlashCommandInfo.Key` (namespaces sorted, then name) is the dedup/settings identity; `CanonicalToken` (`type:pack:name`) is the typed form. `SlashCommandOrderTiers`: native `2000` > script `1000` > derived `0`.
+1. `SlashCommandExtractor` is the **single owner of the `/` marker**; everything downstream is
+   slash-free (`//` escapes a literal leading slash).
+2. `SlashCommandResolver` + `SlashCommandMatcher` - exact match, total order is exact name > alias,
+   then `OverrideOrder` desc, `Order` asc, `Key`.
+3. Arguments: the schema lives on the **executor** (`ISlashCommandExecutor.ArgumentSchema`);
+   `SlashCommandArgumentParser` + `SlashCommandArgumentBinder` apply defaults and validate. An invalid
+   set blocks the send.
+4. Execute under a `ChatExecutionLevel.Command` token - the executor **mutates `ctx.Message` directly**.
+   `SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate)` can only *lower* the
+   caller's intent.
+5. `SlashCommandFingerprint` goes into `AdditionalData`; `MessageContentProjector` shapes the model-facing
+   content by `ModelFacingMode` - `Raw` (default) sends the content as typed, `Neutral` replaces it with
+   the bare `/<token>`, `Hidden` drops it - plus whatever `AdditionalMessageContentPart`s the executor added.
 
-Pipeline (`ChatMessageInsertionService`; pre-flight `CanInsertUserInput` and the send):
+The three derived providers read `GetAvailableAddons()`, deliberately **not** the agent's toolset: for
+`/tool:<name>` that is the chat's whole tool surface, so a tool can be runnable by hand while no agent
+may call it. `ToolCommandExecutor` builds the `ToolCall` the model would have emitted, attaches it to the
+command's own user message and runs it with `ToolInvocationSource.Command` - no policy, no confirmation -
+then returns `generate: false`. Its arguments are keyed-only (`/tool:fs-read path=README.md`), mapped from
+the tool's JSON Schema by `ToolArgumentSchemaMapper` (unknown types degrade to an unvalidated string).
+`SkillCommandExecutor` injects the skill body in full, expanded through `SlashCommandVariableExpander`
+(`$ARGUMENTS`, `$SKILL_NAME`, `$SKILL_DIR`); `SubAgentCommandExecutor` runs like `agent-callsub` with a
+`wait` argument (default `true`).
 
-1. `SlashCommandExtractor.TryExtractToken` - **the single owner of the `/` marker**; the token is slash-free everywhere downstream. `//` escapes a literal leading slash.
-2. `SlashCommandResolver` + `SlashCommandMatcher` - exact match; total order is exact name > alias, then `OverrideOrder` desc, `Order` asc, `Key`; the winner's losers and `Overrides` form the defeated set.
-3. Arguments: the schema lives on the **executor** (`ISlashCommandExecutor.ArgumentSchema`); `SlashCommandArgumentParser` + `SlashCommandArgumentBinder` apply defaults, validate and convert (via `ISlashCommandArgumentFormatProvider`). An invalid argument set blocks the send before execution.
-4. Execute: `ISlashCommandExecutor.ExecuteAsync(ctx, ct)` runs under a `ChatExecutionLevel.Command` token and **mutates `ctx.Message` directly**. `SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate)` is the final generation decision - it can only lower the caller's intent.
-5. `SlashCommandFingerprint` (data-only, persisted) goes into `AdditionalData`; `MessageContentProjector` shapes the model-facing content by `ModelFacingMode` (`Raw` sends the content as typed - the default; `Neutral` replaces it with the bare `/<token>`; `Hidden` drops it) plus the `AdditionalMessageContentPart`s the executor added.
-
-`ToolCommandExecutor` builds the `ToolCall` the model would have emitted out of the bound keyed arguments and attaches it to the command's **own user message** (a real card with status, attachments and result), then runs it through `IToolInvocationDispatcher` with `ToolInvocationSource.Command` and `ConstantConfirmationSink.Approve` - no policy, no confirmation dialog. Its argument schema is keyed-only and derived from the tool's JSON Schema by `ToolArgumentSchemaMapper` (every property becomes `key=value`; `boolean`, `number`/`integer`, a closed `enum`, `array` and `object` get a format provider, everything else - `string`, unknown types, `anyOf`/`oneOf`/`$ref`, nested `properties` - degrades to an unvalidated string), so a tool command has **no positional slot at all**: `/tool:fs-read path=README.md`. It returns `generate: false` - a chain of `/tool:` calls is the user building a turn by hand, and the next message they write is what starts it.
-
-Built-in executors: `SkillCommandExecutor` injects the skill body in full (no `skill-load` round-trip), expanded through `SlashCommandVariableExpander` (`$ARGUMENTS`, `$SKILL_NAME`, `$SKILL_DIR`/`$CLAUDE_SKILL_DIR`, otherwise the process environment; an unknown variable is left verbatim); `SubAgentCommandExecutor` launches the sub-agent like `agent-callsub`, with a `wait` keyed boolean argument (default `true`) deciding whether it awaits and injects the last answer or fires-and-forgets.
-
-Scriptable executors run the body: Lua in-process on AsyncLua (full chat API - `dass.chat`, `dass.command.context.get_message()`, message read/write and `append_*_part`, `dass.ui.create_control` - `await` works, no stdout), Python as an external process in the Desktop build only (stdout is the whole result, no chat API, its part carries no icon).
-
-Input side: `SlashCommandCompletionSource` is an `IInputCompletionSource` (`Priority = 100`, above generic sources) implementing both `TryCompute` (token state / argument state) and `TryHighlight` (token colour by resolution state, argument chips). Analysis is shared in the pure `SlashCommandInputAnalyzer`; prefix matching in `SlashCommandPrefixMatcher`; shortest-token logic in `SlashCommandShortToken`. The inline ghost preview comes from `InputCompletionTransformProvider` in the generic `InputCompletion/` layer.
-
-Settings: `ChatCommandSettings.EnableCommands` is a chat-local master gate (never inherited); `CommandsSet` (`SlashCommandSet`, keyed by `SlashCommandInfo.Key`) holds per-command overrides and inherits the app bag.
+Settings: `ChatCommandSettings.EnableCommands` is a chat-local master gate (never inherited),
+`CommandsSet` holds per-command overrides keyed by `SlashCommandInfo.Key`.
 
 ## Prompting & SCM
 
-`ChatPromptBuilder` is gone; the per-agent pipeline is `AgentPromptComposer` (messages + tools bundle, header mode, toolset-cache invalidation) -> `AgentEffectiveMessagesProvider` (effective messages plus active `ContextCheckpoint`s) -> `PromptAnchoredSectionProcessor` (SCM stage) -> message conversion and hooks. Visibility lives in `MessageVisibilityService`, neutral message quoting in `ChatMessageQuoteRenderer`.
+The per-agent pipeline is `AgentPromptComposer` (messages + tools bundle, header mode, toolset-cache
+invalidation) -> `AgentEffectiveMessagesProvider` (effective messages plus active `ContextCheckpoint`s)
+-> `PromptAnchoredSectionProcessor` (SCM stage) -> message conversion and hooks.
 
-SCM (Sequential Context Management) keeps the prompt prefix **byte-stable** and reports state changes as **events in the message stream** instead of silently rewriting the prompt. Mode is per-agent: `ChatAgentDescriptor.Context.PromptMode` (`AgentContextSettings`), default `Hybrid`.
+SCM keeps the prompt prefix **byte-stable** and reports state changes as **events in the message
+stream** instead of silently rewriting the prompt. Mode is per-agent: `ChatAgentDescriptor.Context.PromptMode`.
 
 | Mode | System prompt source | Change tracking |
 |---|---|---|
 | `Dynamic` | rebuilt on every request | none |
 | `Static` | frozen in agent config until manual refresh | none |
-| `Hybrid` | bytes blitted from a `PromptStateAnchorMessageData` in the history | anchors + deltas + rebaseline |
+| `Hybrid` | bytes blitted from a `PromptStateAnchorMessageData` in history | anchors + deltas + rebaseline |
 
-In `Hybrid` a live anchor pins rendered bytes and section states to a message; on change, the delta is attached to the agent's own pending assistant message; any `ContextCheckpoint` cut newer than the anchor forces a rebaseline. History is append-only - dead anchors stay inert and are never deleted - and everything is per-agent (`AgentId`). `MaxVisibleRounds` is deliberately ignored in `Hybrid`, since a round window would evict the anchor.
+**Traps in `Hybrid`**: history is append-only, so dead anchors stay inert and are never deleted; a
+`ContextCheckpoint` cut newer than the anchor forces a rebaseline; everything is per-agent (`AgentId`);
+`MaxVisibleRounds` is deliberately ignored, since a round window would evict the anchor.
 
-A *section* is one tracked unit of prompt state (identity, system slot, system reminder, tools, skills, sub-agents, memory blocks), implemented as a `state provider + state renderer + delta provider + delta renderer` quartet under `Prompting/Context/Providers/<Name>/`. Addon-backed sections share `AddonSectionDeltaEngine`: a new item is announced in full, an unchanged one by name, a changed one field-by-field, and hiding an item is silent.
+A *section* is one tracked unit of prompt state, implemented as a state provider + state renderer +
+delta provider + delta renderer quartet under `Prompting/Context/Providers/<Name>/`. Addon-backed
+sections share `AddonSectionDeltaEngine`: a new item is announced in full, an unchanged one by name, a
+changed one field-by-field, and hiding an item is silent.
 
-Checkpoints are `ContextCheckpoint` carrying the `[Flags]` kind `ContextCheckpointKind` (`Shield`, `Summary`, `ToolCompaction`, `ForcedToolCompaction`, `ReasoningCompaction`). `AgentContextSettings` carries `PromptMode`, `MaxVisibleRounds`, `DisabledFlags`, `Snapshot` and `ContextSet`.
+`ContextCheckpoint` carries the `[Flags] ContextCheckpointKind` (`Shield`, `Summary`, `ToolCompaction`,
+`ForcedToolCompaction`, `ReasoningCompaction`). `AgentContextSettings` carries `PromptMode`,
+`MaxVisibleRounds`, `DisabledFlags`, `Snapshot` and `ContextSet`.
 
 ### Scriptable prompt contexts
 
-A prompt context addon can be a **script** instead of native code: `context/<name>.lua|.alua|.py` with YAML frontmatter (`--[[ ]]`, `"""` respectively - the engine's descriptor owns the markers). Native sections are `anchored` (the enum default); a script is `kind:` `live-tail` (the default) or `supersede`:
+A prompt context addon can be a **script**: `context/<name>.lua|.alua|.py` with YAML frontmatter
+(`--[[ ]]` / `"""` - the engine's descriptor owns the markers). Native sections are `anchored`; a script
+is `kind:` `live-tail` (default) or `supersede`:
 
-| Kind | What the script receives | Where its text lands |
+| Kind | Receives | Text lands |
 |---|---|---|
-| `live-tail` | — | the current request only (`<system-reminder>` next to the pending assistant) |
-| `supersede` | `previous` = the previously injected rendered text | a persisted stamp, re-injected when the old one goes stale |
+| `live-tail` | - | this request only (`<system-reminder>` next to the pending assistant) |
+| `supersede` | `previous` = previously injected text | a persisted stamp, re-injected when the old one goes stale |
 
-The contract is one line: the script's stdout is the context text, an empty/whitespace result means "no context", and the engine never compares anything - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a digit-leading name gets an `_` prefix). `timeout:` in frontmatter, default 2000 ms, ceiling 10 s; a timeout or an error is a warning in the log and an absent section - never a broken request. Scripts get no chat API and no UI: they are prompt content, not actions. `PromptContextAgenticSearchProvider` serves every prompt context (native sections and scripts alike) to `addon-search` / `addon-list_available` / `addon-info` as a **read-only catalogue** - the model reads which section exists and where its text lands, and can only describe it to the user, never inject, refresh or run one (same lane as slash commands).
+The contract is one line: stdout is the context text, empty/whitespace means "no context", and the
+engine never compares - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a
+digit-leading name gets an `_` prefix). `timeout:` defaults to 2000 ms with a 10 s ceiling; a timeout or
+an error is a log warning and an absent section, never a broken request. Scripts get **no chat API and
+no UI** - they are prompt content, not actions. Discriminators are `script:<name>`, so a script can never
+shadow a native section. The parsed addon is cached app-wide, so providers must resolve chat services
+from `EffectiveChatContext.Services` instead of capturing them.
 
-Engines are a third family next to tool and slash-command engines: `IScriptablePromptContextEngine` + `...Descriptor` (`Language`, `Extensions`, `FrontmatterStart/End`) and `Task<string> RunAsync(services, body, previous, ct)`; `PromptContextFileLocator` takes its `Extensions` from them and `PromptContextParser` picks the engine by extension. `LiveTailScriptContext` / `SupersedeScriptContext` are the providers; they resolve chat services from `EffectiveChatContext.Services` (the parsed addon is cached app-wide, so it must not capture them). Discriminators are `script:<name>`, so a script can never shadow a native section.
+## Dependency injection
 
-## Dependency Injection
+Microsoft.Extensions.DependencyInjection plus a reflection-based registration of our own, in three scopes:
 
-Project uses Microsoft.Extensions.DependencyInjection, paired with own reflection-based registration system. It uses three main scopes:
-- `App` - registered with `LLMDesktopAssistant.Services.ServiceAttribute(Type? serviceType = null)` as a singleton, multiple attributes are allowed to register under multiple service types.
-- `Chat` - registered with `LLMDesktopAssistant.LLM.Services.ChatServiceAttribute(Type? serviceType = null)` as a scoped type, where single scope = single chat, multiple attributes are also allowed. All app services are avaliable within chat services.
-- `WebUI` - registered with `LLMDesktopAssistant.Blazor.Services.WebUIServiceAttribute(Type? serviceType = null, IsScoped = true|false)` as service within ASP.NET web application (scoping is optional). Multiple attributes are not allowed here. All chat services (including app) available for WebUI services.
+| Scope | Attribute | Lifetime |
+|---|---|---|
+| App | `[Service]` (`ServiceAttribute(Type? serviceType = null)`, repeatable) | singleton |
+| Chat | `[ChatService]` (`ChatServiceAttribute`, repeatable) | scoped, one scope = one chat |
+| WebUI | `[WebUIService(IsScoped = true)]` (not repeatable) | ASP.NET web app |
 
-Sugar attributes:
-- `LLMDesktopAssistant.Tools.ToolModuleAttribute(bool chatScoped = true)` used to define inheritants of `LLMDesktopAssistant.Tools.ToolModule` as services. Sugar for `[Chat]Service(typeof(ToolModule))`
-- `LLMDesktopAssistant.Scripting.Lua.LuaApiAttribute(bool chatScoped = true)` used to define inheritants of `LLMDesktopAssistant.Scripting.Lua.LuaApiBaseAsync` as services. Sugar for `[Chat]Service(typeof(LuaApiBaseAsync))`
+All App services are visible in Chat, all Chat (and App) services in WebUI. Sugar: `[ToolModule]` for
+`ToolModule` inheritors and `[LuaApi]` for `LuaApiBaseAsync` inheritors, both `chatScoped = true` by default.
 
-Examples of registering service:
 ```csharp
-using LLMDesktopAssistant.Services;
-
-namespace LLMDesktopAssistant.Agents.Tasks
+[Service(typeof(IAgentTaskExecutor))]
+public class AgentTaskExecutor(/* injected deps */) : IAgentTaskExecutor
 {
-	[Service(typeof(IAgentTaskExecutor))]
-	public class AgentTaskExecutor : IAgentTaskExecutor
-	{
-        ...
-    }
+	...
 }
 ```
 
-```csharp
-namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
-{
-	[ToolModule] // Chat-scoped by default
-	public class FilesystemToolModule : ToolModule
-	{
-		private readonly IWorkingDirectoryAccessService _fileAccess;
-		private readonly IDocumentReadingService _documentReader;
-
-		public FilesystemToolModule(IWorkingDirectoryAccessService fileAccess, IDocumentReadingService documentReader)
-        {
-            ...
-        }
-
-        ...
-    }
-}
-```
-
-### Service configurators
-
-You can define a class that inherits `LLMDesktopAssistant.Services.ServiceConfigurator`. Also put `LLMDesktopAssistant.Services.ServiceConfiguratorAttribute(ServiceScope scope = ServiceScope.App)` attribute on top of it, for example:
-
-```csharp
-using LLMDesktopAssistant.Tools;
-using LLMDesktopAssistant.Utils;
-
-[ServiceConfigurator(ServiceScope.App)]
-public class AppToolModulesConfigurator : ServiceConfigurator
-{
-	public override void Configure(IServiceCollection services)
-	{
-		var toolModules = ReflectionUtility.GetTypesWithAttribute<ToolModule, ToolModuleAttribute>();
-		foreach (var toolModule in toolModules)
-		{
-			if (!toolModule.Attribute.ChatScoped)
-				services.AddSingleton(typeof(ToolModule), toolModule.Type);
-		}
-	}
-}
-
-[ServiceConfigurator(ServiceScope.Chat)]
-public class ChatToolModulesConfigurator : ServiceConfigurator
-{
-	public override void Configure(IServiceCollection services)
-	{
-		var toolModules = ReflectionUtility.GetTypesWithAttribute<ToolModule, ToolModuleAttribute>();
-		foreach (var toolModule in toolModules)
-		{
-			if (toolModule.Attribute.ChatScoped)
-				services.AddScoped(typeof(ToolModule), toolModule.Type); // Note that chat services are scoped!
-		}
-	}
-}
-```
-
-## Localization
-
-Project uses own localization system based on .loc files:
-
-```
-// Comment; only exact single line comments are supported, lines that not starts with '//' cannot contain comments
-
-// Locale definition, leave empty for 'iv' (invariant locale)
-%locale:
-
-// Namespace, used as prefix for all locale keys in locale file
-%namespace: model
-
-// For example, this locale key is 'model.capability.chat'
-capability.chat: Chat completions
-```
-
-Localization files are located in `src/LLMDesktopAssistant/Localization/Resources/*locale*/*.loc` as an embedded resources and auto-imported by `LLMDesktopAssistant.Localization.LocFileLocalizationManager` (do not worry about that, just put .loc files and it will just work!).
-
-**Important note**: when searching for existing locale files using `fs-grep` - DO NOT PUT POSSIBLE NAMESPACE AS SEARCH PATTERN - or tool will not find anything (namespace is located separately). Example: when searching for `model.capability.chat`, search for `capability.chat` instead. Also notice: file name != namespace (possibly, e.g. tools.loc has `tool` namespace).
-
-### How to use locale keys
-
-Use `LLMDesktopAssistant.Localization.Locale` static facade class for getting locale keys and values:
-
-```csharp
-using LLMDesktopAssistant.Localization;
-
-LocaleKeyBase dynamicKey = Locale.GetKey("tool.name.fs-edit");
-LocaleKeyBase constKey = Locale.GetConstKey("Edit file"); // Get wrapper around LocaleKeyBase that returns static string without localization
-
-// Three ways to get SAME value
-string localized = Locale.Get("tool.name.fs-edit");
-localized = dynamicKey.Value;
-localized = dynamicKey.RawValue ?? "tool.name.fs-edit";
-localized = constKey.Value;
-```
-
-Inside AXAML (via `LocExtension`):
-
-```xml
-<...
-    xmlns:loc="using:LLMDesktopAssistant.Localization"
-    ...>
-
-    <!-- Use static string key -->
-    <Button Content="{loc:Loc common.save}"/>
-
-    <!-- Use reactive binding to LocaleKeyBase -->
-    <TextBlock Text="{loc:Loc {Binding TitleKey}}"/>
-
-</...>
-```
-
-## Settings system
-
-Settings are managed by `LLMDesktopAssistant.Settings.SettingsManager` using `SettingsCategory<TObject>` where `TObject : SettingsObject`. Settings are auto-saved on even *deep* changes (using `LLMDesktopAssistant.Utils.ChangeTracker`), and serialized using `System.Text.Json` with string enum conversion and own abstract type resolution (via `LLMDesktopAssistant.Utils.Json.JsonDerivedAttribute(Type baseType, string discriminator)` on implementation/derived types). `SettingsAttribute(string name)` is used to define name for JSON file that will contain configuration.
-
-### Accessing app & chat settings
-
-For accessing app settings - use `LLMDesktopAssistant.Settings.Application.ApplicationSettingsAccessor`, it has `ApplicationSettings` property that returns `LLMDesktopAssistant.Settings.Application.ApplicationSettings`. **Always** use accessor - its good for testing purposes.
-
-For chat settings - inject `LLMDesktopAssistant.LLM.Services.IChatSettingsService`, it has `LLMDesktopAssistant.LLM.Settings.ChatSettings Settings` property.
-
-### Chat & Agent settings inheritance
-
-`ChatSettings` and `AgentDescriptor` can have inherited settings inside each category. `Chat` settings can be inherited from `App` settings, and `Agent` settings can inherit from both. Source generator generates for each "inherited" setting that have `LLMDesktopAssistant.SourceGenerators.InheritedChatSettingAttribute` (for `Chat`) and `LLMDesktopAssistant.SourceGenerators.InheritedChatAgentSettingAttribute` (for `Agent`). Each category must have `SettingsRouteAttribute(string route)` for enable generation. Examples:
-
-```csharp
-[SettingsRoute(nameof(ChatAgentDescriptor.Read))]
-public partial class AgentReadSettings : AgentSettingsCategoryBase
-{
-	private AgentReadPermissions _readPermissions = ...;
-	/// <summary>
-	/// The permissions that determine what the agent can read.
-	/// </summary>
-	[InheritedChatAgentSetting]
-	public AgentReadPermissions ReadPermissions
-	{
-		get => _readPermissions;
-		set => SetProperty(ref _readPermissions, value);
-	}
-
-    ...
-}
-```
-
-Generator will generate for each inherited property:
-```csharp
-partial class AgentReadSettings
-{
-	public global::LLMDesktopAssistant.LLM.Settings.ChatSettingsInheritanceLevel ReadPermissionsInheritance { get; set; }
-
-	public global::LLMDesktopAssistant.Agents.AgentReadPermissions GetEffectiveReadPermissions(global::LLMDesktopAssistant.LLM.Settings.ChatSettings chatSettings)
-	{
-		...
-	}
-
-	public void SetEffectiveReadPermissions(global::LLMDesktopAssistant.LLM.Settings.ChatSettings chatSettings, global::LLMDesktopAssistant.Agents.AgentReadPermissions value)
-	{
-		...
-	}
-}
-```
-
-`Chat` settings have same generated methods signature, except for removed `chatSettings` parameter.
-
-### Using inherited settings
-
-```csharp
-ChatAgentDescriptor agent = ...;
-ChatSettings chatSettings = ...; 
-var readPerms = agent.Read.GetEffectiveReadPermissions(chatSettings);
-
-var skillSources = chatSettings.Skills.GetEffectiveSources();
-
-chatSettings.Skills.PropertyChanged += (s, e)
-{
-    if (e.PropertyName == nameof(ChatSkillSettings.SourcesInheritance))
-    {
-        // Catch inheritance level changes
-    }
-};
-```
-
-Note: `ChatSettingsInheritanceLevel` enum have `{ Application, Profile, Agent }` values.
+A `ServiceConfigurator` subclass with `[ServiceConfigurator(ServiceScope.App)]` or
+`[ServiceConfigurator(ServiceScope.Chat)]` registers a family of types at once (that is how tool modules
+are split into chat-scoped and singleton); remember that **chat services are scoped**, so `AddScoped`
+there, not `AddSingleton`.
 
 ## MVVM
 
-For most ViewModels this project uses `LLMDesktopAssistant.MVVM.ViewModelBase` and `LLMDesktopAssistant.NotifyPropertyChanged` (parent for `ViewModelBase`) classes. Main usage pattern: `ViewModelBase` used for ViewModels, and `NotifyPropertyChanged` used for parts/items inside ViewModels. Project uses reflection-base view locator, VM's can be bound to views used `LLMDesktopAssistant.MVVM.ViewModelForAttribute(Type targetView)`:
+`ViewModelBase` for view models (`NotifyPropertyChanged` for parts/items inside one), reflection-based
+view location via `[ViewModelFor(typeof(SomeView))]`.
 
 ```csharp
-using LLMDesktopAssistant.MVVM;
-
 [ViewModelFor(typeof(SomeView))]
 public class SomeViewModel : ViewModelBase
 {
-    private bool _enabled;
-    public bool Enabled
-    {
-        get => _enabled;
-        set
-        {
-            if (SetProperty(ref _enabled, value))
-                RaisePropertyChanged(nameof(EnabledChanged)); // Optional: raise changed event on depended property
-        }
-    }
+	private bool _enabled;
+	public bool Enabled
+	{
+		get => _enabled;
+		set
+		{
+			if (SetProperty(ref _enabled, value))
+				RaisePropertyChanged(nameof(EnabledChanged));
+		}
+	}
 
-    private RangeObjservableCollection<int> _ids = [];
-    public RangeObjservableCollection<int> Ids
-    {
-        get => _ids;
-        set => _ids.Reset(value); // Reset the collection with new items instead of setting the entire property
-    }
+	private RangeObservableCollection<int> _ids = [];
+	public RangeObservableCollection<int> Ids
+	{
+		get => _ids;
+		set => _ids.Reset(value);   // Reset the collection, don't replace the property
+	}
 }
 ```
 
-### Dialogs
+Dialogs go through `DialogManager.ShowDialogAsync(vm)` / `DialogManager.CloseDialog(result)` with
+`ConfirmDialogViewModel` (`Title`, `Description`, `ConfirmText`, `CancelText`, `IsDanger`) and localized
+strings from `LocalizationManager.LocalizeStatic`.
 
-You can use `LLMDesktopAssistant.Controls.Dialogs.DialogManager` for showing dialogs:
+## Utilities (`LLMDesktopAssistant.Utils`)
 
-```csharp
-using LLMDesktopAssistant.Controls.Dialogs;
-using LLMDesktopAssistant.Localization;
-
-var dialog = new ConfirmDialogViewModel
-{
-	Title = LocalizationManager.LocalizeStatic("settings.memory.delete.title"),
-	Description = LocalizationManager.LocalizeStatic("settings.memory.delete.confirm"),
-	ConfirmText = LocalizationManager.LocalizeStatic("settings.memory.delete.action"),
-	CancelText = LocalizationManager.LocalizeStatic("common.cancel"),
-	IsDanger = true
-};
-
-var result = await DialogManager.ShowDialogAsync(dialog);
-var confirmed = (bool)result!;
-
-// Or inside the dialog's VM
-DialogManager.CloseDialog(true);
-```
-
-## Useful utilities
-
-These are located in `LLMDesktopAssistant.Utils`:
-
-- `RangeObservableCollection` - thread-safe alternative to `ObservableCollection` that can be used for settings and MVVM, is NEVER raises `CollectionChanged` event without `OldItems` and `Newitems`, which is convenient when `Reset` event is unwanted to deal with. **Important notice**: use `Reset(IEnumerable<T>)` method for setter inside reactive objects to reset the *collection* instead of resetting entire *property*.
-- `ReadOnlyObservableCollection` - wrapper around any of `IReadOnlyList<T>`, `INotifyCollectionChanged` or `INotifyPropertyChanged` (every implementaion is optional, but at least on must be implemented).
-- `AsyncCache` - thread-safe async dictionary with cleanup intervals and sliding expiration time.
-- `ChangeTracker` - deep tracker for one specific reactive object, use `ChangeTracker.Untracked` attribute on properties to prevent deep observation for complex objects (`Task` for example).
-- `LLMDesktopAssistant.Disposable` - base class for all disposable objects, you can create direct instance of it with provided `Action` (e.g. `new Disposable(() => ...)`).
-
-## Important notes
-
-The info given in this context document is ACTUAL and you are not needed to observe files by self (unless REALLY needed), even if you miss the right signatures, the `dotnet build` will show all the errors - it's better "invent" signatures and fix errors later, because you will spend less tokens!
-
-So, the GOOD example:
-```
-Okay, I will just use `GetEffectiveReadPermissions(_chatSettings.ChatSettings)`, i don't need to observe the real generator and spend input tokens + one request.
-```
-
-The BAD example:
-```
-Let's view the `src/LLMDesktopAssistant.SourceGenerators/InheritedSettingsGenerator.cs`, who knows if user is right?
-*fs-read_entry call*
-The user was right, it works as he said...
-```
-
-Also, observe the MINIMAL number of files that really needed for understanding behaviour and signatures.
-
-## Building project
-
-DO NOT build the entire solution! Build the each project separately instead (but desktop project should be built inside the temporary directory):
-
-```powershell
-# The artifacts path is built into a variable first: $env:TEMP does NOT expand inside single quotes.
-dotnet build 'src/LLMDesktopAssistant/LLMDesktopAssistant.csproj'
-$a = Join-Path $env:TEMP 'dass-temp-build'
-dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
-```
-
-**NEVER pipe the build output through `Select-Object` (`| Select-Object -Last 40`, `| Select`, `| select`, etc.)!**
-Do not filter, truncate or post-process the build output in any way - run the command bare and let it stream.
-Reasons:
-- it breaks the output encoding (the Russian text in the build log turns into mojibake);
-- it kills the streaming/animation of the shell tool, which makes `runTerminal: true` essentially useless (no live progress, output appears only when the command finishes).
-If the output is too long - just read the part you need from the streamed result, never by piping it.
+- `RangeObservableCollection` - thread-safe `ObservableCollection` that always reports `OldItems` **and**
+  `NewItems`. Use `Reset(IEnumerable<T>)` in setters to reset the collection, not the property.
+- `ReadOnlyObservableCollection` - wrapper over any `IReadOnlyList<T>` / `INotifyCollectionChanged` /
+  `INotifyPropertyChanged`.
+- `AsyncCache` - thread-safe async dictionary with cleanup intervals and sliding expiration.
+- `ChangeTracker` - deep tracker for one reactive object; `[ChangeTracker.Untracked]` opts properties out.
+- `Disposable` - base for disposable objects or a direct `new Disposable(() => ...)`.
 
 ## Project memory
 
-Use specified memory block to store completed work inside the epizodic logs after the completed session. You also can get last 5-10 logs to view the actual state of the project.
+Store finished work in this project's episodic log after a completed session, and read the last 5-10
+logs to learn the current state before starting.
 
 ## Handoffs
 
-Session handoff documents live in `.llmassist/handoffs/`, one file per completed phase, named
-`<YYYY-MM-DD>-<effort-slug>-<phase>.md` (for example
-`.llmassist/handoffs/2026-10-17-tool-execution-v2-p3.md`). The `/handoff` skill writes there - do not save
-handoffs to the OS temporary directory. Older one-off handoffs may sit directly under `.llmassist/`; find
-the latest with `fs-glob '.llmassist/**/*handoff*'`.
+Handoff documents live in `.llmassist/handoffs/`, one file per completed phase, named
+`<YYYY-MM-DD>-<effort-slug>-<phase>.md` (e.g. `.llmassist/handoffs/2026-10-17-tool-execution-v2-p3.md`).
+The `/handoff` skill writes there - not to the OS temp directory. Older one-off handoffs may sit
+directly under `.llmassist/`; find the latest with `fs-glob '.llmassist/**/*handoff*'`.
 
 When continuing a multi-session effort, read the latest handoff first: it points to the spec, plan,
 tickets and commits instead of repeating them.
 
-## Agent skills
+## Docs map
 
-### Issue tracker
-
-Local markdown tracker under `docs/issues/` (not GitHub Issues). See `docs/issues/README.md`.
-
-### Triage labels
-
-Default canonical roles, used verbatim as the `Status:` string (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/issues/README.md`.
-
-### Domain docs
-
-Single-context: `GLOSSARY.md` at the repo root, ADRs in `docs/adr/`. See `docs/issues/README.md`.
+- `GLOSSARY.md` at the repo root - domain vocabulary; ADRs in `docs/adr/`.
+- `docs/issues/` - the local markdown issue tracker (`docs/issues/README.md`); canonical `Status:`
+  values are `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`.
+- `docs/ideas/` - idea-and-proposal tickets per scope; `docs/help/` - user-facing help, embedded as resources.
+- `docs/agent-reports/` - filed reports about dASS misbehaving (the `/dass-report` skill).
