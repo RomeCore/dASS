@@ -10,7 +10,7 @@ only talking.
 | Filesystem | read, write, edit, search files and directories |
 | Web | fetch URLs, search the web, download files |
 | Database | query SQLite, PostgreSQL and SQL Server databases |
-| Scripting | run Lua, Python and C# scripts |
+| Scripting | run Lua and Python scripts |
 | Memory | store and retrieve facts and logs |
 | Math | evaluate expressions, solve equations |
 | Random | dice rolls, random numbers, GUIDs |

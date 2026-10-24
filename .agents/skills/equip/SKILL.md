@@ -57,7 +57,7 @@ Then stop. The user picks. This is the phase boundary, and it is the point of th
 
 One addon at a time. Locations and file shapes are in [FORMATS.md](FORMATS.md); the shape of the tool itself is the `tool-authoring` skill.
 
-Language order for a scriptable tool: **Lua first** - it is the only engine every build has, and it depends least on the machine it lands on. **Python second**, when the job needs a library the Lua APIs do not reach and the tool can live with being desktop-only and text-only. **C# script last** - its API surface costs more than the tool usually saves.
+Language order for a scriptable tool: **Lua first** - it is the only engine every build has, and it depends least on the machine it lands on. **Python second**, when the job needs a library the Lua APIs do not reach and the tool can live with being desktop-only and text-only.
 
 A forged tool names its `behaviours` truthfully - those flags are what the approval policy gates it by - and `tool-authoring` carries the rest of the contract.
 

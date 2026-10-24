@@ -94,7 +94,7 @@ src/LLMDesktopAssistant/SlashCommands/
     ModelFacingMode.cs - Raw / Neutral / Hidden (Raw by default; Neutral replaces the content with the bare token, Hidden drops it)
     Loading/ - SlashCommandAddonTypeDescriptor ('commands'), SlashCommandFileLocator (its Extensions are contributed by the registered scriptable engines), SlashCommandParser (frontmatter-based; picks the engine by file extension, which owns the frontmatter markers and builds the executor)
     Providers/ - DerivedSlashCommandProvider<T>, the Skill/SubAgent/Tool providers and their executors (SkillCommandExecutor, SubAgentCommandExecutor, ToolCommandExecutor + ToolArgumentSchemaMapper), NativeSlashCommandProvider (+Attribute) with the built-in /addon-reload and /call, SlashCommandVariableExpander
-    Scripting/ - IScriptableSlashCommandEngine (+Descriptor) and CommandArgsNode; the engines themselves sit next to the tool engines (Scripting/Lua, Scripting/CSX, Desktop/Scripting/Python)
+    Scripting/ - IScriptableSlashCommandEngine (+Descriptor) and CommandArgsNode; the engines themselves sit next to the tool engines (Scripting/Lua, Desktop/Scripting/Python)
     Resolution/ - SlashCommandResolver, SlashCommandMatcher (exact match), SlashCommandToken
     Arguments/ - SlashCommandArgumentParser/Binder/Schema, ISlashCommandArgumentFormatProvider
     Execution/ - ISlashCommandExecutor, execution context/result, SlashCommandIntent, SlashCommandFingerprint
@@ -117,11 +117,11 @@ A pack is a directory scanned for one folder per kind:
 |---|---|---|
 | `Skill` | `skills/` | `skills/<name>/SKILL.md` or `skills/<name>.md` (`.md`, `.mdx`) |
 | `SubAgent` | `agents/` | `agents/<name>/AGENT.md` or `agents/<name>.md` |
-| `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`, `.csx`) |
+| `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`) |
 | `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
 | `Template` | `templates/` | LLT template extensions |
-| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`), `.csx`, `.py` - one script per context; the extension picks the engine |
-| `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder format; the extension picks the scripting engine (`.lua`/`.alua`, `.csx`, `.py` - Python only in the Desktop build) |
+| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`), `.py` - one script per context; the extension picks the engine |
+| `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder format; the extension picks the scripting engine (`.lua`/`.alua`, `.py` - Python only in the Desktop build) |
 
 Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`. `AddonPackSearchFoldersProvider` also scans other agent runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, `.windsurf`, `.opencode`, `.cline`, `.roocode`, `.lmstudio`, `.junie`, `.everywhere`, ...), so third-party skills and sub-agents are picked up as-is - expect addons you did not create.
 
@@ -155,7 +155,7 @@ Pipeline (`ChatMessageInsertionService`; pre-flight `CanInsertUserInput` and the
 
 Built-in executors: `SkillCommandExecutor` injects the skill body in full (no `skill-load` round-trip), expanded through `SlashCommandVariableExpander` (`$ARGUMENTS`, `$SKILL_NAME`, `$SKILL_DIR`/`$CLAUDE_SKILL_DIR`, otherwise the process environment; an unknown variable is left verbatim); `SubAgentCommandExecutor` launches the sub-agent like `agent-callsub`, with a `wait` keyed boolean argument (default `true`) deciding whether it awaits and injects the last answer or fires-and-forgets.
 
-Scriptable executors run the body: Lua in-process on AsyncLua (full chat API - `dass.chat`, `dass.command.context.get_message()`, message read/write and `append_*_part`, `dass.ui.create_control` - `await` works, no stdout), C# script in-process (`CommandArgs`, `Context.Message`, `Workdir`), Python as an external process in the Desktop build only (stdout is the whole result, no chat API, its part carries no icon).
+Scriptable executors run the body: Lua in-process on AsyncLua (full chat API - `dass.chat`, `dass.command.context.get_message()`, message read/write and `append_*_part`, `dass.ui.create_control` - `await` works, no stdout), Python as an external process in the Desktop build only (stdout is the whole result, no chat API, its part carries no icon).
 
 Input side: `SlashCommandCompletionSource` is an `IInputCompletionSource` (`Priority = 100`, above generic sources) implementing both `TryCompute` (token state / argument state) and `TryHighlight` (token colour by resolution state, argument chips). Analysis is shared in the pure `SlashCommandInputAnalyzer`; prefix matching in `SlashCommandPrefixMatcher`; shortest-token logic in `SlashCommandShortToken`. The inline ghost preview comes from `InputCompletionTransformProvider` in the generic `InputCompletion/` layer.
 
@@ -181,14 +181,14 @@ Checkpoints are `ContextCheckpoint` carrying the `[Flags]` kind `ContextCheckpoi
 
 ### Scriptable prompt contexts
 
-A prompt context addon can be a **script** instead of native code: `context/<name>.lua|.alua|.csx|.py` with YAML frontmatter (`--[[ ]]`, `/* */`, `"""` respectively - the engine's descriptor owns the markers). Native sections are `anchored` (the enum default); a script is `kind:` `live-tail` (the default) or `supersede`:
+A prompt context addon can be a **script** instead of native code: `context/<name>.lua|.alua|.py` with YAML frontmatter (`--[[ ]]`, `"""` respectively - the engine's descriptor owns the markers). Native sections are `anchored` (the enum default); a script is `kind:` `live-tail` (the default) or `supersede`:
 
 | Kind | What the script receives | Where its text lands |
 |---|---|---|
 | `live-tail` | — | the current request only (`<system-reminder>` next to the pending assistant) |
 | `supersede` | `previous` = the previously injected rendered text | a persisted stamp, re-injected when the old one goes stale |
 
-The contract is one line: the script's stdout is the context text (the C# script's return value instead, it has no captured stdout), an empty/whitespace result means "no context", and the engine never compares anything - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a digit-leading name gets an `_` prefix). `timeout:` in frontmatter, default 2000 ms, ceiling 10 s; a timeout or an error is a warning in the log and an absent section - never a broken request. Scripts get no chat API and no UI: they are prompt content, not actions. `PromptContextAgenticSearchProvider` serves every prompt context (native sections and scripts alike) to `addon-search` / `addon-list_available` / `addon-info` as a **read-only catalogue** - the model reads which section exists and where its text lands, and can only describe it to the user, never inject, refresh or run one (same lane as slash commands).
+The contract is one line: the script's stdout is the context text, an empty/whitespace result means "no context", and the engine never compares anything - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a digit-leading name gets an `_` prefix). `timeout:` in frontmatter, default 2000 ms, ceiling 10 s; a timeout or an error is a warning in the log and an absent section - never a broken request. Scripts get no chat API and no UI: they are prompt content, not actions. `PromptContextAgenticSearchProvider` serves every prompt context (native sections and scripts alike) to `addon-search` / `addon-list_available` / `addon-info` as a **read-only catalogue** - the model reads which section exists and where its text lands, and can only describe it to the user, never inject, refresh or run one (same lane as slash commands).
 
 Engines are a third family next to tool and slash-command engines: `IScriptablePromptContextEngine` + `...Descriptor` (`Language`, `Extensions`, `FrontmatterStart/End`) and `Task<string> RunAsync(services, body, previous, ct)`; `PromptContextFileLocator` takes its `Extensions` from them and `PromptContextParser` picks the engine by extension. `LiveTailScriptContext` / `SupersedeScriptContext` are the providers; they resolve chat services from `EffectiveChatContext.Services` (the parsed addon is cached app-wide, so it must not capture them). Discriminators are `script:<name>`, so a script can never shadow a native section.
 

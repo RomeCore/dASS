@@ -22,7 +22,7 @@ Inside a source, the subfolder decides the kind:
 |---|---|---|---|---|
 | Skill | `skills/` | `<name>.md` or `<name>/SKILL.md` | yes | `SKILL.md` |
 | Sub-agent | `agents/` | `<name>.md` or `<name>/AGENT.md` | yes | `AGENT.md` |
-| Scriptable tool | `tools/` | `<name>.lua` / `<name>.alua` / `<name>.py` / `<name>.csx` | yes | none |
+| Scriptable tool | `tools/` | `<name>.lua` / `<name>.alua` / `<name>.py` | yes | none |
 | Template (LLT) | `templates/` | `.llt` - the extensions the LLT parser reports | yes | none |
 
 Skills and sub-agents take `.md` or `.mdx`. A **full format** folder is the one that can carry resources next to its entry file; a scriptable tool is always a single file.
@@ -37,9 +37,9 @@ Skills and sub-agents take `.md` or `.mdx`. A **full format** folder is the one 
 
 ## Scriptable tools, from here
 
-One file per tool; the extension picks the engine: `.lua`/`.alua` (Lua), `.py` (Python - Desktop build only), `.csx` (C# script).
+One file per tool; the extension picks the engine: `.lua`/`.alua` (Lua), `.py` (Python - Desktop build only).
 
-Language order when proposing one: **Lua first** - the only engine every build has, and the one with the least dependence on the machine. **Python second** - when a library the Lua APIs cannot reach is needed. **C# script last** - its API surface costs more than the tool usually saves.
+Language order when proposing one: **Lua first** - the only engine every build has, and the one with the least dependence on the machine. **Python second** - when a library the Lua APIs cannot reach is needed.
 
 A forged tool names its `behaviours` truthfully: those flags are what the approval policy gates the tool by. The rest of the contract, and the way to verify it, is in `tool-authoring`.
 

@@ -9,7 +9,7 @@ dASS is a powerful LLM-powered assistant with:
 - A rich and extensible **tool system** (filesystem, web, database, scripting and more)
 - **Multi-agent collaboration** with specialized agents
 - **Semantic memory** for facts and episodic logs
-- **Meta tools** — dynamic tools written in Lua, Python or C# script
+- **Meta tools** — dynamic tools written in Lua or Python
 - A built-in **web chat UI** for multi-user chatting
 
 > [!TIP]

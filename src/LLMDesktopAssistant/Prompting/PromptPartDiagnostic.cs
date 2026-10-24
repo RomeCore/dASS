@@ -1,5 +1,3 @@
-using Microsoft.CodeAnalysis;
-
 namespace LLMDesktopAssistant.Prompting
 {
 	public class PromptPartDiagnostic

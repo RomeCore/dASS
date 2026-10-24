@@ -13,7 +13,6 @@ name.agent-callsub: Call sub-agent
 name.agent-describe_image: Describe image
 name.clipboard-copy: Copy to clipboard
 name.clipboard-read: Read from clipboard
-name.csx-execute: Execute C# script
 name.db-execute: Execute a SQL statement
 name.db-list: List database connections
 name.db-schema: Show database schema
@@ -89,7 +88,6 @@ description.agent-callsub: Runs a predefined sub-agent using its name and input.
 description.agent-describe_image: Describes the content of an image using a separate vision-capable AI agent.
 description.clipboard-copy: Copies a piece of text to the system clipboard.
 description.clipboard-read: Reads the current text content of the system clipboard.
-description.csx-execute: Runs C# code with access to .NET APIs and returns the script result.
 description.db-execute: Executes a SQL statement against the active database and returns the result.
 description.db-list: Lists the database connections configured in the chat and highlights the currently active one.
 description.db-schema: Shows the schema of the active database: tables, views and their columns.

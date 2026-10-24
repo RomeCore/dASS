@@ -1,6 +1,6 @@
 # Remove the C# (.csx) scripting surface
 
-Status: ready-for-agent
+Status: resolved
 Type: task
 Blocked by:
 
@@ -39,3 +39,4 @@ Blocked by:
 
 - Removal was decided after checking the working tree, the addon packs and the agent folders: no `.csx` file exists anywhere, so no addon needs migrating.
 - The surface is nine source files, one tool module and one package reference; the remaining work is localization, documentation and the unsupported-extension diagnostic.
+- Implemented on 2026-10-24: the nine `Scripting/CSX/` files, the `csx-execute` tool module, its four localization keys and the `Microsoft.CodeAnalysis.CSharp.Scripting` package are gone, along with `ScriptLanguageType.CSharpScript`, the CSX engine tests, the help pages, `README.md`, `AGENTS.md` and the authoring skills. A `.csx` file is now simply not discovered. The unsupported-extension diagnostic was deliberately not implemented - nothing ships a `.csx` file, so there is nobody to warn.

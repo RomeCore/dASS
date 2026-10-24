@@ -5,7 +5,7 @@ using LLMDesktopAssistant.Tools.Execution.Services;
 namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 {
 	/// <summary>
-	/// The script orchestrator: a nested call made by Lua/CSX through <c>dass.tool.call</c>. Scripts are a
+	/// The script orchestrator: a nested call made by Lua through <c>dass.tool.call</c>. Scripts are a
 	/// deliberately powerful area: no policy, no confirmation, no hard floor.
 	/// </summary>
 	/// <remarks>

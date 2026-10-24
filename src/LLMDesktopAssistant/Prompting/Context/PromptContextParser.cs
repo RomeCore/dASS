@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 {
 	/// <summary>
 	/// The parser for scriptable prompt context addon files (e.g. <c>context/git-status.py</c>,
-	/// <c>context/rules.csx</c>, <c>context/time.lua</c>).
+	/// <c>context/time.lua</c>).
 	/// The scripting engine is selected by the file extension; it defines both the frontmatter syntax
 	/// (<see cref="IScriptablePromptContextEngineDescriptor.FrontmatterStart"/> /
 	/// <see cref="IScriptablePromptContextEngineDescriptor.FrontmatterEnd"/>) and the way the body is executed.

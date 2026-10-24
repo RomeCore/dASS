@@ -58,8 +58,8 @@ Commands are collected from the addon packs — one per available skill and sub-
 - **Shell execution** - with optional live and interactive terminal in the UI
 - **Interactive diff confirmation** - preview file changes with color-coded diffs, accept or decline individual edits directly in the chat
 - **Time utilities** - get current time, wait/delays
-- **Scripting** - Python execution in configured `.venv`/global environment, Lua via AsyncLua (async/await Lua interpreter with a wide range of API bindings) and C# scripts via Roslyn
-- **Scriptable tools** - dynamic tools the assistant creates for itself in Python, Lua or C# when the built-in set is not enough (see below)
+- **Scripting** - Python execution in configured `.venv`/global environment and Lua via AsyncLua (async/await Lua interpreter with a wide range of API bindings)
+- **Scriptable tools** - dynamic tools the assistant creates for itself in Python or Lua when the built-in set is not enough (see below)
 - **MCP** - tools from external servers
 
 Configure which tools each agent can use right from the agent settings:
@@ -111,7 +111,7 @@ And check the tool in the agent's settings:
 
 ![Scriptable tool added to the list in agent settings](assets/metatool_added_to_the_list.png)
 
-If you want to edit, share or create tools by yourself, drop `.lua`, `.py` and `.csx` files into the `tools` folder of an addon pack (for example `%LOCALAPPDATA%/.llmassist/packs/<your-pack>/tools`, or `.agents/tools` in your workspace).
+If you want to edit, share or create tools by yourself, drop `.lua` and `.py` files into the `tools` folder of an addon pack (for example `%LOCALAPPDATA%/.llmassist/packs/<your-pack>/tools`, or `.agents/tools` in your workspace).
 
 ---
 

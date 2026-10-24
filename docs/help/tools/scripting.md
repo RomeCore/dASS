@@ -1,12 +1,11 @@
 # Scripting
 
-dASS has three scripting engines available to the model:
+dASS has two scripting engines available to the model:
 
 | Engine | Extension | Description |
 |---|---|---|
 | **AsyncLua** | `.lua` | Lua interpreter with async/await and a wide API |
 | **Python** | `.py` | Python in the configured `.venv` or global environment |
-| **C# script** | `.csx` | Roslyn scripting with full access to .NET and dASS services |
 
 ## Streaming results
 

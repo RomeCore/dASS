@@ -5,7 +5,7 @@
 //    Died:  superseded by addon-based scriptable tools       2026-09-12
 //    Lived: 156 days · 62 commits touched *MetaTool* paths · 37 commits name them in diffs
 //
-//    The name is gone, the idea is not: a file `tools/my-tool.lua` (`.alua`, `.py`, `.csx`) is
+//    The name is gone, the idea is not: a file `tools/my-tool.lua` (`.alua`, `.py`) is
 //    still a tool the LLM can call. It just stopped being a special-cased subsystem and became
 //    a first-class citizen of the generic addon infrastructure.
 //
@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 {
 	/// <summary>
 	/// The parser for scriptable tool addon files (e.g. <c>tools/my-tool.lua</c>, <c>tools/my-tool.py</c>,
-	/// <c>tools/my-tool.csx</c>, <c>tools/my-tool.alua</c>).
+	/// <c>tools/my-tool.alua</c>).
 	/// The scripting engine is selected by the file extension; it defines both the frontmatter syntax
 	/// (<see cref="IScriptableToolEngineDescriptor.FrontmatterStart"/> /
 	/// <see cref="IScriptableToolEngineDescriptor.FrontmatterEnd"/>) and the way the tool body is executed.

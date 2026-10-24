@@ -1,6 +1,6 @@
 ---
 name: tool-authoring
-description: Write or amend a dASS scriptable tool - the .lua / .alua / .py / .csx file in a tools/ addon folder - keeping its frontmatter contract (description, argument schema, behaviours) true to what the body actually does. Use when creating a new scriptable tool, when editing or debugging an existing one, when a tool's description no longer matches its behaviour, or when the user asks how a tool addon is shaped.
+description: Write or amend a dASS scriptable tool - the .lua / .alua / .py file in a tools/ addon folder - keeping its frontmatter contract (description, argument schema, behaviours) true to what the body actually does. Use when creating a new scriptable tool, when editing or debugging an existing one, when a tool's description no longer matches its behaviour, or when the user asks how a tool addon is shaped.
 ---
 
 # Tool authoring (dASS)
@@ -45,7 +45,7 @@ Verification is a judgment call, not a ritual. The moves, cheapest first:
 | Run the body through a runner with stubbed arguments | the logic works on the inputs you chose |
 | Call the tool itself | it loads, its schema accepts real arguments, and a result comes back |
 
-Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv), `csx-execute` (C# script). A runner hands you *its own* arguments, not the tool's - so stub the argument names yourself at the top of the snippet (a local table in Lua, locals in C#), paste the body, and watch the output. That is manual unit testing, and it catches most of what a first real call would catch.
+Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv). A runner hands you *its own* arguments, not the tool's - so stub the argument names yourself at the top of the snippet (a local table in Lua), paste the body, and watch the output. That is manual unit testing, and it catches most of what a first real call would catch.
 
 The failure mode worth naming: claiming a tool works because the file exists. If the addon source has not picked the file up yet, the answer is "not verified yet", not "looks fine".
 
@@ -63,9 +63,8 @@ The path, plus what was verified and by which move. The user's next action depen
 |---|---|---|---|
 | Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build |
 | Python | `.py` | `"""` ... `"""` | Desktop build only |
-| C# script | `.csx` | `/*` ... `*/` | every build |
 
-Order of preference: **Lua** - the only engine every build has. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and text-only results. **C# script** - when the user asks for it; its API surface costs more than the tool usually saves.
+Order of preference: **Lua** - the only engine every build has. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and text-only results.
 
 ## The frontmatter
 
@@ -117,19 +116,12 @@ argument-schema: |
 - no structured result and no streaming - text only
 - needs a Python runtime or virtual environment, and the Desktop build
 
-**C# script** - in-process, compiled on every call, no state shared between calls, full .NET access.
-
-- `ToolArgs` - arguments as `JsonNode`: `(string?)ToolArgs?["input"]`
-- `Result` - `Write`, `SetStructured`, `SetStatus`, `SetProgress`, `UseMarkdown`, `CompleteWithSuccess`
-- `Context` and `Workdir` are available too
-- the globals are declared in `src/LLMDesktopAssistant/Scripting/CSX/CSharpScriptGlobals.cs`
-
 ## Where the file goes
 
 A `tools/` folder inside an addon source: `.agents/` in a repo, `.llmassist/packs/<pack>/` for packs, `%LOCALAPPDATA%\.llmassist\` for machine-wide equipment. A tool is always a single file, and the extension picks the engine. Deciding *which* tool is worth writing at all is `equip`'s job; a tool that contradicts its own contract but is otherwise fine is a `dass-report`.
 
 ## What bites
 
-- Frontmatter copied between engines: the three do not agree on delimiters.
+- Frontmatter copied between engines: the two do not agree on delimiters.
 - A `.py` tool on a build without the Python engine: nothing loads it, and the diagnostic talks about extensions rather than about the platform.
 - An argument read by the body but absent from `argument-schema`: the model cannot pass it, and nothing warns.

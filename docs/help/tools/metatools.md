@@ -1,7 +1,7 @@
 # Meta tools
 
 Meta tools are **dynamic tools created by the LLM itself** when the built-in set is
-not enough. They are stored as `.lua`, `.py` or `.csx` scripts.
+not enough. They are stored as `.lua` or `.py` scripts.
 
 ## How they work
 

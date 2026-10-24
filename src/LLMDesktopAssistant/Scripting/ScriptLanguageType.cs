@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.Scripting
+namespace LLMDesktopAssistant.Scripting
 {
 	/// <summary>
 	/// Represents different types of script languages that can be used in the application.
@@ -38,12 +38,6 @@
 		/// The AsyncLua is used, which is an extended version of Lua with async/await support.
 		/// </summary>
 		Lua,
-
-		/// <summary>
-		/// C# Script (.csx) scripting language.
-		/// Embedded using Microsoft.CodeAnalysis.CSharp.Scripting package.
-		/// </summary>
-		CSharpScript,
 
 		// === EXTERNAL PROCESS SCRIPTS ===
 

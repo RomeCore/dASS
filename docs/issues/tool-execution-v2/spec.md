@@ -250,7 +250,7 @@ Output:
 
 - **Agent decisions** (`ChatRun`, `AgentTask`) — full pipeline.
 - **The user's own actions** (`Command`, `ChatRestart`) — skip policy, confirmation **and the hard floor**: the user's action is trusted, and `AlwaysDisallow` is a statement about what the agent may do. The floor applies to agent decisions only.
-- **Scripts** (`Script`, nested Lua/CSX/Python calls) — **bypass the pipeline entirely** (no policy, no confirmation, no hard floor) — a deliberately powerful area.
+- **Scripts** (`Script`, nested Lua/Python calls) — **bypass the pipeline entirely** (no policy, no confirmation, no hard floor) — a deliberately powerful area.
 
 ---
 

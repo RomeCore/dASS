@@ -100,7 +100,7 @@ instead of adding an attachment part by hand.
 - `Tools/Implementations/**` (root modules, Filesystem, Memory, Web)
 - `Tools/Implementations/Scripting/**`
 - `Tools/Scripting/**` (parser and engine contract)
-- `Scripting/Lua/**` (engine + `LuaApiTools` + `LuaApiAgents`), `Scripting/CSX/**`
+- `Scripting/Lua/**` (engine + `LuaApiTools` + `LuaApiAgents`)
 - `MCP/**`
 - `src/LLMDesktopAssistant.Desktop/ToolModules/**`, `Scripting/Python/**`
 - task-side tools: `Agents/Tasks/*Tool*.cs`, `Agents/Memory/AgentMemoryTools.cs`,

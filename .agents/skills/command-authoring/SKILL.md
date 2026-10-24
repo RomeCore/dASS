@@ -1,6 +1,6 @@
 ---
 name: command-authoring
-description: Write or amend a dASS scriptable slash command - the commands/<name>.lua|.py|.csx file in an addon folder - keeping its frontmatter contract (description, argument-schema, generate, model-facing) true to what the body does to the message. Use when creating a new slash command, editing or debugging one, wiring its arguments with the argument-schema DSL, or when the user asks how a command addon is shaped.
+description: Write or amend a dASS scriptable slash command - the commands/<name>.lua|.py file in an addon folder - keeping its frontmatter contract (description, argument-schema, generate, model-facing) true to what the body does to the message. Use when creating a new slash command, editing or debugging one, wiring its arguments with the argument-schema DSL, or when the user asks how a command addon is shaped.
 ---
 
 # Command authoring (dASS)
@@ -48,7 +48,7 @@ Verification is a judgment call, not a ritual. The moves, cheapest first:
 | Type `/name` | the command resolves, and its argument chips/hint match `argument-schema` |
 | Run it | the executor runs and the part/content/error lands on the message |
 
-Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv), `csx-execute` (C# script). A runner hands you *its own* arguments, not the command's - so stub `command_args` yourself at the top of the snippet (a local table in Lua, a dict in Python, locals in C#), paste the body, watch the output. That is manual unit testing, and it catches most of what a first real run would catch.
+Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv). A runner hands you *its own* arguments, not the command's - so stub `command_args` yourself at the top of the snippet (a local table in Lua, a dict in Python), paste the body, watch the output. That is manual unit testing, and it catches most of what a first real run would catch.
 
 `/addon-reload` rescans the packs after a file edit, without a restart. There is no stubbing layer around the real run: the arguments are bound by the very schema `argument-schema` produced.
 
@@ -68,9 +68,8 @@ The path, plus what was verified and by which move. The user's next action depen
 |---|---|---|---|
 | Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build |
 | Python | `.py` | `"""` ... `"""` | Desktop build only |
-| C# script | `.csx` | `/*` ... `*/` | every build |
 
-Order of preference: **Lua** - the only engine every build has, and the only one with the chat API. **Python** - for an external process, accepting desktop-only, no chat API and text-only output. **C# script** - when the user asks for it; it is in-process and reaches the domain model, but its API surface costs more than the command usually saves.
+Order of preference: **Lua** - the only engine every build has, and the only one with the chat API. **Python** - for an external process, accepting desktop-only, no chat API and text-only output.
 
 ## The frontmatter
 
@@ -166,12 +165,6 @@ Types arrive in the body converted: `choice`/`string` → string, `number` → n
 - **stdout is the whole result**: `print(...)` becomes one content part on the message. A non-zero exit code becomes the message error.
 - **no chat API** - Python cannot read or mutate the message; it only prints. Its part is created by the engine with the command name as the title and **no icon**.
 
-**C# script** - in-process, compiled on every run, full .NET access, **no stdout**.
-
-- `CommandArgs` - `JsonNode` (the same `{ positionals, keyed, rest, raw }` tree)
-- `Context` - the `SlashCommandExecutionContext`; `Context.Message` is the domain message you mutate directly
-- `Workdir` - the chat's working directory
-
 ## Where the file goes
 
 A `commands/` folder inside an addon source: `.agents/` or `.llmassist/` in a repo, `.llmassist/packs/<pack>/` for packs, `%LOCALAPPDATA%\.llmassist\` for machine-wide equipment. A command is always a **single file** (`commands/<name>.<ext>`); there is no folder format. The extension picks the engine. Deciding *which* command is worth writing at all is `equip`'s job; a command that contradicts its own contract but is otherwise fine is a `dass-report`.
@@ -184,7 +177,7 @@ A `commands/` folder inside an addon source: `.agents/` or `.llmassist/` in a re
 - A `: ` (colon-space) inside a YAML description in a mapping - the frontmatter fails to parse. Prefer `-` over `:` in descriptions.
 - Reading `description` as if the model saw it: a command is never exposed to the model, so `description` is for the user's popup and cards only.
 - Expecting Python to reach the chat: it has no `dass.chat`/`dass.command`, and its part carries no icon.
-- Returning a boolean from a **Python** or **C# script** command as if it were the Lua contract - only the Lua engine reads the chunk's return value; the other two always generate unless `generate`/the executor result says otherwise.
+- Returning a boolean from a **Python** command as if it were the Lua contract - only the Lua engine reads the chunk's return value; Python always generates unless `generate`/the executor result says otherwise.
 - Injecting content and then letting the model answer anyway - a command that fully replaces a model turn ends with `return false`.
 - The trailing-call table-constructor trap in Lua (above) - a junk part that looks almost right.
 - **A command that opens a terminal and never waits.** `process.run_terminal` is fire-and-forget by design: without an explicit `await term:wait()` the command returns at once and the terminal outlives it. Correct for a fire-and-forget panel, wrong when the command's return value is meant to reflect the exit code.

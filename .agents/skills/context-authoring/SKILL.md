@@ -1,6 +1,6 @@
 ---
 name: context-authoring
-description: Write or amend a dASS scriptable prompt context - the .lua / .alua / .csx / .py file in a context/ addon folder - keeping its frontmatter contract (kind, timeout, variability) true to where its text actually lands. Use when creating a new prompt context, when editing or debugging an existing one, when deciding between live-tail and supersede, or when the user asks how a prompt context addon is shaped.
+description: Write or amend a dASS scriptable prompt context - the .lua / .alua / .py file in a context/ addon folder - keeping its frontmatter contract (kind, timeout, variability) true to where its text actually lands. Use when creating a new prompt context, when editing or debugging an existing one, when deciding between live-tail and supersede, or when the user asks how a prompt context addon is shaped.
 ---
 
 # Prompt context authoring (dASS)
@@ -53,7 +53,7 @@ Keep the body cheap. A live-tail runs on **every prompt build**, which is every 
 | Run the body in a runner | the logic produces the text you expect |
 | Reload and look at the next request | the addon is picked up, the engine runs it, the text lands in the prompt |
 
-Runners: `lua-execute` (Lua - `print(manuals(process))` and friends document the API in-app), `execute-python` (Python), `csx-execute` (C# script). A runner hands you its *own* globals, so stub `previous` yourself (`local previous = nil`), paste the body, watch the output.
+Runners: `lua-execute` (Lua - `print(manuals(process))` and friends document the API in-app), `execute-python` (Python). A runner hands you its *own* globals, so stub `previous` yourself (`local previous = nil`), paste the body, watch the output.
 
 The failure mode worth naming: claiming a context works because the file exists. If the addon source has not picked it up, the answer is "not verified yet".
 
@@ -71,9 +71,8 @@ The path, the kind, and what the model will actually see - the wrapped tag. Noth
 |---|---|---|---|---|
 | Lua | `.lua`, `.alua` | `--[[` ... `]]` | `print(...)` | every build |
 | Python | `.py` | `"""` ... `"""` | stdout | Desktop build only |
-| C# script | `.csx` | `/*` ... `*/` | `Output.Write(...)` | every build |
 
-Order of preference: **Lua** - the only engine every build has, and the cheapest to run. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and process-per-build cost. **C# script** - when the user asks for it.
+Order of preference: **Lua** - the only engine every build has, and the cheapest to run. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and process-per-build cost.
 
 ## The frontmatter
 
@@ -107,12 +106,6 @@ timeout: 3000
 - a non-zero exit code means "no context", plus a warning in the log
 - needs a Python runtime and the Desktop build
 
-**C# script** - in-process, compiled on every build, no state shared between calls.
-
-- `Previous` - the previously injected text or `null`
-- `Output` - `Write(line)`, `WriteLines(lines)`, `SetContent(text)`, `Clear()`; the collected text is the context
-- the return value is **not** the channel - write through `Output`
-
 ## Where the file goes
 
 A `context/` folder inside an addon source: `.agents/` in a repo, `.llmassist/packs/<pack>/` for packs, `%LOCALAPPDATA%\.llmassist\` for machine-wide equipment. One file per context, and the extension picks the engine.
@@ -134,7 +127,7 @@ The collected text is wrapped into an XML tag named after the addon (a leading d
 ## What bites
 
 - **`kind` omitted on a live-tail intent.** The default is `supersede`; the context silently becomes a persisted stamp.
-- **Frontmatter delimiters copied between engines.** The three do not agree: `--[[ ]]`, `/* */`, `"""`.
+- **Frontmatter delimiters copied between engines.** The two do not agree: `--[[ ]]`, `"""`.
 - **`name` not matching the file name** - a diagnostic, and the addon is hard to find afterwards.
 - **A trailing newline from `print`** - harmless for `live-tail` (a blank line inside the tag), but for `supersede` it is a guaranteed "change" the first time the script switches between `print` styles.
 - **A slow body.** A live-tail runs on every build; an expensive probe quietly taxes every message.
