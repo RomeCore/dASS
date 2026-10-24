@@ -87,6 +87,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 					Codes = AddonDiagnosticCode.InvalidKind,
 					Messages = ["Kind is invalid, must be 'supersede' or 'live-tail'."]
 				});
+				return;
 			}
 
 			int timeoutMs = ScriptPromptContextHelper.DefaultTimeoutMs;

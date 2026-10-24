@@ -231,7 +231,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 									PromptContext = promptContext,
 									Services = services
 								};
-								var liveContext = await liveProvider.ProvideAsync(liveExecution, cancellationToken);
+								var liveContext = await PromptContextBudget.RunAsync(liveExecution, token => liveProvider.ProvideAsync(liveExecution, token), cancellationToken);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{
 									systemReminderSb.Append(liveContext).Append('\n');

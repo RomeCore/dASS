@@ -3,7 +3,6 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Services;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -13,9 +12,10 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// <c>previous</c> global.
 	/// </summary>
 	/// <remarks>
-	/// The provider <em>is</em> the run: the base class holds the timeout and the failure isolation (a script must
-	/// never break the prompt build), and the concrete provider decides what the text means — a current-request
-	/// live tail or a persisted supersede stamp.
+	/// The provider <em>is</em> the run: the concrete provider decides what the text means — a current-request
+	/// live tail or a persisted supersede stamp. This base only knows how to execute a Lua body; nothing here arms
+	/// a timeout or catches anything — the budget and the failure isolation belong to the caller
+	/// (<c>PromptContextBudget</c>), so every language is treated identically.
 	/// </remarks>
 	public abstract class LuaScriptContextProviderBase
 	{
@@ -25,40 +25,20 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <summary>The context addon this provider runs.</summary>
 		protected PromptContextInfo Addon { get; }
 
-		/// <summary>
-		/// Runs the body under the addon's timeout and turns any failure into "no context".
-		/// </summary>
+		/// <summary>Runs the body in the chat's Lua state and returns what it printed.</summary>
 		protected async Task<string?> RunAsync(PromptContextExecutionContext context, string? previous,
 			CancellationToken cancellationToken)
 		{
-			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(Addon.TimeoutMs);
+			var luaService = context.Services.GetRequiredService<LuaService>();
+			var output = new StringBuilder();
 
-			try
-			{
-				var luaService = context.Services.GetRequiredService<LuaService>();
-				var output = new StringBuilder();
+			await luaService.ExecuteAsync(Addon.Body, text => output.AppendLine(text),
+				globals => globals["previous"] = previous is null
+					? LuaNil.Instance
+					: LuaValueConverter.ToLuaValue(previous),
+				cancellationToken);
 
-				await luaService.ExecuteAsync(Addon.Body, text => output.AppendLine(text),
-					globals => globals["previous"] = previous is null
-						? LuaNil.Instance
-						: LuaValueConverter.ToLuaValue(previous),
-					timeout.Token);
-
-				return output.ToString();
-			}
-			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-			{
-				Log.Warning("Prompt context script timed out after {Timeout} ms (context '{Context}').",
-					Addon.TimeoutMs, Addon.Name);
-				return null;
-			}
-			catch (Exception ex)
-			{
-				Log.Warning(ex, "Prompt context script failed (context '{Context}'): {Message}",
-					Addon.Name, ex.Message);
-				return null;
-			}
+			return output.ToString();
 		}
 	}
 }

@@ -25,10 +25,16 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		public IScriptablePromptContextEngineDescriptor Descriptor { get; } = new PythonPromptContextEngineDescriptor();
 
 		/// <inheritdoc/>
-		public IPromptContextProvider CreateProvider(PromptContextInfo context)
-			=> context.Kind is PromptContextProviderKind.LiveTail
-				? new PythonLiveTailScriptContextProvider(context, processLauncher, pythonHelperService)
-				: new PythonSupersedeScriptContextProvider(context, processLauncher, pythonHelperService);
+		public IPromptContextProvider CreateProvider(PromptContextInfo context) => context.Kind switch
+		{
+			PromptContextProviderKind.LiveTail =>
+				new PythonLiveTailScriptContextProvider(context, processLauncher, pythonHelperService),
+			PromptContextProviderKind.Supersede =>
+				new PythonSupersedeScriptContextProvider(context, processLauncher, pythonHelperService),
+			_ => throw new NotSupportedException(
+				$"Scriptable context '{context.Name}' declares kind '{context.Kind}', but only 'live-tail' and " +
+				"'supersede' are scriptable. A scriptable anchored section does not exist yet.")
+		};
 	}
 
 	/// <summary>

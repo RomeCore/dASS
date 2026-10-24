@@ -20,10 +20,14 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public IScriptablePromptContextEngineDescriptor Descriptor { get; } = new LuaPromptContextEngineDescriptor();
 
 		/// <inheritdoc/>
-		public IPromptContextProvider CreateProvider(PromptContextInfo context)
-			=> context.Kind is PromptContextProviderKind.LiveTail
-				? new LuaLiveTailScriptContextProvider(context)
-				: new LuaSupersedeScriptContextProvider(context);
+		public IPromptContextProvider CreateProvider(PromptContextInfo context) => context.Kind switch
+		{
+			PromptContextProviderKind.LiveTail => new LuaLiveTailScriptContextProvider(context),
+			PromptContextProviderKind.Supersede => new LuaSupersedeScriptContextProvider(context),
+			_ => throw new NotSupportedException(
+				$"Scriptable context '{context.Name}' declares kind '{context.Kind}', but only 'live-tail' and " +
+				"'supersede' are scriptable. A scriptable anchored section does not exist yet.")
+		};
 	}
 
 	/// <summary>The descriptor of the Lua scriptable prompt-context engine.</summary>

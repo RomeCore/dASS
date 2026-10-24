@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							PromptContext = promptContext,
 							Services = services
 						};
-						var newDelta = await section.CalculateDeltaAsync(anchorState, existingDeltas, execution, cancellationToken);
+						var newDelta = await PromptContextBudget.RunAsync(execution, token => section.CalculateDeltaAsync(anchorState, existingDeltas, execution, token), cancellationToken);
 						if (newDelta is not null)
 						{
 							newDelta.Discriminator = section.Discriminator;

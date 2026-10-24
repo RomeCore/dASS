@@ -5,8 +5,9 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 	/// native section, and the timeout budget a context declares.
 	/// </summary>
 	/// <remarks>
-	/// There is no runner here: a provider <em>is</em> the run, so the timeout and the failure isolation live in
-	/// the provider the engine creates, next to the language that executes the body.
+	/// No runner, no guard: a provider only runs its body. The budget and the failure isolation sit where the
+	/// context is <em>used</em> — <c>PromptContextBudget</c> in the prompt pipeline, called by the composer and by
+	/// the two section processors — so every language and every context family is treated identically.
 	/// </remarks>
 	public static class ScriptPromptContextHelper
 	{

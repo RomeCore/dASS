@@ -15,9 +15,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	/// the <c>previous</c> global.
 	/// </summary>
 	/// <remarks>
-	/// The provider <em>is</em> the run: the base class holds the timeout and the failure isolation (a script must
-	/// never break the prompt build), and the concrete provider decides what the text means — a current-request
-	/// live tail or a persisted supersede stamp.
+	/// The provider <em>is</em> the run: the concrete provider decides what the text means — a current-request
+	/// live tail or a persisted supersede stamp. This base only knows how to execute a Python body; nothing here
+	/// arms a timeout or catches anything — the budget and the failure isolation belong to the caller
+	/// (<c>PromptContextBudget</c>), so every language is treated identically.
 	/// </remarks>
 	public abstract class PythonScriptContextProviderBase(
 		PromptContextInfo promptContext,
@@ -27,15 +28,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		/// <summary>The context addon this provider runs.</summary>
 		protected PromptContextInfo PromptContext { get; } = promptContext;
 
-		/// <summary>
-		/// Runs the body under the addon's timeout and turns any failure into "no context".
-		/// </summary>
+		/// <summary>Runs the body as a headless process and returns what the process printed.</summary>
 		protected async Task<string?> RunAsync(PromptContextExecutionContext context, string? previous,
 			CancellationToken cancellationToken)
 		{
-			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(PromptContext.TimeoutMs);
-
 			var chatSettings = context.Services.GetRequiredService<IChatSettingsService>().Settings;
 			var workDir = chatSettings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory();
 
@@ -58,30 +54,22 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 				// Headless: no terminal, no addon invalidation — a context runs on every prompt build.
 				var process = processLauncher.Launch(pythonHelperService.CreateLaunchParameters(
 					chatSettings.Environment, $"python \"{tempPyFile}\"", "Prompt context", false, true),
-					timeout.Token);
+					cancellationToken);
 
 				int exitCode = await process;
+
+				// No JSON channel here: the context text is the merged output, exactly as a terminal would show it.
 				if (exitCode == 0)
 					return process.Output;
 
-				Log.Warning("Prompt context script exited with code {ExitCode}: {Output}", exitCode, process.Output);
-			}
-			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-			{
-				Log.Warning("Prompt context script timed out after {Timeout} ms (context '{Context}').",
-					PromptContext.TimeoutMs, PromptContext.Name);
-			}
-			catch (Exception ex)
-			{
-				Log.Warning(ex, "Prompt context script failed (context '{Context}'): {Message}",
-					PromptContext.Name, ex.Message);
+				Log.Warning("Prompt context script exited with code {ExitCode} (context '{Context}'): {Output}",
+					exitCode, PromptContext.Name, process.Output);
+				return null;
 			}
 			finally
 			{
 				File.Delete(tempPyFile);
 			}
-
-			return null;
 		}
 	}
 }

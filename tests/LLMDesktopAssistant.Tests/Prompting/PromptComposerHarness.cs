@@ -74,10 +74,10 @@ internal sealed class PromptComposerHarness
 		new AgentEffectiveMessagesProvider(Chat, _chatSettings, _visibility),
 		_hooks,
 		ToolsetCache,
-		new PromptAnchoredSectionProcessor(Chat, _chatSettings),
+		new PromptAnchoredSectionProcessor(Chat, _chatSettings, Chat.Services),
 		new FakeSupersedeProcessor(),
 		new FakePromptContextCollector(_providers),
-		Dump);
+		Dump, Chat.Services);
 
 	private sealed class FakeQuoteRenderer : IChatMessageQuoteRenderer
 	{

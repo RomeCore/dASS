@@ -148,9 +148,14 @@ internal static class PromptingTestHelpers
 	/// Projects an effective context onto the execution context a provider receives, taking the chat-scoped
 	/// services from the chat itself.
 	/// </summary>
-	public static PromptContextExecutionContext ToExecutionContext(this EffectiveChatContext context,
-		PromptContextInfo? addon = null)
-		=> PromptContextExecutionContext.From(context, addon, context.Chat.Services);
+	public static PromptContextExecutionContext ToExecutionContext(this EffectiveChatContext context)
+		=> new()
+		{
+			Chat = context.Chat,
+			Context = context,
+			PromptContext = new PromptContextInfo { Name = "test", Description = "test" },
+			Services = context.Chat.Services
+		};
 
 	/// <summary>
 	/// Creates an agent with all context settings inheriting from the agent level (own values),

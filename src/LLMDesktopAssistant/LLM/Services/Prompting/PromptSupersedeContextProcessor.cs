@@ -53,14 +53,17 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			foreach (var (promptContext, provider) in providers)
 			{
-				var stamp = await provider.GetNewStampAsync(lastStamps.GetValueOrDefault(provider.Discriminator),
-					new PromptContextExecutionContext
-					{
-						Chat = effectiveContext.Chat,
-						Context = effectiveContext,
-						PromptContext = promptContext,
-						Services = services
-					}, cancellationToken);
+				var execution = new PromptContextExecutionContext
+				{
+					Chat = effectiveContext.Chat,
+					Context = effectiveContext,
+					PromptContext = promptContext,
+					Services = services
+				};
+				var stamp = await PromptContextBudget.RunAsync(execution,
+					token => provider.GetNewStampAsync(lastStamps.GetValueOrDefault(provider.Discriminator),
+						execution, token), cancellationToken);
+
 				if (stamp is not null)
 				{
 					stamp.Discriminator = provider.Discriminator;

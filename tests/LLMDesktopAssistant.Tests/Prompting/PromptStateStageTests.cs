@@ -16,7 +16,7 @@ public class PromptStateStageTests
 	/// <summary>
 	/// Creates a stage. Sections are passed per <see cref="PromptAnchoredSectionProcessor.ProcessAsync"/> call.
 	/// </summary>
-	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat, new FakeChatSettingsService());
+	private static PromptAnchoredSectionProcessor CreateStage(Chat chat) => new(chat, new FakeChatSettingsService(), chat.Services);
 
 	private static PromptContextInfo[] CreateSections() => [PromptingTestHelpers.Section(new FakeSection(0, "core"))];
 
