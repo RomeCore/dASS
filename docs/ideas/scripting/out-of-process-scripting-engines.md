@@ -1,6 +1,6 @@
 # Out-of-process scripting engines for every scriptable kind
 
-Status: open
+Status: resolved
 Type: task
 Blocked by:
 
@@ -36,3 +36,4 @@ Blocked by:
 
 - The script-language enumeration already carries Bash, Batch, PowerShell and JavaScript, so no new vocabulary is required for the first three.
 - The existing Python engine is the working reference for the process lifetime, environment handling and working-directory resolution.
+- Resolved on 2026-10-24 by a grilling session: the negotiated design lives in `docs/issues/out-of-process-scripting/spec.md` (27 decisions), with implementation tickets under `docs/issues/out-of-process-scripting/issues/`. What changed against this idea: input is a generated preamble only (no envelope object, no input file), the family ships four languages at once (Python, Bash, Batch, PowerShell), `json-output` carries the per-kind result contract rather than a text/JSON choice, scriptable prompt contexts are reshaped to mirror tools and commands, and everything out-of-process lives in the desktop assembly.
