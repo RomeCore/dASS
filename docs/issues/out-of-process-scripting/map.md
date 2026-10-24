@@ -50,10 +50,10 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
   below, which are implementation slices.
 - [Prompt context refactor](issues/07-prompt-context-refactor.md) — the engine is a creator only
   (`CreateProvider`), **the provider is the run**, so the four script providers live next to their engines on one
-  base class per language; `PromptContextExecutionContext` is composition (`Context`, `Addon`, `Chat`, `Services`)
-  and replaced `EffectiveChatContext` in all five provider interfaces; `Kind` is parsed from the frontmatter;
-  `EffectiveChatContext.Services` is gone; the helper keeps only the formatting rules. `Descriptors` stays with
-  ticket 01. Both projects compile.
+  base class per language; `PromptContextExecutionContext` is composition (`Context`, `PromptContext`, `Chat`,
+  `Services`) and replaced `EffectiveChatContext` in all five provider interfaces; `Kind` is parsed from the
+  frontmatter; `EffectiveChatContext.Services` is gone; the helper keeps only the formatting rules. `Descriptors`
+  stays with ticket 01. Both projects compile.
 
 ## Not yet specified
 

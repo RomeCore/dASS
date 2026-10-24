@@ -318,7 +318,7 @@ shared.
 public sealed class PromptContextExecutionContext
 {
     public required EffectiveChatContext Context { get; init; }   // contained, not inherited
-    public required PromptContextInfo? Addon { get; init; }
+    public required PromptContextInfo PromptContext { get; init; }   // never null: every context is an addon
     public required Chat Chat { get; init; }
     public required IServiceProvider Services { get; init; }
 }
@@ -338,11 +338,13 @@ provider under `Prompting/Context/Providers/<Name>/`, and the four script provid
 
 Builders: `PromptAnchoredSectionProcessor`, `PromptSupersedeContextProcessor`, their interfaces, and
 `AgentPromptComposer`. They receive **addons** (`IEnumerable<PromptContextInfo>`), pick the providers of their
-family and hand each provider `PromptContextExecutionContext.From(context, addon, chat.Services)`, so `Addon` is
-always filled — every context, native or scriptable, is a `PromptContextInfo` addon.
+family and build the execution context themselves with an object initializer (`Chat`, `Context`, `PromptContext`,
+`Services`) — there is no `From` factory. `PromptContext` is never null: every context, native or scriptable, is a
+`PromptContextInfo` addon.
 
 `EffectiveChatContext.Services` is **removed**: it was written in one place and read in two, both of them script
-providers. Services are reachable through `Chat.Services` for whoever builds the execution context.
+providers. The builders take the chat-scoped `IServiceProvider` in their constructor and put it into the execution
+context, instead of each of them reading `Chat.Services`.
 
 Known latent landmine, recorded not fixed: `IPromptSupersedeStampProvider.CaptureStamp` is synchronous; a
 scriptable anchored section will need a `Task` form.
@@ -411,7 +413,7 @@ cannot find.
 | D20 | Interpreter discovery hard-coded, load-time diagnostics | no new settings UI in this change; a broken addon must look broken |
 | D21 | Everything out-of-process lives in Desktop | `IProcessLauncher`, PTY and the terminal view model are desktop-only |
 | D22 | `PromptContextInfo.Kind` is parsed, not derived | otherwise `CreateProvider` and `Kind` are circular |
-| D23 | `PromptContextExecutionContext.Addon` is nullable | native sections have no script context addon |
+| D23 | `PromptContextExecutionContext.PromptContext` is non-nullable | every collected context is a `PromptContextInfo` addon, native and scriptable alike, so a provider that is not addon-backed has no place in the pipeline — the type says so instead of a convention |
 | D24 | Synchronous `CaptureStamp` is a recorded landmine | a scriptable anchored section will need `Task` |
 | D25 | Batch > 8191 bytes fails fast | cmd cannot hold it; truncation would be silent corruption |
 | D26 | Unknown JSON keys are `InvalidOutput` | a typo must not be silent |
