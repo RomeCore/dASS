@@ -62,6 +62,15 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
   frontmatter; `EffectiveChatContext.Services` is gone; the helper keeps only the formatting rules. `Descriptors`
   stays with ticket 01. Both projects compile.
 
+- **Kind adapters, flags and the terminal path landed** (2026-10-25, uncommitted): the three adapters
+  (`ExternalProcessToolEngine` / `…SlashCommandEngine` / `…PromptContextEngine`) are the only implementations of the
+  three kind interfaces, the three old Python engines are deleted, `ScriptFeaturePolicy` decides what a kind
+  consumes (`PlainOutput` / `JsonOutput` / `Terminal`; no `PlainOutput` makes `json-output` mandatory — the hook
+  shape, unused today), `ScriptEngineCapabilities.StructuredOutput` is renamed `JsonOutput`, the addon's `Language`
+  is now `ScriptLanguage` and nullable, and `TerminalRun` + `RunInTerminalAsync` implement terminal mode. Both
+  projects build; verification is manual. **D26 is amended: unknown JSON keys are ignored.** Lua does not honour
+  `json-input` yet (a new ticket).
+
 - **Contracts slice landed** (2026-10-24): `IScriptEngineDescriptor` + `ScriptEngineCapabilities`, `Descriptors`
   plural on the three kind interfaces, `Language` gone from them, the three kind descriptor interfaces deleted,
   parsers/locators resolving per file, and the frontmatter line prefix wired into `AddonParserDescriptor`. The

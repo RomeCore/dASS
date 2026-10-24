@@ -32,3 +32,8 @@ Implement the contract layer of the family in `Desktop/Scripting/ExternalProcess
 - **The Desktop language registry moved to the adapters ticket** (08): its only consumer is the adapter, and its only denizens are `IExternalProcessScriptEngine`s that do not exist until then. Nothing in this slice needs it.
 - The `FrontmatterLinePrefix` support in `FrontmatterBasedAddonParser` predates this slice; the slice only wires descriptors to it — every parser now passes `descriptor.FrontmatterLinePrefix` into `AddonParserDescriptor`.
 - Builds: core and desktop OK; core tests 1273 passed, 1 pre-existing skip.
+- **Follow-up, 2026-10-25:** the kind parsers no longer keep their own extension tables — they use the shared third
+  arity (`FrontmatterBasedAddonParser<TAddon, TChange, TEngine>`) over `ScriptEngineResolver`, so
+  `GetDescriptorFor` lives in one place. `Descriptor` on `ToolInfo`'s old `ScriptLanguage` property is gone: the
+  addon base carries the nullable `ScriptLanguage`. The Desktop registry gained `Descriptors`, so an adapter answers
+  the kind interface with it instead of building a table.

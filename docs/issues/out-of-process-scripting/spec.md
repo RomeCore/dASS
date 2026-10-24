@@ -214,8 +214,8 @@ Rules:
 
 ## 8. Per-kind mapping
 
-Unknown top-level keys in the JSON are `InvalidOutput` — a silent typo is the bug class this whole effort
-avoids.
+Unknown top-level keys in the JSON are **ignored** — each adapter reads the keys it knows and leaves the rest to a
+newer engine (amended on 2026-10-25; D26 asked for the opposite and was dropped as premature, see the decision row).
 
 ### 8.1 Tool
 
@@ -422,7 +422,7 @@ cannot find.
 | D23 | `PromptContextExecutionContext.PromptContext` is non-nullable | every collected context is a `PromptContextInfo` addon, native and scriptable alike, so a provider that is not addon-backed has no place in the pipeline — the type says so instead of a convention |
 | D24 | Synchronous `CaptureStamp` is a recorded landmine | a scriptable anchored section will need `Task` |
 | D25 | Batch > 8191 bytes fails fast | cmd cannot hold it; truncation would be silent corruption |
-| D26 | Unknown JSON keys are `InvalidOutput` | a typo must not be silent |
+| D26 | ~~Unknown JSON keys are `InvalidOutput`~~ **amended 2026-10-25**: unknown keys are ignored | strictness without a schema to compare against was ceremony; a per-adapter read keeps the contract readable. Revisit if a typo ever costs a session |
 | D27 | `part.content` is explicit once JSON exists | stdout is raw output, not a substitute for a declared part |
 
 ## 14. Out of scope
