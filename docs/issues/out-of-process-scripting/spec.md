@@ -61,7 +61,7 @@ public class ExternalProcessScriptTerminalParameters
     public string? ProcessName { get; init; }            // for the process dispatcher
     public TimeSpan? TimeOut { get; init; }
 
-    // additive (Q18/terminal): a detached terminal must return immediately
+    // additive: a detached terminal must return immediately
     public bool Wait { get; init; } = true;
 }
 

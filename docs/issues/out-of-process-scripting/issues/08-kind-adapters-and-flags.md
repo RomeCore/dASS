@@ -14,7 +14,9 @@ Implement the three adapters and the flags they need (spec §3, §6, §8):
 - parse `json-input`, `json-output` (bool or pattern) and `run-terminal` in the three parsers, store them on
   `ToolInfo` / `SlashCommandInfo` / `PromptContextInfo`, and emit the fatal diagnostics of spec §12;
 - build the kind's variables (`tool_args`, `command_args`, `previous`) and map the result per kind;
-- expose `run-terminal` in the tool and command frontmatter.
+- expose `run-terminal` in the tool and command frontmatter;
+- the Desktop **language registry** (moved here from ticket 01): resolve a file path to its descriptor and its
+  `IExternalProcessScriptEngine`, so the adapters never build their own extension maps.
 
 ## Answer
 

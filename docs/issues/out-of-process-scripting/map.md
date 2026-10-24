@@ -38,7 +38,7 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
 - **The prompt-context budget lives at the call site**, in `PromptContextBudget` (`LLM/Services/Prompting/`), not
   in a language base — the pipeline decides how long a context may run, a provider only runs its body.
 
-**Settled premises (grilled with the user)**
+**Settled premises (decided at design time)**
 
 - The input channel is a **generated preamble**; there is no input file, environment variable or argv.
 - The variable **names belong to the kind**; a language engine only renders `name = value`.
@@ -61,6 +61,11 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
   `Services`) and replaced `EffectiveChatContext` in all five provider interfaces; `Kind` is parsed from the
   frontmatter; `EffectiveChatContext.Services` is gone; the helper keeps only the formatting rules. `Descriptors`
   stays with ticket 01. Both projects compile.
+
+- **Contracts slice landed** (2026-10-24): `IScriptEngineDescriptor` + `ScriptEngineCapabilities`, `Descriptors`
+  plural on the three kind interfaces, `Language` gone from them, the three kind descriptor interfaces deleted,
+  parsers/locators resolving per file, and the frontmatter line prefix wired into `AddonParserDescriptor`. The
+  Desktop language registry waits for the engine interface, so it moved to *Kind adapters and addon flags*.
 
 ## Not yet specified
 
