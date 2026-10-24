@@ -206,11 +206,11 @@ capture is non-greedy and DOTALL (`BEGIN{ "a":\n 1 }END` works). Not found and u
 
 Rules:
 
-- `Stdout` is the only channel that is parsed; `Stderr` never contaminates it.
-- On success `Stderr` is logged (and kept in `Output`), never model-facing.
+- **JSON mode** (`Whole` or `Pattern`): only `Stdout` is read; `Stderr` never contaminates the parse.
+- **Raw mode** (`None`): the result is `Output` — the merged, arrival-ordered stream that
+  `ProcessDescriptor.Output` already produces. Nothing is re-spliced, and stderr is deliberately not filtered
+  out: a script without a JSON channel is heard exactly as a terminal would show it.
 - A non-zero exit with empty `Stderr` still has a message: the exit code plus a truncated command line.
-- `Output` is taken **verbatim** from `ProcessDescriptor.Output`, which already merges stdout and stderr in
-  arrival order. Nothing is re-spliced by the engine.
 
 ## 8. Per-kind mapping
 
@@ -230,8 +230,8 @@ avoids.
 
 `status` → `IToolCall.StatusIcon` / `StatusTitle` (`VisualIconKind.TryParse`; an unknown icon logs a warning
 and yields no icon, it is not an error); `result` / `markdown` → `ResultContent` / `UseMarkdown`;
-`structured` → `StructuredResult`. Without `json-output` the result is `Stdout`; on failure it is
-`Stdout + "\n\n" + Error`.
+`structured` → `StructuredResult`. Without `json-output` the result is `Output`; on failure it is
+`Output + "\n\n" + Error`.
 
 ### 8.2 Slash command
 
@@ -247,7 +247,7 @@ and yields no icon, it is not an error); `result` / `markdown` → `ResultConten
 `effect` → `EffectSummary`; `generate` can only lower the intent (`SlashCommandIntent.Resolve`); `error` →
 `SlashCommandExecutionResult.Error` via `Locale.GetConstKey` (the script's text is a constant key);
 `part` → an `AdditionalMessageContentPart`. `part.content` must be explicit: with JSON present, a missing
-`content` is **not** replaced by stdout. Raw stdout becomes `part.content` only when there is no JSON at all.
+`content` is **not** replaced by stdout. Raw `Output` becomes `part.content` only when there is no JSON at all.
 
 ### 8.3 Prompt context
 
@@ -304,10 +304,16 @@ shared.
   otherwise `CreateProvider` and `Kind` are circular. Native sections declare `Anchored` through
   `PromptContextNativeProvider.AddContext`, which fills the default.
 - Four script providers: `LuaLiveTailScriptContextProvider`, `LuaSupersedeScriptContextProvider`,
-  `PythonLiveTailScriptContextProvider`, `PythonSupersedeScriptContextProvider`. Each language has one base class
-  (`LuaScriptContextProviderBase`, `PythonScriptContextProviderBase`) that owns the timeout — a linked CTS armed
-  with `PromptContextInfo.TimeoutMs` — and the failure isolation: a timeout, an error and invalid output all mean
-  "no context" and only log a warning.
+  `PythonLiveTailScriptContextProvider`, `PythonSupersedeScriptContextProvider`, one base class per language
+  (`LuaScriptContextProviderBase`, `PythonScriptContextProviderBase`). A base only runs the body: it arms no
+  timeout and catches nothing.
+- **The budget and the failure isolation live where a context is used**, never in a language. `PromptContextBudget`
+  (`LLM/Services/Prompting/`) is called by `AgentPromptComposer` (live tails), `PromptSupersedeContextProcessor`
+  and `PromptAnchoredSectionProcessor`: it clamps `PromptContextInfo.TimeoutMs` to the ceiling, arms the linked
+  CTS and turns a timeout, an error and invalid output into "no context" with one warning — one rule for every
+  language and every context family.
+- The Python provider's context text is `Output` (the merged stream): a context has no JSON channel, so stderr is
+  part of what it says, not noise to be filtered.
 - `ScriptPromptContextHelper` survives as the **formatting** rules only: `Wrap`, `GetTagName`,
   `GetDiscriminator`, `DefaultTimeoutMs`, `MaxTimeoutMs`. Its `RunAsync` is gone with the runner.
 - The supersede comparison stays byte-exact on the wrapped text, inside the provider.

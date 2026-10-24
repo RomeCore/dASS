@@ -56,6 +56,14 @@ trusting the Python provider at run time.
 
 ## Comments
 
+- **Correction, same session:** the timeout budget was moved out of the language bases. A base now only runs the
+  body; `PromptContextBudget` (`LLM/Services/Prompting/`) arms the clamped CTS and isolates failures at the three
+  call sites — `AgentPromptComposer`, `PromptSupersedeContextProcessor`, `PromptAnchoredSectionProcessor` — because
+  that is where a context is *used*, and because the ceiling is one invariant, not one per language. This also
+  restored the 10 s clamp the first landing had dropped. `CreateProvider` throws on a kind it cannot build instead
+  of silently falling back to supersede, and the parser returns before creating a provider when the kind is
+  invalid. Both projects build; the tree is the same three commits plus these edits.
+
 - `Blocked by: 01` was dropped on resolution: the ticket was implemented ahead of the contract change, with
   `Language`/`Descriptor` left in place as a documented bridge. Ticket 01 removes them.
 - The decision trail for the session is `.llmassist/handoffs/2026-10-24-out-of-process-scripting-p1.md`.

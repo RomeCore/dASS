@@ -31,6 +31,13 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
 - Facts about the runtimes (Batch escaping and the 8191-byte line, the PowerShell 5.1 BOM, the launcher's
   default 30-minute timeout and its token linkage) live in the spec and must not be rediscovered by hand.
 
+- **JSON mode reads `Stdout`; raw mode returns `Output`.** The merged stream the launcher already produces is the
+  raw result — stderr is not filtered out of a script that has no JSON channel.
+- **A handoff never contains a rollback recipe.** A wrong tree is fixed in place; pointing the next session at
+  `git reset --hard` is how work gets lost.
+- **The prompt-context budget lives at the call site**, in `PromptContextBudget` (`LLM/Services/Prompting/`), not
+  in a language base — the pipeline decides how long a context may run, a provider only runs its body.
+
 **Settled premises (grilled with the user)**
 
 - The input channel is a **generated preamble**; there is no input file, environment variable or argv.
