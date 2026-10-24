@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 {
 	/// <summary>
 	/// Defines a scripting engine that can handle scriptable tool addons written in a specific language
-	/// (Lua, Python or C# script). Each engine knows how to serialize, deserialize, and create executors for its language.
+	/// (Lua, Python, Bash, ...). Each engine knows how to build an executor for its language.
 	/// <para>
 	/// Successor of the late <c>IMetaToolEngine</c> - see the epitaph in <c>ScriptableToolParser.cs</c>.
 	/// </para>
@@ -13,14 +13,10 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	public interface IScriptableToolEngine
 	{
 		/// <summary>
-		/// The scripting language this engine handles.
+		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
+		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
 		/// </summary>
-		ScriptLanguageType Language { get; }
-
-		/// <summary>
-		/// A descriptor for this engine, providing additional information about serialization and extensions.
-		/// </summary>
-		IScriptableToolEngineDescriptor Descriptor { get; }
+		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
 
 		/// <summary>
 		/// Creates an executor function for the given tool.

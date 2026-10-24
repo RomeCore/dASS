@@ -3,6 +3,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 
 namespace LLMDesktopAssistant.Prompting.Context
@@ -11,8 +12,8 @@ namespace LLMDesktopAssistant.Prompting.Context
 	/// The parser for scriptable prompt context addon files (e.g. <c>context/git-status.py</c>,
 	/// <c>context/time.lua</c>).
 	/// The scripting engine is selected by the file extension; it defines both the frontmatter syntax
-	/// (<see cref="IScriptablePromptContextEngineDescriptor.FrontmatterStart"/> /
-	/// <see cref="IScriptablePromptContextEngineDescriptor.FrontmatterEnd"/>) and the way the body is executed.
+	/// (<see cref="IScriptEngineDescriptor.FrontmatterStart"/> /
+	/// <see cref="IScriptEngineDescriptor.FrontmatterEnd"/>) and the way the body is executed.
 	/// </summary>
 	/// <remarks>
 	/// The provider is created here without services: a scriptable context resolves its chat-scoped services
@@ -25,7 +26,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		private static readonly StringComparer _extensionComparer =
 			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-		private readonly Dictionary<string, IScriptablePromptContextEngine> _enginesByExtension;
+		private readonly Dictionary<string, (IScriptablePromptContextEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="PromptContextParser"/> class.
@@ -34,19 +35,19 @@ namespace LLMDesktopAssistant.Prompting.Context
 		public PromptContextParser(IEnumerable<IScriptablePromptContextEngine> engines)
 		{
 			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptor.Extensions.Select(ext => (Extension: ext, Engine: engine)))
-				.ToDictionary(x => x.Extension, x => x.Engine, _extensionComparer);
+				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
+				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
 		}
 
 		/// <summary>
 		/// Gets the scripting engine that handles files with the given path extension.
 		/// </summary>
 		/// <exception cref="NotSupportedException">Thrown when no engine is registered for the extension.</exception>
-		private IScriptablePromptContextEngine GetEngine(string path)
+		private (IScriptablePromptContextEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
 		{
 			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var engine))
-				return engine;
+			if (_enginesByExtension.TryGetValue(extension, out var entry))
+				return entry;
 
 			throw new NotSupportedException(
 				$"No scriptable prompt context engine is registered for the '{extension}' extension (file: '{path}'). " +
@@ -56,12 +57,13 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <inheritdoc/>
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{
-			var descriptor = GetEngine(fileInfo.Path).Descriptor;
+			var descriptor = GetEntry(fileInfo.Path).Descriptor;
 
 			return new AddonParserDescriptor
 			{
 				FrontmatterStart = descriptor.FrontmatterStart,
 				FrontmatterEnd = descriptor.FrontmatterEnd,
+				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
 				// A context is useless without metadata, and its body is code, not markdown.
 				RequiresFrontmatter = true,
 				UseMarkdownFallback = false
@@ -74,7 +76,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			var engine = GetEngine(addon.Path ?? throw new InvalidOperationException("The context path is not set."));
+			var engine = GetEntry(addon.Path ?? throw new InvalidOperationException("The context path is not set.")).Engine;
 
 			if (!frontmatter.TryRequest("kind", ref diagnostic, out PromptContextProviderKind kind))
 				kind = PromptContextProviderKind.Supersede;

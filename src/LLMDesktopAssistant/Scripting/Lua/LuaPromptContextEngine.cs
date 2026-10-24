@@ -1,6 +1,5 @@
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
-using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -14,10 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	public class LuaPromptContextEngine : IScriptablePromptContextEngine
 	{
 		/// <inheritdoc/>
-		public ScriptLanguageType Language => ScriptLanguageType.Lua;
-
-		/// <inheritdoc/>
-		public IScriptablePromptContextEngineDescriptor Descriptor { get; } = new LuaPromptContextEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new LuaPromptContextEngineDescriptor()];
 
 		/// <inheritdoc/>
 		public IPromptContextProvider CreateProvider(PromptContextInfo context) => context.Kind switch
@@ -31,7 +27,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	}
 
 	/// <summary>The descriptor of the Lua scriptable prompt-context engine.</summary>
-	public class LuaPromptContextEngineDescriptor : IScriptablePromptContextEngineDescriptor
+	public class LuaPromptContextEngineDescriptor : IScriptEngineDescriptor
 	{
 		/// <inheritdoc/>
 		public ScriptLanguageType Language => ScriptLanguageType.Lua;
@@ -44,5 +40,12 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		/// <inheritdoc/>
 		public string FrontmatterEnd => "]]";
+
+		/// <inheritdoc/>
+		public string? FrontmatterLinePrefix => null;
+
+		/// <inheritdoc/>
+		public ScriptEngineCapabilities Capabilities =>
+			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput;
 	}
 }

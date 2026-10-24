@@ -5,8 +5,8 @@ using LLMDesktopAssistant.SlashCommands.Execution;
 namespace LLMDesktopAssistant.SlashCommands.Scripting
 {
 	/// <summary>
-	/// Defines a scripting engine that can run slash-command addons written in a specific language (Lua, Python or
-	/// C# script). Each engine knows the frontmatter syntax and how to build the command's executor.
+	/// Defines a scripting engine that can run slash-command addons written in a specific language (Lua, Python,
+	/// Bash, ...). Each engine knows how to build the command's executor.
 	/// </summary>
 	/// <remarks>
 	/// Deliberately a separate family from the tool engines: a command and a tool differ in what they receive, what
@@ -16,11 +16,11 @@ namespace LLMDesktopAssistant.SlashCommands.Scripting
 	/// </remarks>
 	public interface IScriptableSlashCommandEngine
 	{
-		/// <summary>The scripting language this engine handles.</summary>
-		ScriptLanguageType Language { get; }
-
-		/// <summary>Additional information about serialization and extensions.</summary>
-		IScriptableSlashCommandEngineDescriptor Descriptor { get; }
+		/// <summary>
+		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
+		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
+		/// </summary>
+		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
 
 		/// <summary>
 		/// Builds the executor that runs the command's body.

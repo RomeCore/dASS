@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Text;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.StructuredValues.Converters;
 using RCParsing;
+using RCParsing.Building;
 using YamlDotNet.RepresentationModel;
 using YamlDotNet.Serialization;
 
@@ -24,6 +26,13 @@ namespace LLMDesktopAssistant.Addons.Parsers
 			/// Examples: '---' (Markdown), '"""' (Python), ']]' (Lua).
 			/// </summary>
 			public required string FrontmatterEnd { get; init; }
+
+			/// <summary>
+			/// The optional EXACT prefix of every frontmatter line.
+			/// This prefix is often used to strip the comment prefix in languages that not supports block comments
+			/// (like 'REM ' in Windows Batch or '// ' in C-like languages).
+			/// </summary>
+			public string? FrontmatterLinePrefix { get; init; }
 
 			/// <summary>
 			/// Whether the parser requires frontmatter to be present in the file.
@@ -98,25 +107,47 @@ namespace LLMDesktopAssistant.Addons.Parsers
 
 			var ruleBuilder = builder.CreateMainRule();
 
+			RuleBuilder AddFrontmatterRule(RuleBuilder builder, string start, string end, string? prefix = null)
+			{
+				if (string.IsNullOrEmpty(prefix))
+					return builder
+						.Literal(start).Newline()
+						.TextUntil(end).Label("frontmatter")
+						.Literal(end)
+						.Transform(v => v["frontmatter"].Text);
+				else
+					return builder
+						.Literal(prefix + start).Newline()
+						.TextUntil(prefix + end).Label("frontmatter")
+						.Literal(prefix + end)
+						.Transform(v =>
+						{
+							var frontmatter = v["frontmatter"].Span.TrimEnd().ToString();
+							var lines = frontmatter.Split(new string[] { "\r\n", "\n", "\r" }, StringSplitOptions.None);
+							var sb = new StringBuilder();
+							foreach (var line in lines)
+							{
+								if (!line.StartsWith(prefix))
+									throw new SemanticException(v, $"Invalid frontmatter line. Expected line to start with prefix '{prefix}' but got '{line}'.");
+								sb.AppendLine(line[prefix.Length..]);
+							}
+							while (sb.Length > 0 && char.IsWhiteSpace(sb[^1]))
+								sb.Length--;
+							return sb.ToString();
+						});
+			}
+
 			if (descriptor.RequiresFrontmatter)
 			{
 				ruleBuilder
-					.Repeat(b => b
-						.Literal(descriptor.FrontmatterStart)
-						.TextUntil(descriptor.FrontmatterEnd).Label("frontmatter")
-						.Literal(descriptor.FrontmatterEnd)
-						.Transform(v => v["frontmatter"].Text),
+					.Repeat(b => AddFrontmatterRule(b, descriptor.FrontmatterStart, descriptor.FrontmatterEnd, descriptor.FrontmatterLinePrefix),
 					1, 1).Label("frontmatter")
 					.TransformLast(v => v[0].Value);
 			}
 			else
 			{
 				ruleBuilder
-					.Optional(b => b
-						.Literal(descriptor.FrontmatterStart)
-						.TextUntil(descriptor.FrontmatterEnd).Label("frontmatter")
-						.Literal(descriptor.FrontmatterEnd)
-						.Transform(v => v["frontmatter"].Text)
+					.Optional(b => AddFrontmatterRule(b, descriptor.FrontmatterStart, descriptor.FrontmatterEnd, descriptor.FrontmatterLinePrefix)
 					).Label("frontmatter");
 			}
 

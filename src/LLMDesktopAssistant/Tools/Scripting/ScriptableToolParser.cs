@@ -11,7 +11,7 @@
 //
 //    Spiritual successors (not literal renames; some bodies were absorbed by the addon core):
 //      Tools/Meta/IMetaToolEngine.cs              -> Tools/Scripting/IScriptableToolEngine.cs
-//      Tools/Meta/IMetaToolEngineDescriptor.cs    -> Tools/Scripting/IScriptableToolEngineDescriptor.cs
+//      Tools/Meta/IMetaToolEngineDescriptor.cs    -> Scripting/IScriptEngineDescriptor.cs
 //      Tools/Meta/MetaToolParser.cs               -> Tools/Scripting/ScriptableToolParser.cs   <- this file
 //      Tools/Meta/MetaToolInfo.cs                 -> Tools/ToolInfo.cs
 //      Tools/Meta/MetaToolLoader.cs               -> Addons/Loading/AddonFileCachedLoader.cs
@@ -34,6 +34,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using RCLargeLanguageModels.Tools;
 
@@ -43,8 +44,8 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	/// The parser for scriptable tool addon files (e.g. <c>tools/my-tool.lua</c>, <c>tools/my-tool.py</c>,
 	/// <c>tools/my-tool.alua</c>).
 	/// The scripting engine is selected by the file extension; it defines both the frontmatter syntax
-	/// (<see cref="IScriptableToolEngineDescriptor.FrontmatterStart"/> /
-	/// <see cref="IScriptableToolEngineDescriptor.FrontmatterEnd"/>) and the way the tool body is executed.
+	/// (<see cref="IScriptEngineDescriptor.FrontmatterStart"/> /
+	/// <see cref="IScriptEngineDescriptor.FrontmatterEnd"/>) and the way the tool body is executed.
 	/// </summary>
 	/// <remarks>
 	/// The tool body (everything except the frontmatter) is the execution code that is passed to
@@ -56,7 +57,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		private static readonly StringComparer _extensionComparer =
 			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-		private readonly Dictionary<string, IScriptableToolEngine> _enginesByExtension;
+		private readonly Dictionary<string, (IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ScriptableToolParser"/> class.
@@ -65,19 +66,19 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		public ScriptableToolParser(IEnumerable<IScriptableToolEngine> engines)
 		{
 			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptor.Extensions.Select(ext => (Extension: ext, Engine: engine)))
-				.ToDictionary(x => x.Extension, x => x.Engine, _extensionComparer);
+				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
+				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
 		}
 
 		/// <summary>
 		/// Gets the scripting engine that handles files with the given path extension.
 		/// </summary>
 		/// <exception cref="NotSupportedException">Thrown when no engine is registered for the extension.</exception>
-		private IScriptableToolEngine GetEngine(string path)
+		private (IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
 		{
 			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var engine))
-				return engine;
+			if (_enginesByExtension.TryGetValue(extension, out var entry))
+				return entry;
 
 			throw new NotSupportedException(
 				$"No scriptable tool engine is registered for the '{extension}' extension (file: '{path}'). " +
@@ -87,12 +88,13 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		/// <inheritdoc/>
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{
-			var descriptor = GetEngine(fileInfo.Path).Descriptor;
+			var descriptor = GetEntry(fileInfo.Path).Descriptor;
 
 			return new AddonParserDescriptor
 			{
 				FrontmatterStart = descriptor.FrontmatterStart,
 				FrontmatterEnd = descriptor.FrontmatterEnd,
+				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
 				// Scriptable tools are useless without metadata (description, argument schema, ...).
 				RequiresFrontmatter = true,
 				// The body is code, not markdown, so '#'-heading fallbacks must not be used here.
@@ -105,10 +107,10 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			IScriptableToolEngine engine;
+			(IScriptableToolEngine Engine, IScriptEngineDescriptor Descriptor) entry;
 			try
 			{
-				engine = GetEngine(addon.Path ?? throw new InvalidOperationException("The tool path is not set."));
+				entry = GetEntry(addon.Path ?? throw new InvalidOperationException("The tool path is not set."));
 			}
 			catch (Exception ex)
 			{
@@ -121,7 +123,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 				return;
 			}
 
-			addon.ScriptLanguage = engine.Language;
+			addon.ScriptLanguage = entry.Descriptor.Language;
 
 			// === Tool-specific metadata ===
 
@@ -147,7 +149,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 			// === Execution ===
 
 			addon.ToolSource = ToolSource.Meta;
-			addon.Main = engine.CreateExecutor(addon);
+			addon.Main = entry.Engine.CreateExecutor(addon);
 		}
 
 		/// <inheritdoc/>

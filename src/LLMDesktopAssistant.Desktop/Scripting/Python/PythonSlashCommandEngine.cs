@@ -39,10 +39,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		}
 
 		/// <inheritdoc/>
-		public ScriptLanguageType Language => ScriptLanguageType.Python;
-
-		/// <inheritdoc/>
-		public IScriptableSlashCommandEngineDescriptor Descriptor { get; } = new PythonSlashCommandEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new PythonSlashCommandEngineDescriptor()];
 
 		/// <inheritdoc/>
 		public ISlashCommandExecutor CreateExecutor(SlashCommandInfo command, SlashCommandArgumentSchema? argumentSchema)
@@ -50,7 +47,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	}
 
 	/// <summary>The descriptor of the Python scriptable-command engine.</summary>
-	public class PythonSlashCommandEngineDescriptor : IScriptableSlashCommandEngineDescriptor
+	public class PythonSlashCommandEngineDescriptor : IScriptEngineDescriptor
 	{
 		/// <inheritdoc/>
 		public ScriptLanguageType Language => ScriptLanguageType.Python;
@@ -63,6 +60,14 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 
 		/// <inheritdoc/>
 		public string FrontmatterEnd => @"""""""";
+
+		/// <inheritdoc/>
+		public string? FrontmatterLinePrefix => null;
+
+		/// <inheritdoc/>
+		public ScriptEngineCapabilities Capabilities =>
+			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput |
+			ScriptEngineCapabilities.Terminal;
 	}
 
 	/// <summary>

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Scripting;
@@ -24,22 +25,22 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		private static readonly StringComparer _extensionComparer =
 			OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
-		private readonly Dictionary<string, IScriptableSlashCommandEngine> _enginesByExtension;
+		private readonly Dictionary<string, (IScriptableSlashCommandEngine Engine, IScriptEngineDescriptor Descriptor)> _enginesByExtension;
 
 		/// <summary>Initializes a new instance of the <see cref="SlashCommandParser"/> class.</summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
 		public SlashCommandParser(IEnumerable<IScriptableSlashCommandEngine> engines)
 		{
 			_enginesByExtension = engines
-				.SelectMany(engine => engine.Descriptor.Extensions.Select(ext => (Extension: ext, Engine: engine)))
-				.ToDictionary(x => x.Extension, x => x.Engine, _extensionComparer);
+				.SelectMany(engine => engine.Descriptors.SelectMany(descriptor => descriptor.Extensions.Select(extension => (Extension: extension, Engine: engine, Descriptor: descriptor))))
+				.ToDictionary(x => x.Extension, x => (x.Engine, x.Descriptor), _extensionComparer);
 		}
 
-		private IScriptableSlashCommandEngine GetEngine(string path)
+		private (IScriptableSlashCommandEngine Engine, IScriptEngineDescriptor Descriptor) GetEntry(string path)
 		{
 			var extension = Path.GetExtension(path);
-			if (_enginesByExtension.TryGetValue(extension, out var engine))
-				return engine;
+			if (_enginesByExtension.TryGetValue(extension, out var entry))
+				return entry;
 
 			throw new NotSupportedException(
 				$"No scriptable slash-command engine is registered for the '{extension}' extension (file: '{path}'). " +
@@ -49,12 +50,13 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		/// <inheritdoc/>
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{
-			var descriptor = GetEngine(fileInfo.Path).Descriptor;
+			var descriptor = GetEntry(fileInfo.Path).Descriptor;
 
 			return new AddonParserDescriptor
 			{
 				FrontmatterStart = descriptor.FrontmatterStart,
 				FrontmatterEnd = descriptor.FrontmatterEnd,
+				FrontmatterLinePrefix = descriptor.FrontmatterLinePrefix,
 				RequiresFrontmatter = true,
 				UseMarkdownFallback = false
 			};
@@ -65,7 +67,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		{
 			base.Populate(addon, frontmatter, ref diagnostic);
 
-			var engine = GetEngine(addon.Path ?? throw new InvalidOperationException("The command path is not set."));
+			var engine = GetEntry(addon.Path ?? throw new InvalidOperationException("The command path is not set.")).Engine;
 
 			// Namespaces are custom qualifiers; the only one filled in for the author is the source pack.
 			if (!frontmatter.TryRequest("namespaces", ref diagnostic, out ImmutableList<string> namespaces))

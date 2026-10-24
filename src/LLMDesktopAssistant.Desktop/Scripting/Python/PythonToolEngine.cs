@@ -28,9 +28,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		private readonly IProcessLauncher _processLauncher;
 		private readonly PythonHelperService _pythonHelperService;
 
-		public ScriptLanguageType Language => ScriptLanguageType.Python;
-
-		public IScriptableToolEngineDescriptor Descriptor { get; } = new PythonToolEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new PythonToolEngineDescriptor()];
 
 		public PythonToolEngine(IProcessLauncher processLauncher, PythonHelperService pythonHelperService)
 		{

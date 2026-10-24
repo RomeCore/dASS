@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 
 		public override string[] Folders => ["commands"];
 
-		public override string[] Extensions => field ??= [.. _engines.SelectMany(e => e.Descriptor.Extensions).Distinct()];
+		public override string[] Extensions => field ??= [.. _engines.SelectMany(e => e.Descriptors).SelectMany(d => d.Extensions).Distinct()];
 
 		public override bool AllowShortFormat => true;
 

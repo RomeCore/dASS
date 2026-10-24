@@ -16,9 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	[Service(typeof(IScriptableToolEngine))]
 	public class LuaToolEngine : IScriptableToolEngine
 	{
-		public ScriptLanguageType Language => ScriptLanguageType.Lua;
-
-		public IScriptableToolEngineDescriptor Descriptor { get; } = new LuaToolEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new LuaToolEngineDescriptor()];
 
 		public IToolMainExecutor CreateExecutor(ToolInfo tool)
 		{

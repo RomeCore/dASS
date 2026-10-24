@@ -23,10 +23,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	public class LuaSlashCommandEngine : IScriptableSlashCommandEngine
 	{
 		/// <inheritdoc/>
-		public ScriptLanguageType Language => ScriptLanguageType.Lua;
-
-		/// <inheritdoc/>
-		public IScriptableSlashCommandEngineDescriptor Descriptor { get; } = new LuaSlashCommandEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new LuaSlashCommandEngineDescriptor()];
 
 		/// <inheritdoc/>
 		public ISlashCommandExecutor CreateExecutor(SlashCommandInfo command, SlashCommandArgumentSchema? argumentSchema)
@@ -34,7 +31,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	}
 
 	/// <summary>The descriptor of the Lua scriptable-command engine.</summary>
-	public class LuaSlashCommandEngineDescriptor : IScriptableSlashCommandEngineDescriptor
+	public class LuaSlashCommandEngineDescriptor : IScriptEngineDescriptor
 	{
 		/// <inheritdoc/>
 		public ScriptLanguageType Language => ScriptLanguageType.Lua;
@@ -47,6 +44,13 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		/// <inheritdoc/>
 		public string FrontmatterEnd => "]]";
+
+		/// <inheritdoc/>
+		public string? FrontmatterLinePrefix => null;
+
+		/// <inheritdoc/>
+		public ScriptEngineCapabilities Capabilities =>
+			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput;
 	}
 
 	/// <summary>

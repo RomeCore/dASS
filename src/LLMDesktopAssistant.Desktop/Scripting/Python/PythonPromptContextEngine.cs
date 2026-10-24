@@ -19,10 +19,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	) : IScriptablePromptContextEngine
 	{
 		/// <inheritdoc/>
-		public ScriptLanguageType Language => ScriptLanguageType.Python;
-
-		/// <inheritdoc/>
-		public IScriptablePromptContextEngineDescriptor Descriptor { get; } = new PythonPromptContextEngineDescriptor();
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new PythonPromptContextEngineDescriptor()];
 
 		/// <inheritdoc/>
 		public IPromptContextProvider CreateProvider(PromptContextInfo context) => context.Kind switch
@@ -40,7 +37,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	/// <summary>
 	/// The descriptor of the Python scriptable prompt-context engine.
 	/// </summary>
-	public class PythonPromptContextEngineDescriptor : IScriptablePromptContextEngineDescriptor
+	public class PythonPromptContextEngineDescriptor : IScriptEngineDescriptor
 	{
 		/// <inheritdoc/>
 		public ScriptLanguageType Language => ScriptLanguageType.Python;
@@ -53,5 +50,13 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 
 		/// <inheritdoc/>
 		public string FrontmatterEnd => @"""""""";
+
+		/// <inheritdoc/>
+		public string? FrontmatterLinePrefix => null;
+
+		/// <inheritdoc/>
+		public ScriptEngineCapabilities Capabilities =>
+			ScriptEngineCapabilities.StructuredInput | ScriptEngineCapabilities.StructuredOutput |
+			ScriptEngineCapabilities.Terminal;
 	}
 }

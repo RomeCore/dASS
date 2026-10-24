@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		public override string[] Folders => ["context"];
 
 		public override string[] Extensions =>
-			field ??= [.. _engines.SelectMany(e => e.Descriptor.Extensions).Distinct()];
+			field ??= [.. _engines.SelectMany(e => e.Descriptors).SelectMany(d => d.Extensions).Distinct()];
 
 		public override bool AllowShortFormat => true;
 
