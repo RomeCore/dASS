@@ -7,7 +7,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	/// <inheritdoc cref="IPromptSupersedeContextProcessor"/>
 	[ChatService(typeof(IPromptSupersedeContextProcessor))]
 	public class PromptSupersedeContextProcessor(
-		Chat chat
+		Chat chat,
+		IServiceProvider services
 	) : IPromptSupersedeContextProcessor
 	{
 		public async Task ProcessAsync(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext,
@@ -50,10 +51,16 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			var stamps = new List<PromptSupersedeStampBase>();
 
-			foreach (var (addon, provider) in providers)
+			foreach (var (promptContext, provider) in providers)
 			{
 				var stamp = await provider.GetNewStampAsync(lastStamps.GetValueOrDefault(provider.Discriminator),
-					PromptContextExecutionContext.From(effectiveContext, addon, chat.Services), cancellationToken);
+					new PromptContextExecutionContext
+					{
+						Chat = effectiveContext.Chat,
+						Context = effectiveContext,
+						PromptContext = promptContext,
+						Services = services
+					}, cancellationToken);
 				if (stamp is not null)
 				{
 					stamp.Discriminator = provider.Discriminator;

@@ -9,10 +9,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	/// into the current request only.
 	/// </summary>
 	public sealed class PythonLiveTailScriptContextProvider(
-		PromptContextInfo addon,
+		PromptContextInfo promptContext,
 		IProcessLauncher processLauncher,
 		PythonHelperService pythonHelperService)
-		: PythonScriptContextProviderBase(addon, processLauncher, pythonHelperService), IPromptLiveTailContextProvider
+		: PythonScriptContextProviderBase(promptContext, processLauncher, pythonHelperService), IPromptLiveTailContextProvider
 	{
 		/// <inheritdoc/>
 		public async Task<string?> ProvideAsync(PromptContextExecutionContext context,
@@ -22,7 +22,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 
 			return string.IsNullOrWhiteSpace(content)
 				? null
-				: ScriptPromptContextHelper.Wrap(Addon.Name, content);
+				: ScriptPromptContextHelper.Wrap(PromptContext.Name, content);
 		}
 	}
 }

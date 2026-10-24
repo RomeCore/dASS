@@ -25,7 +25,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		IPromptAnchoredSectionProcessor promptAnchoredSectionProcessor,
 		IPromptSupersedeContextProcessor promptSupersedeContextProcessor,
 		IAddonSetCollector<PromptContextInfo> promptContextCollector,
-		IPromptDumpService promptDumpService
+		IPromptDumpService promptDumpService,
+		IServiceProvider services
 		) : IAgentPromptComposer
 	{
 		private const string summaryTag = "summary";
@@ -216,14 +217,20 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					// Process SCM live tails.
 					if (isPendingAssistant)
 					{
-						var liveContextAddons = promptContextInfos.Where(i => i.Provider is IPromptLiveTailContextProvider).ToArray();
-						if (liveContextAddons.Length > 0)
+						var liveContexts = promptContextInfos.Where(i => i.Provider is IPromptLiveTailContextProvider).ToArray();
+						if (liveContexts.Length > 0)
 						{
 							var sb = new StringBuilder();
-							foreach (var addon in liveContextAddons)
+							foreach (var promptContext in liveContexts)
 							{
-								var liveProvider = (IPromptLiveTailContextProvider)addon.Provider;
-								var liveExecution = PromptContextExecutionContext.From(effectiveContext, addon, chat.Services);
+								var liveProvider = (IPromptLiveTailContextProvider)promptContext.Provider;
+								var liveExecution = new PromptContextExecutionContext
+								{
+									Chat = effectiveContext.Chat,
+									Context = effectiveContext,
+									PromptContext = promptContext,
+									Services = services
+								};
 								var liveContext = await liveProvider.ProvideAsync(liveExecution, cancellationToken);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{

@@ -10,7 +10,8 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 	[ChatService(typeof(IPromptAnchoredSectionProcessor))]
 	public class PromptAnchoredSectionProcessor(
 		Chat chat,
-		IChatSettingsService chatSettings
+		IChatSettingsService chatSettings,
+		IServiceProvider services
 	) : IPromptAnchoredSectionProcessor
 	{
 		/// <inheritdoc/>
@@ -96,12 +97,18 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					var deltas = new List<PromptSectionDeltaBase>();
 					var sb = new StringBuilder();
 
-					foreach (var (addon, section) in sections)
+					foreach (var (promptContext, section) in sections)
 					{
 						var anchorState = anchor.Sections.FirstOrDefault(s => s.Discriminator == section.Discriminator);
 						var existingDeltas = deltasPerAnchor.GetValueOrDefault(section.Discriminator) ?? [];
 
-						var execution = PromptContextExecutionContext.From(effectiveContext, addon, chat.Services);
+						var execution = new PromptContextExecutionContext
+						{
+							Chat = effectiveContext.Chat,
+							Context = effectiveContext,
+							PromptContext = promptContext,
+							Services = services
+						};
 						var newDelta = await section.CalculateDeltaAsync(anchorState, existingDeltas, execution, cancellationToken);
 						if (newDelta is not null)
 						{

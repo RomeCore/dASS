@@ -20,12 +20,12 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	/// live tail or a persisted supersede stamp.
 	/// </remarks>
 	public abstract class PythonScriptContextProviderBase(
-		PromptContextInfo addon,
+		PromptContextInfo promptContext,
 		IProcessLauncher processLauncher,
 		PythonHelperService pythonHelperService)
 	{
 		/// <summary>The context addon this provider runs.</summary>
-		protected PromptContextInfo Addon { get; } = addon;
+		protected PromptContextInfo PromptContext { get; } = promptContext;
 
 		/// <summary>
 		/// Runs the body under the addon's timeout and turns any failure into "no context".
@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			CancellationToken cancellationToken)
 		{
 			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(Addon.TimeoutMs);
+			timeout.CancelAfter(PromptContext.TimeoutMs);
 
 			var chatSettings = context.Services.GetRequiredService<IChatSettingsService>().Settings;
 			var workDir = chatSettings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory();
@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 				sys.stdout.reconfigure(encoding="utf-8")
 				sys.stderr.reconfigure(encoding="utf-8")
 				previous = {previousLiteral}
-				{Addon.Body}
+				{PromptContext.Body}
 				""";
 
 			var tempPyFile = Path.GetFullPath(Path.Combine(workDir, $"{Guid.NewGuid()}.py"));
@@ -69,12 +69,12 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
 			{
 				Log.Warning("Prompt context script timed out after {Timeout} ms (context '{Context}').",
-					Addon.TimeoutMs, Addon.Name);
+					PromptContext.TimeoutMs, PromptContext.Name);
 			}
 			catch (Exception ex)
 			{
 				Log.Warning(ex, "Prompt context script failed (context '{Context}'): {Message}",
-					Addon.Name, ex.Message);
+					PromptContext.Name, ex.Message);
 			}
 			finally
 			{

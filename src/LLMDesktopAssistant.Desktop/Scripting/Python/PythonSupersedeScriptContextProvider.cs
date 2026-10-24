@@ -9,13 +9,13 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	/// injected text as <c>previous</c> and produces a stamp only when the rendered text actually changed.
 	/// </summary>
 	public sealed class PythonSupersedeScriptContextProvider(
-		PromptContextInfo addon,
+		PromptContextInfo promptContext,
 		IProcessLauncher processLauncher,
 		PythonHelperService pythonHelperService)
-		: PythonScriptContextProviderBase(addon, processLauncher, pythonHelperService), IPromptSupersedeContextProvider
+		: PythonScriptContextProviderBase(promptContext, processLauncher, pythonHelperService), IPromptSupersedeContextProvider
 	{
 		/// <inheritdoc/>
-		public string Discriminator => ScriptPromptContextHelper.GetDiscriminator(Addon.Name);
+		public string Discriminator => ScriptPromptContextHelper.GetDiscriminator(PromptContext.Name);
 
 		/// <inheritdoc/>
 		public async Task<PromptSupersedeStampBase?> GetNewStampAsync(PromptSupersedeStampBase? previousStamp,
@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 
 			// The comparison is byte-exact on the rendered text: the wrapper is deterministic,
 			// so comparing the wrapped form is the same as comparing the raw output.
-			var rendered = ScriptPromptContextHelper.Wrap(Addon.Name, content);
+			var rendered = ScriptPromptContextHelper.Wrap(PromptContext.Name, content);
 			if (previousStamp?.Snapshot == rendered)
 				return null;
 
