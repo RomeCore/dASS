@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
@@ -40,6 +41,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				return true;
 
 			ctx.Call.Status = ToolStatus.WaitingForApproval;
+			using var confirmation = ctx.Services.GetService<IChatExecutionStatusService>()?.WithConfirmation();
 
 			if (handled.HasFlag(ToolPolicyDecision.Ask))
 				return await AskToolAsync(ctx, ct);
