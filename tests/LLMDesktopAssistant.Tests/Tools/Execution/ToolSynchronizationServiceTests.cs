@@ -244,8 +244,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 
 			await skipped.WaitAsync(TimeSpan.FromSeconds(5));
 			Assert.True(ran);
-			Assert.NotNull(session.Call.SynchronizationWait);
-			Assert.True(session.Call.SynchronizationWait!.IsCancellationRequested);
+			Assert.Null(session.Call.SynchronizationWait);
 
 			holderRelease.TrySetResult();
 			await holder;
