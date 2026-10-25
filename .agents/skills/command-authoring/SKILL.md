@@ -1,6 +1,6 @@
 ---
 name: command-authoring
-description: Write or amend a dASS scriptable slash command - the commands/<name>.lua|.py file in an addon folder - keeping its frontmatter contract (description, argument-schema, generate, model-facing) true to what the body does to the message. Use when creating a new slash command, editing or debugging one, wiring its arguments with the argument-schema DSL, or when the user asks how a command addon is shaped.
+description: Write or amend a dASS scriptable slash command - the commands/<name>.lua|.py|.sh|.ps1|.bat|.cmd file in an addon folder - keeping its frontmatter contract (description, argument-schema, generate, model-facing, json-input, json-output, run-terminal) true to what the body does to the message. Use when creating a new slash command, editing or debugging one, wiring its arguments with the argument-schema DSL, or when the user asks how a command addon is shaped.
 ---
 
 # Command authoring (dASS)
@@ -48,7 +48,7 @@ Verification is a judgment call, not a ritual. The moves, cheapest first:
 | Type `/name` | the command resolves, and its argument chips/hint match `argument-schema` |
 | Run it | the executor runs and the part/content/error lands on the message |
 
-Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv). A runner hands you *its own* arguments, not the command's - so stub `command_args` yourself at the top of the snippet (a local table in Lua, a dict in Python), paste the body, watch the output. That is manual unit testing, and it catches most of what a first real run would catch.
+Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv), and `shell-bash` / `shell-powershell` / `shell-batch` (they run a command, not a file - paste the body and stub `command_args` in it). A runner hands you *its own* arguments, not the command's - so stub `command_args` yourself at the top of the snippet (a local table in Lua, a dict in Python), paste the body, watch the output. That is manual unit testing, and it catches most of what a first real run would catch.
 
 `/addon-reload` rescans the packs after a file edit, without a restart. There is no stubbing layer around the real run: the arguments are bound by the very schema `argument-schema` produced.
 
@@ -66,10 +66,13 @@ The path, plus what was verified and by which move. The user's next action depen
 
 | Engine | Extensions | Frontmatter | Runs where |
 |---|---|---|---|
-| Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build |
-| Python | `.py` | `"""` ... `"""` | Desktop build only |
+| Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build, in-process |
+| Python | `.py` | `"""` ... `"""` | Desktop build, needs a Python runtime or venv |
+| Bash | `.sh` | `#---` ... `#---` | Desktop build, needs bash (Git Bash on Windows) |
+| PowerShell | `.ps1` | `#---` ... `#---` | Desktop build, `pwsh` 7 or Windows PowerShell 5.1 |
+| Batch | `.bat`, `.cmd` | `REM ---` ... `REM ---` | Desktop build, Windows only |
 
-Order of preference: **Lua** - the only engine every build has, and the only one with the chat API. **Python** - for an external process, accepting desktop-only, no chat API and text-only output.
+Order of preference: **Lua** - the only engine every build has, and the only one with the chat API. **Python** - for an external process, accepting desktop-only, no chat API and text-only output. **Bash, PowerShell, Batch** - when the command *is* a shell action, and the only engines that can answer with the structured contract below.
 
 ## The frontmatter
 
@@ -92,6 +95,10 @@ Every engine wraps the same YAML in its own comment markers. `name` **must** equ
 - **`argument-schema`** - the arguments the user may type; see **Arguments** for its two forms.
 - **`generate`** - `true` (default) leaves the caller's intent untouched, `false` forbids generation. It can only **lower** the caller's intent, never raise it. A command that only annotates usually sets `false`. This is the **ceiling**: a Lua body may lower it per run by returning `false` (see **What the body gets**).
 - **`model-facing`** - how the message is shown to the model. `raw` (the default) sends the content as typed; `neutral` replaces it with the bare `/<token>` while every content part the executor appended still reaches the model - use it when the typed arguments are noise the injected content already carries; `hidden` drops the message from the model's view entirely.
+- **`json-input`** - how `command_args` arrives: `auto` (the default) gives the native structure, `true` gives a **JSON string** the body decodes itself. Bash and Batch always get JSON text - they cannot pass a structure, so an explicit `false` there is a load-time error.
+- **`json-output`** - the engines that can carry it are Python, Bash, PowerShell and Batch: `true` means all of stdout is the command's JSON, `"<BEGIN>*<END>"` picks it out of noisy output. Lua runs in-process and has no stdout channel, so it is refused there.
+- **`run-terminal`** - run the script in an interactive terminal attached to the message instead of a managed process: no timeout, and the script can read from the keyboard. Cannot be combined with `json-output`, and a terminal script cannot answer with a part.
+- **`wait`** - with `run-terminal`: `true` (the default) waits for the script to exit, `false` detaches it.
 - **`namespaces`** - extra qualifiers for the token; the source pack is appended automatically. The bare `/name` still resolves.
 - Shared with every addon kind: `description` (missing → diagnostic), plus `order`, `aliases`, `enabled`, `hidden`. `title` and `category` are localizable display strings and drive no behaviour.
 
@@ -159,11 +166,19 @@ Types arrive in the body converted: `choice`/`string` → string, `number` → n
 > [!WARNING]
 > **Never leave a function call as the last element of a table constructor** - the Lua engine here expands it into extra values and parentheses do **not** truncate it (measured; see `AR-0009`). Assign the call to a local first: `local meta = string.format(...); local lines = { header, meta }`. `{ header, string.format(...) }` injects the raw template and the arguments as junk elements.
 
-**Python** - an external process, from a temp `.py` written into the working directory and deleted afterwards.
+**Python** - an external process, from a temp `.py` written into the reserved script folder (`%LOCALAPPDATA%\.llmassist\temp\scripts`) and deleted afterwards.
 
 - `command_args` - a dict: `command_args["rest"]`, `command_args["keyed"]["weight"]`, ...
 - **stdout is the whole result**: `print(...)` becomes one content part on the message. A non-zero exit code becomes the message error.
 - **no chat API** - Python cannot read or mutate the message; it only prints. Its part is created by the engine with the command name as the title and **no icon**.
+
+**Bash, PowerShell, Batch** - an external process from the same reserved folder, and the only engines that can answer with the **structured contract**.
+
+- `command_args` - **JSON text** for Bash and Batch (the `{ positionals, keyed, rest, raw }` object, decoded by the body); a `PSCustomObject` for PowerShell unless `json-input: true`
+- **stdout is the result**: plain text becomes one content part, exactly like Python
+- with `json-output`, stdout must carry `part` (`title`, `icon`, `content`), `generate`, `effect` and `error` instead - and `"<BEGIN>*<END>"` extracts that JSON from noisy output
+- **no chat API**, so a shell script cannot return a boolean to lower the generation; express that in the JSON's `generate`
+- `run-terminal: true` runs it in a PTY attached to the message (`wait: false` detaches it)
 
 ## Where the file goes
 
@@ -176,7 +191,9 @@ A `commands/` folder inside an addon source: `.agents/` or `.llmassist/` in a re
 - An `argument-schema` copied from a tool: the wrong key shape, the wrong value shape, or both, so the arguments parse to nothing.
 - A `: ` (colon-space) inside a YAML description in a mapping - the frontmatter fails to parse. Prefer `-` over `:` in descriptions.
 - Reading `description` as if the model saw it: a command is never exposed to the model, so `description` is for the user's popup and cards only.
-- Expecting Python to reach the chat: it has no `dass.chat`/`dass.command`, and its part carries no icon.
+- Expecting Python to reach the chat: it has no `dass.chat`/`dass.command`, and its part carries no icon. The same holds for Bash, PowerShell and Batch.
+- **A shell command scripted with the tool's JSON shape** (`status`/`result`/`markdown`/`structured`): nothing renders at all, because there is no `part` - and `generate: false` can only lower the intent, so the message silently ends up empty. A command's JSON is `part`/`generate`/`effect`/`error`.
+- A `#` inside a value of a `#`-prefixed frontmatter (`.sh`, `.ps1`, or any Lua command's description): YAML reads it as a comment and cuts the string there. Quote the value or reword it.
 - Returning a boolean from a **Python** command as if it were the Lua contract - only the Lua engine reads the chunk's return value; Python always generates unless `generate`/the executor result says otherwise.
 - Injecting content and then letting the model answer anyway - a command that fully replaces a model turn ends with `return false`.
 - The trailing-call table-constructor trap in Lua (above) - a junk part that looks almost right.

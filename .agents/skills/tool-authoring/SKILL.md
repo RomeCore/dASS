@@ -1,6 +1,6 @@
 ---
 name: tool-authoring
-description: Write or amend a dASS scriptable tool - the .lua / .alua / .py file in a tools/ addon folder - keeping its frontmatter contract (description, argument schema, behaviours) true to what the body actually does. Use when creating a new scriptable tool, when editing or debugging an existing one, when a tool's description no longer matches its behaviour, or when the user asks how a tool addon is shaped.
+description: Write or amend a dASS scriptable tool - the .lua / .alua / .py / .sh / .ps1 / .bat / .cmd file in a tools/ addon folder - keeping its frontmatter contract (description, argument schema, behaviours, json-input, json-output, run-terminal) true to what the body actually does. Use when creating a new scriptable tool, when editing or debugging an existing one, when a tool's description no longer matches its behaviour, or when the user asks how a tool addon is shaped.
 ---
 
 # Tool authoring (dASS)
@@ -45,7 +45,7 @@ Verification is a judgment call, not a ritual. The moves, cheapest first:
 | Run the body through a runner with stubbed arguments | the logic works on the inputs you chose |
 | Call the tool itself | it loads, its schema accepts real arguments, and a result comes back |
 
-Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv). A runner hands you *its own* arguments, not the tool's - so stub the argument names yourself at the top of the snippet (a local table in Lua), paste the body, and watch the output. That is manual unit testing, and it catches most of what a first real call would catch.
+Runners: `lua-execute` (Lua), `execute-python` (Python, plus `execute-python_venv_shell` for the venv), and `shell-bash` / `shell-powershell` / `shell-batch` for the shell languages (they run a command, not a file - paste the body and stub the variables in it). A runner hands you *its own* arguments, not the tool's - so stub the argument names yourself at the top of the snippet (a local table in Lua), paste the body, and watch the output. That is manual unit testing, and it catches most of what a first real call would catch.
 
 The failure mode worth naming: claiming a tool works because the file exists. If the addon source has not picked the file up yet, the answer is "not verified yet", not "looks fine".
 
@@ -61,10 +61,13 @@ The path, plus what was verified and by which move. The user's next action depen
 
 | Engine | Extensions | Frontmatter | Runs where |
 |---|---|---|---|
-| Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build |
-| Python | `.py` | `"""` ... `"""` | Desktop build only |
+| Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build, in-process |
+| Python | `.py` | `"""` ... `"""` | Desktop build, needs a Python runtime or venv |
+| Bash | `.sh` | `#---` ... `#---` | Desktop build, needs bash (Git Bash on Windows) |
+| PowerShell | `.ps1` | `#---` ... `#---` | Desktop build, `pwsh` 7 or Windows PowerShell 5.1 |
+| Batch | `.bat`, `.cmd` | `REM ---` ... `REM ---` | Desktop build, Windows only |
 
-Order of preference: **Lua** - the only engine every build has. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and text-only results.
+Order of preference: **Lua** - the only engine every build has, and the only one that runs in-process with the chat API. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and text-only results. **Bash, PowerShell, Batch** - when the job *is* a shell command (git, a build, a system tool), or when the user already has a script.
 
 ## The frontmatter
 
@@ -86,19 +89,24 @@ argument-schema: |
 ```
 
 - **`description` is everything the model sees** when deciding to call the tool. Write when to use it, not only what it is.
-- **`argument-schema`** is a JSON Schema object; the default is `{"type":"object","additionalProperties":false}`. Every argument the body reads belongs here, each with its own description.
+- **`argument-schema`** is a JSON Schema **written as a YAML string** - a `|` block or a quoted line. The default is `{"type":"object","additionalProperties":false}`. Every argument the body reads belongs here, each with its own description. A one-line `{...}` mapping is not a string: the parser drops it without a word and the tool ends up with the default schema and nothing for the model to fill in.
 - **`approval-level`**: `policy-based` (the recommended default), `policy-ask-or-disallow`, `policy-approve-or-ask`, `policy-auto-approve-unless-disallowed`, `policy-auto-disallow-unless-approved`, `always-approve`, `always-ask`, `always-disallow`.
 - **`behaviours`** - kebab-case slugs, as a list, a comma-separated string, or a single value; the parser also accepts snake_case and raw enum names, case-insensitively. Values:
 
   `file-directory-create`, `file-read`, `file-edit`, `file-delete`, `directory-read`, `directory-edit`, `directory-delete`, `semantic-memory-read`, `semantic-memory-write`, `semantic-memory-delete`, `semantic-memory-clear`, `database-read`, `database-change`, `database-custom-connect`, `read-secrets`, `access-outside-workdir`, `workdir-change`, `clipboard-write`, `clipboard-read`, `internet-access`, `long-running-task`, `execute-external-process`, `possibly-unexpected`, `run-terminal`, `user-interaction`, `agent-execution`, `addon-pack-edit`, `prompt-edit`, `script-edit`.
 
-  What each one means is in `src/LLMDesktopAssistant/Tools/ToolBehaviour.cs`. The `meta` flag is added by the parser on top of whatever the tool declares.
+  What each one means is in `src/LLMDesktopAssistant/Tools/ToolBehaviour.cs`. The `scriptable` flag is added by the parser on top of whatever the tool declares.
 
   **This is the security-relevant field.** The approval policy gates the tool by these flags, so a tool that understates what it touches walks past the user's own auto-approve and disallow settings while looking perfectly correct.
 
 - **`sync`** - how the tool locks the filesystem: `write` (nothing else touches files while it runs), `read` (runs beside other readers, waits out writers) or `none` (claims nothing). **The default is derived from `behaviours`**: anything that may write or cannot be predicted takes `write`, a read-only tool takes `read`, a tool with no file behaviour claims nothing. Declare it only to override that derivation - a script whose declared behaviour is coarser than its real effect, or the other way round.
 
   The lock is a promise, not a mechanism: a script that under-declares `behaviours` and omits `sync` serializes nothing, and two tools then race on the same file.
+
+- **`json-input`** - how `tool_args` arrives: `auto` (the default) gives the language's native structure where it has one, `true` gives a **JSON string** the body decodes itself, `false` demands the native structure. Lua, Python and PowerShell can pass a structure; Bash and Batch cannot, so an explicit `false` there is a load-time error.
+- **`json-output`** - a promise that the script also answers with JSON: `true` means all of stdout is JSON, `"<BEGIN>*<END>"` takes the text between two markers (`\*` is a literal asterisk). Available on the out-of-process engines only - Lua runs in-process and has no stdout channel, so the flag is refused there.
+- **`run-terminal`** - run the script in an interactive terminal attached to the card instead of a managed process: no timeout, and the script can read from the keyboard. Cannot be combined with `json-output`.
+- **`wait`** - with `run-terminal`: `true` (the default) waits for the script to exit, `false` detaches it.
 
 - Shared by every addon kind: `description` - a missing one raises a diagnostic - plus `order`, `aliases`, `enabled` and `hidden`. `title` and `category` are localizable display strings and drive no behaviour.
 
@@ -113,12 +121,22 @@ argument-schema: |
 - a runtime error returns as a failed result carrying its message
 - the API documents itself in-app - `print(manuals(asynclua))` is the pattern the `lua-execute` tool advertises - and the surface lives in `src/LLMDesktopAssistant/Scripting/Lua/API/`
 
-**Python** - an external process, from a temp `.py` written into the working directory and deleted afterwards.
+**Python** - an external process, from a temp `.py` written into the reserved script folder (`%LOCALAPPDATA%\.llmassist\temp\scripts`) and deleted afterwards.
 
-- `tool_args` - arguments as a dict: `tool_args["input"]`
+- `tool_args` - arguments as a dict: `tool_args["input"]`; with `json-input: true` it is a JSON string instead
 - **stdout is the return channel**: `print(...)`. Exit code 0 means success; anything else comes back as a failure with the process output attached.
-- no structured result and no streaming - text only
+- `json-output` is available, exactly as for the shell engines below
+- no streaming - `dass.tool.result` is Lua's API
 - needs a Python runtime or virtual environment, and the Desktop build
+
+**Bash, PowerShell, Batch** - an external process, from a temp script in the same reserved folder.
+
+- `tool_args` - **JSON text** for Bash and Batch, which the body decodes itself (`jq`, or a `json` helper); PowerShell gets a `PSCustomObject` (`$tool_args.input`) unless `json-input: true`, which makes it JSON text too
+- **stdout is the return channel**; a non-zero exit code is a failure with stderr attached
+- `json-output` is available: `true` for a whole-stdout JSON, `"<BEGIN>*<END>"` for a capture between markers
+- the encodings are the engine's business: UTF-8 for `.sh`, UTF-8 with a BOM for `.ps1` (5.1 needs it), an ASCII preamble plus `@echo off` for `.bat` - the author writes plain text and escapes nothing
+- Batch is Windows only; a `.bat`/`.cmd` tool simply does not exist on other platforms
+- `run-terminal: true` gives an interactive PTY instead of a managed process
 
 ## Where the file goes
 
@@ -126,6 +144,9 @@ A `tools/` folder inside an addon source: `.agents/` in a repo, `.llmassist/pack
 
 ## What bites
 
-- Frontmatter copied between engines: the two do not agree on delimiters.
+- Frontmatter copied between engines: they do not agree on delimiters (`--[[ ]]`, `"""`, `#---`, `REM ---`).
 - A `.py` tool on a build without the Python engine: nothing loads it, and the diagnostic talks about extensions rather than about the platform.
 - An argument read by the body but absent from `argument-schema`: the model cannot pass it, and nothing warns.
+- A `#` inside a value of a `#`-prefixed frontmatter (`.sh`, `.ps1`): YAML reads it as the start of a comment and cuts the string there. Quote the value or reword it.
+- `json-output` on a Lua tool: refused at load, because Lua runs in-process and has no stdout to take a structure from.
+- `run-terminal` together with `json-output`: refused at load - a terminal has no separate output channel to parse.

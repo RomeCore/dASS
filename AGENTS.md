@@ -13,9 +13,9 @@ Do not read source files to learn signatures - write the call, build, and fix th
 have to invent a signature first, that is cheaper than observing.
 
 ```powershell
-dotnet build 'src/LLMDesktopAssistant/LLMDesktopAssistant.csproj'
-$a = Join-Path $env:TEMP 'dass-temp-build'   # $env:TEMP does NOT expand inside single quotes
-dotnet build 'src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
+dotnet build "src/LLMDesktopAssistant/LLMDesktopAssistant.csproj"
+$a = Join-Path $env:TEMP "dass-temp-build"   # $env:TEMP does NOT expand inside single quotes
+dotnet build "src/LLMDesktopAssistant.Desktop/LLMDesktopAssistant.Desktop.csproj" -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
 ```
 
 Build each project separately, never the whole solution, and **never pipe the build output**
@@ -27,8 +27,8 @@ talking to, so nothing - not a build, not `dotnet test` - may write there; the a
 convenience, they are the only way it works at all. The same flags apply to its test project:
 
 ```powershell
-$a = Join-Path $env:TEMP 'dass-temp-build'
-dotnet test 'tests/LLMDesktopAssistant.Desktop.Tests/LLMDesktopAssistant.Desktop.Tests.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
+$a = Join-Path $env:TEMP "dass-temp-build"
+dotnet test "tests/LLMDesktopAssistant.Desktop.Tests/LLMDesktopAssistant.Desktop.Tests.csproj" -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
 ```
 
 Core tests (`tests/LLMDesktopAssistant.Tests`) touch no locked file and run plainly.
@@ -90,8 +90,9 @@ public string Name { get; set; }
 
 Anything that touches an OS process or a real window lives in `src/LLMDesktopAssistant.Desktop`, not
 in the core project: `Execution/` (`ProcessLauncher`, `TerminalRun`, `Terminals/TerminalView`),
-`Scripting/ExternalProcess/` (the out-of-process script engines - Python plus the tool, slash-command
-and prompt-context flavours), `Scripting/Python/`, `Scripting/Lua/API/LuaApiProcess.cs`,
+`Scripting/ExternalProcess/` (the out-of-process script engines - Python, Bash, Batch and PowerShell, plus the
+tool, slash-command and prompt-context flavours), `Scripting/{Python,Bash,Batch,PowerShell}/` (the interpreter
+locators and their settings blocks), `Scripting/Lua/API/LuaApiProcess.cs`,
 `ToolModules/` (`shell-execute`, `python-execute`, `DesktopFilesystemToolModule`), `Services/`
 (explorer and link openers), `Markdown/MermaidPreviewProvider`.
 
@@ -168,15 +169,34 @@ kind:
 |---|---|---|
 | `Skill` | `skills/` | `skills/<name>/SKILL.md` or `skills/<name>.md` (`.md`, `.mdx`) |
 | `SubAgent` | `agents/` | `agents/<name>/AGENT.md` or `agents/<name>.md` |
-| `Tool` | `tools/` | extensions of the registered script engines (`.lua`, `.alua`, `.py`) |
+| `Tool` | `tools/` | extensions of the registered script engines - see *Scriptable languages* below |
 | `LuaScript` | `scripts/lua/` | `.lua`, `.alua` |
 | `Template` | `templates/` | LLT template extensions |
-| `PromptContext` | `context/` | `context/<name>.lua` (`.alua`, `.py`) - one script per context |
+| `PromptContext` | `context/` | `context/<name>.<ext>` - one script per context |
 | `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder form |
 
 Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`, plus
 other runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, ...) -
 **expect addons you did not create**.
+
+### Scriptable languages
+
+A scriptable tool, slash command or prompt context is one file whose extension picks the engine:
+
+| Language | Extensions | Frontmatter | Runs where |
+|---|---|---|---|
+| Lua | `.lua`, `.alua` | `--[[` ... `]]` | every build, in-process |
+| Python | `.py` | `"""` ... `"""` | Desktop, separate process |
+| Bash | `.sh` | `#---` ... `#---` | Desktop, needs bash (Git Bash on Windows) |
+| PowerShell | `.ps1` | `#---` ... `#---` | Desktop, `pwsh` 7 or Windows PowerShell 5.1 |
+| Batch | `.bat`, `.cmd` | `REM ---` ... `REM ---` | Desktop, Windows only (the descriptor claims the extensions there only) |
+
+The out-of-process four share `ExternalProcessScriptEngineBase`: a language adds a script builder, a document
+encoding and an interpreter locator, and nothing in the parsers or the kind adapters. Facts that cost a session
+to relearn: a `#` inside a value of a `#`-prefixed frontmatter starts a YAML comment unless the value is quoted;
+`argument-schema` must be a YAML **string** (a `|` block) - a flow mapping is dropped silently; `json-output` and
+`run-terminal` are impossible for Lua (in-process, no stdout channel); and a builder may refuse a document, which
+lands as a `ProcessFailed` result because `BuildScript` runs inside the guarded `try`.
 
 **Trap**: addons are **frozen after collection**; mutating one throws. `addon.Clone()` returns an
 unfrozen copy to change.

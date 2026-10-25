@@ -1,6 +1,6 @@
 ---
 name: context-authoring
-description: Write or amend a dASS scriptable prompt context - the .lua / .alua / .py file in a context/ addon folder - keeping its frontmatter contract (kind, timeout, variability) true to where its text actually lands. Use when creating a new prompt context, when editing or debugging an existing one, when deciding between live-tail and supersede, or when the user asks how a prompt context addon is shaped.
+description: Write or amend a dASS scriptable prompt context - the .lua / .alua / .py / .sh / .ps1 / .bat / .cmd file in a context/ addon folder - keeping its frontmatter contract (kind, timeout, variability, json-input) true to where its text actually lands. Use when creating a new prompt context, when editing or debugging an existing one, when deciding between live-tail and supersede, or when the user asks how a prompt context addon is shaped.
 ---
 
 # Prompt context authoring (dASS)
@@ -53,7 +53,7 @@ Keep the body cheap. A live-tail runs on **every prompt build**, which is every 
 | Run the body in a runner | the logic produces the text you expect |
 | Reload and look at the next request | the addon is picked up, the engine runs it, the text lands in the prompt |
 
-Runners: `lua-execute` (Lua - `print(manuals(process))` and friends document the API in-app), `execute-python` (Python). A runner hands you its *own* globals, so stub `previous` yourself (`local previous = nil`), paste the body, watch the output.
+Runners: `lua-execute` (Lua - `print(manuals(process))` and friends document the API in-app), `execute-python` (Python), and `shell-bash` / `shell-powershell` / `shell-batch` (paste the body and stub `previous` in it). A runner hands you its *own* globals, so stub `previous` yourself (`local previous = nil`), paste the body, watch the output.
 
 The failure mode worth naming: claiming a context works because the file exists. If the addon source has not picked it up, the answer is "not verified yet".
 
@@ -69,10 +69,16 @@ The path, the kind, and what the model will actually see - the wrapped tag. Noth
 
 | Engine | Extensions | Frontmatter | Text channel | Runs where |
 |---|---|---|---|---|
-| Lua | `.lua`, `.alua` | `--[[` ... `]]` | `print(...)` | every build |
-| Python | `.py` | `"""` ... `"""` | stdout | Desktop build only |
+| Lua | `.lua`, `.alua` | `--[[` ... `]]` | `print(...)` | every build, in-process |
+| Python | `.py` | `"""` ... `"""` | stdout | Desktop build, process per build |
+| Bash | `.sh` | `#---` ... `#---` | stdout | Desktop build, needs bash, process per build |
+| PowerShell | `.ps1` | `#---` ... `#---` | stdout | Desktop build, `pwsh` 7 or Windows PowerShell 5.1 |
+| Batch | `.bat`, `.cmd` | `REM ---` ... `REM ---` | stdout | Desktop build, Windows only |
 
-Order of preference: **Lua** - the only engine every build has, and the cheapest to run. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and process-per-build cost.
+Order of preference: **Lua** - the only engine every build has, and the cheapest to run. **Python** - when a library the Lua APIs cannot reach is needed, accepting desktop-only and process-per-build cost. **Bash, PowerShell, Batch** - when the text *is* the output of a shell command (`git status`, a probe) and there is no reason to reimplement it.
+
+> [!WARNING]
+> A shell context costs **one process per prompt build**, and a live-tail runs on every build of every turn. Prefer Lua unless the shell is the point.
 
 ## The frontmatter
 
@@ -88,6 +94,7 @@ timeout: 3000
 - **`timeout`** - milliseconds, default `2000`, clamped to `1..10000`. Exceeding it kills the script and the context is simply absent. Set it above the default only when the body is genuinely slow.
 - **`variability`** - optional display metadata (`configdriven`, `rare`, `frequent`, `perrequest`) shown as a card chip. Defaults: `perrequest` for `live-tail`, `frequent` for `supersede`. It drives no behaviour.
 - **`description`** - what the user reads in the settings list. A missing one raises a diagnostic.
+- **`json-input`** - how `previous` arrives: `auto` (the default) gives the text itself, `true` gives its **JSON form** (`""` quotes and all) for a body that decodes it. An absent `previous` is `nil`/`None`/`$null` in both modes, so a "there is nothing yet" test keeps working. Bash and Batch cannot pass a native value anyway, so `false` there is a load-time error.
 - Shared by every addon kind: `order`, `aliases`, `enabled`, `hidden`.
 
 ## What the body gets
@@ -99,12 +106,20 @@ timeout: 3000
 - the chat's whole Lua API is available (filesystem, process, json, regex, ...); `print(manuals(namespace))` documents it in-app
 - a runtime error means "no context", and a warning in the log
 
-**Python** - a child process, from a temp `.py` written into the working directory and deleted afterwards.
+**Python** - a child process, from a temp `.py` written into the reserved script folder (`%LOCALAPPDATA%\.llmassist\temp\scripts`) and deleted afterwards.
 
 - `previous` - a module-level global, `None` when there is nothing yet
 - **stdout is the only channel**; stderr is not read and does not become the context
 - a non-zero exit code means "no context", plus a warning in the log
 - needs a Python runtime and the Desktop build
+
+**Bash, PowerShell, Batch** - a child process from the same reserved folder.
+
+- `previous` - a global variable (`$previous` in bash, `$previous` in PowerShell, `%previous%` in batch), absent when there is nothing yet; JSON text when `json-input: true`
+- **stdout is the only channel**; stderr is not read and does not become the context
+- a non-zero exit code means "no context", plus a warning in the log
+- the encodings are the engine's business: UTF-8 for `.sh`, UTF-8 with a BOM for `.ps1`, an ASCII preamble for `.bat`
+- Batch is Windows only
 
 ## Where the file goes
 
@@ -127,7 +142,8 @@ The collected text is wrapped into an XML tag named after the addon (a leading d
 ## What bites
 
 - **`kind` omitted on a live-tail intent.** The default is `supersede`; the context silently becomes a persisted stamp.
-- **Frontmatter delimiters copied between engines.** The two do not agree: `--[[ ]]`, `"""`.
+- **Frontmatter delimiters copied between engines.** They do not agree: `--[[ ]]`, `"""`, `#---`, `REM ---`.
+- **A `#` inside a value of a `#`-prefixed frontmatter** (`.sh`, `.ps1`): YAML reads it as a comment and cuts the string there. Quote the value or reword it.
 - **`name` not matching the file name** - a diagnostic, and the addon is hard to find afterwards.
 - **A trailing newline from `print`** - harmless for `live-tail` (a blank line inside the tag), but for `supersede` it is a guaranteed "change" the first time the script switches between `print` styles.
 - **A slow body.** A live-tail runs on every build; an expensive probe quietly taxes every message.
