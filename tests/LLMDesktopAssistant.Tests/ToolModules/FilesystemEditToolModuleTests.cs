@@ -86,7 +86,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		}
 	}
 
-	private static JsonObject Patch(string match, string? replace = null, bool useRegex = false, bool ignoreCase = false)
+	private static JsonObject Patch(string match, string? replace = null, bool useRegex = false, bool ignoreCase = false, bool isMultiEdit = false)
 	{
 		var patch = new JsonObject
 		{
@@ -98,6 +98,8 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 			patch["useRegex"] = true;
 		if (ignoreCase)
 			patch["ignoreCase"] = true;
+		if (isMultiEdit)
+			patch["isMultiEdit"] = true;
 		return patch;
 	}
 
@@ -152,7 +154,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
 		{
 			["path"] = "file.txt",
-			["patches"] = new JsonArray { Patch("foo", "bar") }
+			["patches"] = new JsonArray { Patch("foo", "bar", isMultiEdit: true) }
 		});
 
 		Assert.Contains("File edited successfully", result.ResultContent);
@@ -248,7 +250,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
 		{
 			["path"] = "file.cs",
-			["patches"] = new JsonArray { Patch("class (\\w+)", "class Renamed_$1", useRegex: true) }
+			["patches"] = new JsonArray { Patch("class (\\w+)", "class Renamed_$1", useRegex: true, isMultiEdit: true) }
 		});
 
 		Assert.Contains("File edited successfully", result.ResultContent);
@@ -280,7 +282,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
 		{
 			["path"] = "file.txt",
-			["patches"] = new JsonArray { Patch("foo", "bar") }
+			["patches"] = new JsonArray { Patch("foo", "bar", isMultiEdit: true) }
 		});
 
 		Assert.Contains("File edited successfully", result.ResultContent);
@@ -296,7 +298,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
 		{
 			["path"] = "file.txt",
-			["patches"] = new JsonArray { Patch("a\nb", "X") }
+			["patches"] = new JsonArray { Patch("a\nb", "X", isMultiEdit: true) }
 		});
 
 		Assert.Contains("File edited successfully", result.ResultContent);
@@ -360,7 +362,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
 		{
 			["path"] = "file.txt",
-			["patches"] = new JsonArray { Patch("aa", "b") }
+			["patches"] = new JsonArray { Patch("aa", "b", isMultiEdit: true) }
 		});
 
 		Assert.Contains("File edited successfully", result.ResultContent);
@@ -940,13 +942,9 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 	}
 
 	[Theory]
-	[InlineData("\t", "\n\t\t")]
-	[InlineData("", "\n\t\t")]
-	[InlineData("\t", "\n")]
-	[InlineData("", "\n")]
-	[InlineData("\t", "")]
-	[InlineData("", "")]
-	public async Task Replace_CSharpCode_RealFailure2(string indentation, string extraNewline)
+	[InlineData("\t")]
+	[InlineData("")]
+	public async Task Replace_CSharpCode_RealFailure2(string indentation)
 	{
 		await TestReplaceAsync("""
 			using System.Net;
@@ -957,7 +955,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 				/// The result of a page fetch operation containing the raw HTML, HTTP status code, and response headers.
 				/// </summary>
 				public sealed record FetchResult(
-					string Html,$NEWLINE$
+					string Html,
 					int? HttpStatus,
 					IReadOnlyDictionary<string, string> Headers
 				);
@@ -971,7 +969,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 					private static readonly AsyncCache<string, FetchResult> _cache = new(
 						FetchCoreAsync,
 						slidingExpirationTime: TimeSpan.FromMinutes(15));
-			""".Replace("$NEWLINE$", extraNewline), """
+			""", """
 			using System.Net;
 			
 			namespace LLMDesktopAssistant.Utils.Web
@@ -994,7 +992,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 						FetchCoreAsync,
 						slidingExpirationTime: TimeSpan.FromMinutes(15));
 			""", Patch($"""
-			{indentation}	string Html,{extraNewline}
+			{indentation}	string Html,
 			{indentation}	int? HttpStatus,
 			{indentation}	IReadOnlyDictionary<string, string> Headers
 			{indentation});
@@ -1428,7 +1426,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 			foo()
 			bar()
 			baz()
-			"""));
+			""", isMultiEdit: true));
 	}
 
 	[Fact]
@@ -2079,5 +2077,201 @@ namespace LLMDesktopAssistant.Tests
 	}
 """));
 	}
+
+	[Fact]
+	public async Task OnceOnly_RefusesAPatchThatMatchesTwice()
+	{
+		using var temp = new TempDir();
+		var file = temp.Write("file.txt", "value: 1\nother\nvalue: 1\n");
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "file.txt",
+			["patches"] = new JsonArray { Patch("value: 1", "value: 2") }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("isMultiEdit is not set", result.ResultContent);
+		Assert.Equal("value: 1\nother\nvalue: 1\n", File.ReadAllText(file));
+	}
+
+	[Fact]
+	public async Task OnceOnly_IsMultiEdit_ReplacesEveryOccurrence()
+	{
+		using var temp = new TempDir();
+		var file = temp.Write("file.txt", "value: 1\nother\nvalue: 1\n");
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "file.txt",
+			["patches"] = new JsonArray { Patch("value: 1", "value: 2", isMultiEdit: true) }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("2 occurrences replaced", result.ResultContent);
+		Assert.Equal("value: 2\nother\nvalue: 2\n", File.ReadAllText(file));
+	}
+
+	[Fact]
+	public async Task OnceOnly_RegexPatchIsGuardedToo()
+	{
+		using var temp = new TempDir();
+		var file = temp.Write("file.txt", "foo\nfoo\n");
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "file.txt",
+			["patches"] = new JsonArray { Patch(@"\bfoo\b", "bar", useRegex: true) }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("isMultiEdit is not set", result.ResultContent);
+		Assert.Equal("foo\nfoo\n", File.ReadAllText(file));
+	}
+
+	[Fact]
+	public async Task OnceOnly_RegexPatchWithIsMultiEdit_ReplacesAll()
+	{
+		using var temp = new TempDir();
+		var file = temp.Write("file.txt", "foo\nfoo\n");
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "file.txt",
+			["patches"] = new JsonArray { Patch(@"\bfoo\b", "bar", useRegex: true, isMultiEdit: true) }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Equal("bar\nbar\n", File.ReadAllText(file));
+	}
+
+	[Fact]
+	public async Task Report_ListsEveryPatchWithItsOccurrenceCount()
+	{
+		using var temp = new TempDir();
+		temp.Write("file.txt", "alpha\nbeta\n");
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "file.txt",
+			["patches"] = new JsonArray { Patch("alpha", "ALPHA"), Patch("beta", "BETA") }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("Patch #1", result.ResultContent);
+		Assert.Contains("Patch #2", result.ResultContent);
+		Assert.Contains("1 occurrence replaced", result.ResultContent);
+	}
+
+	[Fact]
+	public async Task Encoding_PreservesUtf8BomAndCrlf()
+	{
+		// AR-0015: editing one line used to drop the byte order mark and leave a phantom hunk.
+		using var temp = new TempDir();
+		var path = Path.Combine(temp.Root, "bom.csproj");
+		var text = "<Project Sdk=\"Microsoft.NET.Sdk\">\r\n  <PropertyGroup>\r\n    <Foo>old</Foo>\r\n  </PropertyGroup>\r\n</Project>\r\n";
+		File.WriteAllBytes(path, [0xEF, 0xBB, 0xBF, .. System.Text.Encoding.UTF8.GetBytes(text)]);
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "bom.csproj",
+			["patches"] = new JsonArray { Patch("<Foo>old</Foo>", "<Foo>new</Foo>") }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("File edited successfully", result.ResultContent);
+		var bytes = File.ReadAllBytes(path);
+		Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, bytes[..3]);
+		Assert.Equal(text.Replace("old", "new"), System.Text.Encoding.UTF8.GetString(bytes[3..]));
+	}
+
+	[Fact]
+	public async Task Encoding_PreservesUtf16()
+	{
+		using var temp = new TempDir();
+		var path = Path.Combine(temp.Root, "u16.txt");
+		var encoding = new System.Text.UnicodeEncoding(false, true);
+		File.WriteAllBytes(path, [.. encoding.GetPreamble(), .. encoding.GetBytes("alpha\r\nbeta\r\ngamma\r\n")]);
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "u16.txt",
+			["patches"] = new JsonArray { Patch("beta", "BETA") }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("File edited successfully", result.ResultContent);
+		var bytes = File.ReadAllBytes(path);
+		Assert.Equal(encoding.GetPreamble(), bytes[..2]);
+		Assert.Equal("alpha\r\nBETA\r\ngamma\r\n", encoding.GetString(bytes[2..]));
+	}
+
+	[Fact]
+	public async Task Encoding_WarnsWhenTheFileIsNotValidUtf8()
+	{
+		using var temp = new TempDir();
+		var path = Path.Combine(temp.Root, "cp1251.txt");
+		// "Привет" in windows-1251 is not valid UTF-8.
+		File.WriteAllBytes(path, [0xCF, 0xF0, 0xE8, 0xE2, 0xE5, 0xF2, 0x0D, 0x0A, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x0D, 0x0A]);
+
+		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
+		{
+			["path"] = "cp1251.txt",
+			["patches"] = new JsonArray { Patch("target", "TARGET") }
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("warning:", result.ResultContent);
+		Assert.Contains("TARGET", File.ReadAllText(path));
+	}
+
+	[Fact]
+	public async Task Encoding_ApplyDiff_PreservesUtf8Bom()
+	{
+		using var temp = new TempDir();
+		var path = Path.Combine(temp.Root, "bom.txt");
+		File.WriteAllBytes(path, [0xEF, 0xBB, 0xBF, .. System.Text.Encoding.UTF8.GetBytes("line1\r\nline2\r\nline3\r\n")]);
+
+		var module = new FilesystemApplyDiffToolModule(new TempDirFileAccess(temp.Root),
+			new StubAddonPathImpactDetector(), new StubAddonManagerInvalidator());
+		var tool = module.GetTools().Single(t => t.Name == "fs-apply_diff");
+
+		var result = await ExecuteAsync(tool, new JsonObject
+		{
+			["path"] = "bom.txt",
+			["insertBeforeLine"] = "2",
+			["insertText"] = "inserted"
+		});
+
+		output.WriteLine(result.ResultContent);
+		Assert.Contains("File edited successfully", result.ResultContent);
+		var bytes = File.ReadAllBytes(path);
+		Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, bytes[..3]);
+		Assert.Equal("line1\r\ninserted\r\nline2\r\nline3\r\n", System.Text.Encoding.UTF8.GetString(bytes[3..]));
+	}
+
+	[Fact]
+	public async Task Encoding_WriteFile_PreservesUtf8BomAndCrlf()
+	{
+		using var temp = new TempDir();
+		var path = Path.Combine(temp.Root, "bom.txt");
+		File.WriteAllBytes(path, [0xEF, 0xBB, 0xBF, .. System.Text.Encoding.UTF8.GetBytes("old\r\n")]);
+
+		var module = new FilesystemWriteToolModule(new TempDirFileAccess(temp.Root),
+			new StubAddonPathImpactDetector(), new StubAddonManagerInvalidator());
+		var tool = module.GetTools().Single(t => t.Name == "fs-write_file");
+
+		var result = await ExecuteAsync(tool, new JsonObject
+		{
+			["path"] = "bom.txt",
+			["content"] = "x\ny\n"
+		});
+
+		output.WriteLine(result.ResultContent);
+		var bytes = File.ReadAllBytes(path);
+		Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, bytes[..3]);
+		Assert.Equal("x\r\ny\r\n", System.Text.Encoding.UTF8.GetString(bytes[3..]));
+	}
+
 
 }

@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
@@ -18,7 +17,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
 	/// <summary>
 	/// Universal file editing tool that applies a list of replacement patches to a text file.
-	/// Supports plain text (with flexible whitespace matching) and regex patterns.
+	/// Supports plain text (with flexible whitespace matching and file-relative indentation) and
+	/// regex patterns, refuses ambiguous patches, and writes the file back in its own encoding.
 	/// </summary>
 	[ToolModule]
 	public class FilesystemEditToolModule : FileSystemEditBaseToolModule
@@ -44,34 +44,51 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Description = """
 					Edits a text file by applying a list of replacement patches.
 
-					Each patch replaces ALL occurrences of its `match` with the `replace` text.
-					Patches are applied sequentially: each patch sees the result of the previous ones.
-					If a patch finds no occurrences, it is skipped and reported in the result вЂ”
-					all other patches are still applied.
+					Every patch must be unambiguous:
+					- `match` found more than once refuses the patch unless `isMultiEdit` is true;
+					- `match` found nowhere is reported and skipped;
+					- the other patches of the call are still applied.
 
-					Plain text mode (useRegex = false, default):
-					- `match` is treated as a literal string (can be multi-line)
-					- Leading/trailing whitespace and common indentation are ignored in matching:
-					  `match: "public class Foo"` matches `"    public class Foo"` in the file
-					- Text before and after the match is preserved
+					Matching is lenient: leading and trailing whitespace and common indentation of
+					`match` are ignored, and the text before and after it on the matched lines is kept.
+
+					Writing is relative, not verbatim. The first line of `replace` lands where the match
+					starts, and every following line moves by one and the same shift, so the block keeps
+					the shape you wrote. The shift is read from the second line, never the first:
+
+						file:     \t\tName = item,
+						replace:  Sync = A,
+								  \t\tName = item,
+						result:   \t\tSync = A,
+								  \t\tName = item,
+
+					With a multi-line `match` the second matched line of the file sets the shift, so write
+					the lines after the first the way you would copy them out of the file. With a one-line
+					`match` there is nothing to align against: the shallowest continuation line lands at the
+					match's own indentation and the rest follow it. So either write them at the columns the
+					file actually uses, or write the whole block flat at column zero.
+
+					A one-line patch cannot express "one level deeper than the first line": those columns
+					are indistinguishable from the file's own, so they collapse onto the match's level.
+					When you open a new nesting level, spell the level out in columns and check the diff.
+
+					An empty `replace` deletes: whole matched lines go away together with their line
+					breaks, and no indentation is left where the block used to be.
 
 					Regex mode (useRegex = true):
-					- `match` is interpreted as a .NET regular expression
-					- `replace` supports standard replacement syntax: $1, ${name}, $&, $$, etc.
-					- To delete a match, pass an empty `replace` string
+					- `match` is a .NET regular expression
+					- `replace` is inserted verbatim, with $1, ${name}, $&, $$, etc.
+					- use it when you need exact characters instead of a shape
 
 					Examples:
-					- Replace text (plain):
-						fs-edit(path: "file.cs", patches: [{ match: "public class Foo", replace: "public class Bar" }])
-					- Regex rename with capture group:
+					- Insert a line above an existing one:
+						fs-edit(path: "file.cs", patches: [{ match: "Name = item,", replace: "Sync = A,\n\t\tName = item," }])
+					- Replace every occurrence on purpose:
+						fs-edit(path: "file.cs", patches: [{ match: "foo", replace: "bar", isMultiEdit: true }])
+					- Delete a member:
+						fs-edit(path: "file.cs", patches: [{ match: "public void Old() {\n\t\tBody();\n\t}" }])
+					- Regex rename with a capture group:
 						fs-edit(path: "file.cs", patches: [{ match: "class (\\w+)", replace: "class Renamed_$1", useRegex: true }])
-					- Delete all matches (empty replace):
-						fs-edit(path: "file.cs", patches: [{ match: "Console\\.WriteLine", replace: "", useRegex: true }])
-					- Multiple patches in one call:
-						fs-edit(path: "file.cs", patches: [
-							{ match: "foo", replace: "bar" },
-							{ match: "class (\\w+)", replace: "class C_$1", useRegex: true }
-						])
 					""",
 				NameKey = Locale.GetKey("tool.name.fs-edit"),
 				DescriptionKey = Locale.GetKey("tool.description.fs-edit"),
@@ -84,7 +101,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		}
 
 		/// <summary>
-		/// A single edit operation that replaces all occurrences of a match with a replacement text.
+		/// A single edit operation that replaces every occurrence of a match with a replacement text.
 		/// </summary>
 		public sealed class EditPatch
 		{
@@ -124,7 +141,27 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[DefaultValue(false)]
 			[Description("If true, multiline mode is used when matching. This affects regex patterns only.")]
 			public bool isRegexMultiline { get; init; } = false;
+
+			/// <summary>
+			/// Gets or sets a value indicating whether the patch may replace more than one occurrence.
+			/// </summary>
+			/// <remarks>
+			/// A match found twice is ambiguous: the author either knows and wants both places changed,
+			/// or made a match too short to be safe. Without this flag the patch is refused instead of
+			/// silently changing a place nobody looked at.
+			/// </remarks>
+			[DefaultValue(false)]
+			[Description("If true, every occurrence of 'match' is replaced. If false (default), a match found more than once refuses the patch.")]
+			public bool isMultiEdit { get; init; } = false;
 		}
+
+		/// <summary>
+		/// The outcome of one pass over the patch list.
+		/// </summary>
+		/// <param name="Content">The content after every patch that landed.</param>
+		/// <param name="Errors">The patches that were not applied, each with the reason.</param>
+		/// <param name="Applied">The patches that landed, each with its occurrence count.</param>
+		private sealed record PatchRun(string Content, List<string> Errors, List<string> Applied);
 
 		private string? CheckArgs(string path, string? fullPath, List<EditPatch> patches)
 		{
@@ -149,6 +186,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		private sealed class FSWriteSharedContext : DiffSharedContext
 		{
 			public IReadOnlyList<string> PatchErrors { get; init; } = [];
+
+			public IReadOnlyList<string> AppliedPatches { get; init; } = [];
 		}
 
 		private StreamingToolAnalysisResult EditStreaming(
@@ -186,28 +225,27 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			var originalContent = File.ReadAllText(fullPath!);
-			var normalizedContent = NormalizeLineEndings(originalContent);
-			var (newContent, patchErrors) = ApplyPatches(normalizedContent, patches, tabSize, cancellationToken);
-			newContent = PreserveLineEndings(originalContent, newContent);
+			var source = TextFileContent.Read(fullPath!);
+			var originalContent = source.Text;
+			var run = ApplyPatches(originalContent, patches, tabSize, cancellationToken);
 
-			if (newContent == originalContent)
+			if (run.Content == originalContent)
 			{
 				sharedCtx = new FSWriteSharedContext
 				{
 					Path = fullPath!,
 					AddonKind = addonKind,
+					Source = source,
 					OriginalContent = originalContent,
 					PreviewedContent = originalContent,
 					FullDiff = EmptyDiff(),
-					PatchErrors = patchErrors
+					PatchErrors = run.Errors,
+					AppliedPatches = run.Applied
 				};
 
 				ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
 					LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
-				ctx.Call.SetResult(patchErrors.Count > 0
-					? $"No changes were made to the file.\n{string.Join("\n", patchErrors)}"
-					: "No changes were made to the file. The specified matches were not found.");
+				ctx.Call.SetResult(DescribeNoChange(run));
 
 				return new PreviewToolExecutionResult
 				{
@@ -218,16 +256,18 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			var (diffView, fullDiff) = PrepareDiff(ctx, path, originalContent, newContent);
+			var (diffView, fullDiff) = PrepareDiff(ctx, path, originalContent, run.Content);
 			sharedCtx = new FSWriteSharedContext
 			{
 				Path = fullPath!,
 				AddonKind = addonKind,
+				Source = source,
 				OriginalContent = originalContent,
-				PreviewedContent = newContent,
+				PreviewedContent = run.Content,
 				FullDiff = fullDiff,
 				DiffView = diffView,
-				PatchErrors = patchErrors
+				PatchErrors = run.Errors,
+				AppliedPatches = run.Applied
 			};
 
 			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
@@ -253,7 +293,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			CancellationToken cancellationToken,
 			[Description("The path to the file to edit.")]
 			string path,
-			[Description("The list of patches to apply. Each patch replaces all occurrences of its match with the replacement text.")]
+			[Description("The list of patches to apply. Each patch replaces its match, and only if that match is unambiguous.")]
 			List<EditPatch> patches,
 			[Description("The number of columns a tab character occupies when measuring indentation (default: 4).")]
 			int tabSize = 4)
@@ -271,23 +311,24 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Failed;
 				}
 
-				var originalContent = sharedCtx?.OriginalContent ?? File.ReadAllText(fullPath!);
+				var source = sharedCtx?.Source ?? TextFileContent.Read(fullPath!);
+				var originalContent = sharedCtx?.OriginalContent ?? source.Text;
 				var newContent = sharedCtx?.PreviewedContent;
-				var patchErrors = sharedCtx?.PatchErrors ?? [];
+				IReadOnlyList<string> patchErrors = sharedCtx?.PatchErrors ?? [];
+				IReadOnlyList<string> appliedPatches = sharedCtx?.AppliedPatches ?? [];
 				if (newContent == null)
 				{
-					var normalizedContent = NormalizeLineEndings(originalContent);
-					(newContent, patchErrors) = ApplyPatches(normalizedContent, patches, tabSize, cancellationToken);
-					newContent = PreserveLineEndings(originalContent, newContent);
+					var run = ApplyPatches(originalContent, patches, tabSize, cancellationToken);
+					newContent = run.Content;
+					patchErrors = run.Errors;
+					appliedPatches = run.Applied;
 				}
 
 				if (newContent == originalContent)
 				{
 					ctx.Call.SetStatus(MaterialIconKind.FileQuestion,
 						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
-					ctx.Call.SetResult(patchErrors.Count > 0
-						? $"No changes were made to the file.\n{string.Join("\n", patchErrors)}"
-						: "No changes were made to the file. The specified matches were not found.");
+					ctx.Call.SetResult(DescribeNoChange(patchErrors, appliedPatches));
 					return ToolExecutionResult.Succeeded;
 				}
 
@@ -309,34 +350,16 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Succeeded;
 				}
 
-				await File.WriteAllTextAsync(fullPath!, result.NewContent, cancellationToken);
+				await source.WriteAsync(fullPath!, result.NewContent, cancellationToken);
 				_addonInvalidator.Invalidate(addonKind);
 
 				var diff = result.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
+				var warning = source.GetDecodingWarning();
 
-				string notAppliedText = patchErrors.Count > 0
-					? $"""
-						
-						[NOT APPLIED PATCHES]:
-						{string.Join("\n", patchErrors)}
-						"""
-					: string.Empty;
-
-				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
-				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
-					$"""
-					File edited successfully. *(-{removed} +{added})*
-					[APPLIED CHANGES]:
-					{diff}
-					[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-					{result.RejectedDiff}{notAppliedText}
-					""" :
-					$"""
-					File edited successfully. *(-{removed} +{added})*
-					[APPLIED CHANGES]:
-					{diff}{notAppliedText}
-					""");
+				ctx.Call.SetStatus(warning != null ? MaterialIconKind.FileAlert : MaterialIconKind.FileDocumentEdit,
+					$"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
+				ctx.Call.SetResult(BuildReport(removed, added, diff, result.RejectedDiff, patchErrors, appliedPatches, warning));
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (OperationCanceledException)
@@ -353,65 +376,140 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 		}
 
-		private static (string NewContent, List<string> PatchErrors) ApplyPatches(
+		/// <summary>
+		/// Builds the model-facing report: what landed, what did not and why, the diff, and the
+		/// encoding warning when the file could not be decoded cleanly.
+		/// </summary>
+		private static string BuildReport(
+			int removed,
+			int added,
+			HunkGroups diff,
+			HunkGroups rejectedDiff,
+			IReadOnlyList<string> patchErrors,
+			IReadOnlyList<string> appliedPatches,
+			string? warning)
+		{
+			var report = new System.Text.StringBuilder();
+			report.Append($"File edited successfully. *(-{removed} +{added})*");
+
+			AppendSection(report, "[PATCHES APPLIED]:", appliedPatches);
+			report.AppendLine();
+			report.AppendLine("[APPLIED CHANGES]:");
+			report.AppendLine(diff.ToString());
+
+			if (rejectedDiff.HasGroups)
+			{
+				report.AppendLine("[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:");
+				report.AppendLine(rejectedDiff.ToString());
+			}
+
+			AppendSection(report, "[NOT APPLIED PATCHES]:", patchErrors);
+
+			if (warning != null)
+				report.AppendLine(warning);
+
+			return report.ToString();
+		}
+
+		private static void AppendSection(System.Text.StringBuilder report, string title, IReadOnlyList<string> lines)
+		{
+			if (lines.Count == 0)
+				return;
+
+			report.AppendLine();
+			report.AppendLine(title);
+			foreach (var line in lines)
+				report.AppendLine(line);
+		}
+
+		private static string DescribeNoChange(PatchRun run)
+			=> DescribeNoChange(run.Errors, run.Applied);
+
+		private static string DescribeNoChange(IReadOnlyList<string> errors, IReadOnlyList<string> applied)
+		{
+			if (errors.Count > 0)
+				return $"No changes were made to the file.\n{string.Join("\n", errors)}";
+
+			if (applied.Count > 0)
+				return $"No changes were made to the file.\n{string.Join("\n", applied)}";
+
+			return "No changes were made to the file. The specified matches were not found.";
+		}
+
+		private static PatchRun ApplyPatches(
 			string content,
 			List<EditPatch> patches,
 			int tabSize,
 			CancellationToken cancellationToken)
 		{
-			var patchErrors = new List<string>();
+			var errors = new List<string>();
+			var applied = new List<string>();
 			var current = content;
 
-			for (int i = 0; i < patches.Count; i++)
+			for (var i = 0; i < patches.Count; i++)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				var patch = patches[i];
 
-				string? newContent;
-				try
+				var patch = patches[i];
+				var label = $"Patch #{i + 1} (match: \"{patch.match}\")";
+
+				if (patch.useRegex)
 				{
-					newContent = patch.useRegex
-						? ApplyRegexPatch(current, patch)
-						: ApplyPlainPatch(current, patch, tabSize);
-				}
-				catch (ArgumentException ex)
-				{
-					patchErrors.Add($"Patch #{i + 1} (match: \"{patch.match}\"): invalid pattern: {ex.Message}");
+					Regex regex;
+					try
+					{
+						regex = new Regex(patch.match, RegexOptions.Compiled
+							| (patch.ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None)
+							| (patch.isRegexMultiline ? RegexOptions.Multiline : RegexOptions.None));
+					}
+					catch (ArgumentException ex)
+					{
+						errors.Add($"{label}: invalid pattern: {ex.Message}");
+						continue;
+					}
+
+					var count = regex.Matches(current).Count;
+					if (IsRefused(label, count, patch, errors))
+						continue;
+
+					current = regex.Replace(current, patch.replace);
+					applied.Add($"{label}: {DescribeOccurrences(count)} replaced.");
 					continue;
 				}
 
-				if (newContent == null)
-					patchErrors.Add($"Patch #{i + 1} (match: \"{patch.match}\"): no occurrences found.");
-				else
-					current = newContent;
+				var application = FilePatchedReplacer.Replace(current, patch.match, patch.replace, tabSize, patch.ignoreCase);
+				if (IsRefused(label, application.Occurrences, patch, errors))
+					continue;
+
+				current = application.Content!;
+				applied.Add($"{label}: {DescribeOccurrences(application.Occurrences)} replaced.");
 			}
 
-			return (current, patchErrors);
+			return new PatchRun(current, errors, applied);
 		}
 
-		private static string? ApplyPlainPatch(string content, EditPatch patch, int tabSize)
+		/// <summary>
+		/// Decides whether a patch must be refused and records why. A match found more than once is
+		/// ambiguous, so it lands only when the model asked for every occurrence explicitly.
+		/// </summary>
+		private static bool IsRefused(string label, int occurrences, EditPatch patch, List<string> errors)
 		{
-			return FilePatchedReplacer.Replace(content, patch.match, patch.replace, tabSize, patch.ignoreCase);
+			if (occurrences == 0)
+			{
+				errors.Add($"{label}: no occurrences found.");
+				return true;
+			}
+
+			if (occurrences > 1 && !patch.isMultiEdit)
+			{
+				errors.Add($"{label}: found {occurrences} occurrences, isMultiEdit is not set.");
+				return true;
+			}
+
+			return false;
 		}
 
-		private static string? ApplyRegexPatch(string content, EditPatch patch)
-		{
-			var options = RegexOptions.Compiled
-				| (patch.ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None)
-				| (patch.isRegexMultiline ? RegexOptions.Multiline : RegexOptions.None);
-			var regex = new Regex(patch.match, options);
-
-			return regex.IsMatch(content) ? regex.Replace(content, patch.replace) : null;
-		}
-
-		private static string NormalizeLineEndings(string text)
-			=> text.Replace("\r\n", "\n").Replace("\r", "\n");
-
-		private static string PreserveLineEndings(string original, string modified)
-		{
-			if (original.Contains("\r\n") && !modified.Contains("\r\n"))
-				return modified.Replace("\n", "\r\n");
-			return modified;
-		}
+		private static string DescribeOccurrences(int count)
+			=> count == 1 ? "1 occurrence" : $"{count} occurrences";
 	}
 }

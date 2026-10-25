@@ -3,226 +3,300 @@ using System.Text;
 namespace LLMDesktopAssistant.Utils.Files;
 
 /// <summary>
-/// Applies plain-text replacement patches to file content with flexible whitespace handling.
-/// Matching ignores leading/trailing whitespace and common indentation; the replacement is
-/// re-indented to the file's own indentation, measured in columns with a configurable tab size.
+/// The outcome of applying one plain-text patch to a file's content.
 /// </summary>
+/// <param name="Content">The patched content, or <see langword="null"/> when nothing matched.</param>
+/// <param name="Occurrences">How many places the match was found in.</param>
+public readonly record struct PatchApplication(string? Content, int Occurrences)
+{
+	/// <summary>
+	/// Whether the match was found at least once.
+	/// </summary>
+	public bool Found => Occurrences > 0;
+}
+
+/// <summary>
+/// Applies plain-text replacement patches with lenient matching and file-relative indentation.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Matching is lenient: leading and trailing whitespace and common indentation of the patch are
+/// ignored, so a patch never has to reproduce the file's spacing. Text that surrounds the match is
+/// preserved.
+/// </para>
+/// <para>
+/// Writing is deliberately not verbatim, and - unlike the earlier implementation - it does not
+/// depend on how the match happened to be written either. The first replacement line lands on
+/// whatever preceded the match in the file; every following line is shifted by one and the same
+/// number of columns, so the replacement keeps exactly the shape it was written in. The shift comes
+/// from the smallest indentation among the replacement's lines <em>after</em> the first, which is
+/// skipped on purpose: models trained on verbatim-only editors write that line without indentation
+/// and indent the continuation lines the way the file does.
+/// </para>
+/// <para>
+/// An empty replacement deletes. Lines the match covered completely are removed together with their
+/// line breaks, so no indentation residue is left where the block used to be.
+/// </para>
+/// </remarks>
 public static class FilePatchedReplacer
 {
 	/// <summary>
-	/// Replaces all occurrences of <paramref name="match"/> with <paramref name="replace"/> in
-	/// <paramref name="content"/>, preserving the file's indentation and any text surrounding
-	/// the match on the matched lines.
+	/// Replaces every occurrence of <paramref name="match"/> with <paramref name="replace"/> in
+	/// <paramref name="content"/>, re-basing the replacement onto the file's own indentation.
 	/// </summary>
 	/// <param name="content">The file content. Line endings are normalized internally.</param>
 	/// <param name="match">The literal text to search for (can span multiple lines).</param>
 	/// <param name="replace">The replacement text. An empty string deletes the match.</param>
 	/// <param name="tabSize">The number of columns a tab character occupies when measuring indentation.</param>
 	/// <param name="ignoreCase">Whether matching is case-insensitive.</param>
-	/// <returns>The modified content, or <see langword="null"/> if no occurrence was found.</returns>
-	public static string? Replace(string content, string match, string replace, int tabSize = 4, bool ignoreCase = false)
+	/// <returns>The patched content and the number of occurrences, or no content when nothing matched.</returns>
+	public static PatchApplication Replace(string content, string match, string replace, int tabSize = 4, bool ignoreCase = false)
 	{
 		var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		var matchLines = SplitLines(match);
-		var replaceLines = SplitLines(replace);
-		if (matchLines.Count == 0)
-			return null;
+		var matchLines = SplitLines(match).Select(l => l.Trim()).ToArray();
+		if (matchLines.Length == 0 || matchLines.All(l => l.Length == 0))
+			return new PatchApplication(null, 0);
 
+		var replaceLines = SplitLines(replace);
 		var fileLines = Normalize(content).Split('\n').ToList();
 
-		if (matchLines.Count == 1 && replaceLines.Count <= 1)
-			return ReplaceSingleLine(fileLines, matchLines[0].Trim(), replaceLines, comparison);
-
-		return ReplaceBlock(fileLines, matchLines, replaceLines, tabSize, comparison);
-	}
-
-	private static string? ReplaceSingleLine(
-		List<string> fileLines, string match, List<string> replaceLines, StringComparison comparison)
-	{
-		var foundAny = false;
-		for (int i = 0; i < fileLines.Count; i++)
+		if (replaceLines.Count == 0)
 		{
-			var newLine = ReplaceOccurrencesInLine(fileLines[i], match, replaceLines, comparison);
-			if (newLine != fileLines[i])
-			{
-				foundAny = true;
-				fileLines[i] = newLine;
-			}
+			return matchLines.Length == 1
+				? ApplyInlineDelete(fileLines, matchLines[0], comparison)
+				: ApplyBlockDelete(fileLines, matchLines, comparison);
 		}
 
-		return foundAny ? string.Join('\n', fileLines) : null;
+		if (matchLines.Length == 1 && replaceLines.Count == 1)
+			return ApplyInline(fileLines, matchLines[0], replaceLines[0], comparison);
+
+		return ApplyBlock(fileLines, matchLines, replaceLines, tabSize, comparison);
 	}
 
-	private static string ReplaceOccurrencesInLine(
-		string line, string match, List<string> replacementLines, StringComparison comparison)
+	private static PatchApplication ApplyInline(
+		List<string> fileLines, string match, string replacement, StringComparison comparison)
+	{
+		var occurrences = 0;
+		for (var i = 0; i < fileLines.Count; i++)
+		{
+			var line = fileLines[i];
+			var updated = RewriteLine(line, match, replacement, comparison, ref occurrences);
+			if (updated != line)
+				fileLines[i] = updated;
+		}
+
+		return Result(fileLines, occurrences);
+	}
+
+	private static PatchApplication ApplyInlineDelete(
+		List<string> fileLines, string match, StringComparison comparison)
+	{
+		var occurrences = 0;
+		for (var i = 0; i < fileLines.Count; i++)
+		{
+			var line = fileLines[i];
+			var updated = RewriteLine(line, match, "", comparison, ref occurrences);
+			if (updated == line)
+				continue;
+
+			if (string.IsNullOrWhiteSpace(updated))
+			{
+				// A single-line match deletes content, not structure: the line stays, emptied, so the
+				// file keeps its shape and no indentation residue is left behind.
+				fileLines[i] = "";
+				continue;
+			}
+
+			fileLines[i] = updated;
+		}
+
+		return Result(fileLines, occurrences);
+	}
+
+	private static PatchApplication ApplyBlock(
+		List<string> fileLines, string[] matchLines, List<string> replaceLines,
+		int tabSize, StringComparison comparison)
+	{
+		if (fileLines.Count < matchLines.Length)
+			return new PatchApplication(null, 0);
+
+		var occurrences = 0;
+
+		for (var i = 0; i <= fileLines.Count - matchLines.Length; i++)
+		{
+			if (!TryMatchBlock(fileLines, i, matchLines, comparison, out var prefixes, out var suffixes))
+				continue;
+
+			occurrences++;
+
+			var anchor = fileLines[i];
+			var shift = GetShift(fileLines, i, matchLines.Length, replaceLines, tabSize);
+			var replacement = BuildBlock(replaceLines, shift, anchor, tabSize, prefixes, suffixes);
+
+			fileLines.RemoveRange(i, matchLines.Length);
+			fileLines.InsertRange(i, replacement);
+
+			// Continue after the replaced block; the loop's i++ moves past it.
+			i += replacement.Count - 1;
+		}
+
+		return Result(fileLines, occurrences);
+	}
+
+	private static PatchApplication ApplyBlockDelete(
+		List<string> fileLines, string[] matchLines, StringComparison comparison)
+	{
+		if (fileLines.Count < matchLines.Length)
+			return new PatchApplication(null, 0);
+
+		var occurrences = 0;
+
+		for (var i = 0; i <= fileLines.Count - matchLines.Length; i++)
+		{
+			if (!TryMatchBlock(fileLines, i, matchLines, comparison, out var prefixes, out var suffixes))
+				continue;
+
+			occurrences++;
+
+			List<string> replacement;
+			if (prefixes.All(p => !HasNonWhitespace(p)) && suffixes.All(s => !HasNonWhitespace(s)))
+			{
+				// The match covered whole lines: they go away with their line breaks.
+				replacement = [];
+			}
+			else
+			{
+				// The match is a fragment: keep the text before it and after it, joined.
+				replacement = [prefixes[0] + suffixes[^1]];
+			}
+
+			fileLines.RemoveRange(i, matchLines.Length);
+			if (replacement.Count > 0)
+				fileLines.InsertRange(i, replacement);
+
+			i += replacement.Count - 1;
+		}
+
+		return Result(fileLines, occurrences);
+	}
+
+	/// <summary>
+	/// Reproduces the replacement block at one matched position: the first line lands on the file's
+	/// own prefix, the rest follow a single shift derived from the patch's base indentation.
+	/// </summary>
+	private static List<string> BuildBlock(
+		List<string> replaceLines, int shift, string anchor, int tabSize, string[] prefixes, string[] suffixes)
+	{
+		var block = new List<string>(replaceLines.Count);
+
+		for (var j = 0; j < replaceLines.Count; j++)
+		{
+			var line = replaceLines[j];
+			string rebuilt;
+
+			if (string.IsNullOrWhiteSpace(line))
+			{
+				rebuilt = "";
+			}
+			else if (j == 0)
+			{
+				var prefix = prefixes[0];
+				// The file already carries this line's indentation; a second one would be doubled.
+				rebuilt = prefix + (IsIndentation(prefix) ? line.TrimStart() : line);
+			}
+			else
+			{
+				rebuilt = MakeIndent(GetIndentation(line, tabSize) + shift, anchor, tabSize) + line.TrimStart();
+			}
+
+			// Text outside the match (e.g. a trailing comment) is never part of the match and must not
+			// be deleted. The last matched line's tail closes the block; a middle line's tail rides on
+			// the replacement line at the same offset, which is where the author saw it.
+			if (j == replaceLines.Count - 1)
+				rebuilt += suffixes[^1];
+			else if (j < suffixes.Length - 1 && HasNonWhitespace(suffixes[j]))
+				rebuilt += suffixes[j];
+
+			block.Add(rebuilt);
+		}
+
+		return block;
+	}
+
+	private static bool TryMatchBlock(
+		List<string> fileLines, int start, string[] matchLines, StringComparison comparison,
+		out string[] prefixes, out string[] suffixes)
+	{
+		prefixes = new string[matchLines.Length];
+		suffixes = new string[matchLines.Length];
+
+		for (var j = 0; j < matchLines.Length; j++)
+		{
+			var line = fileLines[start + j];
+
+			if (matchLines[j].Length == 0)
+			{
+				// A blank patch line stands for a blank file line - it must not swallow real content.
+				if (!string.IsNullOrWhiteSpace(line))
+					return false;
+
+				prefixes[j] = line;
+				suffixes[j] = "";
+				continue;
+			}
+
+			var index = line.IndexOf(matchLines[j], comparison);
+			if (index < 0)
+				return false;
+
+			var prefix = line[..index];
+			var suffix = line[(index + matchLines[j].Length)..];
+
+			// Non-whitespace on both sides of the match would make the replacement position ambiguous.
+			if (HasNonWhitespace(prefix) && HasNonWhitespace(suffix))
+				return false;
+
+			prefixes[j] = prefix;
+			suffixes[j] = suffix;
+		}
+
+		return true;
+	}
+
+	private static string RewriteLine(
+		string line, string match, string replacement, StringComparison comparison, ref int occurrences)
 	{
 		var result = new StringBuilder();
-		int pos = 0;
+		var position = 0;
+
 		while (true)
 		{
-			int index = line.IndexOf(match, pos, comparison);
+			var index = line.IndexOf(match, position, comparison);
 			if (index < 0)
 				break;
 
-			result.Append(line, pos, index - pos);
+			occurrences++;
+			result.Append(line, position, index - position);
 
-			var prefix = line[pos..index];
-			var firstLine = replacementLines.Count > 0 ? replacementLines[0] : "";
-			// If the text before the match is pure indentation, keep the file's indentation
-			// and strip the replacement's own leading whitespace to avoid doubling it
-			result.Append(IsIndentation(prefix) ? firstLine.TrimStart() : firstLine);
+			var prefix = line[position..index];
+			// If the text before the match is pure indentation, the file's indentation wins and the
+			// replacement's own leading whitespace is dropped to avoid doubling it.
+			result.Append(IsIndentation(prefix) ? replacement.TrimStart() : replacement);
 
-			for (int k = 1; k < replacementLines.Count; k++)
-			{
-				result.Append('\n');
-				result.Append(replacementLines[k]);
-			}
-
-			pos = index + match.Length;
+			position = index + match.Length;
 		}
 
-		if (pos == 0)
+		if (position == 0)
 			return line;
 
-		result.Append(line, pos, line.Length - pos);
+		result.Append(line, position, line.Length - position);
 		return result.ToString();
 	}
 
-	private static string? ReplaceBlock(
-		List<string> fileLines, List<string> matchLines, List<string> replaceLines, int tabSize, StringComparison comparison)
-	{
-		if (fileLines.Count < matchLines.Count)
-			return null;
-
-		var matchTrimmed = matchLines.Select(l => l.Trim()).ToArray();
-		var matchClean = CalculateIndents(matchLines, tabSize, out var matchMin);
-		var replaceClean = CalculateIndents(replaceLines, tabSize, out var replaceMin);
-		var columnMin = Math.Min(matchMin, replaceMin);
-		CleanIndents(matchLines, tabSize, matchClean, columnMin);
-		CleanIndents(replaceLines, tabSize, replaceClean, columnMin);
-		var foundAny = false;
-
-		for (int i = 0; i <= fileLines.Count - matchLines.Count; i++)
-		{
-			var prefixes = new string[matchLines.Count];
-			var suffixes = new string[matchLines.Count];
-			var blockMatched = true;
-			for (int j = 0; j < matchLines.Count; j++)
-			{
-				var line = fileLines[i + j];
-				var index = line.IndexOf(matchTrimmed[j], comparison);
-				if (index < 0)
-				{
-					blockMatched = false;
-					break;
-				}
-
-				prefixes[j] = line[..index];
-				suffixes[j] = line[(index + matchTrimmed[j].Length)..];
-
-				// The match must be aligned with the line: non-whitespace text on both
-				// sides of the match would make the replacement position ambiguous
-				if (HasNonWhitespace(prefixes[j]) && HasNonWhitespace(suffixes[j]))
-				{
-					blockMatched = false;
-					break;
-				}
-			}
-
-			if (!blockMatched)
-				continue;
-
-			foundAny = true;
-
-			List<string> newBlockLines;
-			if (replaceLines.Count == 0)
-			{
-				// Delete: keep the text before the match (first line) and after it (last line)
-				newBlockLines = [prefixes[0] + suffixes[^1]];
-			}
-			else
-			{
-				newBlockLines = BuildReplacement(fileLines, i, matchLines, replaceLines, matchClean, replaceClean, prefixes, suffixes, tabSize);
-			}
-
-			fileLines.RemoveRange(i, matchLines.Count);
-			fileLines.InsertRange(i, newBlockLines);
-
-			// Continue scanning after the replaced block; the for-loop's i++ moves past it
-			i += newBlockLines.Count - 1;
-		}
-
-		return foundAny ? string.Join('\n', fileLines) : null;
-	}
-
-	private static List<string> BuildReplacement(
-		List<string> fileLines, int start, List<string> matchLines, List<string> replaceLines,
-		int[] matchClean, int[] replaceClean, string[] prefixes, string[] suffixes, int tabSize)
-	{
-		var hasNonWhitespacePrefix = HasNonWhitespace(prefixes[0]);
-		// The vertical offset between the file's and the match's base indentation, measured
-		// on the first line. When it is zero the file and the patch use the same indentation
-		// and the replacement lines keep their own whitespace; otherwise they are re-aligned
-		// to the file line by line.
-		var shift = GetIndentation(fileLines[start], tabSize) - matchClean[0];
-		var result = new List<string>(replaceLines.Count);
-
-		for (int j = 0; j < replaceLines.Count; j++)
-		{
-			string line;
-			if (string.IsNullOrWhiteSpace(replaceLines[j]))
-			{
-				line = "";
-			}
-			else if (j == 0 && hasNonWhitespacePrefix)
-			{
-				// A non-whitespace prefix (text before the match on the first line) is kept
-				// as-is and the first replacement line follows it without any indentation
-				line = prefixes[0] + replaceLines[j].TrimStart();
-			}
-			else if (shift == 0)
-			{
-				line = replaceLines[j];
-			}
-			else
-			{
-				// Align each replacement line with the file: the file's indentation at the
-				// corresponding matched line plus the replacement's own depth relative to
-				// the match. The last replacement line is aligned with the last matched line
-				// (it usually closes the block); extra lines follow it too. Measured in
-				// columns so tabs and spaces can be mixed freely.
-				var mapped = j == replaceLines.Count - 1 ? matchLines.Count - 1 : Math.Min(j, matchLines.Count - 1);
-				string styleLine;
-				int targetColumns;
-				if (string.IsNullOrWhiteSpace(matchLines[mapped]))
-				{
-					// A blank matched line carries no indentation of its own; align the
-					// replacement line with the block's base indentation (the file's
-					// indentation of the first matched line) plus its own relative depth
-					styleLine = fileLines[start];
-					targetColumns = replaceClean[j] + shift;
-				}
-				else
-				{
-					styleLine = fileLines[start + mapped];
-					targetColumns = replaceClean[j] + GetIndentation(styleLine, tabSize) - matchClean[mapped];
-				}
-				line = MakeIndent(targetColumns, styleLine, tabSize) + replaceLines[j].TrimStart();
-			}
-
-			// Text outside the match on the matched lines (e.g. a trailing comment)
-			// is never part of the match and must not be deleted; whitespace-only
-			// tails (e.g. the indentation of a blank matched line) are dropped
-			if (j == replaceLines.Count - 1)
-				line += suffixes[^1];
-			else if (j < suffixes.Length - 1 && HasNonWhitespace(suffixes[j]))
-				line += suffixes[j];
-
-			result.Add(line);
-		}
-
-		return result;
-	}
+	private static PatchApplication Result(List<string> fileLines, int occurrences) =>
+		occurrences == 0
+			? new PatchApplication(null, 0)
+			: new PatchApplication(string.Join('\n', fileLines), occurrences);
 
 	private static List<string> SplitLines(string text)
 	{
@@ -241,33 +315,50 @@ public static class FilePatchedReplacer
 	private static bool HasNonWhitespace(string text)
 		=> text.Any(c => c is not ' ' and not '\t');
 
-
-	private static int[] CalculateIndents(List<string> lines, int tabSize, out int min)
+	/// <summary>
+	/// The column offset applied to every replacement line after the first.
+	/// </summary>
+	/// <remarks>
+	/// The second line is the reference, never the first: the first line is the one models write
+	/// bare (verbatim-trained habits), while the continuation lines carry the indentation the author
+	/// actually expects. Lining the replacement's second line up with the second matched line of the
+	/// file therefore places the whole block where the author saw it, without per-line bookkeeping.
+	/// A single-line match has no second line to align with, so the replacement's own continuation
+	/// lines supply the base instead.
+	/// </remarks>
+	private static int GetShift(
+		List<string> fileLines, int start, int matchCount, List<string> replaceLines, int tabSize)
 	{
-		min = int.MaxValue;
-
-		var columns = new int[lines.Count];
-		for (int i = 0; i < lines.Count; i++)
+		for (var j = 1; j < replaceLines.Count && j < matchCount; j++)
 		{
-			columns[i] = GetIndentation(lines[i], tabSize);
-			if (!string.IsNullOrWhiteSpace(lines[i]))
-				min = Math.Min(min, columns[i]);
+			if (string.IsNullOrWhiteSpace(replaceLines[j]) || string.IsNullOrWhiteSpace(fileLines[start + j]))
+				continue;
+
+			return GetIndentation(fileLines[start + j], tabSize) - GetIndentation(replaceLines[j], tabSize);
 		}
 
-		if (min == int.MaxValue)
-			min = 0;
-
-		return columns;
+		// A single-line match has no second line to align with, so the replacement supplies the base
+		// from its own continuation lines.
+		return GetIndentation(fileLines[start], tabSize) - GetBaseIndentation(replaceLines, tabSize);
 	}
 
 	/// <summary>
-	/// Computes each line's indentation relative to the minimum indentation among non-blank
-	/// lines, in columns. Blank lines do not affect the minimum.
+	/// The smallest indentation among the replacement's lines after the first, in columns. The first
+	/// line is skipped on purpose: verbatim-trained models write it without indentation, and taking
+	/// it into account would drag the whole block to column zero.
 	/// </summary>
-	private static void CleanIndents(List<string> lines, int tabSize, int[] columns, int min)
+	private static int GetBaseIndentation(List<string> lines, int tabSize)
 	{
-		for (int i = 0; i < columns.Length; i++)
-			columns[i] = Math.Max(0, columns[i] - min);
+		var min = int.MaxValue;
+		for (var i = 1; i < lines.Count; i++)
+		{
+			if (string.IsNullOrWhiteSpace(lines[i]))
+				continue;
+
+			min = Math.Min(min, GetIndentation(lines[i], tabSize));
+		}
+
+		return min == int.MaxValue ? 0 : min;
 	}
 
 	private static int GetIndentation(string line, int tabSize)
