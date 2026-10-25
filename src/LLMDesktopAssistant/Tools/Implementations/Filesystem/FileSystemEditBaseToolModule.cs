@@ -28,6 +28,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			public required AddonKind AddonKind { get; init; }
 
+			/// <summary>
+			/// The file as preview read it, so the write can put the same encoding, byte order mark and
+			/// line ending back instead of letting .NET pick UTF-8 without a preamble.
+			/// </summary>
+			public TextFileContent? Source { get; init; }
+
 			public required string OriginalContent { get; init; }
 
 			public required string PreviewedContent { get; init; }

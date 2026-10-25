@@ -89,10 +89,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					fileExisted ? FileOperation.Edit : FileOperation.Create,
 					fileExisted ? null : FileUtils.GetExistingAncestorDirectory(fullPath));
 
+				TextFileContent? source = null;
 				string oldContent;
 				try
 				{
-					oldContent = fileExisted ? File.ReadAllText(fullPath) : string.Empty;
+					source = fileExisted ? TextFileContent.Read(fullPath) : null;
+					oldContent = source?.Text ?? string.Empty;
 				}
 				catch
 				{
@@ -101,10 +103,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				}
 
 				var newContent = append && fileExisted ? oldContent + content : content;
+				if (source != null)
+					newContent = TextFileContent.Normalize(newContent);
 
 				if (fileExisted && oldContent == newContent)
 				{
-					sharedCtx = CreateShared(fullPath, addonKind, oldContent, oldContent, EmptyDiff(), null);
+					sharedCtx = CreateShared(fullPath, addonKind, source, oldContent, oldContent, EmptyDiff(), null);
 					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
 						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
 					ctx.Call.SetResult($"File {path} already contains the same content.");
@@ -118,7 +122,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				}
 
 				var (diffView, fullDiff) = PrepareDiff(ctx, path, oldContent, newContent);
-				sharedCtx = CreateShared(fullPath, addonKind, oldContent, newContent, fullDiff, diffView);
+				sharedCtx = CreateShared(fullPath, addonKind, source, oldContent, newContent, fullDiff, diffView);
 
 				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path.MarkdownEscape()}**");
 
@@ -142,11 +146,12 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 		}
 
-		private static WriteFileContext CreateShared(string path, AddonKind addonKind, string originalContent,
-			string previewedContent, HunkGroups fullDiff, TextDiffAdditionalViewModel? diffView) => new()
+		private static WriteFileContext CreateShared(string path, AddonKind addonKind, TextFileContent? source,
+			string originalContent, string previewedContent, HunkGroups fullDiff, TextDiffAdditionalViewModel? diffView) => new()
 		{
 			Path = path,
 			AddonKind = addonKind,
+			Source = source,
 			OriginalContent = originalContent,
 			PreviewedContent = previewedContent,
 			FullDiff = fullDiff,
@@ -179,10 +184,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				if (!Directory.Exists(dir))
 					Directory.CreateDirectory(dir!);
 
-				var oldContent = sharedCtx?.OriginalContent ??
-					(fileExisted ? File.ReadAllText(fullPath) : string.Empty);
+				var source = sharedCtx?.Source ??
+					(fileExisted ? TextFileContent.Read(fullPath) : null);
+				var oldContent = sharedCtx?.OriginalContent ?? source?.Text ?? string.Empty;
 				var newContent = sharedCtx?.PreviewedContent ??
 					(append && fileExisted ? oldContent + content : content);
+				if (sharedCtx?.PreviewedContent == null && source != null)
+					newContent = TextFileContent.Normalize(newContent);
 
 				if (fileExisted && oldContent == newContent)
 				{
@@ -204,7 +212,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Succeeded;
 				}
 
-				await File.WriteAllTextAsync(fullPath, result.NewContent, cancellationToken);
+				if (source != null)
+					await source.WriteAsync(fullPath, result.NewContent, cancellationToken);
+				else
+					await File.WriteAllTextAsync(fullPath, result.NewContent, cancellationToken);
 				_addonInvalidator.Invalidate(addonKind);
 
 				var fileInfo = new FileInfo(fullPath);
@@ -248,8 +259,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					output.AppendLine("No changes has been applied.");
 				}
 
+				var warning = source?.GetDecodingWarning();
+				if (warning != null)
+					output.AppendLine(warning);
+
 				ctx.Call.SetStatus(
-					append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck,
+					warning != null
+						? Material.Icons.MaterialIconKind.FileAlert
+						: append ? Material.Icons.MaterialIconKind.FileEdit : Material.Icons.MaterialIconKind.FileCheck,
 					$"**{path}**{changesTitlePostfix}");
 				ctx.Call.SetResult(output.ToString());
 				return ToolExecutionResult.Succeeded;

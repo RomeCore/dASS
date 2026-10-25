@@ -93,7 +93,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 			
-			var originalContent = File.ReadAllText(fullPath);
+			var source = TextFileContent.Read(fullPath);
+			var originalContent = source.Text;
 			var (newContent, errorMessage) = Edit(originalContent, deleteLines, insertBeforeLine, insertText);
 
 			if (newContent == null || newContent == originalContent)
@@ -102,6 +103,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					Path = fullPath,
 					AddonKind = addonKind,
+					Source = source,
 					OriginalContent = originalContent,
 					PreviewedContent = originalContent,
 					FullDiff = EmptyDiff()
@@ -126,6 +128,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Path = fullPath!,
 				AddonKind = addonKind,
+				Source = source,
 				OriginalContent = originalContent,
 				PreviewedContent = newContent,
 				FullDiff = fullDiff,
@@ -180,7 +183,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Failed;
 				}
 
-				var originalContent = sharedCtx?.OriginalContent ?? File.ReadAllText(fullPath);
+				var source = sharedCtx?.Source ?? TextFileContent.Read(fullPath!);
+				var originalContent = sharedCtx?.OriginalContent ?? source.Text;
 				var newContent = sharedCtx?.PreviewedContent;
 				if (newContent == null)
 				{
@@ -222,25 +226,28 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					return ToolExecutionResult.Succeeded;
 				}
 
-				await File.WriteAllTextAsync(fullPath!, result.NewContent, cancellationToken);
+				await source.WriteAsync(fullPath!, result.NewContent, cancellationToken);
 				_addonInvalidator.Invalidate(addonKind);
 
 				var diff = result.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
+				var warning = source.GetDecodingWarning();
+				var warningText = warning == null ? string.Empty : $"\n{warning}";
 
-				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
+				ctx.Call.SetStatus(warning != null ? Material.Icons.MaterialIconKind.FileAlert : Material.Icons.MaterialIconKind.FileDocumentEdit,
+					$"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
 				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
 					{diff}
 					[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
-					{result.RejectedDiff}
+					{result.RejectedDiff}{warningText}
 					""" :
 					$"""
 					File edited successfully. *(-{removed} +{added})*
 					[APPLIED CHANGES]:
-					{diff}
+					{diff}{warningText}
 					""");
 				return ToolExecutionResult.Succeeded;
 			}
@@ -305,7 +312,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				var (startLine, endLine) = ParseLineRange(deleteLines);
 
 				deletedContent = lines.Skip(startLine - 1).Take(endLine - startLine + 1).ToList();
-				insertText ??= string.Join(Environment.NewLine, deletedContent);
+				insertText ??= string.Join('\n', deletedContent);
 
 				int startIndex = startLine - 1;
 				int countToRemove = endLine - startLine + 1;
@@ -331,7 +338,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				lines.InsertRange(insertPosition, insertLinesList);
 			}
 
-			return (string.Join(Environment.NewLine, lines), null);
+			// The file's own line ending is restored on write; joining with the platform default
+			// would rewrite every line of a file that simply uses a different one.
+			return (string.Join('\n', lines), null);
 		}
 
 		private static (int startLine, int endLine) ParseLineRange(string lineRange)
