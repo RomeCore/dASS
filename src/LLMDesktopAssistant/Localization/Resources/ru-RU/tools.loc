@@ -212,8 +212,8 @@ behaviour.longrunningtask: Длительное выполнение
 behaviour.longrunningtask.hint: Инструмент может выполняться долго из-за сложных вычислений или сетевых задержек.
 behaviour.mcp: MCP (внешний сервер)
 behaviour.mcp.hint: Инструмент получен с внешнего MCP-сервера и может иметь непредсказуемое поведение.
-behaviour.meta: Мета-инструмент (создан LLM)
-behaviour.meta.hint: Инструмент создан во время выполнения LLM через Lua/Python скриптинг.
+behaviour.scriptable: Инструмент-скрипт (создан LLM)
+behaviour.scriptable.hint: Инструмент - скриптовый аддон: Lua-, Python- или shell-скрипт, созданный LLM во время выполнения.
 behaviour.none: Безопасно (нет специфического поведения)
 behaviour.none.hint: Вычислительные или информационные задачи (математика, случайные числа, время).
 behaviour.possiblyunexpected: Потенциально неожиданные действия
@@ -252,7 +252,7 @@ behaviour.category.performance: Производительность
 behaviour.category.execution: Выполнение
 behaviour.category.userinteraction: Взаимодействие с пользователем
 behaviour.category.agents: Агенты
-behaviour.category.meta: Мета
+behaviour.category.scriptable: Скриптовые
 behaviour.category.source: Источники
 
 // Specifiers
@@ -312,7 +312,7 @@ name_suffix.hint: {0} инструментов
 result: Результат:
 settings: Настройки инструментов
 source.mcp: MCP
-source.meta: Мета
+source.scriptable: Скриптовый
 status.agent-describe_image.status: Описываем... *{0} токенов*
 status.fs-apply_diff.changes_none: без изменений
 status.fs-diff.accepted: Принято

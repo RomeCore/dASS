@@ -17,6 +17,6 @@ public enum ToolBehaviourCategory
 	Execution = 1 << 6,
 	UserInteraction = 1 << 7,
 	Agents = 1 << 8,
-	Meta = 1 << 9,
+	Scriptable = 1 << 9,
 	Source = 1 << 10,
 }

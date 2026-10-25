@@ -52,11 +52,6 @@ namespace LLMDesktopAssistant.Utils
 		public static string Templates { get; }
 
 		/// <summary>
-		/// The path where to store the metatool scripts, they are usually has .py or .lua extensions.
-		/// </summary>
-		public static string Metatools { get; }
-
-		/// <summary>
 		/// The path where to store the skills usable for agentic tasks. Skills are stored in separate folders with SKILL.md inside root folder.
 		/// </summary>
 		public static string Skills { get; }
@@ -116,7 +111,6 @@ namespace LLMDesktopAssistant.Utils
 			Plugins = Path.Combine(LocalAppData, "plugins");
 			AddonPacks = Path.Combine(LocalAppData, "packs");
 			Templates = Path.Combine(LocalAppData, "templates");
-			Metatools = Path.Combine(LocalAppData, "metatools");
 			Skills = Path.Combine(LocalAppData, "skills");
 			Agents = Path.Combine(LocalAppData, "agents");
 			Memory = Path.Combine(LocalAppData, "memory");
@@ -137,7 +131,6 @@ namespace LLMDesktopAssistant.Utils
 			Directory.CreateDirectory(Plugins);
 			Directory.CreateDirectory(AddonPacks);
 			Directory.CreateDirectory(Templates);
-			Directory.CreateDirectory(Metatools);
 			Directory.CreateDirectory(Skills);
 			Directory.CreateDirectory(Agents);
 			Directory.CreateDirectory(Memory);

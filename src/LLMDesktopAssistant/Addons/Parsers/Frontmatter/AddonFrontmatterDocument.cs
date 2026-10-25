@@ -64,7 +64,7 @@ namespace LLMDesktopAssistant.Addons.Parsers.Frontmatter
 
 			if (typeof(T).IsEnum)
 			{
-				// Flags enums (e.g. metatool's 'behaviours') are read as a list of flags, plain enums
+				// Flags enums (e.g. a tool addon's 'behaviours') are read as a list of flags, plain enums
 				// (e.g. 'approval-level') as a single value. Both accept kebab-case and snake_case names.
 				var parserType = typeof(T).IsDefined(typeof(FlagsAttribute), inherit: false)
 					? typeof(AddonFrontmatterFlagsEnumListPropertyParser<>)

@@ -25,7 +25,7 @@
 						TextWrapping="Wrap"
 						Margin="0,4,0,8"/>
 
-		<!-- Python venv path -->
+		<!-- Native tools venv path -->
 		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
 						BorderThickness="1"
 						CornerRadius="4"
@@ -37,7 +37,7 @@
 									 Margin="0,0,0,2"/>
 				<Grid ColumnDefinitions="*,Auto,Auto">
 					<TextBox Grid.Column="0"
-									 Text="{Binding Configuration.PythonVenvActivateScriptPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									 Text="{Binding Configuration.VenvActivateScriptPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 									 PlaceholderText="{loc:Loc env.python.venv_hint}"
 									 UseFloatingPlaceholder="True"
 									 VerticalContentAlignment="Center"/>
@@ -45,7 +45,7 @@
 					<Button Grid.Column="1"
 									Margin="8,0,0,0"
 									Classes="IconButton"
-									Command="{Binding SelectPythonVenvActivateScriptPathCommand}"
+									Command="{Binding SelectVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.select_script}">
 						<ico:VisualIcon Kind="FolderOpen"/>
 					</Button>
@@ -53,7 +53,7 @@
 					<Button Grid.Column="2"
 									Margin="8,0,0,0"
 									Classes="IconButton"
-									Command="{Binding OpenPythonVenvActivateScriptPathCommand}"
+									Command="{Binding OpenVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 						<ico:VisualIcon Kind="OpenInNew"/>
 					</Button>
@@ -61,27 +61,27 @@
 			</StackPanel>
 		</Border>
 
-		<!-- Python meta venv path -->
+		<!-- Scriptable addons venv path -->
 		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
 						BorderThickness="1"
 						CornerRadius="4"
 						Padding="8"
 						Margin="0,0,0,8">
 			<StackPanel Spacing="6">
-				<TextBlock Text="{loc:Loc env.python.meta_venv_script}"
+				<TextBlock Text="{loc:Loc env.python.addon_venv_script}"
 									 FontWeight="Medium"
 									 Margin="0,0,0,2"/>
 				<Grid ColumnDefinitions="*,Auto,Auto">
 					<TextBox Grid.Column="0"
-									 Text="{Binding Configuration.PythonMetaVenvActivateScriptPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-									 PlaceholderText="{loc:Loc env.python.meta_venv_hint}"
+									 Text="{Binding Configuration.AddonVenvActivateScriptPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									 PlaceholderText="{loc:Loc env.python.addon_venv_hint}"
 									 UseFloatingPlaceholder="True"
 									 VerticalContentAlignment="Center"/>
 
 					<Button Grid.Column="1"
 									Margin="8,0,0,0"
 									Classes="IconButton"
-									Command="{Binding SelectPythonMetaVenvActivateScriptPathCommand}"
+									Command="{Binding SelectAddonVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.select_script}">
 						<ico:VisualIcon Kind="FolderOpen"/>
 					</Button>
@@ -89,7 +89,7 @@
 					<Button Grid.Column="2"
 									Margin="8,0,0,0"
 									Classes="IconButton"
-									Command="{Binding OpenPythonMetaVenvActivateScriptPathCommand}"
+									Command="{Binding OpenAddonVenvActivateScriptPathCommand}"
 									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 						<ico:VisualIcon Kind="OpenInNew"/>
 					</Button>

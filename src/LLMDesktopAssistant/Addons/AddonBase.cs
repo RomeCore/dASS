@@ -154,7 +154,7 @@ namespace LLMDesktopAssistant.Addons
 		// ===================================
 
 		/// <summary>
-		/// Full path to main addon file, if applicable. This is 'SKILL.md' file for skills, 'my-tool.lua' for metatools.
+		/// Full path to main addon file, if applicable. This is 'SKILL.md' file for skills, 'my-tool.lua' for tools.
 		/// </summary>
 		public string? Path
 		{

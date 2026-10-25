@@ -203,7 +203,7 @@ public enum ToolBehaviour : ulong
 	/// </summary>
 	AgentExecution = 1 << 25,
 
-	// ────────────────────────────── Meta ───────────────────────────────────
+	// ────────────────────────────── Addon editing ──────────────────────────
 
 	/// <summary>
 	/// The tool creates, modifies, or deletes addon packs at runtime.
@@ -234,11 +234,11 @@ public enum ToolBehaviour : ulong
 	MCP = 1UL << 61,
 
 	/// <summary>
-	/// The tool is a meta-tool created at runtime by the LLM itself
-	/// (via Lua/Python scripting). Such tools can have arbitrary behaviour
+	/// The tool is a scriptable addon created at runtime by the LLM itself
+	/// (a Lua, Python or shell script file). Such tools can have arbitrary behaviour
 	/// defined by the LLM and should be carefully monitored.
 	/// </summary>
-	Meta = 1UL << 62,
+	Scriptable = 1UL << 62,
 
 	/// <summary>
 	/// The tool is an ad-hoc/specifically created tool for concrete task (for example, by ad-hoc

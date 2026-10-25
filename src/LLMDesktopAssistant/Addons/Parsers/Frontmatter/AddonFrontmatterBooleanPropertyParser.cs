@@ -4,7 +4,7 @@ using LLMDesktopAssistant.StructuredValues.Const;
 namespace LLMDesktopAssistant.Addons.Parsers.Frontmatter
 {
 	/// <summary>
-	/// Parses a boolean frontmatter property, e.g. metatool's 'enabled' field.
+	/// Parses a boolean frontmatter property, e.g. a tool addon's 'enabled' field.
 	/// Accepts boolean nodes, numeric nodes (zero = false) and string nodes ('true'/'false').
 	/// </summary>
 	public class AddonFrontmatterBooleanPropertyParser : AddonFrontmatterPropertyParser<bool>

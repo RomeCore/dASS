@@ -37,7 +37,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			try
 			{
 				var launchParameters = pythonHelperService.CreateLaunchParameters(settings, "python -V",
-					"Python Check", false, false);
+					"Python Check", false, useAddonEnvironment: false);
 				var process = processLauncher.Launch(launchParameters, cancellationToken);
 				var exitCode = await process;
 

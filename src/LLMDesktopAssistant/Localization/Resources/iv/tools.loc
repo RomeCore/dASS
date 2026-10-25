@@ -212,8 +212,8 @@ behaviour.longrunningtask: Long-running task
 behaviour.longrunningtask.hint: The tool may run for an extended period due to heavy computation or network latency.
 behaviour.mcp: MCP (external server)
 behaviour.mcp.hint: The tool originates from an external MCP server and may have unpredictable behaviour.
-behaviour.meta: Meta-tool (LLM-created)
-behaviour.meta.hint: The tool is a meta-tool created at runtime by the LLM via Lua/Python scripting.
+behaviour.scriptable: Scriptable tool (created by the LLM)
+behaviour.scriptable.hint: The tool is a scriptable addon: a Lua, Python or shell script created at runtime by the LLM.
 behaviour.none: Safe (no specific behaviour)
 behaviour.none.hint: Purely computational or informational tasks (math, random, time).
 behaviour.possiblyunexpected: Potentially unexpected actions
@@ -252,7 +252,7 @@ behaviour.category.performance: Performance
 behaviour.category.execution: Execution
 behaviour.category.userinteraction: User interaction
 behaviour.category.agents: Agents
-behaviour.category.meta: Meta
+behaviour.category.scriptable: Scriptable
 behaviour.category.source: Sources
 
 // Specifiers
@@ -312,7 +312,7 @@ name_suffix.hint: {0} tools
 result: Tool result:
 settings: Tools settings
 source.mcp: MCP
-source.meta: Meta
+source.scriptable: Scriptable
 status.agent-describe_image.status: Describing... *{0} tokens*
 status.fs-apply_diff.changes_none: no changes
 status.fs-diff.accepted: Accepted

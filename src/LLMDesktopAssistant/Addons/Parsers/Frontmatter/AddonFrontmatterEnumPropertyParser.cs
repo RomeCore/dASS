@@ -5,7 +5,7 @@ using LLMDesktopAssistant.StructuredValues.Const;
 namespace LLMDesktopAssistant.Addons.Parsers.Frontmatter
 {
 	/// <summary>
-	/// Parses an enum frontmatter property, e.g. skill's 'injection-mode' or metatool's 'approval-level'.
+	/// Parses an enum frontmatter property, e.g. skill's 'injection-mode' or a tool addon's 'approval-level'.
 	/// Supports kebab-case ('read-only'), snake_case ('read_only') and plain enum names case-insensitively.
 	/// </summary>
 	public class AddonFrontmatterEnumPropertyParser<TEnum> : AddonFrontmatterPropertyParser<TEnum>

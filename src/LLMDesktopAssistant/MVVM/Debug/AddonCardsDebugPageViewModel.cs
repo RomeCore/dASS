@@ -209,7 +209,7 @@ public class AddonCardsDebugPageViewModel : ViewModelBase
 		return new AddonCardViewModel(elements)
 		{
 			Icon = MaterialIconKind.RobotHappy,
-			NamePrefix = T("Meta"),
+			NamePrefix = T("Scriptable"),
 			NamePrefixBrush = Brushes.MediumPurple,
 			Name = T("Agent-level sub-agent"),
 			Description = T("Override slots are present but untouched: no accent markers, the reset button appears only after you change something.")

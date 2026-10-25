@@ -1,4 +1,4 @@
-﻿namespace LLMDesktopAssistant.Tools
+namespace LLMDesktopAssistant.Tools
 {
 	/// <summary>
 	/// Enumerates the possible sources of tools within the application.
@@ -16,8 +16,8 @@
 		MCP,
 
 		/// <summary>
-		/// Indicates that the tool is created by LLM using meta tools.
+		/// Indicates that the tool is a scriptable addon: a file the LLM created at runtime through scripting.
 		/// </summary>
-		Meta
+		Scriptable
 	}
 }

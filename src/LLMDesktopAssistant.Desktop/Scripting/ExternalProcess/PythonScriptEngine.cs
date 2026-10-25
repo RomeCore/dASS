@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,
 			string scriptPath, ExternalProcessScriptTerminalParameters parameters, bool runInTerminal)
 			=> pythonHelperService.CreateLaunchParameters(environment, $"python \"{scriptPath}\"",
-				parameters.ProcessName ?? "External script", runInTerminal, isMetaTool: true);
+				parameters.ProcessName ?? "External script", runInTerminal, useAddonEnvironment: true);
 
 		/// <inheritdoc/>
 		protected override string BuildScript(ExternalProcessScriptTerminalParameters parameters,

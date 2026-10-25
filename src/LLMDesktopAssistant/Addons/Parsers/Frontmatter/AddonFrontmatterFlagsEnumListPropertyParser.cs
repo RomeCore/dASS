@@ -5,7 +5,7 @@ using LLMDesktopAssistant.StructuredValues.Const;
 namespace LLMDesktopAssistant.Addons.Parsers.Frontmatter
 {
 	/// <summary>
-	/// Parses a flags enum list frontmatter property, e.g. metatool's 'behaviours'.
+	/// Parses a flags enum list frontmatter property, e.g. a tool addon's 'behaviours'.
 	/// Accepts an array of flag names ('file-read', 'internet-access'), a comma-separated scalar,
 	/// or a single flag name. Flags are combined with a bitwise OR.
 	/// </summary>

@@ -48,7 +48,7 @@ namespace LLMDesktopAssistant.Tools.MVVM
 			context.Addon.ToolSource switch
 			{
 				ToolSource.MCP => (Locale.GetKey("tool.source.mcp"), Brushes.LightGreen),
-				ToolSource.Meta => (Locale.GetKey("tool.source.meta"), Brushes.Magenta),
+				ToolSource.Scriptable => (Locale.GetKey("tool.source.scriptable"), Brushes.Magenta),
 				_ => (null, null)
 			};
 

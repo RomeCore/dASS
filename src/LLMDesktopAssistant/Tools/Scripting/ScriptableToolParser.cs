@@ -87,7 +87,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 				? parsedBehaviours
 				: ToolBehaviour.None;
 
-			addon.DefaultExpectedBehaviour = ToolBehaviour.Meta | behaviours;
+			addon.DefaultExpectedBehaviour = ToolBehaviour.Scriptable | behaviours;
 
 			var argumentSchema = frontmatter.TryRequest("argument-schema", ref diagnostic, out JsonObject parsedArgumentSchema)
 				? parsedArgumentSchema
@@ -101,7 +101,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 
 			// === Execution ===
 
-			addon.ToolSource = ToolSource.Meta;
+			addon.ToolSource = ToolSource.Scriptable;
 			addon.Main = engine.CreateExecutor(addon);
 		}
 

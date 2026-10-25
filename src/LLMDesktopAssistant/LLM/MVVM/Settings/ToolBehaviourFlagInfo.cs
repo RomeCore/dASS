@@ -103,7 +103,7 @@ public class ToolBehaviourFlagInfo(ToolBehaviour flag,
 		ToolBehaviour.PromptEdit => MaterialIconKind.Cards,
 		ToolBehaviour.ScriptEdit => MaterialIconKind.Script,
 		ToolBehaviour.MCP => MaterialIconKind.Server,
-		ToolBehaviour.Meta => MaterialIconKind.AutoFix,
+		ToolBehaviour.Scriptable => MaterialIconKind.AutoFix,
 		ToolBehaviour.AdHoc => MaterialIconKind.LightbulbOn,
 
 		_ => MaterialIconKind.HelpCircle
@@ -153,7 +153,7 @@ public class ToolBehaviourFlagInfo(ToolBehaviour flag,
 
 		// External (purple)
 		ToolBehaviour.MCP => Brushes.MediumPurple,
-		ToolBehaviour.Meta => Brushes.MediumPurple,
+		ToolBehaviour.Scriptable => Brushes.MediumPurple,
 		ToolBehaviour.AdHoc => Brushes.MediumPurple,
 
 		// Safe (green)

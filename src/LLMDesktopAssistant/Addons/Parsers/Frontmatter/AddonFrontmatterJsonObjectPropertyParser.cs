@@ -6,7 +6,7 @@ using LLMDesktopAssistant.StructuredValues.Const;
 namespace LLMDesktopAssistant.Addons.Parsers.Frontmatter
 {
 	/// <summary>
-	/// Parses a JSON schema frontmatter property, e.g. metatool's 'argument-schema'.
+	/// Parses a JSON schema frontmatter property, e.g. a tool addon's 'argument-schema'.
 	/// Expects a scalar string containing JSON; produces a <see cref="JsonObject"/>.
 	/// </summary>
 	public class AddonFrontmatterJsonObjectPropertyParser : AddonFrontmatterPropertyParser<JsonObject>

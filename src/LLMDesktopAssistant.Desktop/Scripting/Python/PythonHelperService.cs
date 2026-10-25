@@ -10,14 +10,24 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	[Service]
 	public class PythonHelperService
 	{
+		/// <summary>
+		/// Builds the launch parameters of a python invocation, optionally preceded by a venv activation.
+		/// </summary>
+		/// <param name="envSettings">The chat's environment settings.</param>
+		/// <param name="command">The command line to run inside the environment.</param>
+		/// <param name="processName">The display name of the process.</param>
+		/// <param name="runInTerminal">Whether the process runs in an interactive terminal.</param>
+		/// <param name="useAddonEnvironment">
+		/// Whether the scriptable addons' venv applies instead of the native tools' one.
+		/// </param>
 		public ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings envSettings, string command,
-			string? processName, bool runInTerminal, bool isMetaTool)
+			string? processName, bool runInTerminal, bool useAddonEnvironment)
 		{
 			var workDir = envSettings.GetEffectiveWorkingDirectories().GetWorkingDirectory();
 			var pythonConfig = envSettings.EnsureAdditional<PythonEnvironmentConfiguration>();
-			var venvPath = isMetaTool
-				? (pythonConfig.PythonMetaVenvActivateScriptPath ?? pythonConfig.PythonVenvActivateScriptPath)
-				: pythonConfig.PythonVenvActivateScriptPath;
+			var venvPath = useAddonEnvironment
+				? (pythonConfig.AddonVenvActivateScriptPath ?? pythonConfig.VenvActivateScriptPath)
+				: pythonConfig.VenvActivateScriptPath;
 
 			string interpreter = OperatingSystem.IsWindows() ? "cmd.exe" : "/bin/bash";
 
