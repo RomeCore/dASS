@@ -52,6 +52,18 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [Batch and PowerShell engines](issues/03-preamble-builders-and-serializers.md) - the last two languages, so the family
+  now has all four builders and all four runners (ticket 04 closes with it). **Batch**: `.bat`/`.cmd`, `REM `-prefixed
+  frontmatter, `@echo off` + `setlocal DisableDelayedExpansion`, `set "name=value"` with `%`→`%%` and ASCII-escaped JSON
+  (code-page independent), CRLF (cmd misparses LF-only files), 8191 characters per *generated* line as a fail-fast, and
+  cmd as the process - CreateProcess does not run a `.bat`, so `/d /s /c ""<path>""` with verbatim arguments.
+  **PowerShell**: `.ps1`, `#`-prefixed frontmatter, UTF-8 with BOM (5.1 reads BOM-less as ANSI), `''` escaping,
+  `ConvertFrom-Json` giving one `PSCustomObject` on every version (D28), `-NoLogo -NoProfile -ExecutionPolicy Bypass
+  -File` with no `-NonInteractive` and no platform branch (`-ExecutionPolicy` is ignored off Windows), and
+  `[Console]::OutputEncoding` behind `$PSVersionTable.PSVersion.Major -le 5`. Batch exists on Windows only and says so by
+  claiming its extensions there only (D29); PowerShell is one engine for 5.1, 7 and Linux. `BuildScript` moved inside the
+  guarded `try` of the runner, so a builder refusal lands as `ProcessFailed` instead of an exception.
+
 - [Bash engine and interpreter discovery](issues/11-bash-engine.md) - `BashScriptEngine` over the proven base, the
   first non-Python language; discovery is the configured path, then Git Bash derived from `git.exe`, then a
   non-WSL `bash` from `PATH`, and `Terminal` is declared up front and proved in a PTY. **A missing interpreter is no

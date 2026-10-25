@@ -140,13 +140,17 @@ kind adapters answer with the union of their languages.
 | Language | `json-input: true` (a JSON **string**) | `json-input: false` (native structure) |
 |---|---|---|
 | Python | `tool_args = '{"path": "C:\\\\x"}'` | `tool_args = {'path': 'C:\\x'}` |
-| PowerShell | `$tool_args = '{"path":"C:\\x"}'` (`'` → `''`) | `$tool_args = '…' \| ConvertFrom-Json` (6+: `-AsHashtable`; 5.1: `PSCustomObject`) |
+| PowerShell | `$tool_args = '{"path":"C:\\x"}'` (`'` → `''`) | `$tool_args = '…' \| ConvertFrom-Json` (a `PSCustomObject` on every version, see D28) |
 | Bash | `tool_args='{"path":"C:\\x"}'` (`'` → `'\''`) | not supported |
 | Batch | `set "tool_args={"path":"C:\\x"}"` | not supported |
 
 `StructuredInput` is therefore a capability, not a wish: Python yes, PowerShell yes (second class), Bash no,
 Batch no. `json-input: auto` (the default) means "native structure where the engine can, JSON otherwise".
 An explicit `json-input: false` on an engine without the capability is a **fatal addon diagnostic**.
+
+PowerShell deliberately does **not** use `-AsHashtable` on 6+, even though the parameter would give richer semantics
+(indexer, `.Count`, `.ContainsKey`): the same addon would then behave differently on 5.1 and on 7, which is the exact
+class of surprise the frontmatter contract exists to prevent. One shape on every machine, D28.
 
 Batch escaping rules (a hard fact, not a choice):
 
@@ -167,10 +171,15 @@ Batch escaping rules (a hard fact, not a choice):
 | Python | UTF-8, no BOM | Python 3 source default is UTF-8 |
 | Bash | UTF-8, no BOM | bytes are passed through; the pipe is UTF-8 |
 | PowerShell | **UTF-8 with BOM** | Windows PowerShell 5.1 reads a BOM-less `.ps1` as ANSI, and Cyrillic becomes mojibake |
-| Batch | ASCII-only preamble | the cmd parser reads the file in the console code page |
+| Batch | UTF-8, no BOM; the preamble is ASCII-only | the cmd parser reads the file in the console code page, so only the part we generate is guaranteed |
 
-The PowerShell preamble also sets `[Console]::OutputEncoding = [Text.Encoding]::UTF8`; `ProcessLauncher`
-already reads both streams as UTF-8. Invalid UTF-8 bytes are replaced (`U+FFFD`), never turned into a failure.
+The PowerShell preamble also sets `[Console]::OutputEncoding = [Text.Encoding]::UTF8`, but only under
+`if ($PSVersionTable.PSVersion.Major -le 5)`: 5.1 is the one that decodes a redirected stdout with the console code
+page, PowerShell 7 already speaks UTF-8, and on Unix there is no code page to change. `ProcessLauncher` already
+reads both streams as UTF-8. Invalid UTF-8 bytes are replaced (`U+FFFD`), never turned into a failure.
+
+Line endings: **Batch and PowerShell are written with CRLF** (cmd misparses an LF-only file - labels and
+multi-line `( )` blocks break - and a `.ps1` is read the same way by every host), Python and Bash with LF.
 
 ### 5.3 Working directory and temp files
 
@@ -384,8 +393,10 @@ Discovery order (D20):
 
 - **Bash**: `bash` on PATH; on Windows prefer Git Bash over `C:\Windows\System32\bash.exe` (WSL), and WSL only
   when explicitly configured — the two have different filesystem namespaces.
-- **PowerShell**: `pwsh` (7+) before `powershell.exe` (5.1).
-- **Batch**: `cmd.exe` (always present on Windows).
+- **PowerShell**: `pwsh` (7+) before `powershell.exe` (5.1). Off Windows only `pwsh` exists; on Windows the
+system copy under `%SystemRoot%\WindowsPowerShell\v1.0\` is the last resort for a trimmed `PATH`.
+- **Batch**: `%COMSPEC%`, then `%SystemRoot%\System32\cmd.exe`. The language does not exist off Windows, so its
+descriptor claims `.bat`/`.cmd` on Windows only (D29).
 - **Python**: the configured venv activation script, else `py -3`, else `python`, else `python3`.
 
 Generalising the per-language runtime settings (a settings UI beyond the existing Python venv one) is a
@@ -427,6 +438,8 @@ so the only honest places to report it are the run and the settings check.
 | D25 | Batch > 8191 bytes fails fast | cmd cannot hold it; truncation would be silent corruption |
 | D26 | ~~Unknown JSON keys are `InvalidOutput`~~ **amended 2026-10-25**: unknown keys are ignored | strictness without a schema to compare against was ceremony; a per-adapter read keeps the contract readable. Revisit if a typo ever costs a session |
 | D27 | `part.content` is explicit once JSON exists | stdout is raw output, not a substitute for a declared part |
+| D28 | PowerShell passes a structure as `ConvertFrom-Json` and nothing else | `-AsHashtable` would give one addon two different object models on 5.1 and 7; the second-class shape is the same everywhere |
+| D29 | Batch claims `.bat`/`.cmd` on Windows only, as an **empty extension list** off Windows | a language that does not exist on the platform is absent from the catalogue instead of being offered and always failing; the engine stays registered, so nothing has to be conditional in DI |
 
 ## 14. Out of scope
 
