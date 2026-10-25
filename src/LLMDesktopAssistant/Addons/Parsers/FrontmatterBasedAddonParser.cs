@@ -575,7 +575,7 @@ namespace LLMDesktopAssistant.Addons.Parsers
 					addon.OutputMode = boolean.Value ? ScriptOutputMode.Whole : ScriptOutputMode.None;
 					break;
 
-				case INodeStringValue text when CountUnescapedStars(text.Value ?? string.Empty) == 1:
+				case INodeStringValue text when ScriptOutputPattern.CountUnescapedStars(text.Value) == 1:
 					addon.OutputMode = ScriptOutputMode.Pattern;
 					addon.OutputPattern = text.Value;
 					break;
@@ -589,25 +589,6 @@ namespace LLMDesktopAssistant.Addons.Parsers
 					Fatal(ref diagnostic, "'json-output' must be true or a pattern.");
 					break;
 			}
-		}
-
-		private static int CountUnescapedStars(string pattern)
-		{
-			var count = 0;
-
-			for (int i = 0; i < pattern.Length; i++)
-			{
-				if (pattern[i] is '\\')
-				{
-					i++;
-					continue;
-				}
-
-				if (pattern[i] is '*')
-					count++;
-			}
-
-			return count;
 		}
 
 		private static void Validate(TAddon addon, IScriptEngineDescriptor descriptor, ScriptFeaturePolicy features,

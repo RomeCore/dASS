@@ -1,8 +1,11 @@
 using System.ComponentModel;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
+using LLMDesktopAssistant.Desktop.Scripting.Bash;
 using LLMDesktopAssistant.Desktop.ToolModules.Terminal;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.LLM.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
@@ -17,12 +20,15 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 	public class ShellExecutionToolModule : TerminalBasedToolModule
 	{
 		private readonly IWorkingDirectoryAccessService _wdAccess;
+		private readonly IBashInterpreterLocator _bashInterpreterLocator;
 
 		public ShellExecutionToolModule(IWorkingDirectoryAccessService wdAccess,
-			IProcessLauncher processLauncher, IAddonManagerInvalidator addonInvalidator)
+			IProcessLauncher processLauncher, IAddonManagerInvalidator addonInvalidator,
+			IBashInterpreterLocator bashInterpreterLocator)
 			: base(processLauncher, addonInvalidator)
 		{
 			_wdAccess = wdAccess;
+			_bashInterpreterLocator = bashInterpreterLocator;
 
 			AddTool(new ToolInitializationInfo
 			{
@@ -103,6 +109,18 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
+			// The shell this machine actually has, not the Unix path that does not exist on Windows: the native tool
+			// and the .sh addons must agree on which bash they mean.
+			var configured = context.Services.GetService<IChatSettingsService>()?.Settings.Environment
+				.GetEffectiveAdditionalSettings().OfType<BashEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
+
+			var interpreter = _bashInterpreterLocator.Resolve(configured);
+			if (!interpreter.Found)
+			{
+				context.Call.SetResult(interpreter.Problem ?? "No bash interpreter was found on this machine.");
+				return Task.FromResult(ToolExecutionResult.Failed);
+			}
+
 			var workDir = _wdAccess.GetWorkingDirectory();
 
 			return Run(new TerminalToolRunParameters
@@ -112,7 +130,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				{
 					ProcessName = "Bash",
 					RunInTerminal = runTerminal,
-					FileName = "/bin/bash",
+					FileName = interpreter.Path!,
 					Arguments = ["-c", command],
 					WorkingDirectory = workDir
 				}

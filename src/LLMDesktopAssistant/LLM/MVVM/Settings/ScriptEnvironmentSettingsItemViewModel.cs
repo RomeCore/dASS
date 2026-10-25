@@ -63,11 +63,13 @@ namespace LLMDesktopAssistant.LLM.Settings
 			{
 				if (CheckResult is null)
 					return null;
-				if (CheckResult.Success)
-					return LocalizationManager.LocalizeStatic("env.check.success");
-				return string.IsNullOrWhiteSpace(CheckResult.Message)
-					? LocalizationManager.LocalizeStatic("env.check.error")
-					: CheckResult.Message;
+
+				// A provider may answer a success with details worth reading (which bash, which version), so its message
+				// wins over the generic "ready" when there is one.
+				if (!string.IsNullOrWhiteSpace(CheckResult.Message))
+					return CheckResult.Message;
+
+				return LocalizationManager.LocalizeStatic(CheckResult.Success ? "env.check.success" : "env.check.error");
 			}
 		}
 

@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             xmlns:local="using:LLMDesktopAssistant.Desktop.Scripting.Bash"
+             xmlns:loc="using:LLMDesktopAssistant.Localization"
+             xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+             x:Class="LLMDesktopAssistant.Desktop.Scripting.Bash.BashEnvironmentConfigurationView"
+             x:DataType="local:BashEnvironmentConfigurationViewModel"
+             x:Name="VMRoot">
+
+	<StackPanel Orientation="Vertical" Spacing="8">
+
+		<!-- ============================================================ -->
+		<!-- BASH ENVIRONMENT -->
+		<!-- ============================================================ -->
+		<TextBlock Text="{loc:Loc env.bash.environments}"
+						FontSize="{DynamicResource FontSizeL}"
+						FontWeight="Bold"/>
+
+		<TextBlock Text="{loc:Loc env.bash.hint}"
+						Opacity="0.6"
+						TextWrapping="Wrap"
+						Margin="0,4,0,8"/>
+
+		<!-- Bash executable -->
+		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+						BorderThickness="1"
+						CornerRadius="4"
+						Padding="8"
+						Margin="0,0,0,8">
+			<StackPanel Spacing="6">
+				<TextBlock Text="{loc:Loc env.bash.executable_script}"
+									 FontWeight="Medium"
+									 Margin="0,0,0,2"/>
+				<Grid ColumnDefinitions="*,Auto,Auto">
+					<TextBox Grid.Column="0"
+									 Text="{Binding Configuration.ExecutablePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+									 PlaceholderText="{loc:Loc env.bash.executable_hint}"
+									 UseFloatingPlaceholder="True"
+									 VerticalContentAlignment="Center"/>
+
+					<Button Grid.Column="1"
+									Margin="8,0,0,0"
+									Classes="IconButton"
+									Command="{Binding SelectExecutableCommand}"
+									ToolTip.Tip="{loc:Loc env.select_script}">
+						<ico:VisualIcon Kind="FolderOpen"/>
+					</Button>
+
+					<Button Grid.Column="2"
+									Margin="8,0,0,0"
+									Classes="IconButton"
+									Command="{Binding OpenExecutableCommand}"
+									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
+						<ico:VisualIcon Kind="OpenInNew"/>
+					</Button>
+				</Grid>
+
+				<StackPanel Orientation="Horizontal" Spacing="6">
+					<TextBlock Text="{loc:Loc env.bash.in_use}"
+										 Opacity="0.6"/>
+					<TextBlock Text="{Binding ResolvedText}"
+										 Opacity="0.6"
+										 TextWrapping="Wrap"/>
+				</StackPanel>
+			</StackPanel>
+		</Border>
+
+	</StackPanel>
+
+</UserControl>

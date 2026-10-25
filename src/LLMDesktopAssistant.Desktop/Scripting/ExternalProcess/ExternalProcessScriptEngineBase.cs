@@ -1,7 +1,5 @@
 using System.IO;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
@@ -76,12 +74,14 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 
 			try
 			{
-				var launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
-					runInTerminal: false).WithTimeout(parameters.TimeOut);
-
+				// An engine that cannot find its interpreter throws while building these parameters, so the reason
+				// becomes a result here instead of escaping through the caller.
+				ProcessLaunchParameters launchParameters;
 				ProcessDescriptor process;
 				try
 				{
+					launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
+						runInTerminal: false).WithTimeout(parameters.TimeOut);
 					process = _processLauncher.Launch(launchParameters, ct);
 					launched = true;
 				}
@@ -128,7 +128,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				string? outputError = null;
 				var json = parameters.OutputMode is ScriptOutputMode.None
 					? null
-					: ExtractJson(stdout, parameters.OutputMode, parameters.OutputPattern, out outputError);
+					: ScriptOutputPattern.Extract(stdout, parameters.OutputMode, parameters.OutputPattern, out outputError);
 
 				if (outputError is not null)
 				{
@@ -190,12 +190,11 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				// An interactive terminal has no deadline and is never linked to the caller's token: one token runs
 				// the whole chat, and stopping a generation must not kill a session the user is typing into. The
 				// card owns the kill instead (TerminalRun registers it and Leave releases it).
-				var launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
-					runInTerminal: true).WithTimeout(null);
-
 				ProcessDescriptor process;
 				try
 				{
+					var launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
+						runInTerminal: true).WithTimeout(null);
 					process = _processLauncher.Launch(launchParameters, CancellationToken.None);
 					launched = true;
 				}
@@ -328,98 +327,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				commandLine = commandLine[..200] + "…";
 
 			return $"The script exited with code {exitCode} and printed nothing to standard error. Command: {commandLine}";
-		}
-
-		/// <summary>
-		/// Takes the promised structure out of standard output. A missing marker and unparsable JSON are both errors:
-		/// a promised structure is never degraded into text.
-		/// </summary>
-		/// <remarks>The capture is non-greedy and spans lines: it ends at the first end marker after the start marker.</remarks>
-		private static JsonNode? ExtractJson(string stdout, ScriptOutputMode mode, string? pattern,
-			out string? error)
-		{
-			error = null;
-
-			string payload;
-			if (mode is ScriptOutputMode.Whole)
-			{
-				payload = stdout.Trim();
-			}
-			else
-			{
-				if (string.IsNullOrEmpty(pattern))
-				{
-					error = "The addon declares a pattern output mode but no pattern.";
-					return null;
-				}
-
-				var markers = SplitPattern(pattern);
-				if (markers is null)
-				{
-					error = $"The output pattern '{pattern}' must contain exactly one unescaped '*'.";
-					return null;
-				}
-
-				var (begin, end) = markers.Value;
-				var start = begin.Length == 0 ? 0 : stdout.IndexOf(begin, StringComparison.Ordinal);
-				if (start < 0)
-				{
-					error = $"The output marker '{begin}' was not found in standard output.";
-					return null;
-				}
-
-				start += begin.Length;
-				var finish = end.Length == 0 ? stdout.Length : stdout.IndexOf(end, start, StringComparison.Ordinal);
-				if (finish < 0)
-				{
-					error = $"The output marker '{end}' was not found after '{begin}'.";
-					return null;
-				}
-
-				payload = stdout[start..finish].Trim();
-			}
-
-			try
-			{
-				return JsonNode.Parse(payload);
-			}
-			catch (JsonException ex)
-			{
-				error = $"The script promised JSON, but its output does not parse: {ex.Message}";
-				return null;
-			}
-		}
-
-		/// <summary>
-		/// Splits <c>"&lt;BEGIN&gt;*&lt;END&gt;"</c> at its first unescaped <c>*</c>; <c>\*</c> is a literal asterisk.
-		/// </summary>
-		/// <returns>The markers, or <see langword="null"/> when the pattern has no unescaped asterisk.</returns>
-		private static (string Begin, string End)? SplitPattern(string pattern)
-		{
-			var begin = new StringBuilder();
-			var end = new StringBuilder();
-			var afterStar = false;
-
-			for (int i = 0; i < pattern.Length; i++)
-			{
-				var ch = pattern[i];
-				if (ch is '\\' && i + 1 < pattern.Length && pattern[i + 1] is '*')
-				{
-					(afterStar ? end : begin).Append('*');
-					i++;
-					continue;
-				}
-
-				if (ch is '*' && !afterStar)
-				{
-					afterStar = true;
-					continue;
-				}
-
-				(afterStar ? end : begin).Append(ch);
-			}
-
-			return afterStar ? (begin.ToString(), end.ToString()) : null;
 		}
 
 		private static ExternalProcessScriptResult Failure(ExternalProcessStatus status, string error)
