@@ -362,8 +362,10 @@ scriptable anchored section will need a `Task` form.
 a second mode:
 
 - **no prefix** (Python `"""`, Lua `--[[ ]]`) — the current behaviour: slice between start and end markers;
-- **with a prefix** — the frontmatter is the leading run of lines that start with the prefix; the prefix is
-  stripped per line before YAML parsing; the rest of the file is the body.
+- **with a prefix** - the same slice, but the marker lines carry the prefix as well (`#---`) and every line
+  between them must start with it; the prefix is stripped per line before YAML parsing. A leading *run* of
+  prefixed lines was considered and rejected: it would swallow a shebang and every ordinary comment at the top
+  of a shell file.
 
 `#` for Bash and PowerShell, `REM ` for Batch. Every frontmatter line is therefore a real comment, so the file
 stays runnable as-is and the block is inert by construction.
