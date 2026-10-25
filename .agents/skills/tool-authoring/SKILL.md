@@ -96,6 +96,10 @@ argument-schema: |
 
   **This is the security-relevant field.** The approval policy gates the tool by these flags, so a tool that understates what it touches walks past the user's own auto-approve and disallow settings while looking perfectly correct.
 
+- **`sync`** - how the tool locks the filesystem: `write` (nothing else touches files while it runs), `read` (runs beside other readers, waits out writers) or `none` (claims nothing). **The default is derived from `behaviours`**: anything that may write or cannot be predicted takes `write`, a read-only tool takes `read`, a tool with no file behaviour claims nothing. Declare it only to override that derivation - a script whose declared behaviour is coarser than its real effect, or the other way round.
+
+  The lock is a promise, not a mechanism: a script that under-declares `behaviours` and omits `sync` serializes nothing, and two tools then race on the same file.
+
 - Shared by every addon kind: `description` - a missing one raises a diagnostic - plus `order`, `aliases`, `enabled` and `hidden`. `title` and `category` are localizable display strings and drive no behaviour.
 
 ## What the body gets
