@@ -52,6 +52,14 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [Docs, skills and the Lua input flag](issues/09-discovery-diagnostics-docs.md) - the tail of the effort: the help
+  pages were rewritten around three kinds and five languages (`tools/metatools.md` became `tools/scriptable-tools.md`,
+  because the old page pointed at a folder ticket 12 deleted), the three authoring skills learned the shells, the four
+  scriptable flags and the reserved temp folder, and `AGENTS.md` gained a scriptable-languages table with the traps
+  that cost a session. With it [ticket 10](issues/10-lua-json-input.md) closed the last behaviour gap: Lua reads
+  `json-input`, so `true` hands `tool_args`/`command_args`/`previous` over as JSON text while `auto` and `false` keep
+  the native value, and an absent `previous` stays `nil` in both modes.
+
 - [Batch and PowerShell engines](issues/03-preamble-builders-and-serializers.md) - the last two languages, so the family
   now has all four builders and all four runners (ticket 04 closes with it). **Batch**: `.bat`/`.cmd`, `REM `-prefixed
   frontmatter, `@echo off` + `setlocal DisableDelayedExpansion`, `set "name=value"` with `%`→`%%` and ASCII-escaped JSON
