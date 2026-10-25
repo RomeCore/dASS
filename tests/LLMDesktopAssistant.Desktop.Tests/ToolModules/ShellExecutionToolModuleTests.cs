@@ -3,6 +3,9 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
+using LLMDesktopAssistant.Desktop.Scripting.Bash;
+using LLMDesktopAssistant.Desktop.Scripting.Batch;
+using LLMDesktopAssistant.Desktop.Scripting.PowerShell;
 using LLMDesktopAssistant.Desktop.ToolModules;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Prompting;
@@ -59,10 +62,26 @@ public class ShellExecutionToolModuleTests
 		}
 	}
 
+	private sealed class StubBashInterpreterLocator : IBashInterpreterLocator
+	{
+		public ExecutableResolution Resolve(string? configuredPath) => new("bash", null);
+	}
+
+	private sealed class StubBatchInterpreterLocator : IBatchInterpreterLocator
+	{
+		public ExecutableResolution Resolve() => new("cmd.exe", null);
+	}
+
+	private sealed class StubPowerShellInterpreterLocator : IPowerShellInterpreterLocator
+	{
+		public ExecutableResolution Resolve(string? configuredPath) => new("pwsh", null);
+	}
+
 	private static ShellExecutionToolModule CreateModule()
 	{
 		var wdAccess = new WorkingDirectoryAccessService(new StubChatSettingsService(), new StubSkillAccessor());
-		return new ShellExecutionToolModule(wdAccess, new StubProcessLauncher(), new StubAddonInvalidator());
+		return new ShellExecutionToolModule(wdAccess, new StubProcessLauncher(), new StubAddonInvalidator(),
+			new StubBashInterpreterLocator(), new StubBatchInterpreterLocator(), new StubPowerShellInterpreterLocator());
 	}
 
 	private static string MainArgumentName(string toolName) => toolName switch

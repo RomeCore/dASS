@@ -2,6 +2,8 @@ using System.ComponentModel;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.Scripting.Bash;
+using LLMDesktopAssistant.Desktop.Scripting.Batch;
+using LLMDesktopAssistant.Desktop.Scripting.PowerShell;
 using LLMDesktopAssistant.Desktop.ToolModules.Terminal;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
@@ -21,14 +23,19 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 	{
 		private readonly IWorkingDirectoryAccessService _wdAccess;
 		private readonly IBashInterpreterLocator _bashInterpreterLocator;
+		private readonly IBatchInterpreterLocator _batchInterpreterLocator;
+		private readonly IPowerShellInterpreterLocator _powerShellInterpreterLocator;
 
 		public ShellExecutionToolModule(IWorkingDirectoryAccessService wdAccess,
 			IProcessLauncher processLauncher, IAddonManagerInvalidator addonInvalidator,
-			IBashInterpreterLocator bashInterpreterLocator)
+			IBashInterpreterLocator bashInterpreterLocator, IBatchInterpreterLocator batchInterpreterLocator,
+			IPowerShellInterpreterLocator powerShellInterpreterLocator)
 			: base(processLauncher, addonInvalidator)
 		{
 			_wdAccess = wdAccess;
 			_bashInterpreterLocator = bashInterpreterLocator;
+			_batchInterpreterLocator = batchInterpreterLocator;
+			_powerShellInterpreterLocator = powerShellInterpreterLocator;
 
 			AddTool(new ToolInitializationInfo
 			{
@@ -48,21 +55,24 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				SpecifierParameters = ["runTerminal", "wait"],
 			});
 
-			AddTool(new ToolInitializationInfo
+			if (OperatingSystem.IsWindows())
 			{
-				Executor = ExecuteBatch,
-				StreamingAnalyzer = ExecuteBatchStreaming,
-				PreviewExecutor = ExecuteBatchPreview,
-				SpecifierAnalyzer = AnalyzeBatchSpecifier,
-				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
-				Name = "shell-batch",
-				Description = $"Executes WINDOWS BATCH command or script from the current working directory. Examples: `git status`, `python script.py`",
-				NameKey = Locale.GetKey("tool.name.shell-batch"),
-				DescriptionKey = Locale.GetKey("tool.description.shell-batch"),
-				CategoryKey = Locale.GetKey("tool.category.scripting"),
-				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
-				SpecifierParameters = ["runTerminal", "wait"],
-			});
+				AddTool(new ToolInitializationInfo
+				{
+					Executor = ExecuteBatch,
+					StreamingAnalyzer = ExecuteBatchStreaming,
+					PreviewExecutor = ExecuteBatchPreview,
+					SpecifierAnalyzer = AnalyzeBatchSpecifier,
+					StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
+					Name = "shell-batch",
+					Description = $"Executes WINDOWS BATCH command or script from the current working directory. Examples: `git status`, `python script.py`",
+					NameKey = Locale.GetKey("tool.name.shell-batch"),
+					DescriptionKey = Locale.GetKey("tool.description.shell-batch"),
+					CategoryKey = Locale.GetKey("tool.category.scripting"),
+					DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
+					SpecifierParameters = ["runTerminal", "wait"],
+				});
+			}
 
 			AddTool(new ToolInitializationInfo
 			{
@@ -167,6 +177,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
+			var interpreter = _batchInterpreterLocator.Resolve();
+			if (!interpreter.Found)
+			{
+				context.Call.SetResult(interpreter.Problem ?? "No command processor was found on this machine.");
+				return Task.FromResult(ToolExecutionResult.Failed);
+			}
+
 			var workDir = _wdAccess.GetWorkingDirectory();
 
 			return Run(new TerminalToolRunParameters
@@ -176,7 +193,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				{
 					ProcessName = "Batch",
 					RunInTerminal = runTerminal,
-					FileName = "cmd.exe",
+					FileName = interpreter.Path!,
 					Arguments = ["/c", $"\"{command}\""],
 					VerbatimArguments = true,
 					WorkingDirectory = workDir
@@ -209,6 +226,16 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
+			var configured = context.Services.GetService<IChatSettingsService>()?.Settings.Environment
+				.GetEffectiveAdditionalSettings().OfType<PowerShellEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
+
+			var interpreter = _powerShellInterpreterLocator.Resolve(configured);
+			if (!interpreter.Found)
+			{
+				context.Call.SetResult(interpreter.Problem ?? "No PowerShell interpreter was found on this machine.");
+				return Task.FromResult(ToolExecutionResult.Failed);
+			}
+
 			var workDir = _wdAccess.GetWorkingDirectory();
 
 			return Run(new TerminalToolRunParameters
@@ -218,7 +245,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				{
 					ProcessName = "PowerShell",
 					RunInTerminal = runTerminal,
-					FileName = "powershell",
+					FileName = interpreter.Path!,
 					Arguments = ["-Command", command],
 					WorkingDirectory = workDir
 				}

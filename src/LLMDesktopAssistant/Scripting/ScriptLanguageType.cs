@@ -20,7 +20,8 @@ namespace LLMDesktopAssistant.Scripting
 
 		/// <summary>
 		/// PowerShell (.ps1) scripting language.
-		/// Available on desktop operating systems using the Microsoft.PowerShell.SDK.
+		/// PowerShell 7 (pwsh) runs on Windows, Linux and macOS; Windows PowerShell 5.1 only on Windows, and it is
+		/// preferred only when pwsh is absent.
 		/// </summary>
 		PowerShell,
 
