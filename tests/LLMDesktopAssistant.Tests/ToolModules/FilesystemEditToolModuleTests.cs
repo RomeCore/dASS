@@ -536,22 +536,6 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 	}
 
 	[Fact]
-	public async Task Match_TrailingNewline_Ignored()
-	{
-		using var temp = new TempDir();
-		var file = temp.Write("file.txt", "foo\nbar");
-
-		var result = await ExecuteAsync(GetFsEditTool(CreateModule(temp.Root)), new JsonObject
-		{
-			["path"] = "file.txt",
-			["patches"] = new JsonArray { Patch("foo\n", "baz") }
-		});
-
-		Assert.Contains("File edited successfully", result.ResultContent);
-		Assert.Equal("baz\nbar", File.ReadAllText(file));
-	}
-
-	[Fact]
 	public async Task Replace_PreservesCrlfLineEndings()
 	{
 		using var temp = new TempDir();
@@ -1613,6 +1597,38 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 						// matched line's prefix (the prefix may also contain text before the match)
 						var fileBasePrefix = effectivePrefixes.Length > 0 ? effectivePrefixes[0] : "";
 """));
+	}
+
+	[Fact]
+	public async Task Replace_RealWorldPatch_RemovesLine()
+	{
+		await TestReplaceAsync("""
+	abc
+	def
+	ghi
+""", """
+	abc
+	ghi
+""", Patch("""
+def
+
+""", ""));
+	}
+
+	[Fact]
+	public async Task Replace_RealWorldPatch_RemovesLine_WithAddition()
+	{
+		await TestReplaceAsync("""
+	abc
+	def
+	ghi
+""", """
+	abc
+	123ghi
+""", Patch("""
+def
+
+""", "123"));
 	}
 
 	[Fact]

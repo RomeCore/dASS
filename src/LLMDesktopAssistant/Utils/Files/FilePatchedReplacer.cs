@@ -34,8 +34,11 @@ public readonly record struct PatchApplication(string? Content, int Occurrences)
 /// and indent the continuation lines the way the file does.
 /// </para>
 /// <para>
-/// An empty replacement deletes. Lines the match covered completely are removed together with their
-/// line breaks, so no indentation residue is left where the block used to be.
+/// A match that ends with a line break reaches the end of its last line. That is load-bearing twice
+/// over. An empty replacement then deletes those lines together with their breaks, so no empty line
+/// is left where they used to be; a replacement is spliced in where they were, and whatever followed
+/// them continues on the line the replacement ended on, because the match took that break with it.
+/// A match that stops inside a line only ever deletes its own text and leaves the line in place.
 /// </para>
 /// </remarks>
 public static class FilePatchedReplacer
@@ -53,24 +56,30 @@ public static class FilePatchedReplacer
 	public static PatchApplication Replace(string content, string match, string replace, int tabSize = 4, bool ignoreCase = false)
 	{
 		var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		var matchLines = SplitLines(match).Select(l => l.Trim()).ToArray();
-		if (matchLines.Length == 0 || matchLines.All(l => l.Length == 0))
+		var matchLines = SplitLines(match).Select(l => l.Trim()).ToList();
+		var matchEndsLine = TakeTrailingBreak(matchLines);
+		if (matchLines.Count == 0 || matchLines.All(l => l.Length == 0))
 			return new PatchApplication(null, 0);
 
-		var replaceLines = SplitLines(replace);
 		var fileLines = Normalize(content).Split('\n').ToList();
 
-		if (replaceLines.Count == 0)
+		// An empty replacement deletes. The raw text decides, not a line count: the empty string is
+		// one blank line once split, so counting could never tell deletion from a blank replacement.
+		if (replace.Length == 0)
 		{
-			return matchLines.Length == 1
+			if (matchEndsLine && matchLines.Count == 1)
+				return ApplyLineDelete(fileLines, matchLines[0], comparison);
+
+			return matchLines.Count == 1
 				? ApplyInlineDelete(fileLines, matchLines[0], comparison)
-				: ApplyBlockDelete(fileLines, matchLines, comparison);
+				: ApplyBlockDelete(fileLines, [.. matchLines], comparison);
 		}
 
-		if (matchLines.Length == 1 && replaceLines.Count == 1)
+		var replaceLines = SplitLines(replace);
+		if (!matchEndsLine && matchLines.Count == 1 && replaceLines.Count == 1)
 			return ApplyInline(fileLines, matchLines[0], replaceLines[0], comparison);
 
-		return ApplyBlock(fileLines, matchLines, replaceLines, tabSize, comparison);
+		return ApplyBlock(fileLines, [.. matchLines], replaceLines, matchEndsLine, tabSize, comparison);
 	}
 
 	private static PatchApplication ApplyInline(
@@ -113,8 +122,24 @@ public static class FilePatchedReplacer
 		return Result(fileLines, occurrences);
 	}
 
+	/// <summary>
+	/// Deletes every line the match covers entirely, together with its break. Used for a patch whose
+	/// match ends with a line break: it reaches the end of its line, so it means the line, not the
+	/// word, and leaving an empty line behind would cost the caller another turn to clean it up.
+	/// </summary>
+	private static PatchApplication ApplyLineDelete(
+		List<string> fileLines, string match, StringComparison comparison)
+	{
+		if (!fileLines.Any(l => string.Equals(l.Trim(), match, comparison)))
+			// The break-terminated match turned out to sit inside a line: delete the text instead.
+			return ApplyInlineDelete(fileLines, match, comparison);
+
+		var removed = fileLines.RemoveAll(l => string.Equals(l.Trim(), match, comparison));
+		return Result(fileLines, removed);
+	}
+
 	private static PatchApplication ApplyBlock(
-		List<string> fileLines, string[] matchLines, List<string> replaceLines,
+		List<string> fileLines, string[] matchLines, List<string> replaceLines, bool matchEndsLine,
 		int tabSize, StringComparison comparison)
 	{
 		if (fileLines.Count < matchLines.Length)
@@ -135,6 +160,16 @@ public static class FilePatchedReplacer
 
 			fileLines.RemoveRange(i, matchLines.Length);
 			fileLines.InsertRange(i, replacement);
+
+			if (matchEndsLine && i + replacement.Count < fileLines.Count)
+			{
+				// The match took its line break with it, so whatever followed it continues on the line
+				// where the replacement ended. Its indentation goes: the line start it belonged to is
+				// gone, and the replacement already carries the file's own prefix.
+				var next = i + replacement.Count;
+				fileLines[next - 1] += fileLines[next].TrimStart();
+				fileLines.RemoveAt(next);
+			}
 
 			// Continue after the replaced block; the loop's i++ moves past it.
 			i += replacement.Count - 1;
@@ -298,12 +333,24 @@ public static class FilePatchedReplacer
 			? new PatchApplication(null, 0)
 			: new PatchApplication(string.Join('\n', fileLines), occurrences);
 
+	/// <summary>
+	/// Splits the text into lines, keeping the empty element a terminating line break leaves behind:
+	/// that element is what records that the text reached the end of its last line.
+	/// </summary>
 	private static List<string> SplitLines(string text)
+		=> Normalize(text).Split('\n').ToList();
+
+	/// <summary>
+	/// Removes the empty element a terminating line break leaves behind and reports whether there was
+	/// one, so the caller knows the text ended at the end of its last line rather than inside it.
+	/// </summary>
+	private static bool TakeTrailingBreak(List<string> lines)
 	{
-		var lines = Normalize(text).Split('\n').ToList();
-		if (lines.Count > 0 && string.IsNullOrEmpty(lines[^1]))
-			lines.RemoveAt(lines.Count - 1);
-		return lines;
+		if (lines.Count <= 1 || lines[^1].Length != 0)
+			return false;
+
+		lines.RemoveAt(lines.Count - 1);
+		return true;
 	}
 
 	private static string Normalize(string text)
