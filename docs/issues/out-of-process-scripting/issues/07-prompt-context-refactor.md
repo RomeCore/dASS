@@ -66,7 +66,6 @@ trusting the Python provider at run time.
 
 - `Blocked by: 01` was dropped on resolution: the ticket was implemented ahead of the contract change, with
   `Language`/`Descriptor` left in place as a documented bridge. Ticket 01 removes them.
-- The decision trail for the session is `.llmassist/handoffs/2026-10-24-out-of-process-scripting-p1.md`.
 - The planned `Addon = null` for native sections never happened: every collected context is an addon, so the member
   is non-nullable and named `PromptContext` — *refactor(prompting): rename the execution context addon and inject
   the service provider*.

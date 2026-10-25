@@ -1,6 +1,6 @@
 # Bash engine, interpreter discovery and the bash settings block
 
-Status: ready-for-agent
+Status: done
 Type: task
 Blocked by: 08
 
@@ -104,3 +104,22 @@ both, so the parser cannot accept a pattern the engine reads differently.
 ## Comments
 
 - Split out of the 2026-10-25 grilling. It takes over the discovery bullet of ticket 09 and closes ticket 02.
+
+- **Landed 2026-10-25** (`9f7f8b84`), verified by hand on the development machine:
+
+  | Check | Result |
+  |---|---|
+  | `shell-bash` (native) | Git Bash 5.2.37 via discovery; `/bin/bash` is gone |
+  | PTY | `TERM=xterm-256color`, 80x30, interactive `read`, Cyrillic typed and read back |
+  | `sh-echo` (`.sh` tool) | `#---` frontmatter parsed, script written to `%LOCALAPPDATA%\...\temp\scripts`, preamble variable present, `pwd` = the chat's working directory |
+  | `sh-files` (`.sh` command, `json-output: "@@*@@"`) | part chip rendered from JSON between markers, noisy stdout ignored, a literal `@@` inside the payload survived (greedy capture) |
+  | `sh-term` (`.sh` command, `run-terminal`) | countdown and an interactive `read` in the attached terminal |
+  | unit tests | `BashScriptBuilderTests` (quoting, Cyrillic, LF) and `ScriptOutputPatternTests` (markers, escapes, greedy, five error paths) |
+
+- **Authoring trap found by the pass**: a command's JSON contract is `part` / `generate` / `effect` / `error`, not the tool's
+  `status` / `result` / `structured`. An addon written with the tool's shape renders **nothing at all** - there is no
+  part and `generate: false` only lowers the intent, so the message silently ends up empty. Worth a line in the
+  authoring skills (ticket 09).
+
+- **Landmine**: the locator caches per configured path, so installing Git Bash *after* a failed lookup (empty
+  configured path) keeps reporting "not found" until the app restarts.

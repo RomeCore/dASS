@@ -1,6 +1,6 @@
 # Frontmatter line prefix for shell engines
 
-Status: open
+Status: done
 Type: task
 Blocked by: 01
 
@@ -18,4 +18,11 @@ stays inert by construction and the file stays runnable as-is.
 
 ## Answer
 
+The implemented mode is **prefix plus markers**, not a leading run of prefixed lines: the opening and closing marker
+lines carry the prefix (`#---`) and every line between them must start with it. A leading run was rejected because it
+would swallow a shebang and every ordinary comment at the top of a shell file. Spec §11 was amended to say so.
+
 ## Comments
+
+- **Closed 2026-10-25** by the first shell language (ticket 11): `.sh` addons parse through the `#` prefix, and the
+  descriptor cache key carries `FrontmatterLinePrefix`, so a prefixed and an unprefixed descriptor cannot collide.

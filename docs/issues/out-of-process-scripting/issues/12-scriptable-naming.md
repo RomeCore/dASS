@@ -1,6 +1,6 @@
 # `meta` becomes `scriptable` in the scripting surface
 
-Status: ready-for-agent
+Status: done
 Type: task
 Blocked by: 08
 
@@ -51,5 +51,9 @@ venv. With no users yet both are free; recording it so the loss is a decision ra
 
 ## Comments
 
-- Split out of the 2026-10-25 grilling. Implemented as its own commit, before the bash engine, so the rename does not
-  ride along in an engine diff.
+- Split out of the 2026-10-25 grilling. Implemented as its own commit (`cc67ba87`), before the bash engine, so the
+  rename does not ride along in an engine diff.
+- `ToolBehaviourCategory.Meta` was renamed as well: with it gone the only surviving "meta" is the R.I.P. epitaph,
+  which is a tombstone with dates rather than a term.
+- The two venvs stayed two - one for the native `execute-python` tools, one for scriptable addons with a fallback -
+  and only the names changed, plus the hint text now says which is which.
