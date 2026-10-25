@@ -22,6 +22,22 @@ Build each project separately, never the whole solution, and **never pipe the bu
 (`| Select-Object -Last 40`): it breaks the console encoding (Cyrillic becomes mojibake) and kills the
 live streaming of the shell tool.
 
+**The Desktop project is the running application.** Its `bin`/`obj` files are locked by the instance you are
+talking to, so nothing - not a build, not `dotnet test` - may write there; the artifacts flags are not a
+convenience, they are the only way it works at all. The same flags apply to its test project:
+
+```powershell
+$a = Join-Path $env:TEMP 'dass-temp-build'
+dotnet test 'tests/LLMDesktopAssistant.Desktop.Tests/LLMDesktopAssistant.Desktop.Tests.csproj' -p:UseArtifactsOutput=true -p:ArtifactsPath="$a"
+```
+
+Core tests (`tests/LLMDesktopAssistant.Tests`) touch no locked file and run plainly.
+
+**Never lower the verbosity of a `dotnet build` or `dotnet test`** (`-v q`, `-v m`, `-v minimal`, `--no-restore`
+on a test run that still has to build): the summary line - how many tests ran, how many failed - is the whole
+point of running them, and quiet output makes a green run indistinguishable from a run that found nothing. The
+default verbosity is the correct one; the only reason to touch the flags is the artifacts path above.
+
 ## Code style
 
 Tabs for indentation, Allman braces, block-scoped `namespace X { }`. `net10.0` with `Nullable` and
