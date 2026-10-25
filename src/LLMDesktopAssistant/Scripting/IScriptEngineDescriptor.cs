@@ -11,26 +11,36 @@ namespace LLMDesktopAssistant.Scripting
 	/// </remarks>
 	public interface IScriptEngineDescriptor
 	{
-		/// <summary>The scripting language this descriptor describes.</summary>
+		/// <summary>
+		/// The scripting language this descriptor describes.
+		/// </summary>
 		ScriptLanguageType Language { get; }
 
-		/// <summary>The file extensions this language owns, in priority order (with the leading dot).</summary>
+		/// <summary>
+		/// The file extensions this language owns, in priority order (with the leading dot).
+		/// </summary>
 		string[] Extensions { get; }
 
-		/// <summary>The frontmatter start marker (for example <c>"""</c>, <c>--[[</c> or <c>---</c>).</summary>
+		/// <summary>
+		/// The frontmatter start marker (for example '"""', '--[[' or '---').
+		/// </summary>
 		string FrontmatterStart { get; }
 
-		/// <summary>The frontmatter end marker.</summary>
+		/// <summary>
+		/// The frontmatter end marker.
+		/// </summary>
 		string FrontmatterEnd { get; }
 
 		/// <summary>
 		/// The exact prefix of every frontmatter line, or <see langword="null"/> for block markers.
-		/// Used by languages without block comments — <c># </c> for the shell languages, <c>REM </c> for Batch — so the
+		/// Used by languages without block comments - '# ' for the shell languages, 'REM ' for Batch - so the
 		/// whole block stays a comment and the file remains runnable as-is.
 		/// </summary>
 		string? FrontmatterLinePrefix { get; }
 
-		/// <summary>What this language can do beyond running a body.</summary>
+		/// <summary>
+		/// What this language can do beyond running a body.
+		/// </summary>
 		ScriptEngineCapabilities Capabilities { get; }
 	}
 }

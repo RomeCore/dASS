@@ -8,12 +8,6 @@ namespace LLMDesktopAssistant.SlashCommands.Scripting
 	/// Defines a scripting engine that can run slash-command addons written in a specific language (Lua, Python,
 	/// Bash, ...). Each engine knows how to build the command's executor.
 	/// </summary>
-	/// <remarks>
-	/// Deliberately a separate family from the tool engines: a command and a tool differ in what they receive, what
-	/// they may do and how their arguments are shaped, so a shared abstraction would be a leaky one. The obvious parts
-	/// mirror <c>IScriptableToolEngine</c>; unlike it, there is no <c>Template</c>/<c>Examples</c>, and the argument
-	/// schema is passed in (for a command it lives on the executor, not on the addon).
-	/// </remarks>
 	public interface IScriptableSlashCommandEngine : IScriptableAddonEngine
 	{
 		/// <summary>

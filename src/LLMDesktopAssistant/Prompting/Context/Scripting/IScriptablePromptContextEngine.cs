@@ -8,12 +8,6 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 	/// engine builds the addon's provider, so the flags and the body stay on the addon instead of being threaded
 	/// through a per-invocation signature.
 	/// </summary>
-	/// <remarks>
-	/// A third family next to <c>IScriptableToolEngine</c> and <c>IScriptableSlashCommandEngine</c>: a prompt
-	/// context neither returns a tool result nor mutates a message, it returns plain text that becomes part of
-	/// the prompt. The provider owns the run; the timeout budget and the failure isolation belong to the caller
-	/// (<c>PromptContextBudget</c>), not to the engine.
-	/// </remarks>
 	public interface IScriptablePromptContextEngine : IScriptableAddonEngine
 	{
 		/// <summary>
