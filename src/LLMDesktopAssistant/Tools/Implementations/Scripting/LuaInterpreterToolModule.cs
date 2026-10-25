@@ -23,6 +23,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 				Executor = Execute,
 				StreamingAnalyzer = ExecuteStreaming,
 				PreviewExecutor = ExecutePreview,
+				// A Lua run can reach the filesystem through the script API, so it excludes every file claim.
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "lua-execute",
 				Description = $"""
 					# MAIN INFO

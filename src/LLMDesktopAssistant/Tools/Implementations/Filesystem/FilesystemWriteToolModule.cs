@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				DefaultExpectedBehaviour = ToolBehaviour.FileEdit | ToolBehaviour.FileDirectoryCreate | ToolBehaviour.AccessOutsideWorkdir |
 					ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit,
 				HandledDecisions = ToolPolicyDecision.Approve | ToolPolicyDecision.Ask,
-				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeSyncKeys
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileWrite
 			});
 		}
 

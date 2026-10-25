@@ -36,6 +36,9 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				StreamingAnalyzer = ExecuteBashStreaming,
 				PreviewExecutor = ExecuteBashPreview,
 				SpecifierAnalyzer = AnalyzeBashSpecifier,
+				// A shell may touch any file, and what it will do is unknowable: it excludes every other
+				// file claim for the duration of the call.
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "shell-bash",
 				Description = $"Executes UNIX BASH command or script from the current working directory. Examples: `git status`, `python script.py`",
 				NameKey = Locale.GetKey("tool.name.shell-bash"),
@@ -51,6 +54,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				StreamingAnalyzer = ExecuteBatchStreaming,
 				PreviewExecutor = ExecuteBatchPreview,
 				SpecifierAnalyzer = AnalyzeBatchSpecifier,
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "shell-batch",
 				Description = $"Executes WINDOWS BATCH command or script from the current working directory. Examples: `git status`, `python script.py`",
 				NameKey = Locale.GetKey("tool.name.shell-batch"),
@@ -66,6 +70,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				StreamingAnalyzer = ExecutePowerShellStreaming,
 				PreviewExecutor = ExecutePowerShellPreview,
 				SpecifierAnalyzer = AnalyzePowerShellSpecifier,
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "shell-powershell",
 				Description = $"Executes WINDOWS POWERSHELL command or script from the current working directory. Examples: `git status`, `python script.py`",
 				NameKey = Locale.GetKey("tool.name.shell-powershell"),

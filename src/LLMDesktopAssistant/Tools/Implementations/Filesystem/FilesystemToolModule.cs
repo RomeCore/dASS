@@ -35,6 +35,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = GetFileInfo,
 				PreviewExecutor = PreviewGetFileInfo,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-get_file_info",
 				Description = "Returns file information including type classification.",
 				NameKey = Locale.GetKey("tool.name.fs-get_file_info"),
@@ -47,6 +48,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = ReadBinaryFile,
 				PreviewExecutor = PreviewReadBinaryFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileRead,
 				Name = "fs-read_binary_file",
 				Description = "Reads binary file content as hex dump from the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-read_binary_file"),
@@ -59,6 +61,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = ReadDocumentFile,
 				PreviewExecutor = PreviewReadDocumentFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileRead,
 				Name = "fs-read_document_file",
 				Description = "Reads complex documents (DOCX, PPTX, PDF) by pages from the working directory. Supported extensions: .pdf, .docx, .pptx. This is not suitable for general text or code files, such as .txt, .py, .md, .cs, .js, etc.",
 				NameKey = Locale.GetKey("tool.name.fs-read_document_file"),
@@ -71,6 +74,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = WriteBinaryFile,
 				PreviewExecutor = PreviewWriteBinaryFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileWrite,
 				Name = "fs-write_binary_file",
 				Description = "Writes binary content to a file inside working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-write_binary_file"),
@@ -84,6 +88,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = CreateDirectory,
 				PreviewExecutor = PreviewCreateDirectory,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeDirectoryWrite,
 				Name = "fs-create_directory",
 				Description = "Creates a new directory inside working directory path.",
 				NameKey = Locale.GetKey("tool.name.fs-create_directory"),
@@ -97,6 +102,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = DeleteFile,
 				PreviewExecutor = PreviewDeleteFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileWrite,
 				Name = "fs-delete_file",
 				Description = "Deletes a file inside working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-delete_file"),
@@ -110,6 +116,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = DeleteDirectory,
 				PreviewExecutor = PreviewDeleteDirectory,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeDirectoryWrite,
 				Name = "fs-delete_directory",
 				Description = "Deletes a directory (empty or with contents) from the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-delete_directory"),
@@ -123,6 +130,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = CopyFile,
 				PreviewExecutor = PreviewCopyFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeCopyFile,
 				Name = "fs-copy_file",
 				Description = "Copies a file within the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-copy_file"),
@@ -136,6 +144,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = CopyDirectory,
 				PreviewExecutor = PreviewCopyDirectory,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeCopyDirectory,
 				Name = "fs-copy_directory",
 				Description = "Copies a directory and all its contents to a new location within the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-copy_directory"),
@@ -149,6 +158,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = RenameFile,
 				PreviewExecutor = PreviewRenameFile,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeMoveFile,
 				Name = "fs-rename_file",
 				Description = "Renames or moves a file within the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-rename_file"),
@@ -162,6 +172,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				Executor = MoveDirectory,
 				PreviewExecutor = PreviewMoveDirectory,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeMoveDirectory,
 				Name = "fs-move_directory",
 				Description = "Moves a directory and all its contents to a new location within the working directory.",
 				NameKey = Locale.GetKey("tool.name.fs-move_directory"),

@@ -250,6 +250,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public bool CanCancel =>
 			!ToolCall.Status.IsTerminal() && ToolCall.CancellationTokenSource is { IsCancellationRequested: false };
 
+		/// <summary>
+		/// Whether the call is queued behind another one and the user can release it from the wait. A pure
+		/// function of the call's state, like <see cref="CanCancel"/>.
+		/// </summary>
+		public bool CanSkipSynchronizationWait => ToolCall.SynchronizationWait is { IsCancellationRequested: false };
+
 		private bool _canRestart;
 		/// <summary>
 		/// Whether the call can be re-run in place: it is finished and its tool still exists in the chat. Unlike
@@ -271,6 +277,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// Gets the command that re-runs this finished call in place.
 		/// </summary>
 		public ICommand RestartCommand { get; }
+
+		/// <summary>
+		/// Gets the command that releases this call from the synchronization queue.
+		/// </summary>
+		public ICommand SkipSynchronizationWaitCommand { get; }
 
 		public ToolCallViewModel(ToolCall toolCall, ChatMessage message, Chat chat)
 		{
@@ -296,6 +307,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
 			CancelCommand = new RelayCommand(Cancel);
 			RestartCommand = new AsyncRelayCommand(RestartRunAsync);
+			SkipSynchronizationWaitCommand = new RelayCommand(SkipSynchronizationWait);
 
 			// The subscription is not dropped when the call finishes: a restart re-runs a finished call on the same
 			// object, so a terminal status is not the end of what this card has to show.
@@ -318,6 +330,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 					case nameof(ToolCall.MinProgress): MinProgress = ToolCall.MinProgress; break;
 					case nameof(ToolCall.MaxProgress): MaxProgress = ToolCall.MaxProgress; break;
 					case nameof(ToolCall.UserConfirmationSource): RaisePropertyChanged(nameof(UserAsked)); break;
+					case nameof(ToolCall.SynchronizationWait): RaisePropertyChanged(nameof(CanSkipSynchronizationWait)); break;
 				}
 
 				if (e.PropertyName is nameof(ToolCall.Status) or nameof(ToolCall.CancellationTokenSource))
@@ -333,6 +346,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// property of the call: a restart needs the tool, and the tool lives in the chat's set.
 		/// </summary>
 		private void RefreshRestartAvailability() => CanRestart = ToolCallService.CanRestart(ToolCall);
+
+		/// <summary>
+		/// Releases this call from the synchronization queue: it runs at once without claiming any key. The
+		/// ordering guarantee is dropped for this call alone, which is exactly what the user chose.
+		/// </summary>
+		private void SkipSynchronizationWait()
+		{
+			ToolCall.SynchronizationWait?.Cancel();
+			RaisePropertyChanged(nameof(CanSkipSynchronizationWait));
+		}
 
 		/// <summary>
 		/// Cancels this call alone. The service ignores the request for a call that is already finished, and the

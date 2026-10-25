@@ -142,6 +142,18 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _cancellationTokenSource, value);
 		}
 
+		private CancellationTokenSource? _synchronizationWait;
+		/// <summary>
+		/// The pending wait for synchronization keys, or <see langword="null"/> when the invocation is
+		/// not queued. Runtime-only: the synchronizer installs it while the call is queued and cancelling
+		/// it releases the call from the wait, so it runs without claiming any key.
+		/// </summary>
+		public CancellationTokenSource? SynchronizationWait
+		{
+			get => _synchronizationWait;
+			set => SetProperty(ref _synchronizationWait, value);
+		}
+
 		private double? _progress;
 		/// <summary>
 		/// The progress of the tool execution. <see langword="null"/> means indeterminate.

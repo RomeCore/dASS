@@ -31,6 +31,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = Glob,
 				StreamingAnalyzer = GlobStreaming,
 				PreviewExecutor = GlobPreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-glob",
 				Description = """
 					Finds files and directories matching a glob pattern.

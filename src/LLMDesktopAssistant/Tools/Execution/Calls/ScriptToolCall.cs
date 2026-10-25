@@ -53,6 +53,9 @@ namespace LLMDesktopAssistant.Tools.Execution.Calls
 		/// <inheritdoc/>
 		public CancellationTokenSource? CancellationTokenSource { get; set; }
 
+		/// <inheritdoc/>
+		public CancellationTokenSource? SynchronizationWait { get; set; }
+
 		/// <summary>
 		/// The payloads the tool added. Nothing consumes them yet; kept so a script-facing attachment
 		/// surface does not need a domain change.

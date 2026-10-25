@@ -1,6 +1,23 @@
 namespace LLMDesktopAssistant.Tools.Execution.Domain
 {
 	/// <summary>
+	/// The access an invocation claims over a key. Two readers may hold the same key at once; a writer
+	/// excludes everything that touches it, including other writers.
+	/// </summary>
+	public enum ToolSyncAccess
+	{
+		/// <summary>
+		/// A shared claim: several readers of the same key run at once.
+		/// </summary>
+		Read,
+
+		/// <summary>
+		/// An exclusive claim: nothing else may touch the key while it is held.
+		/// </summary>
+		Write
+	}
+
+	/// <summary>
 	/// The kind of a synchronization key. The kind decides how two keys are compared.
 	/// </summary>
 	public enum ToolSyncKeyKind
@@ -34,5 +51,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// </summary>
 	/// <param name="Kind">The kind that selects the comparison rule.</param>
 	/// <param name="Value">The key itself. Paths are already absolute - the analyzer absolutizes them.</param>
-	public readonly record struct ToolSyncKey(ToolSyncKeyKind Kind, string Value);
+	/// <param name="Access">
+	/// The claim. Defaults to <see cref="ToolSyncAccess.Write"/>: a key that does not say otherwise is
+	/// exclusive.
+	/// </param>
+	public readonly record struct ToolSyncKey(ToolSyncKeyKind Kind, string Value,
+		ToolSyncAccess Access = ToolSyncAccess.Write);
 }

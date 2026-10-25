@@ -225,6 +225,14 @@
 					<ico:VisualIcon Kind="Refresh" Foreground="DodgerBlue"/>
 				</Button>
 
+				<!-- Release the call from the synchronization queue: it runs at once without claiming keys. -->
+				<Button Classes="IconButton"
+								Command="{Binding SkipSynchronizationWaitCommand}"
+								IsVisible="{Binding CanSkipSynchronizationWait}"
+								ToolTip.Tip="{loc:Loc tool.call.action.skip_sync_wait}">
+					<ico:VisualIcon Kind="LockOpen" Foreground="Orange"/>
+				</Button>
+
 			</WrapPanel>
 
 		</Button>

@@ -304,6 +304,7 @@ call.status.pending: Pending
 call.status.pre_executing: Analyzing...
 call.status.success: Success
 call.status.unknown: Unknown
+call.action.skip_sync_wait: Run immediately
 copy_arguments: Copy arguments
 copy_result: Copy result
 fixed: Fixed tool
@@ -342,6 +343,8 @@ status.random-coin_flip.tails: Tails
 status.random-dice_roll.rolled: Rolled
 status.random-shuffle_list.shuffled: Shuffled list of {0} items
 status.script.lines: {0} lines
+status.sync.all_files: all files
+status.sync.waiting: Waiting for {0}
 status.time-wait.completed: Completed ({0})
 status.time-wait.status: Waiting... {0} remaining
 status.web-search.results: {0} *({1} results)*

@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Tools.Implementations.Filesystem;
 using Material.Icons;
 using LLMDesktopAssistant.Localization;
 
@@ -27,6 +28,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				Executor = OpenFile,
 				StreamingAnalyzer = OpenFileStreaming,
 				PreviewExecutor = OpenFilePreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-open_file",
 				Description = "Opens a file from the working directory with its default application.",
 				NameKey = Locale.GetKey("tool.name.fs-open_file"),
@@ -41,6 +43,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				Executor = OpenInExplorer,
 				StreamingAnalyzer = OpenInExplorerStreaming,
 				PreviewExecutor = OpenInExplorerPreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-open_in_explorer",
 				Description = "Opens a file or directory in the system file explorer. " +
 					"Files are revealed and selected, directories are opened, and non-existent paths " +

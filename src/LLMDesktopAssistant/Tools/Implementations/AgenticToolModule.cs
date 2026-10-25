@@ -22,6 +22,8 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using Material.Icons;
 using RCLargeLanguageModels;
 using SixLabors.ImageSharp;
+using LLMDesktopAssistant.Tools.Implementations.Filesystem;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -85,6 +87,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				Executor = DescribeImage,
 				StreamingAnalyzer = DescribeImageStreaming,
 				PreviewExecutor = DescribeImagePreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileRead,
 				Name = "agent-describe_image",
 				Description = "Describes an image using another LLM agent.",
 				NameKey = Locale.GetKey("tool.name.agent-describe_image"),

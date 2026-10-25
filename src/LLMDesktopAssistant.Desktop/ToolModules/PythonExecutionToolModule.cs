@@ -41,6 +41,8 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				Executor = Execute,
 				StreamingAnalyzer = ExecuteStreaming,
 				PreviewExecutor = ExecutePreview,
+				// Reports whatever the script does: a Python run is a process launch, so it excludes every file claim.
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "execute-python",
 				Description = "Executes Python in isolated virtual environment (global variables are not accessible between scripts) from the working directory. It returns STOUT of the executed code (e.g., print('Hello World!') should return 'Hello World!'). Displays live output in a terminal.",
 				NameKey = Locale.GetKey("tool.name.execute-python"),
@@ -54,6 +56,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				Executor = ExecuteVenvShell,
 				StreamingAnalyzer = ExecuteVenvShellStreaming,
 				PreviewExecutor = ExecuteVenvShellPreview,
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
 				Name = "execute-python_venv_shell",
 				Description = "Executes shell script in a Python's virtual environment from the working directory. Useful for installing packages via 'pip'. Displays live output in a terminal.",
 				NameKey = Locale.GetKey("tool.name.execute-python_venv_shell"),

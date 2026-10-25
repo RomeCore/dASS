@@ -89,6 +89,10 @@ namespace LLMDesktopAssistant.MCP
 				OutputSchema = mcpTool.ReturnJsonSchema?.ToNodeSafe() as JsonObject,
 				Main = CreateExecutor(connection, mcpTool),
 				ToolSource = ToolSource.MCP,
+				// Optimistic on purpose: an MCP server is opaque, and claiming a write would serialize
+				// every remote tool against the whole disk. A read claim lets them run in parallel while
+				// still waiting out any local write.
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Read)],
 				DefaultExpectedBehaviour = ToolBehaviour.MCP,
 				NameKey = Locale.GetConstKey(mcpTool.Title ?? mcpTool.Name),
 				CategoryKey = Locale.GetConstKey(connection.Info.Name)

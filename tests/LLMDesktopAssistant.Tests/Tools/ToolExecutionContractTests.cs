@@ -134,6 +134,8 @@ namespace LLMDesktopAssistant.Tests.Tools
 
 			public string? StatusTitle { get; set; }
 
+			public CancellationTokenSource? SynchronizationWait { get; set; }
+
 			public CancellationTokenSource? CancellationTokenSource { get; set; }
 
 			public void AddAttachment(IChatAttachment attachment) { }

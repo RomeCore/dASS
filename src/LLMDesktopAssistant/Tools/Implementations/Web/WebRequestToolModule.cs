@@ -13,6 +13,7 @@ using RCLargeLanguageModels.Json.Schema;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Tools.Implementations.Filesystem;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Web
 {
@@ -64,6 +65,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 				Executor = DownloadFile,
 				StreamingAnalyzer = DownloadFileStreaming,
 				PreviewExecutor = DownloadFilePreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeSavePathWrite,
 				Name = "web-download",
 				Description = "Download a file from a specified URL into the working directory.",
 				NameKey = Locale.GetKey("tool.name.web-download"),

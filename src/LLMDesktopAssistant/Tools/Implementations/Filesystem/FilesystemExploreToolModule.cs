@@ -30,6 +30,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = Explore,
 				StreamingAnalyzer = ExploreStreaming,
 				PreviewExecutor = ExplorePreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-read_entry",
 				Aliases = ["fs-read_file", "read_file", "fs-read_directory", "read_directory"],
 				Description = """

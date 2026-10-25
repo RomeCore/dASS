@@ -23,6 +23,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Executor = Grep,
 				StreamingAnalyzer = GrepStreaming,
 				PreviewExecutor = GrepPreview,
+				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-grep",
 				Description = """
 					Searches for pattern in files using regex.

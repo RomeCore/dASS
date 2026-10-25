@@ -279,6 +279,7 @@ call.action.approve: Подтвердить
 call.action.reject: Отклонить
 call.action.cancel: Отменить этот вызов
 call.action.restart: Выполнить вызов заново
+call.action.skip_sync_wait: Выполнить немедленно
 call.note.placeholder: Пояснение или вариант...
 call.note.wait: Подожди
 call.note.try_another_tool: Попробуй другой инструмент
@@ -342,6 +343,8 @@ status.random-coin_flip.tails: Решка
 status.random-dice_roll.rolled: Прокрутили
 status.random-shuffle_list.shuffled: Перемешан список из {0} элементов
 status.script.lines: {0} строк
+status.sync.all_files: все файлы
+status.sync.waiting: Ожидание {0}
 status.time-wait.completed: Завершено ({0})
 status.time-wait.status: Ждём... {0} осталось
 status.web-search.results: {0} *({1} результатов)*

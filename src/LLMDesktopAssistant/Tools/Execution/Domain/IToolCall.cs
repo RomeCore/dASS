@@ -75,7 +75,17 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// </summary>
 		CancellationTokenSource? CancellationTokenSource { get; set; }
 
-		
+		/// <summary>
+		/// The pending wait for synchronization keys, or <see langword="null"/> when the invocation is
+		/// not queued. Runtime-only, like <see cref="CancellationTokenSource"/>.
+		/// </summary>
+		/// <remarks>
+		/// Cancelling it does not abort the invocation: it releases the invocation from the wait, so it
+		/// runs without claiming any key. The cancelled source stays installed, which is how a card tells a
+		/// skipped run from an ordinary one.
+		/// </remarks>
+		CancellationTokenSource? SynchronizationWait { get; set; }
+
 		/// <summary>
 		/// Reports progress together with the range it belongs to.
 		/// </summary>

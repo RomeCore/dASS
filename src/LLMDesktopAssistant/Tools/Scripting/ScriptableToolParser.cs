@@ -28,6 +28,7 @@
 //      Utils/MetaToolHumanizedEnumNames.cs · Utils/Directories.cs (Metatools folder)
 // ══════════════════════════════════════════════════════════════════════════════════════
 
+using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
@@ -36,6 +37,7 @@ using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 using RCLargeLanguageModels.Tools;
 
 namespace LLMDesktopAssistant.Tools.Scripting
@@ -89,6 +91,12 @@ namespace LLMDesktopAssistant.Tools.Scripting
 
 			addon.DefaultExpectedBehaviour = ToolBehaviour.Scriptable | behaviours;
 
+			// The script is opaque, so the lock is as honest as the declaration. An explicit `sync` wins over
+			// the behaviours: the author may know that the declared behaviour does not touch the disk.
+			addon.StaticSyncKeys = frontmatter.TryRequest("sync", ref diagnostic, out ToolSyncDeclaration sync)
+				? DeclaredSyncKeys(sync)
+				: DerivedSyncKeys(behaviours);
+
 			var argumentSchema = frontmatter.TryRequest("argument-schema", ref diagnostic, out JsonObject parsedArgumentSchema)
 				? parsedArgumentSchema
 				: new JsonObject
@@ -103,6 +111,69 @@ namespace LLMDesktopAssistant.Tools.Scripting
 
 			addon.ToolSource = ToolSource.Scriptable;
 			addon.Main = engine.CreateExecutor(addon);
+		}
+
+		/// <summary>
+		/// The behaviours that may change files, or that cannot be predicted at all, and therefore exclude
+		/// every other file claim.
+		/// </summary>
+		private const ToolBehaviour MutatingBehaviours =
+			ToolBehaviour.FileDirectoryCreate | ToolBehaviour.FileEdit | ToolBehaviour.FileDelete |
+			ToolBehaviour.DirectoryEdit | ToolBehaviour.DirectoryDelete |
+			ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected |
+			ToolBehaviour.AddonPackEdit | ToolBehaviour.PromptEdit | ToolBehaviour.ScriptEdit;
+
+		/// <summary>
+		/// The behaviours that only read, and therefore share the disk with every other reader.
+		/// </summary>
+		private const ToolBehaviour ReadingBehaviours =
+			ToolBehaviour.FileRead | ToolBehaviour.DirectoryRead | ToolBehaviour.ReadSecrets;
+
+		/// <summary>
+		/// Builds the keys of an explicit <c>sync</c> declaration.
+		/// </summary>
+		private static ImmutableList<ToolSyncKey> DeclaredSyncKeys(ToolSyncDeclaration declaration) =>
+			declaration switch
+			{
+				ToolSyncDeclaration.Read => [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Read)],
+				ToolSyncDeclaration.Write => [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
+				_ => []
+			};
+
+		/// <summary>
+		/// Builds the keys a tool's declared behaviours imply: a script that may write, or whose effect is
+		/// unknown, takes the whole disk; a script that only reads shares it.
+		/// </summary>
+		private static ImmutableList<ToolSyncKey> DerivedSyncKeys(ToolBehaviour behaviours)
+		{
+			if ((behaviours & MutatingBehaviours) != 0)
+				return [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)];
+
+			if ((behaviours & ReadingBehaviours) != 0)
+				return [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Read)];
+
+			return [];
+		}
+
+		/// <summary>
+		/// The value of the <c>sync</c> frontmatter key: the access a scriptable tool claims over the disk.
+		/// </summary>
+		private enum ToolSyncDeclaration
+		{
+			/// <summary>
+			/// The tool claims nothing at all.
+			/// </summary>
+			None,
+
+			/// <summary>
+			/// The tool only reads the disk.
+			/// </summary>
+			Read,
+
+			/// <summary>
+			/// The tool may change the disk; nothing else runs beside it.
+			/// </summary>
+			Write
 		}
 
 		/// <inheritdoc/>

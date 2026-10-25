@@ -122,12 +122,175 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			Assert.Equal(string.Empty, Assert.Single(keys, key => key.Kind == ToolSyncKeyKind.AllFiles).Value);
 		}
 
+		[Fact]
+		public async Task TwoReadsOfTheSameKey_RunConcurrently() =>
+			Assert.Equal(2, await MeasureAsync(ReadContext("shared.txt"), ReadContext("shared.txt"), overlap: true));
+
+		[Fact]
+		public async Task AReadOfAHeldFile_WaitsForTheWriter() =>
+			Assert.Equal(1, await MeasureAsync(FileContext("guarded.txt"), ReadContext("guarded.txt")));
+
+		[Fact]
+		public async Task AReaderArrivingAfterAWriter_DoesNotOvertakeIt()
+		{
+			var service = new ToolSynchronizationService();
+			var path = Path.Combine(Root, "fifo.txt");
+			var order = new List<string>();
+			var lockObject = new object();
+
+			var holderEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			var holderRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			var holder = service.RunAsync(FileContext(path).Context, async () =>
+			{
+				holderEntered.TrySetResult();
+				await holderRelease.Task;
+			}, CancellationToken.None);
+
+			await holderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+			var writer = service.RunAsync(FileContext(path).Context, () =>
+			{
+				lock (lockObject)
+					order.Add("writer");
+
+				return Task.Delay(50);
+			}, CancellationToken.None);
+
+			await Task.Delay(50);
+
+			var reader = service.RunAsync(ReadContext(path).Context, () =>
+			{
+				lock (lockObject)
+					order.Add("reader");
+
+				return Task.CompletedTask;
+			}, CancellationToken.None);
+
+			await Task.Delay(50);
+			holderRelease.TrySetResult();
+
+			await Task.WhenAll(holder, writer, reader).WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.Equal(["writer", "reader"], order);
+		}
+
+		[Fact]
+		public async Task ACancelledWaiter_DoesNotBlockTheOnesBehindIt()
+		{
+			var service = new ToolSynchronizationService();
+			var path = Path.Combine(Root, "cancel-head.txt");
+
+			var holderEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			var holderRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			var holder = service.RunAsync(FileContext(path).Context, async () =>
+			{
+				holderEntered.TrySetResult();
+				await holderRelease.Task;
+			}, CancellationToken.None);
+
+			await holderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+			using var cts = new CancellationTokenSource();
+			var cancelled = service.RunAsync(FileContext(path).Context, () => Task.CompletedTask, cts.Token);
+
+			await Task.Delay(50);
+			cts.Cancel();
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelled);
+
+			var secondRan = false;
+			var second = service.RunAsync(FileContext(path).Context, () =>
+			{
+				secondRan = true;
+				return Task.CompletedTask;
+			}, CancellationToken.None);
+
+			holderRelease.TrySetResult();
+			await Task.WhenAll(holder, second).WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.True(secondRan);
+		}
+
+		[Fact]
+		public async Task ASkippedInvocation_RunsWithoutKeysAndKeepsItsMark()
+		{
+			var service = new ToolSynchronizationService();
+			var path = Path.Combine(Root, "skipped.txt");
+			var session = ReadContext(path);
+
+			var holderEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			var holderRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			var holder = service.RunAsync(FileContext(path).Context, async () =>
+			{
+				holderEntered.TrySetResult();
+				await holderRelease.Task;
+			}, CancellationToken.None);
+
+			await holderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+			var ran = false;
+			var skipped = service.RunAsync(session.Context, () =>
+			{
+				ran = true;
+				return Task.CompletedTask;
+			}, CancellationToken.None);
+
+			await Task.Delay(50);
+			Assert.NotNull(session.Call.SynchronizationWait);
+			Assert.False(ran);
+
+			// Cancelling the wait is the user's "run immediately": the invocation proceeds unguarded.
+			session.Call.SynchronizationWait!.Cancel();
+
+			await skipped.WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.True(ran);
+			Assert.NotNull(session.Call.SynchronizationWait);
+			Assert.True(session.Call.SynchronizationWait!.IsCancellationRequested);
+
+			holderRelease.TrySetResult();
+			await holder;
+		}
+
+		[Fact]
+		public void Canonicalize_WidensAReadToAWriteOfTheSameTarget()
+		{
+			var path = Path.Combine(Root, "widen.txt");
+
+			var keys = ToolSynchronizationService.Canonicalize(
+			[
+				new ToolSyncKey(ToolSyncKeyKind.File, path, ToolSyncAccess.Read),
+				new ToolSyncKey(ToolSyncKeyKind.File, path, ToolSyncAccess.Write)
+			]);
+
+			var key = Assert.Single(keys);
+			Assert.Equal(ToolSyncAccess.Write, key.Access);
+		}
+
+		[Fact]
+		public void Canonicalize_KeepsAFileWriteUnderAReadDirectory()
+		{
+			var directory = Path.Combine(Root, "read-dir");
+			var file = Path.Combine(directory, "a.txt");
+
+			var keys = ToolSynchronizationService.Canonicalize(
+			[
+				new ToolSyncKey(ToolSyncKeyKind.Directory, directory, ToolSyncAccess.Read),
+				new ToolSyncKey(ToolSyncKeyKind.File, file, ToolSyncAccess.Write)
+			]);
+
+			Assert.Equal(2, keys.Count);
+		}
+
 		private static ToolTestContext.Session FileContext(string name) =>
 			Context(Path.Combine(Root, name), ToolSyncKeyKind.File);
 
-		private static ToolTestContext.Session Context(string value, ToolSyncKeyKind kind) =>
+		private static ToolTestContext.Session ReadContext(string name) =>
+			Context(Path.Combine(Root, name), ToolSyncKeyKind.File, ToolSyncAccess.Read);
+
+		private static ToolTestContext.Session Context(string value, ToolSyncKeyKind kind,
+			ToolSyncAccess access = ToolSyncAccess.Write) =>
 			ToolTestContext.Create(ToolTestContext.CreateTool("sync-tool",
-				info => info.StaticSyncKeys = [new ToolSyncKey(kind, value)]));
+				info => info.StaticSyncKeys = [new ToolSyncKey(kind, value, access)]));
 
 		private static async Task RunAsync(ToolSynchronizationService service, string[] paths)
 		{
