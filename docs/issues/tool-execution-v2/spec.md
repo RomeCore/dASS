@@ -176,7 +176,25 @@ The stream is born in the invocation source (the model's `PartialFunctionToolCal
 
 ## 7. Synchronization
 
-Keys are **static** (declared on the descriptor) plus **per-invocation** (derived by `IToolSynchronizationAnalyzer`, which is the one that absolutizes paths — the synchronizer never resolves them). Keys are **typed** (`File`/`Directory`/`Custom`/`AllFiles`) and **hierarchical** (a held `Directory` conflicts with any `File` beneath it; `AllFiles` conflicts with every file key and with itself, never with `Custom`). Path keys compare OS-aware (case-insensitive on Windows), `Custom` compares ordinally. The synchronizer canonicalizes (trimming trailing separators, dedupe, collapsing a file under a requested directory) and acquires **atomically** — no hold-and-wait, hence no deadlock; conflict detection is prefix-aware.
+Keys are **static** (declared on the descriptor) plus **per-invocation** (derived by `IToolSynchronizationAnalyzer`, which is the one that absolutizes paths — the synchronizer never resolves them). Keys are **typed** (`File`/`Directory`/`Custom`/`AllFiles`), **hierarchical** (a held `Directory` conflicts with any `File` beneath it; `AllFiles` conflicts with every file key and with itself, never with `Custom`) and **access-bearing** (`Read`/`Write`, defaulting to `Write`). Two `Read` claims of the same key coexist; anything involving a `Write` excludes. Path keys compare OS-aware (case-insensitive on Windows), `Custom` compares ordinally.
+
+The synchronizer canonicalizes (trimming trailing separators, dedupe, widening `Read` + `Write` of one target to `Write`, collapsing a key under a covering directory — a read directory covers only reads) and acquires **atomically**, so nothing holds one key while waiting for another and no lock order exists. Acquisition is a **FIFO queue over key intersection**: an invocation is granted when nothing held conflicts with it and no conflicting invocation is already waiting ahead of it, which is what stops a reader from overtaking a writer that asked first. Waiters are re-examined after every state change; a cancelled waiter is dropped from the queue with a re-examination, so it cannot keep blocking the ones behind it.
+
+The user may release a queued call through `IToolCall.SynchronizationWait` (a runtime-only `CancellationTokenSource`): cancelling it does not abort the invocation, it runs it **without claiming any key**, and the cancelled source stays installed so the card can mark the run as unsynchronized. There is no timeout — cancellation of the run is the only other way out.
+
+Who claims what:
+
+| Tool family | Keys |
+|---|---|
+| fs writers (`fs-edit`, `fs-write_file`, `fs-apply_diff`, `fs-write_binary_file`, `fs-delete_file`, `web-download`, …) | `Write File(path)` |
+| fs directory writers (`fs-create_directory`, `fs-delete_directory`) | `Write Directory(path)` |
+| `fs-copy_*` / `fs-rename_file` / `fs-move_directory` | `Read` source + `Write` target (`Write` on both for moves) |
+| fs readers (`fs-read_entry`, `fs-glob`, `fs-grep`, `fs-read_binary_file`, `fs-read_document_file`, `fs-get_file_info`, `fs-open_*`, `agent-describe_image`) | `Read`, `File` or `Directory` chosen by a stat |
+| `shell-*`, `execute-python*`, `lua-execute` | `Write AllFiles` (static) |
+| MCP tools | `Read AllFiles` (static, optimistic: an opaque server may write) |
+| scriptable tools | `sync: none \| read \| write` frontmatter, falling back to the declared `behaviours` |
+| unparsable path | `AllFiles` with the call's access |
+
 
 ---
 

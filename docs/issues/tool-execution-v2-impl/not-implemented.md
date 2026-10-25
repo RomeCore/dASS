@@ -37,11 +37,13 @@ a descriptor capability and receives the context.
 
 ## Script-source synchronization
 
-`ScriptToolOrchestrator` skips `IToolSynchronizationService`. Sync keys are not reentrant: a tool holding
-`AllFiles` (or a directory) that calls another tool through `dass.tool.call` would wait forever on the
-keys its own caller holds. The decision between key-reentrancy tracking (via `SharedContext` / ambient
-state) and a narrower skip rule is deferred. **Seam:** the stage is a service the orchestrator chooses to
-call; adding the call back is one line.
+`ScriptToolOrchestrator` skips `IToolSynchronizationService`, and that skip is now **load-bearing**: a
+scriptable tool may hold `AllFiles` (from its `sync` declaration or its `behaviours`) and call another tool
+through `dass.tool.call`, so synchronizing the nested call would deadlock it against its own caller. Keys
+are not reentrant. The remaining decision is key-reentrancy tracking (via `SharedContext` / ambient state)
+versus keeping the skip; until then a nested call is unsynchronized by construction. **Seam:** the stage is
+a service the orchestrator chooses to call; adding the call back is one line.
+
 
 ## Approval-time argument editing
 
@@ -82,12 +84,27 @@ Spec §14 ("not yet specified"). `LLMDesktopAssistant.Blazor` is not wired to th
 stage services are Application-scoped and stateless; a web orchestrator would be a sixth source if the
 need appears.
 
-## Sync analyzers beyond the filesystem
+## Synchronization edges the queue does not cover
 
-Ticket 06 / spec §7. This pass migrates every existing `SynchronizationGroup` to `StaticSyncKeys` and adds
-one `IToolSynchronizationAnalyzer` for filesystem paths (the proof of the hierarchical model). Other tools
-that could emit argument-derived keys will get analyzers later. **Seam:** `IToolSyncAnalyzer` is already a
-descriptor capability; adding one is a local change.
+Spec §7. The keyed queue, the read/write access and the skip surface are landed; what remains outside them is
+deliberate:
+
+- **`wait=false`.** A shell or Python call that does not wait releases its keys when the tool call returns,
+  while the process keeps running. No key can cover a background process; a caller that needs the guarantee
+  has to wait.
+- **The user's skip.** Cancelling `IToolCall.SynchronizationWait` runs the call without claiming anything.
+  The ordering guarantee is lost by design, and the card keeps the mark so the loss is visible.
+- **No timeout.** A queued call waits until it is granted, cancelled or skipped; a long shell does not expire.
+- **MCP optimism.** MCP tools claim `Read AllFiles`, so they run beside each other and beside local readers
+  rather than freezing the disk. A server that writes therefore writes unsynchronized. Flipping the single
+  word to `Write` is the whole fix if it ever bites.
+- **Scriptable tools.** A script is opaque: its lock is as honest as its `sync` declaration or its
+  `behaviours`, and a script that under-declares escapes synchronization entirely. Same class of limit as
+  the skip, but silent.
+
+**Seam:** every item is a decision inside one of three places — the descriptor's keys, the analyzer, or the
+`CancellationTokenSource` on the call.
+
 
 ## End-to-end tests
 
