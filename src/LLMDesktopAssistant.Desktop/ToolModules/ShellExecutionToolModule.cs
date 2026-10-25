@@ -22,20 +22,12 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 	public class ShellExecutionToolModule : TerminalBasedToolModule
 	{
 		private readonly IWorkingDirectoryAccessService _wdAccess;
-		private readonly IBashInterpreterLocator _bashInterpreterLocator;
-		private readonly IBatchInterpreterLocator _batchInterpreterLocator;
-		private readonly IPowerShellInterpreterLocator _powerShellInterpreterLocator;
 
 		public ShellExecutionToolModule(IWorkingDirectoryAccessService wdAccess,
-			IProcessLauncher processLauncher, IAddonManagerInvalidator addonInvalidator,
-			IBashInterpreterLocator bashInterpreterLocator, IBatchInterpreterLocator batchInterpreterLocator,
-			IPowerShellInterpreterLocator powerShellInterpreterLocator)
+			IProcessLauncher processLauncher, IAddonManagerInvalidator addonInvalidator)
 			: base(processLauncher, addonInvalidator)
 		{
 			_wdAccess = wdAccess;
-			_bashInterpreterLocator = bashInterpreterLocator;
-			_batchInterpreterLocator = batchInterpreterLocator;
-			_powerShellInterpreterLocator = powerShellInterpreterLocator;
 
 			AddTool(new ToolInitializationInfo
 			{
@@ -46,6 +38,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				// A shell may touch any file, and what it will do is unknowable: it excludes every other
 				// file claim for the duration of the call.
 				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
+				ChatAvailablePredicate = (tool, svc) => GetBashInterpreter(svc).Found,
 				Name = "shell-bash",
 				Description = $"Executes UNIX BASH command or script from the current working directory. Examples: `git status`, `python script.py`",
 				NameKey = Locale.GetKey("tool.name.shell-bash"),
@@ -55,24 +48,22 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				SpecifierParameters = ["runTerminal", "wait"],
 			});
 
-			if (OperatingSystem.IsWindows())
+			AddTool(new ToolInitializationInfo
 			{
-				AddTool(new ToolInitializationInfo
-				{
-					Executor = ExecuteBatch,
-					StreamingAnalyzer = ExecuteBatchStreaming,
-					PreviewExecutor = ExecuteBatchPreview,
-					SpecifierAnalyzer = AnalyzeBatchSpecifier,
-					StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
-					Name = "shell-batch",
-					Description = $"Executes WINDOWS BATCH command or script from the current working directory. Examples: `git status`, `python script.py`",
-					NameKey = Locale.GetKey("tool.name.shell-batch"),
-					DescriptionKey = Locale.GetKey("tool.description.shell-batch"),
-					CategoryKey = Locale.GetKey("tool.category.scripting"),
-					DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
-					SpecifierParameters = ["runTerminal", "wait"],
-				});
-			}
+				Executor = ExecuteBatch,
+				StreamingAnalyzer = ExecuteBatchStreaming,
+				PreviewExecutor = ExecuteBatchPreview,
+				SpecifierAnalyzer = AnalyzeBatchSpecifier,
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
+				ChatAvailablePredicate = (tool, svc) => GetBatchInterpreter(svc).Found,
+				Name = "shell-batch",
+				Description = $"Executes WINDOWS BATCH command or script from the current working directory. Examples: `git status`, `python script.py`",
+				NameKey = Locale.GetKey("tool.name.shell-batch"),
+				DescriptionKey = Locale.GetKey("tool.description.shell-batch"),
+				CategoryKey = Locale.GetKey("tool.category.scripting"),
+				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
+				SpecifierParameters = ["runTerminal", "wait"],
+			});
 
 			AddTool(new ToolInitializationInfo
 			{
@@ -81,6 +72,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				PreviewExecutor = ExecutePowerShellPreview,
 				SpecifierAnalyzer = AnalyzePowerShellSpecifier,
 				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)],
+				ChatAvailablePredicate = (tool, svc) => GetPowerShellInterpreter(svc).Found,
 				Name = "shell-powershell",
 				Description = $"Executes WINDOWS POWERSHELL command or script from the current working directory. Examples: `git status`, `python script.py`",
 				NameKey = Locale.GetKey("tool.name.shell-powershell"),
@@ -98,6 +90,28 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		// Streaming analyzers leave blocks unclosed, so incremental rendering will work
 		const int TruncationLength = 500;
+
+		private static ExecutableResolution GetBashInterpreter(IServiceProvider services)
+		{
+			var locator = services.GetRequiredService<IBashInterpreterLocator>();
+			var configured = services.GetService<IChatSettingsService>()?.Settings.Environment
+				.GetEffectiveAdditionalSettings().OfType<BashEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
+			return locator.Resolve(configured);
+		}
+
+		private static ExecutableResolution GetBatchInterpreter(IServiceProvider services)
+		{
+			var locator = services.GetRequiredService<IBatchInterpreterLocator>();
+			return locator.Resolve();
+		}
+
+		private static ExecutableResolution GetPowerShellInterpreter(IServiceProvider services)
+		{
+			var locator = services.GetRequiredService<IPowerShellInterpreterLocator>();
+			var configured = services.GetService<IChatSettingsService>()?.Settings.Environment
+				.GetEffectiveAdditionalSettings().OfType<PowerShellEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
+			return locator.Resolve(configured);
+		}
 
 		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string? command)
 		{
@@ -124,12 +138,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
-			// The shell this machine actually has, not the Unix path that does not exist on Windows: the native tool
-			// and the .sh addons must agree on which bash they mean.
-			var configured = context.Services.GetService<IChatSettingsService>()?.Settings.Environment
-				.GetEffectiveAdditionalSettings().OfType<BashEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
-
-			var interpreter = _bashInterpreterLocator.Resolve(configured);
+			var interpreter = GetBashInterpreter(context.Services);
 			if (!interpreter.Found)
 			{
 				context.Call.SetResult(interpreter.Problem ?? "No bash interpreter was found on this machine.");
@@ -177,7 +186,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
 		{
-			var interpreter = _batchInterpreterLocator.Resolve();
+			var interpreter = GetBatchInterpreter(context.Services);
 			if (!interpreter.Found)
 			{
 				context.Call.SetResult(interpreter.Problem ?? "No command processor was found on this machine.");
@@ -229,7 +238,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			var configured = context.Services.GetService<IChatSettingsService>()?.Settings.Environment
 				.GetEffectiveAdditionalSettings().OfType<PowerShellEnvironmentConfiguration>().FirstOrDefault()?.ExecutablePath;
 
-			var interpreter = _powerShellInterpreterLocator.Resolve(configured);
+			var interpreter = GetPowerShellInterpreter(context.Services);
 			if (!interpreter.Found)
 			{
 				context.Call.SetResult(interpreter.Problem ?? "No PowerShell interpreter was found on this machine.");
