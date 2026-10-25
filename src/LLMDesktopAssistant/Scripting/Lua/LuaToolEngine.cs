@@ -32,7 +32,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 					var luaService = ctx.Services.GetRequiredService<LuaService>();
 					var scriptResult = await luaService.ExecuteAsync(tool.Body, print => result.Write(print), g =>
 					{
-						g["tool_args"] = StructuredLuaConverter.JsonNodeToLuaValue(args);
+						// json-input: true hands the arguments over as JSON text the body decodes itself; auto and
+						// false keep the native table, which is what a Lua script usually wants.
+						g["tool_args"] = tool.InputMode is ScriptInputMode.Json
+							? new LuaString(args?.ToJsonString() ?? "null")
+							: StructuredLuaConverter.JsonNodeToLuaValue(args);
 					}, cancellationToken);
 					if (ctx.Call.StructuredResult is null)
 						ctx.Call.SetStructuredResult(StructuredLuaConverter.LuaValueToJsonNode(scriptResult));

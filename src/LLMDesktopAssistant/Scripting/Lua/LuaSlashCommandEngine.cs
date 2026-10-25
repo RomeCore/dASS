@@ -75,15 +75,19 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			var luaService = ctx.Services.GetRequiredService<LuaService>();
 			LuaExecutionContext.Set(command: ctx);
 
-			// The structured command_args are converted once and shared via the (cloned) globals of this run.
-			var commandArgs = LuaStructuredConverter.ToLuaValue(CommandArgsNode.Create(ctx.Arguments, ctx.RawArguments));
+			// The arguments are converted once and shared via the (cloned) globals of this run. json-input: true passes
+			// them as JSON text the body decodes itself; auto and false keep the table.
+			var commandArgs = CommandArgsNode.Create(ctx.Arguments, ctx.RawArguments);
+			var luaCommandArgs = command.InputMode is ScriptInputMode.Json
+				? new LuaString(commandArgs.ToJsonNode()?.ToJsonString() ?? "null")
+				: LuaStructuredConverter.ToLuaValue(commandArgs);
 
 			LuaTuple scriptResult;
 			try
 			{
 				scriptResult = await luaService.ExecuteAsync(command.Body, _ => { }, globals =>
 				{
-					globals["command_args"] = commandArgs;
+					globals["command_args"] = luaCommandArgs;
 				}, ct);
 			}
 			catch (OperationCanceledException)

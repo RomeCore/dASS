@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Nodes;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Services;
@@ -33,12 +34,28 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			var output = new StringBuilder();
 
 			await luaService.ExecuteAsync(Addon.Body, text => output.AppendLine(text),
-				globals => globals["previous"] = previous is null
-					? LuaNil.Instance
-					: LuaValueConverter.ToLuaValue(previous),
+				globals => globals["previous"] = ToPreviousValue(previous),
 				cancellationToken);
 
 			return output.ToString();
+		}
+
+		/// <summary>
+		/// Turns the previously injected text into the <c>previous</c> global: the text itself, or its JSON form when
+		/// the addon declared <c>json-input: true</c>.
+		/// </summary>
+		/// <remarks>
+		/// An absent value stays <see cref="LuaNil"/> in both modes: "there is no previous text" is not a JSON value,
+		/// and a body that tests <c>previous == nil</c> has to keep working.
+		/// </remarks>
+		private LuaValue ToPreviousValue(string? previous)
+		{
+			if (previous is null)
+				return LuaNil.Instance;
+
+			return Addon.InputMode is ScriptInputMode.Json
+				? new LuaString(JsonValue.Create(previous)!.ToJsonString())
+				: new LuaString(previous);
 		}
 	}
 }
