@@ -63,8 +63,10 @@ namespace LLMDesktopAssistant.Utils
 			return MarkdownEscaper.Escape(text) ?? string.Empty;
 		}
 
-		public static string TruncateEnd(this string text, int maxLength, string suffix = "...")
+		public static string? TruncateEnd(this string? text, int maxLength, string suffix = "...")
 		{
+			if (string.IsNullOrEmpty(text))
+				return text;
 			if (text.Length <= maxLength)
 				return text;
 			return string.Concat(text.AsSpan(0, maxLength - suffix.Length), suffix);

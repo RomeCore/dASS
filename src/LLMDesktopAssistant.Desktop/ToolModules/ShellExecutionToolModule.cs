@@ -84,13 +84,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		// Streaming analyzers leave blocks unclosed, so incremental rendering will work
 		const int TruncationLength = 500;
 
-		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string command)
+		private StreamingToolAnalysisResult ExecuteBashStreaming(IToolExecutionContext ctx, string? command)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Console, $"""
 				```bash
 				{command.TruncateEnd(TruncationLength)}
 				""");
-			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
+			return (command?.Length ?? 0) > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
 		private PreviewToolExecutionResult ExecuteBashPreview(bool runTerminal)
@@ -137,13 +137,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolAnalysisResult ExecuteBatchStreaming(IToolExecutionContext ctx, string command)
+		private StreamingToolAnalysisResult ExecuteBatchStreaming(IToolExecutionContext ctx, string? command)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Console, $"""
 				```batch
 				{command.TruncateEnd(TruncationLength)}
 				""");
-			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
+			return (command?.Length ?? 0) > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
 		private PreviewToolExecutionResult ExecuteBatchPreview(bool runTerminal)
@@ -179,13 +179,13 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 			}, context, cancellationToken);
 		}
 
-		private StreamingToolAnalysisResult ExecutePowerShellStreaming(IToolExecutionContext ctx, string command)
+		private StreamingToolAnalysisResult ExecutePowerShellStreaming(IToolExecutionContext ctx, string? command)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.Powershell, $"""
 				```powershell
 				{command.TruncateEnd(TruncationLength)}
 				""");
-			return command.Length > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
+			return (command?.Length ?? 0) > TruncationLength ? StreamingToolAnalysisResult.Stop : StreamingToolAnalysisResult.Continue;
 		}
 
 		private PreviewToolExecutionResult ExecutePowerShellPreview(bool runTerminal)
