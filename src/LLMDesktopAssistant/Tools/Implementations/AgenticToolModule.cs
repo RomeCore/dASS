@@ -396,7 +396,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			string? path)
 		{
 			path ??= "?";
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
 			return StreamingToolAnalysisResult.Continue;
 		}
 
@@ -405,7 +405,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		{
 			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
 
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
 
 			if (!File.Exists(fullPath))
 			{
@@ -431,7 +431,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
 			ctx.Call.UseMarkdown = true;
 
 			var modelName = _chatSettings.Settings.Models.GetEffectiveSelection().VisionModel;

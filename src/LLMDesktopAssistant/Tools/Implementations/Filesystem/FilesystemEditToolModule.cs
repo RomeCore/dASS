@@ -12,6 +12,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -155,7 +156,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			string? path)
 		{
 			path ??= "?";
-			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
 			return StreamingToolAnalysisResult.Continue;
 		}
 
@@ -173,7 +174,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			var error = CheckArgs(path, fullPath, patches);
 			if (error != null)
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult(error);
 
 				return new PreviewToolExecutionResult
@@ -229,7 +230,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				PatchErrors = patchErrors
 			};
 
-			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -265,7 +266,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (error != null)
 				{
-					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult(error);
 					return ToolExecutionResult.Failed;
 				}
@@ -297,7 +298,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				if (sharedCtx?.Approved == false ||
 					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
-					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
@@ -322,7 +323,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						"""
 					: string.Empty;
 
-				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
+				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
 				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
@@ -340,13 +341,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 			catch (OperationCanceledException)
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult("Edit operation was cancelled.");
 				return ToolExecutionResult.Failed;
 			}
 			catch (Exception ex)
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult($"Error editing file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}

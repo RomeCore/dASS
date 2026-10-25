@@ -51,7 +51,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			string? path)
 		{
 			path ??= "?";
-			ctx.Call.SetStatus(MaterialIconKind.File, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.File, $"**{path.MarkdownEscape()}**");
 			return StreamingToolAnalysisResult.Continue;
 		}
 
@@ -108,7 +108,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						};
 					}
 
-					ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode, $"**{path}**");
+					ctx.Call.SetStatus(directoryExists ? MaterialIconKind.FileEye : MaterialIconKind.FileCode, $"**{path.MarkdownEscape()}**");
 
 					return new PreviewToolExecutionResult
 					{
@@ -120,7 +120,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (directoryExists)
 				{
-					ctx.Call.SetStatus(MaterialIconKind.Folder, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.Folder, $"**{path.MarkdownEscape()}**");
 
 					return new PreviewToolExecutionResult
 					{
@@ -129,7 +129,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					};
 				}
 
-				ctx.Call.SetStatus(MaterialIconKind.FileTextError, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileTextError, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult($"No such file or directory found: '{path}'.");
 
 				return new PreviewToolExecutionResult
@@ -172,7 +172,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[DefaultValue(new string[]{ ".git", Directories.WorkingHome })]
 			string[]? ignoreDirectories = null)
 		{
-			ctx.Call.SetStatus(MaterialIconKind.FileEye, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.FileEye, $"**{path.MarkdownEscape()}**");
 
 			return await Task.Run(() =>
 			{
@@ -205,7 +205,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 						if (directoryExists)
 						{
-							ctx.Call.SetStatus(MaterialIconKind.FolderEye, $"**{path}**");
+							ctx.Call.SetStatus(MaterialIconKind.FolderEye, $"**{path.MarkdownEscape()}**");
 						}
 						else
 						{
@@ -345,7 +345,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					}
 					if (!anyExists)
 					{
-						ctx.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
+						ctx.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path.MarkdownEscape()}**");
 						ctx.Call.SetResult($"No such file or directory found: '{path}'.");
 						return ToolExecutionResult.Failed;
 					}

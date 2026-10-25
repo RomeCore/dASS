@@ -11,6 +11,7 @@ using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -190,7 +191,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"File not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -277,7 +278,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"File not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -291,7 +292,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (endByte < startByte)
 			{
-				context.Call.SetStatus(MaterialIconKind.FileCode, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileCode, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult("Invalid byte range.");
 
 				return new PreviewToolExecutionResult
@@ -386,7 +387,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"File not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -400,7 +401,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (endPage < startPage)
 			{
-				context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult("Invalid page range.");
 
 				return new PreviewToolExecutionResult
@@ -410,7 +411,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path}** *({startPage}~{endPage})*");
+			context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path.MarkdownEscape()}** *({startPage}~{endPage})*");
 
 			return new PreviewToolExecutionResult
 			{
@@ -448,7 +449,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					startPage,
 					endPage - startPage + 1);
 
-				context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path}** *({startPage}~{endPage})*");
+				context.Call.SetStatus(MaterialIconKind.FileDocument, $"**{path.MarkdownEscape()}** *({startPage}~{endPage})*");
 
 				if (string.IsNullOrWhiteSpace(text))
 				{
@@ -531,7 +532,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			catch (Exception ex)
 			{
 				ctx = null;
-				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Error writing binary file: {ex.Message}");
 
 				return new PreviewToolExecutionResult
@@ -604,7 +605,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Error writing binary file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -626,7 +627,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (Directory.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult("Directory already exists.");
 
 				return new PreviewToolExecutionResult
@@ -636,7 +637,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path}**");
+			context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -657,7 +658,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (Directory.Exists(fullPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
+					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path.MarkdownEscape()}**");
 					context.Call.SetResult("Directory already exists.");
 					return ToolExecutionResult.Succeeded;
 				}
@@ -665,13 +666,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Directory.CreateDirectory(fullPath);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Directory '{path}' created successfully.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderPlus, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Error creating directory: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -692,7 +693,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"File not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -702,7 +703,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.Delete, $"**{path}**");
+			context.Call.SetStatus(MaterialIconKind.Delete, $"**{path.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -722,7 +723,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!File.Exists(fullPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path}**");
+					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{path.MarkdownEscape()}**");
 					context.Call.SetResult($"File not found: {path}");
 					return ToolExecutionResult.Succeeded;
 				}
@@ -730,13 +731,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				File.Delete(fullPath);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.Delete, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.Delete, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"File '{path}' deleted successfully.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Error deleting file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -757,7 +758,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (path == "." || path == "" || path == "/")
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult("Cannot delete the root working directory.");
 
 				return new PreviewToolExecutionResult
@@ -770,7 +771,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!Directory.Exists(fullPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Directory not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -781,7 +782,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
+			context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -800,7 +801,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				// Prevent deleting the root working directory
 				if (path == "." || path == "" || path == "/")
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
+					context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path.MarkdownEscape()}**");
 					context.Call.SetResult("Cannot delete the root working directory.");
 					return ToolExecutionResult.Failed;
 				}
@@ -810,7 +811,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!Directory.Exists(fullPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path}**");
+					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{path.MarkdownEscape()}**");
 					context.Call.SetResult($"Directory not found: {path}");
 					return ToolExecutionResult.Succeeded;
 				}
@@ -818,13 +819,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Directory.Delete(fullPath, recursive: true);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Directory '{path}' deleted successfully.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path}**");
+				context.Call.SetStatus(MaterialIconKind.FolderRemove, $"**{path.MarkdownEscape()}**");
 				context.Call.SetResult($"Error deleting directory: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -853,7 +854,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullOldPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath.MarkdownEscape()}**");
 				context.Call.SetResult("Source file not found.");
 
 				return new PreviewToolExecutionResult
@@ -866,7 +867,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (File.Exists(fullNewPath) && !overwrite)
 			{
-				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult("Destination file already exists.");
 
 				return new PreviewToolExecutionResult
@@ -877,7 +878,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.Pencil, $"**{oldPath}** → **{newPath}**");
+			context.Call.SetStatus(MaterialIconKind.Pencil, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -905,14 +906,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!File.Exists(fullOldPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}** → **{newPath}**");
+					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 					context.Call.SetResult($"Source file not found: {oldPath}");
 					return ToolExecutionResult.Failed;
 				}
 
 				if (File.Exists(fullNewPath) && !overwrite)
 				{
-					context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+					context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 					context.Call.SetResult($"Destination file already exists: {newPath}");
 					return ToolExecutionResult.Failed;
 				}
@@ -923,13 +924,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				File.Move(fullOldPath, fullNewPath, overwrite);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.Pencil, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.Pencil, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult($"File renamed from '{oldPath}' to '{newPath}'.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult($"Error renaming file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -958,7 +959,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!Directory.Exists(fullOldPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}**");
+				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath.MarkdownEscape()}**");
 				context.Call.SetResult("Source directory not found.");
 
 				return new PreviewToolExecutionResult
@@ -971,7 +972,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (Directory.Exists(fullNewPath) && !overwrite)
 			{
-				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult("Destination directory already exists.");
 
 				return new PreviewToolExecutionResult
@@ -982,7 +983,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.Folder, $"**{oldPath}** → **{newPath}**");
+			context.Call.SetStatus(MaterialIconKind.Folder, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -1010,14 +1011,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!Directory.Exists(fullOldPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}** → **{newPath}**");
+					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 					context.Call.SetResult($"Source directory not found: {oldPath}");
 					return ToolExecutionResult.Failed;
 				}
 
 				if (Directory.Exists(fullNewPath) && !overwrite)
 				{
-					context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+					context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 					context.Call.SetResult($"Destination directory already exists: {newPath}");
 					return ToolExecutionResult.Failed;
 				}
@@ -1026,13 +1027,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				Directory.Move(fullOldPath, fullNewPath);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.Folder, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.Folder, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult($"Directory moved from '{oldPath}' to '{newPath}'.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.PencilRemove, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult($"Error moving directory: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -1062,7 +1063,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullOldPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}**");
+				context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath.MarkdownEscape()}**");
 				context.Call.SetResult("Source file not found.");
 
 				return new PreviewToolExecutionResult
@@ -1075,7 +1076,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (destExisted && !overwrite)
 			{
-				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult("Destination file already exists.");
 
 				return new PreviewToolExecutionResult
@@ -1086,7 +1087,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
+			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -1114,14 +1115,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!File.Exists(fullOldPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}** → **{newPath}**+");
+					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 					context.Call.SetResult($"Source file not found: {oldPath}");
 					return ToolExecutionResult.Failed;
 				}
 
 				if (fileExisted && !overwrite)
 				{
-					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath}** → **{newPath}**+");
+					context.Call.SetStatus(MaterialIconKind.FileQuestion, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 					context.Call.SetResult($"Destination file already exists: {newPath}");
 					return ToolExecutionResult.Failed;
 				}
@@ -1132,13 +1133,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				File.Copy(fullOldPath, fullNewPath, overwrite);
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**+");
+				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 				context.Call.SetResult($"File copied from '{oldPath}' to '{newPath}'.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{oldPath}** → **{newPath}**+");
+				context.Call.SetStatus(MaterialIconKind.FileDocumentError, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 				context.Call.SetResult($"Error copying file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
@@ -1168,7 +1169,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!Directory.Exists(fullOldPath))
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}**");
+				context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath.MarkdownEscape()}**");
 				context.Call.SetResult("Source directory not found.");
 
 				return new PreviewToolExecutionResult
@@ -1181,7 +1182,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (destExisted && !overwrite)
 			{
-				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
+				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 				context.Call.SetResult("Destination directory already exists.");
 
 				return new PreviewToolExecutionResult
@@ -1192,7 +1193,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				};
 			}
 
-			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**");
+			context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -1220,14 +1221,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!Directory.Exists(fullOldPath))
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath}** → **{newPath}**+");
+					context.Call.SetStatus(MaterialIconKind.FolderQuestion, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 					context.Call.SetResult($"Source directory not found: {oldPath}");
 					return ToolExecutionResult.Failed;
 				}
 
 				if (destExisted && !overwrite)
 				{
-					context.Call.SetStatus(MaterialIconKind.FolderAlert, $"**{oldPath}** → **{newPath}**+");
+					context.Call.SetStatus(MaterialIconKind.FolderAlert, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 					context.Call.SetResult($"Destination directory already exists: {newPath}");
 					return ToolExecutionResult.Failed;
 				}
@@ -1244,13 +1245,13 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				_addonInvalidator.Invalidate(addonKind);
 
-				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath}** → **{newPath}**+");
+				context.Call.SetStatus(MaterialIconKind.ContentCopy, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 				context.Call.SetResult($"Directory copied from '{oldPath}' to '{newPath}'.");
 				return ToolExecutionResult.Succeeded;
 			}
 			catch (Exception ex)
 			{
-				context.Call.SetStatus(MaterialIconKind.FolderAlert, $"**{oldPath}** → **{newPath}**+");
+				context.Call.SetStatus(MaterialIconKind.FolderAlert, $"**{oldPath.MarkdownEscape()}** → **{newPath.MarkdownEscape()}**+");
 				context.Call.SetResult($"Error copying directory: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}

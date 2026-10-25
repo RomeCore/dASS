@@ -9,6 +9,7 @@ using LLMDesktopAssistant.Utils.Files;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -106,7 +107,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					sharedCtx = CreateShared(fullPath, addonKind, oldContent, oldContent, EmptyDiff(), null);
 					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
 						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
-					ctx.Call.SetResult($"File **{path}** already contains the same content.");
+					ctx.Call.SetResult($"File {path} already contains the same content.");
 
 					return new PreviewToolExecutionResult
 					{
@@ -119,7 +120,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				var (diffView, fullDiff) = PrepareDiff(ctx, path, oldContent, newContent);
 				sharedCtx = CreateShared(fullPath, addonKind, oldContent, newContent, fullDiff, diffView);
 
-				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path.MarkdownEscape()}**");
 
 				return new PreviewToolExecutionResult
 				{
@@ -187,7 +188,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileQuestion,
 						LocalizationManager.LocalizeStaticFormat("tool.status.fs-edit.changes_none", $"**{path}**"));
-					ctx.Call.SetResult($"File **{path}** already contains the same content.");
+					ctx.Call.SetResult($"File {path} already contains the same content.");
 					return ToolExecutionResult.Succeeded;
 				}
 
@@ -198,7 +199,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				if (sharedCtx?.Approved == false ||
 					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
-					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDiscard, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult("User has rejected the changes, none has applied.");
 					return ToolExecutionResult.Succeeded;
 				}
@@ -216,7 +217,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					created.AppendLine($"Operation: Write");
 					created.AppendLine($"Size: {fileInfo.Length} bytes ~ ({size})");
 
-					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path}**");
+					ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FilePlus, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult(created.ToString());
 					return ToolExecutionResult.Succeeded;
 				}
@@ -255,7 +256,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 			catch (Exception ex)
 			{
-				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult($"Error writing file: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}

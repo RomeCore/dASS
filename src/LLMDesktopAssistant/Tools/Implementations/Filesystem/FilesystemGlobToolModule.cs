@@ -73,11 +73,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!Directory.Exists(fullPath))
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
+				ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
 				ctx.Call.SetResult($"Directory not found: {path}");
 			}
 
-			ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
+			ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -114,7 +114,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				{
 					try
 					{
-						ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path}** → **{pattern.MarkdownEscape()}**");
+						ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
 
 						var matcher = new Matcher();
 						matcher.AddInclude(pattern);
@@ -151,7 +151,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 									matchingFiles.Add($"[FILE] {displayPath} ({FileUtils.BytesToDisplaySize(metrics.Size)}, {lines}, {metrics.Modified:yyyy-MM-dd HH:mm})");
 
-									ctx.Call.SetStatusTitle($"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
+									ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
 
 									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
 										break;
@@ -207,7 +207,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 									matchingDirectories.Add($"[DIR] {displayPath} ({items} items, {dirInfo.LastWriteTime:yyyy-MM-dd HH:mm})");
 
-									ctx.Call.SetStatusTitle($"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
+									ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
 
 									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
 										break;
@@ -242,11 +242,11 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						if (total == 0)
 						{
 							sb.AppendLine("No matches found.");
-							ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
+							ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
 						}
 						else
 						{
-							ctx.Call.SetStatus(MaterialIconKind.FolderMultiple, $"**{path}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
+							ctx.Call.SetStatus(MaterialIconKind.FolderMultiple, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
 						}
 
 						ctx.Call.SetResult(sb.ToString());

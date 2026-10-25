@@ -9,6 +9,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
 using Material.Icons;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -66,7 +67,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			string? path)
 		{
 			path ??= "?";
-			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
 			return StreamingToolAnalysisResult.Continue;
 		}
 
@@ -80,7 +81,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 			if (!File.Exists(fullPath))
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult($"File or directory not found: {path}");
 
 				return new PreviewToolExecutionResult
@@ -131,7 +132,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				DiffView = diffView
 			};
 
-			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path}**");
+			ctx.Call.SetStatus(MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}**");
 
 			return new PreviewToolExecutionResult
 			{
@@ -167,14 +168,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				if (!File.Exists(fullPath))
 				{
-					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult($"File '{path}' not found.");
 					return ToolExecutionResult.Failed;
 				}
 
 				if (FileUtils.IsBinaryFile(fullPath))
 				{
-					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult("Cannot apply diff to binary files.");
 					return ToolExecutionResult.Failed;
 				}
@@ -187,7 +188,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 					if (edited.Item2 != null)
 					{
-						ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+						ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 						ctx.Call.SetResult(edited.Item2);
 						return ToolExecutionResult.Failed;
 					}
@@ -210,7 +211,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				if (sharedCtx?.Approved == false ||
 					(sharedCtx?.Approved == true && !result.AppliedDiff.HasGroups))
 				{
-					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path}**");
+					ctx.Call.SetStatus(MaterialIconKind.FileDiscard, $"**{path.MarkdownEscape()}**");
 					ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 						$"""
 						User has rejected the changes, none has applied.
@@ -227,7 +228,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				var diff = result.AppliedDiff;
 				var (removed, added) = diff.GetChangeCounts();
 
-				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDocumentEdit, $"**{path}** *(-{removed} +{added})*");
+				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.FileDocumentEdit, $"**{path.MarkdownEscape()}** *(-{removed} +{added})*");
 				ctx.Call.SetResult(result.RejectedDiff.HasGroups ?
 					$"""
 					File edited successfully. *(-{removed} +{added})*
@@ -245,7 +246,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			}
 			catch (Exception ex)
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path}**");
+				ctx.Call.SetStatus(MaterialIconKind.FileAlert, $"**{path.MarkdownEscape()}**");
 				ctx.Call.SetResult($"Error applying diff: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
