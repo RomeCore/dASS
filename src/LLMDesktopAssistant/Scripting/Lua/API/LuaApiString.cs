@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "string";
 
 		public override string? Manuals => """
-			--- string — extended string utilities
+			--- string - extended string utilities
 
 			Supplements the built-in Lua string library.
 
@@ -24,9 +24,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- string.split(str, delimiter)
 			  Splits a string by a delimiter.
 			  Parameters:
-			    - str: string — string to split
-			    - delimiter: string or pattern (optional, default "%s+") — delimiter pattern
-			  Returns: table — array of substrings
+			    - str: string - string to split
+			    - delimiter: string or pattern (optional, default "%s+") - delimiter pattern
+			  Returns: table - array of substrings
 
 			--- string.trim(str)
 			--- string.trim_left(str)
@@ -47,43 +47,43 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Replaces spaces with hyphens, removes special chars,
 			  converts to lowercase, handles basic transliteration.
 			  Parameters:
-			    - str: string — input text
-			  Returns: string — e.g. "Hello World!" -> "hello-world"
+			    - str: string - input text
+			  Returns: string - e.g. "Hello World!" -> "hello-world"
 
 			--- string.wrap(str, width, [indent])
 			  Wraps text to a specified line width.
 			  Parameters:
-			    - str: string — text to wrap
-			    - width: number — maximum line width (default: 80)
-			    - indent: string (optional) — prefix for each line (e.g. "> ")
-			  Returns: string — wrapped text
+			    - str: string - text to wrap
+			    - width: number - maximum line width (default: 80)
+			    - indent: string (optional) - prefix for each line (e.g. "> ")
+			  Returns: string - wrapped text
 
 			--- string.truncate(str, max_len, [suffix])
 			  Truncates a string to a maximum length, appending a suffix if trimmed.
 			  Parameters:
-			    - str: string — input text
-			    - max_len: number — maximum length
-			    - suffix: string (optional, default "...") — suffix to append
+			    - str: string - input text
+			    - max_len: number - maximum length
+			    - suffix: string (optional, default "...") - suffix to append
 			  Returns: string
 
 			--- string.pad_left(str, total_width, [char])
 			--- string.pad_right(str, total_width, [char])
 			  Pads a string to a given width with a character.
 			  Parameters:
-			    - str: string — input string
-			    - total_width: number — target length
-			    - char: string (optional, default " ") — padding character
+			    - str: string - input string
+			    - total_width: number - target length
+			    - char: string (optional, default " ") - padding character
 			  Returns: string
 
 			--- string.lines(str)
 			  Splits a string into lines (handles \\n, \\r\\n, \\r).
-			  Returns: table — array of strings
+			  Returns: table - array of strings
 
 			--- string.upper_first(str)
 			  Capitalizes the first character of a string.
 			  Parameters:
-			    - str: string — input text
-			  Returns: string — e.g. "hello" -> "Hello"
+			    - str: string - input text
+			  Returns: string - e.g. "hello" -> "Hello"
 
 			EXAMPLES:
 

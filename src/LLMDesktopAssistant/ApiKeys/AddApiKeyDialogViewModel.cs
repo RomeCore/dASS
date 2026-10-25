@@ -101,13 +101,13 @@ namespace LLMDesktopAssistant.ApiKeys
 			{
 				if (EditingKeyId != null)
 				{
-					// Edit mode — update existing key
+					// Edit mode - update existing key
 					_apiKeys.UpdateKey(EditingKeyId.Value, Name.Trim(), Value, Scheme);
 					CreatedKeyId = EditingKeyId;
 				}
 				else
 				{
-					// Add mode — create new key
+					// Add mode - create new key
 					var item = _apiKeys.AddKey(Name.Trim(), Value, Scheme);
 					CreatedKeyId = item.Id;
 				}

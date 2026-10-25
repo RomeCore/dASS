@@ -75,7 +75,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Match_AMatchingNameFollowedByAnotherSegment_DoesNotMatch()
 		{
-			// No valid token is "grilling:extra" — the name must come last.
+			// No valid token is "grilling:extra" - the name must come last.
 			Assert.Empty(MatchedNames("grilling:extra"));
 		}
 

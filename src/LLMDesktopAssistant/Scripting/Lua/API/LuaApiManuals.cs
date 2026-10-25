@@ -17,18 +17,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			Parameters:
 			  - None
 
-			Returns: string — the list of available namespaces, separated by newlines.
+			Returns: string - the list of available namespaces, separated by newlines.
 
-			--- manuals(namespace) — global function
+			--- manuals(namespace) - global function
 
 			Gets the documentation (manuals) for a given Lua API namespace.
 			Use this to explore what functions and features are available.
 
 			Parameters:
-			  - namespace (one or more): string or table — dot-separated namespace path,
+			  - namespace (one or more): string or table - dot-separated namespace path,
 			    e.g. dass, dass.tool, dass.chat, fs, time
 
-			Returns: string — the manuals text for the requested namespace(s).
+			Returns: string - the manuals text for the requested namespace(s).
 
 			Returns an error if the namespace does not exist
 			or has no manuals registered.

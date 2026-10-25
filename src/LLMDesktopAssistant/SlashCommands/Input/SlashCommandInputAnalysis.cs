@@ -8,8 +8,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 	/// token and arguments, how the token resolves, and where the caret sits.
 	/// </summary>
 	/// <remarks>
-	/// <see cref="ResolutionState"/> is computed from the text alone (caret-independent), so the highlight transform —
-	/// which receives the text but not the caret — can colour the token. The caret flags are for the popup, which
+	/// <see cref="ResolutionState"/> is computed from the text alone (caret-independent), so the highlight transform -
+	/// which receives the text but not the caret - can colour the token. The caret flags are for the popup, which
 	/// decides when to open and when it has switched to argument mode. Offsets are in raw-text coordinates.
 	/// </remarks>
 	public sealed class SlashCommandInputAnalysis

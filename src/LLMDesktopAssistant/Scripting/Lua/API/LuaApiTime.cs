@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "time";
 
 		public override string? Manuals => """
-			--- time — time measurement and formatting API
+			--- time - time measurement and formatting API
 
 			Provides stopwatch, duration formatting, unit conversion,
 			high-resolution timestamps, delays, timers, and execution measurement.
@@ -24,49 +24,49 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			--- time.now()
 			  Returns the current Unix timestamp in seconds (with millisecond precision as float).
-			  Returns: number — e.g. 1712345678.123
+			  Returns: number - e.g. 1712345678.123
 
 			--- time.now_ms()
 			  Returns the current Unix timestamp in milliseconds.
-			  Returns: number — integer, e.g. 1712345678123
+			  Returns: number - integer, e.g. 1712345678123
 
 			--- time.now_ns()
 			  Returns a high-resolution monotonic timestamp in nanoseconds.
 			  Does NOT represent wall-clock time; only suitable for computing differences.
-			  Returns: number — nanoseconds since an undefined epoch
+			  Returns: number - nanoseconds since an undefined epoch
 
 			--- time.sleep(ms)
 			  Pauses execution for the specified number of milliseconds.
 			  Parameters:
-			    - ms: number — duration in milliseconds (can be fractional)
+			    - ms: number - duration in milliseconds (can be fractional)
 			  Returns: nil
 
 			--- time.sleep_until(timestamp)
 			  Pauses execution until the specified Unix timestamp (seconds).
 			  Parameters:
-			    - timestamp: number — Unix timestamp in seconds
+			    - timestamp: number - Unix timestamp in seconds
 			  Returns: nil
 
 			--- time.format(ms, [style])
 			  Formats a duration in milliseconds into a human-readable string.
 			  Parameters:
-			    - ms: number — duration in milliseconds
-			    - style: string (optional) — "auto" (default), "full", "short", "clock"
+			    - ms: number - duration in milliseconds
+			    - style: string (optional) - "auto" (default), "full", "short", "clock"
 			  Returns: string
 
 			--- time.convert(value, from, to)
 			  Converts a time value from one unit to another.
 			  Supported units: ns, us, μs, ms, s, m, h, d, wk
 			  Parameters:
-			    - value: number — the value to convert
-			    - from: string — source unit
-			    - to: string — target unit
+			    - value: number - the value to convert
+			    - from: string - source unit
+			    - to: string - target unit
 			  Returns: number
 
 			--- time.measure(func)
 			  Executes a function and measures its execution time.
 			  Parameters:
-			    - func: function — the function to execute
+			    - func: function - the function to execute
 			  Returns: duration_ms (number), ... (function return values)
 
 			--- time.stopwatch()
@@ -78,12 +78,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Executes a function with a timeout.
 			  If the function exceeds the timeout, it is abandoned.
 			  Parameters:
-			    - func: function — the function to execute
-			    - timeout_ms: number — timeout in milliseconds
+			    - func: function - the function to execute
+			    - timeout_ms: number - timeout in milliseconds
 			  Returns:
-			    - ok: boolean — true if completed within timeout
-			    - elapsed_ms: number — actual execution time
-			    - result or error: any — return value or error message
+			    - ok: boolean - true if completed within timeout
+			    - elapsed_ms: number - actual execution time
+			    - result or error: any - return value or error message
 
 			--- time.set_timeout(ms, callback)
 			  Schedules a callback to run once after the specified delay.
@@ -238,7 +238,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (result.Count == 1 && result[0] is not LuaNil) // single non-nil value
 				return new LuaTuple(elapsedValue, result[0]);
 
-			// nil or empty — return just elapsed time
+			// nil or empty - return just elapsed time
 			return new LuaTuple(elapsedValue);
 		}
 

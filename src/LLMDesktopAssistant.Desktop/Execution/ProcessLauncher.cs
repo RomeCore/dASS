@@ -262,7 +262,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				{
 					pty.ProcessExited += OnPtyExited;
 
-					// The process might have exited before the event subscription — check for it.
+					// The process might have exited before the event subscription - check for it.
 					if (pty.WaitForExit(0))
 						Complete(pty.ExitCode);
 
@@ -314,7 +314,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 
 						WriteToTerminal(new string(chars, 0, charCount));
 
-						// Notify views so they can repaint — XTerm.Terminal.BufferChanged
+						// Notify views so they can repaint - XTerm.Terminal.BufferChanged
 						// only fires on buffer switches, not on writes.
 						session.RaiseOutputUpdated();
 					}

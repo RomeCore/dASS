@@ -50,9 +50,9 @@ namespace LLMDesktopAssistant.ApiKeys
 
 		/// <summary>
 		/// Resolves the actual API key value by ID.
-		/// For <see cref="ApiKeyStorageScheme.Raw"/> — returns as-is.
-		/// For <see cref="ApiKeyStorageScheme.Encrypted"/> — decrypts.
-		/// For <see cref="ApiKeyStorageScheme.EnvironmentVariable"/> — reads from environment variable.
+		/// For <see cref="ApiKeyStorageScheme.Raw"/> - returns as-is.
+		/// For <see cref="ApiKeyStorageScheme.Encrypted"/> - decrypts.
+		/// For <see cref="ApiKeyStorageScheme.EnvironmentVariable"/> - reads from environment variable.
 		/// </summary>
 		/// <returns>The actual key value or <see langword="null"/>.</returns>
 		string? ResolveKey(Guid id);

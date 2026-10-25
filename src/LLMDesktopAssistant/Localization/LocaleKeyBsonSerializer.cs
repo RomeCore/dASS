@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.Localization
 {
 	/// <summary>
 	/// Registers the LiteDB/BSON representation of <see cref="LocaleKeyBase"/>: a discriminated object so a
-	/// persisted key survives a restart — <c>{ "type": "default" | "const" | "formatted", "key": "…", "args": […] }</c>
+	/// persisted key survives a restart - <c>{ "type": "default" | "const" | "formatted", "key": "…", "args": […] }</c>
 	/// (<c>args</c> only for <see cref="LocaleFormattedKey"/>). Kept in lock-step with the JSON representation in
 	/// <c>JsonLocaleKeyConverter</c>.
 	/// </summary>

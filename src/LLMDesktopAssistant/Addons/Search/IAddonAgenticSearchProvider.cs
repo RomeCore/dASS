@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Addons.Search
 	/// its own presentation (tools render their argument schema, skills render the loading hint, etc.).
 	/// </para>
 	/// <para>
-	/// The group header ('<see cref="Title"/> — <see cref="UsageHint"/>') is rendered by the tools,
+	/// The group header ('<see cref="Title"/> - <see cref="UsageHint"/>') is rendered by the tools,
 	/// the provider renders only the body. Implementations backed by the typed addon services can
 	/// inherit <see cref="AddonAgenticSearchProvider{TAddon}"/>.
 	/// </para>

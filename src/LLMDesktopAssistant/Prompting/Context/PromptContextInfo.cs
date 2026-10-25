@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// <summary>
 		/// The kind of the context: how it is executed and where its text lands. A scriptable context parses it
 		/// from its frontmatter; a native section declares it when it builds its info. It is never derived from
-		/// the provider type — the engine that creates the provider reads this value, so deriving it from the
+		/// the provider type - the engine that creates the provider reads this value, so deriving it from the
 		/// provider would be circular.
 		/// </summary>
 		public PromptContextProviderKind Kind

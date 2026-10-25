@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Tests.InputCompletion
 {
 	/// <summary>
 	/// The input's renderer: the regions the first claiming completion source paints, plus the ghost of the current
-	/// completion's selected continuation — a projection of that completion, so closing it takes the preview away.
+	/// completion's selected continuation - a projection of that completion, so closing it takes the preview away.
 	/// </summary>
 	public class InputCompletionTransformProviderTests
 	{

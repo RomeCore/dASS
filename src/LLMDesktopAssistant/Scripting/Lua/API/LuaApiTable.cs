@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "table";
 
 		public override string? Manuals => """
-			--- table — extended table utilities
+			--- table - extended table utilities
 
 			Supplements the built-in Lua table library.
 
@@ -22,111 +22,111 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- table.contains(t, value)
 			  Checks if a value exists in the table (shallow comparison).
 			  Parameters:
-			    - t: table — table to search
-			    - value: any — value to find
+			    - t: table - table to search
+			    - value: any - value to find
 			  Returns: boolean
 
 			--- table.find(t, value)
 			  Returns the first key/index where the value is found, or nil.
 			  Parameters:
-			    - t: table — table to search
-			    - value: any — value to find
+			    - t: table - table to search
+			    - value: any - value to find
 			  Returns: key or nil
 
 			--- table.map(t, func)
 			  Returns a new table where each element is transformed by func(value, key).
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			    - func: function(value, key) -> new_value
 			  Returns: table
 
 			--- table.filter(t, func)
 			  Returns a new table with elements where func(value, key) returns true.
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			    - func: function(value, key) -> boolean
 			  Returns: table
 
 			--- table.reduce(t, func, initial)
 			  Reduces the table to a single value using a binary function.
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			    - func: function(accumulator, value, key) -> new_accumulator
-			    - initial: any — initial accumulator value
-			  Returns: any — final accumulator
+			    - initial: any - initial accumulator value
+			  Returns: any - final accumulator
 
 			--- table.slice(t, start, [end])
 			  Returns a slice of the array (1-based inclusive).
 			  Parameters:
-			    - t: table — array table
-			    - start: number — start index (1-based)
-			    - end: number (optional) — end index (inclusive), default: #t
-			  Returns: table — new array
+			    - t: table - array table
+			    - start: number - start index (1-based)
+			    - end: number (optional) - end index (inclusive), default: #t
+			  Returns: table - new array
 
 			--- table.keys(t)
 			  Returns an array of all keys in the table.
 			  Parameters:
-			    - t: table — source table
-			  Returns: table — array of keys
+			    - t: table - source table
+			  Returns: table - array of keys
 
 			--- table.values(t)
 			  Returns an array of all values in the table.
 			  Parameters:
-			    - t: table — source table
-			  Returns: table — array of values
+			    - t: table - source table
+			  Returns: table - array of values
 
 			--- table.merge(t1, t2)
 			  Merges t2 into t1. For arrays, appends elements.
 			  For objects, overwrites/replaces keys from t2.
 			  Parameters:
-			    - t1: table — target table
-			    - t2: table — source table
+			    - t1: table - target table
+			    - t2: table - source table
 			  Returns: new merged table
 
 			--- table.clone(t)
 			  Returns a shallow copy of the table.
 			  Parameters:
-			    - t: table — source table
-			  Returns: table — copy
+			    - t: table - source table
+			  Returns: table - copy
 			
 			--- table.deep_clone(t)
 			  Returns a deep copy of the table.
 			  Parameters:
-			    - t: table — source table
-			  Returns: table — copy
+			    - t: table - source table
+			  Returns: table - copy
 			
 			--- table.is_empty(t)
 			  Returns true if the table has no elements (array part and hash part).
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			  Returns: boolean
 
 			--- table.size(t)
 			  Returns the total number of elements in the table (all keys).
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			  Returns: number
 
 			--- table.first(t)
 			--- table.last(t)
 			  Returns the first/last element of an array table, or nil if empty.
 			  Parameters:
-			    - t: table — array table
+			    - t: table - array table
 			  Returns: element or nil
 
 			--- table.each(t, func)
 			  Iterates over all elements, calling func(value, key) for each.
 			  Parameters:
-			    - t: table — source table
+			    - t: table - source table
 			    - func: function(value, key)
 			  Returns: nil
 			
 			--- table.times(element, count)
 			  Creates a new array table by repeating the given element `count` times.
 			  Parameters:
-			    - element: any — the value to repeat
-			    - count: number — number of repetitions (must be >= 0)
-			  Returns: table — array with `count` copies of `element`
+			    - element: any - the value to repeat
+			    - count: number - number of repetitions (must be >= 0)
+			  Returns: table - array with `count` copies of `element`
 			  Example: table.times("hello", 3) -> {"hello", "hello", "hello"}
 			
 			EXAMPLES:

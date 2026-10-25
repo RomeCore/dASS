@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.Addons.Search
 
 		/// <summary>
 		/// Gets the candidate addons for the specified agent. Defaults to the effective addon set of the
-		/// agent (including hidden addons — the same set the agent can actually load and use).
+		/// agent (including hidden addons - the same set the agent can actually load and use).
 		/// </summary>
 		protected virtual IEnumerable<TAddon> GetCandidates(ChatAgentDescriptor? agent)
 		{

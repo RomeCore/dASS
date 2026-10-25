@@ -16,26 +16,26 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 {
 	/// <summary>
 	/// The slash-command input-completion source: it completes the leading command token from every command the chat
-	/// enabled and, once the token resolves, the argument under the caret — alongside the command's context (its name,
+	/// enabled and, once the token resolves, the argument under the caret - alongside the command's context (its name,
 	/// its description and the arguments it declares).
 	/// </summary>
 	/// <remarks>
 	/// <para>
 	/// It also paints its own regions (<see cref="TryHighlight"/>): what the caret sits in, how it resolves and how it
 	/// looks are the same knowledge, so the analysis, the parse and the palette live here rather than in a renderer
-	/// registered next to the source. The inline ghost of a completion belongs to the input instead — see
+	/// registered next to the source. The inline ghost of a completion belongs to the input instead - see
 	/// <c>InputCompletionTransformProvider</c>.
 	/// </para>
 	/// <para>
-	/// Two completion states. <b>Token</b> — the caret is inside the token: prefix-match it against the commands, mark
+	/// Two completion states. <b>Token</b> - the caret is inside the token: prefix-match it against the commands, mark
 	/// the shadowed ones (<see cref="InputCompletionItem.IsDefeated"/>) and offer each in its fully-qualified form
-	/// (<c>/skill:grilling</c>). <b>Argument</b> — the token resolved and the caret is in the argument region: build the
+	/// (<c>/skill:grilling</c>). <b>Argument</b> - the token resolved and the caret is in the argument region: build the
 	/// command's context, name the argument under the caret and delegate, when the slot declares a
 	/// <see cref="ISlashCommandArgumentFormatProvider"/> that <see cref="ISlashCommandArgumentFormatProvider.CanComplete"/>,
 	/// to <see cref="ISlashCommandArgumentFormatProvider.Complete"/>. There is no argument-kind-specific code here.
 	/// </para>
 	/// <para>
-	/// The argument state is produced for the whole argument region — the free text of a rest positional included, where
+	/// The argument state is produced for the whole argument region - the free text of a rest positional included, where
 	/// there is nothing to complete but the context is still worth showing. The only argument region that yields nothing
 	/// is the one whose token does not resolve.
 	/// </para>
@@ -111,7 +111,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 		/// <summary>
 		/// The token state: the prefix matches, ordered by <c>Order</c> then name, each in its fully-qualified form,
-		/// shadowed ones marked. An empty match set still yields a result — the popup shows "no matches".
+		/// shadowed ones marked. An empty match set still yields a result - the popup shows "no matches".
 		/// </summary>
 		private static InputCompletionResult ComputeToken(string text, int caretIndex,
 			SlashCommandInputAnalysis analysis, IReadOnlyList<SlashCommandInfo> commandSet)
@@ -162,7 +162,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		}
 
 		/// <summary>
-		/// The row icon of a command, by the kind of source it was derived from — the same vocabulary the command chips
+		/// The row icon of a command, by the kind of source it was derived from - the same vocabulary the command chips
 		/// use. <see cref="SlashCommandSource.Unknown"/> returns <see langword="null"/> so the item falls back to the
 		/// icon its <see cref="InputCompletionKind.Command"/> uses.
 		/// </summary>
@@ -197,7 +197,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			var parsed = analysis.Arguments;
 			var target = parsed is null ? null : SlashCommandArgumentLookup.Find(parsed, rawArguments, caretOffset);
 
-			// Nothing under the caret — an empty tail such as "/call ", or the gap between two arguments: complete the
+			// Nothing under the caret - an empty tail such as "/call ", or the gap between two arguments: complete the
 			// next expected slot (the first unwritten positional, otherwise the rest positional) with an empty prefix.
 			target ??= parsed is null ? null : SlashCommandArgumentLookup.FindNext(schema, parsed, caretOffset);
 
@@ -324,8 +324,8 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 		/// <summary>
 		/// Paints the arguments: every argument reads as one chipped unit, and inside it a keyed name, its <c>=</c>, the
-		/// value and the grouping quotes get their own colours. Without a parse — an unresolved token, or an invalid
-		/// argument list — the whole argument region falls back to the plain argument colour.
+		/// value and the grouping quotes get their own colours. Without a parse - an unresolved token, or an invalid
+		/// argument list - the whole argument region falls back to the plain argument colour.
 		/// </summary>
 		private void AddArgumentSpans(List<TextHighlightSpan> spans, string text, SlashCommandInputAnalysis analysis)
 		{
@@ -340,7 +340,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			}
 
 			// An argument's parts are contiguous and the parts of an argument precede the next argument's, so in raw-text
-			// order the spans never overlap — which matters, because a text run carries a single property set and the
+			// order the spans never overlap - which matters, because a text run carries a single property set and the
 			// first span covering a position wins.
 			var offset = analysis.ArgumentSpan.Start;
 			foreach (var argument in ArgumentsOf(parsed).OrderBy(argument => argument.Position))
@@ -393,7 +393,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 
 		/// <summary>
 		/// Adds one part of an argument: its own colour over the argument's chip. A part carries both, because a text run
-		/// has a single property set — the chip cannot be a separate span drawn underneath.
+		/// has a single property set - the chip cannot be a separate span drawn underneath.
 		/// </summary>
 		private void AddPart(List<TextHighlightSpan> spans, string text, int start, int length, IBrush brush)
 		{

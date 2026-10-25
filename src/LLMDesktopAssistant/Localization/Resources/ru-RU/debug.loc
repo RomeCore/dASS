@@ -29,7 +29,7 @@ highlight_textbox.placeholder: Попробуй: /help text, /unknown cmd, "quot
 
 addon_cards.title: Карточки аддонов
 addon_cards.reset_all: Сбросить всё
-addon_cards.hint: Переключай контролы в шапке, кликай по тегам, разворачивай блоки и детали — карточка живая.
+addon_cards.hint: Переключай контролы в шапке, кликай по тегам, разворачивай блоки и детали - карточка живая.
 
 dynamic_viewmodel.title: Динамические VM
 dynamic_viewmodel.load: Загрузить AXAML

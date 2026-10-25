@@ -62,7 +62,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Executor = new FakeExecutor(WaitSchema())
 		};
 
-		// A declared positional with no format provider — a slot that yields a state-only result.
+		// A declared positional with no format provider - a slot that yields a state-only result.
 		private static readonly SlashCommandInfo Plain = new()
 		{
 			Name = "plain",
@@ -110,7 +110,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Assert.Equal(2, result.Items.Count);
 
 			// Ordered by name then key: both are "grilling", so agent:grilling wins the tie and skill:grilling is defeated. Only
-			// the winner may drop its namespace — the loser keeps the qualifier that tells it apart, so the collapsed form is
+			// the winner may drop its namespace - the loser keeps the qualifier that tells it apart, so the collapsed form is
 			// never ambiguous.
 			Assert.Equal("/grilling", result.Items[0].InsertText);
 			Assert.Equal("/agent:grilling", result.Items[0].Hint);
@@ -153,7 +153,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void TryCompute_ACaretInTheMiddleOfAnArgumentValue_SpansTheValue_AndUsesThePrefix()
 		{
-			// "/agent:web-searcher wait=tr" — the value is at [25,27), the prefix is "tr".
+			// "/agent:web-searcher wait=tr" - the value is at [25,27), the prefix is "tr".
 			var result = Source(WebSearcher).TryCompute("/agent:web-searcher wait=tr", 27);
 
 			Assert.NotNull(result);
@@ -181,7 +181,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void TryCompute_TheRestPositional_ReturnsAStateOnlyResult()
 		{
-			// The whole remainder is the rest positional: a real slot with no format provider — nothing to complete, but
+			// The whole remainder is the rest positional: a real slot with no format provider - nothing to complete, but
 			// the caret inside it is accounted for.
 			var result = Source(WebSearcher).TryCompute("/agent:web-searcher x", 21);
 

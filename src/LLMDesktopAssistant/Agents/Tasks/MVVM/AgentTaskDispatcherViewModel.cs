@@ -81,7 +81,7 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 				}
 
 				// Visibility is controlled via the View; we set a tag-like property.
-				// For now, we simply skip items that don't match — the View will bind to Tasks directly.
+				// For now, we simply skip items that don't match - the View will bind to Tasks directly.
 			}
 		}
 

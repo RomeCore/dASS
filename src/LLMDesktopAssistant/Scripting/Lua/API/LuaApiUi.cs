@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.ui";
 
 		public override string? Manuals => """
-			--- dass.ui — dynamic UI creation API
+			--- dass.ui - dynamic UI creation API
 
 			Creates dynamic Avalonia UI controls from AXAML markup bound to a Lua table (a dynamic
 			view model). The created control is a UserData descriptor; it renders only after it is
@@ -28,16 +28,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  The control is rendered later, inside the tool call UI, on the UI thread.
 
 			  Parameters:
-			    - xaml: string — AXAML markup (reflection bindings, i.e. `{Binding key}`).
+			    - xaml: string - AXAML markup (reflection bindings, i.e. `{Binding key}`).
 			      Do not use compiled bindings or x:DataType.
-			    - view_model: table or nil — the dynamic view model:
-			        * table — a Lua table exposed as a dynamic view model. String keys become
+			    - view_model: table or nil - the dynamic view model:
+			        * table - a Lua table exposed as a dynamic view model. String keys become
 			          bindable members, function values become commands, nested tables become nested
 			          view models. The injected helpers `data:set(name, value)` and `data:notify(name)`
 			          and the optional `__changed(self, name, old, new)` callback drive reactivity.
-			        * nil — an empty view model (useful for purely static markup).
+			        * nil - an empty view model (useful for purely static markup).
 
-			  Returns: uicontrol (UserData) — pass it to dass.tool.result.append_data().
+			  Returns: uicontrol (UserData) - pass it to dass.tool.result.append_data().
 
 			METHODS (on the returned uicontrol):
 
@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  from it (the whole visual tree is rebuilt). Equivalent to `ui.xaml = xaml`.
 			  The dynamic view model stays the same, so the new markup is bound to the same data.
 			  Parameters:
-				- xaml: string — the new AXAML markup (reflection bindings, as in create_control).
+				- xaml: string - the new AXAML markup (reflection bindings, as in create_control).
 
 			NOTES:
 			  - The handle is reusable: the same uicontrol may be appended multiple times.

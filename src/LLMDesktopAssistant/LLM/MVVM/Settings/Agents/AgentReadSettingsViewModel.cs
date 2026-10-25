@@ -908,7 +908,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		};
 
 		/// <summary>
-		/// Gets the full set of <see cref="MessagePartsFacet"/> bits disabled together with <paramref name="bit"/> —
+		/// Gets the full set of <see cref="MessagePartsFacet"/> bits disabled together with <paramref name="bit"/> -
 		/// the contrapositive of <see cref="GetEnabledWith"/>: turning a flag off turns off everything that implies it.
 		/// </summary>
 		private static MessagePartsFacet GetDisabledWith(MessagePartsFacet bit) => bit switch

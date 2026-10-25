@@ -78,7 +78,7 @@ public class UnifiedDiffTests
 		// line15 should NOT be included (it's line 15, change on line 11, +3 = 14)
 		Assert.Equal(8, group.Lines.Count);
 
-		// First 3 lines — context BEFORE the change
+		// First 3 lines - context BEFORE the change
 		for (int i = 0; i < 3; i++)
 			Assert.Equal(' ', group.Lines[i].Kind);
 
@@ -86,7 +86,7 @@ public class UnifiedDiffTests
 		Assert.Equal('-', group.Lines[3].Kind);
 		Assert.Equal('+', group.Lines[4].Kind);
 
-		// Last 3 lines — context AFTER
+		// Last 3 lines - context AFTER
 		for (int i = 5; i < 8; i++)
 			Assert.Equal(' ', group.Lines[i].Kind);
 	}
@@ -114,7 +114,7 @@ public class UnifiedDiffTests
 	[Fact]
 	public void MultipleChangesFar_CreatesMultipleHunks()
 	{
-		// Two changes 6 lines apart (greater than contextLines=3) — should produce two hunks
+		// Two changes 6 lines apart (greater than contextLines=3) - should produce two hunks
 		// Edge case: context between them
 		var old = Enumerable.Range(1, 20).Select(i => $"line{i}").ToArray();
 		var @new = Enumerable.Range(1, 20).Select(i => i switch
@@ -265,7 +265,7 @@ public class UnifiedDiffTests
 		var oldText = string.Join("\n", old);
 		var newText = string.Join("\n", @new);
 
-		// contextLines = 0 — no context at all
+		// contextLines = 0 - no context at all
 		var result0 = UnifiedDiff.Compute(oldText, newText, 0);
 		Assert.True(result0.HasGroups);
 		var group0 = result0.Groups[0];
@@ -361,7 +361,7 @@ public class UnifiedDiffTests
 	[Fact]
 	public void ContextLines_ChangeAtFirstLine_OnlyTrailingContext()
 	{
-		// Change at the very first line — no leading context possible
+		// Change at the very first line - no leading context possible
 		var old = "line1\nline2\nline3\nline4\nline5";
 		var @new = "MODIFIED\nline2\nline3\nline4\nline5";
 		var result = UnifiedDiff.Compute(old, @new, 3);
@@ -393,7 +393,7 @@ public class UnifiedDiffTests
 	[Fact]
 	public void ContextLines_ChangeAtLastLine_OnlyLeadingContext()
 	{
-		// Change at the very last line — no trailing context possible
+		// Change at the very last line - no trailing context possible
 		var old = "line1\nline2\nline3\nline4\nline5";
 		var @new = "line1\nline2\nline3\nline4\nMODIFIED";
 		var result = UnifiedDiff.Compute(old, @new, 3);
@@ -425,7 +425,7 @@ public class UnifiedDiffTests
 	[Fact]
 	public void ContextLines_LargerThanFile_IncludesAllLines()
 	{
-		// contextLines = 100, file has only 5 lines — all lines should be included
+		// contextLines = 100, file has only 5 lines - all lines should be included
 		var old = "line1\nline2\nCHANGE_ME\nline4\nline5";
 		var @new = "line1\nline2\nCHANGED\nline4\nline5";
 		var result = UnifiedDiff.Compute(old, @new, 100);
@@ -453,7 +453,7 @@ public class UnifiedDiffTests
 	[Fact]
 	public void ContextLines_ReplacementWithDifferentCounts_CorrectContext()
 	{
-		// Replace 1 line with 3 lines — verify context counts stay correct
+		// Replace 1 line with 3 lines - verify context counts stay correct
 		var old = "a\nb\nOLD\nc\nd";
 		var @new = "a\nb\nNEW1\nNEW2\nNEW3\nc\nd";
 		var result = UnifiedDiff.Compute(old, @new, 2);

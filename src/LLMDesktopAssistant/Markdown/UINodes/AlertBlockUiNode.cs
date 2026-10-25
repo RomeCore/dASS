@@ -14,10 +14,10 @@ namespace LLMDesktopAssistant.Markdown.UINodes;
 /// Supports the extended <see cref="RichAlertInlineParser"/> syntax where
 /// <see cref="AlertBlock.Kind"/> may contain:
 /// <code>
-/// NOTE | SUCCESS                       — plain kind
-/// SUCCESS:Done                         — kind + custom title
-/// Important message:#FF98D8            — custom title + color
-/// WARNING:Be careful:#FFA500           — kind + custom title + color
+/// NOTE | SUCCESS                       - plain kind
+/// SUCCESS:Done                         - kind + custom title
+/// Important message:#FF98D8            - custom title + color
+/// WARNING:Be careful:#FFA500           - kind + custom title + color
 /// </code>
 /// </summary>
 public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
@@ -178,7 +178,7 @@ public sealed class AlertBlockUiNode : ContainerBlockNode<AlertBlock>
 		if (s.Length == 0)
 			return;
 
-		// "TYPE:Title" — split only when the leading part is a known kind,
+		// "TYPE:Title" - split only when the leading part is a known kind,
 		// otherwise the whole content is a custom title (may contain ':').
 		int colon = s.IndexOf(':');
 		if (colon > 0)

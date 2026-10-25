@@ -22,7 +22,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// <remarks>
 	/// The call is a <em>user</em> call: it lives on the user message, it is a card in the chat with its status,
 	/// attachments and result, and it never pretends to be the generating agent's intent. The orchestration skips the
-	/// policy and the confirmation — the user asked for this tool by name — and the descriptor travels as the plain
+	/// policy and the confirmation - the user asked for this tool by name - and the descriptor travels as the plain
 	/// available addon, because the per-agent overrides are a property of an agent decision. The command asks for no
 	/// generation: a chain of <c>/tool:</c> calls is the user building a turn by hand, and the next message they write
 	/// is what starts it.

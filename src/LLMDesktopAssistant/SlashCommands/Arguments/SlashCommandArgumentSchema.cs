@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// optional rest positional (the "big" argument that takes every token beyond the declared positionals).
 	/// </summary>
 	/// <remarks>
-	/// Immutable on purpose — see <see cref="SlashCommandArgument"/>. <see cref="ImmutableList{T}"/> and
+	/// Immutable on purpose - see <see cref="SlashCommandArgument"/>. <see cref="ImmutableList{T}"/> and
 	/// <see cref="ImmutableDictionary{TKey,TValue}"/> are only shallowly immutable, which is why the leaf
 	/// <see cref="SlashCommandArgument"/> is <c>init</c>-only as well.
 	/// </remarks>
@@ -27,12 +27,12 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// <see cref="SlashCommandParsedArguments.RestPositional"/>.
 		/// </summary>
 		/// <remarks>
-		/// The rest positional is an implicit slot that follows the declared positionals — it is not one of them and
+		/// The rest positional is an implicit slot that follows the declared positionals - it is not one of them and
 		/// never appears in <see cref="SlashCommandParsedArguments.Positionals"/>. It is bound like any other argument:
 		/// <see cref="SlashCommandArgument.Required"/>, <see cref="SlashCommandArgument.Default"/> and
 		/// <see cref="SlashCommandArgument.Format"/> all apply, and the converted value lands in
 		/// <see cref="SlashCommandBoundArguments.RestPositional"/>. The one thing that never happens is splitting: the
-		/// whole surplus is a single, verbatim value — quotes kept — so a tail may legitimately carry spaces.
+		/// whole surplus is a single, verbatim value - quotes kept - so a tail may legitimately carry spaces.
 		/// </remarks>
 		public SlashCommandArgument? RestPositional { get; init; }
 

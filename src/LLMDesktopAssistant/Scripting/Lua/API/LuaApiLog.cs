@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.log";
 
 		public override string? Manuals => """
-			--- dass.log — structured logging API
+			--- dass.log - structured logging API
 
 			Logs messages at various levels with template-based formatting.
 			Supports named placeholders like {Name}, {Count}, etc.
@@ -34,8 +34,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  optional positional arguments to fill in placeholders.
 
 			  Parameters:
-			    - template: string — message template (e.g. "User {Name} logged in")
-			    - ...: any (optional) — values for placeholders, in order
+			    - template: string - message template (e.g. "User {Name} logged in")
+			    - ...: any (optional) - values for placeholders, in order
 
 			  Returns: nil
 

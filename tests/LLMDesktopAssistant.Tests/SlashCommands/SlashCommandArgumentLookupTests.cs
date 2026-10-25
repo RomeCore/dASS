@@ -77,7 +77,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void Find_OnAKeyedArgumentsKey_ReturnsNull()
 		{
-			// The caret is inside "key", before the '=' — v1 does not complete keys.
+			// The caret is inside "key", before the '=' - v1 does not complete keys.
 			Assert.Null(Find(7));
 		}
 

@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// Everything an entry point hands to the dispatcher to start one invocation.
 	/// </summary>
 	/// <remarks>
-	/// <see cref="Descriptor"/> is optional on purpose — a call whose
+	/// <see cref="Descriptor"/> is optional on purpose - a call whose
 	/// tool has disappeared from the toolset still has to be processed, and the dispatcher substitutes
 	/// <see cref="MissingToolDescriptor"/>.
 	/// </remarks>
@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		public required ToolInvocationSource Source { get; init; }
 
 		/// <summary>
-		/// The call being processed. It carries the arguments, the status and — after the run — the
+		/// The call being processed. It carries the arguments, the status and - after the run - the
 		/// result, so it is the only object the caller needs to observe.
 		/// </summary>
 		public required IToolCall Call { get; init; }

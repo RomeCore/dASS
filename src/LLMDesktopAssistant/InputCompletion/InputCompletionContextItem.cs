@@ -4,7 +4,7 @@ namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
 	/// One informational row of the completion popup's context block: something the caret's region declares but that
-	/// cannot be completed — an argument of the command, say. Shown next to the picker, never selected, never inserted.
+	/// cannot be completed - an argument of the command, say. Shown next to the picker, never selected, never inserted.
 	/// </summary>
 	public sealed class InputCompletionContextItem
 	{

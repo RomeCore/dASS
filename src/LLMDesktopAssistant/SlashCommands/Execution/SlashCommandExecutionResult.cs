@@ -7,7 +7,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 	/// </summary>
 	/// <param name="Generate">
 	/// Whether the command wants generation to happen after it. Combined with the caller's intent and the command's
-	/// declarative ceiling, this is the final generation decision — it can only lower the intent.
+	/// declarative ceiling, this is the final generation decision - it can only lower the intent.
 	/// </param>
 	/// <param name="Error">
 	/// The user-facing error, as a locale key, or <see langword="null"/> on success. The host resolves it to text when

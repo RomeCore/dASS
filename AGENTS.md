@@ -44,6 +44,7 @@ Tabs for indentation, Allman braces, block-scoped `namespace X { }`. `net10.0` w
   `*Settings` a category carrying `[SettingsRoute]`.
 - No user-facing string literals - `Locale` keys and `.loc` resources (see **Localization**). No manual
   `services.AddScoped` in feature code - use the attributes (see **Dependency injection**).
+- Do NOT use long dash (—) in both XML-docs, Lua manuals and comments, use short dash (-) instead.
 
 XML docs: every public member gets one, and so does a private member when it needs an explanation or
 when the algorithm is non-obvious. `<summary>` is **always multi-line** - never
@@ -91,7 +92,8 @@ and are auto-imported by `LocFileLocalizationManager` - drop the file in, nothin
 %locale:
 %namespace: model
 
-capability.chat: Chat completions    // full key is 'model.capability.chat'
+// full key is 'model.capability.chat'
+capability.chat: Chat completions
 ```
 
 `%locale:` empty means the invariant `iv` locale; `%namespace:` prefixes every key in the file.

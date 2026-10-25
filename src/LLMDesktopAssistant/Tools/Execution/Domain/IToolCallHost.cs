@@ -1,7 +1,7 @@
 namespace LLMDesktopAssistant.Tools.Execution.Domain
 {
 	/// <summary>
-	/// The message that owns a group of tool calls — a chat message (assistant or user) or an agent
+	/// The message that owns a group of tool calls - a chat message (assistant or user) or an agent
 	/// task's assistant message. The core needs nothing else from the host.
 	/// </summary>
 	public interface IToolCallHost

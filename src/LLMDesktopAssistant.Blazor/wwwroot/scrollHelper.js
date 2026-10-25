@@ -36,7 +36,7 @@ window.ChatScroll = (function () {
         if (!enabled) return;
         if (!isNearBottom()) return;
 
-        // Debounce via requestAnimationFrame — at most once per frame
+        // Debounce via requestAnimationFrame - at most once per frame
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(function () {
             scrollNow(true);

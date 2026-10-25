@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.SlashCommands
 	/// <remarks>
 	/// <para>
 	/// An agent cannot run a command, and does not need to: skills, sub-agents and tools are reachable directly,
-	/// and a scriptable command is a user-facing action. The catalogue is therefore read-only advice — every card
+	/// and a scriptable command is a user-facing action. The catalogue is therefore read-only advice - every card
 	/// carries the exact token, so the model quotes it instead of inventing one.
 	/// </para>
 	/// <para>
@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.SlashCommands
 	/// installation would otherwise drown every query in one command per skill.
 	/// </para>
 	/// <para>
-	/// The candidates come from <see cref="IAddonSetCollector{T}.GetAddonsForChat"/> — the same set autocomplete
+	/// The candidates come from <see cref="IAddonSetCollector{T}.GetAddonsForChat"/> - the same set autocomplete
 	/// and resolution use, with the chat's enablement settings and per-command overrides already applied. Commands
 	/// are chat-level and agent-agnostic, so the agent is ignored.
 	/// </para>

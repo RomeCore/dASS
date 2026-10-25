@@ -11,8 +11,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// <remarks>
 	/// The value comes in one of two shapes, distinguished by its YAML type:
 	/// <list type="bullet">
-	///   <item><description>a <em>string</em> — the compact hint parsed by <see cref="ArgumentHintParser"/>;</description></item>
-	///   <item><description>a <em>mapping</em> — the structured DSL below.</description></item>
+	///   <item><description>a <em>string</em> - the compact hint parsed by <see cref="ArgumentHintParser"/>;</description></item>
+	///   <item><description>a <em>mapping</em> - the structured DSL below.</description></item>
 	/// </list>
 	/// <code>
 	/// argument-schema:

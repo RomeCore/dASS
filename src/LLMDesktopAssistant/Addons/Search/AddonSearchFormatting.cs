@@ -33,7 +33,7 @@ namespace LLMDesktopAssistant.Addons.Search
 		}
 
 		/// <summary>
-		/// Appends a markdown list item for the specified addon: '- `name` (suffix) — description'.
+		/// Appends a markdown list item for the specified addon: '- `name` (suffix) - description'.
 		/// </summary>
 		public static void AppendItem(StringBuilder builder, string name, string? description, string? nameSuffix = null)
 		{
@@ -44,7 +44,7 @@ namespace LLMDesktopAssistant.Addons.Search
 
 			var inlineDescription = Inline(description);
 			if (inlineDescription.Length > 0)
-				builder.Append(" — ").Append(inlineDescription);
+				builder.Append(" - ").Append(inlineDescription);
 
 			builder.AppendLine();
 		}

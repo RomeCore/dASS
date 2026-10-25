@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "web";
 
 		public override string? Manuals => """
-			--- web — web search API
+			--- web - web search API
 
 			Provides web search functionality returning structured results.
 			All results are returned as tables (objects) with named fields.
@@ -30,28 +30,28 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Must be called with await.
 
 			  Parameters:
-			    - query: string (required) — The search query
-			    - options: table (optional) — Optional parameters:
-			      - page: number (default: 1) — Page number (1-10)
-			      - language: string (default: "auto") — Language code, "auto", "en", "ru", "fr" etc.
-			      - timeRange: string (default: "") — "day", "week", "month", "year" or ""
-			      - safeSearch: string (default: "none") — "none", "moderate", "strict"
-			      - category: string (default: "web") — Search category. Available values:
-			        "all" — all categories (General)
-			        "web" — web pages
-			        "images" — image search
-			        "videos" — video search
-			        "news" — news articles
-			        "science" — scientific publications
-			        "it" — information technology (repos, code)
-			        "files" — file hosting & downloads
-			        "socialmedia" — social media content
-			        "music" — music & audio
-			        "map" — maps & geographic content
-			        "repos" — code repositories (GitHub, GitLab)
-			        "packages" — software packages (npm, PyPI, Docker)
-			      - engines: table (optional) — Array of engine names (e.g. {"google", "bing"})
-			      - maxResults: number (default: 10) — Max results per engine (1-50)
+			    - query: string (required) - The search query
+			    - options: table (optional) - Optional parameters:
+			      - page: number (default: 1) - Page number (1-10)
+			      - language: string (default: "auto") - Language code, "auto", "en", "ru", "fr" etc.
+			      - timeRange: string (default: "") - "day", "week", "month", "year" or ""
+			      - safeSearch: string (default: "none") - "none", "moderate", "strict"
+			      - category: string (default: "web") - Search category. Available values:
+			        "all" - all categories (General)
+			        "web" - web pages
+			        "images" - image search
+			        "videos" - video search
+			        "news" - news articles
+			        "science" - scientific publications
+			        "it" - information technology (repos, code)
+			        "files" - file hosting & downloads
+			        "socialmedia" - social media content
+			        "music" - music & audio
+			        "map" - maps & geographic content
+			        "repos" - code repositories (GitHub, GitLab)
+			        "packages" - software packages (npm, PyPI, Docker)
+			      - engines: table (optional) - Array of engine names (e.g. {"google", "bing"})
+			      - maxResults: number (default: 10) - Max results per engine (1-50)
 
 			  Returns: table with:
 			    - results: array of result tables (see below)

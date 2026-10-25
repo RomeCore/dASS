@@ -23,7 +23,7 @@ public sealed record HighlightSpanInfo(int Start, int End, string Kind)
 /// View model for the TextBox highlighting debug page: lets you "feel" the real slash-command highlighting and ghost
 /// preview inside <see cref="HighlightTextBox"/>. It runs the production <see cref="SlashCommandCompletionSource"/>
 /// (its analysis, its parse and its palette) behind the production <see cref="InputCompletionTransformProvider"/>, so
-/// what you see is what the chat input will do — only the completion session is a stand-in, because the real one needs
+/// what you see is what the chat input will do - only the completion session is a stand-in, because the real one needs
 /// a chat.
 /// </summary>
 [ViewModelFor(typeof(HighlightTextBoxDebugPageView))]

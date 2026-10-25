@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.SlashCommands
 
 		/// <summary>
 		/// The fully-qualified identity of the command: its namespaces (sorted ordinally) and its name, joined by
-		/// <c>:</c> — for example <c>matt-pocock:skill:grilling</c>. Two commands that share a bare name but differ in
+		/// <c>:</c> - for example <c>matt-pocock:skill:grilling</c>. Two commands that share a bare name but differ in
 		/// namespace (a skill and a sub-agent both called <c>grilling</c>, say) are therefore distinct, both for
 		/// deduplication and for per-command settings.
 		/// </summary>
@@ -37,7 +37,7 @@ namespace LLMDesktopAssistant.SlashCommands
 
 		/// <summary>
 		/// The canonical, slash-free token of the command: its namespaces in stored order (the type first, then the
-		/// pack) followed by the name, joined by <c>:</c> — for example <c>skill:matt-pocock:grilling</c>.
+		/// pack) followed by the name, joined by <c>:</c> - for example <c>skill:matt-pocock:grilling</c>.
 		/// </summary>
 		/// <remarks>
 		/// Unlike <see cref="Key"/> (which sorts the namespaces ordinally and is the deduplication / settings
@@ -69,8 +69,8 @@ namespace LLMDesktopAssistant.SlashCommands
 		} = true;
 
 		/// <summary>
-		/// The addon the command was derived from — a <c>SkillInfo</c>, a <c>SubAgentInfo</c>, a <c>ToolInfo</c> and so
-		/// on — or <see langword="null"/> for native/scriptable commands. Typed <see cref="object"/> because the addon
+		/// The addon the command was derived from - a <c>SkillInfo</c>, a <c>SubAgentInfo</c>, a <c>ToolInfo</c> and so
+		/// on - or <see langword="null"/> for native/scriptable commands. Typed <see cref="object"/> because the addon
 		/// bases are CRTP-parameterized and share no non-generic base. Runtime-only, never serialized.
 		/// </summary>
 		[System.Text.Json.Serialization.JsonIgnore]

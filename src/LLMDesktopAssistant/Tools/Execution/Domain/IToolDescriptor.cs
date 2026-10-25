@@ -37,7 +37,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		ToolBehaviour DefaultExpectedBehaviour { get; }
 
 		/// <summary>
-		/// How the approval decision is made — policy-based, always approve, always ask, or always
+		/// How the approval decision is made - policy-based, always approve, always ask, or always
 		/// disallow.
 		/// </summary>
 		ToolApprovalLevel ApprovalLevel { get; }

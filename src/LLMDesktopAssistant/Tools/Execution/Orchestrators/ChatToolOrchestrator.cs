@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	/// The chat-run orchestrator: the full pipeline for a tool the agent chose during a chat turn.
 	/// </summary>
 	/// <remarks>
-	/// The sequence is explicit imperative code on purpose — no stage engine, no shared inner helper. The
+	/// The sequence is explicit imperative code on purpose - no stage engine, no shared inner helper. The
 	/// only shared pieces are the stage services and the synchronization higher-order wrapper. The call's
 	/// terminal state belongs to the settlement stage, which runs at the end of the sequence or from the
 	/// catch block; there is no <c>finally</c>.

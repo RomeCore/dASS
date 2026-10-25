@@ -27,7 +27,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 	/// </para>
 	/// <para>
 	/// Every provider renders its own body (tools render the argument schema, skills render the loading
-	/// hint, etc.), while the group header ('Title — UsageHint') is rendered by the tools themselves.
+	/// hint, etc.), while the group header ('Title - UsageHint') is rendered by the tools themselves.
 	/// </para>
 	/// <para>
 	/// The valid 'kinds' filter values are the <see cref="IAddonTypeDescriptor.Type"/> strings of the
@@ -63,7 +63,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var allSearchableKinds = AddonKind.None;
 
 			// The filter values are the addon type strings (for example, 'skills', 'agents' or
-			// 'scripts/lua') of the descriptors that have a provider — the same source
+			// 'scripts/lua') of the descriptors that have a provider - the same source
 			// the addon system itself uses.
 			foreach (var provider in _providers)
 			{
@@ -163,7 +163,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				if (builder.Length > 0)
 					builder.AppendLine();
 
-				builder.Append("**").Append(provider.Title).Append("** — ")
+				builder.Append("**").Append(provider.Title).Append("** - ")
 					.Append(provider.UsageHint).AppendLine(":");
 				builder.AppendLine(body);
 			}
@@ -208,7 +208,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				if (builder.Length > 0)
 					builder.AppendLine();
 
-				builder.Append("**").Append(provider.Title).Append("** — ")
+				builder.Append("**").Append(provider.Title).Append("** - ")
 					.Append(provider.UsageHint).AppendLine(":");
 				builder.AppendLine(body);
 			}
@@ -250,7 +250,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 				if (builder.Length > 0)
 					builder.AppendLine();
-				builder.Append("**").Append(provider.Title).Append("** — ")
+				builder.Append("**").Append(provider.Title).Append("** - ")
 					.Append(provider.UsageHint).AppendLine(":");
 				builder.AppendLine(body);
 			}

@@ -69,25 +69,25 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Context
 		/// Formatted input tokens with thousands separator.
 		/// </summary>
 		[BsonIgnore]
-		public string InputTokensFormatted => InputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+		public string InputTokensFormatted => InputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
 
 		/// <summary>
-		/// Formatted cache hit tokens (or "—" if unavailable).
+		/// Formatted cache hit tokens (or "-" if unavailable).
 		/// </summary>
 		[BsonIgnore]
-		public string CacheHitFormatted => InputCacheHitTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+		public string CacheHitFormatted => InputCacheHitTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
 
 		/// <summary>
-		/// Formatted cache miss tokens (or "—" if unavailable).
+		/// Formatted cache miss tokens (or "-" if unavailable).
 		/// </summary>
 		[BsonIgnore]
-		public string CacheMissFormatted => InputCacheMissTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+		public string CacheMissFormatted => InputCacheMissTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
 
 		/// <summary>
 		/// Formatted output tokens with thousands separator.
 		/// </summary>
 		[BsonIgnore]
-		public string OutputTokensFormatted => OutputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "—";
+		public string OutputTokensFormatted => OutputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
 
 		/// <summary>
 		/// Formatted TTFT in seconds (e.g. "1.23s").

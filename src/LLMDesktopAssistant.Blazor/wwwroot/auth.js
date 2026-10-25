@@ -67,7 +67,7 @@ window.selectProfileImage = function () {
 		input.type = 'file';
 		input.accept = 'image/*';
 
-		// Safety timeout — if the user never picks a file, resolve with null
+		// Safety timeout - if the user never picks a file, resolve with null
 		var safetyTimer = setTimeout(function () {
 			cleanup();
 			resolve(null);

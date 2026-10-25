@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 
 /// <summary>
 /// ViewModel for a single prompt part card in the agent prompt settings UI.
-/// Used both for slot elements (system prompt / persona / specialization — radio selection)
+/// Used both for slot elements (system prompt / persona / specialization - radio selection)
 /// and for prompt components (checkbox selection).
 /// Shows name, description, category, source, language, diagnostics, parameter UI
 /// and template metadata, plus a details section.

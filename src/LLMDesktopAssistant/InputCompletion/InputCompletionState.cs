@@ -4,7 +4,7 @@ using LLMDesktopAssistant.Localization;
 namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
-	/// What the caret is currently inside, as the popup shows it — for example the command being typed, or a command
+	/// What the caret is currently inside, as the popup shows it - for example the command being typed, or a command
 	/// plus the argument the caret sits in. A result may carry a state with an empty item list: the popup then renders
 	/// the state alone (a hint, an error, a "no matches" note, the command's context).
 	/// </summary>
@@ -27,12 +27,12 @@ namespace LLMDesktopAssistant.InputCompletion
 		public LocaleKeyBase? Description { get; init; }
 
 		/// <summary>
-		/// The context block's rows — what the caret's region declares but cannot complete.
+		/// The context block's rows - what the caret's region declares but cannot complete.
 		/// </summary>
 		public IReadOnlyList<InputCompletionContextItem> ContextItems { get; init; } = [];
 
 		/// <summary>
-		/// The locale key of the context block's heading, if any — the argument the caret sits in, or the name of the
+		/// The locale key of the context block's heading, if any - the argument the caret sits in, or the name of the
 		/// list <see cref="ContextItems"/> carries.
 		/// </summary>
 		public LocaleKeyBase? ContextTitle { get; init; }

@@ -8,8 +8,8 @@ namespace LLMDesktopAssistant.Prompting.Context
 	/// to, the chat and the chat-scoped services.
 	/// </summary>
 	/// <remarks>
-	/// Every <c>IPrompt*Provider</c> takes this type — native sections, live tails, supersede sections and their
-	/// delta and stamp providers alike — so the provider family has no asymmetry. The effective chat context is
+	/// Every <c>IPrompt*Provider</c> takes this type - native sections, live tails, supersede sections and their
+	/// delta and stamp providers alike - so the provider family has no asymmetry. The effective chat context is
 	/// <em>contained</em>, not inherited: this object is "the effective context as seen by one provider", and the
 	/// effective context stays a value it holds.
 	/// </remarks>

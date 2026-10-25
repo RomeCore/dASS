@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.models";
 
 		public override string? Manuals => """
-			--- dass.models — model listing API
+			--- dass.models - model listing API
 
 			Provides access to the list of available LLM models.
 
@@ -19,11 +19,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.models.list()
 			  Returns a table with detailed information about all available models.
 
-			  Returns: table — array of model info tables. Each entry contains:
-			    - provider_name: string — provider name (e.g. "OpenAI")
-			    - name: string — model name (e.g. "gpt-4o")
-			    - display_name: string — model display name (e.g. "GPT 4o")
-			    - full_name: string — full model identifier (e.g. "OpenAI$gpt-4o")
+			  Returns: table - array of model info tables. Each entry contains:
+			    - provider_name: string - provider name (e.g. "OpenAI")
+			    - name: string - model name (e.g. "gpt-4o")
+			    - display_name: string - model display name (e.g. "GPT 4o")
+			    - full_name: string - full model identifier (e.g. "OpenAI$gpt-4o")
 
 			EXAMPLES:
 

@@ -1,7 +1,7 @@
 namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
-	/// The kind of an input-completion state or item. Purely descriptive — the popup may use it to pick an icon, and
+	/// The kind of an input-completion state or item. Purely descriptive - the popup may use it to pick an icon, and
 	/// nothing in the engine branches on it.
 	/// </summary>
 	public enum InputCompletionKind

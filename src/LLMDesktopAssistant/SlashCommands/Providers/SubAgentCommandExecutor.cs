@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 {
 	/// <summary>
 	/// Runs <c>/agent:&lt;name&gt; [input]</c>: launches the named predefined sub-agent exactly like the
-	/// <c>agent-callsub</c> tool — fresh launch parameters, the chat-level sub-agent tool policy, the task attached to
+	/// <c>agent-callsub</c> tool - fresh launch parameters, the chat-level sub-agent tool policy, the task attached to
 	/// the command's message.
 	/// </summary>
 	/// <remarks>

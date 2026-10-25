@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "random";
 
 		public override string? Manuals => """
-			--- random — random number generation and sampling API
+			--- random - random number generation and sampling API
 
 			Provides various randomisation functions backed by System.Random.
 
@@ -24,8 +24,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  If called with one argument: returns [0, max].
 			  If called with two arguments: returns [min, max].
 			  Parameters:
-			    - min: number (optional) — lower bound (inclusive), default 0
-			    - max: number — upper bound (inclusive)
+			    - min: number (optional) - lower bound (inclusive), default 0
+			    - max: number - upper bound (inclusive)
 			  Returns: number
 
 			--- random.integer([min], max)
@@ -33,14 +33,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  If called with one argument: returns [1, max].
 			  If called with two arguments: returns [min, max] (both inclusive).
 			  Parameters:
-			    - min: number (optional) — lower bound (inclusive), default 1
-			    - max: number — upper bound (inclusive)
+			    - min: number (optional) - lower bound (inclusive), default 1
+			    - max: number - upper bound (inclusive)
 			  Returns: integer
 
 			--- random.boolean([chance])
 			  Returns true or false with the given probability.
 			  Parameters:
-			    - chance: number (optional, default 0.5) — probability of true, 0 to 1
+			    - chance: number (optional, default 0.5) - probability of true, 0 to 1
 			  Returns: boolean
 
 			--- random.choice(array, [n])
@@ -48,32 +48,32 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  If n is nil or 1: returns a single random element.
 			  If n > 1: returns an array of n unique random elements.
 			  Parameters:
-			    - array: table — array to pick from (1-based, non-sparse)
-			    - n: number (optional) — number of elements to pick
+			    - array: table - array to pick from (1-based, non-sparse)
+			    - n: number (optional) - number of elements to pick
 			  Returns: element or array of elements
 			  Throws if n > #array.
 
 			--- random.shuffle(array)
 			  Shuffles the array in-place using Fisher-Yates algorithm.
 			  Parameters:
-			    - array: table — array to shuffle (1-based)
+			    - array: table - array to shuffle (1-based)
 			  Returns: the same table (mutated)
 
 			--- random.guid()
 			  Generates a random GUID/UUID string.
-			  Returns: string — e.g. "550e8400-e29b-41d4-a716-446655440000"
+			  Returns: string - e.g. "550e8400-e29b-41d4-a716-446655440000"
 
 			--- random.bytes(n)
 			  Returns an array of n random bytes (0-255).
 			  Parameters:
-			    - n: number — number of bytes to generate
-			  Returns: table — array of integers
+			    - n: number - number of bytes to generate
+			  Returns: table - array of integers
 
 			--- random.seed([seed])
 			  Seeds the random number generator.
 			  If called without arguments, seeds with Guid.NewGuid().
 			  Parameters:
-			    - seed: number (optional) — explicit seed value
+			    - seed: number (optional) - explicit seed value
 			  Returns: nil
 
 			EXAMPLES:
@@ -191,7 +191,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (n > length)
 				throw new LuaRuntimeException($"random.choice(array, n): n ({n}) exceeds array length ({length}).");
 
-			// Fisher-Yates partial shuffle — pick first n elements
+			// Fisher-Yates partial shuffle - pick first n elements
 			var result = new LuaTable();
 
 			// Copy indices

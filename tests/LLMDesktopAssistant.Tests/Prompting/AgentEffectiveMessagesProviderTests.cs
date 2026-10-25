@@ -167,7 +167,7 @@ public class AgentEffectiveMessagesProviderTests
 		var carried = Assert.Single(effective.Checkpoints);
 		Assert.Same(summary, carried.Checkpoint);
 		// The cut carrier (a1) is invisible to the agent, so the checkpoint borrows the index
-		// of the nearest preceding visible message (u0) — the same rule as for non-cut checkpoints.
+		// of the nearest preceding visible message (u0) - the same rule as for non-cut checkpoints.
 		Assert.Equal(0, carried.Index);
 		Assert.Equal(0, effective.LastCutIndex); // ...and the cut boundary accounts for the kept boundary message
 	}

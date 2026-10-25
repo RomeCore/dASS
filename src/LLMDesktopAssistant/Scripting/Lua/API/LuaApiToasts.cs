@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.toasts";
 
 		public override string? Manuals => """
-			--- dass.toasts — toast notification API
+			--- dass.toasts - toast notification API
 
 			Shows toast notifications (popup messages) in the application UI.
 
@@ -25,9 +25,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.toasts.info(title, [description], [durationSeconds])
 			  Shows an informational toast.
 			  Parameters:
-			    - title: string — toast title (supports Markdown)
-			    - description: string (optional) — additional text
-			    - durationSeconds: number (optional, default 5) — auto-dismiss seconds
+			    - title: string - toast title (supports Markdown)
+			    - description: string (optional) - additional text
+			    - durationSeconds: number (optional, default 5) - auto-dismiss seconds
 			  Returns: nil
 
 			--- dass.toasts.warning(title, [description], [durationSeconds])

@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// ordering service forces that chat agent on the next turn, whatever the execution stages would have picked.
 	/// </summary>
 	/// <remarks>
-	/// The agent is the command's whole tail — a required, never-split rest positional whose format provider validates
+	/// The agent is the command's whole tail - a required, never-split rest positional whose format provider validates
 	/// the name against the chat's agents, converts it to the agent's id and completes it. The caller's generation
 	/// intent is left untouched and the message reaches the model as written.
 	/// </remarks>

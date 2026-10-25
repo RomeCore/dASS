@@ -93,7 +93,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			var normalizedBase = Path.GetFullPath(baseDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 			var normalizedFull = Path.GetFullPath(fullPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-			// Exact match — accessing the root itself.
+			// Exact match - accessing the root itself.
 			if (string.Equals(normalizedBase, normalizedFull, _pathComparison))
 				return true;
 

@@ -129,7 +129,7 @@
 
 		if (firstRender)
 		{
-			// Set up the observer once on first render — it will watch for DOM changes
+			// Set up the observer once on first render - it will watch for DOM changes
 			await JS.InvokeVoidAsync("ChatScroll.init", "messages-container");
 			await ScrollToBottom(true);
 		}

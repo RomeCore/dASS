@@ -6,19 +6,19 @@ using LLMDesktopAssistant.LLM.Services;
 namespace LLMDesktopAssistant.Prompting.Context
 {
 	/// <summary>
-	/// Serves the chat's prompt contexts — the SCM sections, both native and scriptable — to the addon tools
+	/// Serves the chat's prompt contexts - the SCM sections, both native and scriptable - to the addon tools
 	/// ('addon-search', 'addon-list_available' and 'addon-info'), so an agent can tell the user which sections
 	/// shape its prompt and where their text lands.
 	/// </summary>
 	/// <remarks>
 	/// <para>
 	/// A prompt context is prompt content, not an action: the agent cannot inject, refresh, reorder or tear one
-	/// down, and it never runs the script. The catalogue is therefore read-only advice — every card names the
+	/// down, and it never runs the script. The catalogue is therefore read-only advice - every card names the
 	/// section exactly as it appears in the prompt, so the model can match a tag it sees in its own context
 	/// (for example <c>&lt;git-status&gt;</c>) to the addon that produced it.
 	/// </para>
 	/// <para>
-	/// The candidates come from <see cref="IAddonSetCollector{T}.GetAddonsForAgent"/> — the agent's effective
+	/// The candidates come from <see cref="IAddonSetCollector{T}.GetAddonsForAgent"/> - the agent's effective
 	/// context set, with the enablement settings and per-agent overrides already applied. Prompt contexts are
 	/// per-agent, so a section disabled for the calling agent is not searchable.
 	/// </para>

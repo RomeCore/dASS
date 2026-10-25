@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 	/// <see cref="AgentTaskViewModel"/> cards below the assistant message.
 	/// </summary>
 	/// <remarks>
-	/// This extension is invisible (it does not produce a toolbar button) —
+	/// This extension is invisible (it does not produce a toolbar button) -
 	/// its sole purpose is to subscribe to task changes and manage the
 	/// additional view models automatically.
 	/// </remarks>
@@ -27,7 +27,7 @@ namespace LLMDesktopAssistant.UIExtensions.MessageExtensions
 		/// <param name="viewModel">The assistant message view model.</param>
 		public AgentTaskMessageExtension(MessageViewModelBase viewModel)
 		{
-			IsVisible = false; // No toolbar button — inline cards only
+			IsVisible = false; // No toolbar button - inline cards only
 
 			_message = viewModel.Message;
 			var taskListVm = new AgentTaskListViewModel

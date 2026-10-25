@@ -18,8 +18,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required SlashCommandArgument Definition { get; init; }
 
 		/// <summary>
-		/// The raw argument the user wrote — its text, its quotedness and its span in
-		/// <see cref="SlashCommandParsedArguments.RawArguments"/> — or <see langword="null"/> when the value came from
+		/// The raw argument the user wrote - its text, its quotedness and its span in
+		/// <see cref="SlashCommandParsedArguments.RawArguments"/> - or <see langword="null"/> when the value came from
 		/// <see cref="SlashCommandArgument.Default"/> or was not supplied at all.
 		/// </summary>
 		public SlashCommandRawArgument? Raw { get; init; }

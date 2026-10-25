@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.Prompting.Context.AddonItems
 	/// <list type="bullet">
 	/// <item><description>availability: <see cref="AddedItems"/> and <see cref="RemovedItems"/>;</description></item>
 	/// <item><description>visibility: <see cref="BecameVisibleItems"/> (a hidden item moved into the visible set;
-	/// becoming hidden is not among the transitions — the item stays available);</description></item>
+	/// becoming hidden is not among the transitions - the item stays available);</description></item>
 	/// </list>
 	/// plus <see cref="UpdatedItems"/> for field-level definition changes.
 	/// The section never touches the frozen prompt content itself; it only announces the changes.

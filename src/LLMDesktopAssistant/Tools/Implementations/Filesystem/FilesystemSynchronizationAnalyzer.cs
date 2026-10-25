@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 	/// Derives the synchronization keys of a filesystem edit: the file the call writes.
 	/// </summary>
 	/// <remarks>
-	/// The path is absolutized here — the synchronizer never resolves paths. Access denial is irrelevant:
+	/// The path is absolutized here - the synchronizer never resolves paths. Access denial is irrelevant:
 	/// the key is about the path, not about permission. A missing or unusable path falls back to the
 	/// family-wide <c>fs-edit</c> key, so an invocation with unparsable arguments cannot race with another
 	/// edit of the same family.

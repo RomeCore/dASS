@@ -193,12 +193,12 @@
 			}
 			else
 			{
-				// User cancelled or the operation was aborted — no feedback needed
+				// User cancelled or the operation was aborted - no feedback needed
 			}
 		}
 		catch (OperationCanceledException)
 		{
-			// JS interop timed out — user likely walked away with the dialog open
+			// JS interop timed out - user likely walked away with the dialog open
 			_statusMessage = LocalizationManager.LocalizeStatic("webui.profile.avatar.timeout");
 			_statusIsError = true;
 		}

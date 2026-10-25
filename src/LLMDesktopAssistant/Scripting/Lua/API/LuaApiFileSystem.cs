@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "fs";
 
 		public override string? Manuals => """
-			--- fs — filesystem operations API
+			--- fs - filesystem operations API
 
 			Provides safe filesystem access within the chat's working directory.
 			All paths are relative to the working directory.
@@ -27,162 +27,162 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- fs.read(path)
 			  Reads a text file and returns its full content as a string.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: string
 
 			--- fs.read_lines(path)
 			  Reads a text file and returns lines as an array of strings.
 			  Parameters:
-			    - path: string — path relative to working directory
-			  Returns: table — array of strings
+			    - path: string - path relative to working directory
+			  Returns: table - array of strings
 
 			--- fs.read_binary(path)
 			  Reads a binary file and returns bytes as an array of numbers (0-255).
 			  Parameters:
-			    - path: string — path relative to working directory
-			  Returns: table — array of integers
+			    - path: string - path relative to working directory
+			  Returns: table - array of integers
 			
 			--- fs.is_text(path)
 			  Checks whether a file is text-only (non-binary).
 			  Parameters:
-			    - path: string — path relative to working directory
-			  Returns: boolean — true when the file is non-binary;
+			    - path: string - path relative to working directory
+			  Returns: boolean - true when the file is non-binary;
 			           false when it is binary, missing or outside the working directory
 			
 			--- fs.is_binary(path)
 			  Checks whether a file is binary (contains non-text characters).
 			  Parameters:
-			    - path: string — path relative to working directory
-			  Returns: boolean — true when the file looks binary;
+			    - path: string - path relative to working directory
+			  Returns: boolean - true when the file looks binary;
 			           false when it is text, missing or outside the working directory
 
 			--- fs.write(path, content)
 			  Writes text content to a file (overwrites if exists).
 			  Parameters:
-			    - path: string — path relative to working directory
-			    - content: string — text content to write
+			    - path: string - path relative to working directory
+			    - content: string - text content to write
 			  Returns: nil
 
 			--- fs.write_binary(path, bytes)
 			  Writes binary content to a file (overwrites if exists).
 			  Parameters:
-			    - path: string — path relative to working directory
-			    - bytes: table — array of integers (0-255)
+			    - path: string - path relative to working directory
+			    - bytes: table - array of integers (0-255)
 			  Returns: nil
 
 			--- fs.append(path, content)
 			  Appends text content to the end of a file.
 			  Parameters:
-			    - path: string — path relative to working directory
-			    - content: string — text content to append
+			    - path: string - path relative to working directory
+			    - content: string - text content to append
 			  Returns: nil
 
 			--- fs.exists(path)
 			  Checks if a file or directory exists.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: boolean
 
 			--- fs.is_file(path)
 			  Returns true if the path points to an existing file.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: boolean
 
 			--- fs.is_dir(path)
 			  Returns true if the path points to an existing directory.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: boolean
 
 			--- fs.list(path)
 			  Lists the contents of a directory.
 			  Parameters:
-			    - path: string — directory path relative to working directory (default: ".")
-			  Returns: table — array of entry names (strings)
+			    - path: string - directory path relative to working directory (default: ".")
+			  Returns: table - array of entry names (strings)
 
 			--- fs.detail(path)
 			  Returns detailed information about a file or directory.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: table or nil
 			  Result fields:
-			    - name: string — file/directory name
-			    - path: string — absolute path
+			    - name: string - file/directory name
+			    - path: string - absolute path
 			    - is_file: boolean
 			    - is_dir: boolean
 			    - is_binary: boolean - true when the file is binary
-				- line_count: number — number of lines (only for text files)
-			    - size: number — file size in bytes (0 for directories)
-			    - created: string — creation time (ISO format)
-			    - modified: string — last write time (ISO format)
+				- line_count: number - number of lines (only for text files)
+			    - size: number - file size in bytes (0 for directories)
+			    - created: string - creation time (ISO format)
+			    - modified: string - last write time (ISO format)
 
 			--- fs.size(path)
 			  Returns the size of a file in bytes.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: number or nil
 
 			--- fs.copy(src, dest)
 			  Copies a file or directory.
 			  Parameters:
-			    - src: string — source path
-			    - dest: string — destination path
+			    - src: string - source path
+			    - dest: string - destination path
 			  Returns: nil
 
 			--- fs.move(src, dest)
 			  Moves/renames a file or directory.
 			  Parameters:
-			    - src: string — source path
-			    - dest: string — destination path
+			    - src: string - source path
+			    - dest: string - destination path
 			  Returns: nil
 
 			--- fs.delete(path)
 			  Deletes a file.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: nil
 
 			--- fs.delete_dir(path)
 			  Deletes a directory and all its contents.
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: nil
 
 			--- fs.create_dir(path)
 			  Creates a directory (and any missing parent directories).
 			  Parameters:
-			    - path: string — path relative to working directory
+			    - path: string - path relative to working directory
 			  Returns: nil
 
 			--- fs.join(...)
 			  Joins path components with the platform separator.
 			  Parameters:
-			    - ...: string or number — one or more path components
+			    - ...: string or number - one or more path components
 			  Returns: string
 
 			--- fs.dirname(path)
 			  Returns the parent directory of the given path.
 			  Parameters:
-			    - path: string — path
+			    - path: string - path
 			  Returns: string
 
 			--- fs.basename(path)
 			  Returns the file/directory name from a path.
 			  Parameters:
-			    - path: string — path
+			    - path: string - path
 			  Returns: string
 
 			--- fs.extname(path)
 			  Returns the file extension (with dot).
 			  Parameters:
-			    - path: string — path
+			    - path: string - path
 			  Returns: string or empty string
 
 			--- fs.abs(path)
 			  Resolves path to an absolute path inside the working directory.
 			  Parameters:
-			    - path: string — relative path
+			    - path: string - relative path
 			  Returns: string or nil if outside working directory
 
 			EXAMPLES:

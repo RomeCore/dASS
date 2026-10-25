@@ -10,11 +10,11 @@ namespace LLMDesktopAssistant.Markdown.Parsers;
 /// Extended alert inline parser (based on <see cref="AlertInlineParser"/> from Markdig)
 /// that supports GitHub-style alerts plus custom titles and colors:
 /// <code>
-/// &gt; [!NOTE]                         — standard GFM kind
-/// &gt; [!SUCCESS]                      — extended kind (any ASCII word works)
-/// &gt; [!SUCCESS:Done]                 — kind + custom title
-/// &gt; [!Important message:#FF98D8]    — custom title + color
-/// &gt; [!WARNING:Be careful:#FFA500]   — kind + custom title + color
+/// &gt; [!NOTE]                         - standard GFM kind
+/// &gt; [!SUCCESS]                      - extended kind (any ASCII word works)
+/// &gt; [!SUCCESS:Done]                 - kind + custom title
+/// &gt; [!Important message:#FF98D8]    - custom title + color
+/// &gt; [!WARNING:Be careful:#FFA500]   - kind + custom title + color
 /// </code>
 /// The whole raw text between "[!" and "]" is stored in <see cref="AlertBlock.Kind"/>
 /// and parsed later by the UI node (title/color extraction).

@@ -4,7 +4,7 @@ namespace LLMDesktopAssistant.Tests.Prompting;
 
 /// <summary>
 /// The disabled-for-agents rule: a message carrying the flag is invisible to every agent, including its own
-/// sender, because the rule is checked first — before the type branches.
+/// sender, because the rule is checked first - before the type branches.
 /// </summary>
 [Collection("Prompting")]
 public class MessageVisibilityServiceTests

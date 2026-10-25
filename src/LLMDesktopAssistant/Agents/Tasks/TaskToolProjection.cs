@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 	/// <remarks>
 	/// A chat <see cref="ToolInfo"/> is already an <see cref="IToolDescriptor"/> and is used as is. Only a
 	/// per-task approval override needs a copy: the toolset cache hands out frozen per-agent descriptors,
-	/// so the change is applied to an unfrozen clone. The clone drops the chat-stamped context factory —
+	/// so the change is applied to an unfrozen clone. The clone drops the chat-stamped context factory -
 	/// the task entry point supplies <c>TaskToolContextFactory</c> in the invocation request and the
 	/// dispatcher uses it verbatim.
 	/// </remarks>

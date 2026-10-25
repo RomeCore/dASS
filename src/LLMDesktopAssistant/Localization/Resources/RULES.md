@@ -12,7 +12,7 @@ domain.screen.section.entity.attribute
 - All segments are **lowercase**.
 - Segments are separated by a **dot** `.`.
 - Inside a segment use **snake_case**: letters, digits and `_` only.
-- **Hyphens are forbidden** in segments — with one exception: the last segment of
+- **Hyphens are forbidden** in segments - with one exception: the last segment of
   `tool.name.<tool-name>` / `tool.description.<tool-name>` / `tool.status.<tool-name>.*`
   is the tool id from code and keeps its hyphens/underscores as-is.
 - Segments must not be C# keywords (keys may become generated code later).
@@ -96,7 +96,7 @@ Forbidden: `desc`, `done`, `ok`, `btn`, `no_results`, `failed`, `hint_text`.
 
 ## Formatting
 
-- Values use positional placeholders `{0}`, `{1}` — the key does not encode format
+- Values use positional placeholders `{0}`, `{1}` - the key does not encode format
   details (`"Found {0} files"` not `"Found_0_files"`).
 - Keys are case-sensitive; the whole key must be unique across all `.loc` files
   of the same locale (the parser throws on duplicates).

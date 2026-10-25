@@ -26,7 +26,7 @@ namespace LLMDesktopAssistant.Desktop.Services
 			if (Directory.Exists(path))
 				return OpenDirectory(path);
 
-			// The path doesn't exist — fall back to opening its parent directory.
+			// The path doesn't exist - fall back to opening its parent directory.
 			var parent = Path.GetDirectoryName(path);
 			return !string.IsNullOrWhiteSpace(parent) && OpenDirectory(parent);
 		}
@@ -60,7 +60,7 @@ namespace LLMDesktopAssistant.Desktop.Services
 				});
 			}
 
-			// On other platforms, revealing a file is not supported — open the parent directory instead.
+			// On other platforms, revealing a file is not supported - open the parent directory instead.
 			var parent = Path.GetDirectoryName(filePath);
 			return !string.IsNullOrWhiteSpace(parent) && OpenDirectory(parent);
 		}

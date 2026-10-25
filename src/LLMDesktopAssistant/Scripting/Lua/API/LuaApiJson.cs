@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "json";
 
 		public override string? Manuals => """
-		--- json — JSON encoding and decoding API
+		--- json - JSON encoding and decoding API
 
 		Provides JSON serialization and deserialization functions.
 		Handles nil, tables, arrays, strings, numbers and booleans.
@@ -31,7 +31,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- json.deserialize(str) (alias)
 		  Parses a strict JSON string into a Lua value.
 		  Parameters:
-		    - str: string — JSON string to parse
+		    - str: string - JSON string to parse
 		  Returns: Lua value (table, string, number, boolean, nil)
 		  Throws on invalid JSON.
 
@@ -48,7 +48,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		    - Wrong escape sequences
 		    - Unquoted string values
 		  Parameters:
-		    - str: string — lenient JSON string to parse
+		    - str: string - lenient JSON string to parse
 		  Returns: Lua value (table, string, number, boolean, nil)
 		  Returns nil on parse failure instead of throwing.
 
@@ -57,8 +57,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- json.serialize(value, [indented]) (alias)
 		  Serializes a Lua value into a JSON string.
 		  Parameters:
-		    - value: any — Lua value to serialize (table, string, number, boolean, nil)
-		    - indented: boolean — If true, the output will be formatted for readability
+		    - value: any - Lua value to serialize (table, string, number, boolean, nil)
+		    - indented: boolean - If true, the output will be formatted for readability
 		  Returns: string
 
 		NOTES:
@@ -77,7 +77,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  print(t.name) -- "John"
 		  print(t.age)  -- 30
 
-		  -- Decode (tolerant) — handles malformed JSON from LLMs
+		  -- Decode (tolerant) - handles malformed JSON from LLMs
 		  local t = json.decode_tolerant("{ name: 'John', age: 30, }")
 		  print(t.name) -- "John"
 

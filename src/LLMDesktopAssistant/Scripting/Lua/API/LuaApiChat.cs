@@ -10,8 +10,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	/// </summary>
 	/// <remarks>
 	/// <see cref="GetMessages"/> returns a <em>snapshot</em> of the active branch's messages as a plain array of
-	/// <c>chat_message</c> userdata (see <see cref="LuaChatMessage"/>). The array never re-points under the script —
-	/// reactivity in Lua would leak side effects with no payoff — while each message handle stays live and writable.
+	/// <c>chat_message</c> userdata (see <see cref="LuaChatMessage"/>). The array never re-points under the script -
+	/// reactivity in Lua would leak side effects with no payoff - while each message handle stays live and writable.
 	/// </remarks>
 	[LuaApi(chatScoped: true)]
 	public class LuaApiChat : LuaApiBase
@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.chat";
 
 		public override string? Manuals => """
-			--- dass.chat — managing the current chat
+			--- dass.chat - managing the current chat
 
 			The current chat is the chat the script runs in (this API is chat-scoped).
 
@@ -53,25 +53,25 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			MESSAGE HANDLE ('chat_message'):
 
 			  Properties (read/write):
-			    - content: string — the message text
-			    - error: string or nil — the message error (locale-rendered on read)
-			    - disabled_for_agents: boolean — hide the message from every agent
+			    - content: string - the message text
+			    - error: string or nil - the message error (locale-rendered on read)
+			    - disabled_for_agents: boolean - hide the message from every agent
 
 			  Properties (read-only):
-			    - role: string — "user", "assistant", ...
-			    - id: number — database message id (-1 if unsaved)
-			    - index: number — index in the chat history
-			    - branch_index: number — selected branch index
-			    - branches_count: number — number of available branches
+			    - role: string - "user", "assistant", ...
+			    - id: number - database message id (-1 if unsaved)
+			    - index: number - index in the chat history
+			    - branch_index: number - selected branch index
+			    - branches_count: number - number of available branches
 
 			  Methods:
-			    - msg:append_part(title, icon, color) — a plain chip part
-			    - msg:append_content_part(content, title, icon, color) — a part whose text
+			    - msg:append_part(title, icon, color) - a plain chip part
+			    - msg:append_content_part(content, title, icon, color) - a part whose text
 			      is also appended to the model-facing message content
-			    - msg:append_attachment_part(attachment, title, icon, color) — a native
+			    - msg:append_attachment_part(attachment, title, icon, color) - a native
 			      attachment part; 'attachment' is any ILuaNativeAttachable handle
 			      (e.g. an image handle from image.load()/image.create())
-			    - msg:append_data(...) — append one or more attachable handles: 'uicontrol'
+			    - msg:append_data(...) - append one or more attachable handles: 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
 			      process.run_terminal()
 

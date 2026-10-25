@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		Directory,
 
 		/// <summary>
-		/// An opaque tool-wide key — the old synchronization group. Conflicts only with an equal key.
+		/// An opaque tool-wide key - the old synchronization group. Conflicts only with an equal key.
 		/// </summary>
 		Custom,
 
@@ -33,6 +33,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// beneath it, not only with an exactly equal key.
 	/// </summary>
 	/// <param name="Kind">The kind that selects the comparison rule.</param>
-	/// <param name="Value">The key itself. Paths are already absolute — the analyzer absolutizes them.</param>
+	/// <param name="Value">The key itself. Paths are already absolute - the analyzer absolutizes them.</param>
 	public readonly record struct ToolSyncKey(ToolSyncKeyKind Kind, string Value);
 }

@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		/// <inheritdoc/>
 		public MessageVisibilityResult CheckVisibility(BranchedMessage message, ChatAgentDescriptor agent)
 		{
-			// A message disabled for agents is invisible to every agent — including its own sender. The check is
+			// A message disabled for agents is invisible to every agent - including its own sender. The check is
 			// unconditional and first so that no branch (not even the assistant same-agent shortcut) can bypass it.
 			if (message?.Message?.IsDisabledForAgents == true)
 				return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);

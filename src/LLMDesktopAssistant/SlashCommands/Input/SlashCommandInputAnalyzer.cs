@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 			
 			// The parse is what the renderer colours the arguments with and what the completion source completes against,
 			// so it happens once, here. A token that does not resolve has no schema to parse against, and an invalid
-			// argument list has no parse at all — both leave the region to the coarse argument colour.
+			// argument list has no parse at all - both leave the region to the coarse argument colour.
 			SlashCommandParsedArguments? arguments = null;
 			if (command is not null)
 			{

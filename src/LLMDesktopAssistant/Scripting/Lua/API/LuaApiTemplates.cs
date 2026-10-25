@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.templates";
 
 		public override string? Manuals => """
-			--- dass.templates — template rendering and inspection API
+			--- dass.templates - template rendering and inspection API
 
 			Provides access to the template library for rendering and listing templates.
 			Templates are identified by ID and can be filtered by metadata (language, model, etc.).
@@ -26,45 +26,45 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.templates.render(filters, [context])
 			  Renders a template from the template library.
 			  Parameters:
-			    - filters: string or table — Specifies which template to render.
+			    - filters: string or table - Specifies which template to render.
 			      If string: treated as a template ID (e.g. "system_prompt").
 			      If table: supports the following keys:
 			        - Numeric key: Template ID.
-			        - "id": string — Explicit template ID.
-			        - "lang": string — Language code (e.g. "en_US", "ru_RU", "fr_FR", etc.).
-			        - "model": string — Target model name.
-			        - "model_family": string — Target model family.
-			        - "version": string — Version string (e.g. "1.0.0").
+			        - "id": string - Explicit template ID.
+			        - "lang": string - Language code (e.g. "en_US", "ru_RU", "fr_FR", etc.).
+			        - "model": string - Target model name.
+			        - "model_family": string - Target model family.
+			        - "version": string - Version string (e.g. "1.0.0").
 			        - Any other string key: treated as additional custom metadata.
-			    - context: any (optional) — Data context for template variables.
+			    - context: any (optional) - Data context for template variables.
 			      Accepts nil, boolean, number, string, or table.
 			      Tables with sequential integer keys become arrays.
 			      Tables with string/non-sequential keys become objects/dictionaries.
 			  Returns:
-			    - string — for text templates.
-			    - table — for message templates:
+			    - string - for text templates.
+			    - table - for message templates:
 			      Returns an array of { role: string, content: string } tables.
 
 			--- dass.templates.list([filters])
 			  Lists all templates registered in the template library with their metadata.
 			  Parameters:
-			    - filters: table (optional) — Filter criteria. Supports:
+			    - filters: table (optional) - Filter criteria. Supports:
 			      - Numeric keys (1, 2, 3...): template IDs to filter by.
-			      - "id": string — Template ID to filter by.
-			      - "type": string — Template type: "text" or "messages".
-			      - "lang": string — Language code.
-			      - "model": string — Target model name.
-			      - "model_family": string — Target model family.
-			      - "version": string — Version string.
+			      - "id": string - Template ID to filter by.
+			      - "type": string - Template type: "text" or "messages".
+			      - "lang": string - Language code.
+			      - "model": string - Target model name.
+			      - "model_family": string - Target model family.
+			      - "version": string - Version string.
 			      - Any other string key: custom metadata to filter by.
 			  Returns:
-			    - table — Array of template descriptor tables. Each entry contains:
-			      - id: string — Template identifier.
-			      - type: string — "text" or "messages".
-			      - lang: string (optional) — Language code.
-			      - model: string (optional) — Target model.
-			      - model_family: string (optional) — Target model family.
-			      - version: string (optional) — Version.
+			    - table - Array of template descriptor tables. Each entry contains:
+			      - id: string - Template identifier.
+			      - type: string - "text" or "messages".
+			      - lang: string (optional) - Language code.
+			      - model: string (optional) - Target model.
+			      - model_family: string (optional) - Target model family.
+			      - version: string (optional) - Version.
 			      - ... plus any custom metadata keys flattened directly.
 			
 			NOTES:

@@ -20,40 +20,40 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => null;
 
 		public override string? Manuals => """
-			--- gettypemetatable(type) — get type metatable for a primitive Lua type
+			--- gettypemetatable(type) - get type metatable for a primitive Lua type
 			
 			Returns the current metatable for ALL values of a primitive Lua type.
 			
 			Parameters:
-			  - type: string — type name (same as settypemetatable).
+			  - type: string - type name (same as settypemetatable).
 			
-			Returns: table or nil — the current type metatable.
+			Returns: table or nil - the current type metatable.
 			
-			--- settypemetatable(type, metatable) — set type metatable for a primitive Lua type
+			--- settypemetatable(type, metatable) - set type metatable for a primitive Lua type
 
 			Sets the metatable for ALL values of a primitive Lua type.
 			This allows overriding default behaviour for
 			numbers, strings, booleans, functions, nil, and void.
 
 			Parameters:
-			  - type: string — type name:
+			  - type: string - type name:
 			    "nil", "boolean", "number", "string", "function"
 			    (also accepts short aliases: "bool", "num", "str", "func")
-			  - metatable: table or nil — the metatable to set, or nil to clear.
+			  - metatable: table or nil - the metatable to set, or nil to clear.
 
 			Returns: nil
 
 			Throws if the type is not recognized.
 
-			--- extendtypemetatable(type, extensions) — merge fields into the current type metatable
+			--- extendtypemetatable(type, extensions) - merge fields into the current type metatable
 
 			Merges the provided table into the existing type metatable for the given type,
 			rather than replacing it entirely. Useful for adding individual metamethods
 			without overwriting ones already set.
 
 			Parameters:
-			  - type: string — type name (same as settypemetatable).
-			  - extensions: table — table whose key-value pairs will be merged into
+			  - type: string - type name (same as settypemetatable).
+			  - extensions: table - table whose key-value pairs will be merged into
 			    the type metatable. Overwrites existing keys if they match.
 
 			Returns: nil
@@ -162,7 +162,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			NOTES:
 			  - Changes affect ALL values of the type globally in the Lua runtime.
-			  - Use with care — inappropriate metamethods can break Lua semantics.
+			  - Use with care - inappropriate metamethods can break Lua semantics.
 			  - Pass nil to clear/reset a type metatable to default.
 			  - extendtypemetatable is additive: it only sets or overwrites specific keys.
 			  - Only 5 types are supported: "nil", "boolean", "number", "string", "function".
@@ -237,7 +237,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			else
 				existingTable = new LuaTable();
 
-			// Deep merge (non-mutating) — creates a new table
+			// Deep merge (non-mutating) - creates a new table
 			var mergedTable = existingTable.DeepMergeWith(extensions);
 
 			// Convert back to LuaMetatable and store

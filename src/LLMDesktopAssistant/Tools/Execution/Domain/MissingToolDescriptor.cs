@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// <remarks>
 	/// The descriptor is a singleton because it has no per-call state; the tool name is read from the
 	/// call in the executor. Every optional capability is absent, and the approval level is
-	/// <see cref="ToolApprovalLevel.AlwaysApprove"/> — asking the user to approve a tool that does not
+	/// <see cref="ToolApprovalLevel.AlwaysApprove"/> - asking the user to approve a tool that does not
 	/// exist would be meaningless.
 	/// </remarks>
 	public sealed class MissingToolDescriptor : IToolDescriptor

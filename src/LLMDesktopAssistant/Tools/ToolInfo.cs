@@ -11,8 +11,8 @@ using RCLargeLanguageModels.Tools;
 namespace LLMDesktopAssistant.Tools
 {
 	/// <summary>
-	/// The chat world's tool descriptor. It carries its six executors — built once from the module's
-	/// methods — so a chat tool can run in an agent task by handing this descriptor over unchanged.
+	/// The chat world's tool descriptor. It carries its six executors - built once from the module's
+	/// methods - so a chat tool can run in an agent task by handing this descriptor over unchanged.
 	/// </summary>
 	/// <remarks>
 	/// Tools used to live in two parallel worlds: plain <see cref="ToolInfo"/> produced by tool modules,

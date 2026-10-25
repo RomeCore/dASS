@@ -3,7 +3,7 @@ using Avalonia.Controls;
 namespace LLMDesktopAssistant.Agents.Tasks.MVVM;
 
 /// <summary>
-/// View for the <see cref="AgentTaskDetailViewModel"/> — a dialog window
+/// View for the <see cref="AgentTaskDetailViewModel"/> - a dialog window
 /// that displays an expanded, detailed view of an agent task with all its
 /// messages, tool calls, statistics, sub-tasks, and error information.
 /// </summary>

@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// <para>
 	/// A hint is a list of bracketed arguments, whitespace between them optional (a bracket pair is already an
 	/// argument): <c>&lt;name&gt;</c> is a required positional and <c>[name]</c> an optional one. Inside the brackets
-	/// the syntax extends to <c>[name...:$v1|v2:%description]</c> — a trailing <c>...</c> makes the argument the rest
+	/// the syntax extends to <c>[name...:$v1|v2:%description]</c> - a trailing <c>...</c> makes the argument the rest
 	/// positional, <c>$a|b</c> lists the accepted values (offered as completions and, when strict, validated) and
 	/// <c>%…</c> is the human-readable description. The reserved characters are escaped with a backslash
 	/// (<c>\]</c>, <c>\&gt;</c>, <c>\|</c>, <c>\:</c>, <c>\%</c>, <c>\$</c>, <c>\\</c>). A required rest positional
@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// </summary>
 		/// <param name="hint">The raw hint, or <see langword="null"/>/whitespace when none is declared.</param>
 		/// <param name="invalid">
-		/// Whether the hint started with <c>&lt;</c> or <c>[</c> but could not be parsed — the caller should report
+		/// Whether the hint started with <c>&lt;</c> or <c>[</c> but could not be parsed - the caller should report
 		/// <see cref="LLMDesktopAssistant.Addons.AddonDiagnosticCode.InvalidArgumentHint"/>.
 		/// </param>
 		/// <returns>A non-null schema: the parsed arguments or the free-form rest-slot fallback.</returns>

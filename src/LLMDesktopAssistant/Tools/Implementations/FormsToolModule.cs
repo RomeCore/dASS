@@ -188,7 +188,7 @@ public class FormsToolModule : ToolModule
 		IToolExecutionContext context,
 		[Description("Title of the form")] string title,
 		[Description("Description of the form")] string? description,
-		[Description("Array of JSON objects describing form fields. Each object must contain:\n- id (string, required) — field key in the result\n- label (string, required) — display label for the field\n- type (string, optional) — field type: 'text' (default), 'number', 'password', 'multiline'\n- placeholder (string, optional) — placeholder text inside the field\n- required (bool, optional) — whether the field is required (default: false)\n- default (string, optional) — default value\nExample: [{\"id\": \"name\", \"label\": \"Name\", \"required\": true}, {\"id\": \"comment\", \"label\": \"Comment\", \"type\": \"multiline\"}]")]
+		[Description("Array of JSON objects describing form fields. Each object must contain:\n- id (string, required) - field key in the result\n- label (string, required) - display label for the field\n- type (string, optional) - field type: 'text' (default), 'number', 'password', 'multiline'\n- placeholder (string, optional) - placeholder text inside the field\n- required (bool, optional) - whether the field is required (default: false)\n- default (string, optional) - default value\nExample: [{\"id\": \"name\", \"label\": \"Name\", \"required\": true}, {\"id\": \"comment\", \"label\": \"Comment\", \"type\": \"multiline\"}]")]
 		JsonNode[] fields,
 		CancellationToken cancellationToken = default)
 	{

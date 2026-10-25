@@ -1,7 +1,7 @@
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
 	/// <summary>
-	/// How a leading command token currently reads — the state the highlighter colours and the popup reacts to.
+	/// How a leading command token currently reads - the state the highlighter colours and the popup reacts to.
 	/// </summary>
 	public enum SlashCommandInputResolutionState
 	{

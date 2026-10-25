@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 		public override string? Namespace => "process";
 
 		public override string? Manuals => """
-			--- process — process execution API
+			--- process - process execution API
 
 			Provides command execution with timeout, output capture,
 			path resolution, and basic process management.
@@ -37,26 +37,26 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			  Returns a table with the execution result.
 
 			  Parameters:
-			    - command: string — The command or executable to run (e.g. "git", "node").
+			    - command: string - The command or executable to run (e.g. "git", "node").
 			      On Windows, also searches PATHEXT for executables.
-			    - args: string or table (optional) — Arguments for the command.
+			    - args: string or table (optional) - Arguments for the command.
 			      As string: "status --short" (quoted tokens supported: '--grep "fix bug"').
 			      As table: {"status", "--short"}.
 			      If omitted, the command runs with no arguments.
-			    - options: table (optional) — Execution options:
-			      - cwd: string — Working directory (default: current directory)
-			      - env: table — Additional environment variables as key-value pairs
-			      - stdin: string — Data to write to the process standard input
-			      - timeout_seconds: number (default: 30, max: 600) — Maximum execution time.
+			    - options: table (optional) - Execution options:
+			      - cwd: string - Working directory (default: current directory)
+			      - env: table - Additional environment variables as key-value pairs
+			      - stdin: string - Data to write to the process standard input
+			      - timeout_seconds: number (default: 30, max: 600) - Maximum execution time.
 			        If exceeded, the process is killed and timed_out is true.
 
 			  Returns: table with:
-			    - exit_code: number — Process exit code (0 = success)
-			    - stdout: string — Standard output of the command
-			    - stderr: string — Standard error of the command
-			    - timed_out: boolean — Whether the process was killed due to timeout
-			    - duration_ms: number — Wall-clock execution time in milliseconds
-			    - command: string — The full command that was executed (for logging)
+			    - exit_code: number - Process exit code (0 = success)
+			    - stdout: string - Standard output of the command
+			    - stderr: string - Standard error of the command
+			    - timed_out: boolean - Whether the process was killed due to timeout
+			    - duration_ms: number - Wall-clock execution time in milliseconds
+			    - command: string - The full command that was executed (for logging)
 
 			  Throws: If the command cannot be started or arguments are invalid.
 
@@ -66,17 +66,17 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			  Returns nil if the command is not found.
 
 			  Parameters:
-			    - command: string — The command name to locate (e.g. "git", "python")
+			    - command: string - The command name to locate (e.g. "git", "python")
 
-			  Returns: string or nil — Full path to the executable, or nil if not found.
+			  Returns: string or nil - Full path to the executable, or nil if not found.
 
 			--- process.kill(pid)
 			  Kills a process by its process ID. Returns true if successful.
 
 			  Parameters:
-				- pid: number — The process ID to kill
+				- pid: number - The process ID to kill
 
-			  Returns: boolean — Whether the process was killed.
+			  Returns: boolean - Whether the process was killed.
 
 			--- process.run_terminal(command, [args], [options]) -> terminal, error
 			  Starts an interactive terminal (a PTY) and returns a handle to it. Unlike process.exec
@@ -85,11 +85,11 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			  it in (chat_message:append_data, dass.chat.append_data, dass.tool.result.append_data).
 
 			  Parameters:
-				- command: string — the executable to run
-				- args: string or table (optional) — arguments
+				- command: string - the executable to run
+				- args: string or table (optional) - arguments
 				- options: table (optional):
-				  - cwd: string — working directory (default: the current one)
-				  - env: table — additional environment variables (key-value pairs)
+				  - cwd: string - working directory (default: the current one)
+				  - env: table - additional environment variables (key-value pairs)
 
 			  Returns: terminal, or nil plus the error message.
 				A missing executable, an inaccessible working directory or a failed spawn
@@ -98,16 +98,16 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			TERMINAL HANDLE ('terminal'):
 
 			  Properties (read-only):
-				- pid: number — the OS process id
-				- is_running: boolean — whether the process is still running
-				- exit_code: number or nil — nil while the process runs
+				- pid: number - the OS process id
+				- is_running: boolean - whether the process is still running
+				- exit_code: number or nil - nil while the process runs
 
 			  Methods:
-				- t:text() -> string — the current buffer contents (scrollback plus the visible screen)
-				- t:write(text) — writes raw text into the terminal input
-				- t:write_line(text) — writes the text followed by a carriage return
-				- t:kill() — kills the process
-				- t:wait() -> number — waits for the exit and returns the exit code
+				- t:text() -> string - the current buffer contents (scrollback plus the visible screen)
+				- t:write(text) - writes raw text into the terminal input
+				- t:write_line(text) - writes the text followed by a carriage return
+				- t:kill() - kills the process
+				- t:wait() -> number - waits for the exit and returns the exit code
 				  (the same value on every call; -1 when the process was killed)
 
 			  NOTES:

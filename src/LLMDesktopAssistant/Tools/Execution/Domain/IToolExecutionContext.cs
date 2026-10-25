@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// </summary>
 	/// <remarks>
 	/// A context is created once per invocation from <see cref="ToolInvocationRequest"/> through the
-	/// descriptor's factory. The chat-specific message and message id do not live here — a chat tool
+	/// descriptor's factory. The chat-specific message and message id do not live here - a chat tool
 	/// reaches them by casting the concrete context.
 	/// </remarks>
 	public interface IToolExecutionContext
@@ -27,7 +27,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		IToolDescriptor Descriptor { get; }
 
 		/// <summary>
-		/// The message that owns the sibling calls — used by cascade and the approval helper — or
+		/// The message that owns the sibling calls - used by cascade and the approval helper - or
 		/// <see langword="null"/> when the invocation has no message host.
 		/// </summary>
 		IToolCallHost? Host { get; }
@@ -51,7 +51,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		Chat? Chat { get; }
 
 		/// <summary>
-		/// The most-scoped service provider available to this invocation — the chat scope, the triggered
+		/// The most-scoped service provider available to this invocation - the chat scope, the triggered
 		/// chat's scope, or the root. <c>[Inject]</c> parameters are resolved from here.
 		/// </summary>
 		IServiceProvider Services { get; }
@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		IToolArgumentStream? ArgumentStream { get; }
 
 		/// <summary>
-		/// An ephemeral argument substitution — the hook channel. It is validated at install and never
+		/// An ephemeral argument substitution - the hook channel. It is validated at install and never
 		/// persisted.
 		/// </summary>
 		JsonNode? ArgumentsOverride { get; set; }

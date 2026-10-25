@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Scripting
 	/// <remarks>
 	/// The flags are ordinary addon properties: they are set by the parser before the addon is frozen and travel with
 	/// <c>Clone()</c> into the per-chat copy, exactly like every other addon property. There is no nested settings
-	/// object on purpose — a readonly property over a mutable class is a shared-state trap.
+	/// object on purpose - a readonly property over a mutable class is a shared-state trap.
 	/// </remarks>
 	public abstract class ScriptableAddonBase<TAddon, TChange> : AddonChangedBase<TAddon, TChange>
 		where TAddon : ScriptableAddonBase<TAddon, TChange>

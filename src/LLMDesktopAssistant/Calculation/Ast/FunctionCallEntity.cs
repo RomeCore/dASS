@@ -124,7 +124,7 @@ namespace LLMDesktopAssistant.Calculation.Ast
 				return new ConstantEntity(new Complex(value, 0));
 			}
 
-			return this; // indefinite — symbolic
+			return this; // indefinite - symbolic
 		}
 
 		private MathEntity EvaluateDerivative(MathEvaluationContext ctx)

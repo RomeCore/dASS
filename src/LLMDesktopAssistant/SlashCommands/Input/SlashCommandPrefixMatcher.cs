@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 namespace LLMDesktopAssistant.SlashCommands.Input
 {
 	/// <summary>
-	/// Matches a partially typed, slash-free command token against commands — the "could this still become one?"
+	/// Matches a partially typed, slash-free command token against commands - the "could this still become one?"
 	/// question, as opposed to <see cref="Resolution.SlashCommandMatcher"/>'s exact matching. Pure and static.
 	/// </summary>
 	/// <remarks>

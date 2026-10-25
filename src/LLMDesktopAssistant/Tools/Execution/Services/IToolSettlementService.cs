@@ -3,7 +3,7 @@ using LLMDesktopAssistant.Tools.Execution.Domain;
 namespace LLMDesktopAssistant.Tools.Execution.Services
 {
 	/// <summary>
-	/// The settlement stage: finalizes a call. It is the single owner of the call's terminal state — an
+	/// The settlement stage: finalizes a call. It is the single owner of the call's terminal state - an
 	/// orchestrator calls it at the end of its sequence or from its catch block, and there is no
 	/// <c>finally</c>.
 	/// </summary>

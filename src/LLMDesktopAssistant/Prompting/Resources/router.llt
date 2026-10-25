@@ -25,7 +25,7 @@
 		{
 			`````
 			5. **If no agent is needed**, respond with exactly "None". This means the conversation should proceed without further agent intervention.
-			6. **If the user is just chatting, thanking, or confirming** — respond with "None". No agent needed for casual conversation.
+			6. **If the user is just chatting, thanking, or confirming** - respond with "None". No agent needed for casual conversation.
 			`````
 		}
 

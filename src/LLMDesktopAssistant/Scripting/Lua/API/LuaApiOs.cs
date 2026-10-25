@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "os";
 
 		public override string? Manuals => """
-			--- os — operating system API
+			--- os - operating system API
 
 			Provides information about the system and basic OS operations.
 
@@ -22,16 +22,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			--- os.platform()
 			  Returns the current platform name.
-			  Returns: string — "win", "linux", "osx", "freebsd", or "unknown"
+			  Returns: string - "win", "linux", "osx", "freebsd", or "unknown"
 
 			--- os.arch()
 			  Returns the processor architecture.
-			  Returns: string — e.g. "x64", "arm64", "x86", "arm"
+			  Returns: string - e.g. "x64", "arm64", "x86", "arm"
 
 			--- os.env(name)
 			  Returns the value of an environment variable, or nil if not set.
 			  Parameters:
-			    - name: string — environment variable name (case-insensitive on Windows)
+			    - name: string - environment variable name (case-insensitive on Windows)
 			  Returns: string or nil
 
 			--- os.username()
@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- os.sleep(seconds)
 			  Pauses execution for the specified duration.
 			  Parameters:
-			    - seconds: number — duration in seconds (can be fractional, e.g. 0.5)
+			    - seconds: number - duration in seconds (can be fractional, e.g. 0.5)
 			  Returns: nil
 
 			--- os.pid()

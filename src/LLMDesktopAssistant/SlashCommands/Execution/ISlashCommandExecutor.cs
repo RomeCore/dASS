@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		/// <summary>
 		/// Runs the command.
 		/// </summary>
-		/// <param name="ctx">The execution context — the target message and its bound arguments.</param>
+		/// <param name="ctx">The execution context - the target message and its bound arguments.</param>
 		/// <param name="ct">The command-level execution token.</param>
 		Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct);
 	}

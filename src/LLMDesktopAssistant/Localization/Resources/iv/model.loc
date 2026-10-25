@@ -59,8 +59,8 @@ selector.available_models: Available Models
 selector.deselect_all: Deselect all
 selector.load.error: Failed to load models
 selector.manage.tooltip: Manage providers & models
-selector.modifier.none: — None —
+selector.modifier.none: - None -
 selector.no_models: No models available
-selector.none: — None —
+selector.none: - None -
 selector.refresh: Refresh Models
 selector.select_all: Select all

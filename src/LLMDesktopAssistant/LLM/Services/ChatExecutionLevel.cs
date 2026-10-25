@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		/// <summary>
 		/// The widest level: a chat mutation (send, edit, regenerate, switch branch, ...). Cancelling it cancels
-		/// everything running in the chat — generation, agent routing, commands.
+		/// everything running in the chat - generation, agent routing, commands.
 		/// </summary>
 		Operation = 1,
 

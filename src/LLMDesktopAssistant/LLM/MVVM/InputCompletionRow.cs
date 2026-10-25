@@ -4,7 +4,7 @@ using LLMDesktopAssistant.InputCompletion;
 namespace LLMDesktopAssistant.LLM.MVVM
 {
 	/// <summary>
-	/// One row of the completion picker: a continuation plus the view state the popup draws — its icon and whether the
+	/// One row of the completion picker: a continuation plus the view state the popup draws - its icon and whether the
 	/// row is the selected one. The popup is a plain stack rather than a list control, so the selection flag lives here.
 	/// </summary>
 	public sealed class InputCompletionRow : NotifyPropertyChanged

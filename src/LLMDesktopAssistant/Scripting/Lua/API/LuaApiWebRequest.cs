@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "web";
 
 		public override string? Manuals => """
-			--- web — web request, fetch, parse and download API
+			--- web - web request, fetch, parse and download API
 
 			Provides HTTP requests, content fetching (HTML → Markdown),
 			website status checking, HTML parsing with CSS selectors, and file downloads.
@@ -30,84 +30,84 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns structured response data.
 
 			  Parameters:
-			    - method: string — HTTP method: "GET", "POST", "PUT", "DELETE"
-			    - url: string — The request URL
-			    - params: table (optional) — Additional parameters:
-			      - use_pure_client: boolean (default: false) — If true, use http client without additional headers
-			      - headers: table (optional) — Custom headers as key-value pairs
-			      - content: string or table (optional) — Request body, if table it's serialized to JSON
-			      - contentType: string (default: "application/json") — Content-Type header
+			    - method: string - HTTP method: "GET", "POST", "PUT", "DELETE"
+			    - url: string - The request URL
+			    - params: table (optional) - Additional parameters:
+			      - use_pure_client: boolean (default: false) - If true, use http client without additional headers
+			      - headers: table (optional) - Custom headers as key-value pairs
+			      - content: string or table (optional) - Request body, if table it's serialized to JSON
+			      - contentType: string (default: "application/json") - Content-Type header
 
 			  Returns: table with:
-			    - status_code: number — HTTP status code (e.g. 200)
-			    - status_description: string — Status description (e.g. "OK")
-			    - headers: table — Response headers as key-value pairs
-			    - content_length: number — Length of the response content
-			    - content: string — Response body (sliced by start/count)
+			    - status_code: number - HTTP status code (e.g. 200)
+			    - status_description: string - Status description (e.g. "OK")
+			    - headers: table - Response headers as key-value pairs
+			    - content_length: number - Length of the response content
+			    - content: string - Response body (sliced by start/count)
 			
 			--- async web.status(url, [timeout])
 			  Checks if a website is accessible and returns detailed status info.
 			
 			  Parameters:
-			    - url: string — URL to check
-			    - timeout: number (optional, default: 30) — Timeout in seconds
+			    - url: string - URL to check
+			    - timeout: number (optional, default: 30) - Timeout in seconds
 			
 			  Returns: table with:
-			    - url: string — the checked URL
-			    - status_code: number — HTTP status code
-			    - status_description: string — Status description
-			    - is_accessible: boolean — Whether the site is reachable
-			    - response_time_ms: number — Response time in milliseconds
-			    - content_type: string or nil — Content-Type header
-			    - content_length: number or nil — Content-Length header
-			    - server: string or nil — Server header
+			    - url: string - the checked URL
+			    - status_code: number - HTTP status code
+			    - status_description: string - Status description
+			    - is_accessible: boolean - Whether the site is reachable
+			    - response_time_ms: number - Response time in milliseconds
+			    - content_type: string or nil - Content-Type header
+			    - content_length: number or nil - Content-Length header
+			    - server: string or nil - Server header
 			
 			--- async web.fetch(url, [contentType], [fetchLevel])
 			  Fetches a web page and converts it to the specified content type.
 			  The fetch level escalates automatically when the page denies access.
 
 			  Parameters:
-			    - url: string — URL to fetch
-			    - contentType: string (default: "markdown") — "html", "sanitized_html", or "markdown"
-			    - fetchLevel: string (default: "http_client") — "http_client", "browser", or "stealth_browser"
+			    - url: string - URL to fetch
+			    - contentType: string (default: "markdown") - "html", "sanitized_html", or "markdown"
+			    - fetchLevel: string (default: "http_client") - "http_client", "browser", or "stealth_browser"
 
 			  Returns: table with:
-			    - url: string — the fetched URL
-			    - content_type: string — the actual content type returned
-			    - content_length: number — total length of fetched content
-			    - content: string — the converted content
+			    - url: string - the fetched URL
+			    - content_type: string - the actual content type returned
+			    - content_length: number - total length of fetched content
+			    - content: string - the converted content
 
 			--- async web.parse(url, selector, [fetchLevel])
 			  Fetches HTML content and parses specific elements using a CSS selector.
 			  The fetch level escalates automatically when the page denies access.
 
 			  Parameters:
-			    - url: string — URL to fetch HTML from
-			    - selector: string — CSS selector (e.g. "h1", ".content", "#main > p")
-			    - fetchLevel: string (default: "http_client") — "http_client", "browser", or "stealth_browser"
+			    - url: string - URL to fetch HTML from
+			    - selector: string - CSS selector (e.g. "h1", ".content", "#main > p")
+			    - fetchLevel: string (default: "http_client") - "http_client", "browser", or "stealth_browser"
 
 
 			  Returns: table with:
-			    - url: string — the fetched URL
-			    - selector: string — the CSS selector used
-			    - match_count: number — number of matched elements
-			    - contents: array of strings — text content of each matched element
-			    - html: string — combined HTML of matched elements (sliced)
+			    - url: string - the fetched URL
+			    - selector: string - the CSS selector used
+			    - match_count: number - number of matched elements
+			    - contents: array of strings - text content of each matched element
+			    - html: string - combined HTML of matched elements (sliced)
 
 			--- async web.download(url, savePath, [options])
 			  Downloads a file from a URL and saves it to the local filesystem.
 
 			  Parameters:
-			    - url: string — URL of the file to download
-			    - savePath: string — Path to save the file (relative to the working directory)
+			    - url: string - URL of the file to download
+			    - savePath: string - Path to save the file (relative to the working directory)
 			    - options: table (optional):
-			      - headers: table (optional) — Custom headers as key-value pairs
+			      - headers: table (optional) - Custom headers as key-value pairs
 
 			  Returns: table with:
-			    - url: string — source URL
-			    - file_size: number — downloaded file size in bytes
-			    - status_code: number — HTTP status code
-			    - success: boolean — whether the download succeeded
+			    - url: string - source URL
+			    - file_size: number - downloaded file size in bytes
+			    - status_code: number - HTTP status code
+			    - success: boolean - whether the download succeeded
 
 			EXAMPLES:
 

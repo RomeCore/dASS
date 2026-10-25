@@ -39,7 +39,7 @@ namespace LLMDesktopAssistant.Addons.Loading
 		/// <param name="existingAncestorDirectory">
 		/// The existing directory the operation starts from: every directory strictly below it is considered
 		/// as created by the operation (used by <see cref="FileOperation.Create"/> only). Must be an actual
-		/// ancestor of the path — the detector trusts the caller and never checks the filesystem. Pass
+		/// ancestor of the path - the detector trusts the caller and never checks the filesystem. Pass
 		/// <see langword="null"/> when unknown; then the worst case is assumed (every directory of the path
 		/// may be missing, so all the pack structures on the path are treated as potentially created).
 		/// </param>

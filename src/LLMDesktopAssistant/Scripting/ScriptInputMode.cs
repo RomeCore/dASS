@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting
 		Json,
 
 		/// <summary>
-		/// The language's own structure — a dict/list literal, an object.
+		/// The language's own structure - a dict/list literal, an object.
 		/// </summary>
 		Structured,
 	}

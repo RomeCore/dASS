@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua
 	/// <remarks>
 	/// <para>
 	/// The handle owns nothing it did not launch: it wraps the <see cref="ProcessDescriptor"/> created by the
-	/// launcher. The process dies when the descriptor's cancellation token is cancelled — which is what the
+	/// launcher. The process dies when the descriptor's cancellation token is cancelled - which is what the
 	/// terminal view's Cancel button and <see cref="Kill"/> both do, and what disposing the attached
 	/// view model does.
 	/// </para>

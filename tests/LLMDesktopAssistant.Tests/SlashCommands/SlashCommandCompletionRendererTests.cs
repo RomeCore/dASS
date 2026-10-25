@@ -13,7 +13,7 @@ using LLMDesktopAssistant.SlashCommands.Input;
 namespace LLMDesktopAssistant.Tests.SlashCommands
 {
 	/// <summary>
-	/// The slash-command renderer — the painting half of <see cref="SlashCommandCompletionSource"/>: the token palette,
+	/// The slash-command renderer - the painting half of <see cref="SlashCommandCompletionSource"/>: the token palette,
 	/// the argument chips and the fallback for an argument list that does not parse.
 	/// </summary>
 	public class SlashCommandCompletionRendererTests
@@ -186,7 +186,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			var spans = Rendered("/grilling\nsecond /nope", Grilling);
 
-			// The token, then the whole rest (arguments including the second line) — never a second token.
+			// The token, then the whole rest (arguments including the second line) - never a second token.
 			Assert.Equal(2, spans.Count);
 			Assert.Equal(0, spans[0].Start);
 			Assert.Equal(9, spans[0].Length);

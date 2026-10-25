@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// </summary>
 	/// <remarks>
 	/// A non-strict provider only suggests (free text stays valid); a strict one blocks the send with
-	/// <c>command.error.invalid_argument</c> for anything outside the set. The value is a plain string — the provider
+	/// <c>command.error.invalid_argument</c> for anything outside the set. The value is a plain string - the provider
 	/// does not convert it.
 	/// </remarks>
 	public sealed class ChoiceArgumentFormatProvider : ISlashCommandArgumentFormatProvider

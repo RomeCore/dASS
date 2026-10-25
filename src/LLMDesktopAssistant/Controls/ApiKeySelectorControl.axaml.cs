@@ -86,7 +86,7 @@ namespace LLMDesktopAssistant.Controls
 			}
 			else
 			{
-				// Key not in list — add temporarily
+				// Key not in list - add temporarily
 				var apiKeys = ServiceRegistry.Provider.GetRequiredService<IApiKeyManagerService>();
 				var key = apiKeys.GetKey(newId);
 				if (key != null)

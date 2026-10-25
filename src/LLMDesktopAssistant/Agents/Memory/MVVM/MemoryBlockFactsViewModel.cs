@@ -204,8 +204,8 @@ namespace LLMDesktopAssistant.Agents.Memory.MVVM
 		/// Gets the formatted relevance scores of the fact.
 		/// </summary>
 		public string Scores => string.Format("cos: {0}, bm25: {1}",
-			_result.CosineScore?.ToString("0.00") ?? "—",
-			_result.Bm25Score?.ToString("0.00") ?? "—");
+			_result.CosineScore?.ToString("0.00") ?? "-",
+			_result.Bm25Score?.ToString("0.00") ?? "-");
 
 		/// <summary>
 		/// Gets the command that soft-deletes the fact after a confirmation.

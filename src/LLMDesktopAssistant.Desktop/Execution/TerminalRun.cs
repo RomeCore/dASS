@@ -21,8 +21,8 @@ namespace LLMDesktopAssistant.Desktop.Execution
 	/// user to detach, kill on cancellation and report the late exit code to the card.
 	/// </summary>
 	/// <remarks>
-	/// Shared by every caller that shows a process in an embedded terminal — a native tool module and an
-	/// out-of-process script alike — so the three traps of the lifetime (no timeout, no token linkage, an optional
+	/// Shared by every caller that shows a process in an embedded terminal - a native tool module and an
+	/// out-of-process script alike - so the three traps of the lifetime (no timeout, no token linkage, an optional
 	/// wait) are solved in one place.
 	/// </remarks>
 	public static class TerminalRun

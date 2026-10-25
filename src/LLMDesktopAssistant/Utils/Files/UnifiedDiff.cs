@@ -2,7 +2,7 @@ namespace LLMDesktopAssistant.Utils.Files
 {
 	/// <summary>
 	/// Unified diff generator using LCS (Longest Common Subsequence).
-	/// Produces output similar to `git diff --no-color` — no external dependencies.
+	/// Produces output similar to `git diff --no-color` - no external dependencies.
 	/// </summary>
 	public static class UnifiedDiff
 	{

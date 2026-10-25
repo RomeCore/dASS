@@ -24,7 +24,7 @@ namespace LLMDesktopAssistant.InputCompletion
 		public LocaleKeyBase? Description { get; init; }
 
 		/// <summary>
-		/// Extra text the popup shows with the item on hover, if any — for a command, its fully-qualified token when the
+		/// Extra text the popup shows with the item on hover, if any - for a command, its fully-qualified token when the
 		/// item offers a shortened form.
 		/// </summary>
 		public string? Hint { get; init; }

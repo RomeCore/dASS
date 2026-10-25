@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "math";
 
 		public override string? Manuals => """
-			--- math — extended mathematics API
+			--- math - extended mathematics API
 
 			Supplements the built-in Lua math library with expression parsing/evaluation,
 			complex numbers, numerical integration/differentiation, and equation solving.
@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  The returned function accepts an optional table of variable values.
 			  This is more efficient than math.evaluate for repeated evaluation.
 			  Parameters:
-			    - expression: string — expression to parse (e.g. "x^2 + 2*x + 1")
+			    - expression: string - expression to parse (e.g. "x^2 + 2*x + 1")
 			  Returns: function(vars) -> number|table
 			  Example:
 			    local f = math.parse("x^2 + 2*x + 1")
@@ -41,8 +41,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Evaluates a mathematical expression string with optional variable bindings.
 			  Supports complex numbers, integrals, derivatives, all math functions.
 			  Parameters:
-			    - expression: string — expression to evaluate
-			    - vars: table (optional) — variable bindings {x = 3, y = 5}
+			    - expression: string - expression to evaluate
+			    - vars: table (optional) - variable bindings {x = 3, y = 5}
 			  Returns: number (real) or table {real, imag} for complex results
 			  Examples:
 			    math.evaluate("sin(pi/4)^2 + cos(pi/4)^2")     → 1.0
@@ -53,12 +53,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- math.solve(equation, [variable], [rangeStart], [rangeEnd], [scanStep])
 			  Solves f(x) = 0 numerically using the bisection method.
 			  Parameters:
-			    - equation: string — equation to solve (e.g. "x^2 - 5*x + 6 = 0")
+			    - equation: string - equation to solve (e.g. "x^2 - 5*x + 6 = 0")
 			    - variable: string (optional, default "x")
 			    - rangeStart: number (optional, default -100)
 			    - rangeEnd: number (optional, default 100)
 			    - scanStep: number (optional, default 0.1)
-			  Returns: table — array of found roots (may be empty)
+			  Returns: table - array of found roots (may be empty)
 			  Examples:
 			    math.solve("x^2 - 5*x + 6 = 0")  → {2.0, 3.0}
 			    math.solve("cos(x) - x", "x", 0, 10, 0.01)  → {~0.739}
@@ -66,10 +66,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- math.integral(f, a, b, [steps])
 			  Numerically integrates a Lua function over [a, b].
 			  Parameters:
-			    - f: function(x) — function to integrate
-			    - a: number — lower bound
-			    - b: number — upper bound
-			    - steps: number (optional, default 1000) — Simpson steps
+			    - f: function(x) - function to integrate
+			    - a: number - lower bound
+			    - b: number - upper bound
+			    - steps: number (optional, default 1000) - Simpson steps
 			  Returns: number
 			  Example:
 			    math.integral(function(x) return x^2 end, 0, 10)  → 333.333...
@@ -77,8 +77,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- math.derivative(f, x)
 			  Numerically differentiates a Lua function at point x.
 			  Parameters:
-			    - f: function(x) — function to differentiate
-			    - x: number — point to evaluate at
+			    - f: function(x) - function to differentiate
+			    - x: number - point to evaluate at
 			  Returns: number
 			  Example:
 			    math.derivative(function(x) return x^3 end, 5)  → ~75.0
@@ -94,30 +94,30 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- math.imag(z)
 			  Imaginary part of a complex number.
 
-			--- math.log2(x)       — logarithm base 2
-			--- math.logb(x, base) — logarithm with arbitrary base
-			--- math.cbrt(x)       — cube root
-			--- math.gamma(x)      — Gamma function (Lanczos approximation)
-			--- math.factorial(n)  — factorial (integer n >= 0)
-			--- math.round(x)      — round to nearest integer
-			--- math.trunc(x)      — truncate toward zero
-			--- math.sind(x)       — sine (x in degrees)
-			--- math.cosd(x)       — cosine (x in degrees)
-			--- math.tand(x)       — tangent (x in degrees)
+			--- math.log2(x)       - logarithm base 2
+			--- math.logb(x, base) - logarithm with arbitrary base
+			--- math.cbrt(x)       - cube root
+			--- math.gamma(x)      - Gamma function (Lanczos approximation)
+			--- math.factorial(n)  - factorial (integer n >= 0)
+			--- math.round(x)      - round to nearest integer
+			--- math.trunc(x)      - truncate toward zero
+			--- math.sind(x)       - sine (x in degrees)
+			--- math.cosd(x)       - cosine (x in degrees)
+			--- math.tand(x)       - tangent (x in degrees)
 
 			CONSTANTS (via math.constants):
 
-			--- math.constants.pi      — π = 3.141592653589793
-			--- math.constants.e       — e = 2.718281828459045
-			--- math.constants.phi     — φ = 1.618033988749895 (golden ratio)
-			--- math.constants.tau     — τ = 6.283185307179586
-			--- math.constants.gamma   — γ = 0.5772156649015328 (Euler-Mascheroni)
-			--- math.constants.g       — g = 9.81 (Earth's gravitational acceleration)
-			--- math.constants.c       — c = 299792458 (speed of light)
-			--- math.constants.halfpi  — π/2 = 1.5707963267948966
-			--- math.constants.sqrt2   — √2 = 1.4142135623730951
-			--- math.constants.sqrt3   — √3 = 1.7320508075688772
-			--- math.constants.ln2     — ln(2) = 0.6931471805599453
+			--- math.constants.pi      - π = 3.141592653589793
+			--- math.constants.e       - e = 2.718281828459045
+			--- math.constants.phi     - φ = 1.618033988749895 (golden ratio)
+			--- math.constants.tau     - τ = 6.283185307179586
+			--- math.constants.gamma   - γ = 0.5772156649015328 (Euler-Mascheroni)
+			--- math.constants.g       - g = 9.81 (Earth's gravitational acceleration)
+			--- math.constants.c       - c = 299792458 (speed of light)
+			--- math.constants.halfpi  - π/2 = 1.5707963267948966
+			--- math.constants.sqrt2   - √2 = 1.4142135623730951
+			--- math.constants.sqrt3   - √3 = 1.7320508075688772
+			--- math.constants.ln2     - ln(2) = 0.6931471805599453
 
 			EXAMPLES:
 

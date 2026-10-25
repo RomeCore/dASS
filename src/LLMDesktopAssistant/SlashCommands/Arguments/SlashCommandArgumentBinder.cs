@@ -21,7 +21,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// <remarks>
 		/// Binding stops at the first problem and returns empty collections with the error set. Defaults are converted
 		/// but never validated (they are authored, not typed by the user). The rest positional is bound the same way as
-		/// any other argument — as one, never-split value — so its <c>Required</c>, <c>Default</c> and <c>Format</c> all
+		/// any other argument - as one, never-split value - so its <c>Required</c>, <c>Default</c> and <c>Format</c> all
 		/// apply and its converted value lands in <see cref="SlashCommandBoundArguments.RestPositional"/>.
 		/// </remarks>
 		public static SlashCommandBoundArguments Bind(
@@ -60,7 +60,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 					return Failure(parsed, Locale.GetKey("command.error.missing_argument"));
 
 				// Absent optional without a default: keep the slot so indices stay aligned with the schema. No raw argument
-				// and no ready text — the argument simply is not there.
+				// and no ready text - the argument simply is not there.
 				positionals.Add(new ParsedSlashCommandArgument { Definition = definition });
 			}
 
@@ -86,7 +86,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 				}
 			}
 
-			// 4. The rest positional, if the schema declares one: one value — the whole tail, never split — bound,
+			// 4. The rest positional, if the schema declares one: one value - the whole tail, never split - bound,
 			// validated and converted exactly like a declared positional.
 			ParsedSlashCommandArgument? rest = null;
 			if (schema.RestPositional is { } restDefinition)
@@ -164,7 +164,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 		/// <summary>
 		/// Builds a failed result: empty collections, the given error and the verbatim positional text carried over. The
-		/// parser's error position rides along — it is -1 for an error the binder itself raised.
+		/// parser's error position rides along - it is -1 for an error the binder itself raised.
 		/// </summary>
 		private static SlashCommandBoundArguments Failure(SlashCommandParsedArguments parsed, LocaleKeyBase error)
 		{

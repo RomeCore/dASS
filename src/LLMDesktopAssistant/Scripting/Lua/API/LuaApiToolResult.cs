@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.tool.result";
 
 		public override string? Manuals => """
-			--- dass.tool.result — reactive tool result API
+			--- dass.tool.result - reactive tool result API
 
 			Provides access to the current tool's reactive result for streaming
 			output, progress updates, and completion control.
@@ -26,62 +26,62 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			
 			--- dass.tool.result.available()
 			  Checks whether a tool execution context is available (i.e. we are inside a running tool).
-			  Returns: boolean — true if dass.tool.result functions can be used
+			  Returns: boolean - true if dass.tool.result functions can be used
 			
 			--- dass.tool.result.get()
 			  Returns the current reactive result object (table), or nil if not in a tool context.
 			  The returned table has fields (read-only):
-			    - content: string — current accumulated output
-			    - is_completed: boolean — whether execution has finished
-			    - success: boolean or nil — result status (nil if not completed)
-			    - progress: number or nil — current progress (nil = indeterminate)
-			    - progress_min: number — minimum progress value (default 0.0)
-			    - progress_max: number — maximum progress value (default 1.0)
-			    - status_icon: string or nil — current status icon name
-			    - status_title: string or nil — current status title
-			    - use_markdown: boolean — whether content is rendered as Markdown
+			    - content: string - current accumulated output
+			    - is_completed: boolean - whether execution has finished
+			    - success: boolean or nil - result status (nil if not completed)
+			    - progress: number or nil - current progress (nil = indeterminate)
+			    - progress_min: number - minimum progress value (default 0.0)
+			    - progress_max: number - maximum progress value (default 1.0)
+			    - status_icon: string or nil - current status icon name
+			    - status_title: string or nil - current status title
+			    - use_markdown: boolean - whether content is rendered as Markdown
 
 			--- dass.tool.result.write(line)
 			  Appends a line of text to the result output.
 			  Parameters:
-			    - line: string — line to append
+			    - line: string - line to append
 
 			--- dass.tool.result.write_lines(lines)
 			  Appends multiple lines to the result output at once.
 			  Parameters:
-			    - lines: table — array of strings
+			    - lines: table - array of strings
 
 			--- dass.tool.result.set_content(text)
 			  Replaces the entire result content with the given text.
 			  Parameters:
-			    - text: string — new content
+			    - text: string - new content
 
 			--- dass.tool.result.set_progress(value, [min], [max])
 			  Sets the progress of the tool execution with optional range limits.
 			  Parameters:
-			    - value: number or nil — progress value, or nil for indeterminate
-			    - min: number (optional) — minimum progress value (default: 0.0)
-			    - max: number (optional) — maximum progress value (default: 1.0)
+			    - value: number or nil - progress value, or nil for indeterminate
+			    - min: number (optional) - minimum progress value (default: 0.0)
+			    - max: number (optional) - maximum progress value (default: 1.0)
 
 			--- dass.tool.result.get_progress()
 			  Returns the current progress value.
 			  Returns: table with fields:
-			    - value: number or nil — current progress (nil = indeterminate)
-			    - min: number — minimum progress value
-			    - max: number — maximum progress value
+			    - value: number or nil - current progress (nil = indeterminate)
+			    - min: number - minimum progress value
+			    - max: number - maximum progress value
 
 			--- dass.tool.result.set_status(icon, title)
 			  Sets the status icon and title shown in the UI next to the tool name.
 			  Parameters:
-			    - icon: string — VisualIconKind name (e.g. "File", "Web", "Check", "Download")
+			    - icon: string - VisualIconKind name (e.g. "File", "Web", "Check", "Download")
 			      Pass empty string or nil to keep current icon.
-			    - title: string — status title text (e.g. "Downloading file...")
+			    - title: string - status title text (e.g. "Downloading file...")
 			      Pass empty string or nil to keep current title.
 
 			--- dass.tool.result.set_structured(data)
 			  Sets the structured result data (Lua table → JSON).
 			  Parameters:
-			    - data: table — structured data to return alongside text content
+			    - data: table - structured data to return alongside text content
 
 			--- dass.tool.result.append_part(title, icon, color)
 			  Appends a plain chip part to the tool call. 'icon' is a VisualIconKind name,
@@ -99,19 +99,19 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  dass.ui.create_control(), or a live 'terminal' from process.run_terminal().
 			  Each argument is attached in order; appending the same handle more than once is allowed.
 			  Parameters:
-				- ...handle — one or more attachable handles
+				- ...handle - one or more attachable handles
 			  Returns: nil
 			  No-op if not in a tool execution context.
 
 			--- dass.tool.result.use_markdown(enabled)
 			  Sets whether the result content should be rendered as Markdown.
 			  Parameters:
-			    - enabled: boolean — true to enable Markdown rendering
+			    - enabled: boolean - true to enable Markdown rendering
 
 			--- dass.tool.result.complete([success])
 			  Completes the tool execution. After calling this, further writes are ignored.
 			  Parameters:
-			    - success: boolean (optional) — true for success (default), false for error
+			    - success: boolean (optional) - true for success (default), false for error
 
 			--- dass.tool.result.complete_with_success()
 			  Completes the tool execution with success status.

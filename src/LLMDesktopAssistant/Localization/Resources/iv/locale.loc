@@ -1,5 +1,5 @@
-// Default (neutral) locale — English.
-// Structure: %locale — required, %namespace — optional prefix for all keys in this file.
+// Default (neutral) locale - English.
+// Structure: %locale - required, %namespace - optional prefix for all keys in this file.
 // Single-line entry:  key: value
 // Multiline entry:    key """
 //                     value

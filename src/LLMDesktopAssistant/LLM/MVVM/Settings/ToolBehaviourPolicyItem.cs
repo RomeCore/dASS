@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings;
 public enum BehaviourPolicyMode
 {
 	/// <summary>
-	/// No explicit policy — follow the default approval behaviour.
+	/// No explicit policy - follow the default approval behaviour.
 	/// </summary>
 	Default,
 

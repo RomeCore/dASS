@@ -4,7 +4,7 @@ using Avalonia.Data.Converters;
 namespace LLMDesktopAssistant.Agents.Tasks.MVVM;
 
 /// <summary>
-/// View for a single <see cref="AgentTaskViewModel"/> — displays a compact task card
+/// View for a single <see cref="AgentTaskViewModel"/> - displays a compact task card
 /// with status icon, name, summary, and recursive sub-tasks.
 /// </summary>
 public partial class AgentTaskView : UserControl

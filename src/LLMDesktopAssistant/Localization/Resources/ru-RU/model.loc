@@ -59,8 +59,8 @@ selector.available_models: Доступные модели
 selector.deselect_all: Снять все
 selector.load.error: Не удалось загрузить модели
 selector.manage.tooltip: Управление провайдерами и моделями
-selector.modifier.none: — Нет —
+selector.modifier.none: - Нет -
 selector.no_models: Нет доступных моделей
-selector.none: — Нет —
+selector.none: - Нет -
 selector.refresh: Обновить модели
 selector.select_all: Выбрать все

@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 		/// <summary>
 		/// Runs a process with terminal output displayed in the chat message.
 		/// Creates a <see cref="TerminalAdditionalViewModel"/>, attaches it to the tool call,
-		/// and waits for the process to complete — unless the user leaves the process running.
+		/// and waits for the process to complete - unless the user leaves the process running.
 		/// </summary>
 		/// <param name="parameters">Parameters describing what to run.</param>
 		/// <param name="context">The tool execution context (provides access to the tool call).</param>

@@ -26,7 +26,7 @@ with namespace renames and minor adjustments:
   Process creation, output pumping and termination are owned by
   `LLMDesktopAssistant.Desktop.Execution.ProcessLauncher` / `ProcessTerminalSession`;
   the view only renders the terminal buffer and forwards user input to the PTY.
-- `TerminalControl` and `TerminalWindow` were not ported — they are not needed by
+- `TerminalControl` and `TerminalWindow` were not ported - they are not needed by
   this application.
 
 ## License

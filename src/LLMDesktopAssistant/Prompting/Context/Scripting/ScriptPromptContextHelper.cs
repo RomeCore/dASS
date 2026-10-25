@@ -6,8 +6,8 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 	/// </summary>
 	/// <remarks>
 	/// No runner, no guard: a provider only runs its body. The budget and the failure isolation sit where the
-	/// context is <em>used</em> — <c>PromptContextBudget</c> in the prompt pipeline, called by the composer and by
-	/// the two section processors — so every language and every context family is treated identically.
+	/// context is <em>used</em> - <c>PromptContextBudget</c> in the prompt pipeline, called by the composer and by
+	/// the two section processors - so every language and every context family is treated identically.
 	/// </remarks>
 	public static class ScriptPromptContextHelper
 	{

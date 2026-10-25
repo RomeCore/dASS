@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 	/// <remarks>
 	/// The delegate receives the effective arguments, the invocation context and the cancellation token;
 	/// it writes its output into <see cref="IToolExecutionContext.Call"/> and returns whether it
-	/// succeeded. There is no completion handle — awaiting this task is the completion.
+	/// succeeded. There is no completion handle - awaiting this task is the completion.
 	/// </remarks>
 	public sealed class DelegateMainExecutor : IToolMainExecutor
 	{

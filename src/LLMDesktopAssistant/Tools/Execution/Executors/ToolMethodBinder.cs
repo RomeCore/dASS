@@ -25,14 +25,14 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 	/// the other capabilities, so a preview or specifier method sees the same defaults and conversions
 	/// as the main one. Special parameters are recognised by type and attribute:
 	/// <list type="bullet">
-	/// <item><description><see cref="IToolExecutionContext"/> — the invocation context;</description></item>
-	/// <item><description><see cref="IToolCall"/> — the call, as a shorthand for <c>ctx.Call</c>;</description></item>
-	/// <item><description><c>[OriginalArgs] JsonNode</c> — the raw argument node;</description></item>
-	/// <item><description><c>[SharedContext]</c> — the tool's own channel between stages;</description></item>
-	/// <item><description><see cref="CancellationToken"/> — where the capability is asynchronous;</description></item>
-	/// <item><description><see cref="Specifier"/> — only in a specifier analyzer;</description></item>
-	/// <item><description><c>[Inject]</c> — resolved from <see cref="IToolExecutionContext.Services"/>;</description></item>
-	/// <item><description>everything else — a JSON argument.</description></item>
+	/// <item><description><see cref="IToolExecutionContext"/> - the invocation context;</description></item>
+	/// <item><description><see cref="IToolCall"/> - the call, as a shorthand for <c>ctx.Call</c>;</description></item>
+	/// <item><description><c>[OriginalArgs] JsonNode</c> - the raw argument node;</description></item>
+	/// <item><description><c>[SharedContext]</c> - the tool's own channel between stages;</description></item>
+	/// <item><description><see cref="CancellationToken"/> - where the capability is asynchronous;</description></item>
+	/// <item><description><see cref="Specifier"/> - only in a specifier analyzer;</description></item>
+	/// <item><description><c>[Inject]</c> - resolved from <see cref="IToolExecutionContext.Services"/>;</description></item>
+	/// <item><description>everything else - a JSON argument.</description></item>
 	/// </list>
 	/// </remarks>
 	public static class ToolMethodBinder

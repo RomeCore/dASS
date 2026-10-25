@@ -13,79 +13,79 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "regex";
 
 		public override string? Manuals => """
-			--- regex — regular expressions API
+			--- regex - regular expressions API
 
 			Provides classic regular expression operations using .NET regex syntax.
 			All functions accept an optional 'flags' string parameter.
 
 			Available flags (combine as needed, e.g. "im"):
-			  i — ignore case
-			  m — multiline (^ and $ match line boundaries)
-			  s — singleline (. matches newline)
-			  x — ignore pattern whitespace
-			  c — (replace only) replace only the first occurrence
+			  i - ignore case
+			  m - multiline (^ and $ match line boundaries)
+			  s - singleline (. matches newline)
+			  x - ignore pattern whitespace
+			  c - (replace only) replace only the first occurrence
 
 			FUNCTIONS:
 
 			--- regex.test(pattern, text, [flags])
 			  Returns true if the pattern matches anywhere in the text.
 			  Parameters:
-			    - pattern: string — Regular expression
-			    - text: string — Text to search
-			    - flags: string (optional) — Regex flags
+			    - pattern: string - Regular expression
+			    - text: string - Text to search
+			    - flags: string (optional) - Regex flags
 			  Returns: boolean
 
 			--- regex.match(pattern, text, [flags])
 			  Returns the first match with detailed info.
 			  Parameters:
-			    - pattern: string — Regular expression
-			    - text: string — Text to search
-			    - flags: string (optional) — Regex flags
+			    - pattern: string - Regular expression
+			    - text: string - Text to search
+			    - flags: string (optional) - Regex flags
 			  Returns: table or nil
 			  Result fields:
-			    - value: string — The matched text
-			    - start: number — Start position (1-based)
-			    - end: number — End position (1-based, inclusive)
-			    - length: number — Match length
-			    - groups: table — Group captures. Numeric keys (1..n) and named keys.
+			    - value: string - The matched text
+			    - start: number - Start position (1-based)
+			    - end: number - End position (1-based, inclusive)
+			    - length: number - Match length
+			    - groups: table - Group captures. Numeric keys (1..n) and named keys.
 			      Each group: { value (string or nil), start, end, length }
-				- group_names: array of strings — Named group names
+				- group_names: array of strings - Named group names
 
 			  NOTE: `end` is a Lua reserved word, so that field MUST be accessed with
-			  brackets: `m["end"]` — writing `m.end` is a syntax error.
+			  brackets: `m["end"]` - writing `m.end` is a syntax error.
 			  Same applies to group tables: `m.groups[1]["end"]`.
 
 
 			--- regex.matches(pattern, text, [flags])
 			  Returns all non-overlapping matches.
 			  Parameters:
-			    - pattern: string — Regular expression
-			    - text: string — Text to search
-			    - flags: string (optional) — Regex flags
-			  Returns: array of match tables (same as regex.match result) — NOT an array of strings!
+			    - pattern: string - Regular expression
+			    - text: string - Text to search
+			    - flags: string (optional) - Regex flags
+			  Returns: array of match tables (same as regex.match result) - NOT an array of strings!
 			Iterate as: for _, m in ipairs(regex.matches(...)) do print(m.value) end
 
 			--- regex.replace(pattern, replacement, text, [flags])
 			  Replaces matches with replacement string.
 			  Parameters:
-			    - pattern: string — Regular expression
-			    - replacement: string — Replacement (supports $1, ${name}, $&, $`, $', $_)
-			    - text: string — Input text
-			    - flags: string (optional) — Regex flags, plus "c" for count=1
+			    - pattern: string - Regular expression
+			    - replacement: string - Replacement (supports $1, ${name}, $&, $`, $', $_)
+			    - text: string - Input text
+			    - flags: string (optional) - Regex flags, plus "c" for count=1
 			  Returns: string
 
 			--- regex.split(pattern, text, [flags])
 			  Splits text by the regex pattern.
 			  Parameters:
-			    - pattern: string — Regular expression delimiter
-			    - text: string — Text to split
-			    - flags: string (optional) — Regex flags
+			    - pattern: string - Regular expression delimiter
+			    - text: string - Text to split
+			    - flags: string (optional) - Regex flags
 			  Returns: array of strings
 
 			--- regex.escape(text)
 			  Escapes all regex metacharacters in the text.
 			  Parameters:
-			    - text: string — Text to escape
+			    - text: string - Text to escape
 			  Returns: string
 
 			EXAMPLES:

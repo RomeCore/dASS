@@ -93,7 +93,7 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 
 		/// <summary>
 		/// Builds the trace. <paramref name="command"/> and <paramref name="arguments"/> are <see langword="null"/>
-		/// when the token did not resolve, or resolved but did not bind — the trace is then built from the token alone.
+		/// when the token did not resolve, or resolved but did not bind - the trace is then built from the token alone.
 		/// </summary>
 		public static SlashCommandFingerprint Create(string token, SlashCommandInfo? command,
 			SlashCommandBoundArguments? arguments, bool generateIntent, bool generateOutcome,

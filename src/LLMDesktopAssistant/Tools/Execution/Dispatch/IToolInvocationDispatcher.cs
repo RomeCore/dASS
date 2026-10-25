@@ -10,8 +10,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Dispatch
 	/// <remarks>
 	/// The dispatcher is stateless and knows nothing about chats, tasks or scripts: the source-specific
 	/// values (context factory, confirmation sink, effective behaviours, host, argument stream) arrive in
-	/// the request. Every entry point — the chat execution service, a nested script call, the task
-	/// executor — is therefore the same call.
+	/// the request. Every entry point - the chat execution service, a nested script call, the task
+	/// executor - is therefore the same call.
 	/// </remarks>
 	public interface IToolInvocationDispatcher
 	{

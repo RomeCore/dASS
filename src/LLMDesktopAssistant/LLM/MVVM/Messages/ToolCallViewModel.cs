@@ -253,8 +253,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		private bool _canRestart;
 		/// <summary>
 		/// Whether the call can be re-run in place: it is finished and its tool still exists in the chat. Unlike
-		/// <see cref="CanCancel"/> this is not a function of the call alone — the tool has to be looked up in the
-		/// chat's tools — so it is refreshed when the call's status or cancellation source changes, not on every read.
+		/// <see cref="CanCancel"/> this is not a function of the call alone - the tool has to be looked up in the
+		/// chat's tools - so it is refreshed when the call's status or cancellation source changes, not on every read.
 		/// </summary>
 		public bool CanRestart
 		{

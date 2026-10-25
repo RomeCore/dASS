@@ -135,7 +135,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 		public IToolArgumentStream? ArgumentStream { get; }
 
 		/// <summary>
-		/// An ephemeral argument substitution — the hook channel.
+		/// An ephemeral argument substitution - the hook channel.
 		/// </summary>
 		public JsonNode? ArgumentsOverride { get; set; }
 

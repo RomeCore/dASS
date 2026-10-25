@@ -2,7 +2,7 @@ namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
 	/// A half-open region <c>[Start, End)</c> of the raw input text. The region a completion would replace is defined
-	/// by the source that produced it — never inferred from whitespace, so a token may contain spaces (a mention such
+	/// by the source that produced it - never inferred from whitespace, so a token may contain spaces (a mention such
 	/// as <c>@Code Reviewer</c>, say).
 	/// </summary>
 	public readonly record struct InputCompletionSpan(int Start, int Length)

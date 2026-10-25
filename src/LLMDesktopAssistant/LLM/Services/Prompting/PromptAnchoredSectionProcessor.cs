@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 
 			// Live anchor: the newest anchor of this agent positioned after the boundary. Walking the raw history
 			// (not the effective set) keeps an anchor carried by a hidden message reachable.
-			// A single message may hold anchors of multiple agents — scan all of them.
+			// A single message may hold anchors of multiple agents - scan all of them.
 			for (int i = chat.Messages.Count - 1; i > boundaryIndex; i--)
 			{
 				var branchedMessage = chat.Messages[i];

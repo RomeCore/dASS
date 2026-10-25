@@ -69,7 +69,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				if (resolution.Error is not null || resolution.Command is null)
 				{
 					// Guard: inserted without a passing pre-flight (or a race). Attach the error and the failed trace,
-					// skip the command and the generation — but never drop the input.
+					// skip the command and the generation - but never drop the input.
 					var error = resolution.Error ?? Locale.GetKey("command.error.unknown");
 					message.Error = error;
 					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,

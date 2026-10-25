@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass";
 
 		public override string? Manuals => $"""
-			--- dass — application-level utilities
+			--- dass - application-level utilities
 
 			Provides version info, help system, and working directory.
 
@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			--- dass.version()
 			  Returns the application version string.
-			  Returns: string — e.g. "1.0.0"
+			  Returns: string - e.g. "1.0.0"
 
 			--- dass.help()
 			  Prints the manuals for all available Lua API namespaces.
@@ -33,7 +33,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			--- dass.working_dir()
 			  Returns the current chat's working directory (absolute path).
-			  Returns: string — e.g. "{Directories.DefaultWorkingDirectory}"
+			  Returns: string - e.g. "{Directories.DefaultWorkingDirectory}"
 
 			EXAMPLES:
 

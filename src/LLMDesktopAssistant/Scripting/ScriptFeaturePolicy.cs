@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Scripting
 	/// </summary>
 	/// <remarks>
 	/// A kind without <see cref="PlainOutput"/> has no result other than the promised structure, so its
-	/// <c>json-output</c> becomes mandatory rather than optional — that is how a future hook, which answers with a
+	/// <c>json-output</c> becomes mandatory rather than optional - that is how a future hook, which answers with a
 	/// decision and never with text, will be declared without a fourth flag.
 	/// </remarks>
 	[Flags]

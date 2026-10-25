@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.command";
 
 		public override string? Manuals => """
-			--- dass.command — the running slash command
+			--- dass.command - the running slash command
 
 			Available only inside a script executed as a slash command.
 

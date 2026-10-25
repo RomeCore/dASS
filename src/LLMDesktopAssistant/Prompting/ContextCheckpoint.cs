@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.Prompting
 		}
 
 		/// <summary>
-		/// Display order — shown below message content.
+		/// Display order - shown below message content.
 		/// </summary>
 		public override int Order => 50;
 

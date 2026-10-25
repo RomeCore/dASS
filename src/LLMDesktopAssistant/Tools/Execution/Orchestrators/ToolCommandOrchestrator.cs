@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 {
 	/// <summary>
 	/// The tool-command orchestrator: the user runs the tool through its derived slash command, so policy
-	/// and confirmation are skipped and the hard floor is not checked — the action is the user's own.
+	/// and confirmation are skipped and the hard floor is not checked - the action is the user's own.
 	/// </summary>
 	/// <remarks>
 	/// The body is identical to <see cref="ChatRestartOrchestrator"/> by design: the sources are different

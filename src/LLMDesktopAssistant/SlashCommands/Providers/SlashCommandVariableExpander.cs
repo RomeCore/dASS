@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// <remarks>
 	/// The built-ins are the command's own arguments (<c>$ARGUMENTS</c>) and the skill's identity
 	/// (<c>$CLAUDE_SKILL_DIR</c> / <c>$SKILL_DIR</c>, <c>$SKILL_NAME</c>); anything else resolves against the process
-	/// environment. An unknown variable is left <em>verbatim</em> — a typo must not silently eat text. All the
+	/// environment. An unknown variable is left <em>verbatim</em> - a typo must not silently eat text. All the
 	/// expansion logic lives here, so the executor only calls <see cref="ExpandSkill"/>.
 	/// </remarks>
 	public static class SlashCommandVariableExpander

@@ -40,7 +40,7 @@ public partial class UserInputView : UserControl
 
 	/// <summary>
 	/// Re-anchors the popup to the caret on the next layout pass: the popup sits on the input's top edge (the placement
-	/// mode) and is shifted to the caret horizontally, which needs the popup's width — known only after it measured.
+	/// mode) and is shifted to the caret horizontally, which needs the popup's width - known only after it measured.
 	/// </summary>
 	private void ScheduleCompletionPopupOffset()
 		=> Dispatcher.UIThread.Post(UpdateCompletionPopupOffset, DispatcherPriority.Loaded);
@@ -72,7 +72,7 @@ public partial class UserInputView : UserControl
 	}
 
 	/// <summary>
-	/// Sends the drafted message, or cancels the running generation instead — there is nothing to send while one runs.
+	/// Sends the drafted message, or cancels the running generation instead - there is nothing to send while one runs.
 	/// </summary>
 	private static void Send(UserInputViewModel viewModel, bool generate)
 	{
@@ -83,7 +83,7 @@ public partial class UserInputView : UserControl
 	}
 
 	/// <summary>
-	/// Applies the completion's accept to the input: the new text and caret. The completion is not closed — the text
+	/// Applies the completion's accept to the input: the new text and caret. The completion is not closed - the text
 	/// change recomputes it, so the popup stays open while there is still context to complete (a command's arguments,
 	/// say) and closes on its own when nothing claims the caret anymore. Returns whether anything was accepted.
 	/// </summary>

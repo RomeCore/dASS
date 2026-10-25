@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.SlashCommands
 	/// remainder, and undoes the <c>//</c> escape. Pure and static.
 	/// </summary>
 	/// <remarks>
-	/// The token model is slash-free — the marker belongs to the message text, not to a command's identity. This is the
+	/// The token model is slash-free - the marker belongs to the message text, not to a command's identity. This is the
 	/// single place that knows about <c>/</c>; <see cref="Resolution.SlashCommandMatcher"/> and everything downstream
 	/// work on the slash-free token it produces. The message-insertion service is its consumer.
 	/// </remarks>

@@ -31,7 +31,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		[Fact]
 		public void For_ANameSharedWithAnother_OnlyTheWinnerMayDropIt()
 		{
-			// The names tie, so the resolver's last tie-break — the ordinal key — decides: ".claude:web-searcher" sorts before
+			// The names tie, so the resolver's last tie-break - the ordinal key - decides: ".claude:web-searcher" sorts before
 			// "agent:web-searcher" ('.' < 'a'), and only that one may then be written without its namespace.
 			var winner = Command("web-searcher", ".claude");
 			var loser = Command("web-searcher", "agent");

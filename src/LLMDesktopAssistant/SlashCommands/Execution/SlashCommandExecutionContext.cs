@@ -41,19 +41,19 @@ namespace LLMDesktopAssistant.SlashCommands.Execution
 		public required string RawText { get; init; }
 
 		/// <summary>
-		/// The whole argument text after the token, verbatim — the pre-parse remainder
+		/// The whole argument text after the token, verbatim - the pre-parse remainder
 		/// (<see cref="SlashCommandParsedArguments.RawArguments"/>).
 		/// </summary>
 		public required string RawArguments { get; init; }
 
 		/// <summary>
 		/// The bound arguments: schema defaults applied, values validated and converted. Valid by the time the executor
-		/// runs — an invalid argument set blocks the send before execution.
+		/// runs - an invalid argument set blocks the send before execution.
 		/// </summary>
 		public required SlashCommandBoundArguments Arguments { get; init; }
 
 		/// <summary>
-		/// The caller's generation intent — whether the user's send asked for generation. The final decision may lower
+		/// The caller's generation intent - whether the user's send asked for generation. The final decision may lower
 		/// it but never raise it.
 		/// </summary>
 		public required bool GenerateIntent { get; init; }

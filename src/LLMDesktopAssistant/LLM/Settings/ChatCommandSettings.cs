@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 	public partial class ChatCommandSettings : ChatSettingsCategoryBase
 	{
 		/// <summary>
-		/// Whether slash commands are enabled for this chat. Deliberately chat-local — the master gate is never
+		/// Whether slash commands are enabled for this chat. Deliberately chat-local - the master gate is never
 		/// inherited from the application.
 		/// </summary>
 		public bool EnableCommands

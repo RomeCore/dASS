@@ -7,7 +7,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// </summary>
 	/// <remarks>
 	/// A format provider handles one argument kind (a boolean flag, a file path, "one of many", ...). Adding a new kind
-	/// of argument means adding a provider — the command engine itself is never touched.
+	/// of argument means adding a provider - the command engine itself is never touched.
 	/// </remarks>
 	public interface ISlashCommandArgumentFormatProvider
 	{

@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// </summary>
 	/// <remarks>
 	/// One adapter serves every out-of-process language; the extension of the tool's own file picks the engine. The
-	/// JSON keys are read one by one and unknown ones are ignored — a tool card tolerates extra fields that a newer
+	/// JSON keys are read one by one and unknown ones are ignored - a tool card tolerates extra fields that a newer
 	/// engine writes.
 	/// </remarks>
 	[Service(typeof(IScriptableToolEngine))]
@@ -91,7 +91,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var json = result.Json as JsonObject;
 
 			// Without a promised structure the result is the merged stream: a script with no JSON channel is heard
-			// exactly as a terminal would show it. With JSON, only stdout is a candidate — stderr would poison it.
+			// exactly as a terminal would show it. With JSON, only stdout is a candidate - stderr would poison it.
 			call.SetResult(json is null
 				? result.Output
 				: Text(json, "result") ?? result.Stdout);

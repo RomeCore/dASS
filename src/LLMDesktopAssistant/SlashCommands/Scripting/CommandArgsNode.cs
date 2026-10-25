@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.SlashCommands.Scripting
 	/// <c>{ positionals = {...}, keyed = {...}, rest = "...", raw = "..." }</c> with converted values.
 	/// </summary>
 	/// <remarks>
-	/// Lua converts the node to a table, Python to a dict literal and C# to a JSON tree — the shape itself is decided
+	/// Lua converts the node to a table, Python to a dict literal and C# to a JSON tree - the shape itself is decided
 	/// once, here.
 	/// </remarks>
 	public static class CommandArgsNode

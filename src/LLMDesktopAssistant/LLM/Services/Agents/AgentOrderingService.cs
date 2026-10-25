@@ -83,7 +83,7 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 		/// </summary>
 		/// <remarks>
 		/// The marker lives on a user message of the current round, and a round is a run of consecutive user messages
-		/// (a marked message followed by plain text, say) — so the whole trailing run is searched, newest message first,
+		/// (a marked message followed by plain text, say) - so the whole trailing run is searched, newest message first,
 		/// not just the last message. The scan stops at the first assistant (or other) message: a marker behind an
 		/// assistant message belongs to a previous round and is inert, even though the marker itself is never consumed.
 		/// The forced agent runs even when it belongs to no enabled stage (its turn is tagged with

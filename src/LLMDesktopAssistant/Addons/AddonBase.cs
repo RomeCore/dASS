@@ -226,7 +226,7 @@ namespace LLMDesktopAssistant.Addons
 
 		/// <summary>
 		/// Gets a value indicating whether the addon is valid and may be consumed (search, prompt, commands, ...).
-		/// Invalid addons stay visible in the UI but are filtered out wherever addons are actually used —
+		/// Invalid addons stay visible in the UI but are filtered out wherever addons are actually used -
 		/// see <see cref="AddonSetCollectorBase{TAddon,TChange}"/>.
 		/// </summary>
 		[JsonIgnore]

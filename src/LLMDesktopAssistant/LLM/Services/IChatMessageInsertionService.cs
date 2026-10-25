@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.LLM.Services
 	/// Two entry points split by trust. <see cref="CanInsertUserInput"/> is a pure pre-flight the view model calls
 	/// <em>before</em> it commits the draft, so a refused command never loses the user's text.
 	/// <see cref="InsertUserInputAsync"/> is the authoritative path the chat-operations facade calls; it re-resolves, so
-	/// a caller that skips the pre-flight (or a race with addon reloading) still gets a defined result — the message is
+	/// a caller that skips the pre-flight (or a race with addon reloading) still gets a defined result - the message is
 	/// inserted with the error attached and the command is not run.
 	/// </remarks>
 	public interface IChatMessageInsertionService

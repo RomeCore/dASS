@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// the application.
 	/// </summary>
 	/// <remarks>
-	/// The command is <see cref="AddonChangedBase{Self,TChange}.IsFixed"/> so it cannot be disabled — it is the recovery
+	/// The command is <see cref="AddonChangedBase{Self,TChange}.IsFixed"/> so it cannot be disabled - it is the recovery
 	/// hatch when the addon state is broken. It
 	/// <see cref="SlashCommandInfo.Generate"/>s nothing and its message is
 	/// <see cref="ModelFacingMode.Neutral"/> so the reload never leaks into the model context.

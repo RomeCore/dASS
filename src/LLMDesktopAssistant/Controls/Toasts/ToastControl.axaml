@@ -10,7 +10,7 @@
 						 x:Class="LLMDesktopAssistant.Controls.Toasts.ToastControl"
 						 Name="PART_Root">
 
-	<!-- ItemsControl — контейнер для списка тостов -->
+	<!-- ItemsControl - контейнер для списка тостов -->
 	<ItemsControl Name="PART_ToastList"
 								ItemsSource="{Binding #PART_Root.Toasts}">
 

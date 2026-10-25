@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Support
 	/// The cache key is a pair, not a single timestamp: the override is compared by reference (it is a
 	/// node handed to the context once) and the raw string by value. Any change to either input
 	/// produces a different key and a fresh parse; no invalidation call is needed anywhere.
-	/// The accessor is not a snapshot — it always reflects the latest input.
+	/// The accessor is not a snapshot - it always reflects the latest input.
 	/// </remarks>
 	/// <param name="call">The call whose raw arguments are the persisted channel.</param>
 	/// <param name="overrideGetter">Reads the ephemeral override from the context.</param>

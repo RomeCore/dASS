@@ -36,7 +36,7 @@ namespace LLMDesktopAssistant.Providers
 		/// <summary>
 		/// Gets the context size as a human-readable string.
 		/// </summary>
-		public string ContextText => Model.ContextSize > 0 ? $"{Model.ContextSize:N0}" : "—";
+		public string ContextText => Model.ContextSize > 0 ? $"{Model.ContextSize:N0}" : "-";
 
 		/// <summary>
 		/// Gets the input modality icons with tooltips.

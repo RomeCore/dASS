@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "icon";
 
 		public override string? Manuals => """
-			--- icon — Material Design icons API
+			--- icon - Material Design icons API
 
 			Provides access to Material Design icons (MaterialIconKind enum).
 			Useful for setting status icons in tool results, toasts, etc.
@@ -24,26 +24,26 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- icon.exists(kind)
 			  Checks if an icon with the given name exists.
 			  Parameters:
-			    - kind: string — icon name (case-insensitive, e.g. "File", "Web", "Alert")
+			    - kind: string - icon name (case-insensitive, e.g. "File", "Web", "Alert")
 			  Returns: boolean
 
 			--- icon.get(kind)
 			  Gets detailed information about an icon by its name.
 			  Parameters:
-			    - kind: string — icon name (case-insensitive)
-			  Returns: table or nil — with fields:
-			    - name: string — canonical icon name
-			    - kind: number — numeric enum value
+			    - kind: string - icon name (case-insensitive)
+			  Returns: table or nil - with fields:
+			    - name: string - canonical icon name
+			    - kind: number - numeric enum value
 
 			--- icon.list([filter])
 			  Lists all available icon names.
 			  Parameters:
-			    - filter: string (optional) — substring filter (case-insensitive)
-			  Returns: table — array of icon name strings (sorted alphabetically)
+			    - filter: string (optional) - substring filter (case-insensitive)
+			  Returns: table - array of icon name strings (sorted alphabetically)
 
 			--- icon.random()
 			  Returns a random icon name.
-			  Returns: string — random icon name
+			  Returns: string - random icon name
 
 			EXAMPLES:
 

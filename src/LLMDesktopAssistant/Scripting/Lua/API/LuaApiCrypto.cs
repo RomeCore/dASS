@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "crypto";
 
 		public override string? Manuals => """
-			--- crypto — cryptography API
+			--- crypto - cryptography API
 
 			Provides hashing, HMAC, Base64 encoding/decoding and random hex generation.
 
@@ -29,40 +29,40 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- crypto.sha512(data)
 			  Returns the hex-encoded hash of the input data.
 			  Parameters:
-			    - data: string or table of bytes — input data
-			  Returns: string — lowercase hex digest
+			    - data: string or table of bytes - input data
+			  Returns: string - lowercase hex digest
 
 			--- crypto.hmac(key, data, algorithm)
 			  Returns the hex-encoded HMAC of the input data.
 			  Parameters:
-			    - key: string or table of bytes — HMAC key
-			    - data: string or table of bytes — input data
-			    - algorithm: string — hash algorithm: "md5", "sha1", "sha256", "sha512"
-			  Returns: string — lowercase hex digest
+			    - key: string or table of bytes - HMAC key
+			    - data: string or table of bytes - input data
+			    - algorithm: string - hash algorithm: "md5", "sha1", "sha256", "sha512"
+			  Returns: string - lowercase hex digest
 
 			--- crypto.base64_encode(data)
 			  Encodes a string or bytes to Base64.
 			  Parameters:
-			    - data: string or table of bytes — data to encode
-			  Returns: string — Base64 encoded
+			    - data: string or table of bytes - data to encode
+			  Returns: string - Base64 encoded
 
 			--- crypto.base64_decode(str)
 			  Decodes a Base64 string to plain text (UTF-8).
 			  Parameters:
-			    - str: string — Base64 encoded string
-			  Returns: string — decoded text
+			    - str: string - Base64 encoded string
+			  Returns: string - decoded text
 
 			--- crypto.base64_decode_bytes(str)
 			  Decodes a Base64 string to an array of bytes.
 			  Parameters:
-			    - str: string — Base64 encoded string
-			  Returns: table — array of integers (0-255)
+			    - str: string - Base64 encoded string
+			  Returns: table - array of integers (0-255)
 
 			--- crypto.random_hex(n)
 			  Generates a random hex string of n bytes (2n hex chars).
 			  Parameters:
-			    - n: number — number of random bytes
-			  Returns: string — hex string
+			    - n: number - number of random bytes
+			  Returns: string - hex string
 
 			EXAMPLES:
 

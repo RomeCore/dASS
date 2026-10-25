@@ -7,8 +7,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Support
 	/// <see cref="IContentChatAttachment"/> the tool or a stage wrote onto the call.
 	/// </summary>
 	/// <remarks>
-	/// The two worlds store their payloads differently — a chat call keeps them in the message part
-	/// collection, a task call in its own attachment list — so the helper takes the collection instead of
+	/// The two worlds store their payloads differently - a chat call keeps them in the message part
+	/// collection, a task call in its own attachment list - so the helper takes the collection instead of
 	/// reading it from <see cref="Domain.IToolCall"/>. The separator is fixed here: the chat prompt already
 	/// emits it, and changing it would rewrite a byte-stable SCM prefix.
 	/// </remarks>

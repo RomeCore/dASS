@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 {
 	/// <summary>
 	/// Drives the input completion: it asks <see cref="IInputCompletionService"/> for the completion at the caret and
-	/// exposes the state the popup binds to, the current selection and the accept action. It owns no text — the caller
+	/// exposes the state the popup binds to, the current selection and the accept action. It owns no text - the caller
 	/// supplies the text and applies the accept.
 	/// </summary>
 	public sealed class InputCompletionViewModel : NotifyPropertyChanged
@@ -133,7 +133,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		/// <summary>
 		/// Handles the keys the popup owns. Returns <see langword="true"/> when the key was consumed. Enter/Tab are not
-		/// handled here — the caller checks <see cref="CanAccept"/> and calls <see cref="Accept"/>.
+		/// handled here - the caller checks <see cref="CanAccept"/> and calls <see cref="Accept"/>.
 		/// </summary>
 		public bool TryHandleKey(Key key)
 		{

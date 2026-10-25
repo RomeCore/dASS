@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.tool";
 
 		public override string? Manuals => """
-			--- dass.tool — assistant's tool system
+			--- dass.tool - assistant's tool system
 
 			Provides access to all registered tools (filesystem, web search, Python
 			execution, etc.) directly from Lua scripts.
@@ -29,21 +29,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Calls a registered tool by name and returns a structured result table.
 
 			  Parameters:
-			    - name: string — tool name (e.g. "web-search", "fs-read_entry")
-			    - args: table — arguments to pass to the tool, converted to JSON internally.
+			    - name: string - tool name (e.g. "web-search", "fs-read_entry")
+			    - args: table - arguments to pass to the tool, converted to JSON internally.
 			      Use string keys matching the tool's argument schema.
 			      Booleans: true / false
 			      Arrays: { "a", "b", "c" }
 			      Nested objects: { key = { subkey = "value" } }
 			      If the tool requires no arguments, pass an empty table {}.
 
-			  Returns: table — structured result with the following fields:
+			  Returns: table - structured result with the following fields:
 			    - content: string - the textual result produced by the tool
 				- structured: table or nil - the optional structured result produced by the tool
-			    - success: boolean — whether the tool executed successfully
-			    - tool: table — the table containing info of the tool that was called (see dass.tool.list() for what that table contains)
-			    - status_title: string or nil — optional status title
-			    - status_icon: string or nil — optional status icon name
+			    - success: boolean - whether the tool executed successfully
+			    - tool: table - the table containing info of the tool that was called (see dass.tool.list() for what that table contains)
+			    - status_title: string or nil - optional status title
+			    - status_icon: string or nil - optional status icon name
 
 			  A tool-level failure is not an exception: check `success` and `content`. An error is
 			  thrown only when the tool name is not registered. A nested call is a script invocation:
@@ -52,24 +52,24 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.tool.list()
 			  Returns a table with detailed information about all registered tools.
 
-			  Returns: table — array of tool info tables. Each entry contains:
-			    - name: string — tool name (e.g. "web-search")
-			    - description: string — tool description
-			    - category: string — tool category (e.g. "web", "scripting")
-			    - display_name: string or nil — user-friendly name
-			    - enabled: boolean or nil — whether the tool is enabled, nil when tool is not changed by settings and default 'enabled' state is used
-			    - approval_level: string — the tool's approval policy, in kebab-case. One of:
+			  Returns: table - array of tool info tables. Each entry contains:
+			    - name: string - tool name (e.g. "web-search")
+			    - description: string - tool description
+			    - category: string - tool category (e.g. "web", "scripting")
+			    - display_name: string or nil - user-friendly name
+			    - enabled: boolean or nil - whether the tool is enabled, nil when tool is not changed by settings and default 'enabled' state is used
+			    - approval_level: string - the tool's approval policy, in kebab-case. One of:
 			        "default" - tool is subject to the agent's default approval level
-			        "policy-based" — defer to the agent's behaviour policy (auto-approve, prompt, or reject)
-			        "policy-ask-or-disallow" — prompt the user even if the agent auto-approved the behaviour
-			        "policy-approve-or-ask" — never disallow; auto-approve or prompt per agent policy
-			        "policy-auto-approve-unless-disallowed" — never prompt; execute unless explicitly disallowed
-			        "policy-auto-disallow-unless-approved" — never prompt; reject unless explicitly auto-approved
-			        "always-approve" — execute immediately, bypassing all policy checks
-			        "always-ask" — always prompt the user for confirmation
-			        "always-disallow" — always reject without executing
-			    - source: string — tool source ("native", "meta", "mcp")
-			    - arguments: table — JSON schema of the arguments
+			        "policy-based" - defer to the agent's behaviour policy (auto-approve, prompt, or reject)
+			        "policy-ask-or-disallow" - prompt the user even if the agent auto-approved the behaviour
+			        "policy-approve-or-ask" - never disallow; auto-approve or prompt per agent policy
+			        "policy-auto-approve-unless-disallowed" - never prompt; execute unless explicitly disallowed
+			        "policy-auto-disallow-unless-approved" - never prompt; reject unless explicitly auto-approved
+			        "always-approve" - execute immediately, bypassing all policy checks
+			        "always-ask" - always prompt the user for confirmation
+			        "always-disallow" - always reject without executing
+			    - source: string - tool source ("native", "meta", "mcp")
+			    - arguments: table - JSON schema of the arguments
 
 			EXAMPLES:
 

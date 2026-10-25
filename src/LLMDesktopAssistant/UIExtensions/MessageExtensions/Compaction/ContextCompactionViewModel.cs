@@ -16,7 +16,7 @@ using Material.Icons;
 namespace LLMDesktopAssistant.UIExtensions.MessageExtensions.Compaction
 {
 	/// <summary>
-	/// The view model of the message's context compaction panel — a single segmented control
+	/// The view model of the message's context compaction panel - a single segmented control
 	/// that combines the five context checkpoint toggles (shield, summary, tool results,
 	/// forced tool results and reasoning compaction).
 	/// </summary>

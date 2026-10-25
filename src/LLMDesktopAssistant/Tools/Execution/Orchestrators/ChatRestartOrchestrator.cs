@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 {
 	/// <summary>
 	/// The chat-restart orchestrator: the user re-runs an existing call, so policy and confirmation are
-	/// skipped and the hard floor is not checked — the action is the user's own.
+	/// skipped and the hard floor is not checked - the action is the user's own.
 	/// </summary>
 	/// <remarks>
 	/// The body is identical to <see cref="ToolCommandOrchestrator"/> by design: the sources are different

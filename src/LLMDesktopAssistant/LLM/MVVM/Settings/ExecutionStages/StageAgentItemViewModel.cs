@@ -66,7 +66,7 @@ public class RoundRobinStageAgentViewModel : StageAgentItemViewModelBase
 
 /// <summary>
 /// ViewModel for an agent inside a mention-only stage or adaptive stage.
-/// No weight, no ordering — just enabled/disabled with remove.
+/// No weight, no ordering - just enabled/disabled with remove.
 /// </summary>
 public class MentionStageAgentViewModel : StageAgentItemViewModelBase
 {

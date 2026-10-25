@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 		// Process state (owned by the launcher, mirrored here for input routing only)
 		private IPtyConnection? _ptyConnection;
 		private static readonly Encoding Utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
-		private int _processExitHandled;    // 0=false, 1=true — written via Interlocked
+		private int _processExitHandled;    // 0=false, 1=true - written via Interlocked
 
 		// Cursor blinking
 		private DispatcherTimer _cursorBlinkTimer = null!;
@@ -597,7 +597,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		/// <summary>
 		/// Gets or sets the PTY connection that the view writes user input to.
-		/// The view never reads from the connection — the launcher does.
+		/// The view never reads from the connection - the launcher does.
 		/// </summary>
 		public IPtyConnection? PtyConnection
 		{
@@ -614,7 +614,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 				{
 					_ptyConnection.ProcessExited += OnPtyProcessExited;
 
-					// The process might have exited before the subscription — check for it.
+					// The process might have exited before the subscription - check for it.
 					if (_ptyConnection.WaitForExit(0))
 						Interlocked.Exchange(ref _processExitHandled, 1);
 				}
@@ -845,7 +845,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnLoaded(object? sender, RoutedEventArgs e)
 		{
-			// The process is launched by the ProcessLauncher — nothing to start here.
+			// The process is launched by the ProcessLauncher - nothing to start here.
 
 			// Start cursor blinking if enabled
 			if (CursorBlink)
@@ -1205,7 +1205,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 					}
 					else
 					{
-						// Word / line select, or ShowCaretOnClick=true — start immediately.
+						// Word / line select, or ShowCaretOnClick=true - start immediately.
 						int viewportRow = row;
 						_terminal!.Selection.StartSelection(col, viewportRow, mode);
 						_isSelecting = true;
@@ -1246,7 +1246,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 				{
 					if (_pendingSelectionStart.HasValue)
 					{
-						// Pointer was never moved after the click — no visible selection was started,
+						// Pointer was never moved after the click - no visible selection was started,
 						// so just clear the pending state without leaving any caret.
 						_pendingSelectionStart = null;
 					}
@@ -1298,7 +1298,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 					int viewportRow = row;
 					if (_pendingSelectionStart.HasValue)
 					{
-						// First movement after a single click — now actually start the selection.
+						// First movement after a single click - now actually start the selection.
 						_terminal?.Selection.StartSelection(_pendingSelectionStart.Value.Col, _pendingSelectionStart.Value.Row, XT.Selection.SelectionMode.Normal);
 						_pendingSelectionStart = null;
 					}
@@ -2752,7 +2752,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 			public string? PreeditText => _preeditText;
 
 			/// <summary>
-			/// The visual that is rendering the text — this is the terminal view itself.
+			/// The visual that is rendering the text - this is the terminal view itself.
 			/// </summary>
 			public override Visual TextViewVisual => _view;
 

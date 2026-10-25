@@ -16,16 +16,16 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// plain text); an unquoted keyed value runs to the next declared key (spaces allowed), a quoted one is bounded by
 	/// its quotes; everything else is positional; positionals precede the first key; with
 	/// <see cref="SlashCommandArgumentSchema.HasRestPositional"/> the declared positionals are parsed as usual and the
-	/// surplus is not split further — declared <c>key=…</c> segments are still extracted and that surplus is delivered
+	/// surplus is not split further - declared <c>key=…</c> segments are still extracted and that surplus is delivered
 	/// verbatim (quotes kept) as <see cref="SlashCommandParsedArguments.RestPositional"/>, a raw argument that carries
 	/// the schema's rest slot and the surplus span. Independently of the
 	/// schema, <see cref="SlashCommandParsedArguments.RawPositionalArguments"/> always carries every positional argument
-	/// — the whole region before the first key, verbatim.
+	/// - the whole region before the first key, verbatim.
 	/// </para>
 	/// <para>
 	/// Two edges of that contract are worth spelling out. A keyed value is bounded by its quotes <em>only</em> when
 	/// nothing but whitespace follows the closing quote: <c>key="value" + junk</c> is not a quoted value but a literal
-	/// one running to the next key (with the quotes as part of the text and <c>WasQuoted</c> unset) — the same thing
+	/// one running to the next key (with the quotes as part of the text and <c>WasQuoted</c> unset) - the same thing
 	/// <c>key=value + junk</c> produces, so quotes never change the outcome unless they wrap the value exactly. An
 	/// opening quote that is never closed is a parse error at the earliest such quote, because the quote token then
 	/// swallows the rest of the text. The rest positional is exempt from both rules: it is taken verbatim from the
@@ -87,7 +87,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 							Raw = rawValue,
 							Unescaped = unescapedValue ?? string.Empty,
 							// The span of the whole "key=value". An unquoted value is empty here, so its span is only
-							// corrected once the next key is known — see Flush.
+							// corrected once the next key is known - see Flush.
 							Position = identifierResult.startIndex,
 							Length = valueResult.endIndex - identifierResult.startIndex,
 							ValuePosition = valueResult.startIndex,
@@ -183,7 +183,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 			// Step 1: the declared key=value segments. Everything before the first one is positional, everything from
 			// it on belongs to the keys. An unquoted value runs to the next declared key, so a value cannot be told
-			// apart before all key positions are known — hence the scan first, the values afterwards.
+			// apart before all key positions are known - hence the scan first, the values afterwards.
 			int firstKeyStart = text.Length;
 
 			string? keyName = null;
@@ -217,7 +217,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 				// Unquoted, or a quoted value with trailing junk: one literal value running to the next key, quotes
 				// and all.
-				// An unquoted value is captured by the grammar as empty, so its span has to be cut here — from just
+				// An unquoted value is captured by the grammar as empty, so its span has to be cut here - from just
 				// after the '=' to the next key, whitespace trimmed. The key's own offset comes from the match.
 				var valueStart = keyValueStart;
 				var valueEnd = nextKeyStart;
@@ -261,7 +261,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 			// Step 2: the positionals, which are exactly the tokens before the first key. A rest schema parses the
 			// declared positionals as usual and stops at the first surplus token: that one and everything after it is the
-			// rest positional, taken verbatim — quotes kept, never checked for a closing one.
+			// rest positional, taken verbatim - quotes kept, never checked for a closing one.
 			var prefix = text[..firstKeyStart];
 			var restStart = prefix.Length;
 			var index = 0;
@@ -299,7 +299,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 			}
 
 			// Every positional argument, verbatim: the whole region before the first key, quotes and spacing kept. The
-			// rest positional is a slice of that region — the surplus beyond the declared positionals.
+			// rest positional is a slice of that region - the surplus beyond the declared positionals.
 			var rawPositionals = prefix.TrimEnd();
 			var restPositional = BuildRestPositional(schema, prefix, restStart);
 
@@ -331,8 +331,8 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 
 		/// <summary>
 		/// Builds the rest positional's raw argument out of the surplus region, or returns <see langword="null"/> when the
-		/// schema declares no rest positional or the surplus is empty. The surplus is taken verbatim — quotes kept, never
-		/// checked for a closing one — and its span is the region from the first surplus token to the end of the positional
+		/// schema declares no rest positional or the surplus is empty. The surplus is taken verbatim - quotes kept, never
+		/// checked for a closing one - and its span is the region from the first surplus token to the end of the positional
 		/// text, trailing whitespace excluded.
 		/// </summary>
 		private static SlashCommandRawArgument? BuildRestPositional(SlashCommandArgumentSchema schema, string prefix,

@@ -1439,7 +1439,7 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 
 			- Leading indentation is **normalized during parsing**: every line loses up to `depth × TabSize` leading
 			  whitespace, where `depth` is the block nesting level. You can write templates with comfortable
-			  indentation — the common base indent is stripped and the output stays clean
+			  indentation - the common base indent is stripped and the output stays clean
 			- Inner whitespace, line breaks and blank lines are preserved as written
 			- Leading/trailing blank lines of blocks are trimmed; indentation before complex statements
 			  (`@if`, `@foreach`, `@while`) is removed
@@ -1453,12 +1453,12 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 
 			- Leading indentation is **normalized during parsing**: every line loses up to `depth × TabSize` leading
 			  whitespace, where `depth` is the block nesting level. You can write templates with comfortable
-			  indentation — the common base indent is stripped and the output stays clean
+			  indentation - the common base indent is stripped and the output stays clean
 			- Inner whitespace, line breaks and blank lines are preserved as written
 			- Leading/trailing blank lines of blocks are trimmed; indentation before complex statements
 			  (`@if`, `@foreach`, `@while`) is removed
-			- Lines containing only non-rendering constructs — `@/` and `@* *@` comments, `@let` declarations,
-			  variable assignments — are removed entirely: the surrounding line breaks are trimmed so they
+			- Lines containing only non-rendering constructs - `@/` and `@* *@` comments, `@let` declarations,
+			  variable assignments - are removed entirely: the surrounding line breaks are trimmed so they
 			  leave no blank lines in the output
 			- `TabSize` (default `4`) on `LLTParser` controls how many columns one indent level takes during refinement
 			- `@let` variables are **lexically scoped**
@@ -1471,8 +1471,8 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 			""", """
 			- Leading/trailing blank lines of blocks are trimmed; indentation before complex statements
 			  (`@if`, `@foreach`, `@while`) is removed
-			- Lines containing only non-rendering constructs — `@/` and `@* *@` comments, `@let` declarations,
-			  variable assignments — are removed entirely: the surrounding line breaks are trimmed so they
+			- Lines containing only non-rendering constructs - `@/` and `@* *@` comments, `@let` declarations,
+			  variable assignments - are removed entirely: the surrounding line breaks are trimmed so they
 			  leave no blank lines in the output
 			"""));
 	}

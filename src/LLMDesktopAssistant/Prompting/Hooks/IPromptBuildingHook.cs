@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Prompting.Hooks;
 /// <para>
 /// Unlike <see cref="Injectors.IPromptInjector"/> (which inserts entire
 /// <see cref="RawUserMessage"/> instances), <see cref="IPromptBuildingHook"/>
-/// operates on <b>existing</b> messages — it can replace, remove, or annotate
+/// operates on <b>existing</b> messages - it can replace, remove, or annotate
 /// individual <see cref="BranchedMessage"/> entries, or transform the final
 /// list of LLM-native messages after conversion.
 /// </para>

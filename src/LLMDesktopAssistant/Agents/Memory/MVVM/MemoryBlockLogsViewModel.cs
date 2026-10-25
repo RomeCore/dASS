@@ -351,7 +351,7 @@ namespace LLMDesktopAssistant.Agents.Memory.MVVM
 		/// <summary>
 		/// Gets the formatted BM25 relevance score of the log.
 		/// </summary>
-		public string Bm25Score => _result.Bm25Score?.ToString("0.00") ?? "—";
+		public string Bm25Score => _result.Bm25Score?.ToString("0.00") ?? "-";
 
 		/// <summary>
 		/// Gets the command that hard-deletes the log after a confirmation.

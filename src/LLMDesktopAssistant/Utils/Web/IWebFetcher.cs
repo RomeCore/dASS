@@ -2,7 +2,7 @@ namespace LLMDesktopAssistant.Utils.Web;
 
 /// <summary>
 /// Fetches the raw HTML content of web pages. Implementations return the
-/// page body exactly as received — no parsing, sanitization, or Markdown
+/// page body exactly as received - no parsing, sanitization, or Markdown
 /// conversion is performed. Conversion and parsing are the caller's
 /// responsibility (for example with AngleSharp).
 /// </summary>

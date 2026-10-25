@@ -1,4 +1,4 @@
-// Embedded test locale — verifies that .loc files are loaded from assembly resources.
+// Embedded test locale - verifies that .loc files are loaded from assembly resources.
 
 %locale: ru-RU
 %namespace: embedded

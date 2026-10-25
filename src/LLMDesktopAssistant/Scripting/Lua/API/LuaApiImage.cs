@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "image";
 
 		public override string? Manuals => """
-		--- image — Image loading, manipulation and saving API
+		--- image - Image loading, manipulation and saving API
 
 		Provides functions to load, create, manipulate and save images.
 		Uses SixLabors.ImageSharp under the hood.
@@ -27,40 +27,40 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- image.load(path) -> Image
 		  Loads an image from a file path.
 		  Parameters:
-		    - path: string — path to the image file
+		    - path: string - path to the image file
 		  Returns: Image object (UserData)
 
 		--- image.load_base64(base64) -> Image
 		  Loads an image from a base64-encoded string.
 		  Parameters:
-		    - base64: string — base64-encoded image data
+		    - base64: string - base64-encoded image data
 		  Returns: Image object (UserData)
 
 		--- image.load_url(url) -> Image
 		  Loads an image from a URL.
 		  Parameters:
-		    - url: string — URL of the image
+		    - url: string - URL of the image
 		  Returns: Image object (UserData)
 
 		--- image.create(width, height, [color]) -> Image
 		  Creates a new blank image.
 		  Parameters:
-		    - width: number — width in pixels
-		    - height: number — height in pixels
-		    - color: string (optional) — background color (hex "#ff0000", name "red", etc.)
+		    - width: number - width in pixels
+		    - height: number - height in pixels
+		    - color: string (optional) - background color (hex "#ff0000", name "red", etc.)
 		  Returns: Image object (UserData)
 
 		--- image.from_bytes(bytes, [format]) -> Image
 		  Creates an image from raw byte data.
 		  Parameters:
 		    - bytes: string (binary data as Lua string)
-		    - format: string (optional) — image format hint
+		    - format: string (optional) - image format hint
 		  Returns: Image object (UserData)
 
 		--- image.info(path) -> table
 		  Gets image metadata without loading the full image.
 		  Parameters:
-		    - path: string — path to the image file
+		    - path: string - path to the image file
 		  Returns: table with fields: width, height, format
 
 		--- image.formats() -> table
@@ -72,23 +72,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- img:save(path, [options])
 		  Saves the image to a file.
 		  Parameters:
-		    - path: string — output file path
+		    - path: string - output file path
 		    - options: table (optional):
-		      - quality: number — JPEG/WebP quality (1-100, default 85)
+		      - quality: number - JPEG/WebP quality (1-100, default 85)
 
 		--- img:to_base64([format]) -> string
 		  Converts the image to a base64-encoded string.
 		  Parameters:
-		    - format: string (optional) — output format ("png", "jpg", "webp", default: original)
+		    - format: string (optional) - output format ("png", "jpg", "webp", default: original)
 		  Returns: string
 
 		--- img:resize(width, height, [options])
 		  Resizes the image.
 		  Parameters:
-		    - width: number — new width
-		    - height: number — new height
+		    - width: number - new width
+		    - height: number - new height
 		    - options: table (optional):
-		      - mode: string — "stretch" (default), "contain" (pad), "cover" (crop)
+		      - mode: string - "stretch" (default), "contain" (pad), "cover" (crop)
 
 		--- img:crop(x, y, width, height)
 		  Crops the image to the specified rectangle.
@@ -99,7 +99,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- img:flip(direction)
 		  Flips the image.
 		  Parameters:
-		    - direction: string — "horizontal", "vertical", or "both"
+		    - direction: string - "horizontal", "vertical", or "both"
 
 		--- img:clone() -> Image
 		  Creates a deep copy of the image.
@@ -109,9 +109,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  Automatically called by garbage collector.
 
 		IMAGE OBJECT PROPERTIES (read-only):
-		  - img.width: number — image width in pixels
-		  - img.height: number — image height in pixels
-		  - img.format: string — image format ("png", "jpg", "webp", etc.)
+		  - img.width: number - image width in pixels
+		  - img.height: number - image height in pixels
+		  - img.format: string - image format ("png", "jpg", "webp", etc.)
 
 		EXAMPLES:
 

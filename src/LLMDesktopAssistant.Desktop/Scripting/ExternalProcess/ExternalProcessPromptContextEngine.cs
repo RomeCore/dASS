@@ -40,7 +40,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// The shared runner of an out-of-process prompt context: one assignment of <c>previous</c>, then the body.
 	/// </summary>
 	/// <remarks>
-	/// The provider <em>is</em> the run: the concrete provider decides what the text means — a current-request live
+	/// The provider <em>is</em> the run: the concrete provider decides what the text means - a current-request live
 	/// tail or a persisted supersede stamp. This base only starts the engine; the timeout is the caller's
 	/// cancellation token, and a failed script is one warning and "no context", never a broken prompt build.
 	/// </remarks>

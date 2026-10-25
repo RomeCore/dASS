@@ -20,8 +20,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// the interpreter, wait, split the channels, extract the optional structure and classify the outcome.
 	/// </summary>
 	/// <remarks>
-	/// A language engine supplies only what its language dictates — the script text, the document encoding and the
-	/// interpreter — while everything a caller depends on (statuses, error text, timeouts, addon invalidation) is
+	/// A language engine supplies only what its language dictates - the script text, the document encoding and the
+	/// interpreter - while everything a caller depends on (statuses, error text, timeouts, addon invalidation) is
 	/// decided here once.
 	/// </remarks>
 	public abstract class ExternalProcessScriptEngineBase : IExternalProcessScriptEngine

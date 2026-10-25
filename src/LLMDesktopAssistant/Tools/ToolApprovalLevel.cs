@@ -3,7 +3,7 @@ using LLMDesktopAssistant.Agents;
 namespace LLMDesktopAssistant.Tools;
 
 /// <summary>
-/// Defines the approval policy for a tool — whether execution requires
+/// Defines the approval policy for a tool - whether execution requires
 /// user interaction, is automatically allowed, or follows agent-level
 /// behaviour policies (<see cref="AgentToolSettings.AutoApproveBehaviours"/>
 /// and <see cref="AgentToolSettings.DisallowBehaviours"/>).

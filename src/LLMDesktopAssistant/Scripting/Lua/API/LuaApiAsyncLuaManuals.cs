@@ -13,7 +13,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 	public override string? Namespace => "asynclua";
 
 	public override string? Manuals => """
-		--- AsyncLua — Extended Lua Syntax Manuals
+		--- AsyncLua - Extended Lua Syntax Manuals
 		
 		AsyncLua 5.5+$ASYNCLUA_VER is an extended Lua 5.5 interpreter with built-in async/await,
 		concurrency primitives, augmented assignments, and exception handling.
@@ -81,7 +81,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		DELAY
 		───────────────────────────────────────────────────────────────
 		
-		`task.delay(ms)` — returns a task that completes after the specified milliseconds:
+		`task.delay(ms)` - returns a task that completes after the specified milliseconds:
 
 		  await task.delay(500)  -- waits 500ms
 		  await task.delay(0.5) -- waits 500us
@@ -90,7 +90,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		RUN (fire-and-forget)
 		───────────────────────────────────────────────────────────────
 		
-		`task.run(asyncFunc, args...)` — launches an sync/async function in another thread.
+		`task.run(asyncFunc, args...)` - launches an sync/async function in another thread.
 		Can be useful on synchronous functions that take a long time to complete
 		(long-running cycles and calculations without async features).
 		The function runs concurrently in the background:
@@ -104,7 +104,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		PARARUN (Parallel Run)
 		───────────────────────────────────────────────────────────────
 		
-		`task.pararun(table, transformer, [concurrency_level])` — iterates over a table
+		`task.pararun(table, transformer, [concurrency_level])` - iterates over a table
 		and applies the transformer function to each element concurrently:
 		
 		  local result = await task.pararun({1, 2, 3, 4}, function(item) return item * 2 end, 2)  -- note: pass function, NOT call it
@@ -114,7 +114,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		CREATE (TaskCompletionSource-like handle)
 		───────────────────────────────────────────────────────────────
 
-		`task.create()` — creates a pending task that behaves like a TaskCompletionSource:
+		`task.create()` - creates a pending task that behaves like a TaskCompletionSource:
 		it can be completed later with result values or with an error, and it is awaitable.
 		There is no cancellation.
 
@@ -143,14 +143,14 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		  local value = await t   -- suspends until set_result / set_error is called
 
 		METHODS:
-		  - t:set_result(...)      — completes the task with the given values (multiple results allowed)
-		  - t:set_error([message]) — completes the task with an error (default message: "Task failed.")
+		  - t:set_result(...)      - completes the task with the given values (multiple results allowed)
+		  - t:set_error([message]) - completes the task with an error (default message: "Task failed.")
 
 		───────────────────────────────────────────────────────────────
 		IS_ASYNC
 		───────────────────────────────────────────────────────────────
 		
-		`is_async(func)` — returns true if the given value is an async function:
+		`is_async(func)` - returns true if the given value is an async function:
 		
 		  print(is_async(syncFunc))   -- false
 		  print(is_async(asyncFunc))  -- true
@@ -160,7 +160,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		PCALL_ASYNC / XPCALL_ASYNC
 		───────────────────────────────────────────────────────────────
 		
-		`pcall_async(asyncFunc, ...)` — protected call for async functions.
+		`pcall_async(asyncFunc, ...)` - protected call for async functions.
 		Returns (ok, result...) like standard pcall, but works with async:
 		
 		  local ok, err = await pcall_async(dangerousAsyncFunc)
@@ -168,7 +168,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		      print('Error:', err)
 		  end
 		
-		`xpcall_async(asyncFunc, errHandler)` — async version of xpcall
+		`xpcall_async(asyncFunc, errHandler)` - async version of xpcall
 		with a custom error handler:
 		
 		  local function handler(err)
@@ -289,7 +289,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		ADDITIONAL OPERATORS
 		───────────────────────────────────────────────────────────────
 		
-		Standard Lua operators — all work as expected:
+		Standard Lua operators - all work as expected:
 		
 		  ^   Power:          2 ^ 3 = 8
 		  //  Floor division: 7 // 3 = 2
@@ -316,7 +316,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		  print('here')
 		
 		───────────────────────────────────────────────────────────────
-		EXAMPLES — FULL PATTERNS
+		EXAMPLES - FULL PATTERNS
 		───────────────────────────────────────────────────────────────
 		
 		-- Concurrent execution with lock

@@ -15,11 +15,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// The regions come from <see cref="IInputCompletionSource"/>, which a source implements next to its completion —
+	/// The regions come from <see cref="IInputCompletionSource"/>, which a source implements next to its completion -
 	/// what a feature completes and how it looks stay in one place.
 	/// </para>
 	/// <para>
-	/// The ghost is a projection of the current <see cref="InputCompletionResult"/> — the selected continuation — rather
+	/// The ghost is a projection of the current <see cref="InputCompletionResult"/> - the selected continuation - rather
 	/// than of the source that produced it, so closing the completion (Escape, a pointer-driven caret move) takes the
 	/// preview away with it, and the preview can never outlive the completion it belongs to.
 	/// </para>
@@ -44,7 +44,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_renderers = [.. renderers];
 			_ghost = ResolveGhost();
 
-			// A new completion — or a closed one — changes what the preview shows, so the layout has to be redone.
+			// A new completion - or a closed one - changes what the preview shows, so the layout has to be redone.
 			_completion.ResultChanged += (_, _) => NotifyLayoutChanged();
 
 			// So does the selection: the ghost previews the *selected* continuation, not the first one.
@@ -96,7 +96,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				rendered = text[..caret] + ghost + text[tailEnd..];
 
 				// The renderers paint the *raw* text; the ghost overwrites [caret, tailEnd). Remap every region onto the
-				// rendered text — trim the ones the ghost swallowed, shift the ones behind it — so that no region bleeds
+				// rendered text - trim the ones the ghost swallowed, shift the ones behind it - so that no region bleeds
 				// out of the ghost and the spans stay sorted and non-overlapping (TextLayout mispaints otherwise).
 				for (var i = 0; i < spans.Count; i++)
 				{

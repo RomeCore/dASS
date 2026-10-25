@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.InputCompletion
 		void Select(int completionIndex);
 
 		/// <summary>
-		/// Drops the current completion without recomputing — the user closed it, or the caret was moved by hand.
+		/// Drops the current completion without recomputing - the user closed it, or the caret was moved by hand.
 		/// </summary>
 		void Close();
 	}

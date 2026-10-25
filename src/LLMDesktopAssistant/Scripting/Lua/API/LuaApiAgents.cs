@@ -26,7 +26,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "dass.agents";
 
 		public override string? Manuals => """
-			--- dass.agents — agentic LLM execution API
+			--- dass.agents - agentic LLM execution API
 
 			Provides the ability to execute LLM agents with tools directly from Lua scripts.
 			The agent uses the model configured as "AgenticToolsModel" in chat settings
@@ -40,39 +40,39 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  PARAMETERS:
 			    Each argument is a property table with the following fields:
 
-			    - task_title: string (optional) — Title of the task used for UI display.
+			    - task_title: string (optional) - Title of the task used for UI display.
 
-			    - messages: table (required) — Array of message tables.
+			    - messages: table (required) - Array of message tables.
 			      The LAST message MUST be a "user" message.
 
 			      Each message table has a "role" field:
 
 			      role = "system":
-			        - content: string — system instruction
+			        - content: string - system instruction
 
 			      role = "user":
-			        - content: string — user message text
-			        - attachments: table (optional) — array of attachment objects
+			        - content: string - user message text
+			        - attachments: table (optional) - array of attachment objects
 			          Currently supports images via `image.load()` / `image.create()`:
 			          { image.load("path.png") }
 
 			      role = "assistant":
-			        - content: string — assistant response text
-			        - reasoning_content: string (optional) — reasoning/thinking text
-			        - tool_calls: table (optional) — array of tool call tables
+			        - content: string - assistant response text
+			        - reasoning_content: string (optional) - reasoning/thinking text
+			        - tool_calls: table (optional) - array of tool call tables
 			          Each tool call (table):
 			          - tool_name: string
 			          - tool_call_id: string
-			          - arguments: table — arguments matching the tool's schema
-			          - result_success: boolean (optional) — whether the tool execution succeeded
-			          - result_content: string (optional) — tool output text
-			          - result_attachments: table (optional) — array of attachment objects
-			        - attachments: table (optional) — array of attachment objects produced by the assistant
+			          - arguments: table - arguments matching the tool's schema
+			          - result_success: boolean (optional) - whether the tool execution succeeded
+			          - result_content: string (optional) - tool output text
+			          - result_attachments: table (optional) - array of attachment objects
+			        - attachments: table (optional) - array of attachment objects produced by the assistant
 
-			    - model: string (optional) — Name of the model to use.
+			    - model: string (optional) - Name of the model to use.
 			      If omitted, the chat's "AgenticToolsModel" is used.
 
-			    - tools: table (optional) — Mixed array of tool names (strings) and/or
+			    - tools: table (optional) - Mixed array of tool names (strings) and/or
 			      callback tool definitions (tables). If omitted, no tools are available.
 
 			      String entries reference registered tools by name:
@@ -98,7 +98,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			      Mixed example: { "web-search", { name = "calc", ... } }
 
-			    - skills: table (optional) — Mixed array of skill names (strings) and/or
+			    - skills: table (optional) - Mixed array of skill names (strings) and/or
 			      ad-hoc skill definitions (tables). If omitted, no skills are available.
 
 			      String entries reference registered skills by name:
@@ -114,18 +114,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			        }
 
 			      Ad-hoc skill fields:
-			        - name: string (required) — skill name
-			        - description: string (required) — description shown to the model
-			        - path: string (optional) — path to the skill file
-			        - home_directory: string (optional) — home directory; if omitted
+			        - name: string (required) - skill name
+			        - description: string (required) - description shown to the model
+			        - path: string (optional) - path to the skill file
+			        - home_directory: string (optional) - home directory; if omitted
 			          and "path" is set, defaults to the path's directory
-			        - body: string or function (required) — the skill body: a string
+			        - body: string or function (required) - the skill body: a string
 			          is returned as-is; a Lua function is invoked on demand to produce
 			          the body (can be async).
 
 			      Mixed example: { "webreaper", { name = "my_skill", ... } }
 
-			    - memory_blocks: table (optional) — Array of memory block names (strings)
+			    - memory_blocks: table (optional) - Array of memory block names (strings)
 			      to make accessible to the agent via memory tools (search, record, etc.).
 			      The blocks are resolved from the executing agent's memory attachments;
 			      memory must be enabled for both the chat and the agent. If omitted,
@@ -133,7 +133,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			        { "project_notes", "user_preferences" }
 
-			    - sub_agents: table (optional) — Array of registered sub-agent names (strings)
+			    - sub_agents: table (optional) - Array of registered sub-agent names (strings)
 			      to make available to the agent. The agent can then delegate sub-tasks
 			      to them via the agent-callsub tool. The sub-agents are resolved from
 			      the available sub-agent set (chat and profile sources). If omitted,
@@ -142,9 +142,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			        { "code-reviewer", "docs-writer" }
 
 			  RETURNS:
-			    - If a single property table is passed: table — array of response messages
+			    - If a single property table is passed: table - array of response messages
 			      (same format as input messages, excluding the input messages themselves).
-			    - If multiple property tables are passed (batch): table — array of response arrays,
+			    - If multiple property tables are passed (batch): table - array of response arrays,
 			      one per input property table. If an individual agent fails, its entry
 			      is an error string instead of a response array.
 

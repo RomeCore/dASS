@@ -115,7 +115,7 @@ namespace LLMDesktopAssistant.Calculation
                 }
                 else if (prevF * f < 0)
                 {
-                    // Sign change detected — root in [prevX, x]
+                    // Sign change detected - root in [prevX, x]
                     double root;
                     try
                     {

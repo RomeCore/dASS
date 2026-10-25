@@ -39,7 +39,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the message is disabled for every agent: it stays in the
-		/// transcript and in the UI but is never shown to an agent — not even to its own sender. Defaults to
+		/// transcript and in the UI but is never shown to an agent - not even to its own sender. Defaults to
 		/// <see langword="false"/>.
 		/// </summary>
 		public bool IsDisabledForAgents

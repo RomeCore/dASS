@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 	/// An immutable snapshot of the text the user selected inside one <see cref="MarkdownRenderer"/>.
 	/// </summary>
 	/// <remarks>
-	/// The snapshot is taken right before the selection toolbar is shown, and the processors only ever see it —
+	/// The snapshot is taken right before the selection toolbar is shown, and the processors only ever see it -
 	/// never the live selection. That is what lets the toolbar clear the selection before running an action
 	/// without breaking processors that read the text asynchronously.
 	/// </remarks>

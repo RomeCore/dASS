@@ -4,13 +4,13 @@ using LLMDesktopAssistant.Controls.Text;
 namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
-	/// One source of input completions — a slash-command matcher, a chat-agent-mention matcher, a file-path provider.
+	/// One source of input completions - a slash-command matcher, a chat-agent-mention matcher, a file-path provider.
 	/// A source is deliberately generic: it does not know what the UI does with the result.
 	/// </summary>
 	/// <remarks>
 	/// Sources are registered in the chat scope. For a given caret the service picks the single source with the
 	/// highest <see cref="Priority"/> that claims it (see <see cref="IInputCompletionService"/>), so a source must
-	/// return <see langword="false"/> — not an empty result — when the caret is not in a region it owns.
+	/// return <see langword="false"/> - not an empty result - when the caret is not in a region it owns.
 	/// </remarks>
 	public interface IInputCompletionSource
 	{

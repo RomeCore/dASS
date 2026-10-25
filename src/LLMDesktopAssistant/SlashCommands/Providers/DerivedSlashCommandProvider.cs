@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// </summary>
 	/// <remarks>
 	/// The provider reads <see cref="IAddonSetCollector{T}.GetAvailableAddons"/> and filters it by
-	/// <see cref="AddonBase{Self}.IsValid"/> itself — it deliberately does not go through
+	/// <see cref="AddonBase{Self}.IsValid"/> itself - it deliberately does not go through
 	/// <c>GetAddonsForChat()</c>, whose availability predicates are a prompt concern. The consumers of the command
 	/// surface (autocomplete, resolution) reach it through the command collector's own <c>GetAddonsForChat()</c>.
 	/// Commands are frozen before they leave the provider.

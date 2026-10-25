@@ -9,6 +9,6 @@ namespace LLMDesktopAssistant.Controls.Text;
 /// <param name="Length">The range's length.</param>
 /// <param name="Brush">The range's foreground brush.</param>
 /// <param name="Decorations">The range's decorations, if any.</param>
-/// <param name="Background">The range's background brush, if any — a chip behind the text.</param>
+/// <param name="Background">The range's background brush, if any - a chip behind the text.</param>
 public readonly record struct TextHighlightSpan(int Start, int Length, IBrush Brush,
 	TextDecorationCollection? Decorations = null, IBrush? Background = null);

@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "datetime";
 
 		public override string? Manuals => """
-			--- datetime — date and time API
+			--- datetime - date and time API
 
 			All functions work with datetime tables:
 			  { year, month, day, hour, min, sec, ms, is_dst, utc_offset (minutes), timestamp (unix epoch seconds) }
@@ -31,31 +31,31 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- datetime.parse(str, [format])
 			  Parses a date/time string into a datetime table.
 			  Parameters:
-			    - str: string — date/time string
-			    - format: string (optional) — .NET date format string. 
+			    - str: string - date/time string
+			    - format: string (optional) - .NET date format string. 
 			      If omitted, ISO 8601 and common formats are auto-detected.
 			  Returns: table or nil on failure
 
 			--- datetime.format(dt, [format])
 			  Formats a datetime table into a string.
 			  Parameters:
-			    - dt: table — datetime table
-			    - format: string (optional) — .NET date format string.
+			    - dt: table - datetime table
+			    - format: string (optional) - .NET date format string.
 			      Default: "o" (ISO 8601: "2026-05-25T02:54:00.0000000Z")
 			  Returns: string
 
 			--- datetime.diff(dt1, dt2)
 			  Returns the difference between two datetime tables in seconds.
 			  Parameters:
-			    - dt1: table — first datetime
-			    - dt2: table — second datetime
-			  Returns: number — dt1 - dt2 in seconds
+			    - dt1: table - first datetime
+			    - dt2: table - second datetime
+			  Returns: number - dt1 - dt2 in seconds
 
 			--- datetime.add(dt, interval)
 			  Adds a time interval to a datetime table.
 			  Parameters:
-			    - dt: table — datetime table
-			    - interval: table — interval with fields:
+			    - dt: table - datetime table
+			    - interval: table - interval with fields:
 			      - years: number (optional)
 			      - months: number (optional)
 			      - days: number (optional)
@@ -63,24 +63,24 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - minutes: number (optional)
 			      - seconds: number (optional)
 			      - ms: number (optional, milliseconds)
-			  Returns: table — new datetime (original unchanged)
+			  Returns: table - new datetime (original unchanged)
 
 			--- datetime.utc(dt)
 			  Converts a datetime table to UTC.
 			  Parameters:
-			    - dt: table — datetime table
+			    - dt: table - datetime table
 			  Returns: table
 
 			--- datetime.timestamp(dt)
 			  Returns the Unix epoch seconds from a datetime table.
 			  Parameters:
-			    - dt: table — datetime table
+			    - dt: table - datetime table
 			  Returns: number
 
 			--- datetime.from_timestamp(ts)
 			  Creates a datetime table from Unix epoch seconds.
 			  Parameters:
-			    - ts: number — Unix epoch seconds
+			    - ts: number - Unix epoch seconds
 			  Returns: table
 
 			EXAMPLES:

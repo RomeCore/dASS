@@ -45,7 +45,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public required int ValuePosition { get; init; }
 
 		/// <summary>
-		/// The length of the key part of a keyed argument — the identifier before the <c>=</c> — or 0 for a positional.
+		/// The length of the key part of a keyed argument - the identifier before the <c>=</c> - or 0 for a positional.
 		/// </summary>
 		public required int KeyLength { get; init; }
 

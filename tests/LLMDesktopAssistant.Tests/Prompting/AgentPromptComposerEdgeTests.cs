@@ -151,7 +151,7 @@ public class AgentPromptComposerEdgeTests
 
 		var bundle = (await composer.BuildAsync(agent));
 
-		// Ticket 19: the anchor survives on the raw history — no rebaseline, header still from the anchor snapshot.
+		// Ticket 19: the anchor survives on the raw history - no rebaseline, header still from the anchor snapshot.
 		Assert.Single(u0.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
 		Assert.Empty(a1.Message.AdditionalData.GetAll<PromptStateAnchorMessageData>());
 		Assert.Equal("core", bundle.Messages[0].Content);

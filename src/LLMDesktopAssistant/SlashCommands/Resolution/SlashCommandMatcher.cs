@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.SlashCommands.Resolution
 		/// <remarks>
 		/// Total order: an exact name match before an alias-only match, then <c>OverrideOrder</c> descending (the
 		/// native &gt; scriptable &gt; derived tiers), then <c>Order</c> ascending, then <see cref="SlashCommandInfo.Key"/>
-		/// ascending — so the outcome is deterministic and a true tie cannot occur. Namespace matching is set semantics
+		/// ascending - so the outcome is deterministic and a true tie cannot occur. Namespace matching is set semantics
 		/// and case-insensitive.
 		/// </remarks>
 		public static ImmutableList<SlashCommandCandidate> Match(

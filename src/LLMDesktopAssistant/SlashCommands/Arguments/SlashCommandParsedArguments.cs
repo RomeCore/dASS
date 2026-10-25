@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 	/// The output of the command argument grammar: the raw argument text split into positional and keyed arguments.
 	/// </summary>
 	/// <remarks>
-	/// This is a purely syntactic result — no schema default has been applied, nothing has been validated or converted.
+	/// This is a purely syntactic result - no schema default has been applied, nothing has been validated or converted.
 	/// Use <see cref="SlashCommandArgumentBinder"/> to turn it into <see cref="SlashCommandBoundArguments"/>.
 	/// </remarks>
 	public sealed class SlashCommandParsedArguments
@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		public SlashCommandRawArgument? RestPositional { get; init; }
 
 		/// <summary>
-		/// The rest positional's verbatim text, or an empty string when there is none — see
+		/// The rest positional's verbatim text, or an empty string when there is none - see
 		/// <see cref="RestPositional"/>.
 		/// </summary>
 		public string RestPositionalArguments => RestPositional?.Raw ?? string.Empty;

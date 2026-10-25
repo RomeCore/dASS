@@ -9,11 +9,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// Maps a tool's JSON-Schema argument description onto the slash-command argument schema.
 	/// </summary>
 	/// <remarks>
-	/// Every property becomes a <em>keyed</em> command argument. A tool command has no positional slot at all — a call
-	/// reads as <c>/tool:fs-read path=README.md</c> — so nothing is ever inferred from the schema's property order.
+	/// Every property becomes a <em>keyed</em> command argument. A tool command has no positional slot at all - a call
+	/// reads as <c>/tool:fs-read path=README.md</c> - so nothing is ever inferred from the schema's property order.
 	/// The declared type picks the format provider: <c>boolean</c>, <c>number</c>/<c>integer</c>, a closed
-	/// <c>enum</c>, and <c>array</c>/<c>object</c> (a JSON literal). Everything else — <c>string</c>, a missing or
-	/// unknown type, <c>anyOf</c>/<c>oneOf</c>/<c>$ref</c>, nested <c>properties</c> — degrades to a plain string with
+	/// <c>enum</c>, and <c>array</c>/<c>object</c> (a JSON literal). Everything else - <c>string</c>, a missing or
+	/// unknown type, <c>anyOf</c>/<c>oneOf</c>/<c>$ref</c>, nested <c>properties</c> - degrades to a plain string with
 	/// no validation; the tool's own argument binding stays the authority on the shape.
 	/// </remarks>
 	public static class ToolArgumentSchemaMapper
@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		/// </summary>
 		/// <param name="schema">The tool's JSON-Schema argument object, or <see langword="null"/>.</param>
 		/// <returns>
-		/// A keyed-only schema — positionals and the rest slot stay empty — or an empty schema when the tool declares
+		/// A keyed-only schema - positionals and the rest slot stay empty - or an empty schema when the tool declares
 		/// no properties.
 		/// </returns>
 		public static SlashCommandArgumentSchema Create(JsonObject? schema)

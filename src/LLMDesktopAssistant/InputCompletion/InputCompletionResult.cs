@@ -5,7 +5,7 @@ namespace LLMDesktopAssistant.InputCompletion
 {
 	/// <summary>
 	/// The completion a source computed for a request: the region to replace, the current state and the continuations.
-	/// A result is a pure snapshot of that computation — the accepted edit is derived from it, never stored on it.
+	/// A result is a pure snapshot of that computation - the accepted edit is derived from it, never stored on it.
 	/// </summary>
 	public sealed class InputCompletionResult
 	{
@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.InputCompletion
 
 		/// <summary>
 		/// The suffix of <paramref name="item"/>'s insertion the text before <see cref="CaretIndex"/> does not carry yet
-		/// — the ghost the renderer previews — or <see langword="null"/> when there is nothing to preview: the item does
+		/// - the ghost the renderer previews - or <see langword="null"/> when there is nothing to preview: the item does
 		/// not <i>continue</i> what is typed (a command reached through an alias, say), the whole insertion is already
 		/// there, or the caret sits outside the region.
 		/// </summary>

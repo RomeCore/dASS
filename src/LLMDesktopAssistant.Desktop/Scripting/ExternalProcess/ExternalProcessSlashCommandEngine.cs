@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// </summary>
 	/// <remarks>
 	/// There is no chat API for an external process: everything a command does to its message it declares in the
-	/// result — an effect summary, a generation decision, an error and one content part.
+	/// result - an effect summary, a generation decision, an error and one content part.
 	/// </remarks>
 	[Service(typeof(IScriptableSlashCommandEngine))]
 	public class ExternalProcessSlashCommandEngine(ExternalProcessEngineRegistry registry) : IScriptableSlashCommandEngine

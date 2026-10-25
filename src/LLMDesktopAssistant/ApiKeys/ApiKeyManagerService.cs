@@ -93,7 +93,7 @@ namespace LLMDesktopAssistant.ApiKeys
 			}
 			else if (scheme != null && scheme != item.StorageScheme)
 			{
-				// Scheme changed but value unchanged — re-encrypt with new scheme
+				// Scheme changed but value unchanged - re-encrypt with new scheme
 				var rawValue = ResolveKey(id);
 				if (rawValue != null)
 				{

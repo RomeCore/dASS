@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// <summary>
 	/// The thin adapter the Lua tool surface (<c>dass.tool.result.*</c>) writes through. It replaces the
 	/// deleted <c>ReactiveToolResult</c>: every write goes straight into the call, and only the members
-	/// the call does not expose — the progress range and the script's own completion verdict — are kept
+	/// the call does not expose - the progress range and the script's own completion verdict - are kept
 	/// here.
 	/// </summary>
 	internal sealed class LuaToolResult

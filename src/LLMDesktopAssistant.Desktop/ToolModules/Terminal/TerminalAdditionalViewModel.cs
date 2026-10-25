@@ -147,7 +147,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 
 		/// <summary>
 		/// Whether the Leave button is offered. A call that the model already ran fire-and-forget has
-		/// nothing to leave — it returned long ago.
+		/// nothing to leave - it returned long ago.
 		/// </summary>
 		public bool CanLeave => State == TerminalState.Running && IsLeaveAllowed;
 

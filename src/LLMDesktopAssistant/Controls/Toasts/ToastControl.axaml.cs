@@ -276,7 +276,7 @@ public partial class ToastControl : UserControl
 
 	/// <summary>
 	/// Plays the entrance animation (slide + fade in) for a newly added toast.
-	/// Only the new toast is animated — existing toasts are NOT touched.
+	/// Only the new toast is animated - existing toasts are NOT touched.
 	/// </summary>
 	private void PlaySlideIn(long toastId, Control container)
 	{

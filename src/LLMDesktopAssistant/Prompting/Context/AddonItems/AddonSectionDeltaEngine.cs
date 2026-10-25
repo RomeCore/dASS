@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Prompting.Context.AddonItems
 	/// <item><description>an item that was never seen is announced in full;</description></item>
 	/// <item><description>an item that was seen and unchanged is announced by name only;</description></item>
 	/// <item><description>an item that was seen and changed is announced with the field-level changes;</description></item>
-	/// <item><description>becoming hidden is silent — the item stays available;</description></item>
+	/// <item><description>becoming hidden is silent - the item stays available;</description></item>
 	/// <item><description>a hidden item becoming visible is announced separately (with its definition when needed).</description></item>
 	/// </list>
 	/// </summary>

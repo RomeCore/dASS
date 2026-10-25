@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.Tools.Execution
 		bool CanRestart(IToolCall call);
 
 		/// <summary>
-		/// Re-runs a finished call on the same <see cref="IToolCall"/> — status, result, progress and the payloads the
+		/// Re-runs a finished call on the same <see cref="IToolCall"/> - status, result, progress and the payloads the
 		/// tool attached are reset before the run, and the call keeps its identity so the prompt picks the new result
 		/// up at the next request without a new turn.
 		/// </summary>
