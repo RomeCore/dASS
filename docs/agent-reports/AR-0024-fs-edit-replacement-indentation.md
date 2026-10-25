@@ -1,6 +1,7 @@
 # AR-0024 - `fs-edit` adds the matched indentation on top of the replacement's own, and only for single-line matches
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-25 - one rule instead of three: the first line of `replace` lands on the match and every following line moves by a single shift read from the second line, so a single-line and a multi-line `match` no longer behave differently. Known limit, now stated in the tool description: with a one-line `match`, "one level deeper than the first line" is byte-identical to "the file's own columns", so relative continuation indentation collapses onto the match level - a patch that opens a nesting level has to spell the columns out.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `fs-edit`

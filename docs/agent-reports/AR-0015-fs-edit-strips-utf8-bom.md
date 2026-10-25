@@ -1,6 +1,7 @@
 # AR-0015 - fs-edit (and fs-apply_diff) silently drop the UTF-8 BOM from the file they edit
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-25 - `TextFileContent` keeps the encoding, the byte order mark, the preamble and the line ending on write, and fs-edit, fs-apply_diff and fs-write_file all go through it. A file that is not valid in its own encoding now warns in the result instead of corrupting silently.
 - **Severity:** silent
 - **Lane:** agent
 - **Surface:** tool `fs-edit`, tool `fs-apply_diff`

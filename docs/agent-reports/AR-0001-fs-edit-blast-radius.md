@@ -1,6 +1,7 @@
 # AR-0001 - fs-edit gives no way to know, before writing, how much of the file a patch will touch
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-25 - closed by the once-only guarantee rather than by a dry run: a match found more than once refuses the patch unless `isMultiEdit` is true, and every patch is reported with its occurrence count. See also AR-0024 for what happened to the write-side rule.
 - **Severity:** silent
 - **Lane:** agent
 - **Surface:** tool `fs-edit`

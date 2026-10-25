@@ -1,6 +1,7 @@
 # AR-0023 - `fs-edit` leaves a whitespace-only line where a deleted block used to be
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-25 - whole matched lines are removed together with their line breaks, so no indentation residue is left where the block used to be; a single-line match empties the line and keeps it. A neighbouring blank line is not consumed - include it in `match` when it has to go.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `fs-edit`
