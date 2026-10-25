@@ -38,7 +38,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				DescriptionKey = Locale.GetKey("tool.description.wd-switch"),
 				CategoryKey = Locale.GetKey("tool.category.workdir"),
 				DefaultExpectedBehaviour = ToolBehaviour.WorkdirChange,
-				StaticSyncKeys = [new(ToolSyncKeyKind.Custom, "wd-switch")] // Prevent parallel execution of this tool
+				StaticSyncKeys = [new(ToolSyncKeyKind.AllFiles, string.Empty, ToolSyncAccess.Write)]
 			});
 		}
 
