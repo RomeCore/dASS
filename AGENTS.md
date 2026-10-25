@@ -324,11 +324,6 @@ strings from `LocalizationManager.LocalizeStatic`.
 - `ChangeTracker` - deep tracker for one reactive object; `[ChangeTracker.Untracked]` opts properties out.
 - `Disposable` - base for disposable objects or a direct `new Disposable(() => ...)`.
 
-## Project memory
-
-Store finished work in this project's episodic log after a completed session, and read the last 5-10
-logs to learn the current state before starting.
-
 ## Handoffs
 
 Handoff documents live in `.llmassist/handoffs/`, one file per completed phase, named
