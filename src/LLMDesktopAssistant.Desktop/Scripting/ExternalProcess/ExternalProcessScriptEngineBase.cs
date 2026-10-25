@@ -68,19 +68,32 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				return Failure(ExternalProcessStatus.InvalidOutput,
 					$"'{Language}' cannot pass a structured value: the addon must declare 'json-input: true'.");
 
-			var script = BuildScript(parameters, inputMode.Value, workingDirectory);
-			var scriptPath = CreateScriptFile(script);
+			string? scriptPath = null;
 			var launched = false;
 
 			try
 			{
+				// Building the document is language business too: a builder may refuse its own limits (a batch line
+				// longer than cmd can hold), and that refusal is a result rather than an exception through the caller.
+				string path;
+				try
+				{
+					path = CreateScriptFile(BuildScript(parameters, inputMode.Value, workingDirectory));
+					scriptPath = path;
+				}
+				catch (Exception ex)
+				{
+					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Language, parameters.ProcessName);
+					return Failure(ExternalProcessStatus.ProcessFailed, ex.Message);
+				}
+
 				// An engine that cannot find its interpreter throws while building these parameters, so the reason
 				// becomes a result here instead of escaping through the caller.
 				ProcessLaunchParameters launchParameters;
 				ProcessDescriptor process;
 				try
 				{
-					launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
+					launchParameters = CreateLaunchParameters(chatSettings.Environment, path, parameters,
 						runInTerminal: false).WithTimeout(parameters.TimeOut);
 					process = _processLauncher.Launch(launchParameters, ct);
 					launched = true;
@@ -155,7 +168,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			}
 			finally
 			{
-				TryDelete(scriptPath);
+				if (scriptPath is not null)
+					TryDelete(scriptPath);
 
 				if (launched)
 					InvalidateAddons(parameters.Kind, services);
@@ -181,19 +195,35 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				};
 			}
 
-			var script = BuildScript(parameters, inputMode.Value, workingDirectory);
-			var scriptPath = CreateScriptFile(script);
+			string? scriptPath = null;
 			var launched = false;
 
 			try
 			{
+				string path;
+				try
+				{
+					path = CreateScriptFile(BuildScript(parameters, inputMode.Value, workingDirectory));
+					scriptPath = path;
+				}
+				catch (Exception ex)
+				{
+					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Language, parameters.ProcessName);
+					return new ExternalProcessScriptTerminalResult
+					{
+						Status = ExternalProcessStatus.ProcessFailed,
+						Output = string.Empty,
+						Error = ex.Message
+					};
+				}
+
 				// An interactive terminal has no deadline and is never linked to the caller's token: one token runs
 				// the whole chat, and stopping a generation must not kill a session the user is typing into. The
 				// card owns the kill instead (TerminalRun registers it and Leave releases it).
 				ProcessDescriptor process;
 				try
 				{
-					var launchParameters = CreateLaunchParameters(chatSettings.Environment, scriptPath, parameters,
+					var launchParameters = CreateLaunchParameters(chatSettings.Environment, path, parameters,
 						runInTerminal: true).WithTimeout(null);
 					process = _processLauncher.Launch(launchParameters, CancellationToken.None);
 					launched = true;
@@ -253,7 +283,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			}
 			finally
 			{
-				TryDelete(scriptPath);
+				if (scriptPath is not null)
+					TryDelete(scriptPath);
 
 				if (launched)
 					InvalidateAddons(parameters.Kind, services);
