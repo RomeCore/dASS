@@ -1,6 +1,6 @@
 # Engine contracts, descriptors and the language registry
 
-Status: open
+Status: done
 Type: task
 Blocked by:
 
@@ -27,6 +27,11 @@ Implement the contract layer of the family in `Desktop/Scripting/ExternalProcess
 ## Answer
 
 ## Comments
+
+- **Closed 2026-10-25.** Everything in this ticket is in and used by three languages' worth of adapters: the
+  contract types, `Descriptors` on the three kind interfaces, `Language` gone, the parsers resolving per file,
+  `FrontmatterLinePrefix` wired, the Desktop registry in `ExternalProcessEngineRegistry` (which landed with 08).
+  The temporary Python bridge it mentions is gone as well.
 
 - **Contract half landed** on 2026-10-24 (uncommitted when this note was written). What is in: `IScriptEngineDescriptor` (extensions, frontmatter markers, `FrontmatterLinePrefix`, `Capabilities`) + `ScriptEngineCapabilities` in `Scripting/`; `Descriptor` → `IReadOnlyList<IScriptEngineDescriptor> Descriptors` on all three kind interfaces; `Language` removed from them (the descriptor is now the only source, and the parsers set `ToolInfo.ScriptLanguage` from it); the three kind-specific descriptor interfaces are deleted; the three parsers resolve extension → (engine, descriptor) and pass `FrontmatterLinePrefix` into `AddonParserDescriptor`; the three locators collect extensions from the descriptor lists. Lua declares `StructuredInput | StructuredOutput`, Python adds `Terminal`.
 - **The Desktop language registry moved to the adapters ticket** (08): its only consumer is the adapter, and its only denizens are `IExternalProcessScriptEngine`s that do not exist until then. Nothing in this slice needs it.

@@ -376,7 +376,7 @@ stays runnable as-is and the block is inert by construction.
 | Cancellation | the engine's token kills the process tree (`Kill(entireProcessTree: true)` is already in the launcher) |
 | Addon invalidation | tools and commands: `Invalidate(AddonKind.All)` in `finally` (after the process ends); contexts: never |
 | Temp script | written to the reserved temp folder, deleted in `finally` |
-| Interpreter discovery | hard-coded order; a missing interpreter is a **load-time addon diagnostic**, not a runtime surprise |
+| Interpreter discovery | fixed order plus one optional override; a missing interpreter is a **runtime failure and a settings check** - the parse is app-wide and cannot see a chat's setting (amended 2026-10-25) |
 
 Discovery order (D20):
 
@@ -390,8 +390,9 @@ Generalising the per-language runtime settings (a settings UI beyond the existin
 separate effort; this change adds none.
 
 Diagnostics are fatal at addon load: `json-input: false` on a non-capable engine, `json-output` on a context,
-`run-terminal` together with `json-output`, a malformed `json-output` pattern, an interpreter that the engine
-cannot find.
+`run-terminal` together with `json-output`, a malformed `json-output` pattern. A missing interpreter is **not**
+one of them: the addon is parsed once for the whole application while the interpreter path is a per-chat setting,
+so the only honest places to report it are the run and the settings check.
 
 ## 13. Decisions
 
@@ -416,7 +417,7 @@ cannot find.
 | D17 | Per-line comment prefix for shell frontmatter | the block stays inert and the file stays runnable |
 | D18 | Timeouts per kind (30 min / 10 min / 2 s / none) | a 30-minute command button is a UX bug, a context has a budget, a terminal has a human |
 | D19 | Invalidate addons in `finally`; never for contexts | a context runs on every prompt build |
-| D20 | Interpreter discovery hard-coded, load-time diagnostics | no new settings UI in this change; a broken addon must look broken |
+| D20 | Interpreter discovery has a fixed order and one optional override; ~~load-time diagnostics~~ **amended 2026-10-25**: a missing interpreter is a runtime failure | a parse is app-wide and a setting is per-chat, so the two cannot meet at load time; a broken addon still looks broken, one call later |
 | D21 | Everything out-of-process lives in Desktop | `IProcessLauncher`, PTY and the terminal view model are desktop-only |
 | D22 | `PromptContextInfo.Kind` is parsed, not derived | otherwise `CreateProvider` and `Kind` are circular |
 | D23 | `PromptContextExecutionContext.PromptContext` is non-nullable | every collected context is a `PromptContextInfo` addon, native and scriptable alike, so a provider that is not addon-backed has no place in the pipeline — the type says so instead of a convention |

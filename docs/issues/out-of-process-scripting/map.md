@@ -52,6 +52,17 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [Bash engine and interpreter discovery](issues/11-bash-engine.md) - `BashScriptEngine` over the proven base, the
+  first non-Python language; discovery is the configured path, then Git Bash derived from `git.exe`, then a
+  non-WSL `bash` from `PATH`, and `Terminal` is declared up front and proved in a PTY. **A missing interpreter is no
+  longer a load-time diagnostic (D20 amended)**: the parse is app-wide and the path is per chat. The pattern
+  grammar moved into one `ScriptOutputPattern`, whose capture is greedy (first begin marker to the last end marker).
+
+- [Scriptable naming](issues/12-scriptable-naming.md) - `meta` left the tool and python surfaces: `ToolSource`,
+  `ToolBehaviour` and `ToolBehaviourCategory` are `Scriptable`, the catalogue token and the Lua `tool.source` value
+  follow, the python venv pair became `VenvActivateScriptPath` / `AddonVenvActivateScriptPath`, and the dead
+  `%LOCALAPPDATA%\metatools` folder is gone. Only the R.I.P. epitaph keeps the word.
+
 - The spec is [`spec.md`](spec.md) — all 27 decisions (D1–D27), the per-language preamble facts, the per-kind
   JSON contracts and the prompt-context refactor. The map is **closed**: the effort continues in the tickets
   below, which are implementation slices.
@@ -62,7 +73,7 @@ The destination spec is [`spec.md`](spec.md). The design was settled in a single
   frontmatter; `EffectiveChatContext.Services` is gone; the helper keeps only the formatting rules. `Descriptors`
   stays with ticket 01. Both projects compile.
 
-- **Kind adapters, flags and the terminal path landed** (2026-10-25, uncommitted): the three adapters
+- **Kind adapters, flags and the terminal path landed** (2026-10-25): the three adapters
   (`ExternalProcessToolEngine` / `…SlashCommandEngine` / `…PromptContextEngine`) are the only implementations of the
   three kind interfaces, the three old Python engines are deleted, `ScriptFeaturePolicy` decides what a kind
   consumes (`PlainOutput` / `JsonOutput` / `Terminal`; no `PlainOutput` makes `json-output` mandatory — the hook

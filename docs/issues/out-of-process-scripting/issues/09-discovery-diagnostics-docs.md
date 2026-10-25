@@ -2,7 +2,7 @@
 
 Status: open
 Type: task
-Blocked by: 08
+Blocked by: 11
 
 ## Question
 
@@ -22,3 +22,9 @@ Finish the surface around the family (spec §12):
 ## Answer
 
 ## Comments
+
+- **2026-10-25:** the two settings bullets left this ticket. Interpreter discovery moved to ticket 11 (it belongs
+  with the bash engine, which is its first non-Python consumer), and the "meta tool environment" rename moved to
+  ticket 12. What remains here is documentation and the authoring skills. The load-time diagnostic for a missing
+  runtime is cancelled outright: it belongs to the chat's settings, which an app-wide parse cannot see - see
+  ticket 11.
