@@ -10,7 +10,8 @@ name.addon-list_available: List available addons
 name.addon-search: Search addons
 name.agent-call: Call agent
 name.agent-callsub: Call sub-agent
-name.agent-describe_image: Describe image
+name.attach-read_image: Read image
+name.attach-describe_image: Describe image
 name.clipboard-copy: Copy to clipboard
 name.clipboard-read: Read from clipboard
 name.db-execute: Execute a SQL statement
@@ -85,7 +86,8 @@ description.addon-list_available: Lists the names of all addons available to you
 description.addon-search: Searches the available addons (skills, sub-agents, tools, prompt contexts, Lua scripts and slash commands) by a free-form query and returns the best matches with usage hints. Slash commands and prompt contexts are a read-only catalogue: the user types the former and the latter are injected automatically, an agent can only describe them.
 description.agent-call: Runs another AI agent with a custom instruction, user message and a set of allowed tools, skills, sub-agents and memory blocks.
 description.agent-callsub: Runs a predefined sub-agent using its name and input.
-description.agent-describe_image: Describes the content of an image using a separate vision-capable AI agent.
+description.attach-read_image: Reads image from file and puts its directly to the vision model that called this tool.
+description.attach-describe_image: Describes the content of an image using a separate vision-capable AI agent.
 description.clipboard-copy: Copies a piece of text to the system clipboard.
 description.clipboard-read: Reads the current text content of the system clipboard.
 description.db-execute: Executes a SQL statement against the active database and returns the result.
@@ -157,6 +159,7 @@ description.web-status: Checks whether a website is reachable and reports its HT
 // Tool categories
 category.addons: Addons
 category.agents: Agents
+category.attachments: Attachments
 category.database: Database
 category.filesystem: File system
 category.forms: Forms
@@ -314,7 +317,7 @@ result: Tool result:
 settings: Tools settings
 source.mcp: MCP
 source.scriptable: Scriptable
-status.agent-describe_image.status: Describing... *{0} tokens*
+status.attach-describe_image.status: Describing... *{0} tokens*
 status.fs-apply_diff.changes_none: no changes
 status.fs-diff.accepted: Accepted
 status.fs-diff.confirm: Confirm

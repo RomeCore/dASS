@@ -199,7 +199,7 @@ public enum ToolBehaviour : ulong
 	/// The tool invokes, manages, or coordinates other AI agents.
 	/// This can trigger cascading agent execution and should be
 	/// carefully monitored to prevent runaway agent loops.
-	/// Examples: <c>agent-describe_image</c>, agent delegation calls.
+	/// Examples: <c>attach-describe_image</c>, agent delegation calls.
 	/// </summary>
 	AgentExecution = 1 << 25,
 

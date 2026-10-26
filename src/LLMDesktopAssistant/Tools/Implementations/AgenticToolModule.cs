@@ -1,16 +1,11 @@
 using System.ComponentModel;
-using System.Diagnostics.Tracing;
 using System.Text;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
-using LLMDesktopAssistant.Utils.Attachments;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
-using LLMDesktopAssistant.LLM.Services.Prompting;
-using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting;
@@ -19,11 +14,12 @@ using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Tools.Implementations.Filesystem;
+using LLMDesktopAssistant.Utils;
+using LLMDesktopAssistant.Utils.Attachments;
 using Material.Icons;
 using RCLargeLanguageModels;
 using SixLabors.ImageSharp;
-using LLMDesktopAssistant.Tools.Implementations.Filesystem;
-using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations
 {
@@ -80,21 +76,6 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				DescriptionKey = Locale.GetKey("tool.description.agent-callsub"),
 				CategoryKey = Locale.GetKey("tool.category.agents"),
 				DefaultExpectedBehaviour = ToolBehaviour.AgentExecution | ToolBehaviour.LongRunningTask
-			});
-
-			AddTool(new ToolInitializationInfo
-			{
-				Executor = DescribeImage,
-				StreamingAnalyzer = DescribeImageStreaming,
-				PreviewExecutor = DescribeImagePreview,
-				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzeFileRead,
-				Name = "agent-describe_image",
-				Description = "Describes an image using another LLM agent.",
-				NameKey = Locale.GetKey("tool.name.agent-describe_image"),
-				DescriptionKey = Locale.GetKey("tool.description.agent-describe_image"),
-				CategoryKey = Locale.GetKey("tool.category.agents"),
-				DefaultExpectedBehaviour = ToolBehaviour.AgentExecution | ToolBehaviour.LongRunningTask |
-					ToolBehaviour.FileRead | ToolBehaviour.AccessOutsideWorkdir
 			});
 		}
 
@@ -387,135 +368,6 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			{
 				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);
 				ctx.Call.SetResult("An error occurred while calling the sub-agent: " + ex.Message);
-				return ToolExecutionResult.Failed;
-			}
-		}
-
-		private StreamingToolAnalysisResult DescribeImageStreaming(
-			IToolExecutionContext ctx,
-			string? path)
-		{
-			path ??= "?";
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
-			return StreamingToolAnalysisResult.Continue;
-		}
-
-		private PreviewToolExecutionResult DescribeImagePreview(IToolExecutionContext ctx,
-			string path, [SharedContext] out string fullPath)
-		{
-			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
-
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
-
-			if (!File.Exists(fullPath))
-			{
-				ctx.Call.SetResult($"File not found: {path}");
-				return new PreviewToolExecutionResult
-				{
-					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
-					InterruptingSuccess = false
-				};
-			}
-
-			return new PreviewToolExecutionResult
-			{
-				ExpectedBehaviour = ToolBehaviour.AgentExecution | ToolBehaviour.LongRunningTask | ToolBehaviour.FileRead |
-					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
-			};
-		}
-
-		private async Task<ToolExecutionResult> DescribeImage(
-			[SharedContext] string? fullPath,
-			[Description("The title of the agent call to be visible in UI")] string? callTitle,
-			[Description("The path to the image file to describe")] string path,
-			IToolExecutionContext ctx,
-			CancellationToken cancellationToken = default)
-		{
-			ctx.Call.SetStatus(MaterialIconKind.Image, $"**{path.MarkdownEscape()}**");
-			ctx.Call.UseMarkdown = true;
-
-			var modelName = _chatSettings.Settings.Models.GetEffectiveSelection().VisionModel;
-			if (string.IsNullOrEmpty(modelName))
-			{
-				ctx.Call.SetResult($"No vision model selected. Say user to select a vision model first.");
-				return ToolExecutionResult.Failed;
-			}
-
-			if (!File.Exists(fullPath))
-			{
-				ctx.Call.SetResult($"File not found: {path}");
-				return ToolExecutionResult.Failed;
-			}
-
-			LLModel llm;
-			try
-			{
-				llm = _modelManager.GetModel(modelName);
-			}
-			catch (Exception ex)
-			{
-				ctx.Call.SetResult($"Vision model '{modelName}' is not available: {ex.Message}");
-				return ToolExecutionResult.Failed;
-			}
-
-			try
-			{
-				fullPath ??= _fileAccess.AccessPath(path, DirectoryAccessMode.Read);
-				var image = Image.Load(fullPath);
-				using var memstream = new MemoryStream();
-				image.SaveAsPng(memstream);
-				var format = "png";
-				var base64 = Convert.ToBase64String(memstream.ToArray());
-				var url = "data:image/" + format + ";base64," + base64;
-
-				var agentTask = _agentTaskExecutor.Execute(new AgentTaskLaunchParameters
-				{
-					TaskName = callTitle,
-					TriggeredChat = ctx.Chat,
-					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
-					Model = llm,
-					InitialMessages = [
-						new AgentSystemMessage { Content = _templates.GetTextTemplate("image_describer_prompt").Render().ToString()! },
-						new AgentUserMessage {
-							Content = "Please describe the image.",
-							Attachments = [new AgentNativeAttachment
-							{
-								Type = AttachmentKind.Image,
-								Url = url
-							}]
-						}
-					]
-				}, cancellationToken);
-
-				ctx.Call.SetResult(agentTask.LastGeneratedContent ?? string.Empty);
-
-				int tokenCounter = 0;
-				void LastResponseChanged(object? sender, PropertyChangedEventArgs e)
-				{
-					ctx.Call.SetResult(agentTask.LastGeneratedContent ?? string.Empty);
-					tokenCounter++;
-
-					if (tokenCounter > 1)
-						ctx.Call.SetStatusTitle(string.Format(LocalizationManager.LocalizeStatic("tool.status.agent-describe_image.status"), tokenCounter));
-				}
-				agentTask.PropertyChanged += LastResponseChanged;
-
-				try
-				{
-					await agentTask;
-				}
-				finally
-				{
-					agentTask.PropertyChanged -= LastResponseChanged;
-				}
-
-				ctx.Call.SetStatusTitle(null);
-				return ToolExecutionResult.Succeeded;
-			}
-			catch (Exception ex)
-			{
-				ctx.Call.AppendResultLine($"Got error: {ex.Message}. " +
-					$"May be the model is not a vision model or API is down. Please try again later.");
 				return ToolExecutionResult.Failed;
 			}
 		}

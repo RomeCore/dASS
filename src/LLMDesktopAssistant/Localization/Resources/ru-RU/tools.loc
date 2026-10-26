@@ -10,7 +10,8 @@ name.addon-list_available: Список доступных аддонов
 name.addon-search: Поиск аддонов
 name.agent-call: Вызвать агента
 name.agent-callsub: Вызвать суб-агента
-name.agent-describe_image: Описать изображение
+name.attach-read_image: Прочитать изображение
+name.attach-describe_image: Описать изображение
 name.clipboard-copy: Скопировать в буфер обмена
 name.clipboard-read: Чтение из буфера обмена
 name.db-execute: Выполнить SQL-запрос
@@ -85,7 +86,8 @@ description.addon-list_available: Выводит имена всех досту�
 description.addon-search: Ищет доступные аддоны (скиллы, субагенты, инструменты, промпт-контексты, Lua-скрипты и слеш-команды) по произвольному запросу и возвращает лучшие совпадения с подсказками по использованию. Слеш-команды и промпт-контексты - только каталог: первые набирает пользователь, вторые подставляются автоматически, агент может лишь описать их.
 description.agent-call: Запускает другого ИИ-агента с заданными инструкциями, сообщением пользователя и набором разрешённых инструментов, навыков, субагентов и блоков памяти.
 description.agent-callsub: Запускает другого предварительно сконфигурированного ИИ-агента с заданным сообщением пользователя.
-description.agent-describe_image: Описывает содержимое изображения с помощью отдельного ИИ-агента, способного работать с изображениями.
+description.attach-read_image: Читает изображение с файла на диске и возвращает его вызывающей видящей модели.
+description.attach-describe_image: Описывает содержимое изображения с помощью отдельного ИИ-агента, способного работать с изображениями.
 description.clipboard-copy: Копирует указанный текст в системный буфер обмена.
 description.clipboard-read: Считывает текущее содержимое системного буфера обмена.
 description.db-execute: Выполняет SQL-запрос к активной базе данных и возвращает результат.
@@ -157,6 +159,7 @@ description.web-status: Проверяет доступность сайта и 
 // Tool categories
 category.addons: Аддоны
 category.agents: Агенты
+category.attachments: Вложения
 category.database: Базы данных
 category.filesystem: Файловая система
 category.forms: Формы
@@ -314,7 +317,7 @@ result: Результат:
 settings: Настройки инструментов
 source.mcp: MCP
 source.scriptable: Скриптовый
-status.agent-describe_image.status: Описываем... *{0} токенов*
+status.attach-describe_image.status: Описываем... *{0} токенов*
 status.fs-apply_diff.changes_none: без изменений
 status.fs-diff.accepted: Принято
 status.fs-diff.confirm: Применить
