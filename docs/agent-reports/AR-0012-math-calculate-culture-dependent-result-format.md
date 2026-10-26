@@ -1,6 +1,7 @@
 # AR-0012 - math-calculate prints results in the machine's culture, which its own parser rejects
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-26 - every branch of `FormatComplex` and the root formatter in `Solve` now use the invariant culture.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `math-calculate`
@@ -88,6 +89,13 @@ Nothing in this session (no chained computation was needed). In real use the wor
    `ToString("G")` and the `$"{...}"` interpolations both use `CultureInfo.CurrentCulture`. `ToString("G", CultureInfo.InvariantCulture)` (and invariant interpolation) makes the output match the grammar the parser enforces.
 2. **Fix the sibling in the same pass.** `Solve` formats its roots with `r.ToString("G")` at `src/LLMDesktopAssistant/Tools/Implementations/MathematicsToolModule.cs:169`, so `math-solve` emits comma-decimal roots for the same reason and feeds the same problem back into `math-calculate`.
 3. **Do not "fix" it on the input side instead.** Accepting `,` as a decimal separator in the parser is ambiguous in this grammar, because `,` is already the argument separator (`integral(x^2, x, 0, 10)`). The output side is the only side that can be changed safely.
+
+## Resolution
+
+1. **`FormatComplex` is fully invariant.** All three branches go through `ToString("G", CultureInfo.InvariantCulture)`, and a NaN part short-circuits to the literal `NaN` instead of leaking the localized word. With a comma-decimal culture `gamma(2+i)` answers `0.6529654964201672 + 0.34306583981654626i` and `gamma(-1)` answers `NaN` - both round-trip through `math-calculate` (the parser accepts `infinity` in any case, so an infinite result does too).
+2. **The sibling is fixed with it.** `Solve` and `SolveComplex` format through the same helper, so roots lost their commas as well; `Solve` keeps `r.ToString("G", CultureInfo.InvariantCulture)` directly.
+
+What made this survive the first pass and cost a second one: only the pure-real branch had been switched to the invariant culture, so real results read correctly while complex ones still carried commas and localized NaNs - a half-fix that looks green from the outside and is exactly the case the report was filed about.
 
 ## Unverified
 

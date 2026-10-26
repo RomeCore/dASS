@@ -1,6 +1,7 @@
 # AR-0011 - math-calculate silently truncates non-integer `factorial` arguments
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-26 - the factorial now goes through the gamma function for every non-integer argument, in both entry points.
 - **Severity:** silent
 - **Lane:** agent
 - **Surface:** tool `math-calculate`
@@ -26,7 +27,7 @@ The fractional part is discarded, silently, and a successful result comes back:
 | call | returned | correct value |
 |---|---|---|
 | `factorial(0.5)` | `1` | `Γ(1.5) ≈ 0.8862269254527580` |
-| `factorial(2.9)` | `2` | `Γ(3.9) ≈ 5.3993` |
+| `factorial(2.9)` | `2` | `Γ(3.9) ≈ 5.2993297338` |
 | `0.5!` (operator form) | `1` | `Γ(1.5) ≈ 0.8862269254527580` |
 | `factorial(10)` | `3628800` | `3628800` |
 | `5!` | `120` | `120` |
@@ -44,7 +45,7 @@ Both entry points are affected - the `factorial(...)` call and the postfix `!` o
 1. Call `math-calculate` with `factorial(0.5)`.
    Observed `1`; expected `0.8862269254527580` (equivalently `gamma(1.5)`).
 2. Call it with `factorial(2.9)`.
-   Observed `2`; expected `Γ(3.9) ≈ 5.3993`.
+   Observed `2`; expected `Γ(3.9) ≈ 5.2993297338`.
 3. Confirm the operator form goes the same way: call it with `0.5!`.
    Observed `1`.
 
@@ -68,8 +69,23 @@ Read `factorial` as integers-only and would call `gamma(x + 1)` for anything non
 2. **Cheapest alternative:** state the integer-only domain in the description *and* reject a non-integer argument with a `MathEvaluationException` instead of truncating it - a loud failure at least stops the wrong number from being born.
 3. **Worth a look at the same time:** `ComputeFactorial` takes an `int` while its loop counter is a `long`, so the cast happens one layer above the domain check. Whether a non-integer should even reach that function is the design question underneath the bug.
 
+## Resolution
+
+Both product loops are gone. `SpecialFunctions` (`src/LLMDesktopAssistant/Calculation/SpecialFunctions.cs`) now owns the gamma function and the factorial, and the two entry points - the `factorial(...)` call in `FunctionCallEntity` and the postfix `!` in `UnaryOpEntity` - delegate to `SpecialFunctions.Factorial`:
+
+1. **Integers keep the exact product**, so `5!` is still `120` and not `119.99999999999997`; above `170` the answer is `+∞`, where the double range ends.
+2. **Everything else goes through `x! = Γ(x + 1)`.** The Lanczos set (`g = 7`, nine terms) is good to about 1e-15 relative, so `factorial(0.5)` is `0.8862269254527580` and `factorial(2.9)` is `5.2993297338`.
+3. **Negative fractions are real again.** The old `gamma` refused `x <= 0` outright, which on its own would have turned `(-1.5)!` into `NaN` although `Γ(-0.5) = -2√π ≈ -3.5449077018` exists; the shared implementation reflects from the stable branch and returns `NaN` only at the poles, i.e. at the negative integers.
+4. **Complex arguments follow the same rule**: `factorial(1+i)` is `Γ(2+i) ≈ 0.6529654964201642 + 0.3430658398165443i`. The complex gamma branch also chose its reflection by `Magnitude` instead of `Re z`, so it answered nonsense inside the unit circle off the real axis; it now reflects on the real part.
+
+`compgamma` is gone: `gamma` itself takes a complex argument, while a real one keeps the real path so `gamma(5)` and `gamma(5 + 0i)` stay the same number. Results are now rendered in the invariant culture throughout `FormatComplex`, which closes AR-0012 as well.
+
+Tests: `tests/LLMDesktopAssistant.Tests/Calculation/FactorialTests.cs` - 33 cases over integers, fractions, negative fractions, poles, the overflow edge, both entry points and the complex gamma branch.
+
+The Lua API follows the same path: `LuaApiMath.Gamma` and `LuaApiMath.Factorial` delegate to `SpecialFunctions` too, so a script gets `math.factorial(0.5) = 0.8862269254527586` and `math.factorial(-1) = nan`. One caveat survives there: both return only the real part of the result, because a Lua number has nowhere to put the imaginary one, so a complex table argument is computed correctly and then halved.
+
 ## Unverified
 
-- `Γ(3.9) ≈ 5.3993` was derived from the definition of `Γ`, not produced by the tool - the tool has no way to return it today.
+- `Γ(3.9) ≈ 5.2993297338` (the first revision of this report said 5.3993, which is simply wrong) was derived from the definition of `Γ`, not produced by the tool - the tool had no way to return it at the time.
 - Whether `factorial` accepts a complex argument at all was not checked, nor how the `(int)` cast behaves for magnitudes outside `int` range (e.g. `factorial(1e10)`).
 - The behaviour at a large integer argument was not probed; the loop stops when the running product reaches `+∞`, but that was read from the source, not observed.

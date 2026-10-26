@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Globalization;
 using System.Numerics;
 using LLMDesktopAssistant.Calculation;
 using LLMDesktopAssistant.Calculation.Ast;
@@ -36,18 +37,18 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					Normal:
 
 					asinh, acosh, tan, atanh, atan2, cbrt, sign, floor, ceil, round, trunc, mod,
-					gamma, factorial, integral, derivative
+					integral, derivative
 
 					Complex:
 
-					mag, conjugate, minmag, maxmag, compgamma
+					mag, conjugate, minmag, maxmag
 
 					Normal and complex:
 
 					sin, sinh, asin, cos, cosh, acos, tanh, atan,
 					sind, cosd, tand, asind, acosd, atand,
 					ln, log, log2, log10, logb, exp, pow, sqrt,
-					abs, min, max
+					abs, min, max, gamma, factorial
 					""",
 				NameKey = Locale.GetKey("tool.name.math-calculate"),
 				DescriptionKey = Locale.GetKey("tool.description.math-calculate"),
@@ -71,7 +72,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					The equation can be written as 'expression = 0' or just 'expression'.
 					If no range is specified, it scans from -100 to 100 by default.
 
-					For complex roots, use 'math-solve-complex'.
+					For complex roots, use 'math-solve_complex'.
 					""",
 				NameKey = Locale.GetKey("tool.name.math-solve"),
 				DescriptionKey = Locale.GetKey("tool.description.math-solve"),
@@ -158,7 +159,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 					return ToolExecutionResult.Succeeded;
 				}
 
-				var formatted = string.Join(", ", roots.Select(r => r.ToString("G")));
+				var formatted = string.Join(", ", roots.Select(r => r.ToString("G", CultureInfo.InvariantCulture)));
 				ctx.Call.SetResult($"Roots found for '{variable}': {formatted}");
 				ctx.Call.SetStatus(Material.Icons.MaterialIconKind.Abacus,
 					LocalizationManager.LocalizeStaticFormat("tool.status.math-solve.status", $"`{equation}`", roots.Length));
@@ -226,15 +227,21 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			}
 		}
 
+		/// <summary>
+		/// Renders a value the way the parser itself accepts it - point decimal, no localized words.
+		/// </summary>
 		private static string FormatComplex(Complex c)
 		{
+			if (double.IsNaN(c.Real) || double.IsNaN(c.Imaginary))
+				return "NaN";
 			if (c.Imaginary == 0)
-				return c.Real.ToString("G");
+				return c.Real.ToString("G", CultureInfo.InvariantCulture);
 			if (c.Real == 0)
-				return $"{c.Imaginary}i";
+				return $"{c.Imaginary.ToString("G", CultureInfo.InvariantCulture)}i";
 
 			string sign = c.Imaginary > 0 ? "+" : "-";
-			return $"{c.Real:G} {sign} {Math.Abs(c.Imaginary):G}i";
+			string imaginary = Math.Abs(c.Imaginary).ToString("G", CultureInfo.InvariantCulture);
+			return $"{c.Real.ToString("G", CultureInfo.InvariantCulture)} {sign} {imaginary}i";
 		}
 	}
 }

@@ -1,6 +1,7 @@
 # AR-0013 - math-solve's description sends the caller to a tool that does not exist
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-26 - the pointer now spells `math-solve_complex`, the name the tool is registered under.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `math-solve` (description)
@@ -57,6 +58,12 @@ Used the underscore spelling, taken from the `Valid tool names` list in the erro
 3. **State the literal registered name in the sibling's own description.** It currently shows only the call form `solve_complex(...)` (line 89), so neither description contains the string a caller must type.
 
 Worth noting for whoever fixes this: the localization keys are already correct - `name.math-solve_complex` and `description.math-solve_complex` in both `iv/tools.loc` and `ru-RU/tools.loc` - so the typo is confined to the raw `Description` string in code, not duplicated across locale files.
+
+## Resolution
+
+The `math-solve` description now ends with `For complex roots, use 'math-solve_complex'.`, so the first call a caller makes after an empty real solve hits the tool that exists.
+
+Proposed fixes 2 and 3 were deliberately not taken. Renaming the tool to `math-solve-complex` would trade one mismatch for a wave of broken references - the underscore name is already what localization keys, slash commands and scripts carry. The examples inside the sibling's description (`solve_complex(x^2 + 1 = 0, z)`) illustrate the expression form its arguments accept, not a tool to call, and the registered name reaches the model through the toolset itself.
 
 ## Unverified
 

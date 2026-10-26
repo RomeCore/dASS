@@ -85,12 +85,11 @@ namespace LLMDesktopAssistant.Calculation.Ast
 					"min" => new Complex(args.Min(a => a.Real), 0),
 					"max" => new Complex(args.Max(a => a.Real), 0),
 
-					"maxmag" => args.Aggregate(Complex.Zero, (a, b) => Complex.MaxMagnitude(a, b)),
-					"minmag" => args.Aggregate(Complex.Zero, (a, b) => Complex.MinMagnitude(a, b)),
+					"maxmag" => args.Aggregate(Complex.MaxMagnitude),
+					"minmag" => args.Aggregate(Complex.MinMagnitude),
 
-					"gamma" => new Complex(ComputeGamma(args[0].Real), 0),
-					"compgamma" => ComputeComplexGamma(args[0]),
-					"factorial" => new Complex(ComputeFactorial((int)args[0].Real), 0),
+					"gamma" => SpecialFunctions.Gamma(args[0]),
+					"factorial" => SpecialFunctions.Factorial(args[0]),
 
 					_ => throw new MathEvaluationException($"Unknown function '{Name}'.")
 				};
@@ -146,38 +145,6 @@ namespace LLMDesktopAssistant.Calculation.Ast
 
 			return new ConstantEntity(new Complex(
 				NumericalDifferentiation.CentralDifference(Arguments[0], variable, x0, ctx), 0));
-		}
-
-		private static double ComputeGamma(double x)
-		{
-			if (x <= 0) return double.NaN;
-			double[] p = { 0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7 };
-			if (x < 0.5) return Math.PI / (Math.Sin(Math.PI * x) * ComputeGamma(1 - x));
-			x -= 1;
-			double a = p[0];
-			for (int i = 1; i < p.Length; i++) a += p[i] / (x + i);
-			double t = x + 7.5;
-			return Math.Sqrt(2 * Math.PI) * Math.Pow(t, x + 0.5) * Math.Exp(-t) * a;
-		}
-
-		private static Complex ComputeComplexGamma(Complex x)
-		{
-			if (x.Magnitude <= 0) return double.NaN;
-			double[] p = { 0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7 };
-			if (x.Magnitude < 0.5) return Math.PI / (Complex.Sin(Math.PI * x) * ComputeComplexGamma(1 - x));
-			x -= 1;
-			Complex a = p[0];
-			for (int i = 1; i < p.Length; i++) a += p[i] / (x + i);
-			Complex t = x + 7.5;
-			return Complex.Sqrt(2 * Math.PI) * Complex.Pow(t, x + 0.5) * Complex.Exp(-t) * a;
-		}
-
-		private static double ComputeFactorial(int n)
-		{
-			if (n < 0) return double.NaN;
-			double r = 1;
-			for (long i = 2; i <= n && !double.IsPositiveInfinity(r); i++) r *= i;
-			return r;
 		}
 
 		public override string ToString() => $"{Name}({string.Join(", ", Arguments)})";

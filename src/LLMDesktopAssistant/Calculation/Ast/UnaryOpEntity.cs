@@ -37,34 +37,11 @@ namespace LLMDesktopAssistant.Calculation.Ast
                 UnaryOpKind.Plus => value,
                 UnaryOpKind.Minus => -value,
                 UnaryOpKind.Abs => Complex.Abs(value),
-                UnaryOpKind.Factorial => ComputeFactorial((int)value.Real),
+                UnaryOpKind.Factorial => SpecialFunctions.Factorial(value),
                 _ => throw new MathEvaluationException($"Unknown unary operation: {Op}")
             };
 
             return new ConstantEntity(result);
-        }
-
-        private static Complex ComputeFactorial(int n)
-        {
-            if (n < 0)
-            {
-                return double.NaN;
-            }
-            if (n == 0)
-            {
-                return 1.0;
-            }
-
-            double result = 1.0;
-            for (long i = 2; i <= n; i++)
-            {
-                result *= i;
-                if (double.IsPositiveInfinity(result))
-                {
-                    break;
-                }
-            }
-            return result;
         }
 
         public override string ToString()

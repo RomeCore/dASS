@@ -1,6 +1,7 @@
 # AR-0010 - math-calculate's `minmag` always returns 0
 
-- **Status:** open
+- **Status:** fixed
+- **Fixed:** 2026-10-26 - both folds lost the `Complex.Zero` seed.
 - **Severity:** silent
 - **Lane:** agent
 - **Surface:** tool `math-calculate`
@@ -66,8 +67,21 @@ Nothing, in this session - there was no consumer of `minmag`. In real use the on
 2. **Decide the single-argument case deliberately.** Today `minmag(3+4i)` is `0` as well; if the intent was a no-op it should be stated, because the `0` is indistinguishable from a real result.
 3. **Say in the description whether the return value is the argument or its magnitude.** `mag` and `minmag` sitting side by side in the same list invites both readings, and the caller cannot tell from the output which one it received.
 
+## Resolution
+
+The seed was the whole bug: `Complex.Zero` sat in the compared set as if it were an argument, and nothing complex has a smaller magnitude than zero, so `minmag` answered `0` for every input. Both folds now run seedless:
+
+```csharp
+"maxmag" => args.Aggregate(Complex.MaxMagnitude),
+"minmag" => args.Aggregate(Complex.MinMagnitude),
+```
+
+That also settles proposed fix 2: the single-argument form returns the argument itself, `minmag(3+4i)` is `3 + 4i` - the no-op reading, not a `0`. An empty argument list now throws instead of answering `0`, because a seedless fold has nothing to return. `maxmag` was rewritten for symmetry, not because it was broken.
+
+Tests: `tests/LLMDesktopAssistant.Tests/Calculation/MagnitudeTests.cs` - ten cases over two- and three-argument folds, negative reals, single arguments and complex values. `minmag(3+4i, 1+1i)` is `1 + 1i`, where it used to be `0`.
+
 ## Unverified
 
 - Only non-zero, non-NaN, positive-imagnitude arguments were exercised. Whether `maxmag` breaks for a set containing a NaN argument was not checked.
 - The `maxmag` line carries the identical seed but happens to be correct for every non-negative input; whether the maintainer wants both rewritten for symmetry is a judgement call, not an observation.
-- Behaviour for an empty argument list (`minmag()`) was not tested; the parser may reject it before the fold runs.
+- Behaviour for an empty argument list (`minmag()`) was not probed; the seedless fold throws `InvalidOperationException`, which the surrounding catch turns into a `MathEvaluationException` - read from the source, not observed.
