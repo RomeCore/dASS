@@ -15,6 +15,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	[LuaApi(chatScoped: true)]
 	public class LuaApiWebRequest : LuaApiBase
 	{
+		public const int DefaultTimeout = 30;
+
 		public override string? Namespace => "web";
 
 		public override string? Manuals => """
@@ -37,6 +39,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - headers: table (optional) - Custom headers as key-value pairs
 			      - content: string or table (optional) - Request body, if table it's serialized to JSON
 			      - contentType: string (default: "application/json") - Content-Type header
+			      - timeout: number (optional) - Request timeout in seconds (default: $TIMEOUT$)
 
 			  Returns: table with:
 			    - status_code: number - HTTP status code (e.g. 200)
@@ -50,7 +53,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			
 			  Parameters:
 			    - url: string - URL to check
-			    - timeout: number (optional, default: 30) - Timeout in seconds
+			    - timeout: number (optional, default: $TIMEOUT$) - Timeout in seconds
 			
 			  Returns: table with:
 			    - url: string - the checked URL
@@ -85,7 +88,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - url: string - URL to fetch HTML from
 			    - selector: string - CSS selector (e.g. "h1", ".content", "#main > p")
 			    - fetchLevel: string (default: "http_client") - "http_client", "browser", or "stealth_browser"
-
 
 			  Returns: table with:
 			    - url: string - the fetched URL
@@ -144,7 +146,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    contentType = "application/json"
 			  })
 			  print(r.status_code, r.content)
-			""";
+			""".Replace("$TIMEOUT$", DefaultTimeout.ToString());
 
 		private readonly IWorkingDirectoryAccessService _fileAccess;
 		private readonly IWebFetcher _webFetcher;
@@ -154,9 +156,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			_fileAccess = fileAccess;
 			_webFetcher = webFetcher;
-			_httpClient = CreateClient(timeoutSeconds: 30);
-			_pureHttpClient = new HttpClient();
-			_infiniteTimeoutClient = CreateClient(timeoutSeconds: null);
+			_httpClient = CreateClient(addHeaders: true, timeoutSeconds: DefaultTimeout);
+			_pureHttpClient = CreateClient(addHeaders: false, timeoutSeconds: DefaultTimeout);
+			_infiniteTimeoutClient = CreateClient(addHeaders: true, timeoutSeconds: null);
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -183,6 +185,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			string contentType = "application/json";
 			Dictionary<string, string>? headers = null;
 			bool usePureClient = false;
+			int? timeout = DefaultTimeout;
 
 			if (args.Length > 2 && args[2] is LuaTable opts)
 			{
@@ -212,6 +215,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 							headers[keyStr.Value] = valStr.Value;
 					}
 				}
+
+				if (opts.Get("timeout") is LuaNumber to)
+				{
+					if (to.Value <= 0)
+						timeout = null;
+					else
+						timeout = (int)to.Value;
+				}
 			}
 
 			try
@@ -236,7 +247,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 				}
 
-				var client = usePureClient ? _pureHttpClient : _httpClient;
+				HttpClient client;
+
+				if (timeout == DefaultTimeout)
+					client = usePureClient ? _pureHttpClient : _httpClient;
+				else
+					client = CreateClient(addHeaders: !usePureClient, timeout);
+
 				var response = await client.SendAsync(request);
 				var responseContent = await response.Content.ReadAsStringAsync();
 
@@ -272,7 +289,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args[0] is not LuaString urlVal)
 				throw new LuaRuntimeException("First argument must be a string (URL).");
 
-			int timeout = 30;
+			int timeout = DefaultTimeout;
 			if (args.Length > 1 && args[1] is LuaNumber tv)
 				timeout = (int)tv.Value;
 
@@ -492,16 +509,20 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			return WebFetchLevel.HttpClient;
 		}
 
-		private static HttpClient CreateClient(int? timeoutSeconds = 30)
+		private static HttpClient CreateClient(bool addHeaders, int? timeoutSeconds)
 		{
 			var client = new HttpClient();
-			client.DefaultRequestHeaders.Add("User-Agent",
-				"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-			client.DefaultRequestHeaders.Add("Accept",
-				"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-			client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
-			client.DefaultRequestHeaders.Add("Connection", "keep-alive");
-			client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
+
+			if (addHeaders)
+			{
+				client.DefaultRequestHeaders.Add("User-Agent",
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+				client.DefaultRequestHeaders.Add("Accept",
+					"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+				client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.5");
+				client.DefaultRequestHeaders.Add("Connection", "keep-alive");
+				client.DefaultRequestHeaders.Add("Upgrade-Insecure-Requests", "1");
+			}
 
 			if (timeoutSeconds.HasValue)
 				client.Timeout = TimeSpan.FromSeconds(timeoutSeconds.Value);
