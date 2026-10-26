@@ -39,7 +39,7 @@ And absolute patterns, which `Glob` in other runtimes accepts and which an agent
 
 | Pattern | Result |
 |---|---|
-| `E:/CSharp Projects/LLMDesktopAssistant/src/**/*.csproj` | **0** - `No matches found` (there are 6+ `.csproj` files under `src/`) |
+| `<absolute path to the repo>/src/**/*.csproj` | **0** - `No matches found` (there are 6+ `.csproj` files under `src/`) |
 
 The full body of the failing call is:
 
@@ -72,7 +72,7 @@ Case sensitivity is *not* a factor here: `**/fileutils.cs` (all lowercase) corre
 4. `fs-glob` with pattern `**/*.loc`                   -> 3 results
 5. `fs-glob` with pattern `**/*.lo[c]`                 -> 0 results
 6. `fs-glob` with pattern `**/*.{cs,loc}`              -> 0 results
-7. `fs-glob` with pattern `E:/CSharp Projects/LLMDesktopAssistant/src/**/*.csproj`
+7. `fs-glob` with an absolute pattern pointing at the same tree, e.g. `<drive>/<repo>/src/**/*.csproj`
                                                        -> 0 results (the files exist)
 ```
 
@@ -80,7 +80,7 @@ All seven calls succeed. Only the syntax of the pattern differs between the work
 
 ## Witnesses
 
-- **2026-10-26** - session reviewing `fs-glob` at the user's request ("глянь тул для glob-поиска файлов"), followed by the user's verdict "этот глоб сам по себе говно, разительно отличается от того, что в линуксе (bash) и в Claude Code (Glob)". The user hit the same wall from the outside, which is why this is not one agent's misreading of a description.
+- **2026-10-26** - session reviewing `fs-glob` on the user's request. The mismatch was also reported from outside that session: the user described the tool's dialect as differing sharply from bash and from Claude Code's Glob, which is the same behaviour this report records.
 
 ## What I did instead
 
@@ -101,4 +101,4 @@ All seven calls succeed. Only the syntax of the pattern differs between the work
 
 - Traced, not measured: the engine is `Microsoft.Extensions.FileSystemGlobbing` (`using` at the top of `FilesystemGlobToolModule.cs`, `new Matcher()` + `AddInclude(pattern)`), whose documented dialect is `*`, `**` and literals. I did not read its parser to confirm that `?`/`[`/`{` are treated as literal characters rather than being rejected - the observation (0 results, `Succeeded`) stands either way, but the exact mechanism inside the package is inferred.
 - Not exercised: `**` alone, `!` negation, backslash escapes, a `path` argument with a trailing separator, UNC paths, and whether `path` itself accepts an absolute value (that path uses a different code path - `_fileAccess.CheckedAccessPath` - so it may well work where the pattern does not).
-- Claude Code's behaviour is read from its source in `E:\CSharp Projects\Референсы\claude-code\src\utils\glob.ts` and `src/tools/GlobTool\prompt.ts`, not executed.
+- Claude Code's behaviour is read from that project's source (`src/utils/glob.ts`, `src/tools/GlobTool/prompt.ts`) in a local checkout kept outside this repository, not executed. The checkout's location is not recorded here on purpose.

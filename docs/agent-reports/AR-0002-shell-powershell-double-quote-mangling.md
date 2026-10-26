@@ -22,8 +22,10 @@ TerminatorExpectedAtEndOfString
 
 I hit this twice - once with the full pipeline (`... 2>&1 | Select-Object -Last 40`), once after removing the pipeline - both with double-quoted arguments. The *identical* command rewritten with single quotes ran correctly on the first try.
 
-- Failed: `dotnet test "E:\CSharp Projects\AsyncLua\tests\AsyncLua.Tests\AsyncLua.Tests.csproj" --filter "FullyQualifiedName~TaskLibraryTests" --nologo`
-- Worked: `dotnet test 'E:\CSharp Projects\AsyncLua\tests\AsyncLua.Tests\AsyncLua.Tests.csproj' --filter 'FullyQualifiedName~TaskLibraryTests' --nologo`
+- Failed: `dotnet test "<AsyncLua repo>\tests\AsyncLua.Tests\AsyncLua.Tests.csproj" --filter "FullyQualifiedName~TaskLibraryTests" --nologo`
+- Worked: `dotnet test '<AsyncLua repo>\tests\AsyncLua.Tests\AsyncLua.Tests.csproj' --filter 'FullyQualifiedName~TaskLibraryTests' --nologo`
+
+(`<AsyncLua repo>` stands for the sibling AsyncLua checkout; the real absolute path is deliberately not recorded.)
 
 ## Why it costs
 

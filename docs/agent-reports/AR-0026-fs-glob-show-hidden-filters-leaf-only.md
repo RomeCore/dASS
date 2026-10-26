@@ -71,7 +71,7 @@ The result is a half-hidden tree: `.gitignore` is excluded (dot leaf), `.git/con
 
 ## Witnesses
 
-- **2026-10-26** - session reviewing `fs-glob` at the user's request ("глянь тул для glob-поиска файлов"). Found while checking whether the tool hides the junk it walks; the user's verdict on the tool ("этот глоб сам по себе говно, разительно отличается от того, что в линуксе и в Claude Code") came before the probe and was about the dialect, not about this, so this one is my observation only.
+- **2026-10-26** - session reviewing `fs-glob` on the user's request; found while checking whether the tool hides the trees it walks. This finding is entirely my own observation - the user's remarks in that session were about the pattern dialect, not about hidden filtering.
 
 ## What I did instead
 

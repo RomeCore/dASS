@@ -25,8 +25,10 @@ literal text landed in the artifacts path.
 
 ```
 ...\NuGet.targets(198,5): error Неверно задано имя папки. :
-'E:\CSharp Projects\LLMDesktopAssistant\src\LLMDesktopAssistant.SourceGenerators\$env:TEMP\dass-temp-build\obj\LLMDesktopAssistant.SourceGenerators'.
+'<repo>\src\LLMDesktopAssistant.SourceGenerators\$env:TEMP\dass-temp-build\obj\LLMDesktopAssistant.SourceGenerators'.
 ```
+
+(`<repo>` stands for the checkout root; the real absolute path is deliberately not recorded.)
 
 Computing the path first (double quotes expand) worked on the first try:
 

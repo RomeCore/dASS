@@ -92,7 +92,7 @@ Both produce "Expected a function call as a statement" rather than a message tha
 
 ## What I did instead
 
-Opened `E:\CSharp Projects\AsyncLua\src\AsyncLua\Parsing\AsyncLuaParser.cs` (the engine, not dASS) to read
+Opened `<AsyncLua repo>\src\AsyncLua\Parsing\AsyncLuaParser.cs` (the engine, not dASS) to read
 the token definition and the statement wiring, then used the real syntax `global x = ...`. Without source
 access the feature is effectively undiscoverable from the error text.
 
