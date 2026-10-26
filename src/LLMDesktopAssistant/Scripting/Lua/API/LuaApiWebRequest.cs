@@ -295,7 +295,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			try
 			{
-				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeout));
+				using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctx.CancellationToken);
+				cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 				var startTime = DateTime.UtcNow;
 
 				var response = await _httpClient.GetAsync(urlVal.Value, HttpCompletionOption.ResponseHeadersRead, cts.Token);
@@ -348,7 +349,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			try
 			{
-				var fetchResult = await _webFetcher.FetchAsync(urlVal.Value, fetchLevel);
+				var fetchResult = await _webFetcher.FetchAsync(urlVal.Value, fetchLevel, ctx.CancellationToken);
 				if (fetchResult.HttpStatus is >= 400)
 					throw new HttpRequestException($"HTTP {fetchResult.HttpStatus} loading {urlVal.Value}.");
 
@@ -393,12 +394,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			try
 			{
-				var fetchResult = await _webFetcher.FetchAsync(urlVal.Value, fetchLevel);
+				var fetchResult = await _webFetcher.FetchAsync(urlVal.Value, fetchLevel, ctx.CancellationToken);
 				if (fetchResult.HttpStatus is >= 400)
 					throw new HttpRequestException($"HTTP {fetchResult.HttpStatus} loading {urlVal.Value}.");
 				var html = fetchResult.Html;
 				var parser = new HtmlParser();
-				var document = await parser.ParseDocumentAsync(html);
+				var document = await parser.ParseDocumentAsync(html, ctx.CancellationToken);
 				var elements = document.QuerySelectorAll(selectorVal.Value);
 
 				var result = new LuaTable();
@@ -467,7 +468,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 				}
 
-				var response = await _infiniteTimeoutClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+				var response = await _infiniteTimeoutClient.SendAsync(request,
+					HttpCompletionOption.ResponseHeadersRead, ctx.CancellationToken);
 				var result = new LuaTable();
 
 				if (!response.IsSuccessStatusCode)
@@ -479,7 +481,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					return new LuaTuple(result);
 				}
 
-				using var downloadStream = await response.Content.ReadAsStreamAsync();
+				using var downloadStream = await response.Content.ReadAsStreamAsync(ctx.CancellationToken);
 				using var fileStream = File.Create(fullSavePath);
 				await downloadStream.CopyToAsync(fileStream);
 				var fileSize = fileStream.Length;

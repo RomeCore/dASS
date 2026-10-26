@@ -1,3 +1,4 @@
+using System.Globalization;
 using AsyncLua;
 using AsyncLua.Values;
 using SearXSharp;
@@ -183,7 +184,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			SearchResultList resultList;
 			try
 			{
-				resultList = await _searchManager.SearchAllAsync(searchQuery, default);
+				resultList = await _searchManager.SearchAllAsync(searchQuery, ctx.CancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -248,9 +249,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			SetField(t, "audio_src", r.AudioSrc);
 
 			if (r.PublishedDate.HasValue)
-				t["published_date"] = new LuaString(r.PublishedDate.Value.ToString("O"));
+				t["published_date"] = new LuaString(r.PublishedDate.Value.ToString("O", CultureInfo.InvariantCulture));
 			if (r.Duration.HasValue && r.Duration.Value > TimeSpan.Zero)
-				t["duration"] = new LuaString(r.Duration.Value.ToString(@"hh\:mm\:ss"));
+				t["duration"] = new LuaString(r.Duration.Value.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture));
 
 			SetField(t, "author", r.Author);
 			SetField(t, "metadata", r.Metadata);
