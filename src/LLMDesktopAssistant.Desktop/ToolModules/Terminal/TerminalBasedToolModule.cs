@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Desktop.Execution;
@@ -63,9 +64,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 				descriptor = _processLauncher.Launch(
 					launchParameters,
 					runInTerminal ? CancellationToken.None : cancellationToken);
-
-				// External process can affect addons potentially
-				_addonInvalidator.Invalidate(AddonKind.All);
 			}
 			catch (Exception ex)
 			{
@@ -73,8 +71,37 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 				return ToolExecutionResult.Failed;
 			}
 
-			var outcome = await TerminalRun.RunAsync(descriptor, call, runInTerminal, parameters.Wait,
-				leaveAllowed: parameters.Wait, cancellationToken);
+			void HandleOutputLineAdded(object? sender, NotifyCollectionChangedEventArgs args)
+			{
+				// Events are add-only, ignore others
+				if (args.Action != NotifyCollectionChangedAction.Add)
+					return;
+
+				foreach (string line in args.NewItems!)
+					call.AppendResultLine(line);
+			}
+			var plainOutput = descriptor.PlainOutput;
+			plainOutput?.Output.CollectionChanged += HandleOutputLineAdded;
+			foreach (var line in plainOutput?.Output ?? [])
+				call.AppendResultLine(line);
+
+			TerminalRunResult outcome = default;
+			try
+			{
+				outcome = await TerminalRun.RunAsync(descriptor, call, runInTerminal, parameters.Wait,
+					leaveAllowed: parameters.Wait, cancellationToken);
+			}
+			catch
+			{
+				outcome = new TerminalRunResult(null, false, false);
+			}
+			finally
+			{
+				plainOutput?.Output.CollectionChanged -= HandleOutputLineAdded;
+			}
+
+			// External process can affect addons potentially
+			_addonInvalidator.Invalidate(AddonKind.All);
 
 			if (outcome.Cancelled)
 			{
