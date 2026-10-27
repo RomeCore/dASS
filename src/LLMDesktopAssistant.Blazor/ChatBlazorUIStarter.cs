@@ -50,6 +50,7 @@ namespace LLMDesktopAssistant.Blazor
 				var services = chatServices;
 				var chatServiceCollection = services.GetRequiredKeyedService<IServiceCollection>(ServiceKeys.ChatServices);
 				var allServices = chatServiceCollection
+					.Where(s => s.Lifetime is not ServiceLifetime.Transient && !s.ServiceType.IsGenericTypeDefinition)
 					.SelectMany(s => chatServices.GetServices(s.ServiceType)
 						.Select(si => (s.ServiceType, si)))
 					.Distinct()
@@ -58,6 +59,10 @@ namespace LLMDesktopAssistant.Blazor
 				foreach (var (serviceType, instance) in allServices)
 					if (instance != null)
 						builder.Services.AddSingleton(serviceType, instance);
+
+				foreach (var serviceDescriptor in chatServiceCollection)
+					if (serviceDescriptor.Lifetime is ServiceLifetime.Transient || serviceDescriptor.ServiceType.IsGenericTypeDefinition)
+						builder.Services.Add(serviceDescriptor);
 
 				// Add startup settings
 				builder.Services.AddSingleton(settings);
