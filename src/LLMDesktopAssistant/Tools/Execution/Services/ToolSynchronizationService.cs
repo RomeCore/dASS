@@ -142,6 +142,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			var waiter = new Waiter(keys, ctx.Call.ToolName);
 			var previousTitle = ctx.Call.StatusTitle;
 			ctx.Call.SynchronizationWait = wait;
+			ctx.Call.Status = LLM.Domain.ToolStatus.Queued;
 
 			while (true)
 			{

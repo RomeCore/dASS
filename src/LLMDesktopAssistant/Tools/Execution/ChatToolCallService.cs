@@ -42,7 +42,7 @@ namespace LLMDesktopAssistant.Tools.Execution
 		/// <inheritdoc/>
 		public bool CanRestart(IToolCall call) => call.Status switch
 		{
-			ToolStatus.None or ToolStatus.Pending or ToolStatus.PreExecuting
+			ToolStatus.None or ToolStatus.Pending or ToolStatus.Queued or ToolStatus.PreExecuting
 				or ToolStatus.WaitingForApproval or ToolStatus.Executing => false,
 			_ => true
 		} && FindTool(call.ToolName) is not null;

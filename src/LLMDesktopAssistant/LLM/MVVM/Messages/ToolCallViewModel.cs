@@ -171,14 +171,15 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			Status switch
 			{
 				ToolStatus.Pending => MaterialIconKind.Edit,
-				ToolStatus.PreExecuting => MaterialIconKind.WrenchClock,
-				ToolStatus.Executing => MaterialIconKind.WrenchClock,
+				ToolStatus.Queued => MaterialIconKind.Hourglass,
+				ToolStatus.PreExecuting => MaterialIconKind.Hourglass,
+				ToolStatus.Executing => MaterialIconKind.Hourglass,
 				ToolStatus.WaitingForApproval => MaterialIconKind.QuestionMarkCircle,
 				ToolStatus.ExecutionInterrupted => MaterialIconKind.CancelCircle,
 				ToolStatus.Success => MaterialIconKind.CheckCircle,
 				ToolStatus.Cancelled => MaterialIconKind.CancelCircle,
 				ToolStatus.Error => MaterialIconKind.AlertCircle,
-				_ => MaterialIconKind.Wrench
+				_ => MaterialIconKind.CancelCircle
 			};
 
 		public IBrush? ToolIconBrush =>
@@ -309,8 +310,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			RestartCommand = new AsyncRelayCommand(RestartRunAsync);
 			SkipSynchronizationWaitCommand = new RelayCommand(SkipSynchronizationWait);
 
-			// The subscription is not dropped when the call finishes: a restart re-runs a finished call on the same
-			// object, so a terminal status is not the end of what this card has to show.
 			ToolCall.PropertyChanged += OnToolCallPropertyChanged;
 
 			RefreshRestartAvailability();

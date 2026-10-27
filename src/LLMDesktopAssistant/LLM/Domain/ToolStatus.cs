@@ -16,6 +16,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		Pending,
 
 		/// <summary>
+		/// The tool is currently waiting inside synchronization queue.
+		/// </summary>
+		Queued,
+
+		/// <summary>
 		/// The tool is pre-executing.
 		/// </summary>
 		PreExecuting,

@@ -305,6 +305,7 @@ call.status.confirming: Требуется подтверждение
 call.status.executing: Выполнение...
 call.status.failed: Ошибка
 call.status.pending: Ожидание
+call.status.queued: В очереди
 call.status.pre_executing: Анализ...
 call.status.success: Успешно
 call.status.unknown: Неизвестно

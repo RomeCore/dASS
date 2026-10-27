@@ -234,19 +234,21 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			var status = _toolCall.Status;
 
 			IsCompleted = status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled;
-			IsRunning = status is ToolStatus.Pending or ToolStatus.PreExecuting or ToolStatus.Executing;
+			IsRunning = status is ToolStatus.Pending or ToolStatus.Queued or ToolStatus.PreExecuting or ToolStatus.Executing;
 			IsConfirming = status == ToolStatus.WaitingForApproval;
 			IsFailed = status is ToolStatus.Error or ToolStatus.Cancelled;
 
 			(StatusIcon, StatusText) = status switch
 			{
-				ToolStatus.Pending => (MaterialIconKind.ClockOutline,
+				ToolStatus.Pending => (MaterialIconKind.Edit,
 					LocalizationManager.LocalizeStatic("tool.call.status.pending")),
-				ToolStatus.PreExecuting => (MaterialIconKind.WrenchClock,
+				ToolStatus.Queued => (MaterialIconKind.ClockOutline,
+					LocalizationManager.LocalizeStatic("tool.call.status.queued")),
+				ToolStatus.PreExecuting => (MaterialIconKind.Hourglass,
 					LocalizationManager.LocalizeStatic("tool.call.status.pre_executing")),
 				ToolStatus.WaitingForApproval => (MaterialIconKind.QuestionMarkCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.confirming")),
-				ToolStatus.Executing => (MaterialIconKind.WrenchClock,
+				ToolStatus.Executing => (MaterialIconKind.Hourglass,
 					LocalizationManager.LocalizeStatic("tool.call.status.executing")),
 				ToolStatus.Success => (MaterialIconKind.CheckCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.success")),
