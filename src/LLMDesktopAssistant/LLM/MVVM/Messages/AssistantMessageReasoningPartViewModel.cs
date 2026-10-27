@@ -1,7 +1,7 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
-using Avalonia.Threading;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
 {
@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	public class AssistantMessageReasoningPartViewModel : MessagePartViewModel
 	{
 		private readonly AssistantMessage _assistantMessage;
-		private DispatcherOperation? _currentUpdateOperation;
+		private UIDispatcherOperation? _currentUpdateOperation;
 
 		public AssistantMessageViewModel Owner { get; }
 

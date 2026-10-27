@@ -1,5 +1,5 @@
-using Avalonia.Threading;
 using LLMDesktopAssistant.Controls.Toasts;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Services.Instances;
 
@@ -75,13 +75,13 @@ public class ToastService : IToastService
 		if (_toastControl == null)
 			return;
 
-		if (Dispatcher.UIThread.CheckAccess())
+		if (UIDispatcher.IsUIThread)
 		{
 			action(_toastControl);
 		}
 		else
 		{
-			Dispatcher.UIThread.Post(() => action(_toastControl));
+			UIDispatcher.Post(() => action(_toastControl));
 		}
 	}
 }

@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
-using Avalonia.Threading;
 
 namespace LLMDesktopAssistant.Utils
 {
@@ -275,7 +274,7 @@ namespace LLMDesktopAssistant.Utils
 			}
 
 			if (RaiseInUIThread)
-				Dispatcher.UIThread.Invoke(Raise);
+				UIDispatcher.Invoke(Raise);
 			else
 				Raise();
 		}

@@ -3,10 +3,10 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.Execution.Terminals;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 {
@@ -104,7 +104,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 
 		private void OnSessionOutputUpdated(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				TerminalHost?.InvalidateVisual();
 				UpdateScrollBar();

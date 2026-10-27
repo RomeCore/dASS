@@ -1,5 +1,5 @@
 ﻿using Avalonia.Controls;
-using Avalonia.Threading;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 {
@@ -44,14 +44,14 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 			// If enough time has passed, flush immediately on the UI thread
 			if (elapsed >= FrameInterval)
 			{
-				Dispatcher.UIThread.Post(Flush);
+				UIDispatcher.Post(Flush);
 				return;
 			}
 
 			// Otherwise schedule a delayed flush
 			var delay = FrameInterval - elapsed;
 
-			Dispatcher.UIThread.Post(async () =>
+			UIDispatcher.Post(async () =>
 			{
 				await Task.Delay(delay);
 				Flush();

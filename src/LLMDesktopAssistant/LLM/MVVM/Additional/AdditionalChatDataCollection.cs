@@ -5,11 +5,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
 	public class AdditionalChatDataCollection : RangeObservableOrderedCollection<AdditionalChatData>
 	{
-		internal static bool RaiseInUIThreadGlobal { get; set; } = true;
-
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AdditionalChatDataCollection"/> class.
+		/// These items are bound to the message view, so their notifications are raised in the UI thread.
+		/// </summary>
 		public AdditionalChatDataCollection()
 		{
-			RaiseInUIThread = RaiseInUIThreadGlobal;
+			RaiseInUIThread = true;
 			Comparer = AdditionalViewModelComparer.Instance;
 		}
 

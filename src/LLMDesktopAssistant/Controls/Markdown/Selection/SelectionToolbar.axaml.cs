@@ -3,13 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
 using LiveMarkdown.Avalonia;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Utils;
 using Serilog;
 
 namespace LLMDesktopAssistant.Controls.Markdown.Selection
@@ -161,7 +161,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 
 			// Deferred: the renderer finishes the drag in its own handler, so the selection is only final
 			// once the current event has been processed.
-			Dispatcher.UIThread.Post(TryShow);
+			UIDispatcher.Post(TryShow);
 		}
 
 		private void OnCanCopyChanged(bool canCopy)
@@ -174,7 +174,7 @@ namespace LLMDesktopAssistant.Controls.Markdown.Selection
 
 			// Keyboard selections have no pointer release to wait for. During a drag the release decides.
 			if (!_pointerDown)
-				Dispatcher.UIThread.Post(TryShow);
+				UIDispatcher.Post(TryShow);
 		}
 
 		private void OnScrollChanged(object? sender, ScrollChangedEventArgs e) => Hide(clearSelection: false);

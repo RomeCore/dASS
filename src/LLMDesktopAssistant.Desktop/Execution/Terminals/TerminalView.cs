@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.Threading;
+using LLMDesktopAssistant.Utils;
 using Porta.Pty;
 using XTerm.Buffer;
 using XTerm.Events;
@@ -497,7 +498,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalDirectoryChanged(object? sender, TerminalEvents.DirectoryChangeEventArgs e)
 		{
-			Dispatcher.UIThread.Invoke(() =>
+			UIDispatcher.Invoke(() =>
 			{
 				var oldValue = _currentDirectory;
 				_currentDirectory = e.Directory;
@@ -1525,7 +1526,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalBufferChanged(object? sender, XT.Events.TerminalEvents.BufferChangedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var oldValue = _isAlternateBuffer;
 				_isAlternateBuffer = e.Buffer == XT.Common.BufferType.Alternate;
@@ -1548,7 +1549,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalCursorStyleChanged(object? sender, XT.Events.TerminalEvents.CursorStyleChangedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				if (!Equals(CursorStyle, e.Style))
 				{
@@ -1566,7 +1567,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalTitleChanged(object? sender, XT.Events.TerminalEvents.TitleChangeEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 
 				var args = new TitleChangedEventArgs(e.Title)
@@ -1581,7 +1582,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowMoved(object? sender, XT.Events.TerminalEvents.WindowMovedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new WindowMovedEventArgs(e.X, e.Y)
 				{
@@ -1595,7 +1596,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowResized(object? sender, XT.Events.TerminalEvents.WindowResizedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new WindowResizedEventArgs(e.Width, e.Height)
 				{
@@ -1609,7 +1610,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowMinimized(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowMinimizedEvent);
 				RaiseEvent(args);
@@ -1619,7 +1620,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowMaximized(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowMaximizedEvent);
 				RaiseEvent(args);
@@ -1629,7 +1630,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowRestored(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowRestoredEvent);
 				RaiseEvent(args);
@@ -1639,7 +1640,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowRaised(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowRaisedEvent);
 				RaiseEvent(args);
@@ -1649,7 +1650,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowLowered(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowLoweredEvent);
 				RaiseEvent(args);
@@ -1659,7 +1660,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowFullscreened(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(WindowFullscreenedEvent);
 				RaiseEvent(args);
@@ -1669,7 +1670,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalBellRang(object? sender, EventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				var args = new RoutedEventArgs(BellRangEvent);
 				RaiseEvent(args);
@@ -1679,7 +1680,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 		private void OnTerminalWindowInfoRequested(object? sender, XT.Events.TerminalEvents.WindowInfoRequestedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(() =>
+			UIDispatcher.Post(() =>
 			{
 				// Raise routed event so any parent can handle it without custom plumbing.
 				var args = new WindowInfoRequestedEventArgs(e.Request)
@@ -1721,7 +1722,7 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 
 			Interlocked.Exchange(ref _processExitHandled, 1);
 
-			Dispatcher.UIThread.InvokeAsync(() =>
+			UIDispatcher.InvokeAsync(() =>
 			{
 				// Raise event on UI thread so subscribers can safely update UI
 				var args = new ProcessExitedEventArgs(e.ExitCode);

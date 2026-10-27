@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Specialized;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using Avalonia.Threading;
 using LiteDB;
 using Serilog;
 
@@ -152,7 +151,7 @@ namespace LLMDesktopAssistant.Utils
 		{
 			if (RaiseInUIThread)
 			{
-				Dispatcher.UIThread.Invoke(() =>
+				UIDispatcher.Invoke(() =>
 				{
 					OnCollectionChanged(e);
 					RaisePropertyChanged(nameof(Count));

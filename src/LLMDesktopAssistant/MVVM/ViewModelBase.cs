@@ -1,4 +1,5 @@
 ﻿using Avalonia.Threading;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.MVVM
 {
@@ -9,12 +10,12 @@ namespace LLMDesktopAssistant.MVVM
 	{
 		protected static void InvokeUI(Action action, CancellationToken cancellationToken = default)
 		{
-			Dispatcher.UIThread.Invoke(action, DispatcherPriority.Default, cancellationToken);
+			UIDispatcher.Invoke(action, DispatcherPriority.Default, cancellationToken);
 		}
 
-		protected static DispatcherOperation InvokeUIAsync(Action action, CancellationToken cancellationToken = default)
+		protected static UIDispatcherOperation InvokeUIAsync(Action action, CancellationToken cancellationToken = default)
 		{
-			return Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Default, cancellationToken);
+			return UIDispatcher.InvokeAsync(action, DispatcherPriority.Default, cancellationToken);
 		}
 	}
 }

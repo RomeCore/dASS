@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Text;
-using Avalonia.Threading;
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Domain;
 
@@ -8,6 +7,7 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Providers;
+using LLMDesktopAssistant.Utils;
 using RCLargeLanguageModels.Metadata;
 using Serilog;
 
@@ -167,7 +167,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				PropertyChangedEventHandler summaryChanged = (s, e) =>
 				{
 					if (e.PropertyName is nameof(summarizationTask.LastGeneratedContent))
-						Dispatcher.UIThread.Post(() =>
+						UIDispatcher.Post(() =>
 						{
 							checkpoint.Context = summarizationTask.LastGeneratedContent ?? string.Empty;
 						});

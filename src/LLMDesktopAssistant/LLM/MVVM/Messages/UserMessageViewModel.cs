@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using Avalonia.Media.Imaging;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
+using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Users;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 	public class UserMessageViewModel : MessageViewModelBase
 	{
 		private readonly UserMessage _userMessage;
-		private DispatcherOperation? _currentUpdateOperation;
+		private UIDispatcherOperation? _currentUpdateOperation;
 
 		public UserMessage UserMessage => _userMessage;
 

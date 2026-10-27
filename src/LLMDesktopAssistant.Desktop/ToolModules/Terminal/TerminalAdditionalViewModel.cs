@@ -1,5 +1,4 @@
 using System.IO;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -383,10 +382,10 @@ namespace LLMDesktopAssistant.Desktop.ToolModules.Terminal
 
 		private static void OnUiThread(Action action)
 		{
-			if (Dispatcher.UIThread.CheckAccess())
+			if (UIDispatcher.IsUIThread)
 				action();
 			else
-				Dispatcher.UIThread.Post(action);
+				UIDispatcher.Post(action);
 		}
 
 		protected override void Dispose(bool disposing)

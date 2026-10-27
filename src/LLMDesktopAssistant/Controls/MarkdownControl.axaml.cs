@@ -12,6 +12,7 @@ using LLMDesktopAssistant.Controls.Markdown.Selection;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Controls;
 
@@ -277,7 +278,7 @@ public partial class MarkdownControl : UserControl
 		};
 
 		// Deferred, so the control is already attached and laid out when the transition starts.
-		Dispatcher.UIThread.Post(() => control.Opacity = 1, DispatcherPriority.Render);
+		UIDispatcher.Post(() => control.Opacity = 1, DispatcherPriority.Render);
 	}
 
 	private void MarkdownTextChanged(string? newText, bool usePlaintext)

@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using LLMDesktopAssistant.Utils;
 using Serilog;
 
 namespace LLMDesktopAssistant.LLM.MVVM;
@@ -43,7 +44,7 @@ public partial class UserInputView : UserControl
 	/// mode) and is shifted to the caret horizontally, which needs the popup's width - known only after it measured.
 	/// </summary>
 	private void ScheduleCompletionPopupOffset()
-		=> Dispatcher.UIThread.Post(UpdateCompletionPopupOffset, DispatcherPriority.Loaded);
+		=> UIDispatcher.Post(UpdateCompletionPopupOffset, DispatcherPriority.Loaded);
 
 	private void UpdateCompletionPopupOffset()
 	{

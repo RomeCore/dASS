@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using LLMDesktopAssistant.ApiKeys;
 using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Controls
 {
@@ -108,7 +108,7 @@ namespace LLMDesktopAssistant.Controls
 
 		private void AddButton_Click(object? sender, RoutedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(async () =>
+			UIDispatcher.Post(async () =>
 			{
 				var vm = new AddApiKeyDialogViewModel();
 				var result = await DialogManager.ShowDialogAsync(vm);
@@ -123,7 +123,7 @@ namespace LLMDesktopAssistant.Controls
 
 		private void ManageButton_Click(object? sender, RoutedEventArgs e)
 		{
-			Dispatcher.UIThread.Post(async () =>
+			UIDispatcher.Post(async () =>
 			{
 				var vm = new ManageApiKeysDialogViewModel();
 				await DialogManager.ShowDialogAsync(vm);

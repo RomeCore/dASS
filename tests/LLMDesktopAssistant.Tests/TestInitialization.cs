@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Settings.Application;
 using LLMDesktopAssistant.Utils;
 
@@ -12,8 +11,7 @@ internal static class TestInitialization
 	{
 		ReflectionUtility.Initialize(AppDomain.CurrentDomain);
 		ApplicationSettingsAccessor.SetApplicationSettings(new());
-		// Disable raising events in the UI thread for additional chat data collections
-		// otherwise is causes constant deadlocks when running tests concurrently.
-		AdditionalChatDataCollection.RaiseInUIThreadGlobal = false;
+		// No dispatcher loop runs here, so every UI-thread call must execute inline.
+		UIDispatcher.Delegating = false;
 	}
 }

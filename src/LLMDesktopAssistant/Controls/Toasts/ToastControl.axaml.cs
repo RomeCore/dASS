@@ -4,9 +4,9 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Rendering.Composition;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Controls.Toasts;
@@ -142,9 +142,9 @@ public partial class ToastControl : UserControl
 
 	public void Dismiss(long toastId)
 	{
-		if (!Dispatcher.UIThread.CheckAccess())
+		if (!UIDispatcher.IsUIThread)
 		{
-			Dispatcher.UIThread.Post(() => Dismiss(toastId));
+			UIDispatcher.Post(() => Dismiss(toastId));
 			return;
 		}
 
@@ -245,7 +245,7 @@ public partial class ToastControl : UserControl
 				await Task.Delay(delay, cts.Token);
 				if (!cts.Token.IsCancellationRequested)
 				{
-					Dispatcher.UIThread.Post(() => Dismiss(toastId));
+					UIDispatcher.Post(() => Dismiss(toastId));
 				}
 			}
 			catch (OperationCanceledException) { }
@@ -331,7 +331,7 @@ public partial class ToastControl : UserControl
 		_ = Task.Run(async () =>
 		{
 			await Task.Delay(SlideOutDuration + TimeSpan.FromMilliseconds(50));
-			Dispatcher.UIThread.Post(onComplete);
+			UIDispatcher.Post(onComplete);
 		});
 	}
 
