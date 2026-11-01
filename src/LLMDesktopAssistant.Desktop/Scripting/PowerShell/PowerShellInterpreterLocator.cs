@@ -40,9 +40,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.PowerShell
 		public ExecutableResolution Resolve(string? configuredPath)
 			=> _cache.GetOrAdd(configuredPath?.Trim() ?? string.Empty, Discover);
 
-		private static ExecutableResolution Discover(string configuredPath)
+		private static ExecutableResolution Discover(string? configuredPath)
 		{
-			if (configuredPath.Length > 0)
+			if (!string.IsNullOrWhiteSpace(configuredPath))
 			{
 				return File.Exists(configuredPath)
 					? new ExecutableResolution(configuredPath, null)

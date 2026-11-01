@@ -47,7 +47,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			      - cwd: string - Working directory (default: current directory)
 			      - env: table - Additional environment variables as key-value pairs
 			      - stdin: string - Data to write to the process standard input
-			      - timeout_seconds: number (default: 30, max: 600) - Maximum execution time.
+			      - timeout_seconds: number (default: 30) - Maximum execution time.
 			        If exceeded, the process is killed and timed_out is true.
 
 			  Returns: table with:
@@ -184,7 +184,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			ns["exec"] = new LuaCallbackFunction(ExecAsync);
 			ns["run_terminal"] = new LuaCallbackFunction(RunTerminal);
 			ns["which"] = new LuaCallbackFunction(Which);
-			ns["kill"] = new LuaCallbackFunction(Kill);
+			ns["kill"] = new LuaCallbackFunction(Kill, isAsync: false);
 			return null;
 		}
 
@@ -392,7 +392,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					stdin = stdinVal.Value;
 
 				if (opts.Get("timeout_seconds") is LuaNumber tsVal)
-					timeoutSeconds = Math.Max(1, Math.Min(600, (int)tsVal.Value));
+					timeoutSeconds = Math.Max(1, (int)tsVal.Value);
 
 				if (opts.Get("env") is LuaTable envTable)
 				{
@@ -469,41 +469,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 		/// </summary>
 		private static string? ResolveCommandPath(string command)
 		{
-			if (Path.IsPathFullyQualified(command))
-				return File.Exists(command) ? command : null;
-
-			if (command.Contains(Path.DirectorySeparatorChar) || command.Contains(Path.AltDirectorySeparatorChar))
-			{
-				var fullPath = Path.GetFullPath(command);
-				return File.Exists(fullPath) ? fullPath : null;
-			}
-
-			var pathEnv = Environment.GetEnvironmentVariable("PATH");
-			if (string.IsNullOrEmpty(pathEnv))
-				return null;
-
-			var pathSeparator = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':';
-			var paths = pathEnv.Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries);
-
-			var extensions = new[] { string.Empty };
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				var pathext = Environment.GetEnvironmentVariable("PATHEXT");
-				if (!string.IsNullOrEmpty(pathext))
-					extensions = pathext.Split(';', StringSplitOptions.RemoveEmptyEntries);
-			}
-
-			foreach (var path in paths)
-			{
-				foreach (var ext in extensions)
-				{
-					var fullPath = Path.Combine(path.Trim(), command + ext);
-					if (File.Exists(fullPath))
-						return fullPath;
-				}
-			}
-
-			return null;
+			return ExecutableLookup.FindOnPath(command);
 		}
 
 		private static LuaTuple Which(LuaCallingContext ctx, LuaValue[] args)
@@ -521,7 +487,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			return new LuaTuple(new LuaString(resolved));
 		}
 
-		private static LuaTuple Kill(LuaCallingContext ctx, LuaValue[] args)
+		private static async Task<LuaTuple> Kill(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("process.kill(pid): at least 1 argument expected.");
@@ -533,7 +499,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			{
 				using var process = Process.GetProcessById((int)pidVal.Value);
 				process.Kill(entireProcessTree: true);
-				process.WaitForExit(3000);
+				using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+				await process.WaitForExitAsync(cts.Token);
 				return new LuaTuple(LuaBoolean.True);
 			}
 			catch (ArgumentException)
