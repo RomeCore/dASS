@@ -90,6 +90,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				- options: table (optional):
 				  - cwd: string - working directory (default: the current one)
 				  - env: table - additional environment variables (key-value pairs)
+				  - timeout_seconds: number (default: nil - infinite) - Maximum execution time.
 
 			  Returns: terminal, or nil plus the error message.
 				A missing executable, an inaccessible working directory or a failed spawn
@@ -213,7 +214,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					WorkingDirectory = cwd,
 					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
 					StdIn = invocation.StdIn,
-					TimeOut = TimeSpan.FromSeconds(invocation.TimeoutSeconds)
+					TimeOut = TimeSpan.FromSeconds(invocation.TimeoutSeconds ?? DefaultTimeoutSeconds)
 				}, ctx.CancellationToken);
 			}
 			catch (Exception ex)
@@ -320,7 +321,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					WorkingDirectory = workDir,
 					RunInTerminal = true,
 					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
-					TimeOut = null
+					TimeOut = invocation.TimeoutSeconds is { } timeoutSecs ? TimeSpan.FromSeconds(timeoutSecs) : null
 				}, ctx.CancellationToken);
 			}
 			catch (Exception ex)
@@ -352,7 +353,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			var cmdArgs = Array.Empty<string>();
 			string? cwd = null;
 			string? stdin = null;
-			var timeoutSeconds = DefaultTimeoutSeconds;
+			int? timeoutSeconds = null;
 			var envVars = new Dictionary<string, string?>();
 
 			if (args.Length > 1 && args[1] is not LuaNil)
@@ -415,7 +416,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 		/// <c>process.exec</c>: a terminal has no initial stdin and never times out.
 		/// </remarks>
 		private sealed record Invocation(string Command, string[] Arguments, string? WorkingDirectory,
-			Dictionary<string, string?> Environment, string? StdIn, int TimeoutSeconds);
+			Dictionary<string, string?> Environment, string? StdIn, int? TimeoutSeconds);
 
 		/// <summary>
 		/// Tokenizes a command-line string into individual arguments,
