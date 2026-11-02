@@ -15,8 +15,9 @@
 		<!-- Messages Area -->
 		<Panel Grid.Row="0">
 
-			<!-- Agent Tasks button (top-right, mirrors ScrollToBottomButton) -->
+			<!-- Agent Tasks button (top-right) -->
 			<Button x:Name="AgentTasksButton"
+							IsVisible="{Binding HasRunningTasks}"
 							Classes="BigIconButton"
 							HorizontalAlignment="Right"
 							VerticalAlignment="Top"
@@ -29,8 +30,7 @@
 												  Width="32" Height="32"/>
 
 					<!-- Running task count badge -->
-					<Border IsVisible="{Binding HasRunningTasks}"
-									Background="#F44336"
+					<Border Background="#F44336"
 									CornerRadius="9"
 									HorizontalAlignment="Right"
 									VerticalAlignment="Top"
@@ -90,7 +90,15 @@
 							HorizontalAlignment="Right"
 							VerticalAlignment="Bottom"
 							Margin="32,16">
+				
+				<Button.Transitions>
+					<Transitions>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+					</Transitions>
+				</Button.Transitions>
+
 				<ico:VisualIcon Kind="ArrowDown"/>
+
 			</Button>
 
 			<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->

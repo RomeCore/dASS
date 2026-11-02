@@ -13,11 +13,9 @@ public partial class ChatView : UserControl
 	private void MessagesScrollViewer_ScrollChanged(object? sender, ScrollChangedEventArgs e)
 	{
 		var atEnd = MessagesScrollViewer.Offset.Y >= MessagesScrollViewer.ScrollBarMaximum.Y - 1d;
-
-		// While the end of the streamed content is being followed the offset intentionally lags
-		// a bit behind the maximum, so don't flash the button during that chase.
-		ScrollToBottomButton.IsVisible =
-			!atEnd && !MessagesScrollViewer.IsFollowingEnd;
+		bool isScrollToBottomActive = !atEnd && !MessagesScrollViewer.IsFollowingEnd;
+		ScrollToBottomButton.Opacity = isScrollToBottomActive ? 1 : 0;
+		ScrollToBottomButton.IsHitTestVisible = isScrollToBottomActive;
 	}
 
 	private void ScrollToBottomButton_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
