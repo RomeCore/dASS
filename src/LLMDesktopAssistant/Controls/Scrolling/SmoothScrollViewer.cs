@@ -133,15 +133,26 @@ namespace LLMDesktopAssistant.Controls.Scrolling
 		public bool IsFollowingEnd => _isFollowingEnd;
 
 		/// <summary>
-		/// Starts (or retargets) a smooth scroll to <paramref name="targetY"/>, clamped to the scrollable
-		/// range. A scroll already in progress is not restarted - it just gets a new target.
+		/// Starts (or retargets) a smooth scroll to <paramref name="targetY"/>, keeping the horizontal
+		/// offset and clamping to the scrollable range. A scroll already in progress is not restarted -
+		/// it just gets a new target.
 		/// </summary>
 		public void AnimateTo(double targetY)
 		{
-			var maximum = MaximumY;
-			var target = new Vector(Offset.X, Math.Clamp(targetY, 0d, maximum));
+			AnimateTo(new Vector(Offset.X, targetY));
+		}
 
-			SetFollowingEnd(target.Y >= maximum - EndTolerance);
+		/// <summary>
+		/// Starts (or retargets) a smooth scroll to <paramref name="target"/>, clamped to the scrollable
+		/// range. A scroll already in progress is not restarted - it just gets a new target.
+		/// </summary>
+		/// <remarks>
+		/// Where the target lands decides whether the end of the content is followed: a target on the end
+		/// engages the follow, any other target drops it - the same rule a wheel notch follows.
+		/// </remarks>
+		public void AnimateTo(Vector target)
+		{
+			SetFollowingEnd(target.Y >= MaximumY - EndTolerance);
 			Pursue(target);
 		}
 
