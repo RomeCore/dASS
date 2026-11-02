@@ -266,8 +266,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					await agentTask;
 
+					ctx.Call.UseMarkdown = true;
 					ctx.Call.SetResult(string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
-							"Agent did not generate any content." : agentTask.LastGeneratedContent);
+						"Agent did not generate any content." : agentTask.LastGeneratedContent);
 					return ToolExecutionResult.Succeeded;
 				}
 				else
@@ -355,9 +356,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				{
 					await agentTask;
 
-					ctx.Call.SetResult(string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
-							"Sub-agent did not generate any content." : agentTask.LastGeneratedContent);
 					ctx.Call.UseMarkdown = true;
+					ctx.Call.SetResult(string.IsNullOrWhiteSpace(agentTask.LastGeneratedContent) ?
+						"Sub-agent did not generate any content." : agentTask.LastGeneratedContent);
 					return ToolExecutionResult.Succeeded;
 				}
 
