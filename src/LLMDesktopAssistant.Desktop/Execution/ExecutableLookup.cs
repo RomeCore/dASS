@@ -1,5 +1,4 @@
 using System.IO;
-using System.Runtime.InteropServices;
 
 namespace LLMDesktopAssistant.Desktop.Execution
 {
@@ -11,7 +10,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		/// <summary>
 		/// Resolves the full path of a executable by searching PATH (and PATHEXT on Windows).
 		/// </summary>
-		/// <param name="fileName">The file name to look for, with the extension the platform needs.</param>
+		/// <param name="fileName">The file name to look for, with or without the extension the platform needs.</param>
 		/// <returns>The full path of the first match, or <see langword="null"/>.</returns>
 		public static string? FindOnPath(string fileName)
 		{
@@ -28,28 +27,46 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			if (string.IsNullOrEmpty(pathEnv))
 				return null;
 
-			var pathSeparator = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':';
-			var paths = pathEnv.Split(pathSeparator, StringSplitOptions.RemoveEmptyEntries);
+			var paths = pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+			var extensions = Extensions();
 
-			var extensions = new[] { string.Empty };
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			foreach (var entry in paths)
 			{
-				var pathext = Environment.GetEnvironmentVariable("PATHEXT");
-				if (!string.IsNullOrEmpty(pathext))
-					extensions = pathext.Split(';', StringSplitOptions.RemoveEmptyEntries);
-			}
+				// A quoted entry is legal and appears in the wild; the quotes are not part of the directory.
+				var directory = entry.Trim().Trim('"');
+				if (directory.Length == 0)
+					continue;
 
-			foreach (var path in paths)
-			{
-				foreach (var ext in extensions)
+				foreach (var extension in extensions)
 				{
-					var fullPath = Path.Combine(path.Trim(), fileName + ext);
-					if (File.Exists(fullPath))
-						return fullPath;
+					var candidate = Path.Combine(directory, fileName + extension);
+					if (File.Exists(candidate))
+						return candidate;
 				}
 			}
 
 			return null;
+		}
+
+		/// <summary>
+		/// The suffixes to try on <c>PATH</c>: the bare name first, then every <c>PATHEXT</c> extension on Windows.
+		/// </summary>
+		/// <remarks>
+		/// The bare name has to come first: callers already pass fully spelled names (<c>bash.exe</c>, <c>git.exe</c>,
+		/// <c>pwsh.exe</c>, or whatever a Lua script asked for), and appending an extension to those asks for
+		/// <c>bash.exe.EXE</c>, which never exists - the executable is then reported as missing while it sits on PATH.
+		/// </remarks>
+		private static string[] Extensions()
+		{
+			if (!OperatingSystem.IsWindows())
+				return [string.Empty];
+
+			var pathext = Environment.GetEnvironmentVariable("PATHEXT");
+			if (string.IsNullOrEmpty(pathext))
+				return [string.Empty];
+
+			var extensions = pathext.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+			return [string.Empty, ..extensions];
 		}
 	}
 }
