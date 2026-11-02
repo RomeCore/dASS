@@ -1,4 +1,4 @@
-@page "/"
+﻿@page "/"
 
 @using LLMDesktopAssistant.Blazor.Components.Messages
 @using LLMDesktopAssistant.Blazor.Services
@@ -15,6 +15,7 @@
 @inject Chat chat
 @inject IChatOperationService chatOperation
 @inject IChatExecutionTokenService ExecutionTokens
+@inject IFollowUpChatMessageQueue FollowUps
 @inject IUserManagementService userManager
 @inject IJSRuntime JS
 
@@ -37,40 +38,104 @@
 		</div>
 	</div>
 	<div class="chat-messages-container" id="messages-container">
-		<MessageSequenceComponent Messages="@chat.Messages" />
+		<MessageSequenceComponent Messages="@chat.Messages" OnEdit="BeginEdit" />
 		<ChatStatusComponent />
 	</div>
 
 	<div class="chat-input-area">
+
+		@* Input chips: the pending queue and the message being edited, as an overlay above the divider. *@
+		@if (_queueCount > 0 || _editingMessage != null)
+		{
+			<div class="chat-chips">
+				@if (_queueCount > 0)
+				{
+					<div class="chat-chip">
+						<button class="chat-chip-body" @onclick="OpenQueueDialog">
+							@LocalizationManager.LocalizeStaticFormat("chat.follow_up.chip", _queueCount)
+						</button>
+						<button class="chat-chip-close" title="@LocalizationManager.LocalizeStatic("chat.follow_up.clear")" @onclick="ClearQueue">
+							<VisualIconComponent Kind="@MaterialIconKind.Close" Size="14" />
+						</button>
+					</div>
+				}
+
+				@if (_editingMessage != null)
+				{
+					<div class="chat-chip">
+						<button class="chat-chip-body" @onclick="RevealEditingMessage">
+							@LocalizationManager.LocalizeStatic("chat.follow_up.edit_chip")
+						</button>
+						<button class="chat-chip-close" title="@LocalizationManager.LocalizeStatic("chat.input.cancel_edit.hint")" @onclick="CancelEdit">
+							<VisualIconComponent Kind="@MaterialIconKind.Close" Size="14" />
+						</button>
+					</div>
+				}
+			</div>
+		}
+
+		@* Queue dialog: every pending follow-up in composition order, each removable on its own. *@
+		@if (_showQueueDialog)
+		{
+			<div class="chat-dialog-backdrop" @onclick="CloseQueueDialog">
+				<div class="chat-dialog-card" @onclick:stopPropagation="true">
+					<div class="chat-dialog-title">@LocalizationManager.LocalizeStatic("chat.follow_up.dialog.title")</div>
+
+					@if (_queueEntries.Count == 0)
+					{
+						<span class="chat-dialog-empty">@LocalizationManager.LocalizeStatic("chat.follow_up.dialog.empty")</span>
+					}
+					else
+					{
+						@foreach (var entry in _queueEntries)
+						{
+							<div class="chat-queue-item">
+								<div class="chat-queue-preview">@Preview(entry)</div>
+								<div class="chat-queue-meta">
+									<span>@LocalizationManager.LocalizeStaticFormat("chat.follow_up.item.sender", entry.SenderLogin)</span>
+									<span>@LevelTitle(entry.Level)</span>
+									<span>@entry.CreatedAt.ToLocalTime().ToString("g")</span>
+								</div>
+								<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("chat.follow_up.item.remove")" @onclick="() => RemoveEntry(entry)">
+									<VisualIconComponent Kind="@MaterialIconKind.Close" Size="16" />
+								</button>
+							</div>
+						}
+					}
+
+					<button class="chat-dialog-close" @onclick="CloseQueueDialog">@LocalizationManager.LocalizeStatic("chat.follow_up.close")</button>
+				</div>
+			</div>
+		}
+
 		<div class="chat-input-row">
 			<input class="chat-input"
 				   @bind="_inputText"
 				   @bind:event="oninput"
 				   @onkeydown="HandleKeyDown"
-				   placeholder="@LocalizationManager.LocalizeStatic("webui.chat.input.placeholder")"
-				   disabled="@_isGenerating" />
+				   placeholder="@LocalizationManager.LocalizeStatic("webui.chat.input.placeholder")" />
 
-			@* Send message without generation *@
+			@* Send without generation: while a run is going this queues with no answer requested *@
 			<button class="chat-send-btn"
 					@onclick="SendMessageWithoutGeneration"
-					disabled="@(string.IsNullOrWhiteSpace(_inputText) || _isGenerating)">
+					disabled="@(!CanSubmit)"
+					title="@LocalizationManager.LocalizeStatic("chat.input.send_button.hint")">
 				<VisualIconComponent Kind="@MaterialIconKind.SendClock" Size="18" Color="white" />
+			</button>
+
+			@* Send: inserts at once when idle, queues while a run is going, flushes on an empty box with a pending queue *@
+			<button class="chat-send-btn"
+					@onclick="SendMessageWithGeneration"
+					disabled="@(!CanSubmit)"
+					title="@LocalizationManager.LocalizeStatic("chat.input.send_generate_button.hint")">
+				<VisualIconComponent Kind="@MaterialIconKind.Send" Size="18" Color="white" />
 			</button>
 
 			@if (_isGenerating)
 			{
-				@* Stop / Cancel generation *@
+				@* Stop: a hard stop, it never injects the queue *@
 				<button class="chat-stop-btn" title="@LocalizationManager.LocalizeStatic("webui.generation.stop")" @onclick="StopGeneration">
 					<VisualIconComponent Kind="@MaterialIconKind.Stop" Size="20" Color="white" />
-				</button>
-			}
-			else
-			{
-				@* Send message *@
-				<button class="chat-send-btn"
-						@onclick="SendMessageWithGeneration"
-						disabled="@string.IsNullOrWhiteSpace(_inputText)">
-					<VisualIconComponent Kind="@MaterialIconKind.Send" Size="18" Color="white" />
 				</button>
 			}
 		</div>
@@ -99,6 +164,11 @@
 	private bool _isGenerating = false;
 	private bool _showProfileOverlay = false;
 
+	private int _queueCount;
+	private List<FollowUpMessage> _queueEntries = [];
+	private bool _showQueueDialog;
+	private BranchedMessage? _editingMessage;
+
 	/// <summary>
 	/// When <see langword="true"/>, the next render will scroll to bottom.
 	/// Used after sending a message (without generation) to ensure the new message is visible.
@@ -120,7 +190,9 @@
 
 		chat.Messages.CollectionChanged += MessagesChanged;
 		ExecutionTokens.ExecutionCancellationTokenChanged += ExecutionStateChanged;
+		FollowUps.Changed += OnQueueChanged;
 		_isGenerating = ExecutionTokens.ExecutionCancellationToken != null;
+		_queueCount = FollowUps.Count;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -181,60 +253,183 @@
 
 	private async Task HandleKeyDown(KeyboardEventArgs e)
 	{
-		if (e.Key == "Enter" && !e.ShiftKey)
-		{
-			await SendMessage(generate: false);
-		}
+		if (e.Key != "Enter" || e.ShiftKey)
+			return;
+
+		await SubmitAsync(generate: !e.CtrlKey);
 	}
 
-	private async Task SendMessage(bool generate)
+	/// <summary>
+	/// Routes a submit through the follow-up matrix, mirroring the desktop: a run in progress queues the text or stops
+	/// the run, an empty box flushes the queue, and an idle chat sends as usual.
+	/// </summary>
+	private async Task SubmitAsync(bool generate)
 	{
-		if (_isGenerating)
-			return;
-
 		var text = _inputText?.Trim();
-		if (string.IsNullOrWhiteSpace(text))
-			return;
-
-		_inputText = string.Empty;
 
 		try
 		{
-			var user = UserState.GetCurrentUser();
-			var senderLogin = user?.Login ?? "anonymous";
-
-			await chatOperation.SendUserInputAsync(new UserInput
+			// An edit is never queued: committing it is a turn of its own, and that turn stops the run.
+			if (_editingMessage != null)
 			{
-				Content = text,
-				SenderLogin = senderLogin,
-				Parts = [],
-				Visibility = _selectedVisibility,
-				VisibleTo = []
-			}, generate);
+				if (!string.IsNullOrWhiteSpace(text))
+					await SendAsync(text, generate);
 
-			// Mark for scroll on next render so the sent message is visible
-			_pendingScroll = true;
+				return;
+			}
+
+			if (_isGenerating)
+			{
+				if (!string.IsNullOrWhiteSpace(text))
+					await EnqueueAsync(text, generate);
+				else if (generate)
+					await chatOperation.StopAndFlushAsync();
+				else
+					await chatOperation.StopGenerationAsync();
+
+				return;
+			}
+
+			if (!string.IsNullOrWhiteSpace(text))
+			{
+				await SendAsync(text, generate);
+				return;
+			}
+
+			if (FollowUps.HasAny)
+				await chatOperation.FlushFollowUpsAsync(generate: false);
 		}
 		catch (Exception ex)
 		{
-			Console.Error.WriteLine($"Failed to send message: {ex.Message}");
+			Console.Error.WriteLine($"Failed to submit: {ex.Message}");
 		}
 	}
 
-	private Task SendMessageWithoutGeneration() => SendMessage(false);
-	private Task SendMessageWithGeneration() => SendMessage(true);
+	private UserInput CreateUserInput(string text) => new()
+	{
+		Content = text,
+		SenderLogin = UserState.GetCurrentUser()?.Login ?? "anonymous",
+		Parts = [],
+		Visibility = _selectedVisibility,
+		VisibleTo = [],
+		// Rights are not modelled yet: every participant may run a command.
+		CanExecuteCommand = true
+	};
+
+	private async Task SendAsync(string text, bool generate)
+	{
+		var editing = _editingMessage;
+		_inputText = string.Empty;
+		_editingMessage = null;
+
+		if (editing is { } message)
+		{
+			// The history may have moved under the edit: never rewrite a message the participant did not open.
+			var index = message.MessageIndex;
+			if (index < 0 || index >= chat.Messages.Count || !ReferenceEquals(chat.Messages[index], message))
+				return;
+
+			await chatOperation.SendEditedUserInputAsync(index, CreateUserInput(text), generate);
+		}
+		else
+		{
+			await chatOperation.SendUserInputAsync(CreateUserInput(text), generate);
+		}
+
+		// Mark for scroll on next render so the sent message is visible
+		_pendingScroll = true;
+	}
+
+	private async Task EnqueueAsync(string text, bool generate)
+	{
+		_inputText = string.Empty;
+
+		await chatOperation.QueueUserInputAsync(CreateUserInput(text), generate);
+	}
+
+	private Task SendMessageWithoutGeneration() => SubmitAsync(false);
+	private Task SendMessageWithGeneration() => SubmitAsync(true);
 
 	private void StopGeneration()
 	{
 		try
 		{
-			ExecutionTokens.ExecutionCancellationToken?.Cancel();
+			// The Stop button is a hard stop: it never injects the queue.
+			_ = chatOperation.StopGenerationAsync();
 		}
 		catch (Exception ex)
 		{
 			Console.Error.WriteLine($"Failed to stop generation: {ex.Message}");
 		}
 	}
+
+	private void OnQueueChanged() => InvokeAsync(() =>
+	{
+		_queueCount = FollowUps.Count;
+		_queueEntries = [.. FollowUps.Entries];
+		StateHasChanged();
+	});
+
+	private void OpenQueueDialog()
+	{
+		_queueEntries = [.. FollowUps.Entries];
+		_showQueueDialog = true;
+	}
+
+	private void CloseQueueDialog() => _showQueueDialog = false;
+
+	private void RemoveEntry(FollowUpMessage entry) => FollowUps.Remove(entry);
+
+	private async Task ClearQueue()
+	{
+		if (!await JS.InvokeAsync<bool>("confirm", LocalizationManager.LocalizeStatic("chat.follow_up.clear.description")))
+			return;
+
+		FollowUps.Clear();
+	}
+
+	private void BeginEdit(BranchedMessage message)
+	{
+		if (message.Message is not UserMessage userMessage)
+			return;
+
+		_editingMessage = message;
+		_inputText = userMessage.Content ?? string.Empty;
+	}
+
+	private void CancelEdit()
+	{
+		_editingMessage = null;
+		_inputText = string.Empty;
+	}
+
+	private Task RevealEditingMessage()
+	{
+		if (_editingMessage is not { } message)
+			return Task.CompletedTask;
+
+		return JS.InvokeVoidAsync("eval",
+			$"document.getElementById('msg-{message.MessageIndex}')?.scrollIntoView({{block: 'center'}})").AsTask();
+	}
+
+	/// <summary>
+	/// Gets a value indicating whether there is anything to submit: text to send or a pending queue to flush.
+	/// </summary>
+	private bool CanSubmit => !string.IsNullOrWhiteSpace(_inputText) || _queueCount > 0;
+
+	private static string Preview(FollowUpMessage entry)
+	{
+		var text = entry.Content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
+		return text.Length <= 120 ? text : text[..117] + "...";
+	}
+
+	private static string LevelTitle(FollowUpInjectionLevel level) => LocalizationManager.LocalizeStatic(level switch
+	{
+		FollowUpInjectionLevel.Immediate => "chat.follow_up.level.immediate",
+		FollowUpInjectionLevel.Message => "chat.follow_up.level.message",
+		FollowUpInjectionLevel.Agent => "chat.follow_up.level.agent",
+		_ => "chat.follow_up.level.agent_sequence",
+	});
 
 	private async Task ScrollToBottom(bool smooth = true)
 	{
@@ -252,6 +447,7 @@
 	{
 		chat.Messages.CollectionChanged -= MessagesChanged;
 		ExecutionTokens.ExecutionCancellationTokenChanged -= ExecutionStateChanged;
+		FollowUps.Changed -= OnQueueChanged;
 		_ = JS.InvokeVoidAsync("ChatScroll.destroy");
 	}
 }

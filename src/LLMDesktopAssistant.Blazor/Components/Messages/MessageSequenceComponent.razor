@@ -6,12 +6,18 @@
 
 @foreach (var message in Messages)
 {
-	<ChatMessageComponent Message="@message" />
+	<ChatMessageComponent Message="@message" OnEdit="OnEdit" />
 }
 
 @code {
 	[Parameter]
 	public required RangeObservableCollection<BranchedMessage> Messages { get; init; }
+
+	/// <summary>
+	/// Raised when a participant asks to edit a message; the chat page loads it into the input.
+	/// </summary>
+	[Parameter]
+	public EventCallback<BranchedMessage> OnEdit { get; set; }
 
 	protected override void OnInitialized()
 	{

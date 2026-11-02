@@ -5,7 +5,7 @@
 
 @if (Message.Message is UserMessage userMsg)
 {
-	<UserMessageComponent BranchedMessage="@Message" Message="@userMsg" ChatOperation="@ChatOperation" Chat="@Chat" />
+	<UserMessageComponent BranchedMessage="@Message" Message="@userMsg" ChatOperation="@ChatOperation" Chat="@Chat" OnEdit="OnEdit" />
 }
 else if (Message.Message is AssistantMessage assistantMsg)
 {
@@ -15,4 +15,10 @@ else if (Message.Message is AssistantMessage assistantMsg)
 @code {
 	[Parameter]
 	public required BranchedMessage Message { get; init; }
+
+	/// <summary>
+	/// Raised when a participant asks to edit this message.
+	/// </summary>
+	[Parameter]
+	public EventCallback<BranchedMessage> OnEdit { get; set; }
 }

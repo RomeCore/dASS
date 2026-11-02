@@ -12,7 +12,7 @@
 
 @rendermode InteractiveServer
 
-<div class="message-row user-message-row @(_isHidden ? "message-hidden" : "")">
+<div id="@($"msg-{BranchedMessage.MessageIndex}")" class="message-row user-message-row @(_isHidden ? "message-hidden" : "")">
 	@if (_showAvatar)
 	{
 		<div class="message-header user-message-header">
@@ -49,6 +49,7 @@
 			</div>
 		</div>
 
+		@* Reserved for the future participant-rights model: resend, delete and branching stay off until then. *@
 		@if (false)
 		{
 			<div class="message-actions user-message-actions">
@@ -82,6 +83,17 @@
 				}
 			</div>
 		}
+
+		@* The one action that is live today: load the message into the input, as on the desktop. *@
+		@* Editing truncates the branch for everyone, so until a rights model exists only the author may do it. *@
+		@if (_isOwn)
+		{
+			<div class="message-actions user-message-actions">
+				<button class="msg-action-btn" title="@LocalizationManager.LocalizeStatic("webui.edit")" @onclick="EditMessage">
+					<VisualIconComponent Kind="@MaterialIconKind.Edit" Size="18" />
+				</button>
+			</div>
+		}
 	}
 </div>
 
@@ -98,10 +110,17 @@
 	[Parameter]
 	public required Chat Chat { get; init; }
 
+	/// <summary>
+	/// Raised when a participant asks to edit this message; the chat page loads it into the input.
+	/// </summary>
+	[Parameter]
+	public EventCallback<BranchedMessage> OnEdit { get; set; }
+
 	private bool _showAvatar = true;
 	private string _avatarBase64 = string.Empty;
 	private string _senderName = string.Empty;
 	private bool _isHidden;
+	private bool _isOwn;
 
 	protected override void OnInitialized()
 	{
@@ -116,7 +135,9 @@
 	{
 		// Always show the message to the sender (author)
 		var currentUser = UserState.GetCurrentUser();
-		if (currentUser?.Login == Message.SenderLogin)
+		_isOwn = currentUser?.Login == Message.SenderLogin;
+
+		if (_isOwn)
 		{
 			_isHidden = false;
 			return;
@@ -185,10 +206,7 @@
 		}
 	}
 
-	private void EditMessage()
-	{
-		Console.WriteLine($"Edit message {BranchedMessage.MessageIndex} - not implemented yet");
-	}
+	private Task EditMessage() => OnEdit.InvokeAsync(BranchedMessage);
 
 	private void PreviousBranch()
 	{
