@@ -11,67 +11,152 @@
 
 	<StackPanel Orientation="Horizontal"
 							HorizontalAlignment="Right"
-							Spacing="5">
+							Spacing="6">
 
-		<!-- Active user selector -->
+		<!-- Active user selector: an avatar (or a fallback icon) collapsed, the name in the list -->
 		<ComboBox ItemsSource="{Binding Users}"
 							SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
-							MinWidth="110"
-							MaxWidth="250"
+							MinWidth="56"
 							VerticalAlignment="Center"
 							IsVisible="{Binding HasMultipleUsers}"
-							ToolTip.Tip="{loc:Loc chat.user.active.hint}">
+							ToolTip.Tip="{loc:Loc chat.user.active.hint}"
+							ToolTip.VerticalOffset="-2"
+							ToolTip.Placement="Top">
 
 			<ComboBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal" Spacing="6">
+				<DataTemplate x:DataType="local:UserToolbarItemModel">
+					<Panel>
 						<ico:VisualIcon Kind="AccountCircle"
-															Width="14" Height="14"
-															VerticalAlignment="Center"
-															Opacity="0.7"/>
-						<TextBlock Text="{Binding Name}"
-											 FontWeight="Medium"
-											 VerticalAlignment="Center"
-											 TextTrimming="CharacterEllipsis"/>
-					</StackPanel>
+														Width="14" Height="14"
+														VerticalAlignment="Center"
+														Opacity="0.7"
+														IsVisible="{Binding !HasAvatar}"/>
+						<Border CornerRadius="8"
+										ClipToBounds="True"
+										IsVisible="{Binding HasAvatar}">
+							<Image Source="{Binding Avatar}"
+										 Width="16" Height="16"
+										 Stretch="UniformToFill"/>
+						</Border>
+					</Panel>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
 
+			<ComboBox.Styles>
+				<Style Selector="ComboBoxItem">
+					<Setter Property="ContentTemplate">
+						<Setter.Value>
+							<DataTemplate x:DataType="local:UserToolbarItemModel">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<ico:VisualIcon Kind="AccountCircle"
+																	Width="14" Height="14"
+																	VerticalAlignment="Center"
+																	Opacity="0.7"
+																	IsVisible="{Binding !HasAvatar}"/>
+									<Border CornerRadius="8"
+													ClipToBounds="True"
+													IsVisible="{Binding HasAvatar}">
+										<Image Source="{Binding Avatar}"
+													 Width="16" Height="16"
+													 Stretch="UniformToFill"/>
+									</Border>
+									<TextBlock Text="{Binding Name}"
+														 FontWeight="Medium"
+														 VerticalAlignment="Center"
+														 TextTrimming="CharacterEllipsis"/>
+								</StackPanel>
+							</DataTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</ComboBox.Styles>
+
 		</ComboBox>
 
-		<!-- Visibility selector -->
+		<!-- Visibility selector: the icon collapsed, icon and text in the list -->
 		<ComboBox ItemsSource="{Binding Visibilities}"
-					SelectedItem="{Binding SelectedVisibility}"
-					MinWidth="120"
-					Margin="4,0"
-					ToolTip.Tip="{loc:Loc chat.visibility.hint}">
+							SelectedItem="{Binding SelectedVisibility}"
+							MinWidth="56"
+							VerticalAlignment="Center"
+							ToolTip.Tip="{loc:Loc chat.visibility.hint}"
+							ToolTip.VerticalOffset="-2"
+							ToolTip.Placement="Top">
 
 			<ComboBox.ItemTemplate>
-				<DataTemplate>
-					<StackPanel Orientation="Horizontal" Spacing="6">
-						<ico:VisualIcon Kind="{Binding Icon}"
-															Width="14" Height="14"
-															VerticalAlignment="Center"
-															Opacity="0.7"/>
-						<TextBlock Text="{loc:Loc {Binding Title}}"
-											 VerticalAlignment="Center"/>
-					</StackPanel>
+				<DataTemplate x:DataType="local:UserMessageVisibilityItemModel">
+					<ico:VisualIcon Kind="{Binding Icon}"
+													Width="14" Height="14"
+													VerticalAlignment="Center"
+													Opacity="0.7"/>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
+
+			<ComboBox.Styles>
+				<Style Selector="ComboBoxItem">
+					<Setter Property="ContentTemplate">
+						<Setter.Value>
+							<DataTemplate x:DataType="local:UserMessageVisibilityItemModel">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<ico:VisualIcon Kind="{Binding Icon}"
+																	Width="14" Height="14"
+																	VerticalAlignment="Center"
+																	Opacity="0.7"/>
+									<TextBlock Text="{loc:Loc {Binding Title}}"
+														 VerticalAlignment="Center"/>
+								</StackPanel>
+							</DataTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</ComboBox.Styles>
+
 		</ComboBox>
 
-		<!-- Cancel edit -->
-		<Button Classes="IconButton"
-						Command="{Binding UserInput.CancelEditCommand}"
-						ToolTip.Tip="{loc:Loc chat.input.cancel_edit.hint}">
+		<!-- Follow-up level: the icon collapsed, icon and text in the list -->
+		<ComboBox ItemsSource="{Binding Levels}"
+							SelectedItem="{Binding SelectedLevel, Mode=TwoWay}"
+							MinWidth="56"
+							VerticalAlignment="Center"
+							ToolTip.Tip="{loc:Loc chat.follow_up.level.hint}"
+							ToolTip.VerticalOffset="-2"
+							ToolTip.Placement="Top">
 
-			<ico:VisualIcon Kind="EditOff"/>
-		</Button>
+			<ComboBox.ItemTemplate>
+				<DataTemplate x:DataType="local:UserInputLevelItemModel">
+					<ico:VisualIcon Kind="{Binding Icon}"
+													Width="14" Height="14"
+													VerticalAlignment="Center"
+													Opacity="0.7"/>
+				</DataTemplate>
+			</ComboBox.ItemTemplate>
 
-		<!-- Send -->
+			<ComboBox.Styles>
+				<Style Selector="ComboBoxItem">
+					<Setter Property="ContentTemplate">
+						<Setter.Value>
+							<DataTemplate x:DataType="local:UserInputLevelItemModel">
+								<StackPanel Orientation="Horizontal" Spacing="6">
+									<ico:VisualIcon Kind="{Binding Icon}"
+																	Width="14" Height="14"
+																	VerticalAlignment="Center"
+																	Opacity="0.7"/>
+									<TextBlock Text="{loc:Loc {Binding Title}}"
+														 VerticalAlignment="Center"/>
+								</StackPanel>
+							</DataTemplate>
+						</Setter.Value>
+					</Setter>
+				</Style>
+			</ComboBox.Styles>
+
+		</ComboBox>
+
+		<!-- Send without generation: while a run is going this queues with no answer requested -->
 		<Button Classes="IconButton"
 						Command="{Binding UserInput.SendMessageCommand}"
-						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}">
+						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 
 			<ico:VisualIcon Kind="SendClock"/>
 		</Button>
@@ -79,17 +164,20 @@
 		<!-- Send with generation -->
 		<Button Classes="IconButton"
 						Command="{Binding UserInput.SendGenerateMessageCommand}"
-						IsVisible="{Binding UserInput.IsGenerating, Converter={StaticResource InverseBooleanConverter}}"
-						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}">
+						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 
 			<ico:VisualIcon Kind="Send"/>
 		</Button>
 
-		<!-- Stop -->
+		<!-- Stop: a hard stop, it never injects the queue -->
 		<Button Classes="IconButton"
 						Command="{Binding UserInput.CancelGenerationCommand}"
 						IsVisible="{Binding UserInput.IsGenerating}"
-						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}">
+						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 
 			<ico:VisualIcon Kind="Stop"/>
 		</Button>

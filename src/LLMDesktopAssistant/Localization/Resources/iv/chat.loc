@@ -3,6 +3,24 @@
 %locale: 
 %namespace: chat
 
+follow_up.chip: Messages queued: {0}
+follow_up.clear: Clear queue
+follow_up.clear.action: Clear
+follow_up.clear.description: Every queued message will be lost. This cannot be undone.
+follow_up.clear.title: Clear the queue?
+follow_up.close: Close
+follow_up.dialog.empty: No queued messages
+follow_up.dialog.title: Queued messages
+follow_up.edit_chip: Editing message
+follow_up.edit_reveal: Show the message being edited
+follow_up.item.remove: Remove from the queue
+follow_up.item.sender: from {0}
+follow_up.level.agent: After the agent
+follow_up.level.agent_sequence: After the whole chain
+follow_up.level.hint: When the queued message is injected
+follow_up.level.immediate: Right away
+follow_up.level.message: After the message
+follow_up.open: Open the queue
 input.attach_file.hint: Attach file...
 input.cancel_edit.hint: Cancel editing
 input.hint: Enter your message...

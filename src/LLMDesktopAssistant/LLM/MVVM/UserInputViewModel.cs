@@ -59,7 +59,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			public bool CanExecute(object? parameter)
 			{
-				return _vm._executionTokens.ExecutionCancellationToken == null;
+				// The box stays usable while a run is going: the matrix decides between queueing and stopping.
+				return true;
 			}
 
 			public async void Execute(object? parameter)
@@ -135,7 +136,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				try
 				{
-					_vm._executionTokens.ExecutionCancellationToken?.Cancel();
+					// The Stop button is a hard stop: it never injects the queue.
+					_ = _vm.StopGenerationAsync();
 				}
 				catch (Exception ex)
 				{
@@ -225,6 +227,29 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		}
 
 		private readonly IChatExecutionTokenService _executionTokens;
+		private readonly IFollowUpChatMessageQueue _followUps;
+
+		/// <summary>
+		/// Gets a value indicating whether the chat holds pending follow-ups.
+		/// </summary>
+		public bool HasFollowUps => _followUps.HasAny;
+
+		/// <summary>
+		/// Gets or sets the level the next queued message is composed with. Persisted with the queue itself, so the last
+		/// picked value survives a restart.
+		/// </summary>
+		public FollowUpInjectionLevel SelectedLevel
+		{
+			get => _followUps.DefaultLevel;
+			set
+			{
+				if (_followUps.DefaultLevel == value)
+					return;
+
+				_followUps.DefaultLevel = value;
+				RaisePropertyChanged(nameof(SelectedLevel));
+			}
+		}
 
 		private int _completionCaretIndex;
 
@@ -267,11 +292,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		public ICommand CancelGenerationCommand { get; }
 
+		/// <summary>
+		/// Gets the chips shown above the input: the pending follow-up queue and the message being edited.
+		/// </summary>
+		public UserInputChipsViewModel Chips { get; }
+
 		public UserInputViewModel(ChatViewModel chatVM)
 		{
 			Chat = chatVM.Chat;
 			ChatViewModel = chatVM;
 			_executionTokens = Chat.Services.GetRequiredService<IChatExecutionTokenService>();
+			_followUps = Chat.Services.GetRequiredService<IFollowUpChatMessageQueue>();
 
 			var inputCompletionService = Chat.Services.GetRequiredService<IInputCompletionService>();
 			CompletionViewModel = new InputCompletionViewModel(inputCompletionService);
@@ -292,6 +323,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			IsGenerating = _executionTokens.ExecutionCancellationToken != null;
 			_executionTokens.ExecutionCancellationTokenChanged += OnExecutionStateChanged;
+
+			Chips = new UserInputChipsViewModel(this);
 		}
 
 		private void OnExecutionStateChanged()
@@ -427,7 +460,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			// Pre-flight: an unknown command or an invalid argument list refuses the send before the draft is cleared,
 			// so the user's text survives a refusal.
 			var insertion = Chat.Services.GetRequiredService<IChatMessageInsertionService>();
-			var check = insertion.CanInsertUserInput(userInput, generate, editingMessage?.MessageIndex);
+			var check = insertion.CanInsertUserInput(userInput);
 			if (!check.Success)
 			{
 				Chat.Services.GetRequiredService<IToastService>().ShowError(check.Error!.Value);
@@ -452,6 +485,54 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			return chatOperator.SendUserInputAsync(userInput, generate, cts);
 		}
 
+		/// <summary>
+		/// Puts the current draft into the follow-up queue instead of sending it, for the case where a run is going.
+		/// </summary>
+		/// <param name="generate">Whether the message asks for an answer once it is injected.</param>
+		public async Task EnqueueCurrentUserInputAsync(bool generate)
+		{
+			var userInput = GetCurrentUserInput();
+			if (userInput is null)
+				return;
+
+			// Same pre-flight as a send: a refused command keeps the text where the user can see it.
+			var insertion = Chat.Services.GetRequiredService<IChatMessageInsertionService>();
+			var check = insertion.CanInsertUserInput(userInput);
+			if (!check.Success)
+			{
+				Chat.Services.GetRequiredService<IToastService>().ShowError(check.Error!.Value);
+				return;
+			}
+
+			var chatOperator = Chat.Services.GetRequiredService<IChatOperationService>();
+			var queued = chatOperator.QueueUserInputAsync(userInput, generate);
+
+			// The entry already exists: QueueUserInputAsync does all its queue work before its first await, so the draft
+			// can be dropped now even when an immediate entry then stops and drains the run.
+			UserInputState.Text = string.Empty;
+			UserInputState.Parts.Clear();
+
+			await queued;
+		}
+
+		/// <summary>
+		/// Drains the pending follow-ups as a turn: they are inserted in order and generate if any of them asked for it.
+		/// </summary>
+		public Task FlushFollowUpsAsync() =>
+			Chat.Services.GetRequiredService<IChatOperationService>().FlushFollowUpsAsync(generate: false);
+
+		/// <summary>
+		/// Stops the running turn, waits for it to unwind, then drains the queue and generates again.
+		/// </summary>
+		public Task StopGenerationAndFlushAsync() =>
+			Chat.Services.GetRequiredService<IChatOperationService>().StopAndFlushAsync();
+
+		/// <summary>
+		/// Stops the running turn and leaves the queue untouched.
+		/// </summary>
+		public Task StopGenerationAsync() =>
+			Chat.Services.GetRequiredService<IChatOperationService>().StopGenerationAsync();
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -460,6 +541,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				UserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
 				_executionTokens.ExecutionCancellationTokenChanged -= OnExecutionStateChanged;
+				Chips.Dispose();
 
 				_draftData.Dispose();
 				_editData.Dispose();

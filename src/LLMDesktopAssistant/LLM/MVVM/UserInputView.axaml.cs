@@ -73,14 +73,51 @@ public partial class UserInputView : UserControl
 	}
 
 	/// <summary>
-	/// Sends the drafted message, or cancels the running generation instead - there is nothing to send while one runs.
+	/// Routes Enter and Ctrl+Enter through the follow-up matrix: a run in progress queues the text or stops the run, an
+	/// empty box flushes the queue, and an idle chat sends as usual.
 	/// </summary>
 	private static void Send(UserInputViewModel viewModel, bool generate)
 	{
+		// An edit is never queued: committing it is a turn of its own, and that turn stops the run.
+		if (viewModel.EditingMessage != null)
+		{
+			if (!viewModel.IsEmpty)
+				Run(viewModel.SendCurrentUserInputAsync(generate));
+
+			return;
+		}
+
 		if (viewModel.IsGenerating)
-			viewModel.CancelGenerationCommand.Execute(null);
-		else if (!viewModel.IsEmpty)
-			viewModel.SendCurrentUserInputAsync(generate: generate);
+		{
+			if (!viewModel.IsEmpty)
+				Run(viewModel.EnqueueCurrentUserInputAsync(generate));
+			else if (generate)
+				Run(viewModel.StopGenerationAndFlushAsync());
+			else
+				Run(viewModel.StopGenerationAsync());
+
+			return;
+		}
+
+		if (!viewModel.IsEmpty)
+			Run(viewModel.SendCurrentUserInputAsync(generate));
+		else if (viewModel.HasFollowUps)
+			Run(viewModel.FlushFollowUpsAsync());
+	}
+
+	/// <summary>
+	/// Starts an input action without blocking the key handler, logging whatever it throws instead of losing it.
+	/// </summary>
+	private static void Run(Task task)
+	{
+		_ = task.ContinueWith(t =>
+		{
+			// A cancelled turn is not a failure: stopping is a normal action of this matrix.
+			if (t.Exception?.InnerException is OperationCanceledException)
+				return;
+
+			Log.Error(t.Exception, "Follow-up input action failed");
+		}, TaskContinuationOptions.OnlyOnFaulted);
 	}
 
 	/// <summary>

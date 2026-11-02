@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.UserInputChipsView"
+						 x:DataType="local:UserInputChipsViewModel">
+
+	<UserControl.Styles>
+		
+		<Style Selector="Border.inputActionChip">
+			<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryAccentBrush}"/>
+			<Setter Property="BorderThickness" Value="1,1,1,0"/>
+			<Setter Property="CornerRadius" Value="8,8,0,0"/>
+		</Style>
+
+	</UserControl.Styles>
+
+	<StackPanel Orientation="Horizontal"
+							Spacing="8"
+							IsVisible="{Binding IsVisible}">
+
+		<!-- Pending follow-ups -->
+		<Border Classes="inputActionChip"
+						IsVisible="{Binding HasQueue}">
+			<StackPanel Orientation="Horizontal" Spacing="2">
+				<Button Command="{Binding OpenQueueCommand}"
+								Background="Transparent"
+								BorderThickness="0"
+								Padding="10,4"
+								ToolTip.Tip="{loc:Loc chat.follow_up.open}">
+					<TextBlock Text="{Binding QueueTitle}" FontSize="12"/>
+				</Button>
+				<Button Command="{Binding ClearQueueCommand}"
+								Background="Transparent"
+								BorderThickness="0"
+								Padding="6,4"
+								ToolTip.Tip="{loc:Loc chat.follow_up.clear}">
+					<ico:VisualIcon Kind="Close" Width="12" Height="12"/>
+				</Button>
+			</StackPanel>
+		</Border>
+
+		<!-- Message being edited -->
+		<Border Classes="inputActionChip"
+						IsVisible="{Binding IsEditing}">
+			<StackPanel Orientation="Horizontal" Spacing="2">
+				<Button Command="{Binding RevealEditCommand}"
+								Background="Transparent"
+								BorderThickness="0"
+								Padding="10,4"
+								ToolTip.Tip="{loc:Loc chat.follow_up.edit_reveal}">
+					<TextBlock Text="{Binding EditTitle}" FontSize="12"/>
+				</Button>
+				<Button Command="{Binding CancelEditCommand}"
+								Background="Transparent"
+								BorderThickness="0"
+								Padding="6,4"
+								ToolTip.Tip="{loc:Loc chat.input.cancel_edit.hint}">
+					<ico:VisualIcon Kind="Close" Width="12" Height="12"/>
+				</Button>
+			</StackPanel>
+		</Border>
+
+	</StackPanel>
+
+</UserControl>

@@ -31,6 +31,8 @@
 			<Button Classes="IconButton"
 							Command="{Binding OpenSettingsCommand}"
 							ToolTip.Tip="{loc:Loc common.settings}"
+							ToolTip.VerticalOffset="-2"
+							ToolTip.Placement="Top"
 							CornerRadius="0,8,8,0">
 				<ico:VisualIcon Kind="Cog"/>
 			</Button>
@@ -43,14 +45,18 @@
 		<!-- Memorized tool decisions -->
 		<Button Classes="IconButton"
 						Command="{Binding OpenConsentMemorizationCommand}"
-						ToolTip.Tip="{loc:Loc tool.call.remember.manager.hint}">
+						ToolTip.Tip="{loc:Loc tool.call.remember.manager.hint}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 			<ico:VisualIcon Kind="BookmarkMultipleOutline"/>
 		</Button>
 
 		<!-- Attach -->
 		<Button Classes="IconButton"
 						Command="{Binding OpenAttachmentsManagerCommand}"
-						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}">
+						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 
 			<ico:VisualIcon Kind="Paperclip"/>
 		</Button>
@@ -58,7 +64,9 @@
 		<!-- Blazor Web UI Host -->
 		<Button Classes="IconButton"
 						Command="{Binding OpenBlazorWebUICommand}"
-						ToolTip.Tip="{loc:Loc webui.host.title}">
+						ToolTip.Tip="{loc:Loc webui.host.title}"
+						ToolTip.VerticalOffset="-2"
+						ToolTip.Placement="Top">
 
 			<ico:VisualIcon Kind="Web"/>
 		</Button>

@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using Avalonia.Controls;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.LLM.Domain;

@@ -1,15 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
-			 xmlns:beh="clr-namespace:LLMDesktopAssistant.Controls.Behaviours"
-			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatView"
-			 x:DataType="local:ChatViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatView"
+						 x:DataType="local:ChatViewModel">
 	
 	<Grid RowDefinitions="*,Auto">
 
@@ -27,21 +26,21 @@
 
 				<Panel>
 					<ico:VisualIcon Kind="{Binding AgentTaskIcon}"
-									  Width="32" Height="32"/>
+												  Width="32" Height="32"/>
 
 					<!-- Running task count badge -->
 					<Border IsVisible="{Binding HasRunningTasks}"
-							Background="#F44336"
-							CornerRadius="9"
-							HorizontalAlignment="Right"
-							VerticalAlignment="Top"
-							Padding="5,1"
-							Margin="0,-6,-6,0"
-							ZIndex="1">
+									Background="#F44336"
+									CornerRadius="9"
+									HorizontalAlignment="Right"
+									VerticalAlignment="Top"
+									Padding="5,1"
+									Margin="0,-6,-6,0"
+									ZIndex="1">
 						<TextBlock Text="{Binding RunningTaskCount}"
-								   FontSize="10"
-								   Foreground="White"
-								   FontWeight="Bold"/>
+										   FontSize="10"
+										   Foreground="White"
+										   FontWeight="Bold"/>
 					</Border>
 				</Panel>
 
@@ -56,8 +55,8 @@
 													Spacing="8"
 													Margin="0,0,0,8">
 								<ico:VisualIcon Kind="TimerSandComplete"
-																	Width="18" Height="18"
-																	VerticalAlignment="Center"/>
+																Width="18" Height="18"
+																VerticalAlignment="Center"/>
 								<TextBlock Text="{loc:Loc task.title}"
 													 FontSize="15" FontWeight="Bold"
 													 VerticalAlignment="Center"/>
@@ -72,12 +71,12 @@
 			</Button>
 
 			<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
-										ScrollChanged="MessagesScrollViewer_ScrollChanged"
-										VerticalScrollBarVisibility="Visible"
-										AllowAutoHide="False"
-										BringIntoViewOnFocusChange="False"
-										FollowEnd="True"
-										Step="75">
+																 ScrollChanged="MessagesScrollViewer_ScrollChanged"
+																 VerticalScrollBarVisibility="Visible"
+																 AllowAutoHide="False"
+																 BringIntoViewOnFocusChange="False"
+																 FollowEnd="True"
+																 Step="75">
 
 				<StackPanel>
 					<ContentControl Content="{Binding MessageSequence}"/>
@@ -93,6 +92,13 @@
 							Margin="32,16">
 				<ico:VisualIcon Kind="ArrowDown"/>
 			</Button>
+
+			<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->
+			<ContentControl HorizontalAlignment="Right"
+											VerticalAlignment="Bottom"
+											Margin="16,0,96,0"
+											ZIndex="20"
+											Content="{Binding ChatBottomPanel.UserInput.Chips}"/>
 
 		</Panel>
 

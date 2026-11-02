@@ -3,6 +3,24 @@
 %locale: ru-RU
 %namespace: chat
 
+follow_up.chip: Сообщений в очереди: {0}
+follow_up.clear: Очистить очередь
+follow_up.clear.action: Очистить
+follow_up.clear.description: Все сообщения в очереди будут потеряны. Отменить это нельзя.
+follow_up.clear.title: Очистить очередь?
+follow_up.close: Закрыть
+follow_up.dialog.empty: В очереди пусто
+follow_up.dialog.title: Сообщения в очереди
+follow_up.edit_chip: Редактирование сообщения
+follow_up.edit_reveal: Показать редактируемое сообщение
+follow_up.item.remove: Убрать из очереди
+follow_up.item.sender: от {0}
+follow_up.level.agent: После агента
+follow_up.level.agent_sequence: После всей цепочки
+follow_up.level.hint: Когда вставлять сообщение из очереди
+follow_up.level.immediate: Сразу
+follow_up.level.message: После ответа
+follow_up.open: Открыть очередь
 input.attach_file.hint: Прикрепить файл...
 input.cancel_edit.hint: Отменить редактирование
 input.hint: Введите сообщение...

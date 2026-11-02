@@ -18,6 +18,24 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// </summary>
 		public ChatViewModel ChatViewModel { get; }
 
+		/// <summary>
+		/// Raised when a message should be scrolled into view - the edit chip asks for it.
+		/// </summary>
+		public event Action<MessageViewModelBase>? BringIntoViewRequested;
+
+		/// <summary>
+		/// Asks the view to scroll the given message into view. Does nothing when the message is not in the sequence.
+		/// </summary>
+		/// <param name="message">The message to reveal.</param>
+		public void BringIntoView(BranchedMessage message)
+		{
+			var index = ChatViewModel.Chat.Messages.IndexOf(message);
+			if (index < 0 || index >= MessageViewModels.Count)
+				return;
+
+			BringIntoViewRequested?.Invoke(MessageViewModels[index]);
+		}
+
 		public MessageSequenceViewModel(ChatViewModel chatVM)
 		{
 			MessageViewModels = new RangeObservableCollection<MessageViewModelBase>();
