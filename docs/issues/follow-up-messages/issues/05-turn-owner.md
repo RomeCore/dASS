@@ -1,6 +1,6 @@
 # 05: The turn in `ChatOperationService`
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 01, 02, 03, 04
 
@@ -56,3 +56,7 @@ exactly as written in the spec.
 ## Not in scope
 
 The key matrix (ticket 08), stop and immediate (ticket 06), regenerate and friends (ticket 07).
+
+## Answer
+
+`ChatOperationService` owns the turn: `RunTurnAsync` with both orders and `FlushAsync` as a per-entry loop. One refinement of the ticket text: the entry leaves the queue between its message and its command, not after the command. Appending is a synchronous write while a command can run for minutes, so the queue must never show an already-inserted message, and the removal cannot race a long command. `FlushOutcome.Inserted` stops the loop when another turn owns the head, which is what prevents a spin. The turn starts each iteration with a token check, so a cancelled turn never advances the queue.

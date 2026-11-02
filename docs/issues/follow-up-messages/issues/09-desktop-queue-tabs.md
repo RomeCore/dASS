@@ -1,6 +1,6 @@
 # 09: Queue chips and dialog (Avalonia UI)
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 08
 
@@ -64,3 +64,7 @@ inside the same visual block.
 ## Not in scope
 
 WebUI (ticket 10).
+
+## Answer
+
+Landed as chips in the shared Avalonia UI (Desktop and Android together). The queue chip shows the count and opens the dialogue with per-entry delete; its nested close clears everything behind `ConfirmDialogViewModel`. The edit chip brings the message into view through `MessageSequenceViewModel.BringIntoViewRequested` and its nested close cancels the edit. Adjusted after the first live look: an accent border, the row flush with the divider (`Margin="16,0,96,0") and on the left, and the toolbar's separate cancel-edit button removed because the chip owns that action now. Keeping clear of `ScrollToBottomButton` is a right margin of 96.

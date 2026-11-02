@@ -1,6 +1,6 @@
 # 10: WebUI parity
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 07, 08, 09
 
@@ -36,3 +36,7 @@ See [`spec.md`](../spec.md) section *WebUI*.
 ## Not in scope
 
 Participant permissions, per-participant private queues (the queue is shared by design).
+
+## Answer
+
+The box is never disabled, Enter generates and Ctrl+Enter does not (the inverse behaviour was a bug), the chip and the dialogue are shared state with the sender shown, `CanExecuteCommand` is set on every send, and message editing loads the message into the input. Two additions beyond the ticket. First, only the author sees the edit action: editing truncates the branch for every participant, so until a rights model exists the cheap honest rule is "own messages only". Second, both send buttons stay available during a run, so the queue is reachable with the mouse and not only through Enter. The edit is held as the `BranchedMessage` and its identity is checked before commit, so a history that moved under the edit is not silently rewritten.

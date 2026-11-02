@@ -1,6 +1,6 @@
 # 03: The insertion primitive becomes queue-blind, in two steps
 
-Status: open
+Status: resolved
 Type: task
 Blocked by:
 
@@ -69,3 +69,7 @@ public interface IChatMessageInsertionService
 ## Not in scope
 
 Who generates instead (ticket 05), command extraction (ticket 04).
+
+## Answer
+
+The primitive is split exactly as written: `AppendUserInputAsync` appends (or replaces at the edit index) and resolves the command without running it; `RunInsertedCommandAsync` runs it and reports the intent. The `IChatExecutionService` dependency is gone with the generation call, which removed the DI cycle the design relied on. `CanInsertUserInput` dropped its two unused parameters. `CanExecuteCommand` is read once, in the message factory, and a message without the permission is stored verbatim.

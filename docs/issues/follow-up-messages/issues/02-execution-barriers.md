@@ -1,6 +1,6 @@
 # 02: Barriers and the early exit in the execution loops
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 01
 
@@ -42,3 +42,7 @@ See [`spec.md`](../spec.md) section *Barriers and the early exit*.
 ## Not in scope
 
 Draining, insertion, the turn loop.
+
+## Answer
+
+Three barriers landed where the ticket put them: the message barrier after `Task.WhenAll(toolExecutionTasks)`, the agent barrier after `RunAgentExecutionFinishedHooksAsync`, the sequence barrier before agent selection. `GenerateMessageResponseAsync` returns `(Message, Interrupted)` and `GenerateResponseWithAgentAsync` returns `bool`; no exception type was introduced, because the three generic `catch` blocks would have logged a sentinel at every level and the message-level `OperationCanceledException` handler would have marked a successful message as cancelled.

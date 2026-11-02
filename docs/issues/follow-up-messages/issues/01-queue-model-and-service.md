@@ -1,6 +1,6 @@
 # 01: Follow-up queue model and queue service
 
-Status: open
+Status: resolved
 Type: task
 Blocked by:
 
@@ -77,3 +77,7 @@ public interface IFollowUpChatMessageQueue
 ## Not in scope
 
 Barrier checks, the drain, any UI.
+
+## Answer
+
+Landed as specified, with two signature adjustments. `MinLevel` returns `FollowUpInjectionLevel?` (`null` when the queue is empty), so "no gate" can never be mistaken for a level. `Entries` was added for the dialogue snapshot. The drain hook is `TryBeginNext` / `Complete` / `Abandon` instead of a dequeue plus a restore: the entry is removed only after its message reached the history, so a crash can duplicate a pending entry but never lose one. `DefaultLevel` ignores a write of the default value when the item does not exist yet, otherwise the toolbar combo created an empty queue item in every chat it was opened in.

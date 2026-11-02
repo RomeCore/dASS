@@ -1,10 +1,10 @@
 # Follow-up messages - spec
 
-Status: agreed during the grilling of 2026-10-31 and 2026-11-02. Implementation is tracked in
-[`issues/`](issues/).
+Status: implemented and verified live on 2026-11-02. Every ticket in [`issues/`](issues/) is closed with an answer
+that records what actually landed, including the deliberate deviations from this text.
 
-This spec supersedes the design notes in [`docs/ideas/chat-execution/follow-up-messages.md`](../../ideas/chat-execution/follow-up-messages.md);
-the idea file stays open until the implementation lands and is then rewritten as a record.
+This spec superseded the design notes in [`docs/ideas/chat-execution/follow-up-messages.md`](../../ideas/chat-execution/follow-up-messages.md);
+that file is now a short record pointing back here.
 
 ## Problem
 

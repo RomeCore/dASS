@@ -1,6 +1,6 @@
 # 11: Verification pass
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 09, 10
 
@@ -49,3 +49,7 @@ Every cell of the input matrix, in both clients:
 - Restarting generation (regenerate) with a non-empty queue: the answer comes first, the queue after.
 - Stop pressed twice in a row: no duplicated message, no double answer.
 - The tab strip never covers the scroll-to-bottom button, and the history does not shift when a tab appears.
+
+## Answer
+
+Verified live by the user: the ordinary behaviour is unchanged and the follow-up flow works in the running build. Not re-verified: the two-browser focus check (AR-0027), attachments inside the queue surviving a restart, and the `FormsToolModule` path. That last one is the one open risk of the feature: `WaitUntilIdleAsync` has no timeout, so a Lua form that does not observe its tool token would leave stop-and-flush waiting forever and silently. Adding a ceiling (log a warning and proceed) is the recommended follow-up.

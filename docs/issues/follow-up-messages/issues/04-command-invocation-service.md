@@ -1,6 +1,6 @@
 # 04: Command invocation service
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 03
 
@@ -43,3 +43,7 @@ public interface IChatCommandInvocationService
 ## Not in scope
 
 New command sources, the argument grammar.
+
+## Answer
+
+`IChatCommandInvocationService` landed with `Resolve` and `ExecuteAsync`, and the `CommandResolution` / `CommandExecution` records moved next to it. `ExecuteAsync` takes the `Command` level around the executor call only and keeps the existing rule that a cancelled command is not a failure.

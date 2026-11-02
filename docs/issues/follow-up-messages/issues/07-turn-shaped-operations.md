@@ -1,6 +1,6 @@
 # 07: Edit commit, regenerate, resend, continue
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 05
 
@@ -36,3 +36,7 @@ See [`spec.md`](../spec.md) sections *Flows* (edit commit, regenerate, resend, c
 ## Not in scope
 
 Editing a queued entry, editing in the WebUI (ticket 10).
+
+## Answer
+
+Edit commit, regenerate, resend and continue all run through the turn. The edit waits for idle before taking the operation - the previous order took the operation first, which cancelled the very run it was about to wait for. Review catch: all three operations ignored the `false` result of the idle wait and went on to mutate a history that was still unwinding; they now return instead.

@@ -1,6 +1,6 @@
 # 08: Desktop input matrix
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 05, 06
 
@@ -49,3 +49,7 @@ else if (viewModel.HasFollowUps) viewModel.FlushFollowUpsAsync();
 ## Not in scope
 
 The tab strip and its dialog (ticket 09).
+
+## Answer
+
+The matrix landed in `UserInputView.Send` with `Run` for the fire-and-forget continuations (cancellation is filtered out of the log). The level selector lives in the right toolbar as an icon-only combo - the icon collapsed, the icon and the localized text in the list - and it is visible at all times. `SendMessageCommand.CanExecute` no longer depends on the execution token. Two review fixes: an open edit is committed instead of queued, and the Stop button routes through `StopGenerationAsync` as a hard stop.

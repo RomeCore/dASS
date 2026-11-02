@@ -1,6 +1,6 @@
 # 06: Stop, hard stop, immediate level and the idle wait
 
-Status: open
+Status: resolved
 Type: task
 Blocked by: 05
 
@@ -52,3 +52,7 @@ public interface IChatOperationService
 ## Not in scope
 
 The key handling itself (ticket 08).
+
+## Answer
+
+`WaitUntilIdleAsync` lives on `IChatExecutionStatusService` and is driven by `WithExecution`, not by the token service: taking a level erases the entry it just cancelled, so tokens cannot report the end of the run they killed. `StopGenerationAsync`, `StopAndFlushAsync` and the `Immediate` enqueue path landed; the wait happens before the new operation is taken, so the new turn does not compete with the dying one. Known risk, left open and recorded in the verification answer: the wait has no timeout.
