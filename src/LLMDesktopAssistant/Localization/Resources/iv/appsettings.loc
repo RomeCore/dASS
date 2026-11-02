@@ -21,3 +21,6 @@ web.stealth: Stealth (CloakBrowser)
 web.installed: Installed
 web.not_installed: Not installed
 web.install: Install
+
+appearance.title: Appearance
+appearance.show_splash: Show the startup splash screen

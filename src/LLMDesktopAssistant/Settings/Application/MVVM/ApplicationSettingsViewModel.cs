@@ -48,6 +48,11 @@ namespace LLMDesktopAssistant.Settings.Application.MVVM
 		private void InitializeTree()
 		{
 			SettingsTree.Add(
+				new SettingsLeafNode(LocalizationManager.LocalizeStatic("appsettings.appearance.title"),
+				MaterialIconKind.Palette,
+				() => new ApplicationAppearanceSettingsViewModel()));
+
+			SettingsTree.Add(
 				new SettingsLeafNode(LocalizationManager.LocalizeStatic("appsettings.language.title"),
 				MaterialIconKind.Translate,
 				() => new ApplicationLanguageSettingsViewModel()));

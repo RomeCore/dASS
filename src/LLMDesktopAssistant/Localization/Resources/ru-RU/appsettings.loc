@@ -21,3 +21,6 @@ web.stealth: Stealth (CloakBrowser)
 web.installed: Установлен
 web.not_installed: Не установлен
 web.install: Установить
+
+appearance.title: Внешний вид
+appearance.show_splash: Показывать заставку при запуске
