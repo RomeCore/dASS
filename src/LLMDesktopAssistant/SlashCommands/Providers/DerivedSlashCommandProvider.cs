@@ -68,7 +68,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 				var command = new SlashCommandInfo
 				{
 					Name = source.Name,
-					Description = source.Description,
+					DescriptionGetter = _ => source.Description,
 					Aliases = source.Aliases,
 					Order = source.Order,
 					Namespaces = BuildNamespaces(source),
@@ -78,7 +78,10 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 					Path = source.Path,
 					AddonSource = source.AddonSource,
 					SourceKind = SourceKind,
-					Source = source
+					Source = source,
+					NameKey = source.NameKey,
+					DescriptionKey = source.DescriptionKey,
+					CategoryKey = source.CategoryKey
 				};
 
 				PopulateFromSource(source, command);
