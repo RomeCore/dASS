@@ -148,7 +148,7 @@ namespace LLMDesktopAssistant.LLM.Services.Attachments
 			{
 				try
 				{
-					nativeAttachment = new SerializableImageAttachment(destPath);
+					nativeAttachment = SerializableImageAttachment.FromFile(destPath);
 				}
 				catch
 				{
