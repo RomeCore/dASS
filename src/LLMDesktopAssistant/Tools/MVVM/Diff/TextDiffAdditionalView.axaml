@@ -97,7 +97,7 @@
 
 							<Border Padding="0" Margin="0" CornerRadius="0"
 											BorderThickness="0,0,0,0"
-											Opacity="{Binding IsEnabled, Converter={StaticResource BooleanToOpacityConverter}}">
+											Opacity="{Binding IsEnabled, Converter={StaticResource BooleanToOpacityConverter_0_4}}">
 
 								<Grid RowDefinitions="Auto,*" Margin="0">
 

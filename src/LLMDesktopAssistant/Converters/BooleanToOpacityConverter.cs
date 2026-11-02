@@ -16,9 +16,9 @@ namespace LLMDesktopAssistant.Converters
 		public double TrueOpacity { get; set; } = 1.0;
 
 		/// <summary>
-		/// The opacity value when the boolean is <see langword="false"/> (default: 0.4).
+		/// The opacity value when the boolean is <see langword="false"/> (default: 0.0).
 		/// </summary>
-		public double FalseOpacity { get; set; } = 0.4;
+		public double FalseOpacity { get; set; } = 0.0;
 
 		public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
 		{

@@ -16,9 +16,11 @@
 	<conv:FallbackMultiConverter x:Key="FallbackMultiConverter"/>
 	<conv:JsonToMarkdownConverter x:Key="JsonToMarkdownConverter"/>
 	<conv:ColorToBrushConverter x:Key="ColorToBrushConverter"/>
-
-	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter"/>
-	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverterDisabled" FalseOpacity="0.25"/>
+	
+	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter" FalseOpacity="0.0"/>
+	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter_0_25" FalseOpacity="0.25"/>
+	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter_0_4" FalseOpacity="0.4"/>
+	<conv:BooleanToOpacityConverter x:Key="BooleanToOpacityConverter_0_5" FalseOpacity="0.5"/>
 
 	<conv:DiffLineBackgroundConverter x:Key="DiffLineBackgroundConverter"/>
 	<conv:DiffLineForegroundConverter x:Key="DiffLineForegroundConverter"/>

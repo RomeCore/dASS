@@ -17,13 +17,20 @@
 
 			<!-- Agent Tasks button (top-right) -->
 			<Button x:Name="AgentTasksButton"
-							IsVisible="{Binding HasRunningTasks}"
+							IsHitTestVisible="{Binding HasRunningTasks}"
+							Opacity="{Binding HasRunningTasks, Converter={StaticResource BooleanToOpacityConverter}}"
 							Classes="BigIconButton"
 							HorizontalAlignment="Right"
 							VerticalAlignment="Top"
 							Margin="32,16"
 							ClipToBounds="False"
 							ZIndex="10">
+				
+				<Button.Transitions>
+					<Transitions>
+						<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+					</Transitions>
+				</Button.Transitions>
 
 				<Panel>
 					<ico:VisualIcon Kind="{Binding AgentTaskIcon}"
