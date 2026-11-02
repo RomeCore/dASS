@@ -5,58 +5,50 @@
 			 mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="200"
 			 xmlns:local="using:LLMDesktopAssistant.Controls.Dialogs"
 			 x:Class="LLMDesktopAssistant.Controls.Dialogs.ConfirmDialogView"
-			 x:DataType="local:ConfirmDialogViewModel">
+			 x:DataType="local:ConfirmDialogViewModel"
+			 MinWidth="280"
+			 MaxWidth="520"
+			 Padding="16">
 
-	<Border Background="{DynamicResource CardBackground}"
-			BorderBrush="{DynamicResource CardBorderBrush}"
-			BorderThickness="1"
-			CornerRadius="8"
-			Padding="16"
-			Margin="4"
-			MinWidth="280"
-			MaxWidth="520">
+	<StackPanel Orientation="Vertical" Spacing="12">
 
-		<StackPanel Orientation="Vertical" Spacing="12">
+		<!-- Title -->
+		<TextBlock Text="{Binding Title}"
+				   FontSize="16"
+				   FontWeight="Bold"
+				   TextWrapping="Wrap"/>
 
-			<!-- Title -->
-			<TextBlock Text="{Binding Title}"
-					   FontSize="16"
-					   FontWeight="Bold"
-					   TextWrapping="Wrap"/>
+		<!-- Description -->
+		<TextBlock Text="{Binding Description}"
+				   FontSize="13"
+				   TextWrapping="Wrap"
+				   IsVisible="{Binding Description, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+				   Opacity="0.8"/>
 
-			<!-- Description -->
-			<TextBlock Text="{Binding Description}"
-					   FontSize="13"
-					   TextWrapping="Wrap"
-					   IsVisible="{Binding Description, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-					   Opacity="0.8"/>
+		<!-- Buttons -->
+		<StackPanel Orientation="Horizontal"
+					HorizontalAlignment="Right"
+					Spacing="8"
+					Margin="0,8,0,0">
 
-			<!-- Buttons -->
-			<StackPanel Orientation="Horizontal"
-						HorizontalAlignment="Right"
-						Spacing="8"
-						Margin="0,8,0,0">
+			<Button Content="{Binding CancelText}"
+					Command="{Binding CancelCommand}"
+					Classes="secondary"
+					MinWidth="80"/>
 
-				<Button Content="{Binding CancelText}"
-						Command="{Binding CancelCommand}"
-						Classes="secondary"
-						MinWidth="80"/>
+			<Button Content="{Binding ConfirmText}"
+					Command="{Binding ConfirmCommand}"
+					IsVisible="{Binding IsDanger}"
+					Foreground="#FF5733"
+					MinWidth="80"/>
 
-				<Button Content="{Binding ConfirmText}"
-						Command="{Binding ConfirmCommand}"
-						IsVisible="{Binding IsDanger}"
-						Foreground="#FF5733"
-						MinWidth="80"/>
-
-				<Button Content="{Binding ConfirmText}"
-						Command="{Binding ConfirmCommand}"
-						IsVisible="{Binding IsDanger, Converter={StaticResource InverseBooleanConverter}}"
-						MinWidth="80"/>
-
-			</StackPanel>
+			<Button Content="{Binding ConfirmText}"
+					Command="{Binding ConfirmCommand}"
+					IsVisible="{Binding IsDanger, Converter={StaticResource InverseBooleanConverter}}"
+					MinWidth="80"/>
 
 		</StackPanel>
 
-	</Border>
+	</StackPanel>
 
 </UserControl>

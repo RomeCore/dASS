@@ -5,73 +5,65 @@
 			 mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="240"
 			 xmlns:local="using:LLMDesktopAssistant.Controls.Dialogs"
 			 x:Class="LLMDesktopAssistant.Controls.Dialogs.TextInputDialogView"
-			 x:DataType="local:TextInputDialogViewModel">
+			 x:DataType="local:TextInputDialogViewModel"
+			 MinWidth="320"
+			 MaxWidth="560"
+			 Padding="16">
 
-	<Border Background="{DynamicResource CardBackground}"
-			BorderBrush="{DynamicResource CardBorderBrush}"
-			BorderThickness="1"
-			CornerRadius="8"
-			Padding="16"
-			Margin="4"
-			MinWidth="320"
-			MaxWidth="560">
+	<StackPanel Orientation="Vertical" Spacing="12">
 
-		<StackPanel Orientation="Vertical" Spacing="12">
+		<!-- Title -->
+		<TextBlock Text="{Binding Title}"
+				   FontSize="16"
+				   FontWeight="Bold"
+				   TextWrapping="Wrap"/>
 
-			<!-- Title -->
-			<TextBlock Text="{Binding Title}"
-					   FontSize="16"
-					   FontWeight="Bold"
-					   TextWrapping="Wrap"/>
+		<!-- Description -->
+		<TextBlock Text="{Binding Description}"
+				   FontSize="13"
+				   TextWrapping="Wrap"
+				   IsVisible="{Binding Description, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+				   Opacity="0.8"/>
 
-			<!-- Description -->
-			<TextBlock Text="{Binding Description}"
-					   FontSize="13"
-					   TextWrapping="Wrap"
-					   IsVisible="{Binding Description, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-					   Opacity="0.8"/>
+			<!-- Input -->
+			<StackPanel Spacing="4">
+				<TextBlock Text="{Binding Label}"
+						   FontSize="13"
+						   IsVisible="{Binding Label, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+						   Opacity="0.8"/>
 
-				<!-- Input -->
-				<StackPanel Spacing="4">
-					<TextBlock Text="{Binding Label}"
-							   FontSize="13"
-							   IsVisible="{Binding Label, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-							   Opacity="0.8"/>
+				<Panel>
+					<TextBox Text="{Binding Value, Mode=TwoWay}"
+							 PlaceholderText="{Binding Placeholder}"
+							 MinLines="3"
+							 MaxLines="8"
+							 AcceptsReturn="True"
+							 TextWrapping="Wrap"
+							 IsVisible="{Binding IsMultiline}"/>
 
-					<Panel>
-						<TextBox Text="{Binding Value, Mode=TwoWay}"
-								 PlaceholderText="{Binding Placeholder}"
-								 MinLines="3"
-								 MaxLines="8"
-								 AcceptsReturn="True"
-								 TextWrapping="Wrap"
-								 IsVisible="{Binding IsMultiline}"/>
-
-						<TextBox Text="{Binding Value, Mode=TwoWay}"
-								 PlaceholderText="{Binding Placeholder}"
-								 IsVisible="{Binding IsMultiline, Converter={StaticResource InverseBooleanConverter}}"/>
-					</Panel>
-				</StackPanel>
-
-			<!-- Buttons -->
-			<StackPanel Orientation="Horizontal"
-						HorizontalAlignment="Right"
-						Spacing="8"
-						Margin="0,8,0,0">
-
-				<Button Content="{Binding CancelText}"
-						Command="{Binding CancelCommand}"
-						Classes="secondary"
-						MinWidth="80"/>
-
-				<Button Content="{Binding SubmitText}"
-						Command="{Binding SubmitCommand}"
-						MinWidth="80"/>
-
+					<TextBox Text="{Binding Value, Mode=TwoWay}"
+							 PlaceholderText="{Binding Placeholder}"
+							 IsVisible="{Binding IsMultiline, Converter={StaticResource InverseBooleanConverter}}"/>
+				</Panel>
 			</StackPanel>
+
+		<!-- Buttons -->
+		<StackPanel Orientation="Horizontal"
+					HorizontalAlignment="Right"
+					Spacing="8"
+					Margin="0,8,0,0">
+
+			<Button Content="{Binding CancelText}"
+					Command="{Binding CancelCommand}"
+					Classes="secondary"
+					MinWidth="80"/>
+
+			<Button Content="{Binding SubmitText}"
+					Command="{Binding SubmitCommand}"
+					MinWidth="80"/>
 
 		</StackPanel>
 
-	</Border>
+	</StackPanel>
 
 </UserControl>
