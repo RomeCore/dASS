@@ -129,28 +129,22 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			set => SetProperty(ref _renderMarkdown, value);
 		}
 
-		private bool _isDisabledForAgents;
-		/// <summary>
-		/// Gets or sets a value indicating whether the message is hidden from every agent. The state is kept on the
-		/// message itself, so it is persisted and shared by every view of the chat.
-		/// </summary>
-		public bool IsDisabledForAgents
+		private bool _isOtherBeingEdited = false;
+		public bool IsOtherBeingEdited
 		{
-			get => _isDisabledForAgents;
+			get => _isOtherBeingEdited;
 			set
 			{
-				if (SetProperty(ref _isDisabledForAgents, value))
-				{
-					Message.IsDisabledForAgents = value;
+				if (SetProperty(ref _isOtherBeingEdited, value))
 					RaisePropertyChanged(nameof(ContentOpacity));
-				}
 			}
 		}
 
 		/// <summary>
 		/// Gets the opacity of the whole message: a message hidden from agents is dimmed.
 		/// </summary>
-		public double ContentOpacity => IsDisabledForAgents ? 0.55 : 1.0;
+		public double ContentOpacity => (Message.IsDisabledForAgents ? 0.55 : 1.0)
+			* (IsOtherBeingEdited ? 0.3 : 1.0);
 
 		/// <summary>
 		/// Gets a value indicating whether the message contains tool calls.
@@ -181,7 +175,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			Message.PropertyChanged += OnMessagePropertyChanged;
 
 			_renderMarkdown = DefaultRenderMarkdown;
-			_isDisabledForAgents = Message.IsDisabledForAgents;
 
 			ToolCalls.PropertyChanged += OnToolCallsPropertyChanged;
 
@@ -222,8 +215,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			else if (e.PropertyName == nameof(ChatMessage.IsDisabledForAgents))
 				InvokeUI(() =>
 				{
-					_isDisabledForAgents = Message.IsDisabledForAgents;
-					RaisePropertyChanged(nameof(IsDisabledForAgents));
 					RaisePropertyChanged(nameof(ContentOpacity));
 				});
 		}

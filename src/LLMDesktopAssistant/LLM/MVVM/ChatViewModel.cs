@@ -76,7 +76,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			Chat = chat;
 			ChatBottomPanel = new ChatBottomPanelViewModel(this);
 			ChatStatus = new ChatStatusViewModel(chat);
-			MessageSequence = new MessageSequenceViewModel(this);
+			MessageSequence = new MessageSequenceViewModel(this, ChatBottomPanel.UserInput);
 
 			AgentTaskList = new AgentTaskListViewModel
 			{

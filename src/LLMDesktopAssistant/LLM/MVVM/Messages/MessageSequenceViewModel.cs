@@ -19,6 +19,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		public ChatViewModel ChatViewModel { get; }
 
 		/// <summary>
+		/// The user input view model instance associated with this message sequence.
+		/// </summary>
+		public UserInputViewModel UserInputViewModel { get; }
+
+		/// <summary>
 		/// Raised when a message should be scrolled into view - the edit chip asks for it.
 		/// </summary>
 		public event Action<MessageViewModelBase>? BringIntoViewRequested;
@@ -29,20 +34,19 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 		/// <param name="message">The message to reveal.</param>
 		public void BringIntoView(BranchedMessage message)
 		{
-			var index = ChatViewModel.Chat.Messages.IndexOf(message);
-			if (index < 0 || index >= MessageViewModels.Count)
-				return;
-
-			BringIntoViewRequested?.Invoke(MessageViewModels[index]);
+			if (MessageViewModels.FirstOrDefault(vm => vm.Message == message.Message) is { } vm)
+				BringIntoViewRequested?.Invoke(vm);
 		}
 
-		public MessageSequenceViewModel(ChatViewModel chatVM)
+		public MessageSequenceViewModel(ChatViewModel chatVM, UserInputViewModel userInputVM)
 		{
-			MessageViewModels = new RangeObservableCollection<MessageViewModelBase>();
+			MessageViewModels = [];
 			ChatViewModel = chatVM;
+			UserInputViewModel = userInputVM;
 
 			MessageViewModels.AddRange(chatVM.Chat.Messages.Select(CreateMessageViewModel));
-			chatVM.Chat.Messages.CollectionChanged += OnMessagesCollectionChanged;
+			ChatViewModel.Chat.Messages.CollectionChanged += OnMessagesCollectionChanged;
+			UserInputViewModel.PropertyChanged += UserInputPropertyChanged;
 		}
 
 		private void OnMessagesCollectionChanged(object? s, NotifyCollectionChangedEventArgs e)
@@ -90,8 +94,20 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 						break;
 				}
-				;
 			});
+		}
+
+		private void UserInputPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(UserInputViewModel.EditingMessage))
+			{
+				if (UserInputViewModel.EditingMessage is not null)
+					foreach (var message in MessageViewModels)
+						message.IsOtherBeingEdited = message.Message != UserInputViewModel.EditingMessage.Message;
+				else
+					foreach (var message in MessageViewModels)
+						message.IsOtherBeingEdited = false;
+			}
 		}
 
 		private MessageViewModelBase CreateMessageViewModel(BranchedMessage branchedMessage)
@@ -126,6 +142,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				foreach (var viewModel in MessageViewModels)
 					viewModel.Dispose();
 				ChatViewModel.Chat.Messages.CollectionChanged -= OnMessagesCollectionChanged;
+				UserInputViewModel.PropertyChanged -= UserInputPropertyChanged;
 				MessageViewModels.Clear();
 			}
 		}
