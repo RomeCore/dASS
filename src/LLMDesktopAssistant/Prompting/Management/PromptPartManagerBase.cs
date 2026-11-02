@@ -292,8 +292,9 @@ namespace LLMDesktopAssistant.Prompting.Management
 
 		private V? PickBest(IEnumerable<V> parts)
 		{
-			var appSettings = ApplicationSettingsAccessor.ApplicationSettings.Language;
-			var preferredLanguageCode = new LanguageCode((appSettings.Prompt ?? appSettings.System).ToNullIfEmpty() ?? "iv");
+			var promptLanguage = ApplicationSettingsAccessor.ApplicationSettings.Language.Prompt;
+			var interfaceLanguage = ApplicationStartupSettingsAccessor.Current.Language;
+			var preferredLanguageCode = new LanguageCode((promptLanguage ?? interfaceLanguage).ToNullIfEmpty() ?? "iv");
 			var languageGroups = parts.ToLookup(p => p.Language);
 			var selectedLanguage = _langFallbackScheme.GetFallbackLanguage(preferredLanguageCode, languageGroups.Select(g => g.Key));
 

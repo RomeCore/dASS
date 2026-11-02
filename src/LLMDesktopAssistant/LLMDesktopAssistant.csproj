@@ -31,6 +31,7 @@
 	<ItemGroup>
 		<AvaloniaResource Include="Assets\Fonts\*.ttf" />
 		<AvaloniaResource Include="Assets\icon.ico" />
+		<AvaloniaResource Include="Assets\icon.png" />
 		<EmbeddedResource Include="Assets\TextMate\**\*.json" />
 		<EmbeddedResource Include="Prompting\Resources\**\*.llt" />
 		<EmbeddedResource Include="Localization\Resources\**\*.loc" />

@@ -11,7 +11,6 @@ namespace LLMDesktopAssistant.Localization
 	/// Files are loaded from the embedded resources of the current assembly and from the user locale
 	/// directory (<c>%LOCALAPPDATA%\.llmassist\locale</c>), where user files override embedded ones.
 	/// </summary>
-	[Service(typeof(LocalizationManager), Order = 10)]
 	public class LocFileLocalizationManager : LocalizationManager
 	{
 		private readonly Assembly _resourceAssembly;
@@ -29,7 +28,7 @@ namespace LLMDesktopAssistant.Localization
 			LoadEmbeddedFiles();
 			LoadUserFiles(userLocaleDirectory ?? Directories.LocaleFiles);
 
-			var savedLanguage = ApplicationSettingsAccessor.ApplicationSettings.Language.System;
+			var savedLanguage = ApplicationStartupSettingsAccessor.Current.Language;
 			if (!string.IsNullOrEmpty(savedLanguage))
 				CurrentLanguage = savedLanguage;
 		}
@@ -61,7 +60,10 @@ namespace LLMDesktopAssistant.Localization
 			if (_entriesByLocale.ContainsKey(language))
 			{
 				_currentLocale = language;
-				ApplicationSettingsAccessor.ApplicationSettings.Language.System = language;
+
+				// The chosen language is persisted through the startup settings, which need no
+				// container and no reflection scan.
+				ApplicationStartupSettingsAccessor.Current.Language = language;
 				return true;
 			}
 			return false;

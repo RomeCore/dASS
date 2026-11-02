@@ -1,0 +1,14 @@
+%locale: ru-RU
+%namespace: splash
+
+loading: Загрузка...
+failed: Не удалось запустить приложение
+close: Закрыть
+
+stage.plugins: Загрузка плагинов
+stage.scan: Сканирование сборок
+stage.services: Сборка контейнера сервисов
+stage.chats: Инициализация чатов
+stage.main_window: Подготовка интерфейса
+
+loading_module: Загрузка модуля {0} ({1})

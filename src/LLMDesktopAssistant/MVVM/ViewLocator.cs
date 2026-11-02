@@ -16,11 +16,17 @@ namespace LLMDesktopAssistant.MVVM
 	/// </remarks>
 	public sealed class ViewLocator : IDataTemplate
 	{
-		private static readonly Dictionary<Type, Type> _ViewModel_to_View_map;
+		private static Dictionary<Type, Type> _ViewModel_to_View_map = null!;
 		private static readonly ConcurrentDictionary<Type, Type?> _resolvedTypesCache = new();
 
 		static ViewLocator()
 		{
+		}
+
+		private static void EnsureMap()
+		{
+			if (_ViewModel_to_View_map is not null) return;
+
 			List<(Type ViewModelType, Type ViewType)> mappings = [];
 
 			// Try-catch block needed for designer support
@@ -104,6 +110,8 @@ namespace LLMDesktopAssistant.MVVM
 
 		private static bool TryMap(Type viewModelType, out Type? viewType)
 		{
+			EnsureMap();
+
 			if (_ViewModel_to_View_map.TryGetValue(viewModelType, out var mapped))
 			{
 				viewType = mapped;

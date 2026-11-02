@@ -1,0 +1,14 @@
+%locale:
+%namespace: splash
+
+loading: Loading...
+failed: Startup failed
+close: Close
+
+stage.plugins: Loading plugins
+stage.scan: Scanning assemblies
+stage.services: Building the service container
+stage.chats: Initializing chats
+stage.main_window: Preparing the interface
+
+loading_module: Loading module {0} ({1})

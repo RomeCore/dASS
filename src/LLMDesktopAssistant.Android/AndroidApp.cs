@@ -1,14 +1,21 @@
-﻿using LLMDesktopAssistant.Android.Utils;
-using Serilog;
+﻿using LLMDesktopAssistant.Settings.Application;
+using LLMDesktopAssistant.Startup.Splash;
 
 namespace LLMDesktopAssistant.Avalonia.Android
 {
 	public class AndroidApp : App
 	{
-		protected override LoggerConfiguration ConfigureLogger(LoggerConfiguration config)
+		protected override object? CreateSplashContent()
 		{
-			return base.ConfigureLogger(config)
-				.WriteTo.Sink(new AndroidDebugLogSink());
+			if (!ApplicationStartupSettingsAccessor.Current.ShowSplash)
+				return null;
+
+			// The same view the desktop window hosts: the compact class drops the wordmark, so
+			// the logo fills the screen the way an Android splash is expected to.
+			var view = new SplashView { DataContext = new SplashViewModel() };
+			view.Classes.Add("compact");
+
+			return view;
 		}
 	}
 }

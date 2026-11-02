@@ -63,7 +63,7 @@ namespace LLMDesktopAssistant.Localization
 				});
 			}
 
-			if (ServiceRegistry.Provider.GetService<LocalizationManager>() is LocalizationManager localizationManager)
+			if (LocalizationManager.Current is { } localizationManager)
 			{
 				multiBinding.Bindings.Add(new Binding
 				{
@@ -76,7 +76,6 @@ namespace LLMDesktopAssistant.Localization
 			multiBinding.Converter = new LocalizationConverter();
 			multiBinding.ConverterParameter = StringFormat;
 
-			// TODO: Check if this is right
 			return multiBinding;
 		}
 
@@ -84,7 +83,7 @@ namespace LLMDesktopAssistant.Localization
 		{
 			public object? Convert(IList<object?> values, Type targetType, object? parameter, CultureInfo culture)
 			{
-				if (values.Count < 2) return null;
+				if (values.Count == 0) return null;
 
 				var key = values[0]?.ToString();
 				if (string.IsNullOrEmpty(key)) return null;

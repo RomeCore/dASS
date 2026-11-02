@@ -1,33 +1,32 @@
 ﻿using Avalonia.Markup.Xaml.Styling;
-using LLMDesktopAssistant.Blazor;
-using LLMDesktopAssistant.Desktop.Utils;
-using LLMDesktopAssistant.Utils;
-using Serilog;
-using Serilog.Sinks.SystemConsole.Themes;
+using LLMDesktopAssistant.Cli;
+using LLMDesktopAssistant.Settings.Application;
 
 namespace LLMDesktopAssistant.Desktop
 {
 	public class DesktopApp : App
 	{
-		protected override LoggerConfiguration ConfigureLogger(LoggerConfiguration config)
-		{
-			return base.ConfigureLogger(config)
-				.WriteTo.Sink(new ConsoleAllocatorSink())
-				.WriteTo.Console(applyThemeToRedirectedOutput: true, theme: SystemConsoleTheme.Literate);
-		}
-
 		public override void Initialize()
 		{
-			// Load plugins only for desktops
-			PluginManager.LoadPluginsInto(AppDomain.CurrentDomain);
-			ReflectionUtility.AddAdditionalAssembly(typeof(ChatBlazorUIStarter).Assembly, observe: true);
-
+			// Plugin loading and the Blazor assembly registration are the PluginsStage, so that they
+			// appear in the startup progress like every other expensive step.
 			Styles.Add(new StyleInclude(new Uri("avares://LiveMarkdown.Avalonia.Mermaid/Styles.axaml"))
 			{
 				Source = new Uri("avares://LiveMarkdown.Avalonia.Mermaid/Styles.axaml")
 			});
 
 			base.Initialize();
+		}
+
+		protected override object? CreateSplashContent()
+		{
+			if (CommandLineExecutor.Parameters.NoSplash)
+				return null;
+
+			if (!ApplicationStartupSettingsAccessor.Current.ShowSplash)
+				return null;
+
+			return new SplashWindow();
 		}
 	}
 }

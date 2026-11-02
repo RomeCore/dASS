@@ -10,7 +10,8 @@ namespace LLMDesktopAssistant.Localization
 		private static LocalizationManager? _overrideManager;
 
 		/// <summary>
-		/// Sets the manager used by the static localization methods. Intended for testing purposes.
+		/// Sets the manager used by the static localization methods. Intended for the startup
+		/// bootstrap and for testing, not for feature code.
 		/// </summary>
 		/// <param name="manager">The manager to use, or <see langword="null"/> to resolve from the service registry.</param>
 		internal static void SetOverrideManager(LocalizationManager? manager)
@@ -18,6 +19,13 @@ namespace LLMDesktopAssistant.Localization
 			_overrideManager = manager;
 		}
 
+		/// <summary>
+		/// Gets the manager the static localization methods use. It is the override installed during
+		/// the shared initialization, or the registered service once the container exists - which is
+		/// what lets XAML localize itself before the container is built.
+		/// </summary>
+		public static LocalizationManager? Current =>
+			_overrideManager ?? ServiceRegistry.Provider?.GetService<LocalizationManager>();
 
 		/// <summary>
 		/// Event that is raised when the language changes. Subscribers do not need a reference to a manager instance,
@@ -32,7 +40,7 @@ namespace LLMDesktopAssistant.Localization
 		/// <returns>The localized string, or null if not found.</returns>
 		public static string? TryLocalizeStatic(string key)
 		{
-			return (_overrideManager ?? ServiceRegistry.Provider?.GetService<LocalizationManager>())?.TryLocalize(key);
+			return Current?.TryLocalize(key);
 		}
 
 		/// <summary>
@@ -42,7 +50,7 @@ namespace LLMDesktopAssistant.Localization
 		/// <returns>The localized string, or the original key if not found.</returns>
 		public static string LocalizeStatic(string key)
 		{
-			return (_overrideManager ?? ServiceRegistry.Provider?.GetService<LocalizationManager>())?.TryLocalize(key) ?? key;
+			return Current?.TryLocalize(key) ?? key;
 		}
 
 		/// <summary>
@@ -53,11 +61,9 @@ namespace LLMDesktopAssistant.Localization
 		/// <returns>The localized string, or the original key if not found.</returns>
 		public static string LocalizeStaticFormat(string formatKey, params object?[] formatArgs)
 		{
-			var format = (_overrideManager ?? ServiceRegistry.Provider?.GetService<LocalizationManager>())?.Localize(formatKey) ?? formatKey;
+			var format = Current?.Localize(formatKey) ?? formatKey;
 			return string.Format(format, formatArgs);
 		}
-
-
 
 		private string _currentLanguage = string.Empty;
 		/// <summary>

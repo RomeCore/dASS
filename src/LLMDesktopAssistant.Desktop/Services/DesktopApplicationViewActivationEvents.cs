@@ -11,9 +11,13 @@ namespace LLMDesktopAssistant.Desktop.Services
 
 		public DesktopApplicationViewActivationEvents()
 		{
-			App.OnFrameworkInitializationCompleted(() =>
+			// The window does not exist when the framework initialization completes: the startup
+			// stages create it later, so the subscription waits for the main content.
+			App.OnMainContentCreated(() =>
 			{
-				var window = App.MainWindow!;
+				if (App.MainWindow is not { } window)
+					return;
+
 				window.Activated += (s, e) => Activated?.Invoke();
 			});
 		}

@@ -1,0 +1,85 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:vm="using:LLMDesktopAssistant.Startup.Splash"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 x:Class="LLMDesktopAssistant.Startup.Splash.SplashView"
+			 x:DataType="vm:SplashViewModel"
+			 Background="#1B1B1F">
+
+	<UserControl.Styles>
+		<Style Selector="UserControl.compact TextBlock.wordmark">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="UserControl.compact Image.logo">
+			<Setter Property="Width" Value="88" />
+			<Setter Property="Height" Value="88" />
+		</Style>
+	</UserControl.Styles>
+
+	<Grid RowDefinitions="*,Auto">
+
+		<StackPanel VerticalAlignment="Center"
+					HorizontalAlignment="Center"
+					Spacing="14">
+
+			<Image Classes="logo"
+				   Source="avares://LLMDesktopAssistant/Assets/icon.png"
+				   Width="120"
+				   Height="120"
+				   Stretch="Uniform"
+				   RenderOptions.BitmapInterpolationMode="HighQuality" />
+
+			<TextBlock Classes="wordmark"
+					   Text="{Binding ApplicationName}"
+					   FontSize="28"
+					   FontWeight="SemiBold"
+					   HorizontalAlignment="Center" />
+
+			<TextBlock Text="{Binding VersionText}"
+					   FontSize="12"
+					   Opacity="0.55"
+					   HorizontalAlignment="Center" />
+		</StackPanel>
+
+		<StackPanel Grid.Row="1"
+					Margin="28,0,28,24"
+					Spacing="8">
+
+			<TextBlock Text="{Binding StatusText}"
+					   FontSize="12"
+					   Opacity="0.75"
+					   TextTrimming="CharacterEllipsis" />
+
+			<ProgressBar Minimum="0"
+						 Maximum="1"
+						 Value="{Binding TotalProgress}"
+						 Height="4" />
+		</StackPanel>
+
+		<Border Grid.RowSpan="2"
+				IsVisible="{Binding HasError}"
+				Background="#1B1B1F">
+			<StackPanel VerticalAlignment="Center"
+						HorizontalAlignment="Stretch"
+						Margin="28"
+						Spacing="12">
+
+				<TextBlock Text="{Binding StatusText}"
+						   FontSize="16"
+						   FontWeight="SemiBold"
+						   Foreground="#FF6B6B" />
+
+				<ScrollViewer MaxHeight="180">
+					<SelectableTextBlock Text="{Binding ErrorText}"
+										 FontSize="12"
+										 Opacity="0.8"
+										 TextWrapping="Wrap" />
+				</ScrollViewer>
+
+				<Button Content="{loc:Loc splash.close}"
+						HorizontalAlignment="Right"
+						Click="OnCloseErrorClicked" />
+			</StackPanel>
+		</Border>
+	</Grid>
+</UserControl>

@@ -14,8 +14,9 @@ namespace LLMDesktopAssistant.Prompting
 
 		private static LanguageMetadata GetCurrentLanguageMetadata()
 		{
-			var appSettiings = ApplicationSettingsAccessor.ApplicationSettings.Language;
-			var targetLanguage = (appSettiings.Prompt ?? appSettiings.System).ToNullIfEmpty() ?? "iv";
+			var promptLanguage = ApplicationSettingsAccessor.ApplicationSettings.Language.Prompt;
+			var interfaceLanguage = ApplicationStartupSettingsAccessor.Current.Language;
+			var targetLanguage = (promptLanguage ?? interfaceLanguage).ToNullIfEmpty() ?? "iv";
 			return new LanguageMetadata(new LanguageCode(targetLanguage));
 		}
 

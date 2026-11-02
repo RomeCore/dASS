@@ -148,7 +148,7 @@ public partial class HelpViewModel : ViewModelBase
 
 	private static string GetCurrentLocale()
 	{
-		return ApplicationSettingsAccessor.ApplicationSettings.Language.System;
+		return ApplicationStartupSettingsAccessor.Current.Language;
 	}
 
 	private static string ReplaceImageLinks(string markdown, string documentPath)

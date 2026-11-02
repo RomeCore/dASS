@@ -3,7 +3,9 @@ using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Storage;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Startup;
 using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services
@@ -56,11 +58,28 @@ namespace LLMDesktopAssistant.LLM.Services
 			// Activate all chat-specific services
 			sw.Restart();
 			var collection = scope.ServiceProvider.GetRequiredKeyedService<IServiceCollection>(ServiceKeys.ChatServices);
-			foreach (var service in collection)
+			var activatable = collection
+				.Where(service => !service.IsKeyedService
+					&& service.Lifetime != ServiceLifetime.Transient
+					&& !service.ServiceType.ContainsGenericParameters)
+				.ToList();
+
+			for (var index = 0; index < activatable.Count; index++)
 			{
-				if (!service.IsKeyedService && service.Lifetime != ServiceLifetime.Transient && !service.ServiceType.ContainsGenericParameters)
-					scope.ServiceProvider.GetServices(service.ServiceType);
+				var service = activatable[index];
+				scope.ServiceProvider.GetServices(service.ServiceType);
+
+				// The splash publishes this on every chat, and the manager is a no-op once the handle
+				// is detached - so the formatting only happens while somebody is actually watching.
+				if (StartupSplashManager.IsAttached)
+					StartupSplashManager.SetStageProgress(
+						(double)(index + 1) / activatable.Count,
+						Locale.GetFormattedKey(
+							"splash.loading_module",
+							service.ServiceType.Name,
+							$"{index + 1}/{activatable.Count}"));
 			}
+
 			Log.Debug("Chat services activated in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
 			return scope;
