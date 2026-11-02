@@ -1,4 +1,5 @@
 using System.Text;
+using Markdig.Helpers;
 
 namespace LLMDesktopAssistant.Utils.Files;
 
@@ -155,7 +156,7 @@ public static class FilePatchedReplacer
 			occurrences++;
 
 			var anchor = fileLines[i];
-			var shift = GetShift(fileLines, i, matchLines.Length, replaceLines, tabSize);
+			var shift = GetShift(fileLines, i, matchLines, replaceLines, tabSize);
 			var replacement = BuildBlock(replaceLines, shift, anchor, tabSize, prefixes, suffixes);
 
 			fileLines.RemoveRange(i, matchLines.Length);
@@ -366,7 +367,7 @@ public static class FilePatchedReplacer
 	/// The column offset applied to every replacement line after the first.
 	/// </summary>
 	/// <remarks>
-	/// The second line is the reference, never the first: the first line is the one models write
+	/// The second line is the reference, if first line is written without indentation: the first line is the one models write
 	/// bare (verbatim-trained habits), while the continuation lines carry the indentation the author
 	/// actually expects. Lining the replacement's second line up with the second matched line of the
 	/// file therefore places the whole block where the author saw it, without per-line bookkeeping.
@@ -374,9 +375,12 @@ public static class FilePatchedReplacer
 	/// lines supply the base instead.
 	/// </remarks>
 	private static int GetShift(
-		List<string> fileLines, int start, int matchCount, List<string> replaceLines, int tabSize)
+		List<string> fileLines, int start, string[] matchLines, List<string> replaceLines, int tabSize)
 	{
-		for (var j = 1; j < replaceLines.Count && j < matchCount; j++)
+		int offset = matchLines.Length > 0 && matchLines[0].Length > 0 && !char.IsWhiteSpace(matchLines[0][0]) ?
+			1 : 0;
+
+		for (var j = offset; j < replaceLines.Count && j < matchLines.Length; j++)
 		{
 			if (string.IsNullOrWhiteSpace(replaceLines[j]) || string.IsNullOrWhiteSpace(fileLines[start + j]))
 				continue;

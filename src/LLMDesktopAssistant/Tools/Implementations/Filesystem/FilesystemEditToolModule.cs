@@ -54,7 +54,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 					Writing is relative, not verbatim. The first line of `replace` lands where the match
 					starts, and every following line moves by one and the same shift, so the block keeps
-					the shape you wrote. The shift is read from the second line, never the first:
+					the shape you wrote:
 
 						file:     \t\tName = item,
 						replace:  Sync = A,
