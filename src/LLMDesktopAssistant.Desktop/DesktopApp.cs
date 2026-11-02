@@ -1,6 +1,7 @@
 ﻿using Avalonia.Markup.Xaml.Styling;
 using LLMDesktopAssistant.Cli;
 using LLMDesktopAssistant.Settings.Application;
+using LLMDesktopAssistant.Startup;
 
 namespace LLMDesktopAssistant.Desktop
 {
@@ -18,7 +19,7 @@ namespace LLMDesktopAssistant.Desktop
 			base.Initialize();
 		}
 
-		protected override object? CreateSplashContent()
+		protected override IStartupSplashHandle? CreateSplashContent()
 		{
 			if (CommandLineExecutor.Parameters.NoSplash)
 				return null;

@@ -1,11 +1,12 @@
 ﻿using LLMDesktopAssistant.Settings.Application;
+using LLMDesktopAssistant.Startup;
 using LLMDesktopAssistant.Startup.Splash;
 
 namespace LLMDesktopAssistant.Avalonia.Android
 {
 	public class AndroidApp : App
 	{
-		protected override object? CreateSplashContent()
+		protected override IStartupSplashHandle? CreateSplashContent()
 		{
 			if (!ApplicationStartupSettingsAccessor.Current.ShowSplash)
 				return null;

@@ -70,9 +70,8 @@ namespace LLMDesktopAssistant
 		public override void OnFrameworkInitializationCompleted()
 		{
 			var splash = CreateSplashContent();
-
-			if (splash is IStartupSplashHandle handle)
-				StartupSplashManager.Attach(handle);
+			if (splash is not null)
+				StartupSplashManager.Attach(splash);
 
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
@@ -104,7 +103,7 @@ namespace LLMDesktopAssistant
 		/// splash is disabled.
 		/// </summary>
 		/// <returns>A window on the desktop, a control in single-view mode, or <see langword="null"/>.</returns>
-		protected virtual object? CreateSplashContent() => null;
+		protected virtual IStartupSplashHandle? CreateSplashContent() => null;
 
 		/// <summary>
 		/// Creates the stages of this host. The platform stages come first so that anything they
