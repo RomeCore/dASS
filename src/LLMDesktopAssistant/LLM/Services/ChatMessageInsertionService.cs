@@ -1,60 +1,46 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands;
-using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
-using LLMDesktopAssistant.SlashCommands.Resolution;
 
 namespace LLMDesktopAssistant.LLM.Services
 {
 	/// <inheritdoc cref="IChatMessageInsertionService"/>
 	[ChatService(typeof(IChatMessageInsertionService))]
 	public class ChatMessageInsertionService(
-		Chat chat,
 		IChatStorageService storage,
 		IChatSettingsService chatSettings,
-		ISlashCommandResolver resolver,
-		IChatExecutionTokenService tokens,
-		IChatExecutionService executor
+		IChatCommandInvocationService commands
 	) : IChatMessageInsertionService
 	{
-		/// <summary>
-		/// The schema used when a command declares none (<see cref="SlashCommandInfo.ArgumentSchema"/> is
-		/// <see langword="null"/>): a command with no schema takes no arguments.
-		/// </summary>
-		private static readonly SlashCommandArgumentSchema EmptySchema = new();
-
 		/// <inheritdoc/>
-		public UserInputInsertionCheckResult CanInsertUserInput(UserInput input, bool generateIntent, int? editIndex = null)
+		public UserInputInsertionCheckResult CanInsertUserInput(UserInput input)
 		{
-			// An edit runs its command too (see InsertUserInputAsync), so it is validated exactly like a new message.
-			// With commands off the whole command path is disabled.
-			if (!CommandsEnabled)
+			// With commands off, or with the permission denied, the whole command path is disabled.
+			if (!CommandsEnabled || !input.CanExecuteCommand)
 				return UserInputInsertionCheckResult.Ok;
 
 			if (!SlashCommandExtractor.TryExtractToken(input.Content, out var rawToken, out var rawArguments))
 				return UserInputInsertionCheckResult.Ok;
 
-			var resolution = Resolve(rawToken, rawArguments);
+			var resolution = commands.Resolve(rawToken, rawArguments);
 			return resolution.Error is null
 				? UserInputInsertionCheckResult.Ok
 				: UserInputInsertionCheckResult.Blocked(resolution.Error, resolution.ErrorPosition);
 		}
 
 		/// <inheritdoc/>
-		public async Task InsertUserInputAsync(UserInput input, bool generateIntent, int? editIndex = null,
+		public Task<UserInputInsertion> AppendUserInputAsync(UserInput input, int? editIndex = null,
 			CancellationToken ct = default)
 		{
-			var commandsEnabled = CommandsEnabled;
+			// The permission is read here and only here, so the direct path and the queued path cannot diverge.
 			string rawToken = string.Empty;
 			string rawArguments = string.Empty;
-			var isCommand = commandsEnabled &&
+			var isCommand = input.CanExecuteCommand && CommandsEnabled &&
 				SlashCommandExtractor.TryExtractToken(input.Content, out rawToken, out rawArguments);
 
-			// A "//…" escape is undone only while command handling is active; with commands off the text is literal.
-			var content = commandsEnabled ? SlashCommandExtractor.UnescapeLeadingSlash(input.Content) : input.Content;
-
-			var resolution = isCommand ? Resolve(rawToken, rawArguments) : default;
+			// A "//..." escape is undone only while command handling is active; forbidden or off means verbatim.
+			var content = isCommand ? SlashCommandExtractor.UnescapeLeadingSlash(input.Content) : input.Content;
 
 			var message = CreateUserMessage(input, content);
 			if (editIndex is not null)
@@ -62,111 +48,48 @@ namespace LLMDesktopAssistant.LLM.Services
 			else
 				storage.AppendMessage(message);
 
-			var generate = generateIntent;
+			if (!isCommand)
+				return Task.FromResult(new UserInputInsertion(message, null));
 
-			if (isCommand)
+			var resolution = commands.Resolve(rawToken, rawArguments);
+			return Task.FromResult(new UserInputInsertion(message,
+				new PendingCommand(rawToken, rawArguments, resolution)));
+		}
+
+		/// <inheritdoc/>
+		public async Task<UserInputInsertionResult> RunInsertedCommandAsync(UserInputInsertion insertion,
+			bool generateIntent, CancellationToken ct = default)
+		{
+			if (insertion.Command is not { } pending)
+				return new UserInputInsertionResult(generateIntent);
+
+			var message = insertion.Message;
+			var resolution = pending.Resolution;
+
+			if (resolution.Error is not null || resolution.Command is null)
 			{
-				if (resolution.Error is not null || resolution.Command is null)
-				{
-					// Guard: inserted without a passing pre-flight (or a race). Attach the error and the failed trace,
-					// skip the command and the generation - but never drop the input.
-					var error = resolution.Error ?? Locale.GetKey("command.error.unknown");
-					message.Error = error;
-					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,
-						arguments: null, generateIntent, generateOutcome: false, SlashCommandExecutionStatus.Failed, error));
-					generate = false;
-				}
-				else
-				{
-					var execution = await ExecuteCommandAsync(resolution.Command, resolution.Arguments!,
-						resolution.RawArguments, rawToken, message, generateIntent, ct);
-
-					if (execution.Error is not null)
-						message.Error = execution.Error;
-
-					message.AdditionalData.Add(SlashCommandFingerprint.Create(rawToken, resolution.Command,
-						resolution.Arguments, generateIntent, execution.Generate, execution.Status, execution.Error,
-						execution.EffectSummary, execution.ModelFacingMode));
-
-					generate = execution.Generate;
-				}
+				// Guard: inserted without a passing pre-flight (or a race). Attach the error and the failed trace,
+				// skip the command - but never drop the message.
+				var error = resolution.Error ?? Locale.GetKey("command.error.unknown");
+				message.Error = error;
+				message.AdditionalData.Add(SlashCommandFingerprint.Create(pending.RawToken, resolution.Command,
+					arguments: null, generateIntent, generateOutcome: false, SlashCommandExecutionStatus.Failed, error));
+				return new UserInputInsertionResult(false);
 			}
 
-			if (generate)
-				await executor.GenerateResponseAsync(ct);
+			var execution = await commands.ExecuteAsync(resolution, pending.RawToken, message, generateIntent, ct);
+
+			if (execution.Error is not null)
+				message.Error = execution.Error;
+
+			message.AdditionalData.Add(SlashCommandFingerprint.Create(pending.RawToken, resolution.Command,
+				resolution.Arguments, generateIntent, execution.Generate, execution.Status, execution.Error,
+				execution.EffectSummary, execution.ModelFacingMode));
+
+			return new UserInputInsertionResult(execution.Generate);
 		}
 
 		private bool CommandsEnabled => chatSettings.Settings.Commands.EnableCommands;
-
-		private async Task<CommandExecution> ExecuteCommandAsync(SlashCommandInfo command,
-			SlashCommandBoundArguments arguments, string rawArguments, string rawToken, ChatMessage message,
-			bool generateIntent, CancellationToken ct)
-		{
-			var context = new SlashCommandExecutionContext
-			{
-				Chat = chat,
-				Message = message,
-				Command = command,
-				Token = command.CanonicalToken,
-				RawToken = rawToken,
-				RawText = message.Content,
-				RawArguments = rawArguments,
-				Arguments = arguments,
-				GenerateIntent = generateIntent,
-				Services = chat.Services
-			};
-
-			SlashCommandExecutionResult result;
-			try
-			{
-				using var scope = tokens.WithToken(ChatExecutionLevel.Command, ct, out var commandToken);
-				result = await command.Executor.ExecuteAsync(context, commandToken);
-			}
-			catch (OperationCanceledException)
-			{
-				// A cancelled command is not a failure: no message error, no generation.
-				return new CommandExecution(false, SlashCommandExecutionStatus.Cancelled, null, null);
-			}
-			catch (Exception ex)
-			{
-				// The message is already in history, so a runtime failure is attached rather than thrown.
-				return new CommandExecution(false, SlashCommandExecutionStatus.Failed,
-					Locale.GetConstKey(ex.Message), null);
-			}
-
-			if (result.Error is not null)
-				return new CommandExecution(false, SlashCommandExecutionStatus.Failed, result.Error,
-					result.EffectSummary);
-
-			return new CommandExecution(
-				SlashCommandIntent.Resolve(generateIntent, command.Generate, result.Generate),
-				SlashCommandExecutionStatus.Executed, null, result.EffectSummary, result.ModelFacingMode);
-		}
-
-		/// <summary>
-		/// Resolves the token, parses and binds its arguments. The resolved command and the bound arguments are carried
-		/// even when binding fails, so the fingerprint can describe the attempt.
-		/// </summary>
-		private CommandResolution Resolve(string rawToken, string rawArguments)
-		{
-			var resolution = resolver.Resolve(rawToken);
-			if (resolution.Command is null)
-				return new CommandResolution(null, null, rawArguments,
-					resolution.Error ?? Locale.GetKey("command.error.unknown"), -1);
-
-			var command = resolution.Command;
-			var schema = command.Executor.ArgumentSchema ?? EmptySchema;
-
-			if (!SlashCommandArgumentParser.TryParse(schema, rawArguments, out var parsed))
-				return new CommandResolution(command, null, parsed.RawArguments,
-					parsed.Error ?? Locale.GetKey("command.error.parse_error"), parsed.ErrorPosition);
-
-			var bound = SlashCommandArgumentBinder.Bind(schema, parsed);
-			if (!bound.IsValid)
-				return new CommandResolution(command, null, parsed.RawArguments, bound.Error, bound.ErrorPosition);
-
-			return new CommandResolution(command, bound, parsed.RawArguments, null, -1);
-		}
 
 		private static UserMessage CreateUserMessage(UserInput userInput, string content)
 		{
@@ -182,16 +105,5 @@ namespace LLMDesktopAssistant.LLM.Services
 			message.AdditionalData.Reset(userInput.Parts);
 			return message;
 		}
-
-		/// <summary>The outcome of resolving a command: the resolved command and bound arguments when it succeeded, or
-		/// the reason the send is blocked.</summary>
-		private readonly record struct CommandResolution(
-			SlashCommandInfo? Command, SlashCommandBoundArguments? Arguments, string RawArguments,
-			LocaleKeyBase? Error, int ErrorPosition);
-
-		/// <summary>The outcome of running a command: the final generation decision and what to record.</summary>
-		private readonly record struct CommandExecution(
-			bool Generate, SlashCommandExecutionStatus Status, LocaleKeyBase? Error, string? EffectSummary,
-			ModelFacingMode? ModelFacingMode = null);
 	}
 }

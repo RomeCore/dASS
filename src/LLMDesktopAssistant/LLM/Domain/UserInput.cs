@@ -39,5 +39,12 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// Gets or sets a value indicating whether a <see cref="VisibleTo"/> is a whitelist filter.
 		/// </summary>
 		public bool IsVisibleToWhiteList { get; init; }
+
+		/// <summary>
+		/// Gets a value indicating whether this input may run a slash command. When <see langword="false"/> the content
+		/// is inserted verbatim: no token extraction, no execution and no escape removal. Every producer sets it; the
+		/// desktop input and the WebUI pass <see langword="true"/> until a participant-rights model exists.
+		/// </summary>
+		public bool CanExecuteCommand { get; init; } = true;
 	}
 }

@@ -28,5 +28,12 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// </summary>
 		/// <returns>A disposable that ends the confirmation marker.</returns>
 		IDisposable WithConfirmation();
+
+		/// <summary>
+		/// Completes when no execution and no confirmation is alive, i.e. when the previous turn has fully unwound.
+		/// Returns immediately when the chat is already idle.
+		/// </summary>
+		/// <param name="ct">The cancellation token.</param>
+		Task WaitUntilIdleAsync(CancellationToken ct = default);
 	}
 }

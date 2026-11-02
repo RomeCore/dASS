@@ -52,7 +52,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		IToastService toastService,
 		IChatExecutionStatusService executionStatusService,
 		IChatStatusService statusService,
-		IPromptDumpService promptDumpService
+		IPromptDumpService promptDumpService,
+		IFollowUpChatMessageQueue followUps
 	) : IChatExecutionService
 	{
 		private const bool EnablePrefixCompletions = false;
@@ -76,6 +77,10 @@ namespace LLMDesktopAssistant.LLM.Services
 				while (true)
 				{
 					token.ThrowIfCancellationRequested();
+
+					// The sequence barrier: the queue takes over before another agent is selected.
+					if (followUps.HasEligible(FollowUpInjectionLevel.AgentSequence))
+						return;
 
 					var lastAssistantMessage = chat.Messages.LastOrDefault()?.Message as Domain.AssistantMessage;
 					Guid? nextAgentId = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0
@@ -106,7 +111,10 @@ namespace LLMDesktopAssistant.LLM.Services
 					}
 
 					token.ThrowIfCancellationRequested();
-					await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, token);
+
+					if (await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, token))
+						return;
+
 					cycles++;
 				}
 			}
@@ -133,7 +141,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 		}
 
-		public async Task GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId,
+		public async Task<bool> GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId,
 			CancellationToken cancellationToken = default)
 		{
 			try
@@ -147,7 +155,12 @@ namespace LLMDesktopAssistant.LLM.Services
 
 				while (true)
 				{
-					var response = await GenerateMessageResponseAsync(agentId, agentStageId, agent, cycles, token);
+					var (response, interrupted) = await GenerateMessageResponseAsync(agentId, agentStageId, agent, cycles, token);
+
+					// The message barrier fired: the message is committed, the sequence ends here.
+					if (interrupted)
+						return true;
+
 					cycles++;
 					responsesBuilder.Add(response);
 
@@ -160,7 +173,9 @@ namespace LLMDesktopAssistant.LLM.Services
 							Agent = agent,
 							Responses = responsesBuilder.ToImmutable()
 						}, token);
-						break;
+
+						// The agent barrier sits after the hooks: the agent finished its cycle honestly.
+						return followUps.HasEligible(FollowUpInjectionLevel.Agent);
 					}
 				}
 			}
@@ -180,8 +195,9 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 		}
 
-		private async Task<Domain.AssistantMessage> GenerateMessageResponseAsync(Guid agentId, Guid agentStageId,
-			ChatAgentDescriptor agent, int cycle, CancellationToken cancellationToken = default)
+		private async Task<(Domain.AssistantMessage Message, bool Interrupted)> GenerateMessageResponseAsync(
+			Guid agentId, Guid agentStageId, ChatAgentDescriptor agent, int cycle,
+			CancellationToken cancellationToken = default)
 		{
 			try
 			{
@@ -459,7 +475,8 @@ namespace LLMDesktopAssistant.LLM.Services
 					}
 				}
 
-				return domainResponseMessage;
+				// The tool batch is closed and the message is committed: this is the message barrier.
+				return (domainResponseMessage, followUps.HasEligible(FollowUpInjectionLevel.Message));
 			}
 			catch (OperationCanceledException)
 			{

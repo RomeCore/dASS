@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using LLMDesktopAssistant.LLM.Domain;
 
 namespace LLMDesktopAssistant.LLM.Services
@@ -43,6 +44,36 @@ namespace LLMDesktopAssistant.LLM.Services
 				Interlocked.Decrement(ref _confirmationCount);
 				UpdateStatus();
 			});
+		}
+
+		/// <inheritdoc/>
+		public async Task WaitUntilIdleAsync(CancellationToken ct = default)
+		{
+			while (Status != ChatStatus.Idle)
+			{
+				var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+				void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+				{
+					if (e.PropertyName == nameof(Status) && Status == ChatStatus.Idle)
+						tcs.TrySetResult();
+				}
+
+				PropertyChanged += OnPropertyChanged;
+				try
+				{
+					// Re-check inside the subscription: the transition may have happened before it was attached.
+					if (Status == ChatStatus.Idle)
+						return;
+
+					using var registration = ct.Register(() => tcs.TrySetCanceled(ct));
+					await tcs.Task;
+				}
+				finally
+				{
+					PropertyChanged -= OnPropertyChanged;
+				}
+			}
 		}
 
 		private void UpdateStatus()

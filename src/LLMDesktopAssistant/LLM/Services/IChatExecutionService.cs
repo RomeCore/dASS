@@ -20,7 +20,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <param name="agentId">The identifier of the agent to use.</param>
 		/// <param name="agentStageId">The identifier of the stage within the agent to use.</param>
 		/// <param name="cancellationToken">Token for cancellation of the operation.</param>
-		/// <returns>A task representing the asynchronous operation.</returns>
-		Task GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId, CancellationToken cancellationToken = default);
+		/// <returns><see langword="true"/> when the call stopped at a follow-up barrier instead of finishing the agent's
+		/// cycle; the caller must then end the sequence and let the turn drain the queue.</returns>
+		Task<bool> GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId, CancellationToken cancellationToken = default);
 	}
 }
