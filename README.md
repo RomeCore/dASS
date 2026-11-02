@@ -121,7 +121,6 @@ If you want to edit, share or create tools by yourself, drop `.lua` and `.py` fi
 |---|---|
 | Windows / Linux / macOS | `LLMDesktopAssistant.Desktop` |
 | Android | `LLMDesktopAssistant.Android` |
-| Browser (WebAssembly) | `LLMDesktopAssistant.Browser` |
 | Web chat UI (multi-user) | `LLMDesktopAssistant.Blazor` |
 
 ## 🧪 Tests

@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMDesktopAssistant", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMDesktopAssistant.Android", "src\LLMDesktopAssistant.Android\LLMDesktopAssistant.Android.csproj", "{55605F69-B953-05C3-23D1-8B92E7106A32}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMDesktopAssistant.Browser", "src\LLMDesktopAssistant.Browser\LLMDesktopAssistant.Browser.csproj", "{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMDesktopAssistant.Desktop", "src\LLMDesktopAssistant.Desktop\LLMDesktopAssistant.Desktop.csproj", "{5C04DFE7-E212-0635-4A98-D4731355C554}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLMDesktopAssistant.Blazor", "src\LLMDesktopAssistant.Blazor\LLMDesktopAssistant.Blazor.csproj", "{F000687E-E836-4254-8E6F-00CE6E630318}"
@@ -46,14 +44,6 @@ Global
 		{55605F69-B953-05C3-23D1-8B92E7106A32}.Release|x64.ActiveCfg = Release|Any CPU
 		{55605F69-B953-05C3-23D1-8B92E7106A32}.Release|x64.Build.0 = Release|Any CPU
 		{55605F69-B953-05C3-23D1-8B92E7106A32}.Release|x64.Deploy.0 = Release|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Debug|x64.Build.0 = Debug|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Release|Any CPU.Build.0 = Release|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Release|x64.ActiveCfg = Release|Any CPU
-		{CB7F10B9-E4A0-7D60-15B1-A914A1AC1162}.Release|x64.Build.0 = Release|Any CPU
 		{5C04DFE7-E212-0635-4A98-D4731355C554}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5C04DFE7-E212-0635-4A98-D4731355C554}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C04DFE7-E212-0635-4A98-D4731355C554}.Debug|x64.ActiveCfg = Debug|Any CPU
