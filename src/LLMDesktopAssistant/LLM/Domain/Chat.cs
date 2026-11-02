@@ -16,9 +16,15 @@ namespace LLMDesktopAssistant.LLM.Domain
 		public IServiceProvider Services { get; } = services;
 
 		/// <summary>
-		/// The ID of the chat.
+		/// The ID of the chat in the database.
 		/// </summary>
 		public int Id { get; internal set; }
+
+		/// <summary>
+		/// The unique session ID for this chat session.
+		/// This is temporary, used mostly to separate chats from each other at runtime.
+		/// </summary>
+		public Guid SessionId { get; } = Guid.NewGuid();
 
 		private string _topic = string.Empty;
 		/// <summary>
