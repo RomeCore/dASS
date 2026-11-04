@@ -5,19 +5,23 @@ using LLMDesktopAssistant.Settings.Application;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
-	[ChatService(typeof(ILuaScriptsetStateWatcher))]
-	public class LuaScriptsetStateWatcher : Disposable, ILuaScriptsetStateWatcher
+	/// <summary>
+	/// The watcher for Lua script-related configuration that automatically triggers updates on
+	/// <see cref="IAddonSetCollector{T}"/> for Lua scripts.
+	/// </summary>
+	[ChatService]
+	public class LuaScriptsetStateWatcher : Disposable
 	{
-		private readonly IAddonSetCollector<LuaScriptInfo> _scriptsetCollector;
+		private readonly IAddonSetCollector<LuaScriptInfo> _scriptSetCollector;
 		private readonly IChatSettingsService _chatSettings;
 		private readonly AddonManagerInvalidationHook _addonHook;
 
 		public event Action? OnStateChanged;
 
-		public LuaScriptsetStateWatcher(IAddonSetCollector<LuaScriptInfo> scriptsetCollector,
+		public LuaScriptsetStateWatcher(IAddonSetCollector<LuaScriptInfo> scriptSetCollector,
 			IChatSettingsService chatSettings, AddonManagerInvalidationHook addonHook)
 		{
-			_scriptsetCollector = scriptsetCollector;
+			_scriptSetCollector = scriptSetCollector;
 			_chatSettings = chatSettings;
 			_addonHook = addonHook;
 
@@ -28,12 +32,13 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		private void ScriptsSettings_DeepChanged(object? sender, EventArgs e)
 		{
-			OnStateChanged?.Invoke();
+			// Trigger reloading on settings change (settings object compare is lazy)
+			_scriptSetCollector.GetAddonsForChat();
 		}
 
 		private void AddonHook_OnReloaded(AddonKind kinds, bool obj)
 		{
-			OnStateChanged?.Invoke();
+			_scriptSetCollector.GetAddonsForChat();
 		}
 
 		protected override void Dispose(bool disposing)
@@ -46,11 +51,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				ApplicationSettingsAccessor.ApplicationSettings.InheritedChatSettings.Scripts.DeepChanged -= ScriptsSettings_DeepChanged;
 				_addonHook.OnReloaded -= AddonHook_OnReloaded;
 			}
-		}
-
-		public IEnumerable<LuaScriptInfo> GetEffectiveScripts()
-		{
-			return _scriptsetCollector.GetAddonsForChat().OrderBy(s => s.IsNative ? 0 : 1);
 		}
 	}
 }

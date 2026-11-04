@@ -15,7 +15,8 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		private readonly List<string?> _namespaces;
 
 		private readonly Lock _lock = new();
-		private readonly ILuaScriptsetStateWatcher _scriptsetStateWatcher;
+		private readonly IAddonSetCollector<LuaScriptInfo> _scriptSetCollector;
+		private readonly AddonSet<LuaScriptInfo> _scripts;
 		private readonly LuaTable _globalTableSnapshot;
 		private readonly Dictionary<LuaType, LuaMetatable> _typeMetatablesSnapshot;
 		private readonly List<string?> _namespacesSnapshot;
@@ -26,9 +27,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		public IReadOnlyList<string?> Namespaces { get; }
 
-		public LuaService(ILuaScriptsetStateWatcher scriptsetStateWatcher)
+		public LuaService(IAddonSetCollector<LuaScriptInfo> scriptSetCollector)
 		{
-			_scriptsetStateWatcher = scriptsetStateWatcher;
+			_scriptSetCollector = scriptSetCollector;
+			_scripts = scriptSetCollector.GetAddonsForChat();
+			_scripts.Addons.CollectionChanged += ScriptsCollectionChanged;
 
 			_lua = new LuaState().LoadDefaultLibraries();
 			_namespaces = [ null ];
@@ -45,7 +48,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			_typeMetatablesSnapshot = _lua.TypeMetatables.ToDictionary();
 
 			RefreshScripts();
-			_scriptsetStateWatcher.OnStateChanged += RefreshScripts;
+		}
+
+		private void ScriptsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			RefreshScripts();
 		}
 
 		protected override void Dispose(bool disposing)
@@ -55,7 +62,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			if (disposing)
 			{
 				Cleanup();
-				_scriptsetStateWatcher.OnStateChanged -= RefreshScripts;
+				_scripts.Addons.CollectionChanged -= ScriptsCollectionChanged;
 			}
 		}
 
@@ -125,9 +132,8 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			try
 			{
 				ResetEnvironment();
-				var scripts = _scriptsetStateWatcher.GetEffectiveScripts();
 
-				foreach (var script in scripts)
+				foreach (var script in _scripts)
 				{
 					try
 					{
