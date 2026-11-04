@@ -21,7 +21,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		IChatMessageQuoteRenderer messageQuoteRenderer,
 		IAgentEffectiveMessagesProvider effectiveMessagesProvider,
 		IEnumerable<IPromptBuildingHook> promptBuildingHooks,
-		IToolsetCacheService toolsetCache,
 		IPromptAnchoredSectionProcessor promptAnchoredSectionProcessor,
 		IPromptSupersedeContextProcessor promptSupersedeContextProcessor,
 		IAddonSetCollector<PromptContextInfo> promptContextCollector,
@@ -36,10 +35,6 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		public async Task<AgentPromptBundle> BuildAsync(ChatAgentDescriptor agent,
 			CancellationToken cancellationToken = default)
 		{
-			// The composer owns the toolset cache: it must be fresh for both the tool definitions
-			// and the tool call resolution performed by the execution service.
-			toolsetCache.Invalidate(agent);
-
 			var effectiveContext = effectiveMessagesProvider.GetEffectiveMessages(agent);
 
 			var hooks = promptBuildingHooks.OrderBy(h => h.Order).ToList();

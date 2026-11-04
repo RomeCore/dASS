@@ -197,15 +197,4 @@ public class AgentPromptComposerTests
 
 		Assert.Contains(bundle.Tools, t => t.Name == "my-tool");
 	}
-
-	[Fact]
-	public async Task Build_InvalidatesTheToolsetCache()
-	{
-		var agent = PromptingTestHelpers.CreateAgent();
-		var harness = new PromptComposerHarness(PromptingTestHelpers.User("u0", 0));
-
-		await harness.CreateComposer().BuildAsync(agent);
-
-		Assert.Equal(1, harness.ToolsetCache.InvalidateCount);
-	}
 }

@@ -1,7 +1,7 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Prompting.Skills;
-using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 
 namespace LLMDesktopAssistant.SlashCommands.Providers
@@ -10,6 +10,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// Derives a <c>/skill:&lt;name&gt;</c> command from every available skill.
 	/// </summary>
 	[ChatService(typeof(ISlashCommandProvider))]
+	[ChatService(typeof(IAdditionalAddonSource<SlashCommandInfo>))]
 	public class SkillSlashCommandProvider(IAddonSetCollector<SkillInfo> sources)
 		: DerivedSlashCommandProvider<SkillInfo>(sources)
 	{

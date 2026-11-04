@@ -1,3 +1,5 @@
+using LLMDesktopAssistant.Addons.Sources;
+using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Providers;
 using LLMDesktopAssistant.Utils;
 
@@ -12,7 +14,10 @@ namespace LLMDesktopAssistant.Services.Configurators
 			foreach (var provider in providers)
 			{
 				if (!provider.Attribute.ChatScoped)
+				{
 					services.AddSingleton(typeof(ISlashCommandProvider), provider.Type);
+					services.AddSingleton(typeof(IAdditionalAddonSource<SlashCommandInfo>), provider.Type);
+				}
 			}
 		}
 	}

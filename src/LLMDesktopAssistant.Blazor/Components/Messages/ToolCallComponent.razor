@@ -1,7 +1,8 @@
 @using System.ComponentModel
+@using LLMDesktopAssistant.Addons
 @using LLMDesktopAssistant.LLM.Domain
 @using LLMDesktopAssistant.LLM.MVVM.Messages
-@using LLMDesktopAssistant.LLM.Services.Tools
+@using LLMDesktopAssistant.Tools
 @using LLMDesktopAssistant.Utils
 @using Material.Icons
 
@@ -9,7 +10,7 @@
 
 @rendermode InteractiveServer
 
-@inject IToolsetCacheService ToolsetCache
+@inject IAddonSetCollector<ToolInfo> ToolsetCollector
 
 <div class="toolcall-item" data-status="@ToolCall.Status">
 	<span class="toolcall-icon">
@@ -82,7 +83,7 @@
 
 	protected override void OnInitialized()
 	{
-		_title = ToolsetCache.AvailableTools.GetValueOrDefault(ToolCall.ToolName)
+		_title = ToolsetCollector.GetAvailableAddons().GetByName(ToolCall.ToolName)
 			?.NameKey.Value ?? LocalizationManager.LocalizeStatic(ToolCall.ToolName);
 
 		ToolCall.PropertyChanged += OnToolCallPropertyChanged;

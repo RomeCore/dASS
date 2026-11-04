@@ -14,6 +14,9 @@ namespace LLMDesktopAssistant.Prompting.Management
 		where K : notnull
 		where V : PromptPartBase, new()
 	{
+		/// <inheritdoc/>
+		public event EventHandler? Changed;
+
 		private readonly Lock _lock = new();
 
 		private readonly HashSet<V> _parts = [];
@@ -243,6 +246,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 				};
 			}
 			var key = GetKey(part);
+			var imported = false;
 
 			_lock.Enter();
 			try
@@ -257,16 +261,22 @@ namespace LLMDesktopAssistant.Prompting.Management
 				_byTemplate[template] = part;
 				_templateSourceKeys[template] = (key, source);
 
-				return true;
+				imported = true;
 			}
 			finally
 			{
 				_lock.Exit();
 			}
+
+			if (imported)
+				Changed?.Invoke(this, EventArgs.Empty);
+			return imported;
 		}
 
 		public bool DropTemplate(ITemplate template)
 		{
+			var dropped = false;
+
 			_lock.Enter();
 			try
 			{
@@ -280,12 +290,16 @@ namespace LLMDesktopAssistant.Prompting.Management
 				_byKey[key].Remove(part);
 				_bySource[source].Remove(part);
 
-				return true;
+				dropped = true;
 			}
 			finally
 			{
 				_lock.Exit();
 			}
+
+			if (dropped)
+				Changed?.Invoke(this, EventArgs.Empty);
+			return dropped;
 		}
 
 		private static readonly HierarchicalLanguageFallbackScheme _langFallbackScheme = new(LanguageCode.Invariant);

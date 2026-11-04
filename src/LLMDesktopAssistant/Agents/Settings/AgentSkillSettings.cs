@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.SourceGenerators;
 
@@ -8,23 +9,22 @@ namespace LLMDesktopAssistant.Agents
 	/// list of per-skill changes.
 	/// </summary>
 	[SettingsRoute(nameof(ChatAgentDescriptor.Skills))]
-	public partial class AgentSkillSettings : AgentSettingsCategoryBase
+	public partial class AgentSkillSettings : AgentSettingsCategoryBase, IAddonCategorySettings
 	{
-		private bool _enableSkills = true;
 		/// <summary>
-		/// Gets or sets a value indicating whether skills are enabled for the agent.
+		/// Whether this category contributes skills at all.
 		/// </summary>
-		public bool EnableSkills
+		public bool AddonsCategoryEnabled
 		{
-			get => _enableSkills;
-			set => SetProperty(ref _enableSkills, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = true;
 
 		/// <summary>
 		/// Gets or sets the skillset settings for the agent.
 		/// </summary>
 		[InheritedChatAgentSetting]
-		public SkillsetSettings Skillset
+		public SkillsetConfiguration Skillset
 		{
 			get => field ??= new();
 			set => SetProperty(ref field, value);

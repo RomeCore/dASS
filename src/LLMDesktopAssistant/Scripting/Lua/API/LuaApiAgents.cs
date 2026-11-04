@@ -403,12 +403,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private readonly IAgentManagementService _agentManager;
 		private readonly IAddonSetCollector<SkillInfo> _skillsetBuilder;
 		private readonly IAddonSetCollector<SubAgentInfo> _subAgentsetCollector;
-		private readonly IToolsetCacheService _toolsetCache;
+		private readonly IAddonSetCollector<ToolInfo> _toolsetCollector;
 		private LuaService _luaService = null!;
 
 		public LuaApiAgents(IChatSettingsService chatSettings, IAgentTaskExecutor agentTaskExecutor, IModelManager modelManager,
 			IAgentManagementService agentManager, IAddonSetCollector<SkillInfo> skillsetBuilder,
-			IAddonSetCollector<SubAgentInfo> subAgentsetCollector, IToolsetCacheService toolsetCache)
+			IAddonSetCollector<SubAgentInfo> subAgentsetCollector, IAddonSetCollector<ToolInfo> toolsetCollector)
 		{
 			_chatSettings = chatSettings;
 			_agentTaskExecutor = agentTaskExecutor;
@@ -416,7 +416,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			_agentManager = agentManager;
 			_skillsetBuilder = skillsetBuilder;
 			_subAgentsetCollector = subAgentsetCollector;
-			_toolsetCache = toolsetCache;
+			_toolsetCollector = toolsetCollector;
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -562,8 +562,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				{
 					if (toolValue is LuaString toolValueString)
 					{
-						if (!_toolsetCache.AvailableTools.TryGetValue(toolValueString.Value, out var tool))
-							throw new Exception($"tool '{toolValueString.Value}' is not available.");
+						var tool = _toolsetCollector.GetAvailableAddons().GetByName(toolValueString.Value)
+							?? throw new Exception($"tool '{toolValueString.Value}' is not available.");
 
 						tools.Add(tool);
 					}
@@ -595,14 +595,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (skillsOption is LuaTable skillsOptionTable)
 			{
 				var skillMap = skillsOptionTable.Values.Any(v => v is LuaString) ?
-					_skillsetBuilder.GetAvailableAddons().ToImmutableDictionary(s => s.Name) :
+					_skillsetBuilder.GetAvailableAddons() :
 					null;
 
 				foreach (var skillValue in skillsOptionTable.Values)
 				{
 					if (skillValue is LuaString skillValueString)
 					{
-						if (!skillMap!.TryGetValue(skillValueString.Value, out var skill))
+						if (skillMap!.GetByName(skillValueString.Value) is not { } skill)
 							throw new Exception($"skill '{skillValueString.Value}' is not available.");
 
 						skills.Add(new ChatAgentSkill(skill));
@@ -648,7 +648,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (subAgentsOption is LuaTable subAgentsOptionTable)
 			{
 				var subAgentMap = subAgentsOptionTable.Values.Any(v => v is LuaString) ?
-					_subAgentsetCollector.GetAvailableAddons().ToImmutableDictionary(s => s.Name) :
+					_subAgentsetCollector.GetAvailableAddons() :
 					null;
 
 				foreach (var subAgentValue in subAgentsOptionTable.Values)
@@ -656,7 +656,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					if (subAgentValue is not LuaString subAgentName)
 						throw new Exception("sub_agents must be an array of sub-agent name strings.");
 
-					if (!subAgentMap!.TryGetValue(subAgentName.Value, out var subAgentInfo))
+					if (subAgentMap!.GetByName(subAgentName.Value) is not { } subAgentInfo)
 						throw new Exception($"sub-agent '{subAgentName.Value}' is not available.");
 
 					subAgents.Add(new TaskSubAgentDescriptor

@@ -70,13 +70,6 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public RangeObservableCollection<AgentTask> AgentTasks { get; } = [];
 
-		/// <summary>
-		/// Gets or sets the list of tool modules that are available for use in the chat session.
-		/// </summary>
-		public List<ToolModule> AdditionalTools { get; set; } = [];
-
-
-
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);

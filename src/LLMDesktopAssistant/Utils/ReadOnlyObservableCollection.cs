@@ -13,6 +13,12 @@ namespace LLMDesktopAssistant.Utils
 
 		public bool IsReadOnly => true;
 
+		/// <summary>
+		/// Gets a value indicating whether the underlying collection raises <see cref="CollectionChanged"/>. A view over
+		/// a plain list does not, and subscribing to it throws; callers that subscribe must check this first.
+		/// </summary>
+		public bool CanRaiseCollectionChanged => _ncc is not null;
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private IReadOnlyList<T> GetItems()
 		{

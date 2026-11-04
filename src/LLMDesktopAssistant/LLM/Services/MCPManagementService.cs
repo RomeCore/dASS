@@ -12,6 +12,9 @@ namespace LLMDesktopAssistant.LLM.Services
 	{
 		private MCPConnectionInfo[] _usedConnections = [];
 
+		/// <inheritdoc/>
+		public event EventHandler? ConnectionsChanged;
+
 		public bool HasMCPConnections()
 		{
 			if (!chatSettings.Settings.Mcp.EnableMcp)
@@ -28,6 +31,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			if (!chatSettings.Settings.Mcp.EnableMcp)
 			{
 				_usedConnections = [];
+				ConnectionsChanged?.Invoke(this, EventArgs.Empty);
 				return;
 			}
 
@@ -36,6 +40,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			var usedConnectionTasks = usedServerIds.Select(id => MCPManager.EnsureConnectionAsync(id, cancellationToken));
 			_usedConnections = await Task.WhenAll(usedConnectionTasks);
+			ConnectionsChanged?.Invoke(this, EventArgs.Empty);
 		}
 
 		public MCPToolModule[] GetMCPTools()

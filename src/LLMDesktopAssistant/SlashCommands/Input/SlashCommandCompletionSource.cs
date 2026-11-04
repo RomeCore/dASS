@@ -67,7 +67,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		/// <inheritdoc/>
 		public InputCompletionResult? TryCompute(string text, int caretIndex)
 		{
-			var commandSet = commands.GetAddonsForChat().ToList();
+			var commandSet = commands.GetAddonsForChat();
 			if (commandSet.Count == 0)
 				return null;
 
@@ -89,7 +89,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 		{
 			text ??= string.Empty;
 
-			var commandSet = commands.GetAddonsForChat().ToList();
+			var commandSet = commands.GetAddonsForChat();
 			if (commandSet.Count == 0)
 				return null;
 

@@ -1,4 +1,3 @@
-using AngleSharp.Common;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
@@ -13,7 +12,6 @@ namespace LLMDesktopAssistant.Tools
 	public class ToolsetCollector(
 		Chat chat,
 		IChatSettingsService chatSettings,
-		IMCPManagementService mcpManager,
 		IServiceProvider services
 		) : AddonSetCollectorBase<ToolInfo, ToolChange>(services)
 	{
@@ -26,22 +24,10 @@ namespace LLMDesktopAssistant.Tools
 			_services.GetRequiredService<IAgentManagementService>(),
 			chatSettings);
 
-		protected override IEnumerable<ToolInfo> GetAdditionalAddons()
+		protected override AddonTarget ResolveAgentTarget(ChatAgentDescriptor agent)
 		{
-			return _services.GetServices<ToolModule>()
-				.Concat(chat.AdditionalTools ?? [])
-				.Concat(mcpManager.GetMCPTools())
-				.SelectMany(m => m.GetTools());
-		}
-
-		public override IEnumerable<ToolInfo> GetAddonsForAgent(ChatAgentDescriptor agent)
-		{
-			var settings = agent.Tools;
-			if (!settings.EnableTools)
-				return [];
-
-			var toolset = settings.GetEffectiveToolset(chatSettings.Settings).GetEffectiveConfiguration();
-			return GetAddonsWithChanges(toolset, agent);
+			var toolset = agent.Tools.GetEffectiveToolset(chatSettings.Settings).GetEffectiveConfiguration();
+			return new(toolset, agent.Tools);
 		}
 
 		protected override void ApplyChange(ToolInfo target, ToolChange change, ChatAgentDescriptor? agent)
@@ -55,17 +41,24 @@ namespace LLMDesktopAssistant.Tools
 			target.Specifiers = [.. target.Specifiers, .. change.Specifiers];
 		}
 
-		protected override void ApplyDefaults(ToolInfo target, AddonSetConfigurationBase<ToolChange> setConfig,
+		protected override void ApplyDefaults(ToolInfo target, AddonSetConfigurationBase<ToolChange> config,
 			ChatAgentDescriptor? agent)
 		{
-			base.ApplyDefaults(target, setConfig, agent);
+			base.ApplyDefaults(target, config, agent);
 
 			// The factory and the level are properties of the concrete agent toolset, so they must be stamped
 			// on every clone, not only on the ones with an explicit change entry.
 			target.ContextFactory = ContextFactory;
 			target.ApprovalLevel = target.ApprovalLevel ??
-				(setConfig as ToolsetConfiguration)?.DefaultApprovalLevel ??
+				(config as ToolsetConfiguration)?.DefaultApprovalLevel ??
 				ToolApprovalLevel.PolicyBased;
+		}
+
+		protected override bool IsAffectedByDefault(ToolInfo addon, ToolChange? change, string? propertyName)
+		{
+			if (propertyName == nameof(ToolsetConfiguration.DefaultApprovalLevel))
+				return change?.ApprovalLevel is null && addon.ApprovalLevel is null;
+			return base.IsAffectedByDefault(addon, change, propertyName);
 		}
 	}
 }

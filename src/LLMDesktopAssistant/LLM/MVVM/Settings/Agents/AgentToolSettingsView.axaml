@@ -51,7 +51,7 @@
 	<StackPanel Margin="8" Spacing="8">
 
 		<!-- Enable tools checkbox -->
-		<CheckBox IsChecked="{Binding ToolSettings.EnableTools}"
+		<CheckBox IsChecked="{Binding ToolSettings.AddonsCategoryEnabled}"
 							Content="{loc:Loc settings.tools.enable}"/>
 
 		<!-- Separator -->
@@ -88,7 +88,7 @@
 		</Grid>
 
 		<ItemsControl ItemsSource="{Binding PolicyMaskCategoryItems}"
-									IsEnabled="{Binding ToolSettings.EnableTools}">
+									IsEnabled="{Binding ToolSettings.AddonsCategoryEnabled}">
 
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
@@ -182,18 +182,18 @@
 
 		<CheckBox IsChecked="{Binding UseCustomToolset}"
 							Content="{loc:Loc toolset.use_custom}"
-							IsEnabled="{Binding ToolSettings.EnableTools}"/>
+							IsEnabled="{Binding ToolSettings.AddonsCategoryEnabled}"/>
 
 		<TextBlock Text="{loc:Loc toolset.use_custom.hint}"
 							Opacity="0.6"
 							TextWrapping="Wrap"
-							IsEnabled="{Binding ToolSettings.EnableTools}"/>
+							IsEnabled="{Binding ToolSettings.AddonsCategoryEnabled}"/>
 
 		<!-- Shared toolset name editor -->
 		<StackPanel Orientation="Horizontal"
 								Spacing="4"
 								IsVisible="{Binding !UseCustomToolset}"
-								IsEnabled="{Binding ToolSettings.EnableTools}">
+								IsEnabled="{Binding ToolSettings.AddonsCategoryEnabled}">
 
 			<TextBlock Text="{loc:Loc toolset.shared}"
 								 FontWeight="Bold"
@@ -312,7 +312,7 @@
 		</Grid>
 
 		<!-- Tool list (the unified addon list: search, grouping modes and cards) -->
-		<ContentControl IsEnabled="{Binding ToolSettings.EnableTools}">
+		<ContentControl IsEnabled="{Binding ToolSettings.AddonsCategoryEnabled}">
 			<cards:AddonListView DataContext="{Binding List}"/>
 		</ContentControl>
 

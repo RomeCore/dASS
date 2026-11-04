@@ -1,4 +1,4 @@
-using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.SlashCommands;
@@ -14,7 +14,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	{
 		private sealed class FakeProvider(params SlashCommandInfo[] commands) : ISlashCommandProvider
 		{
-			public IEnumerable<SlashCommandInfo> GetCommands() => commands;
+			public ReadOnlyObservableCollection<SlashCommandInfo> Addons { get; } = new(commands);
+
+			public bool IsStatic => true;
 		}
 
 		private sealed class FakeChatSettingsService(ChatSettings settings) : IChatSettingsService
@@ -34,15 +36,23 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			}
 		}
 
-		private sealed class FakeAccessor<T>(IEnumerable<T> addons) : IAddonAccessor<T>
+		private sealed class FakeAccessor<T>(IEnumerable<T> addons) : IFileAddonAccessor<T>
 		{
 			public ReadOnlyObservableCollection<T> Addons { get; } = new(addons.ToList());
 		}
 
-		private sealed class FakeServiceProvider(IAddonAccessor<SlashCommandInfo> accessor) : IServiceProvider
+		private sealed class FakeServiceProvider(
+			IFileAddonAccessor<SlashCommandInfo> accessor,
+			IAdditionalAddonSource<SlashCommandInfo> source) : IServiceProvider
 		{
-			public object? GetService(Type serviceType) =>
-				serviceType == typeof(IAddonAccessor<SlashCommandInfo>) ? accessor : null;
+			public object? GetService(Type serviceType)
+			{
+				if (serviceType == typeof(IFileAddonAccessor<SlashCommandInfo>))
+					return accessor;
+				if (serviceType == typeof(IEnumerable<IAdditionalAddonSource<SlashCommandInfo>>))
+					return new[] { source };
+				return null;
+			}
 		}
 
 		private static SlashCommandInfo Command(string name, params string[] namespaces) => new()
@@ -52,8 +62,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		};
 
 		private static SlashCommandSetCollector Collector(ChatSettings settings, params SlashCommandInfo[] commands)
-			=> new([new FakeProvider(commands)], new FakeChatSettingsService(settings),
-				new FakeServiceProvider(new FakeAccessor<SlashCommandInfo>([])));
+			=> new(new FakeChatSettingsService(settings),
+				new FakeServiceProvider(new FakeAccessor<SlashCommandInfo>([]), new FakeProvider(commands)));
 
 		[Fact]
 		public void CommandsOfDifferentNamespaces_StayDistinct()
@@ -85,7 +95,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void MasterGate_WhenDisabled_ReturnsNoCommands()
 		{
 			var settings = new ChatSettings();
-			settings.Commands.EnableCommands = false;
+			settings.Commands.AddonsCategoryEnabled = false;
 
 			var collector = Collector(settings, Command("grilling", "skill"));
 

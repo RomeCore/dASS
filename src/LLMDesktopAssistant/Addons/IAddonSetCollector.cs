@@ -3,11 +3,12 @@
 namespace LLMDesktopAssistant.Addons
 {
 	public interface IAddonSetCollector<T>
+		where T : AddonBase<T>
 	{
-		IEnumerable<T> GetAvailableAddons();
+		AddonSet<T> GetAvailableAddons();
 
-		IEnumerable<T> GetAddonsForChat();
+		AddonSet<T> GetAddonsForChat();
 
-		IEnumerable<T> GetAddonsForAgent(ChatAgentDescriptor agent);
+		AddonSet<T> GetAddonsForAgent(ChatAgentDescriptor agent);
 	}
 }

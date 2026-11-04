@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 		/// Gets or sets the script-set settings.
 		/// </summary>
 		[InheritedChatSetting]
-		public LuaScriptsetSettings Scriptset
+		public LuaScriptsetConfiguration Scriptset
 		{
 			get => field ??= new();
 			set => SetProperty(ref field, value);

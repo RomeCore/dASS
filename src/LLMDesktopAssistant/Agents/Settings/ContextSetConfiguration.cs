@@ -3,7 +3,7 @@ using LLMDesktopAssistant.Prompting.Context;
 
 namespace LLMDesktopAssistant.Agents.Settings
 {
-	public class ContextSetSettings : AddonSetConfigurationBase<PromptContextChange>
+	public class ContextSetConfiguration : AddonSetConfigurationBase<PromptContextChange>
 	{
 	}
 }

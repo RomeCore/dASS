@@ -1,6 +1,6 @@
 ﻿using System.Collections.Specialized;
-using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.StructuredValues.Parameterization;
 using LLMDesktopAssistant.Utils;
@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 	public class AppTemplateImporter : IAppTemplateImporter
 	{
 		private readonly TemplateLibrary _library;
-		private readonly IAddonAccessor<ITemplate> _templatesAccessor;
+		private readonly IFileAddonAccessor<ITemplate> _templatesAccessor;
 		private readonly ITemplateParser _templateParser;
 
 		private readonly ImmutableList<ITemplate> _builtInTemplates;
@@ -24,7 +24,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 		public ReadOnlyObservableCollection<ITemplate> Templates =>
 			field ??= new ReadOnlyObservableCollection<ITemplate>(_templates);
 		
-		public AppTemplateImporter(IAddonAccessor<ITemplate> templatesAccessor, ITemplateParser templateParser)
+		public AppTemplateImporter(IFileAddonAccessor<ITemplate> templatesAccessor, ITemplateParser templateParser)
 		{
 			_library = [];
 			_library.MetadataFactories.Add(new ParameterSchemaTemplateMetadataFactory());

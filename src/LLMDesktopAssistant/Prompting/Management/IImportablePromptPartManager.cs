@@ -4,6 +4,11 @@ namespace LLMDesktopAssistant.Prompting.Management
 {
 	public interface IImportablePromptPartManager
 	{
+		/// <summary>
+		/// Occurs when the set of registered prompt parts changes through an import or a drop.
+		/// </summary>
+		event EventHandler? Changed;
+
 		string TemplateType { get; }
 
 		/// <summary>

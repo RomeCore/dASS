@@ -1,6 +1,7 @@
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Search;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -8,7 +9,7 @@ namespace LLMDesktopAssistant.Services.Configurators
 {
 	/// <summary>
 	/// Registers closed generic addon services for every <see cref="IAddonTypeDescriptor"/> as app singletons:
-	/// <see cref="IAddonAccessor{T}"/>, <see cref="IReactiveAddonLoader{T}"/>,
+	/// <see cref="IFileAddonAccessor{T}"/>, <see cref="IReactiveAddonLoader{T}"/>,
 	/// <see cref="IDiagnosticAddonFactory{T}"/> and <see cref="IAddonSearchService{T}"/> per addon CLR type.
 	/// </summary>
 	/// <remarks>
@@ -43,7 +44,7 @@ namespace LLMDesktopAssistant.Services.Configurators
 	/// These services are intentionally registered as CLOSED generics instead of open generic
 	/// [Service]/[ChatService] attributes: <see cref="ServiceRegistry.AddAppServices"/> copies open
 	/// generic registrations into the chat builder as separate singleton instances, which duplicated
-	/// the scoped chat loaders and broke CollectionChanged subscriptions in <see cref="AddonAccessor{T}"/>
+	/// the scoped chat loaders and broke CollectionChanged subscriptions in <see cref="FileAddonAccessor{T}"/>
 	/// (subscriptions were made on different loader instances than the ones being populated).
 	/// </remarks>
 	[ServiceConfigurator(ServiceScope.Chat)]
@@ -65,7 +66,7 @@ namespace LLMDesktopAssistant.Services.Configurators
 		{
 			var addonType = descriptor.ClrType;
 
-			Register(typeof(IAddonAccessor<>), typeof(AddonAccessor<>));
+			Register(typeof(IFileAddonAccessor<>), typeof(FileAddonAccessor<>));
 			Register(typeof(IReactiveAddonLoader<>), typeof(AddonFileCachedLoader<>));
 			if (descriptor.UseDefaultDiagnosticFactory)
 				Register(typeof(IDiagnosticAddonFactory<>), typeof(DiagnosticAddonFactory<>));

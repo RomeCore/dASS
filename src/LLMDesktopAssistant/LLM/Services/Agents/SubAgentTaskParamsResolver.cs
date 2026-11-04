@@ -57,9 +57,9 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 				};
 			}
 
-			var subAgentsMap = subAgentsetCollector.GetAvailableAddons().ToDictionary(s => s.Name);
+			var subAgentsMap = subAgentsetCollector.GetAvailableAddons();
 
-			var info = subAgentsMap.GetValueOrDefault(descriptor.Name)
+			var info = subAgentsMap.GetByName(descriptor.Name)
 				?? throw new KeyNotFoundException($"Sub-agent '{descriptor.Name}' not found.");
 
 			var tools = toolResolver.ResolveSubAgentTools(info, out var toolErrors);
@@ -67,11 +67,11 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			var skills = ImmutableList.CreateBuilder<AgentSkill>();
 			if (info.Skills.Count > 0)
 			{
-				var skillMap = skillsetBuilder.GetAvailableAddons().ToDictionary(s => s.Name);
+				var skillMap = skillsetBuilder.GetAvailableAddons();
 
 				foreach (var allowedSkill in info.Skills.Distinct())
 				{
-					if (skillMap.TryGetValue(allowedSkill, out var skillInfo))
+					if (skillMap.GetByName(allowedSkill) is { } skillInfo)
 					{
 						skills.Add(new ChatAgentSkill(skillInfo));
 					}
@@ -110,7 +110,7 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			{
 				foreach (var subAgent in info.SubAgents)
 				{
-					if (subAgentsMap.TryGetValue(subAgent, out var subAgentInfo))
+					if (subAgentsMap.GetByName(subAgent) is { } subAgentInfo)
 					{
 						subAgents.Add(new TaskSubAgentDescriptor
 						{

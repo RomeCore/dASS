@@ -1,10 +1,5 @@
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.Prompting.ContextExpanders;
-using LLMDesktopAssistant.Prompting.Management;
-using LLMDesktopAssistant.Prompting.Plugins;
-using LLMDesktopAssistant.StructuredValues.Converters;
-using LLTSharp;
 
 namespace LLMDesktopAssistant.Agents.SubAgents
 {
@@ -15,72 +10,16 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 	[ChatService(typeof(IAddonSetCollector<SubAgentInfo>))]
 	public class SubAgentsetCollector(
 		IChatSettingsService chatSettings,
-		IPromptSubAgentManager subAgentManager,
-		IEnumerable<IPromptSystemContextExpander> promptSystemContextExpanders,
-		IEnumerable<IPromptTemplatePlugin> promptTemplatePlugins,
 		IServiceProvider services
 	) : AddonSetCollectorBase<SubAgentInfo, SubAgentChange>(services)
 	{
-		protected override IEnumerable<SubAgentInfo> GetAdditionalAddons()
-		{
-			List<SubAgentInfo> subAgents = [];
-
-			var promptSubAgents = subAgentManager.GetAll().ToList();
-			if (promptSubAgents.Count > 0)
-			{
-				subAgents.AddRange(promptSubAgents.Select(sp =>
-				{
-					return new SubAgentInfo
-					{
-						Name = sp.Name,
-						OverrideOrder = 1, // Template sub-agents have priority over file-system sub-agents.
-						Description = sp.Description ?? string.Empty,
-						BodyGetter = new(si =>
-						{
-							var context = new Dictionary<string, object?>();
-							foreach (var expander in promptSystemContextExpanders)
-								expander.ExpandPromptContext(context);
-							var templateFunctions = new TemplateFunctionSet(promptTemplatePlugins.SelectMany(p => p.GetTemplateFunctions()));
-
-							if (sp.ParameterSchema is not null)
-							{
-								if (si.Change is not null)
-								{
-									si.Change.Parameters = sp.ParameterSchema.Root.CreateOrFixValue(si.Change.Parameters, []);
-									context["params"] = LLTStructuredConverter.ToTemplateDataAccessor(si.Change.Parameters);
-								}
-								else
-								{
-									var @params = sp.ParameterSchema.Root.CreateOrFixValue(null, []);
-									context["params"] = LLTStructuredConverter.ToTemplateDataAccessor(@params);
-								}
-							}
-							return sp.EffectiveTemplate.Render(context, templateFunctions).ToString() ?? string.Empty;
-						}),
-						AddonSource = AddonSource.Template,
-						TemplateSource = sp.Source,
-						ParameterSchema = sp.ParameterSchema
-					};
-				}));
-			}
-
-			return subAgents;
-		}
+		protected override AddonTarget ResolveAgentTarget(ChatAgentDescriptor agent)
+			=> new(agent.SubAgents.GetEffectiveSubAgentset(chatSettings.Settings), agent.SubAgents);
 
 		protected override void ApplyChange(SubAgentInfo target, SubAgentChange change, ChatAgentDescriptor? agent)
 		{
 			base.ApplyChange(target, change, agent);
 			target.Model = change.Model ?? target.Model;
-		}
-
-		public override IEnumerable<SubAgentInfo> GetAddonsForAgent(ChatAgentDescriptor agent)
-		{
-			var settings = agent.SubAgents;
-			if (!settings.EnableSubAgents)
-				return [];
-
-			var subAgentset = settings.GetEffectiveSubAgentset(chatSettings.Settings);
-			return GetAddonsWithChanges(subAgentset, agent);
 		}
 	}
 }

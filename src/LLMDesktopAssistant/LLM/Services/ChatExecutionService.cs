@@ -11,6 +11,7 @@ using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Dispatch;
@@ -46,7 +47,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		IToolInvocationDispatcher dispatcher,
 		IToolMemorizationService toolMemorizer,
 		IEnumerable<IChatExecutionHook> executionHooks,
-		IToolsetCacheService toolsetCache,
+		IAddonSetCollector<ToolInfo> toolsetCollector,
 		IMCPManagementService mcpManager,
 		IUsageStatsCollector usageStatsCollector,
 		IToastService toastService,
@@ -285,12 +286,10 @@ namespace LLMDesktopAssistant.LLM.Services
 					if (toolCall is not IFunctionToolCall funtionCall)
 						throw new InvalidOperationException($"Unsupported tool call type: {toolCall.GetType()}.");
 
-					if (toolsetCache.ValidAliasedTools.TryGetValue(toolCall.ToolName, out var toolInfo))
+					var toolInfo = toolsetCollector.GetAddonsForAgent(agent).GetByName(toolCall.ToolName);
+					if (toolInfo is not null && toolInfo.Name != toolCall.ToolName)
 					{
-						if (toolInfo.Name != toolCall.ToolName)
-						{
-							Log.Information($"Tool call '{toolCall.ToolName}' is aliased as '{toolInfo.Name}'. Using the alias.");
-						}
+						Log.Information($"Tool call '{toolCall.ToolName}' is aliased as '{toolInfo.Name}'. Using the alias.");
 					}
 
 					var domainToolCall = new Domain.ToolCall

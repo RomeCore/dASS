@@ -33,7 +33,7 @@ public class ChatCommandsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the command set resolved by the current inheritance level. The cards edit the changes of this set.
 	/// </summary>
-	public SlashCommandSet EffectiveCommandsSet => _commandSettings.GetEffectiveCommandsSet();
+	public SlashCommandSetConfiguration EffectiveCommandsSet => _commandSettings.GetEffectiveCommandsSet();
 
 	/// <summary>
 	/// Gets or sets the inheritance level of the command set.
@@ -60,12 +60,13 @@ public class ChatCommandsSettingsViewModel : ViewModelBase
 		settings.PropertyChanged += CommandSettings_PropertyChanged;
 
 		List = new AddonListViewModel<SlashCommandInfo, SlashCommandChange>(services, null, AddonKind.SlashCommand, (list, addon) => new AddonCardContext<SlashCommandInfo, SlashCommandChange>
-			{
-				Addon = addon,
-				SetConfig = EffectiveCommandsSet,
-				TagClickCommand = list.TagClickCommand,
-				OnDeleted = list.Update
-			})
+		{
+			Addon = addon,
+			Services = services,
+			SetConfig = EffectiveCommandsSet,
+			TagClickCommand = list.TagClickCommand,
+			OnDeleted = list.Update
+		})
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.commands.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.commands.empty")

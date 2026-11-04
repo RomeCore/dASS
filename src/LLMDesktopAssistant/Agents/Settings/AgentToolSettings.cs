@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.SourceGenerators;
@@ -10,17 +11,16 @@ namespace LLMDesktopAssistant.Agents
 	/// Contains the tool policy group, the toolset group and the local tools enable flag.
 	/// </summary>
 	[SettingsRoute(nameof(ChatAgentDescriptor.Tools))]
-	public partial class AgentToolSettings : AgentSettingsCategoryBase
+	public partial class AgentToolSettings : AgentSettingsCategoryBase, IAddonCategorySettings
 	{
-		private bool _enableTools = true;
 		/// <summary>
-		/// Whether to use tools in the chat.
+		/// Whether this category contributes tools at all.
 		/// </summary>
-		public bool EnableTools
+		public bool AddonsCategoryEnabled
 		{
-			get => _enableTools;
-			set => SetProperty(ref _enableTools, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = true;
 
 		private ToolPolicyMask _policy;
 		/// <summary>

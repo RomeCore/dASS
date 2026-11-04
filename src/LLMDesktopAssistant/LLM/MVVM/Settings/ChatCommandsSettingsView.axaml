@@ -36,7 +36,7 @@
 
 		<!-- Master gate -->
 		<CheckBox Content="{loc:Loc settings.commands.enabled}"
-				  IsChecked="{Binding CommandSettings.EnableCommands, Mode=TwoWay}"/>
+				  IsChecked="{Binding CommandSettings.AddonsCategoryEnabled, Mode=TwoWay}"/>
 
 		<TextBlock Text="{loc:Loc settings.commands.enabled.hint}"
 				   Opacity="0.5"

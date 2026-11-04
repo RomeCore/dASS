@@ -1,6 +1,6 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
-using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Specifiers;
@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 	/// </summary>
 	[ChatService(typeof(ISubAgentToolResolver))]
 	public class SubAgentToolResolver(
-		IToolsetCacheService toolsetCache
+		IAddonSetCollector<ToolInfo> toolsetCollector
 	) : ISubAgentToolResolver
 	{
 		/// <inheritdoc/>
@@ -20,29 +20,30 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 		{
 			errors = [];
 
-			// Tools are looked up in the aliased tool dictionary so that both primary names
-			// and aliases (e.g. Claude Code compatible names) can be used in sub-agent definitions.
-			var toolLookup = toolsetCache.AliasedTools;
+			// Tools are looked up by name or alias so that both primary names and aliases (e.g. Claude Code
+			// compatible names) can be used in sub-agent definitions. The lookup deliberately uses the available
+			// set: a sub-agent has its own permissions and must not inherit the caller agent's tool restrictions.
+			var toolset = toolsetCollector.GetAvailableAddons();
 			var resolved = new Dictionary<string, IToolDescriptor>(StringComparer.Ordinal);
 
 			// Available tools are added first with the lowest priority.
 			foreach (var tool in agentInfo.AvailableTools)
 			{
-				if (toolLookup.TryGetValue(tool.ToolName, out var toolInfo) && !resolved.ContainsKey(toolInfo.Name))
+				if (toolset.GetByName(tool.ToolName) is { } toolInfo && !resolved.ContainsKey(toolInfo.Name))
 					resolved[toolInfo.Name] = CreateAgentTool(toolInfo, ToolApprovalLevel.PolicyBased);
 			}
 
 			// Allowed tools override available tools.
 			foreach (var tool in agentInfo.AllowedTools)
 			{
-				if (toolLookup.TryGetValue(tool.ToolName, out var toolInfo))
+				if (toolset.GetByName(tool.ToolName) is { } toolInfo)
 					resolved[toolInfo.Name] = CreateAgentTool(toolInfo, ToolApprovalLevel.AlwaysApprove);
 			}
 
 			// Disallowed tools override everything.
 			foreach (var tool in agentInfo.DisallowedTools)
 			{
-				if (toolLookup.TryGetValue(tool.ToolName, out var toolInfo))
+				if (toolset.GetByName(tool.ToolName) is { } toolInfo)
 					resolved[toolInfo.Name] = CreateAgentTool(toolInfo, ToolApprovalLevel.AlwaysDisallow);
 			}
 

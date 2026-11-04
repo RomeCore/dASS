@@ -15,12 +15,15 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	public class ToolCommandSourceTests
 	{
 		private sealed class FakeCollector<T>(IEnumerable<T> addons) : IAddonSetCollector<T>
+			where T : AddonBase<T>
 		{
-			public IEnumerable<T> GetAvailableAddons() => addons;
+			private readonly AddonSet<T> _set = new(addons);
 
-			public IEnumerable<T> GetAddonsForChat() => addons;
+			public AddonSet<T> GetAvailableAddons() => _set;
 
-			public IEnumerable<T> GetAddonsForAgent(ChatAgentDescriptor agent) => addons;
+			public AddonSet<T> GetAddonsForChat() => _set;
+
+			public AddonSet<T> GetAddonsForAgent(ChatAgentDescriptor agent) => _set;
 		}
 
 		private static ToolInfo Tool(string name, string? schema = null, AddonPackInfo? pack = null,
@@ -53,7 +56,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var provider = new ToolSlashCommandProvider(new FakeCollector<ToolInfo>(
 				[Tool("fs-read"), Tool("web-search")]));
 
-			var commands = provider.GetCommands().ToList();
+			var commands = provider.Addons.ToList();
 
 			Assert.Equal(new[] { "fs-read", "web-search" }, commands.Select(c => c.Name));
 			Assert.All(commands, c => Assert.Equal(SlashCommandSource.Tool, c.SourceKind));
@@ -75,7 +78,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			var provider = new ToolSlashCommandProvider(new FakeCollector<ToolInfo>([Tool("fs-read", pack: pack)]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.Equal(new[] { "tool", "authoring" }, command.Namespaces);
 			Assert.Same(pack, command.SourcePack);
@@ -90,7 +93,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				Tool("ok")
 			]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.Equal("ok", command.Name);
 		}

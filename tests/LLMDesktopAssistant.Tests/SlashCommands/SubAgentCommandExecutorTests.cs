@@ -82,22 +82,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			public void LoadFromProfile(string profileName) { }
 		}
 
-		private sealed class FakeToolsetCache : IToolsetCacheService
-		{
-			public ImmutableDictionary<string, ToolInfo> AvailableTools => [];
-			public ImmutableDictionary<string, ToolInfo> AliasedTools => [];
-			public ImmutableDictionary<string, ToolInfo> ValidTools => [];
-			public ImmutableDictionary<string, ToolInfo> ValidAliasedTools => [];
-
-			public void Invalidate(ChatAgentDescriptor? agent)
-			{
-			}
-		}
-
 		private readonly FakeParamsResolver _resolver = new();
 		private readonly FakeAgentTaskExecutor _executor = new();
 		private readonly FakeChatSettings _chatSettings = new();
-		private readonly FakeToolsetCache _toolsetCache = new();
 
 		public SubAgentCommandExecutorTests()
 		{
@@ -151,7 +138,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 		private SubAgentCommandExecutor Executor()
 			=> new(new SubAgentInfo { Name = "web-searcher", Description = "searches the web" },
-				_resolver, _executor, _chatSettings, _toolsetCache);
+				_resolver, _executor, _chatSettings);
 
 		[Fact]
 		public async Task LaunchesTheSubAgent_WhenNotWaiting()

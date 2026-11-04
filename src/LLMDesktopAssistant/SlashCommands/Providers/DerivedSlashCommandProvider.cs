@@ -1,7 +1,7 @@
-using System.Collections.Immutable;
+using System.Collections.Specialized;
 using LLMDesktopAssistant.Addons;
-using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.SlashCommands.Providers
 {
@@ -12,19 +12,32 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// <remarks>
 	/// The provider reads <see cref="IAddonSetCollector{T}.GetAvailableAddons"/> and filters it by
 	/// <see cref="AddonBase{Self}.IsValid"/> itself - it deliberately does not go through
-	/// <c>GetAddonsForChat()</c>, whose availability predicates are a prompt concern. The consumers of the command
-	/// surface (autocomplete, resolution) reach it through the command collector's own <c>GetAddonsForChat()</c>.
-	/// Commands are frozen before they leave the provider.
+	/// <c>GetAddonsForChat()</c>, whose availability predicates are a prompt concern. The command list is rebuilt
+	/// incrementally when the source available set changes: commands are matched by
+	/// <see cref="SlashCommandInfo.Key"/> and a command whose source addon is the same instance is reused, so one
+	/// changed skill emits one replace instead of a full reset.
 	/// </remarks>
 	/// <typeparam name="TSource">The addon kind the commands are derived from.</typeparam>
-	public abstract class DerivedSlashCommandProvider<TSource> : ISlashCommandProvider
+	public abstract class DerivedSlashCommandProvider<TSource> : Disposable, ISlashCommandProvider
 		where TSource : AddonBase<TSource>
 	{
 		private readonly IAddonSetCollector<TSource> _sources;
+		private readonly RangeObservableCollection<SlashCommandInfo> _commands = [];
+		private readonly Dictionary<TSource, SlashCommandInfo> _commandMap = new(ReferenceEqualityComparer.Instance);
+		private ReadOnlyObservableCollection<SlashCommandInfo>? _view;
+
+		/// <inheritdoc/>
+		public ReadOnlyObservableCollection<SlashCommandInfo> Addons => _view ??= new(_commands);
 
 		protected DerivedSlashCommandProvider(IAddonSetCollector<TSource> sources)
 		{
 			_sources = sources;
+
+			var addons = sources.GetAvailableAddons().Addons;
+			addons.CollectionChanged += OnSourcesChanged;
+			_commands.AddRange(addons.Where(FilterAddon).Select(BuildCommand));
+			foreach (var command in _commands)
+				_commandMap[(TSource)command.Source!] = command;
 		}
 
 		/// <summary>
@@ -61,43 +74,91 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		}
 
 		/// <inheritdoc/>
-		public IEnumerable<SlashCommandInfo> GetCommands()
+		protected override void Dispose(bool disposing)
 		{
-			foreach (var source in _sources.GetAvailableAddons().Where(a => FilterAddon(a)))
-			{
-				var command = new SlashCommandInfo
-				{
-					Name = source.Name,
-					DescriptionGetter = _ => source.Description,
-					Aliases = source.Aliases,
-					Order = source.Order,
-					Namespaces = BuildNamespaces(source),
-					OverrideOrder = SlashCommandOrderTiers.ForSource(SourceKind),
-					Executor = CreateCommandExecutor(source),
-					SourcePack = source.SourcePack,
-					Path = source.Path,
-					AddonSource = source.AddonSource,
-					SourceKind = SourceKind,
-					Source = source,
-					NameKey = source.NameKey,
-					DescriptionKey = source.DescriptionKey,
-					CategoryKey = source.CategoryKey
-				};
+			base.Dispose(disposing);
 
-				PopulateFromSource(source, command);
-				command.Freeze();
-
-				yield return command;
-			}
+			if (disposing)
+				_sources.GetAvailableAddons().Addons.CollectionChanged -= OnSourcesChanged;
 		}
 
-		private ImmutableList<string> BuildNamespaces(TSource source)
+		private void OnSourcesChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
-			var builder = ImmutableList.CreateBuilder<string>();
-			builder.Add(TypeNamespace);
+			if (e.Action is NotifyCollectionChangedAction.Move)
+				return;
+
+			if (e.Action is NotifyCollectionChangedAction.Reset)
+			{
+				var visited = new HashSet<TSource>();
+
+				foreach (var item in _sources.GetAvailableAddons().Addons)
+				{
+					visited.Add(item);
+					if (!_commandMap.ContainsKey(item) && FilterAddon(item))
+					{
+						var command = BuildCommand(item);
+						_commands.Add(command);
+						_commandMap[item] = command;
+					}
+				}
+
+				foreach (var (item, command) in _commandMap.ToList())
+				{
+					if (!visited.Contains(item))
+					{
+						_commands.Remove(command);
+						_commandMap.Remove(item);
+					}
+				}
+
+				return;
+			}
+
+			if (e.OldItems is not null)
+				foreach (var item in e.OldItems)
+					if (item is TSource oldAddon && _commandMap.Remove(oldAddon, out var command))
+						_commands.Remove(command);
+
+			if (e.NewItems is not null)
+				foreach (var item in e.NewItems)
+					if (item is TSource newAddon && FilterAddon(newAddon))
+					{
+						var command = BuildCommand(newAddon);
+						_commands.Add(command);
+						_commandMap[(TSource)command.Source!] = command;
+					}
+		}
+
+		private SlashCommandInfo BuildCommand(TSource source)
+		{
+			var namespaceBuilder = ImmutableList.CreateBuilder<string>();
+			namespaceBuilder.Add(TypeNamespace);
 			if (source.SourcePack is not null)
-				builder.Add(source.SourcePack.Name);
-			return builder.ToImmutable();
+				namespaceBuilder.Add(source.SourcePack.Name);
+
+			var command = new SlashCommandInfo
+			{
+				Name = source.Name,
+				DescriptionGetter = _ => source.Description,
+				Aliases = source.Aliases,
+				Order = source.Order,
+				Namespaces = namespaceBuilder.ToImmutable(),
+				OverrideOrder = SlashCommandOrderTiers.ForSource(SourceKind),
+				Executor = CreateCommandExecutor(source),
+				SourcePack = source.SourcePack,
+				Path = source.Path,
+				AddonSource = source.AddonSource,
+				SourceKind = SourceKind,
+				Source = source,
+				NameKey = source.NameKey,
+				DescriptionKey = source.DescriptionKey,
+				CategoryKey = source.CategoryKey
+			};
+
+			PopulateFromSource(source, command);
+			command.Freeze();
+
+			return command;
 		}
 	}
 }

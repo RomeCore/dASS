@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons.Management;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.ToolModules;
 using LLMDesktopAssistant.LLM.Services;
@@ -39,7 +40,7 @@ public class ShellExecutionToolModuleTests
 		}
 	}
 
-	private sealed class StubSkillAccessor : IAddonAccessor<SkillInfo>
+	private sealed class StubSkillAccessor : IFileAddonAccessor<SkillInfo>
 	{
 		public ReadOnlyObservableCollection<SkillInfo> Addons => new(new List<SkillInfo>());
 	}

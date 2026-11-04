@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.SourceGenerators;
 
@@ -8,24 +9,23 @@ namespace LLMDesktopAssistant.Agents
 	/// list of per-sub-agent changes.
 	/// </summary>
 	[SettingsRoute(nameof(ChatAgentDescriptor.SubAgents))]
-	public partial class AgentSubAgentSettings : AgentSettingsCategoryBase
+	public partial class AgentSubAgentSettings : AgentSettingsCategoryBase, IAddonCategorySettings
 	{
-		private bool _enableSubAgents = true;
 		/// <summary>
-		/// Gets or sets a value indicating whether sub-agents are enabled for the agent.
+		/// Whether this category contributes sub-agents at all.
 		/// </summary>
-		public bool EnableSubAgents
+		public bool AddonsCategoryEnabled
 		{
-			get => _enableSubAgents;
-			set => SetProperty(ref _enableSubAgents, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = true;
 
-		private SubAgentsetSettings _subAgentset = new();
+		private SubAgentsetConfiguration _subAgentset = new();
 		/// <summary>
 		/// Gets or sets the sub-agentset settings.
 		/// </summary>
 		[InheritedChatAgentSetting]
-		public SubAgentsetSettings SubAgentset
+		public SubAgentsetConfiguration SubAgentset
 		{
 			get => _subAgentset;
 			set => SetProperty(ref _subAgentset, value);

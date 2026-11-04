@@ -5,7 +5,7 @@ using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Agents.Settings
 {
-	public class SkillsetSettings : AddonSetConfigurationBase<SkillChange>
+	public class SkillsetConfiguration : AddonSetConfigurationBase<SkillChange>
 	{
 	}
 }

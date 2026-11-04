@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Services;
@@ -15,12 +16,12 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// Derives an <c>/agent:&lt;name&gt;</c> command from every available sub-agent.
 	/// </summary>
 	[ChatService(typeof(ISlashCommandProvider))]
+	[ChatService(typeof(IAdditionalAddonSource<SlashCommandInfo>))]
 	public class SubAgentSlashCommandProvider(
 		IAddonSetCollector<SubAgentInfo> sources,
 		ISubAgentTaskParamsResolver paramsResolver,
 		IAgentTaskExecutor agentTaskExecutor,
-		IChatSettingsService chatSettings,
-		IToolsetCacheService toolsetCache)
+		IChatSettingsService chatSettings)
 		: DerivedSlashCommandProvider<SubAgentInfo>(sources)
 	{
 		protected override string TypeNamespace => "agent";
@@ -28,6 +29,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		protected override SlashCommandSource SourceKind => SlashCommandSource.SubAgent;
 
 		protected override ISlashCommandExecutor CreateCommandExecutor(SubAgentInfo source)
-			=> new SubAgentCommandExecutor(source, paramsResolver, agentTaskExecutor, chatSettings, toolsetCache);
+			=> new SubAgentCommandExecutor(source, paramsResolver, agentTaskExecutor, chatSettings);
 	}
 }

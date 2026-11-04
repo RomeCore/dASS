@@ -9,7 +9,6 @@ using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
-using LLMDesktopAssistant.MVVM;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
 
@@ -62,7 +61,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 		/// <summary>
 		/// Gets the context set resolved by the current inheritance level.
 		/// </summary>
-		public ContextSetSettings EffectiveContextSet => Settings.GetEffectiveContextSet(_chatSettings);
+		public ContextSetConfiguration EffectiveContextSet => Settings.GetEffectiveContextSet(_chatSettings);
 
 		public AgentContextSettingsViewModel(IServiceProvider services, ChatAgentDescriptor agent,
 			AgentContextSettings settings, ChatSettings chatSettings)
@@ -72,14 +71,14 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			_agent = agent;
 			_promptContextCollector = services.GetRequiredService<IAddonSetCollector<PromptContextInfo>>();
 
-			List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(services, agent, AddonKind.PromptContext,
-				(list, addon) => new AddonCardContext<PromptContextInfo, PromptContextChange>
-				{
-					Addon = addon,
-					SetConfig = EffectiveContextSet,
-					TagClickCommand = list.TagClickCommand,
-					OnDeleted = list.Update
-				})
+			List = new AddonListViewModel<PromptContextInfo, PromptContextChange>(services, agent, AddonKind.PromptContext, (list, addon) => new AddonCardContext<PromptContextInfo, PromptContextChange>
+			{
+				Addon = addon,
+				Services = services,
+				SetConfig = EffectiveContextSet,
+				TagClickCommand = list.TagClickCommand,
+				OnDeleted = list.Update
+			})
 			{
 				SearchPlaceholderKey = Locale.GetKey("settings.prompt_contexts.search.placeholder"),
 				EmptyTextKey = Locale.GetKey("settings.prompt_contexts.empty")

@@ -35,7 +35,7 @@ public class AgentSubAgentSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the sub-agentset resolved by the current inheritance level. The cards edit the changes of this set.
 	/// </summary>
-	public SubAgentsetSettings EffectiveSubAgentset => SubAgentSettings.GetEffectiveSubAgentset(_chatSettings);
+	public SubAgentsetConfiguration EffectiveSubAgentset => SubAgentSettings.GetEffectiveSubAgentset(_chatSettings);
 
 	/// <summary>
 	/// Gets or sets the inheritance level of the sub-agentset.
@@ -66,12 +66,13 @@ public class AgentSubAgentSettingsViewModel : ViewModelBase
 		settings.PropertyChanged += SubAgentSettings_PropertyChanged;
 
 		List = new AddonListViewModel<SubAgentInfo, SubAgentChange>(services, agent, AddonKind.SubAgent, (list, addon) => new AddonCardContext<SubAgentInfo, SubAgentChange>
-			{
-				Addon = addon,
-				SetConfig = EffectiveSubAgentset,
-				TagClickCommand = list.TagClickCommand,
-				OnDeleted = list.Update
-			})
+		{
+			Addon = addon,
+			Services = services,
+			SetConfig = EffectiveSubAgentset,
+			TagClickCommand = list.TagClickCommand,
+			OnDeleted = list.Update
+		})
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.sub_agents.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.sub_agents.empty")

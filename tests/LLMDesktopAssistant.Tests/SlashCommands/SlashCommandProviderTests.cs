@@ -16,12 +16,15 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	public class SlashCommandProviderTests
 	{
 		private sealed class FakeCollector<T>(IEnumerable<T> addons) : IAddonSetCollector<T>
+			where T : AddonBase<T>
 		{
-			public IEnumerable<T> GetAvailableAddons() => addons;
+			private readonly AddonSet<T> _set = new(addons);
 
-			public IEnumerable<T> GetAddonsForChat() => addons;
+			public AddonSet<T> GetAvailableAddons() => _set;
 
-			public IEnumerable<T> GetAddonsForAgent(ChatAgentDescriptor agent) => addons;
+			public AddonSet<T> GetAddonsForChat() => _set;
+
+			public AddonSet<T> GetAddonsForAgent(ChatAgentDescriptor agent) => _set;
 		}
 
 		private static AddonPackInfo Pack(string name) => new()
@@ -58,7 +61,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var skill = Skill("grilling", pack);
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>([skill]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.Equal("grilling", command.Name);
 			Assert.Equal("grilling description", command.Description);
@@ -85,7 +88,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>([Skill("lonely")]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.Equal(new[] { "skill" }, command.Namespaces);
 		}
@@ -96,7 +99,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>(
 				[Skill("a"), Skill("b"), Skill("c")]));
 
-			var names = provider.GetCommands().Select(c => c.Name).ToList();
+			var names = provider.Addons.Select(c => c.Name).ToList();
 
 			Assert.Equal(new[] { "a", "b", "c" }, names);
 		}
@@ -110,7 +113,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				Skill("ok")
 			]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.Equal("ok", command.Name);
 		}
@@ -120,7 +123,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>([Skill("grilling")]));
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 
 			Assert.True(command.IsFrozen);
 			Assert.Throws<InvalidOperationException>(() => command.Name = "changed");
@@ -131,7 +134,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			var provider = new SkillSlashCommandProvider(new FakeCollector<SkillInfo>([Skill("grilling")]));
 
-			var schema = Assert.Single(provider.GetCommands()).Executor.ArgumentSchema!;
+			var schema = Assert.Single(provider.Addons).Executor.ArgumentSchema!;
 
 			Assert.True(schema.HasRestPositional);
 			Assert.Empty(schema.Positionals);
@@ -142,9 +145,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void AgentSchema_IsARestPositionalPlusAnOptionalWait()
 		{
 			var subAgent = new SubAgentInfo { Name = "web-searcher", Description = "searches the web" };
-			var provider = new SubAgentSlashCommandProvider(new FakeCollector<SubAgentInfo>([subAgent]), null!, null!, null!, null!);
+			var provider = new SubAgentSlashCommandProvider(new FakeCollector<SubAgentInfo>([subAgent]), null!, null!, null!);
 
-			var command = Assert.Single(provider.GetCommands());
+			var command = Assert.Single(provider.Addons);
 			var schema = command.Executor.ArgumentSchema!;
 
 			Assert.Equal(new[] { "agent" }, command.Namespaces);

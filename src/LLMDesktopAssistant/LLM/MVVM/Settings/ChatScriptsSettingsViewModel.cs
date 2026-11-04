@@ -33,7 +33,7 @@ public class ChatScriptsSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the scriptset resolved by the current inheritance level. The cards edit the changes of this set.
 	/// </summary>
-	public LuaScriptsetSettings EffectiveScriptset => _scriptSettings.GetEffectiveScriptset();
+	public LuaScriptsetConfiguration EffectiveScriptset => _scriptSettings.GetEffectiveScriptset();
 
 	/// <summary>
 	/// Gets or sets the inheritance level of the scriptset.
@@ -60,12 +60,13 @@ public class ChatScriptsSettingsViewModel : ViewModelBase
 		settings.PropertyChanged += ScriptSettings_PropertyChanged;
 
 		List = new AddonListViewModel<LuaScriptInfo, LuaScriptChange>(services, null, AddonKind.LuaScript, (list, addon) => new AddonCardContext<LuaScriptInfo, LuaScriptChange>
-			{
-				Addon = addon,
-				SetConfig = EffectiveScriptset,
-				TagClickCommand = list.TagClickCommand,
-				OnDeleted = list.Update
-			})
+		{
+			Addon = addon,
+			Services = services,
+			SetConfig = EffectiveScriptset,
+			TagClickCommand = list.TagClickCommand,
+			OnDeleted = list.Update
+		})
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.scripts.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.scripts.empty")

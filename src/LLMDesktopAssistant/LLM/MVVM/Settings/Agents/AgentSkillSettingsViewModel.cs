@@ -34,7 +34,7 @@ public class AgentSkillSettingsViewModel : ViewModelBase
 	/// <summary>
 	/// Gets the skillset resolved by the current inheritance level. The cards edit the changes of this set.
 	/// </summary>
-	public SkillsetSettings EffectiveSkillset => SkillSettings.GetEffectiveSkillset(_chatSettings);
+	public SkillsetConfiguration EffectiveSkillset => SkillSettings.GetEffectiveSkillset(_chatSettings);
 
 	/// <summary>
 	/// Gets or sets the inheritance level of the skillset.
@@ -65,12 +65,13 @@ public class AgentSkillSettingsViewModel : ViewModelBase
 		settings.PropertyChanged += SkillSettings_PropertyChanged;
 
 		List = new AddonListViewModel<SkillInfo, SkillChange>(services, agent, AddonKind.Skill, (list, addon) => new AddonCardContext<SkillInfo, SkillChange>
-			{
-				Addon = addon,
-				SetConfig = EffectiveSkillset,
-				TagClickCommand = list.TagClickCommand,
-				OnDeleted = list.Update
-			})
+		{
+			Addon = addon,
+			Services = services,
+			SetConfig = EffectiveSkillset,
+			TagClickCommand = list.TagClickCommand,
+			OnDeleted = list.Update
+		})
 		{
 			SearchPlaceholderKey = Locale.GetKey("settings.skills.search.placeholder"),
 			EmptyTextKey = Locale.GetKey("settings.skills.empty")

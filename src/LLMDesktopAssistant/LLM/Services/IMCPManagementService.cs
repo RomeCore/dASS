@@ -6,6 +6,12 @@ namespace LLMDesktopAssistant.LLM.Services
 	public interface IMCPManagementService
 	{
 		/// <summary>
+		/// Occurs when the set of connected MCP servers changes after
+		/// <see cref="EnsureCurrentMCPConnectionsAsync"/> has completed.
+		/// </summary>
+		event EventHandler? ConnectionsChanged;
+
+		/// <summary>
 		/// Checks if chat has any MCP in their configuration.
 		/// </summary>
 		/// <returns>true if any chat has an MCP configuration; otherwise, false.</returns>

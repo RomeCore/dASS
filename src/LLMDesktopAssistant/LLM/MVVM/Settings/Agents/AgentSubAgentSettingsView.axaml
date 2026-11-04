@@ -14,7 +14,7 @@
 	<StackPanel Margin="8" Spacing="8">
 
 		<!-- Enable sub-agents checkbox -->
-		<CheckBox IsChecked="{Binding SubAgentSettings.EnableSubAgents}"
+		<CheckBox IsChecked="{Binding SubAgentSettings.AddonsCategoryEnabled}"
 				  Content="{loc:Loc settings.sub_agents.enable}"/>
 
 		<Rectangle Height="1"
@@ -71,7 +71,7 @@
 				   TextWrapping="Wrap"/>
 
 		<!-- Search + list -->
-		<ContentControl IsEnabled="{Binding SubAgentSettings.EnableSubAgents}">
+		<ContentControl IsEnabled="{Binding SubAgentSettings.AddonsCategoryEnabled}">
 			<cards:AddonListView DataContext="{Binding List}"/>
 		</ContentControl>
 

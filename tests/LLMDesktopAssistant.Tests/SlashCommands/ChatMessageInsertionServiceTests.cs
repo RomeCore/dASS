@@ -43,35 +43,33 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			}
 		}
 
-		private sealed class RecordingExecutionService : IChatExecutionService
-		{
-			public int GenerateCalls { get; private set; }
-
-			public Task GenerateResponseAsync(CancellationToken cancellationToken = default)
-			{
-				GenerateCalls++;
-				return Task.CompletedTask;
-			}
-
-			public Task GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId,
-				CancellationToken cancellationToken = default) => Task.CompletedTask;
-		}
-
 		private sealed class Harness : IDisposable
 		{
 			public ChatStorageTestContext Storage { get; } = new();
 			public FakeChatSettingsService Settings { get; } = new();
 			public FakeResolver Resolver { get; } = new();
-			public RecordingExecutionService Executor { get; } = new();
 			public ChatMessageInsertionService Service { get; }
 
 			public Harness()
 			{
 				Service = new ChatMessageInsertionService(
-					Storage.Chat, Storage.Service, Settings, Resolver, new ChatExecutionTokenService(), Executor);
+					Storage.Service,
+					Settings,
+					new ChatCommandInvocationService(Storage.Chat, Resolver, new ChatExecutionTokenService()));
 			}
 
 			public UserMessage LastMessage => (UserMessage)Storage.Chat.Messages[^1].Message;
+
+			/// <summary>
+			/// Appends the input and runs the command it carries, which is what the production caller does in two
+			/// steps so that the queue can drop an entry in between.
+			/// </summary>
+			public async Task<UserInputInsertionResult> InsertAsync(UserInput input, bool generateIntent,
+				int? editIndex = null)
+			{
+				var insertion = await Service.AppendUserInputAsync(input, editIndex);
+				return await Service.RunInsertedCommandAsync(insertion, generateIntent);
+			}
 
 			public void Dispose() => Storage.Dispose();
 		}
@@ -96,7 +94,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("hello there"), generateIntent: true);
+			var check = harness.Service.CanInsertUserInput(Input("hello there"));
 
 			Assert.True(check.Success);
 			Assert.Null(check.Error);
@@ -108,7 +106,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true);
+			var check = harness.Service.CanInsertUserInput(Input("/nope"));
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.unknown", check.Error!.Key);
@@ -126,7 +124,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
 
-			var check = harness.Service.CanInsertUserInput(Input("/grilling"), generateIntent: true);
+			var check = harness.Service.CanInsertUserInput(Input("/grilling"));
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.missing_argument", check.Error!.Key);
@@ -138,7 +136,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true).Success);
+			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it")).Success);
 		}
 
 		[Fact]
@@ -146,7 +144,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("hello there"), generateIntent: true, editIndex: 0).Success);
+			Assert.True(harness.Service.CanInsertUserInput(Input("hello there")).Success);
 		}
 
 		[Fact]
@@ -154,7 +152,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true, editIndex: 0);
+			var check = harness.Service.CanInsertUserInput(Input("/nope"));
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.unknown", check.Error!.Key);
@@ -170,7 +168,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
 
-			var check = harness.Service.CanInsertUserInput(Input("/grilling"), generateIntent: true, editIndex: 0);
+			var check = harness.Service.CanInsertUserInput(Input("/grilling"));
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.missing_argument", check.Error!.Key);
@@ -182,25 +180,25 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it"), generateIntent: true, editIndex: 0).Success);
+			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it")).Success);
 		}
 
 		[Fact]
 		public void CanInsertUserInput_AnEdit_WhenCommandsAreDisabled_IsAccepted()
 		{
 			using var harness = new Harness();
-			harness.Settings.Settings.Commands.EnableCommands = false;
+			harness.Settings.Settings.Commands.AddonsCategoryEnabled = false;
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true, editIndex: 0).Success);
+			Assert.True(harness.Service.CanInsertUserInput(Input("/nope")).Success);
 		}
 
 		[Fact]
 		public void CanInsertUserInput_WhenCommandsAreDisabled_IsAccepted()
 		{
 			using var harness = new Harness();
-			harness.Settings.Settings.Commands.EnableCommands = false;
+			harness.Settings.Settings.Commands.AddonsCategoryEnabled = false;
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/nope"), generateIntent: true).Success);
+			Assert.True(harness.Service.CanInsertUserInput(Input("/nope")).Success);
 		}
 
 		[Fact]
@@ -208,11 +206,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			await harness.Service.InsertUserInputAsync(Input("/nope"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/nope"), generateIntent: true);
 
 			Assert.Equal("/nope", harness.LastMessage.Content);
 			Assert.Equal("command.error.unknown", harness.LastMessage.Error!.Key);
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -225,12 +223,12 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 			harness.Resolver.Add(Command("grilling", executor));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling do it"), generateIntent: true);
 
 			Assert.Equal("/grilling do it", harness.LastMessage.Content);
 			Assert.Null(harness.LastMessage.Error);
 			Assert.Equal(1, executor.Calls);
-			Assert.Equal(1, harness.Executor.GenerateCalls);
+			Assert.True(result.Generate);
 
 			var context = executor.LastContext!;
 			Assert.Equal("skill:grilling", context.Token);
@@ -245,9 +243,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor { Result = SlashCommandExecutionResult.Ok(generate: false) }));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling"), generateIntent: true);
 
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -256,9 +254,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor(), generate: false));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling"), generateIntent: true);
 
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -266,10 +264,10 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			await harness.Service.InsertUserInputAsync(Input("hello"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("hello"), generateIntent: true);
 
 			Assert.Equal("hello", harness.LastMessage.Content);
-			Assert.Equal(1, harness.Executor.GenerateCalls);
+			Assert.True(result.Generate);
 		}
 
 		[Fact]
@@ -277,7 +275,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			await harness.Service.InsertUserInputAsync(Input("//hello"), generateIntent: false);
+			await harness.InsertAsync(Input("//hello"), generateIntent: false);
 
 			Assert.Equal("/hello", harness.LastMessage.Content);
 		}
@@ -286,9 +284,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public async Task Insert_WhenCommandsAreDisabled_SendsTheMessageLiterally()
 		{
 			using var harness = new Harness();
-			harness.Settings.Settings.Commands.EnableCommands = false;
+			harness.Settings.Settings.Commands.AddonsCategoryEnabled = false;
 
-			await harness.Service.InsertUserInputAsync(Input("/nope"), generateIntent: false);
+			await harness.InsertAsync(Input("/nope"), generateIntent: false);
 
 			Assert.Equal("/nope", harness.LastMessage.Content);
 			Assert.Null(harness.LastMessage.Error);
@@ -300,11 +298,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor { Throws = new InvalidOperationException("boom") }));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling"), generateIntent: true);
 
 			Assert.NotNull(harness.LastMessage.Error);
 			Assert.Equal("boom", harness.LastMessage.Error!.Value);
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -313,7 +311,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling do it"), generateIntent: true);
+			await harness.InsertAsync(Input("/grilling do it"), generateIntent: true);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.NotNull(fingerprint);
@@ -332,7 +330,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		{
 			using var harness = new Harness();
 
-			await harness.Service.InsertUserInputAsync(Input("/nope"), generateIntent: true);
+			await harness.InsertAsync(Input("/nope"), generateIntent: true);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.NotNull(fingerprint);
@@ -350,13 +348,13 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				Result = new SlashCommandExecutionResult(true, Locale.GetKey("command.error.invalid_argument"))
 			}));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling"), generateIntent: true);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.Equal(SlashCommandExecutionStatus.Failed, fingerprint!.Status);
 			Assert.Equal("command.error.invalid_argument", fingerprint.Error!.Key);
 			Assert.False(fingerprint.GenerateOutcome);
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -365,13 +363,13 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor { Throws = new OperationCanceledException() }));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: true);
+			var result = await harness.InsertAsync(Input("/grilling"), generateIntent: true);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.Equal(SlashCommandExecutionStatus.Cancelled, fingerprint!.Status);
 			Assert.Null(fingerprint.Error);
 			Assert.Null(harness.LastMessage.Error);
-			Assert.Equal(0, harness.Executor.GenerateCalls);
+			Assert.False(result.Generate);
 		}
 
 		[Fact]
@@ -383,7 +381,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				Result = SlashCommandExecutionResult.Ok(modelFacingMode: ModelFacingMode.Neutral)
 			}));
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: false);
+			await harness.InsertAsync(Input("/grilling"), generateIntent: false);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.Equal(ModelFacingMode.Neutral, fingerprint!.ModelFacingMode);
@@ -397,7 +395,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			command.ModelFacingMode = ModelFacingMode.Neutral;
 			harness.Resolver.Add(command);
 
-			await harness.Service.InsertUserInputAsync(Input("/grilling"), generateIntent: false);
+			await harness.InsertAsync(Input("/grilling"), generateIntent: false);
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.Equal(ModelFacingMode.Neutral, fingerprint!.ModelFacingMode);

@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.Tools;
@@ -15,6 +16,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// enabled is therefore still runnable by hand.
 	/// </remarks>
 	[ChatService(typeof(ISlashCommandProvider))]
+	[ChatService(typeof(IAdditionalAddonSource<SlashCommandInfo>))]
 	public class ToolSlashCommandProvider(IAddonSetCollector<ToolInfo> sources)
 		: DerivedSlashCommandProvider<ToolInfo>(sources)
 	{

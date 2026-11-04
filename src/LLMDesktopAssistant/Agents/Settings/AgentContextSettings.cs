@@ -52,7 +52,7 @@ namespace LLMDesktopAssistant.Agents.Settings
 		/// Gets or sets the context-set settings for the agent.
 		/// </summary>
 		[InheritedChatAgentSetting]
-		public ContextSetSettings ContextSet
+		public ContextSetConfiguration ContextSet
 		{
 			get => field ??= new();
 			set => SetProperty(ref field, value);

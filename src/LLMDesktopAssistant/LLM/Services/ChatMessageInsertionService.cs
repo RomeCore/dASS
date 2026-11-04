@@ -93,7 +93,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			return new UserInputInsertionResult(execution.Generate);
 		}
 
-		private bool CommandsEnabled => chatSettings.Settings.Commands.EnableCommands;
+		private bool CommandsEnabled => chatSettings.Settings.Commands.AddonsCategoryEnabled;
 
 		private static UserMessage CreateUserMessage(UserInput userInput, string content)
 		{

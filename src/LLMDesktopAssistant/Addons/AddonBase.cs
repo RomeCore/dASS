@@ -32,6 +32,27 @@ namespace LLMDesktopAssistant.Addons
 		} = string.Empty;
 
 		/// <summary>
+		/// The key that identifies the addon for deduplication, lookup and change resolution: addons that share a
+		/// <see cref="Key"/> are one logical addon, and a per-chat change is stored under it. Defaults to
+		/// <see cref="Name"/>; an addon whose name is not unique across its namespaces (a command, for example)
+		/// overrides it.
+		/// </summary>
+		[JsonIgnore]
+		[BsonIgnore]
+		[YamlIgnore]
+		public virtual string Key => Name;
+
+		/// <summary>
+		/// The order used when addons with the same name conflict. The addon with the higher
+		/// <see cref="OverrideOrder"/> wins; the others are recorded as overrides on the winning addon.
+		/// </summary>
+		public int OverrideOrder
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = 0;
+
+		/// <summary>
 		/// The order in which addons will be sorted and provided.
 		/// Addons are sorted by this property, then by <see cref="Name"/>.
 		/// </summary>

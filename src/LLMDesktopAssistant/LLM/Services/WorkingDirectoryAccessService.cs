@@ -1,4 +1,4 @@
-using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Prompting.Skills;
 
@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.LLM.Services
 	[ChatService(typeof(IWorkingDirectoryAccessService))]
 	public class WorkingDirectoryAccessService(
 		IChatSettingsService chatSettings,
-		IAddonAccessor<SkillInfo> skillAddons
+		IFileAddonAccessor<SkillInfo> skillAddons
 	) : IWorkingDirectoryAccessService
 	{
 		public string GetWorkingDirectory()

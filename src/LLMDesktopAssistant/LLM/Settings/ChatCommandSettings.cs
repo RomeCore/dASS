@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SourceGenerators;
 
@@ -7,13 +8,13 @@ namespace LLMDesktopAssistant.LLM.Settings
 	/// Chat-level slash-command settings: the master enable gate and the per-command override bag.
 	/// </summary>
 	[SettingsRoute(nameof(ChatSettings.Commands))]
-	public partial class ChatCommandSettings : ChatSettingsCategoryBase
+	public partial class ChatCommandSettings : ChatSettingsCategoryBase, IAddonCategorySettings
 	{
 		/// <summary>
 		/// Whether slash commands are enabled for this chat. Deliberately chat-local - the master gate is never
 		/// inherited from the application.
 		/// </summary>
-		public bool EnableCommands
+		public bool AddonsCategoryEnabled
 		{
 			get;
 			set => SetProperty(ref field, value);
@@ -24,7 +25,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 		/// Inherits the application bag by default.
 		/// </summary>
 		[InheritedChatSetting]
-		public SlashCommandSet CommandsSet
+		public SlashCommandSetConfiguration CommandsSet
 		{
 			get;
 			set => SetProperty(ref field, value);

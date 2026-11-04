@@ -1,3 +1,6 @@
+using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Utils;
+
 namespace LLMDesktopAssistant.SlashCommands.Providers
 {
 	/// <summary>
@@ -5,14 +8,17 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// constructor through <see cref="AddCommand"/>, which stamps the native tier and freezes each command.
 	/// </summary>
 	/// <remarks>
-	/// Native commands are static: they do not come from a pack and are built once. Unlike
-	/// <see cref="DerivedSlashCommandProvider{TSource}"/>, nothing is re-derived, so the command list is populated in
-	/// the constructor and returned verbatim. Any per-chat override still applies through the command set collector,
-	/// which clones and re-freezes the command.
+	/// Native commands are static: they do not come from a pack and are built once, so the provider declares itself
+	/// static and exposes its command list without collection-changed notifications. Any per-chat override still
+	/// applies through the command set collector, which clones and re-freezes the command.
 	/// </remarks>
 	public abstract class NativeSlashCommandProvider : ISlashCommandProvider
 	{
 		private readonly List<SlashCommandInfo> _commands = [];
+		private ReadOnlyObservableCollection<SlashCommandInfo>? _view;
+
+		/// <inheritdoc/>
+		public ReadOnlyObservableCollection<SlashCommandInfo> Addons => _view ??= new(_commands);
 
 		/// <summary>
 		/// Registers a native command: stamps <see cref="SlashCommandSource.Native"/> and the native priority tier,
@@ -27,8 +33,5 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			command.Freeze();
 			_commands.Add(command);
 		}
-
-		/// <inheritdoc/>
-		public IEnumerable<SlashCommandInfo> GetCommands() => _commands;
 	}
 }

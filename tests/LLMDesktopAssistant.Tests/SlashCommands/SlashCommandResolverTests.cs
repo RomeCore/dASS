@@ -12,11 +12,13 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	{
 		private sealed class FakeCollector(IEnumerable<SlashCommandInfo> commands) : IAddonSetCollector<SlashCommandInfo>
 		{
-			public IEnumerable<SlashCommandInfo> GetAvailableAddons() => commands;
+			private readonly AddonSet<SlashCommandInfo> _set = new(commands);
 
-			public IEnumerable<SlashCommandInfo> GetAddonsForChat() => commands;
+			public AddonSet<SlashCommandInfo> GetAvailableAddons() => _set;
 
-			public IEnumerable<SlashCommandInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => commands;
+			public AddonSet<SlashCommandInfo> GetAddonsForChat() => _set;
+
+			public AddonSet<SlashCommandInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => _set;
 		}
 
 		private static SlashCommandInfo Command(string name, string[] namespaces, int overrideOrder = 0) => new()

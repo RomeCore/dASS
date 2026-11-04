@@ -1,14 +1,12 @@
+using LLMDesktopAssistant.Addons.Sources;
+
 namespace LLMDesktopAssistant.SlashCommands.Providers
 {
 	/// <summary>
-	/// A source of slash commands. Providers are chat-scoped and are pulled by the command set collector through
-	/// <c>GetAdditionalAddons()</c>.
+	/// A source of slash commands. Providers are chat-scoped addon sources: the command set collector subscribes
+	/// to their <see cref="IAdditionalAddonSource{T}.Addons"/> collection and patches only the affected keys.
 	/// </summary>
-	public interface ISlashCommandProvider
+	public interface ISlashCommandProvider : IAdditionalAddonSource<SlashCommandInfo>
 	{
-		/// <summary>
-		/// Builds the commands this provider contributes.
-		/// </summary>
-		IEnumerable<SlashCommandInfo> GetCommands();
 	}
 }

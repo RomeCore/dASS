@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tests.Addons
@@ -31,13 +32,13 @@ namespace LLMDesktopAssistant.Tests.Addons
 		{
 		}
 
-		private sealed class FakeServiceProvider<TAddon>(IAddonAccessor<TAddon> accessor) : IServiceProvider
+		private sealed class FakeServiceProvider<TAddon>(IFileAddonAccessor<TAddon> accessor) : IServiceProvider
 		{
 			public object? GetService(Type serviceType) =>
-				serviceType == typeof(IAddonAccessor<TAddon>) ? accessor : null;
+				serviceType == typeof(IFileAddonAccessor<TAddon>) ? accessor : null;
 		}
 
-		private sealed class FakeAccessor<TAddon>(IEnumerable<TAddon> addons) : IAddonAccessor<TAddon>
+		private sealed class FakeAccessor<TAddon>(IEnumerable<TAddon> addons) : IFileAddonAccessor<TAddon>
 		{
 			public ReadOnlyObservableCollection<TAddon> Addons { get; } = new(addons.ToList());
 		}

@@ -25,8 +25,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		SubAgentInfo subAgent,
 		ISubAgentTaskParamsResolver paramsResolver,
 		IAgentTaskExecutor agentTaskExecutor,
-		IChatSettingsService chatSettings,
-		IToolsetCacheService toolsetCache) : ISlashCommandExecutor
+		IChatSettingsService chatSettings) : ISlashCommandExecutor
 	{
 		public const string WaitArgumentKey = "wait";
 
@@ -67,9 +66,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			AgentTaskLaunchParameters parameters;
 			try
 			{
-				// Invalidate the toolset cache - params resolver will use it.
-				toolsetCache.Invalidate(agent: null);
-
 				parameters = paramsResolver.Resolve(sourceParameters, descriptor,
 					[new AgentUserMessage { Content = ctx.Arguments.RestPositionalArguments }],
 					out var errors, chatSettings.Settings.SubAgents.GetEffectivePolicy());

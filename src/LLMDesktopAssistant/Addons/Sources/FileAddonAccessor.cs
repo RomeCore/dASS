@@ -2,9 +2,9 @@ using System.Collections.Specialized;
 using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Utils;
 
-namespace LLMDesktopAssistant.Addons
+namespace LLMDesktopAssistant.Addons.Sources
 {
-	public class AddonAccessor<T> : Disposable, IAddonAccessor<T>
+	public class FileAddonAccessor<T> : Disposable, IFileAddonAccessor<T>
 	{
 		private readonly RangeObservableCollection<T> _addons = [];
 		private readonly IReactiveAddonLoader<T>[] _loaders;
@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.Addons
 			}
 		}
 
-		public AddonAccessor(IEnumerable<IReactiveAddonLoader<T>> loaders,
+		public FileAddonAccessor(IEnumerable<IReactiveAddonLoader<T>> loaders,
 			IAddonManagerInvalidator invalidator, IEnumerable<IAddonTypeDescriptor> descriptors)
 		{
 			_loaders = [.. loaders];

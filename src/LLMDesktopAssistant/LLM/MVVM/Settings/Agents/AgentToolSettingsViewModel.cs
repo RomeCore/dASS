@@ -205,12 +205,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 			PolicyMaskCategoryItems = InitializePolicyMaskItems();
 
 			List = new AddonListViewModel<ToolInfo, ToolChange>(services, agent, AddonKind.Tool, (list, addon) => new AddonCardContext<ToolInfo, ToolChange>
-				{
-					Addon = addon,
-					SetConfig = EffectiveToolsetConfiguration,
-					TagClickCommand = list.TagClickCommand,
-					OnDeleted = list.Update
-				})
+			{
+				Addon = addon,
+				Services = services,
+				SetConfig = EffectiveToolsetConfiguration,
+				TagClickCommand = list.TagClickCommand,
+				OnDeleted = list.Update
+			})
 			{
 				SearchPlaceholderKey = Locale.GetKey("settings.tools.search.placeholder"),
 				EmptyTextKey = Locale.GetKey("settings.tools.empty")

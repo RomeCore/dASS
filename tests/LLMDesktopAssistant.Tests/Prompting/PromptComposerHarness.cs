@@ -29,7 +29,6 @@ internal sealed class PromptComposerHarness
 
 	public Chat Chat { get; }
 	public FakeChatSettingsService ChatSettings => _chatSettings;
-	public RecordingToolsetCache ToolsetCache { get; } = new();
 	public RecordingPromptDumpService Dump { get; } = new();
 
 	public PromptComposerHarness(params BranchedMessage[] messages)
@@ -73,7 +72,6 @@ internal sealed class PromptComposerHarness
 		new FakeQuoteRenderer(),
 		new AgentEffectiveMessagesProvider(Chat, _chatSettings, _visibility),
 		_hooks,
-		ToolsetCache,
 		new PromptAnchoredSectionProcessor(Chat, _chatSettings, Chat.Services),
 		new FakeSupersedeProcessor(),
 		new FakePromptContextCollector(_providers),
@@ -112,31 +110,20 @@ internal sealed class PromptComposerHarness
 		public string Render(PromptSupersedeStampBase stamp) => text;
 	}
 
-	private sealed class FakePromptContextCollector(IEnumerable<IPromptContextProvider> providers)
-		: IAddonSetCollector<PromptContextInfo>
+	private sealed class FakePromptContextCollector : IAddonSetCollector<PromptContextInfo>
 	{
-		private readonly List<PromptContextInfo> _infos = [.. providers.Select(p => new PromptContextInfo { Provider = p })];
+		private readonly AddonSet<PromptContextInfo> _set;
 
-		public IEnumerable<PromptContextInfo> GetAvailableAddons() => _infos;
+		public FakePromptContextCollector(IEnumerable<IPromptContextProvider> providers)
+		{
+			_set = new(providers.Select(p => new PromptContextInfo { Provider = p }));
+		}
 
-		public IEnumerable<PromptContextInfo> GetAddonsForChat() => _infos;
+		public AddonSet<PromptContextInfo> GetAvailableAddons() => _set;
 
-		public IEnumerable<PromptContextInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => _infos;
-	}
+		public AddonSet<PromptContextInfo> GetAddonsForChat() => _set;
 
-	internal sealed class RecordingToolsetCache : IToolsetCacheService
-	{
-		public ImmutableDictionary<string, ToolInfo> AvailableTools { get; } = ImmutableDictionary<string, ToolInfo>.Empty;
-
-		public ImmutableDictionary<string, ToolInfo> AliasedTools { get; } = ImmutableDictionary<string, ToolInfo>.Empty;
-
-		public ImmutableDictionary<string, ToolInfo> ValidTools { get; } = ImmutableDictionary<string, ToolInfo>.Empty;
-
-		public ImmutableDictionary<string, ToolInfo> ValidAliasedTools { get; } = ImmutableDictionary<string, ToolInfo>.Empty;
-
-		public int InvalidateCount { get; private set; }
-
-		public void Invalidate(ChatAgentDescriptor? agent) => InvalidateCount++;
+		public AddonSet<PromptContextInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => _set;
 	}
 
 	internal sealed class RecordingPromptDumpService : IPromptDumpService

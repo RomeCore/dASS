@@ -44,13 +44,21 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 	];
 
 	/// <summary>The command set the real source expects, over the sample commands.</summary>
-	private sealed class SampleCollector(IEnumerable<SlashCommandInfo> commands) : IAddonSetCollector<SlashCommandInfo>
+	private sealed class SampleCollector : IAddonSetCollector<SlashCommandInfo>
 	{
-		public IEnumerable<SlashCommandInfo> GetAvailableAddons() => commands;
+		private readonly AddonSet<SlashCommandInfo> _set = new();
 
-		public IEnumerable<SlashCommandInfo> GetAddonsForChat() => commands;
+		public SampleCollector(IEnumerable<SlashCommandInfo> commands)
+		{
+			foreach (var command in commands)
+				_set.Upsert(command);
+		}
 
-		public IEnumerable<SlashCommandInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => commands;
+		public AddonSet<SlashCommandInfo> GetAvailableAddons() => _set;
+
+		public AddonSet<SlashCommandInfo> GetAddonsForChat() => _set;
+
+		public AddonSet<SlashCommandInfo> GetAddonsForAgent(ChatAgentDescriptor agent) => _set;
 	}
 
 	/// <summary>

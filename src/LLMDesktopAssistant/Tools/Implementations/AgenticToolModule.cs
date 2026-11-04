@@ -128,13 +128,13 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			if (allowedTools.Length > 0)
 			{
 				var toolMap = agentDescriptor is not null ?
-					_toolsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
-					_toolsetBuildingService.GetAvailableAddons().ToDictionary(t => t.Name);
+					_toolsetBuildingService.GetAddonsForAgent(agentDescriptor) :
+					_toolsetBuildingService.GetAvailableAddons();
 
 				int notFound = 0;
 				foreach (var allowedTool in allowedTools.Distinct())
 				{
-					if (toolMap.TryGetValue(allowedTool, out var toolInfo))
+					if (toolMap.GetByName(allowedTool) is { } toolInfo)
 					{
 						tools.Add(toolInfo);
 					}
@@ -146,20 +146,20 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				}
 
 				if (notFound > 0)
-					errorSb.Append("Valid tool names: " + string.Join(", ", toolMap.Keys));
+					errorSb.Append("Valid tool names: " + string.Join(", ", toolMap.Select(t => t.Name)));
 			}
 
 			var skills = ImmutableList.CreateBuilder<AgentSkill>();
 			if (allowedSkills.Length > 0)
 			{
 				var skillMap = agentDescriptor is not null ?
-					_skillsetBuildingService.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
-					_skillsetBuildingService.GetAvailableAddons().ToDictionary(t => t.Name);
+					_skillsetBuildingService.GetAddonsForAgent(agentDescriptor) :
+					_skillsetBuildingService.GetAvailableAddons();
 
 				int notFound = 0;
 				foreach (var allowedSkill in allowedSkills.Distinct())
 				{
-					if (skillMap.TryGetValue(allowedSkill, out var skillInfo))
+					if (skillMap.GetByName(allowedSkill) is { } skillInfo)
 					{
 						skills.Add(new ChatAgentSkill(skillInfo));
 					}
@@ -171,20 +171,20 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				}
 
 				if (notFound > 0)
-					errorSb.Append("Valid skill names: " + string.Join(", ", skillMap.Keys));
+					errorSb.Append("Valid skill names: " + string.Join(", ", skillMap.Select(t => t.Name)));
 			}
 
 			var subAgents = ImmutableList.CreateBuilder<TaskSubAgentDescriptor>();
 			if (allowedSubAgents.Length > 0)
 			{
 				var subAgentMap = agentDescriptor is not null ?
-					_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).ToDictionary(t => t.Name) :
-					_subAgentsetCollector.GetAvailableAddons().ToDictionary(t => t.Name);
+					_subAgentsetCollector.GetAddonsForAgent(agentDescriptor) :
+					_subAgentsetCollector.GetAvailableAddons();
 
 				int notFound = 0;
 				foreach (var allowedSubAgent in allowedSubAgents.Distinct())
 				{
-					if (subAgentMap.TryGetValue(allowedSubAgent, out var subAgentInfo))
+					if (subAgentMap.GetByName(allowedSubAgent) is { } subAgentInfo)
 					{
 						subAgents.Add(new TaskSubAgentDescriptor
 						{
@@ -200,7 +200,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				}
 
 				if (notFound > 0)
-					errorSb.AppendLine("Valid sub-agent names: " + string.Join(", ", subAgentMap.Keys));
+					errorSb.AppendLine("Valid sub-agent names: " + string.Join(", ", subAgentMap.Select(t => t.Name)));
 			}
 
 			var memoryBlocks = ImmutableList.CreateBuilder<TaskMemoryBlock>();
@@ -300,8 +300,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				: null;
 
 			var subAgent = agentDescriptor is not null ?
-				_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).FirstOrDefault(a => a.Name == agentName) :
-				_subAgentsetCollector.GetAvailableAddons().FirstOrDefault(a => a.Name == agentName);
+				_subAgentsetCollector.GetAddonsForAgent(agentDescriptor).GetByName(agentName) :
+				_subAgentsetCollector.GetAvailableAddons().GetByName(agentName);
 			if (subAgent is null)
 			{
 				ctx.Call.SetStatusIcon(MaterialIconKind.RobotDead);

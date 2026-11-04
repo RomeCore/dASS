@@ -1,5 +1,5 @@
 ﻿using System.Collections.Specialized;
-using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.StructuredValues.Parameterization;
 using LLMDesktopAssistant.Utils;
@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 	{
 		private readonly TemplateLibrary _library;
 		private readonly IAppTemplateImporter _appTemplateImporter;
-		private readonly IAddonAccessor<ITemplate> _templatesAccessor;
+		private readonly IFileAddonAccessor<ITemplate> _templatesAccessor;
 		private readonly Dictionary<string, IImportablePromptPartManager> _promptPartManagers;
 		private readonly RangeObservableCollection<ITemplate> _templates = [];
 
@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 			field ??= new ReadOnlyObservableCollection<ITemplate>(_templates);
 
 		public ChatTemplateImporter(IAppTemplateImporter appTemplateImporter,
-			IAddonAccessor<ITemplate> templatesAccessor,
+			IFileAddonAccessor<ITemplate> templatesAccessor,
 			IEnumerable<IImportablePromptPartManager> promptPartManagers)
 		{
 			_library = new TemplateLibrary();

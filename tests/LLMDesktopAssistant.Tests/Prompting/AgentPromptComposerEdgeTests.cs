@@ -420,19 +420,6 @@ public class AgentPromptComposerEdgeTests
 	}
 
 	[Fact]
-	public async Task Build_InvalidatesTheCacheOnEveryCall()
-	{
-		var agent = DynamicAgent();
-		var harness = new PromptComposerHarness(PromptingTestHelpers.User("u0", 0));
-		var composer = harness.CreateComposer();
-
-		await composer.BuildAsync(agent);
-		await composer.BuildAsync(agent);
-
-		Assert.Equal(2, harness.ToolsetCache.InvalidateCount);
-	}
-
-	[Fact]
 	public async Task Dump_ReportsTheAnchorHeaderSource_WhenEnabled()
 	{
 		var agent = HybridAgent();

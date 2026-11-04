@@ -42,10 +42,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			var senderAgent = ctx is ChatToolExecutionContext chatContext
 				? _agentManager.TryGetSenderAgentDescriptor(chatContext.Message)
 				: null;
-			var skills = senderAgent is not null ?
-				_skillsetBuilder.GetAddonsForAgent(senderAgent) :
-				_skillsetBuilder.GetAvailableAddons();
-			var foundSkill = skills.FirstOrDefault(s => s.Name == name);
+			var foundSkill = senderAgent is not null ?
+				_skillsetBuilder.GetAddonsForAgent(senderAgent).GetByName(name) :
+				_skillsetBuilder.GetAvailableAddons().GetByName(name);
 
 			if (foundSkill == null)
 			{

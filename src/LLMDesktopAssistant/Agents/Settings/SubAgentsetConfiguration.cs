@@ -8,7 +8,7 @@ namespace LLMDesktopAssistant.Agents.Settings
 	/// The per-agent sub-agent set settings: the default enable/hide flags and the
 	/// list of per-sub-agent changes.
 	/// </summary>
-	public class SubAgentsetSettings : AddonSetConfigurationBase<SubAgentChange>
+	public class SubAgentsetConfiguration : AddonSetConfigurationBase<SubAgentChange>
 	{
 	}
 }

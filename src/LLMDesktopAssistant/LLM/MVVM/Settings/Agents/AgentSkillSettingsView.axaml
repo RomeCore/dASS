@@ -14,7 +14,7 @@
 	<StackPanel Margin="8" Spacing="8">
 
 		<!-- Enable skills checkbox -->
-		<CheckBox IsChecked="{Binding SkillSettings.EnableSkills}"
+		<CheckBox IsChecked="{Binding SkillSettings.AddonsCategoryEnabled}"
 				  Content="{loc:Loc settings.skills.enable}"/>
 
 		<Rectangle Height="1"
@@ -71,7 +71,7 @@
 				   TextWrapping="Wrap"/>
 
 		<!-- Search + list -->
-		<ContentControl IsEnabled="{Binding SkillSettings.EnableSkills}">
+		<ContentControl IsEnabled="{Binding SkillSettings.AddonsCategoryEnabled}">
 			<cards:AddonListView DataContext="{Binding List}"/>
 		</ContentControl>
 

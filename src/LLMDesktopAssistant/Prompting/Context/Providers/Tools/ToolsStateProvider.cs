@@ -1,7 +1,8 @@
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Prompting;
-using LLMDesktopAssistant.LLM.Services.Tools;
+using LLMDesktopAssistant.Tools;
 
 namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 {
@@ -12,7 +13,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 	/// </summary>
 	[ChatService(typeof(IPromptSectionStateProvider<ToolsSectionState>))]
 	public class ToolsStateProvider(
-		IToolsetCacheService toolsetCache) : IPromptSectionStateProvider<ToolsSectionState>
+		IAddonSetCollector<ToolInfo> toolsetCollector) : IPromptSectionStateProvider<ToolsSectionState>
 	{
 		/// <inheritdoc/>
 		public Task<ToolsSectionState?> CaptureStateAsync(ChatAgentDescriptor agent,
@@ -25,7 +26,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Providers.Tools
 			// outside of it deltas are not computed at all, so the hidden list has no purpose there.
 			bool captureHiddenTools = agent.Context.PromptMode == PromptContextMode.Hybrid;
 
-			foreach (var tool in toolsetCache.ValidTools.Values)
+			foreach (var tool in toolsetCollector.GetAddonsForAgent(agent))
 			{
 				if (tool.Hidden ?? false)
 				{

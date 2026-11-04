@@ -1,4 +1,4 @@
-using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
@@ -62,18 +62,18 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		private static (ToolsetCollector Collector, ChatAgentDescriptor Agent) CreateCollector(ToolInfo tool)
 		{
 			var services = new ServiceCollection();
-			services.AddSingleton<IAddonAccessor<ToolInfo>>(new FakeAddonAccessor(tool));
+			services.AddSingleton<IFileAddonAccessor<ToolInfo>>(new FakeAddonAccessor(tool));
 			services.AddSingleton<IToolMemorizationService, ToolMemorizationService>();
 			services.AddSingleton<IAgentManagementService>(new FakeAgentManager());
 			var provider = services.BuildServiceProvider();
 
 			var chat = new Chat(provider);
-			var collector = new ToolsetCollector(chat, new FakeChatSettings(), new FakeMcp(), provider);
+			var collector = new ToolsetCollector(chat, new FakeChatSettings(), provider);
 
 			return (collector, new ChatAgentDescriptor());
 		}
 
-		private sealed class FakeAddonAccessor(params ToolInfo[] tools) : IAddonAccessor<ToolInfo>
+		private sealed class FakeAddonAccessor(params ToolInfo[] tools) : IFileAddonAccessor<ToolInfo>
 		{
 			public ReadOnlyObservableCollection<ToolInfo> Addons { get; } = new(tools.ToList());
 		}
@@ -107,6 +107,8 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 
 		private sealed class FakeMcp : IMCPManagementService
 		{
+			public event EventHandler? ConnectionsChanged { add { } remove { } }
+
 			public bool HasMCPConnections() => false;
 
 			public Task EnsureCurrentMCPConnectionsAsync(CancellationToken cancellationToken = default) =>

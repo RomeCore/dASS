@@ -67,6 +67,6 @@ namespace LLMDesktopAssistant.Tools.Execution
 		}
 
 		private ToolInfo? FindTool(string name) =>
-			toolset.GetAvailableAddons().FirstOrDefault(tool => tool.Name == name);
+			toolset.GetAvailableAddons().GetByName(name);
 	}
 }

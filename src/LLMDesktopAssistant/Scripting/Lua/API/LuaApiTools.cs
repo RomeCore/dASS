@@ -1,7 +1,7 @@
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Calls;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
@@ -101,7 +101,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			""";
 
 		private readonly Chat _chat;
-		private readonly IToolsetCacheService _toolsetCache;
+		private readonly IAddonSetCollector<ToolInfo> _toolsetCollector;
 		private readonly IToolInvocationDispatcher _dispatcher;
 
 		/// <summary>
@@ -110,10 +110,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		/// </summary>
 		private readonly IToolExecutionContextFactory _contextFactory;
 
-		public LuaApiTools(Chat chat, IToolsetCacheService toolsetCache, IToolInvocationDispatcher dispatcher)
+		public LuaApiTools(Chat chat, IAddonSetCollector<ToolInfo> toolsetCollector, IToolInvocationDispatcher dispatcher)
 		{
 			_chat = chat;
-			_toolsetCache = toolsetCache;
+			_toolsetCollector = toolsetCollector;
 			_dispatcher = dispatcher;
 			_contextFactory = new ScriptToolContextFactory(_chat);
 		}
@@ -130,8 +130,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1 || args[0] is not LuaString functionName)
 				throw new LuaRuntimeException("dass.tool.call(name, args): first argument must be a string (tool name).");
 
-			if (!_toolsetCache.AvailableTools.TryGetValue(functionName.Value, out var tool))
-				throw new LuaRuntimeException($"Tool '{functionName.Value}' not found.");
+			var tool = _toolsetCollector.GetAvailableAddons().GetByName(functionName.Value)
+				?? throw new LuaRuntimeException($"Tool '{functionName.Value}' not found.");
 
 			// The call is in-memory and belongs to the script, not to the tool the script is running in.
 			var call = new ScriptToolCall
@@ -178,7 +178,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var resultTable = new LuaTable();
 
 			int i = 1;
-			foreach (var (_, tool) in _toolsetCache.AvailableTools)
+			foreach (var tool in _toolsetCollector.GetAvailableAddons())
 			{
 				var entry = ToolToTable(tool);
 				resultTable.Set(i++, entry);
