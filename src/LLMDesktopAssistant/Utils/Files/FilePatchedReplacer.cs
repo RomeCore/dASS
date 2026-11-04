@@ -26,13 +26,11 @@ public readonly record struct PatchApplication(string? Content, int Occurrences)
 /// preserved.
 /// </para>
 /// <para>
-/// Writing is deliberately not verbatim, and - unlike the earlier implementation - it does not
-/// depend on how the match happened to be written either. The first replacement line lands on
-/// whatever preceded the match in the file; every following line is shifted by one and the same
-/// number of columns, so the replacement keeps exactly the shape it was written in. The shift comes
-/// from the smallest indentation among the replacement's lines <em>after</em> the first, which is
-/// skipped on purpose: models trained on verbatim-only editors write that line without indentation
-/// and indent the continuation lines the way the file does.
+/// Writing is not verbatim, but it is one rule, and every line of a replacement moves by the same
+/// shift. A patch copied out of the file - its second line at the depth of the line it matched -
+/// lands verbatim; a patch that re-nests the matched block instead is relative to the match, so its
+/// lines keep their own offset from the first matched line. The first replacement line always lands
+/// on whatever preceded the match in the file.
 /// </para>
 /// <para>
 /// A match that ends with a line break reaches the end of its last line. That is load-bearing twice
@@ -57,8 +55,12 @@ public static class FilePatchedReplacer
 	public static PatchApplication Replace(string content, string match, string replace, int tabSize = 4, bool ignoreCase = false)
 	{
 		var comparison = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		var matchLines = SplitLines(match).Select(l => l.Trim()).ToList();
+		var matchText = SplitLines(match);
+		var matchLines = matchText.Select(l => l.Trim()).ToList();
+		var matchIndents = matchText.Select(l => GetIndentation(l, tabSize)).ToList();
 		var matchEndsLine = TakeTrailingBreak(matchLines);
+		if (matchEndsLine)
+			matchIndents.RemoveAt(matchIndents.Count - 1);
 		if (matchLines.Count == 0 || matchLines.All(l => l.Length == 0))
 			return new PatchApplication(null, 0);
 
@@ -80,7 +82,7 @@ public static class FilePatchedReplacer
 		if (!matchEndsLine && matchLines.Count == 1 && replaceLines.Count == 1)
 			return ApplyInline(fileLines, matchLines[0], replaceLines[0], comparison);
 
-		return ApplyBlock(fileLines, [.. matchLines], replaceLines, matchEndsLine, tabSize, comparison);
+		return ApplyBlock(fileLines, [.. matchLines], matchIndents, replaceLines, matchEndsLine, tabSize, comparison);
 	}
 
 	private static PatchApplication ApplyInline(
@@ -140,8 +142,8 @@ public static class FilePatchedReplacer
 	}
 
 	private static PatchApplication ApplyBlock(
-		List<string> fileLines, string[] matchLines, List<string> replaceLines, bool matchEndsLine,
-		int tabSize, StringComparison comparison)
+		List<string> fileLines, string[] matchLines, List<int> matchIndents, List<string> replaceLines,
+		bool matchEndsLine, int tabSize, StringComparison comparison)
 	{
 		if (fileLines.Count < matchLines.Length)
 			return new PatchApplication(null, 0);
@@ -156,7 +158,7 @@ public static class FilePatchedReplacer
 			occurrences++;
 
 			var anchor = fileLines[i];
-			var shift = GetShift(fileLines, i, matchLines, replaceLines, tabSize);
+			var shift = GetShift(fileLines, i, matchLines, matchIndents, replaceLines, tabSize);
 			var replacement = BuildBlock(replaceLines, shift, anchor, tabSize, prefixes, suffixes);
 
 			fileLines.RemoveRange(i, matchLines.Length);
@@ -367,49 +369,31 @@ public static class FilePatchedReplacer
 	/// The column offset applied to every replacement line after the first.
 	/// </summary>
 	/// <remarks>
-	/// The second line is the reference, if first line is written without indentation: the first line is the one models write
-	/// bare (verbatim-trained habits), while the continuation lines carry the indentation the author
-	/// actually expects. Lining the replacement's second line up with the second matched line of the
-	/// file therefore places the whole block where the author saw it, without per-line bookkeeping.
-	/// A single-line match has no second line to align with, so the replacement's own continuation
-	/// lines supply the base instead.
+	/// <para>
+	/// When the match's second line sits at the same depth as the second line it matched, the two were
+	/// written in one coordinate system: line two of the replacement takes the place of line two of
+	/// the match, and the shift is simply their difference. That is a patch copied out of the file,
+	/// and it is what keeps such a patch verbatim.
+	/// </para>
+	/// <para>
+	/// When they differ, the patch re-nested the matched block - a brace, a wrapper, a body line that
+	/// moved a level - and pairing the lines would pair them with lines they have nothing to do with,
+	/// which moved the whole block a level up or down (AR-0024). The patch is then relative to the
+	/// match, so the shift is the difference between the first matched file line and the match's own
+	/// first line, and every replacement line keeps its offset from the match.
+	/// </para>
 	/// </remarks>
 	private static int GetShift(
-		List<string> fileLines, int start, string[] matchLines, List<string> replaceLines, int tabSize)
+		List<string> fileLines, int start, string[] matchLines, List<int> matchIndents,
+		List<string> replaceLines, int tabSize)
 	{
-		int offset = matchLines.Length > 0 && matchLines[0].Length > 0 && !char.IsWhiteSpace(matchLines[0][0]) ?
-			1 : 0;
+		if (matchLines.Length > 1 && replaceLines.Count > 1 && start + 1 < fileLines.Count
+			&& !string.IsNullOrWhiteSpace(matchLines[1])
+			&& !string.IsNullOrWhiteSpace(replaceLines[1])
+			&& matchIndents[1] == GetIndentation(fileLines[start + 1], tabSize))
+			return matchIndents[1] - GetIndentation(replaceLines[1], tabSize);
 
-		for (var j = offset; j < replaceLines.Count && j < matchLines.Length; j++)
-		{
-			if (string.IsNullOrWhiteSpace(replaceLines[j]) || string.IsNullOrWhiteSpace(fileLines[start + j]))
-				continue;
-
-			return GetIndentation(fileLines[start + j], tabSize) - GetIndentation(replaceLines[j], tabSize);
-		}
-
-		// A single-line match has no second line to align with, so the replacement supplies the base
-		// from its own continuation lines.
-		return GetIndentation(fileLines[start], tabSize) - GetBaseIndentation(replaceLines, tabSize);
-	}
-
-	/// <summary>
-	/// The smallest indentation among the replacement's lines after the first, in columns. The first
-	/// line is skipped on purpose: verbatim-trained models write it without indentation, and taking
-	/// it into account would drag the whole block to column zero.
-	/// </summary>
-	private static int GetBaseIndentation(List<string> lines, int tabSize)
-	{
-		var min = int.MaxValue;
-		for (var i = 1; i < lines.Count; i++)
-		{
-			if (string.IsNullOrWhiteSpace(lines[i]))
-				continue;
-
-			min = Math.Min(min, GetIndentation(lines[i], tabSize));
-		}
-
-		return min == int.MaxValue ? 0 : min;
+		return GetIndentation(fileLines[start], tabSize) - matchIndents[0];
 	}
 
 	private static int GetIndentation(string line, int tabSize)

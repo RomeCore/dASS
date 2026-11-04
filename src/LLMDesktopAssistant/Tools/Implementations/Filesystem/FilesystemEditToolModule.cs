@@ -52,25 +52,32 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					Matching is lenient: leading and trailing whitespace and common indentation of
 					`match` are ignored, and the text before and after it on the matched lines is kept.
 
-					Writing is relative, not verbatim. The first line of `replace` lands where the match
-					starts, and every following line moves by one and the same shift, so the block keeps
-					the shape you wrote:
+					Writing is relative, not verbatim: the whole replacement moves by one shift, and the
+					rule does not depend on how many lines `match` has.
 
-						file:     \t\tName = item,
-						replace:  Sync = A,
-								  \t\tName = item,
-						result:   \t\tSync = A,
-								  \t\tName = item,
+					- A patch copied out of the file - the second line of `match` sitting where the second
+					  matched file line sits - lands verbatim: line two of `replace` takes the place of
+					  line two of the match, and the shift is their difference.
+					- A patch that re-nests the matched block - a brace, a wrapper, a body line that moved
+					  a level - is read as relative to the match: the first line of `replace` lands
+					  where the match starts, and every other line keeps its offset from it.
 
-					With a multi-line `match` the second matched line of the file sets the shift, so write
-					the lines after the first the way you would copy them out of the file. With a one-line
-					`match` there is nothing to align against: the shallowest continuation line lands at the
-					match's own indentation and the rest follow it. So either write them at the columns the
-					file actually uses, or write the whole block flat at column zero.
+						file:     \t\tif (x)
+								  \t\t\tDo();
+						match:    if (x)
+								  \tDo();
+						replace:  if (x)
+								  {
+								  \tDo();
+								  }
+						result:   \t\tif (x)
+								  \t\t{
+								  \t\t\tDo();
+								  \t\t}
 
-					A one-line patch cannot express "one level deeper than the first line": those columns
-					are indistinguishable from the file's own, so they collapse onto the match's level.
-					When you open a new nesting level, spell the level out in columns and check the diff.
+					In practice: to edit a block in place, copy it out of the file with its indentation
+					and edit the copy; to write a block from scratch, start each line at column zero and
+					the shift puts it under the match.
 
 					An empty `replace` deletes: whole matched lines go away together with their line
 					breaks, and no indentation is left where the block used to be.

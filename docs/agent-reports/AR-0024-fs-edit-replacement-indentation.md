@@ -1,8 +1,9 @@
 # AR-0024 - `fs-edit` rewrites the indentation of the replacement's continuation lines unpredictably
 
-- **Status:** open
+- **Status:** fixed (2026-11-05)
 - **Fixed:** 2026-10-25 - one rule instead of three: the first line of `replace` lands on the match and every following line moves by a single shift read from the second line, so a single-line and a multi-line `match` no longer behave differently. Known limit, now stated in the tool description: with a one-line `match`, "one level deeper than the first line" is byte-identical to "the file's own columns", so relative continuation indentation collapses onto the match level - a patch that opens a nesting level has to spell the columns out.
 - **Reopened:** 2026-11-04 - the rule does not hold for multi-line matches. In one edit pass, five multi-line `match` patches moved the replacement's continuation lines anyway: three collapsed to column 0, one gained a level, and one repair patch damaged a block it had just written. The one-line-match limit does not explain any of them.
+- **Fixed:** 2026-11-05 - `GetShift` no longer pairs line j of `replace` with the line it happened to replace. A patch copied out of the file lands verbatim; a patch that re-nests the matched block is read as relative to the match. The number of lines in `match` stops deciding the result, and the rule is stated in the tool description. See _Fix 2026-11-05_ below.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `fs-edit`
@@ -150,4 +151,37 @@ That is three different mechanisms replacing one edit, and the only one that beh
 - The cause was not traced: the `fs-edit` implementation was not opened, and this session was working in the dASS repo, not in the tool's own code. What is observed is the input, the echo and the resulting bytes - not the branch that produced them.
 - Whether `fs-apply_diff` inherits the same behaviour for multi-line `insertText` was not exercised deeply: every `insertText` in this session was written with absolute tabs and landed as written, which suggests it is verbatim, but a single counter-example would overturn that.
 - The exact mechanism behind "single-line match re-indents, multi-line match does not" is guessed, not measured; a table of `match` shapes against their output would settle it in one run.
-- The 2026-10-25 fix note says the behaviour was changed; whether the 2026-11-04 damage is a regression of that change or the same known one-line limit leaking into multi-line matches was not determined.
+- The 2026-10-25 fix note says the behaviour was changed; whether the 2026-11-04 damage is a regression of that change or the same known one-line limit leaking into multi-line matches was not determined. - Settled by the 2026-11-05 fix: neither. The pairing of line j of `replace` with line j of the file survived that change and simply mispaired a patch whose second line had moved.
+
+## Fix 2026-11-05
+
+**The rule now.** One shift for the whole replacement, and the shape of the match no longer decides it.
+
+1. If the match's second line sits at the same depth as the second matched file line, the patch was
+   copied out of the file: line two of `replace` takes the place of line two of the match and the
+   shift is their difference. A copied patch therefore lands verbatim - call 1 no longer doubles.
+2. Otherwise the patch re-nested the matched block (a brace, a wrapper, a body line that moved a
+   level): the shift is the depth of the first matched file line minus the depth of the match's own
+   first line, so the block is relative to the match and every line keeps its offset from it. The
+   wrap and the unwrap from the repro now land one level deeper and one level shallower rather than
+   the reverse.
+
+Both shapes of `match` go through the same two branches, so a single-line and a multi-line match of
+the same edit produce the same bytes. `fs-edit`'s description states the rule, and
+`FilePatchedReplacer` carries it in its XML doc.
+
+**Tests.** `tests/LLMDesktopAssistant.Tests/Utils/FilePatchedReplacerTests.cs` gained four cases:
+wrapping a body in a block, converting an expression-bodied member into a block, the same replacement
+under a one-line and a two-line match, and a verbatim copy that must not be shifted twice. Three
+existing cases were corrected, because they encoded the split behaviour this report is about:
+`..._RelativeContinuation_CollapsesOntoTheMatchLevel` (now `..._IsAddedToTheMatchLevel` - the
+"documented limit" was the bug), `..._FollowsTheColumnsOfTheContinuationLines` (now
+`..._BarePatch_LandsOnTheMatchIndentation`), and `..._FirstLineWithoutIndentAndContinuationCopiedFromFile`,
+whose match now carries the file's tabs. Full run: 1427 tests, 0 failed, 1 skipped
+(`SkillParserTests.DescriptionWithColons_ParsesCorrectly`, a pre-existing YamlDotNet skip).
+
+**Still open.** Point 6 of the proposed fix - `No changes were made` and `1 occurrence replaced` in
+one answer - lives in `DescribeNoChange` in `FilesystemEditToolModule` and was not touched. The rule
+also still rests on one inference: "the patch was copied out of the file" is read from the depth of
+the match's second line, so a patch that happens to put its second line at the file's second line
+without having been copied is treated as verbatim.
