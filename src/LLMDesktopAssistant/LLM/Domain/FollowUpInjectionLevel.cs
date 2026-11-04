@@ -25,8 +25,8 @@ namespace LLMDesktopAssistant.LLM.Domain
 		Agent = 2,
 
 		/// <summary>
-		/// Injected once the whole agent sequence is over.
+		/// Injected once the whole multi-agent sequence is over.
 		/// </summary>
-		AgentSequence = 3,
+		MultiAgentSequence = 3,
 	}
 }

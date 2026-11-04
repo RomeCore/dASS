@@ -130,7 +130,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			new UserInputLevelItemModel { Level = FollowUpInjectionLevel.Immediate, Title = Locale.GetKey("chat.follow_up.level.immediate"), Icon = MaterialIconKind.Flash },
 			new UserInputLevelItemModel { Level = FollowUpInjectionLevel.Message, Title = Locale.GetKey("chat.follow_up.level.message"), Icon = MaterialIconKind.ChatProcessing },
 			new UserInputLevelItemModel { Level = FollowUpInjectionLevel.Agent, Title = Locale.GetKey("chat.follow_up.level.agent"), Icon = MaterialIconKind.Robot },
-			new UserInputLevelItemModel { Level = FollowUpInjectionLevel.AgentSequence, Title = Locale.GetKey("chat.follow_up.level.agent_sequence"), Icon = MaterialIconKind.TimerSandComplete }
+			new UserInputLevelItemModel { Level = FollowUpInjectionLevel.MultiAgentSequence, Title = Locale.GetKey("chat.follow_up.level.agent_sequence"), Icon = MaterialIconKind.TimerSandComplete }
 		];
 
 		private UserInputLevelItemModel _selectedLevel;

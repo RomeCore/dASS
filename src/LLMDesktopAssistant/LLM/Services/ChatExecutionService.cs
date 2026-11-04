@@ -59,13 +59,12 @@ namespace LLMDesktopAssistant.LLM.Services
 		private const bool EnablePrefixCompletions = false;
 
 		private readonly List<IChatExecutionHook> _executionHooks = executionHooks.OrderBy(h => h.Order).ToList();
-
 		private readonly ChatConfirmationSink _confirmationSink = new(executionStatusService);
-
 		private readonly IToolExecutionContextFactory _chatContextFactory =
 			new ChatToolContextFactory(chat, toolMemorizer, agentManager, chatSettings);
 
-		public async Task GenerateResponseAsync(CancellationToken cancellationToken = default)
+		/// <inheritdoc/>
+		public async Task<bool> GenerateResponseAsync(CancellationToken cancellationToken = default)
 		{
 			using var execution = executionStatusService.WithExecution();
 
@@ -77,10 +76,6 @@ namespace LLMDesktopAssistant.LLM.Services
 				while (true)
 				{
 					token.ThrowIfCancellationRequested();
-
-					// The sequence barrier: the queue takes over before another agent is selected.
-					if (followUps.HasEligible(FollowUpInjectionLevel.AgentSequence))
-						return;
 
 					var lastAssistantMessage = chat.Messages.LastOrDefault()?.Message as Domain.AssistantMessage;
 					Guid? nextAgentId = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0
@@ -107,13 +102,13 @@ namespace LLMDesktopAssistant.LLM.Services
 								LocalizationManager.LocalizeStatic("chat.toast.agent_selection_failed.description"));
 						else
 							await RunExecutionFinishedHooksAsync(token);
-						return;
+						return followUps.HasEligible(FollowUpInjectionLevel.MultiAgentSequence);
 					}
 
 					token.ThrowIfCancellationRequested();
 
 					if (await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, token))
-						return;
+						return true;
 
 					cycles++;
 				}
@@ -141,6 +136,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 		}
 
+		/// <inheritdoc/>
 		public async Task<bool> GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId,
 			CancellationToken cancellationToken = default)
 		{

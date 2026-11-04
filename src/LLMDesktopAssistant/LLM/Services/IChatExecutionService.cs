@@ -11,8 +11,9 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// Generates a response asynchronously and puts it into a <see cref="IChatStorageService"/>.
 		/// </summary>
 		/// <param name="cancellationToken">Token for cancellation of the operation.</param>
-		/// <returns>A task representing the asynchronous operation.</returns>
-		Task GenerateResponseAsync(CancellationToken cancellationToken = default);
+		/// <returns><see langword="true"/> when the call stopped at a follow-up barrier instead of finishing the multi-agent
+		/// cycle; the caller must then end the sequence and let the turn drain the queue.</returns>
+		Task<bool> GenerateResponseAsync(CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Generates a response asynchronously using specific agent and puts it into a <see cref="IChatStorageService"/>.
