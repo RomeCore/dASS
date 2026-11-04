@@ -1,7 +1,8 @@
-# AR-0024 - `fs-edit` adds the matched indentation on top of the replacement's own, and only for single-line matches
+# AR-0024 - `fs-edit` rewrites the indentation of the replacement's continuation lines unpredictably
 
-- **Status:** fixed
+- **Status:** open
 - **Fixed:** 2026-10-25 - one rule instead of three: the first line of `replace` lands on the match and every following line moves by a single shift read from the second line, so a single-line and a multi-line `match` no longer behave differently. Known limit, now stated in the tool description: with a one-line `match`, "one level deeper than the first line" is byte-identical to "the file's own columns", so relative continuation indentation collapses onto the match level - a patch that opens a nesting level has to spell the columns out.
+- **Reopened:** 2026-11-04 - the rule does not hold for multi-line matches. In one edit pass, five multi-line `match` patches moved the replacement's continuation lines anyway: three collapsed to column 0, one gained a level, and one repair patch damaged a block it had just written. The one-line-match limit does not explain any of them.
 - **Severity:** friction
 - **Lane:** agent
 - **Surface:** tool `fs-edit`
@@ -79,11 +80,28 @@ Verbatim. The body line kept its single tab, the doc comments and the new member
 
 My replacement's own whitespace is never stripped in either case, so the two behaviours are not two views of one rule. I could not derive which one applies without having already sent the call.
 
+### The 2026-11-04 sighting - multi-line matches still do not follow the documented rule
+
+The fix note claims one shift read from the second line, with the only known limit being a one-line `match`. Every damaged call in this session had a **multi-line** `match`. Four examples from a single implementation pass:
+
+1. `src/LLMDesktopAssistant/Addons/AddonBase.cs` - a two-line `match` replacing a doc-comment line. Both `match` lines sit at two tabs, the replacement's second line was written at two tabs; it landed at column 0 (`/// </summary>`), so the doc comment closed outside the member.
+
+2. `src/LLMDesktopAssistant/LLM/Settings/ChatCommandSettings.cs` - a multi-line `match` covering the class declaration and the gate property. The replacement wrote `\t\t{` and `\t\t\tget;`; the file received `{` and `get;` at column 0. A follow-up repair patch collapsed `get;` a second time, so the block took three calls to format.
+
+3. `src/LLMDesktopAssistant/LLM/Services/Prompting/AgentPromptComposer.cs` - a multi-line `match` removing a constructor parameter. The replacement's next constructor line was written at two tabs and landed at column 0, leaving the primary-constructor parameter list visually outside the class body.
+
+4. `src/LLMDesktopAssistant/SlashCommands/Providers/SubAgentCommandExecutor.cs` - a multi-line `match` where the replacement's continuation line was written at two tabs and arrived as `I\t\tIAgentTaskExecutor agentTaskExecutor,`. The preserved `I` is correct lenient matching; the two tabs inserted after it are the shift again.
+
+5. `tests/LLMDesktopAssistant.Tests/SlashCommands/SlashCommandSetCollectorTests.cs` - the opposite direction: a replacement block written at two levels landed one level deeper, so the nested `GetService` body sat four tabs under its class instead of three.
+
+The direction is not even consistent within one pass: cases 1-3 collapse, case 5 adds. That matches the original complaint, not the fixed note.
+
 ## Why it costs
 
 - **It produces silent breakage in review, not in build.** Over-indentation compiles; column 0 does not. So one variant ships quietly and the other fails loudly later - and which one you get depends on an invisible property of the `match`.
 - **Every multi-line insertion needs a verification pass.** Either I open the file afterwards, or I trust a tool that just did the opposite of what the same tool did a minute ago. In this session that was five repair calls (`fs-apply_diff` per damaged region plus two regex passes over a whole file) and roughly eight wasted `fs-edit` attempts.
 - **It pushes the work onto a worse tool.** The only reliable way to insert a block turned out to be `fs-apply_diff` with explicit line numbers, which means counting lines in a 400-line file - exactly the bookkeeping `fs-edit` exists to avoid.
+- **The 2026-11-04 pass added re-reads.** Each collapsed block had to be read back before it could be repaired, and two repairs were themselves mangled, so the same member was touched three times.
 
 ## Repro
 
@@ -99,17 +117,22 @@ My replacement's own whitespace is never stripped in either case, so the two beh
 4. Now take a two-line block whose lines sit at two and three tabs, and send a multi-line `match`
    with a `replace` whose continuation lines carry one tab (or none).
 5. Those lines are written exactly as typed - one tab, or nothing - with no re-indentation.
+
+6. Minimal multi-line case: two `match` lines at two tabs, a `replace` whose second line is also
+   at two tabs. The second line lands at column 0.
 ```
 
 ## Witnesses
 
 - **2026-10-25** - session adding synchronization analyzers to the fs tools - eleven `fs-edit` calls inserting a `SyncAnalyzer` line above a `Name = "..."` line across five modules, all over-indented by the match's indentation and all repaired by a regex pass; then a multi-line edit of `ToolCallViewModel.cs` whose continuation lines landed at column 0, repaired with `fs-apply_diff`. The user interrupted mid-session to point the behaviour out ("fs-edit works with RELATIVE indents"), which is the strongest evidence that the intended rule is not the one the tool follows.
+- **2026-11-04** - session implementing the reactive addon set cache - one pass over `AddonBase.cs`, `ChatCommandSettings.cs`, `AgentPromptComposer.cs`, `SubAgentCommandExecutor.cs` and `SlashCommandSetCollectorTests.cs`: four collapsed or shifted continuation lines and one over-indented block, each repaired with a follow-up `fs-edit` or `fs-apply_diff`. Two repair calls returned `No changes were made` while also reporting `1 occurrence replaced`, which cost an extra read to decide whether the file had changed.
 
 ## What I did instead
 
 - For insertions: `fs-apply_diff` with `insertBeforeLine` + `insertText`, which writes the text exactly as given (and, to its credit, is the reason the C# was repairable at all).
 - For bulk, mechanical changes: a Python script over the file with a regex, bypassing the tool entirely.
 - For the indentation already damaged: a regex patch that rewrote every over-indented line back to four tabs.
+- In the 2026-11-04 pass: re-read the damaged block, then either a one-line `fs-edit` per line or `fs-apply_diff` with absolute line numbers.
 
 That is three different mechanisms replacing one edit, and the only one that behaved predictably was not a tool at all.
 
@@ -117,11 +140,14 @@ That is three different mechanisms replacing one edit, and the only one that beh
 
 1. **Pick one rule and state it in the description.** Cheapest and decides everything else: either "the replacement is inserted verbatim - indentation included" or "the replacement inherits the matched indentation and its own leading whitespace is stripped". Today's wording describes matching and leaves writing open, and the implementation does both at once depending on the match's shape.
 2. **Make the two shapes agree.** Whatever the rule, a single-line and a multi-line `match` of the same block must produce the same bytes. This is the actual bug: the same logical edit behaves differently depending on whether I put a line break in `match`.
-3. **Add a way to say "verbatim"** (`replaceVerbatim: true`) if the inherited-indentation rule is kept for the common single-line case. Then a multi-line block edit is expressible without guessing.
-4. **Echo the replacement's indentation in the diff**, e.g. a whitespace-visible mode, so the first evidence is not "read the file and count tabs".
+3. **Treat a multi-line `match` as verbatim.** The 2026-10-25 note claims the shift is read from the second matched line; the 2026-11-04 cases show the shift still applied (or dropped) against that line. A regression test with a two-line `match` at two tabs and a `replace` whose second line is also at two tabs would settle it in one run.
+4. **Add a way to say "verbatim"** (`replaceVerbatim: true`) if the inherited-indentation rule is kept for the common single-line case. Then a multi-line block edit is expressible without guessing.
+5. **Echo the replacement's indentation in the diff**, e.g. a whitespace-visible mode, so the first evidence is not "read the file and count tabs".
+6. **Make the result message truthful.** `No changes were made` and `1 occurrence replaced` must not be emitted for the same patch.
 
 ## Unverified
 
 - The cause was not traced: the `fs-edit` implementation was not opened, and this session was working in the dASS repo, not in the tool's own code. What is observed is the input, the echo and the resulting bytes - not the branch that produced them.
 - Whether `fs-apply_diff` inherits the same behaviour for multi-line `insertText` was not exercised deeply: every `insertText` in this session was written with absolute tabs and landed as written, which suggests it is verbatim, but a single counter-example would overturn that.
 - The exact mechanism behind "single-line match re-indents, multi-line match does not" is guessed, not measured; a table of `match` shapes against their output would settle it in one run.
+- The 2026-10-25 fix note says the behaviour was changed; whether the 2026-11-04 damage is a regression of that change or the same known one-line limit leaking into multi-line matches was not determined.
