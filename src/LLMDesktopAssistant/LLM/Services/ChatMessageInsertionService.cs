@@ -36,11 +36,15 @@ namespace LLMDesktopAssistant.LLM.Services
 			// The permission is read here and only here, so the direct path and the queued path cannot diverge.
 			string rawToken = string.Empty;
 			string rawArguments = string.Empty;
-			var isCommand = input.CanExecuteCommand && CommandsEnabled &&
+			var commandHandlingActive = input.CanExecuteCommand && CommandsEnabled;
+			var isCommand = commandHandlingActive &&
 				SlashCommandExtractor.TryExtractToken(input.Content, out rawToken, out rawArguments);
 
-			// A "//..." escape is undone only while command handling is active; forbidden or off means verbatim.
-			var content = isCommand ? SlashCommandExtractor.UnescapeLeadingSlash(input.Content) : input.Content;
+			// A "//..." escape is undone while command handling is active, even when the token after the escape does
+			// not resolve to a command; forbidden or off means verbatim.
+			var content = commandHandlingActive
+				? SlashCommandExtractor.UnescapeLeadingSlash(input.Content)
+				: input.Content;
 
 			var message = CreateUserMessage(input, content);
 			if (editIndex is not null)
