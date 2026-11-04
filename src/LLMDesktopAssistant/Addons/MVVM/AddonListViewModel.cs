@@ -183,6 +183,11 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		private bool _wasFiltering;
 
 		/// <summary>
+		/// Gets the services provided by the constructor.
+		/// </summary>
+		protected IServiceProvider Services => _services;
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="AddonListViewModel{TAddon, TChange}"/> class.
 		/// </summary>
 		/// <param name="services">The services to use.</param>
@@ -249,6 +254,7 @@ namespace LLMDesktopAssistant.Addons.MVVM
 			return new AddonCardContext<TAddon, TChange>
 			{
 				Addon = addon,
+				Services = _services,
 				TagClickCommand = TagClickCommand,
 				OnDeleted = Update
 			};

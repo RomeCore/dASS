@@ -68,9 +68,11 @@ sub_agents.tools.disallowed: Запрещены субагенту
 sub_agents.skills: Доступные навыки
 sub_agents.sub_agents: Доступные субагенты
 sub_agents.memory_blocks: Блоки памяти
+sub_agents.links.tool: Инструмент {0} не найден
 sub_agents.links.skill: Навык {0} не найден
 sub_agents.links.sub_agent: Субагент {0} не найден
 sub_agents.links.memory_block: Блок памяти {0} не найден
+sub_agents.links.unknown: Неизвестная ссылка: {0}
 
 // =====================================================
 // === Скрипты                                       ===

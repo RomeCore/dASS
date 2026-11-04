@@ -2,6 +2,7 @@ using Avalonia.Media;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.MVVM;
 using LLMDesktopAssistant.Addons.MVVM.Elements;
+using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Prompting.Skills;
@@ -24,14 +25,14 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 	[Service(typeof(IAddonCardFactory<SubAgentInfo, SubAgentChange>))]
 	public class SubAgentAddonCardFactory : AddonCardFactoryBase<SubAgentInfo, SubAgentChange>
 	{
-		private readonly IAddonAccessor<SkillInfo> _skills;
-		private readonly IAddonAccessor<SubAgentInfo> _subAgents;
+		private readonly IFileAddonAccessor<SkillInfo> _skills;
+		private readonly IFileAddonAccessor<SubAgentInfo> _subAgents;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SubAgentAddonCardFactory"/> class.
 		/// </summary>
 		public SubAgentAddonCardFactory(IServiceProvider services,
-			IAddonAccessor<SkillInfo> skills, IAddonAccessor<SubAgentInfo> subAgents)
+			IFileAddonAccessor<SkillInfo> skills, IFileAddonAccessor<SubAgentInfo> subAgents)
 			: base(services)
 		{
 			_skills = skills;
@@ -66,7 +67,7 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 			AddCountChip(elements, order++, MaterialIconKind.RobotHappy, "card.sub_agents.sub_agents.badge", addon.SubAgents.Count);
 			AddCountChip(elements, order, MaterialIconKind.Database, "card.sub_agents.memory_blocks.badge", addon.MemoryBlocks.Count);
 
-			AddLinkIssueChips(elements, addon, order);
+			AddLinkIssueChips(elements, context.Services, addon, order);
 		}
 
 		/// <inheritdoc/>
@@ -95,23 +96,30 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 		/// <summary>
 		/// Adds one chip per reference of the sub-agent that cannot be resolved in the current session.
 		/// </summary>
-		private void AddLinkIssueChips(List<IAddonCardElement> elements, SubAgentInfo addon, int order)
+		private void AddLinkIssueChips(List<IAddonCardElement> elements, IServiceProvider services, SubAgentInfo addon, int order)
 		{
-			var skillNames = _skills.Addons.Select(skill => skill.Name).ToHashSet(StringComparer.Ordinal);
-			var subAgentNames = _subAgents.Addons.Select(subAgent => subAgent.Name).ToHashSet(StringComparer.Ordinal);
+			var toolSetCollector = services.GetService<IAddonSetCollector<ToolInfo>>();
+			var skillSetCollector = services.GetService<IAddonSetCollector<SkillInfo>>();
+			var subAgentSetCollector = services.GetService<IAddonSetCollector<SubAgentInfo>>();
+
+			var tools = toolSetCollector?.GetAvailableAddons() ?? [];
+			var skills = skillSetCollector?.GetAvailableAddons() ?? [];
+			var subAgents = subAgentSetCollector?.GetAvailableAddons() ?? [];
 			var memoryBlockNames = SettingsManager.GetCategory<MemoryBlock>().GetAll()
 				.Select(block => block.Value.Name)
 				.ToHashSet(StringComparer.Ordinal);
 
-			foreach (var issue in SubAgentLinkChecker.Check(addon, skillNames, subAgentNames, memoryBlockNames))
+			foreach (var issue in SubAgentLinkChecker.Check(addon, tools, skills, subAgents, memoryBlockNames))
 			{
 				var key = issue.Kind switch
 				{
+					SubAgentLinkIssueKind.Tool => "card.sub_agents.links.tool",
 					SubAgentLinkIssueKind.Skill => "card.sub_agents.links.skill",
 					SubAgentLinkIssueKind.SubAgent => "card.sub_agents.links.sub_agent",
-					_ => "card.sub_agents.links.memory_block"
+					SubAgentLinkIssueKind.MemoryBlock => "card.sub_agents.links.memory_block",
+					_ => "card.sub_agents.links.unknown"
 				};
-				var label = Locale.GetConstKey(Locale.Format(key, issue.Name));
+				var label = Locale.GetFormattedKey(key, issue.Name);
 
 				elements.Add(new AddonCardChip
 				{

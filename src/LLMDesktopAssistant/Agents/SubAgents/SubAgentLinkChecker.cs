@@ -1,4 +1,8 @@
 
+using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Prompting.Skills;
+using LLMDesktopAssistant.Tools;
+
 namespace LLMDesktopAssistant.Agents.SubAgents;
 
 /// <summary>
@@ -6,6 +10,11 @@ namespace LLMDesktopAssistant.Agents.SubAgents;
 /// </summary>
 public enum SubAgentLinkIssueKind
 {
+	/// <summary>
+	/// A referenced tool does not exist.
+	/// </summary>
+	Tool,
+
 	/// <summary>
 	/// A referenced skill does not exist.
 	/// </summary>
@@ -42,20 +51,27 @@ public static class SubAgentLinkChecker
 	/// <param name="subAgentNames">The names of all available sub-agents.</param>
 	/// <param name="memoryBlockNames">The names of all available memory blocks.</param>
 	/// <returns>The list of broken references.</returns>
-	public static ImmutableList<SubAgentLinkIssue> Check(SubAgentInfo info,
-		HashSet<string> skillNames, HashSet<string> subAgentNames, HashSet<string> memoryBlockNames)
+	public static ImmutableList<SubAgentLinkIssue> Check(SubAgentInfo info, AddonSet<ToolInfo> tools,
+		AddonSet<SkillInfo> skills, AddonSet<SubAgentInfo> subAgents, HashSet<string> memoryBlockNames)
 	{
 		var issues = ImmutableList.CreateBuilder<SubAgentLinkIssue>();
 
+		var subAgentTools = info.AllowedTools.Concat(info.AvailableTools).Concat(info.DisallowedTools).Select(t => t.ToolName);
+		foreach (var tool in subAgentTools)
+		{
+			if (!tools.ContainsName(tool))
+				issues.Add(new SubAgentLinkIssue(SubAgentLinkIssueKind.Tool, tool));
+		}
+
 		foreach (var skill in info.Skills)
 		{
-			if (!skillNames.Contains(skill))
+			if (!skills.ContainsName(skill))
 				issues.Add(new SubAgentLinkIssue(SubAgentLinkIssueKind.Skill, skill));
 		}
 
 		foreach (var subAgent in info.SubAgents)
 		{
-			if (!subAgentNames.Contains(subAgent))
+			if (!subAgents.ContainsName(subAgent))
 				issues.Add(new SubAgentLinkIssue(SubAgentLinkIssueKind.SubAgent, subAgent));
 		}
 

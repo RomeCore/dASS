@@ -4,7 +4,15 @@ namespace LLMDesktopAssistant.Addons.MVVM
 		where TAddon : AddonChangedBase<TAddon, TChange>
 		where TChange : AddonChangeBase, new()
 	{
+		/// <summary>
+		/// Gets the addon the card represents.
+		/// </summary>
 		public required TAddon Addon { get; init; }
+
+		/// <summary>
+		/// Gets the services provided by the card requester.
+		/// </summary>
+		public required IServiceProvider Services { get; init; }
 
 		/// <summary>
 		/// Gets the change set the card edits, or <see langword="null"/> for a read-only card.

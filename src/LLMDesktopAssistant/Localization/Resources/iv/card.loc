@@ -68,9 +68,11 @@ sub_agents.tools.disallowed: Disallowed for the sub-agent
 sub_agents.skills: Available skills
 sub_agents.sub_agents: Available sub-agents
 sub_agents.memory_blocks: Memory blocks
+sub_agents.links.tool: Tool {0} does not exist
 sub_agents.links.skill: Skill {0} does not exist
 sub_agents.links.sub_agent: Sub-agent {0} does not exist
 sub_agents.links.memory_block: Memory block {0} does not exist
+sub_agents.links.unknown: Unknown link: {0}
 
 // =====================================================
 // === Scripts                                      ===

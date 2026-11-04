@@ -406,10 +406,6 @@ sub_agents.show_in_explorer: Show in explorer
 sub_agents.delete: Delete file
 sub_agents.delete.title: Delete sub-agent?
 sub_agents.delete.confirm: The file {0} will be permanently deleted. This action cannot be undone.
-sub_agents.links.skill_not_found: Skill '{0}' not found
-sub_agents.links.sub_agent_not_found: Sub-agent '{0}' not found
-sub_agents.links.memory_block_not_found: Memory block '{0}' not found
-
 
 agent.read.half: What this agent reads
 agent.read.half.desc: Which messages this agent sees in its context. A message reaches the agent only when both filters allow it: this read filter and the author's share filter. The "Users" row covers users and agents that identify as users, the "Agents" row covers all other agents.
