@@ -1,4 +1,6 @@
 using System.Text.Json.Nodes;
+using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Tests.Tools;
@@ -8,13 +10,20 @@ namespace LLMDesktopAssistant.Tests.Scripting;
 
 public class LuaJsonInputTests
 {
-	private sealed class StubScriptsetStateWatcher : ILuaScriptsetStateWatcher
+	private sealed class StubScriptSetCollector : IAddonSetCollector<LuaScriptInfo>
 	{
-		public event Action? OnStateChanged;
-
-		public IEnumerable<LuaScriptInfo> GetEffectiveScripts()
+		public AddonSet<LuaScriptInfo> GetAvailableAddons()
 		{
-			OnStateChanged?.Invoke();
+			return [];
+		}
+
+		public AddonSet<LuaScriptInfo> GetAddonsForChat()
+		{
+			return [];
+		}
+
+		public AddonSet<LuaScriptInfo> GetAddonsForAgent(ChatAgentDescriptor agent)
+		{
 			return [];
 		}
 	}
@@ -32,7 +41,7 @@ public class LuaJsonInputTests
 		var executor = Engine().CreateExecutor(tool);
 		var session = ToolTestContext.Create(tool, args, configureServices: services =>
 		{
-			services.AddSingleton<ILuaScriptsetStateWatcher, StubScriptsetStateWatcher>();
+			services.AddSingleton<IAddonSetCollector<LuaScriptInfo>, StubScriptSetCollector>();
 			services.AddSingleton<LuaService>();
 		});
 
