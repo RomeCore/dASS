@@ -24,9 +24,18 @@ follow_up.open: Open the queue
 input.attach_file.hint: Attach file...
 input.cancel_edit.hint: Cancel editing
 input.hint: Enter your message...
+input.hint.answer_last: Last message has no answer - Enter generates one
+input.hint.edit: Editing the message - Enter saves the changes and generates the answer
+input.hint.edit_empty: Editing the message - type the text
+input.hint.first: Start the conversation - write the first message
+input.hint.flush: Enter to send the queued messages
+input.hint.queue: Enter to queue it, answered after the current turn
+input.hint.send: Enter to send and generate the answer
+input.hint.stop: Enter to stop generation
+input.hint.stop_flush: Enter to stop and send the queue · Ctrl+Enter stops only
 input.send_button.hint: Send message · Ctrl+Enter
-input.send_generate_button.hint: Send message and generate
-input.stop_button.hint: Stop generation
+input.send_generate_button.hint: Send and generate · Enter
+input.stop_button.hint: Stop generation · Ctrl+Enter
 list.title: Chats
 manager.no_messages_to_rename.description: Chat has no messages
 manager.no_messages_to_rename.title: Cannot rename chat

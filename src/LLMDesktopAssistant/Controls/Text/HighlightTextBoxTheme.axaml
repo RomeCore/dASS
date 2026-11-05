@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
 					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 					xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+					xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 					xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
 					xmlns:conv="using:Avalonia.Data.Converters">
 
@@ -22,6 +23,9 @@
 	<SolidColorBrush x:Key="SlashCommandQuoteBrush" Color="#B9B9CC"/>
 	<SolidColorBrush x:Key="SlashCommandArgumentBackgroundBrush" Color="#268C8C8C"/>
 
+	<!-- The gap between the floating placeholder caption and the field (Fluent's TextBoxTopHeaderMargin). -->
+	<Thickness x:Key="HighlightTextBoxFloatingPlaceholderMargin">0,0,0,4</Thickness>
+
 	<ControlTheme x:Key="{x:Type txt:HighlightTextBox}"
 							  TargetType="txt:HighlightTextBox">
 
@@ -39,62 +43,85 @@
 		<Setter Property="FocusAdorner" Value="{x:Null}"/>
 		<Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True"/>
 
+		<!--
+			The IBeam belongs to the field, not to its presenter: Cursor inherits, so this single setter covers the
+			padding strips and the floating caption as well. The presenter-only setter left them with the arrow.
+		-->
+		<Setter Property="Cursor" Value="IBeam"/>
+
 		<Setter Property="Template">
 			<ControlTemplate>
 				<Border Name="PART_BorderElement"
-						Background="{TemplateBinding Background}"
-						BorderBrush="{TemplateBinding BorderBrush}"
-						BorderThickness="{TemplateBinding BorderThickness}"
-						CornerRadius="{TemplateBinding CornerRadius}"
-						MinWidth="{TemplateBinding MinWidth}"
-						MinHeight="{TemplateBinding MinHeight}">
-					<ScrollViewer Name="PART_ScrollViewer"
-								  Margin="{TemplateBinding Padding}"
-								  HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
-								  VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
-								  IsScrollChainingEnabled="{TemplateBinding (ScrollViewer.IsScrollChainingEnabled)}"
-								  AllowAutoHide="{TemplateBinding (ScrollViewer.AllowAutoHide)}"
-								  BringIntoViewOnFocusChange="{TemplateBinding (ScrollViewer.BringIntoViewOnFocusChange)}">
-						<Panel>
-							<TextBlock Name="PART_Placeholder"
-									   Foreground="{TemplateBinding PlaceholderForeground}"
-									   Text="{TemplateBinding PlaceholderText}"
-									   TextAlignment="{TemplateBinding TextAlignment}"
-									   TextWrapping="{TemplateBinding TextWrapping}"
-									   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-									   VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-								<TextBlock.IsVisible>
-									<MultiBinding Converter="{x:Static conv:BoolConverters.And}">
-										<Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static conv:StringConverters.IsNullOrEmpty}"/>
-										<Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static conv:StringConverters.IsNullOrEmpty}"/>
-									</MultiBinding>
-								</TextBlock.IsVisible>
-							</TextBlock>
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								MinWidth="{TemplateBinding MinWidth}"
+								MinHeight="{TemplateBinding MinHeight}">
+					
+					<DockPanel Name="PART_InnerDockPanel"
+							   Margin="{TemplateBinding Padding}">
 
-							<txt:HighlightTextPresenter Name="PART_TextPresenter"
-														 Text="{TemplateBinding Text, Mode=TwoWay}"
-														 CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
-														 CaretIndex="{TemplateBinding CaretIndex}"
-														 SelectionStart="{TemplateBinding SelectionStart}"
-														 SelectionEnd="{TemplateBinding SelectionEnd}"
-														 TextAlignment="{TemplateBinding TextAlignment}"
-														 TextWrapping="{TemplateBinding TextWrapping}"
-														 LineHeight="{TemplateBinding LineHeight}"
-														 LetterSpacing="{TemplateBinding LetterSpacing}"
-														 PasswordChar="{TemplateBinding PasswordChar}"
-														 RevealPassword="{TemplateBinding RevealPassword}"
-														 SelectionBrush="{TemplateBinding SelectionBrush}"
-														 SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
-														 CaretBrush="{TemplateBinding CaretBrush}"
-														 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-														 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-						</Panel>
-						<ScrollViewer.Styles>
-							<Style Selector="ScrollContentPresenter#PART_ContentPresenter">
-								<Setter Property="Cursor" Value="IBeam"/>
-							</Style>
-						</ScrollViewer.Styles>
-					</ScrollViewer>
+						<TextBlock Name="PART_FloatingPlaceholder"
+								   DockPanel.Dock="Top"
+								   Margin="{DynamicResource HighlightTextBoxFloatingPlaceholderMargin}"
+								   Foreground="{TemplateBinding PlaceholderForeground}"
+								   Text="{TemplateBinding PlaceholderText}"
+								   TextWrapping="{TemplateBinding TextWrapping}"
+								   IsVisible="False"/>
+
+						<scroll:SmoothScrollViewer Name="PART_ScrollViewer"
+												   HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+												   VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+												   IsScrollChainingEnabled="{TemplateBinding (ScrollViewer.IsScrollChainingEnabled)}"
+												   AllowAutoHide="{TemplateBinding (ScrollViewer.AllowAutoHide)}"
+												   BringIntoViewOnFocusChange="{TemplateBinding (ScrollViewer.BringIntoViewOnFocusChange)}">
+							<Panel>
+								<TextBlock Name="PART_Placeholder"
+										   Foreground="{TemplateBinding PlaceholderForeground}"
+										   Text="{TemplateBinding PlaceholderText}"
+										   TextAlignment="{TemplateBinding TextAlignment}"
+										   TextWrapping="{TemplateBinding TextWrapping}"
+										   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+										   VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+									<TextBlock.IsVisible>
+										<MultiBinding Converter="{x:Static conv:BoolConverters.And}">
+											<Binding ElementName="PART_TextPresenter" Path="PreeditText" Converter="{x:Static conv:StringConverters.IsNullOrEmpty}"/>
+											<Binding RelativeSource="{RelativeSource TemplatedParent}" Path="Text" Converter="{x:Static conv:StringConverters.IsNullOrEmpty}"/>
+										</MultiBinding>
+									</TextBlock.IsVisible>
+								</TextBlock>
+
+								<txt:HighlightTextPresenter Name="PART_TextPresenter"
+															Text="{TemplateBinding Text, Mode=TwoWay}"
+															CaretBlinkInterval="{TemplateBinding CaretBlinkInterval}"
+															CaretIndex="{TemplateBinding CaretIndex}"
+															SelectionStart="{TemplateBinding SelectionStart}"
+															SelectionEnd="{TemplateBinding SelectionEnd}"
+															TextAlignment="{TemplateBinding TextAlignment}"
+															TextWrapping="{TemplateBinding TextWrapping}"
+															LineHeight="{TemplateBinding LineHeight}"
+															LetterSpacing="{TemplateBinding LetterSpacing}"
+															PasswordChar="{TemplateBinding PasswordChar}"
+															RevealPassword="{TemplateBinding RevealPassword}"
+															SelectionBrush="{TemplateBinding SelectionBrush}"
+															SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+															CaretBrush="{TemplateBinding CaretBrush}"
+															HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+							</Panel>
+							<ScrollViewer.Styles>
+								<Style Selector="ScrollContentPresenter#PART_ContentPresenter">
+									<Setter Property="Cursor" Value="IBeam"/>
+								</Style>
+
+								<!-- The inherited IBeam must not reach the scrollbars. -->
+								<Style Selector="ScrollBar">
+									<Setter Property="Cursor" Value="Arrow"/>
+								</Style>
+							</ScrollViewer.Styles>
+						</scroll:SmoothScrollViewer>
+					</DockPanel>
 				</Border>
 			</ControlTemplate>
 		</Setter>
@@ -130,6 +157,14 @@
 		<!-- Error -->
 		<Style Selector="^:error /template/ Border#PART_BorderElement">
 			<Setter Property="BorderBrush" Value="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
+		</Style>
+		
+		<Style Selector="^ /template/ TextBlock#PART_FloatingPlaceholder">
+			<Setter Property="Cursor" Value="IBeam"/>
+		</Style>
+
+		<Style Selector="^[UseFloatingPlaceholder=true]:not(:empty) /template/ TextBlock#PART_FloatingPlaceholder">
+			<Setter Property="IsVisible" Value="True"/>
 		</Style>
 
 	</ControlTheme>

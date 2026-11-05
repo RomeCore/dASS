@@ -24,9 +24,18 @@ follow_up.open: Открыть очередь
 input.attach_file.hint: Прикрепить файл...
 input.cancel_edit.hint: Отменить редактирование
 input.hint: Введите сообщение...
+input.hint.answer_last: Последнее сообщение без ответа - Enter сгенерирует ответ
+input.hint.edit: Правка сообщения - Enter сохранит изменения и сгенерирует ответ
+input.hint.edit_empty: Правка сообщения - введите текст
+input.hint.first: Начните разговор - напишите первое сообщение
+input.hint.flush: Enter - отправить сообщения из очереди
+input.hint.queue: Enter - в очередь, ответ после текущего хода
+input.hint.send: Enter - отправить и сгенерировать ответ
+input.hint.stop: Enter - остановить генерацию
+input.hint.stop_flush: Enter - остановить и отправить очередь · Ctrl+Enter - только остановить
 input.send_button.hint: Отправить сообщение · Ctrl+Enter
-input.send_generate_button.hint: Отправить сообщение и запустить генерацию
-input.stop_button.hint: Остановить генерацию
+input.send_generate_button.hint: Отправить и запустить генерацию · Enter
+input.stop_button.hint: Остановить генерацию · Ctrl+Enter
 list.title: Чаты
 manager.no_messages_to_rename.description: В чате отсутствуют сообщения
 manager.no_messages_to_rename.title: Невозможно переименовать чат

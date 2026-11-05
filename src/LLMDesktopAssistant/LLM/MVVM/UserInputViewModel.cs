@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Input;
@@ -163,7 +164,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		// The draft parts are owned by the persisted UserInputState; the edit parts live only in memory.
 		private readonly AdditionalChatDataCollectionViewModel _draftData;
-		private readonly AdditionalChatDataCollection _editParts = new();
+		private readonly AdditionalChatDataCollection _editParts = [];
 		private readonly AdditionalChatDataCollectionViewModel _editData;
 
 		/// <summary>
@@ -185,6 +186,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				{
 					RaisePropertyChanged(nameof(AdditionalData));
 					RaisePropertyChanged(nameof(Text));
+					RaiseInputStateDependentProperties();
 				}
 			}
 		}
@@ -205,12 +207,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					{
 						_editText = value;
 						RaisePropertyChanged(nameof(Text));
+						RaiseInputStateDependentProperties();
 						CompletionViewModel.Update(value, _completionCaretIndex);
 					}
 				}
 				else if (UserInputState.Text != value)
 				{
 					UserInputState.Text = value;
+					RaiseInputStateDependentProperties();
 					CompletionViewModel.Update(value, _completionCaretIndex);
 				}
 			}
@@ -223,7 +227,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public bool IsGenerating
 		{
 			get => _isGenerating;
-			private set => SetProperty(ref _isGenerating, value);
+			private set
+			{
+				if (SetProperty(ref _isGenerating, value))
+					RaiseInputStateDependentProperties();
+			}
 		}
 
 		private readonly IChatExecutionTokenService _executionTokens;
@@ -324,6 +332,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			IsGenerating = _executionTokens.ExecutionCancellationToken != null;
 			_executionTokens.ExecutionCancellationTokenChanged += OnExecutionStateChanged;
 
+			// The placeholder names what Enter will do, so it has to follow both the history and the queue.
+			Chat.Messages.CollectionChanged += OnChatMessagesChanged;
+			_followUps.Changed += OnFollowUpsChanged;
+
 			Chips = new UserInputChipsViewModel(this);
 		}
 
@@ -338,6 +350,21 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				RaisePropertyChanged(nameof(Text));
 		}
 
+		private void OnChatMessagesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+			=> InvokeUI(RaiseInputStateDependentProperties);
+
+		private void OnFollowUpsChanged() => InvokeUI(RaiseInputStateDependentProperties);
+
+		/// <summary>
+		/// Raises the properties that read the whole input state: the placeholder text and whether the last turn can
+		/// be repeated.
+		/// </summary>
+		private void RaiseInputStateDependentProperties()
+		{
+			RaisePropertyChanged(nameof(PlaceholderKey));
+			RaisePropertyChanged(nameof(CanResendTail));
+		}
+
 		/// <summary>
 		/// Gets a value indicating whether there is nothing to send.
 		/// </summary>
@@ -345,6 +372,46 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			EditingMessage != null
 				? string.IsNullOrWhiteSpace(_editText) && _editParts.Count == 0
 				: UserInputState.IsEmpty;
+
+		/// <summary>
+		/// Gets a value indicating whether the history's tail is a user message with no answer - the state in which
+		/// Enter repeats that turn instead of sending an empty message.
+		/// </summary>
+		public bool CanResendTail =>
+			!IsGenerating && IsEmpty && !HasFollowUps &&
+			Chat.Messages.Count > 0 && Chat.Messages[Chat.Messages.Count - 1].Message is UserMessage;
+
+		/// <summary>
+		/// The placeholder of the input: it names what Enter will do in the current state, so the key matrix is visible
+		/// before the key is pressed.
+		/// </summary>
+		public LocaleKeyBase PlaceholderKey
+		{
+			get
+			{
+				if (EditingMessage != null)
+					return Locale.GetKey(IsEmpty ? "chat.input.hint.edit_empty" : "chat.input.hint.edit");
+
+				if (IsGenerating)
+				{
+					if (!IsEmpty)
+						return Locale.GetKey("chat.input.hint.queue");
+
+					return Locale.GetKey(HasFollowUps ? "chat.input.hint.stop_flush" : "chat.input.hint.stop");
+				}
+
+				if (!IsEmpty)
+					return Locale.GetKey("chat.input.hint.send");
+				if (HasFollowUps)
+					return Locale.GetKey("chat.input.hint.flush");
+				if (CanResendTail)
+					return Locale.GetKey("chat.input.hint.answer_last");
+				if (Chat.Messages.Count == 0)
+					return Locale.GetKey("chat.input.hint.first");
+
+				return Locale.GetKey("chat.input.hint");
+			}
+		}
 
 		public UserInput? GetCurrentUserInput()
 		{
@@ -533,6 +600,18 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public Task StopGenerationAsync() =>
 			Chat.Services.GetRequiredService<IChatOperationService>().StopGenerationAsync();
 
+		/// <summary>
+		/// Repeats the history's last turn: the tail is an unanswered user message, and the answer is asked for again
+		/// without inserting anything new.
+		/// </summary>
+		public Task ResendTailAsync()
+		{
+			if (Chat.Messages.Count == 0)
+				return Task.CompletedTask;
+
+			return Chat.Services.GetRequiredService<IChatOperationService>().ResendMessageAsync(Chat.Messages.Count - 1);
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -541,6 +620,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				UserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
 				_executionTokens.ExecutionCancellationTokenChanged -= OnExecutionStateChanged;
+				Chat.Messages.CollectionChanged -= OnChatMessagesChanged;
+				_followUps.Changed -= OnFollowUpsChanged;
 				Chips.Dispose();
 
 				_draftData.Dispose();

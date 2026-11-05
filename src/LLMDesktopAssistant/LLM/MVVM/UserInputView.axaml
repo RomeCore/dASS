@@ -29,7 +29,8 @@
 													Margin="0,4"
 													FontSize="16"
 													VerticalAlignment="Center"
-													PlaceholderText="{loc:Loc chat.input.hint}"
+													UseFloatingPlaceholder="True"
+													PlaceholderText="{loc:Loc {Binding PlaceholderKey}}"
 													ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
 		<Border x:Name="DropOverlay"

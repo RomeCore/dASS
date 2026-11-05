@@ -74,7 +74,8 @@ public partial class UserInputView : UserControl
 
 	/// <summary>
 	/// Routes Enter and Ctrl+Enter through the follow-up matrix: a run in progress queues the text or stops the run, an
-	/// empty box flushes the queue, and an idle chat sends as usual.
+	/// empty box flushes the queue, an idle chat sends as usual, and an unanswered tail is repeated when there is
+	/// nothing to send.
 	/// </summary>
 	private static void Send(UserInputViewModel viewModel, bool generate)
 	{
@@ -103,6 +104,8 @@ public partial class UserInputView : UserControl
 			Run(viewModel.SendCurrentUserInputAsync(generate));
 		else if (viewModel.HasFollowUps)
 			Run(viewModel.FlushFollowUpsAsync());
+		else if (generate && viewModel.CanResendTail)
+			Run(viewModel.ResendTailAsync());
 	}
 
 	/// <summary>
