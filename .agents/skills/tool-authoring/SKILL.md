@@ -89,7 +89,21 @@ argument-schema: |
 ```
 
 - **`description` is everything the model sees** when deciding to call the tool. Write when to use it, not only what it is.
-- **`argument-schema`** is a JSON Schema **written as a YAML string** - a `|` block or a quoted line. The default is `{"type":"object","additionalProperties":false}`. Every argument the body reads belongs here, each with its own description. A one-line `{...}` mapping is not a string: the parser drops it without a word and the tool ends up with the default schema and nothing for the model to fill in.
+- **`argument-schema`** is a JSON Schema **written as a YAML string** - a `|` block or a quoted line. The default is `{"type":"object","additionalProperties":false}`. Every argument the body reads belongs here, each with its own description. A one-line `{...}` mapping is not a string: the parse reports a non-fatal diagnostic, the addon still loads, and the tool ends up with the default schema and nothing for the model to fill in.
+
+  Two keys inside the schema are dASS's own rather than JSON Schema's. Both are read by the argument descriptor and **trimmed from the schema the model sees**:
+
+  - `main: true` - marks the one argument the call is about. It becomes the rest positional of `/tool:<name> …` (`/tool:shell-bash git status --short`), and it is what an unnamed specifier literal targets. At most one argument may carry it; a second one is a load error.
+  - `kind: "file" | "directory" | "fileOrDirectory"` - says the `string` is really a filesystem path (`fileOrDirectory` = one that may be either, what `fs-read_entry` takes). A path argument completes as a path in the slash command and is matched by **path segments** in a specifier rule (`src/**/*.cs`), relative to the working directory, case-insensitively on Windows. Without it the same rule would be matched as plain text.
+
+  ```json
+  "properties": {
+    "path": { "type": "string", "description": "File to read", "main": true, "kind": "file" },
+    "offset": { "type": "integer" }
+  }
+  ```
+
+  The names matter beyond the schema: a specifier rule says `offset:10`, and saved rules live in tool changes and agent packs, so renaming a JSON argument silently changes what every saved rule means.
 - **`approval-level`**: `policy-based` (the recommended default), `policy-ask-or-disallow`, `policy-approve-or-ask`, `policy-auto-approve-unless-disallowed`, `policy-auto-disallow-unless-approved`, `always-approve`, `always-ask`, `always-disallow`.
 - **`behaviours`** - kebab-case slugs, as a list, a comma-separated string, or a single value; the parser also accepts snake_case and raw enum names, case-insensitively. Values:
 
@@ -150,3 +164,4 @@ A `tools/` folder inside an addon source: `.agents/` in a repo, `.llmassist/pack
 - A `#` inside a value of a `#`-prefixed frontmatter (`.sh`, `.ps1`): YAML reads it as the start of a comment and cuts the string there. Quote the value or reword it.
 - `json-output` on a Lua tool: refused at load, because Lua runs in-process and has no stdout to take a structure from.
 - `run-terminal` together with `json-output`: refused at load - a terminal has no separate output channel to parse.
+- `kind` is not cross-checked against `type` for a scripted tool: `{"type":"integer","kind":"file"}` is accepted and the argument then never matches a path rule. The contradiction is only refused for a tool declared in C#.
