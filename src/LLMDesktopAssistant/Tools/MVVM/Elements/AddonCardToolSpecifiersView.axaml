@@ -7,6 +7,7 @@
 						 xmlns:ag="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+												  xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
 						 x:Class="LLMDesktopAssistant.Tools.MVVM.Elements.AddonCardToolSpecifiersView"
 						 x:DataType="vm:AddonCardToolSpecifiersViewModel">
 
@@ -78,15 +79,16 @@
 
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="vm:ToolSpecifierRuleRowViewModel">
-					<Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="4" Margin="0,2,0,2">
+					<Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="4" Margin="0,2,0,2">
 
 						<CheckBox Grid.Column="0"
 											IsChecked="{Binding Enabled, Mode=TwoWay}"/>
 
-						<TextBox Grid.Column="1"
-										 Text="{Binding Pattern, Mode=TwoWay}"
-										 PlaceholderText="{loc:Loc card.tools.specifiers.pattern}"
-										 FontSize="12"/>
+						<txt:HighlightTextBox Grid.Column="1"
+																	Text="{Binding Pattern, Mode=TwoWay}"
+																	HighlightTransformProvider="{Binding HighlightProvider}"
+																	PlaceholderText="{loc:Loc card.tools.specifiers.pattern}"
+																	FontSize="12"/>
 
 						<ComboBox Grid.Column="2"
 											ItemsSource="{Binding Decisions}"
@@ -112,6 +114,14 @@
 
 							<ico:VisualIcon Kind="Close"/>
 						</Button>
+
+						<TextBlock Grid.Row="1"
+										 Grid.Column="1"
+										 Text="{Binding Error}"
+										 IsVisible="{Binding HasError}"
+										 TextWrapping="Wrap"
+										 FontSize="11"
+										 Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}"/>
 
 					</Grid>
 				</DataTemplate>

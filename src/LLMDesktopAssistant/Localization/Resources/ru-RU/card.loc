@@ -102,5 +102,16 @@ tools.specifiers.toggle: Показать правила спецификато�
 tools.specifiers.union_mode: Режим объединения
 tools.specifiers.aggregation_mode: Режим агрегации
 tools.specifiers.pattern: Шаблон
+tools.specifiers.error.empty: Правило пустое.
+tools.specifiers.error.syntax: Не удалось разобрать выражение на позиции {0}.
+tools.specifiers.error.no_target: У инструмента нет главного аргумента, поэтому литерал без имени никогда не совпадёт. Укажите аргумент явно.
+tools.specifiers.error.too_long: Шаблон слишком длинный.
+tools.specifiers.error.too_many_alternatives: Слишком много вариантов в фигурных скобках.
+tools.specifiers.error.too_many_units: Слишком много элементов в шаблоне.
+tools.specifiers.error.invalid_class_range: Диапазон в квадратных скобках задан в обратном порядке.
+tools.specifiers.error.double_star_not_whole_segment: «**» должен занимать целый фрагмент.
+tools.specifiers.error.double_star: «**» здесь не поддерживается, используйте «*».
+tools.specifiers.error.argument_tail: «:*» допустим только в конце шаблона.
+tools.specifiers.error.generic: Неверный шаблон: {0}
 tools.arguments: Аргументы инструмента
 tools.arguments.toggle: Показать аргументы инструмента

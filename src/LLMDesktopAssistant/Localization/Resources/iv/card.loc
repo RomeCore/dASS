@@ -102,5 +102,16 @@ tools.specifiers.toggle: Show specifier rules
 tools.specifiers.union_mode: Union mode
 tools.specifiers.aggregation_mode: Aggregation mode
 tools.specifiers.pattern: Pattern
+tools.specifiers.error.empty: The rule is empty.
+tools.specifiers.error.syntax: The expression cannot be parsed at position {0}.
+tools.specifiers.error.no_target: The tool has no main argument, so an unnamed literal can never match. Name the argument instead.
+tools.specifiers.error.too_long: The pattern is too long.
+tools.specifiers.error.too_many_alternatives: Too many alternatives in the braces.
+tools.specifiers.error.too_many_units: The pattern has too many elements.
+tools.specifiers.error.invalid_class_range: The character range in the brackets is reversed.
+tools.specifiers.error.double_star_not_whole_segment: '**' must occupy a whole segment.
+tools.specifiers.error.double_star: '**' is not supported here; use '*'.
+tools.specifiers.error.argument_tail: ':*' is only allowed at the end of the pattern.
+tools.specifiers.error.generic: Invalid pattern: {0}
 tools.arguments: Tool arguments
 tools.arguments.toggle: Show tool arguments

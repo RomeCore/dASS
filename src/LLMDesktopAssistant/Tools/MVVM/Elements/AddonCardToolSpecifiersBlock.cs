@@ -194,7 +194,8 @@ namespace LLMDesktopAssistant.Tools.MVVM.Elements
 
 		private void AddRule()
 		{
-			Rules.Add(new ToolSpecifierRuleRowViewModel(this, true, string.Empty, SpecifierDecision.Allow));
+			Rules.Add(new ToolSpecifierRuleRowViewModel(this, _context.Addon.Arguments, true, string.Empty,
+				SpecifierDecision.Allow));
 			SyncSpecifiers();
 		}
 
@@ -204,7 +205,8 @@ namespace LLMDesktopAssistant.Tools.MVVM.Elements
 				? change.Specifiers
 				: _context.Addon.Specifiers;
 
-			Rules.Reset(source.Select(rule => new ToolSpecifierRuleRowViewModel(this, rule.Enabled, rule.Pattern, rule.Decision)));
+			Rules.Reset(source.Select(rule => new ToolSpecifierRuleRowViewModel(this, _context.Addon.Arguments,
+				rule.Enabled, rule.Pattern, rule.Decision)));
 		}
 
 		private void SubscribeChange()
