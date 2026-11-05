@@ -1,6 +1,7 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Executors;
@@ -36,10 +37,10 @@ namespace LLMDesktopAssistant.Scripting.Lua
 						// false keep the native table, which is what a Lua script usually wants.
 						g["tool_args"] = tool.InputMode is ScriptInputMode.Json
 							? new LuaString(args?.ToJsonString() ?? "null")
-							: StructuredLuaConverter.JsonNodeToLuaValue(args);
+							: args.ToConstNodeValue().ToLuaValue();
 					}, cancellationToken);
 					if (ctx.Call.StructuredResult is null)
-						ctx.Call.SetStructuredResult(StructuredLuaConverter.LuaValueToJsonNode(scriptResult));
+						ctx.Call.SetStructuredResult(scriptResult.ToConstNodeValue(tolerant: true).ToJsonNode());
 					result.Write("Script returned: " + scriptResult.ToString());
 					result.Complete(success: true);
 				}

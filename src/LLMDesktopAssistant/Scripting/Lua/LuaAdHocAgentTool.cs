@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Agents.Tasks;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -57,7 +58,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			try
 			{
-				var args = StructuredLuaConverter.JsonNodeToLuaValue(arguments);
+				var args = arguments.ToConstNodeValue().ToLuaValue();
 				var result = await Function.InvokeAsync(Context, args);
 				return new AgentToolCallResult
 				{

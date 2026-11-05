@@ -31,12 +31,17 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 		/// Converts the given Lua value to an immutable structured node value (<see cref="ConstNodeValue"/>).
 		/// </summary>
 		/// <param name="value">The value to convert.</param>
+		/// <param name="tolerant">
+		/// When <see langword="true"/>, unsupported values (functions, userdata, threads, etc.) are
+		/// dropped instead of throwing. Containers keep the entries that are representable.
+		/// </param>
 		/// <returns>
-		/// The immutable node value, or <see langword="null"/> if <paramref name="value"/> is <see langword="null"/>.
+		/// The immutable node value, or <see langword="null"/> if <paramref name="value"/> is <see langword="null"/>
+		/// or, in tolerant mode, the value itself is not representable.
 		/// </returns>
-		public static ConstNodeValue? ToConstNodeValue(this LuaValue? value)
+		public static ConstNodeValue? ToConstNodeValue(this LuaValue? value, bool tolerant = false)
 		{
-			return value is null ? null : ConvertToConst(value);
+			return value is null ? null : ConvertToConst(value, tolerant);
 		}
 
 		/// <summary>
@@ -82,7 +87,7 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 			return table;
 		}
 
-		private static ConstNodeValue ConvertToConst(LuaValue value)
+		private static ConstNodeValue? ConvertToConst(LuaValue value, bool tolerant)
 		{
 			switch (value)
 			{
@@ -98,23 +103,37 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 				{
 					if (IsArrayTable(table))
 					{
-						return new ConstNodeArrayValue
+						var items = ImmutableList.CreateBuilder<ConstNodeValue>();
+
+						for (int i = 1; i <= table.Length; i++)
 						{
-							Items = Enumerable.Range(1, table.Length).Select(i => ConvertToConst(table.Get(i))).ToImmutableList()
-						};
+							if (ConvertToConst(table.Get(i), tolerant) is { } item)
+								items.Add(item);
+						}
+
+						return new ConstNodeArrayValue { Items = items.ToImmutable() };
 					}
 					else
 					{
-						return new ConstNodeDictionaryValue
+						var items = ImmutableDictionary.CreateBuilder<string, ConstNodeValue>();
+
+						foreach (var kvp in table.Entries)
 						{
-							Items = table.Entries
-								.Select(kvp => (Key: KeyToString(kvp.Key), Value: kvp.Value))
-								.Where(pair => pair.Key is not null)
-								.ToImmutableDictionary(pair => pair.Key!, pair => ConvertToConst(pair.Value))
-						};
+							var key = KeyToString(kvp.Key);
+							if (key is null)
+								continue;
+
+							if (ConvertToConst(kvp.Value, tolerant) is { } item)
+								items[key] = item;
+						}
+
+						return new ConstNodeDictionaryValue { Items = items.ToImmutable() };
 					}
 				}
 				default:
+					if (tolerant)
+						return null;
+
 					throw new ArgumentException($"Unsupported Lua value type '{value.GetType().FullName}'.", nameof(value));
 			}
 		}

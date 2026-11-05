@@ -2,6 +2,7 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Calls;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
@@ -138,7 +139,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			{
 				ToolName = tool.Name,
 				Arguments = args.Length > 1
-					? StructuredLuaConverter.LuaValueToJsonNode(args[1])?.ToJsonString() ?? "{}"
+					? args[1].ToConstNodeValue(tolerant: true).ToJsonNode()?.ToJsonString() ?? "{}"
 					: "{}"
 			};
 
@@ -160,7 +161,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			resultTable["success"] = LuaBoolean.FromBoolean(call.Status == ToolStatus.Success);
 
 			if (call.StructuredResult is not null)
-				resultTable["structured"] = StructuredLuaConverter.JsonNodeToLuaValue(call.StructuredResult);
+				resultTable["structured"] = call.StructuredResult.ToConstNodeValue().ToLuaValue();
 
 			resultTable["tool"] = ToolToTable(tool);
 
@@ -199,7 +200,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			result["approval_level"] = tool.ApprovalLevel is null ? new LuaString("default") :
 				new LuaString(KebabEnumNames<ToolApprovalLevel>.Serialize(tool.ApprovalLevel.Value) ?? "policy-based");
 			result["source"] = new LuaString(tool.ToolSource.ToString().ToLower());
-			result["arguments"] = StructuredLuaConverter.JsonNodeToLuaValue(tool.ArgumentSchema);
+			result["arguments"] = tool.ArgumentSchema.ToConstNodeValue().ToLuaValue();
 			return result;
 		}
 	}

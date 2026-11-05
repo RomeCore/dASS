@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.StructuredValues.Const;
@@ -110,16 +111,31 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 		{
 			JsonValueKind.Null => ConstNodeNullValue.Instance,
 			JsonValueKind.String => new ConstNodeStringValue { Value = value.GetValue<string>() },
-			JsonValueKind.Number => new ConstNodeNumberValue { Value = value.GetValue<double>() },
+			JsonValueKind.Number => new ConstNodeNumberValue { Value = ReadNumber(value) },
 			JsonValueKind.True or JsonValueKind.False => new ConstNodeBooleanValue { Value = value.GetValue<bool>() },
 			_ => throw new ArgumentException($"Unsupported JSON value kind '{value.GetValueKind()}'.", nameof(value))
 		};
+
+		/// <summary>
+		/// Reads a JSON number regardless of the CLR type it was created from: a hand-built
+		/// <c>JsonObject</c> usually carries an <see cref="int"/> or <see cref="long"/>, and probing for
+		/// one concrete type would miss the others.
+		/// </summary>
+		/// <param name="value">The JSON value known to be a number.</param>
+		/// <returns>The number as a double, which is what structured values store.</returns>
+		private static double ReadNumber(JsonValue value)
+		{
+			if (value.TryGetValue(out double number))
+				return number;
+
+			return double.Parse(value.ToJsonString(), CultureInfo.InvariantCulture);
+		}
 
 		private static ReactiveNodeValue ConvertToReactive(JsonValue value) => value.GetValueKind() switch
 		{
 			JsonValueKind.Null => new ReactiveNodeNullValue(),
 			JsonValueKind.String => new ReactiveNodeStringValue { Value = value.GetValue<string>() },
-			JsonValueKind.Number => new ReactiveNodeNumberValue { Value = value.GetValue<double>() },
+			JsonValueKind.Number => new ReactiveNodeNumberValue { Value = ReadNumber(value) },
 			JsonValueKind.True or JsonValueKind.False => new ReactiveNodeBooleanValue { Value = value.GetValue<bool>() },
 			_ => throw new ArgumentException($"Unsupported JSON value kind '{value.GetValueKind()}'.", nameof(value))
 		};

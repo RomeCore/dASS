@@ -3,6 +3,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Management;
 using LLMDesktopAssistant.Prompting.Plugins;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLTSharp;
 using LLTSharp.DataAccessors;
 using LLTSharp.Metadata;
@@ -149,7 +150,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			TemplateDataAccessor context = TemplateNullAccessor.Instance;
 			if (args.Length > 1)
-				context = StructuredLuaConverter.LuaValueToLLTSharp(args[1]);
+				context = args[1].ToConstNodeValue(tolerant: true).ToTemplateDataAccessor() ?? TemplateNullAccessor.Instance;
 
 			try
 			{

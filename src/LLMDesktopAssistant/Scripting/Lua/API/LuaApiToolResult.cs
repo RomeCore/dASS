@@ -1,6 +1,7 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
@@ -338,7 +339,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				var data = args[0];
 				if (data is LuaTable || data is LuaNil)
 				{
-					var jsonNode = StructuredLuaConverter.LuaValueToJsonNode(data);
+					var jsonNode = data.ToConstNodeValue(tolerant: true).ToJsonNode();
 					result.SetStructured(jsonNode);
 				}
 			}

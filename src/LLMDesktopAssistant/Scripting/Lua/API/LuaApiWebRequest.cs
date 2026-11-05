@@ -4,6 +4,7 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Utils.Web;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
@@ -198,7 +199,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						content = cvStr.Value;
 					else if (cv is LuaTable)
 					{
-						var jsonNode = StructuredLuaConverter.LuaValueToJsonNode(cv);
+						var jsonNode = cv.ToConstNodeValue(tolerant: true).ToJsonNode();
 						content = jsonNode?.ToJsonString() ?? "{}";
 					}
 				}

@@ -12,6 +12,7 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.Providers;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
@@ -572,7 +573,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						var name = (toolValueTable.Get("name") as LuaString)?.Value;
 						var displayName = (toolValueTable.Get("display_name") as LuaString)?.Value;
 						var desc = (toolValueTable.Get("description") as LuaString)?.Value;
-						var schema = StructuredLuaConverter.LuaValueToJsonNode(toolValueTable.Get("parameters"));
+						var schema = toolValueTable.Get("parameters").ToConstNodeValue(tolerant: true).ToJsonNode();
 						var callback = toolValueTable.Get("callback");
 
 						if (string.IsNullOrEmpty(name))
@@ -802,7 +803,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var toolName = toolCallTable.Get("tool_name").ToString();
 			var toolCallId = toolCallTable.Get("tool_call_id").ToString();
-			var arguments = StructuredLuaConverter.LuaValueToJsonNode(toolCallTable.Get("arguments"));
+			var arguments = toolCallTable.Get("arguments").ToConstNodeValue(tolerant: true).ToJsonNode();
 
 			var resultSuccess = toolCallTable.Get("result_success");
 			var resultContent = toolCallTable.Get("result_content").ToString();
@@ -883,7 +884,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var resultTable = new LuaTable();
 			resultTable.Set("tool_call_id", toolCall.ToolCallId);
 			resultTable.Set("tool_name", toolCall.ToolName);
-			resultTable.Set("arguments", StructuredLuaConverter.JsonNodeToLuaValue(TolerantJsonParser.Parse(toolCall.Arguments)));
+			resultTable.Set("arguments", TolerantJsonParser.Parse(toolCall.Arguments).ToConstNodeValue().ToLuaValue());
 			resultTable.Set("result_success", toolCall.Result?.Success ?? true);
 			resultTable.Set("result_content", toolCall.Result?.Content ?? "");
 			var attachmentsTable = new LuaTable();

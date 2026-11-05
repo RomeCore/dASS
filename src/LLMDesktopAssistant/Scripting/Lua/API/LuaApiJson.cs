@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Unicode;
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
@@ -126,7 +127,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					throw new LuaRuntimeException($"json.decode(str): expected a string, got {args[0].TypeName}.");
 
 				var node = JsonNode.Parse(jsonStr.Value);
-				return new LuaTuple(StructuredLuaConverter.JsonNodeToLuaValue(node));
+				return new LuaTuple(node.ToConstNodeValue().ToLuaValue());
 			}
 			catch (LuaRuntimeException)
 			{
@@ -149,7 +150,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					throw new LuaRuntimeException($"json.decode_tolerant(str): expected a string, got {args[0].TypeName}.");
 
 				var node = TolerantJsonParser.Parse(jsonStr.Value);
-				return new LuaTuple(StructuredLuaConverter.JsonNodeToLuaValue(node));
+				return new LuaTuple(node.ToConstNodeValue().ToLuaValue());
 			}
 			catch (LuaRuntimeException)
 			{
@@ -173,7 +174,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					indented = true;
 
 				var value = args[0];
-				var node = StructuredLuaConverter.LuaValueToJsonNode(value);
+				var node = value.ToConstNodeValue(tolerant: true).ToJsonNode();
 				var options = indented ? _indentedSerializationOptions : _serializationOptions;
 				string s = node?.ToJsonString(options) ?? "null";
 				return new LuaTuple(new LuaString(s));
