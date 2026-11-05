@@ -1,5 +1,6 @@
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Utils.Dice;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -69,11 +70,27 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - n: number - number of bytes to generate
 			  Returns: table - array of integers
 
+			--- random.dice(expression, [repeat])
+			  Rolls dice written in standard dice notation.
+			  Notation:
+				- XdY or dY: X dice with Y faces (d20, 2d6); d% is a d100
+				- +N / -N: flat modifiers, several groups allowed (1d20+5, 1d8+2d6+3)
+				- khN / klN: keep the N highest / lowest dice (4d6kh3, 2d20kh1)
+				- dhN / dlN: drop the N highest / lowest dice (4d6dl1)
+				- ! or !N: exploding dice, on the maximum face or on N and above (3d6!, 2d10!9)
+				- rN / rrN: reroll dice showing N once / until they differ (4d6r1, 4d6rr1)
+			  Parameters:
+				- expression: string - the dice expression
+				- repeat: number (optional, default 1) - how many times to roll it
+			  Returns: table { expression, total, text, dice } for a single roll,
+			  an array of such tables when repeat > 1 (same rule as random.choice).
+			  'dice' holds the kept faces. Throws on an invalid expression.
+
 			--- random.seed([seed])
 			  Seeds the random number generator.
 			  If called without arguments, seeds with Guid.NewGuid().
 			  Parameters:
-			    - seed: number (optional) - explicit seed value
+				- seed: number (optional) - explicit seed value
 			  Returns: nil
 
 			EXAMPLES:
@@ -99,6 +116,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  -- GUID
 			  print(random.guid())
+
+			  -- Dice
+			  local roll = random.dice("2d20kh1+5")
+			  print(roll.total, roll.text)
+
+			  -- Several rolls of the same expression
+			  local rolls = random.dice("1d20", 3)
+			  print(rolls[1].total, rolls[3].total)
 			""";
 
 		private Random _rng = new();
@@ -112,6 +137,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["shuffle"] = new LuaCallbackFunction(Shuffle);
 			ns["guid"] = new LuaCallbackFunction(Guid);
 			ns["bytes"] = new LuaCallbackFunction(Bytes);
+			ns["dice"] = new LuaCallbackFunction(Dice);
 			ns["seed"] = new LuaCallbackFunction(Seed);
 			return null;
 		}
@@ -263,6 +289,59 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				result[i + 1] = new LuaNumber(buffer[i]);
 
 			return new LuaTuple(result);
+		}
+
+		private LuaTuple Dice(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1 || args[0] is not LuaString expressionText)
+				throw new LuaRuntimeException("random.dice(expression, [repeat]): expression must be a string.");
+
+			if (args.Length > 1 && args[1] is not LuaNil && args[1] is not LuaNumber)
+				throw new LuaRuntimeException("random.dice(expression, [repeat]): repeat must be a number.");
+
+			var repeat = args.Length > 1 && args[1] is LuaNumber repeatValue ? (int)repeatValue.Value : 1;
+			if (repeat < 1 || repeat > DiceLimits.MaxRepeat)
+			{
+				throw new LuaRuntimeException(
+					$"random.dice(expression, [repeat]): repeat must be between 1 and {DiceLimits.MaxRepeat}.");
+			}
+
+			DiceExpression expression;
+			try
+			{
+				expression = DiceExpressionParser.Parse(expressionText.Value);
+			}
+			catch (DiceExpressionException exception)
+			{
+				throw new LuaRuntimeException(exception.Message);
+			}
+
+			var roller = new DiceRoller(_rng);
+
+			if (repeat == 1)
+				return new LuaTuple(ToLuaTable(roller.Roll(expression)));
+
+			var rolls = new LuaTable();
+			for (var index = 0; index < repeat; index++)
+				rolls[index + 1] = ToLuaTable(roller.Roll(expression));
+
+			return new LuaTuple(rolls);
+		}
+
+		private static LuaTable ToLuaTable(DiceRollResult roll)
+		{
+			var dice = new LuaTable();
+			var index = 0;
+
+			foreach (var value in roll.KeptValues)
+				dice[++index] = new LuaNumber(value);
+
+			var table = new LuaTable();
+			table["expression"] = new LuaString(roll.Expression.ToNotation());
+			table["total"] = new LuaNumber(roll.Total);
+			table["text"] = new LuaString(roll.ToText());
+			table["dice"] = dice;
+			return table;
 		}
 
 		private LuaTuple Seed(LuaCallingContext ctx, LuaValue[] args)
