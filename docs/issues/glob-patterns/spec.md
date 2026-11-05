@@ -2,7 +2,9 @@
 
 > Assembled from the design session on the `fs-glob` dialect. This is the implementable document; the reasoning is in `docs/agent-reports/AR-0025` and `AR-0026`, which it closes.
 >
-> Status of the implementation: `Utils/Patterns`, `Utils/Files`, `fs-glob`, `fs-grep` and the ignore policy of `fs-read_entry` are done as described here. Specifiers and the remaining migration steps are not.
+> Status of the implementation: `Utils/Patterns`, `Utils/Files`, `fs-glob`, `fs-grep` and the ignore policy of `fs-read_entry` are done as described here, and specifiers are migrated: the literals compile with `GlobTextPattern`, path targets are matched through `GlobPathMatcher`, and the analyzer is generated from `ToolArgumentsDescriptor` (see `docs/adr/0001-tool-arguments-descriptor.md`). What is left is `WebReaperWebBrowserInstaller`.
+>
+> Note on the age of the text below: sections 1-15 and 17 describe the pattern layer as it was designed and are current. Section 18 was written before the argument descriptor existed and is now the section that changed; it has been rewritten in place. The model in it is called `ToolArgumentKind`/`SpecifierTargetKind`, and the metadata keys are `main`/`kind`.
 
 ## 1. Goal
 
@@ -355,8 +357,14 @@ public sealed record GlobWalkOptions
 
 public static class GlobWalker
 {
-	public static IEnumerable<GlobEntry> Enumerate(GlobSearch search, GlobWalkOptions options,
-		CancellationToken cancellationToken = default);
+    public static IEnumerable<GlobEntry> Enumerate(GlobSearch search, GlobWalkOptions options,
+        CancellationToken cancellationToken = default);
+}
+
+public static class GlobPathMatcher
+{
+    public static GlobOptions DefaultOptions { get; }   // IgnoreCase on Windows
+    public static bool Matches(GlobPattern pattern, string path, string baseDirectory);
 }
 ```
 
@@ -460,7 +468,9 @@ Normative; every row is a test in `tests/LLMDesktopAssistant.Tests/Utils`.
 | `FilesystemExploreToolModule` | `FileSystemName.MatchesSimpleExpression` | `GlobTextSet.ParseNames` |
 | `FilesystemGrepToolModule` | `Directory.EnumerateFiles` + `allowedExtensions` + `recursive` | one glob path; `GlobWalker` collects the files |
 | `WebReaperWebBrowserInstaller` | `Directory.EnumerateDirectories(root, "chromium-*")` | not migrated |
-| `SpecifierMatcher.GlobMatch` | hand-rolled `*`, `?`, `:*` recursion | not migrated |
+| `SpecifierMatcher.GlobMatch` | hand-rolled `*`, `?`, `:*` recursion | `GlobTextPattern` with `ArgumentTail`, compiled once per literal and cached (`SpecifierLiteralPart.Glob`) |
+| specifier path targets | did not exist | `[PathArgument]` on the tool method; `GlobPathMatcher` matches a path against the rule by segments |
+| slash-command arguments of a tool | mapped from the raw schema | `ToolArgumentSchemaMapper.Create(ToolArgumentsDescriptor)`, main argument as the rest positional |
 
 `fs-glob` description shrank to what the model cannot infer:
 
@@ -473,7 +483,9 @@ Syntax the dialect does not cover fails with a reason instead of returning no ma
 
 ### 16.1. Specifier audit
 
-Before `[]` and `{}` are switched on for specifiers, every existing rule in the repository and in the installed packs must be listed and checked: a rule containing `[` or `{` changes meaning, because those characters become syntax. `SpecifierMatcherTests` is the safety net.
+The audit was run before `[]` and `{}` were switched on, because a rule containing `[` or `{` changes meaning once those characters become syntax. Result: no rule in the repository or in the shipped packs uses them, so the dialect is switched on in full. `SpecifierMatcherTests` and `SpecifierGlobTests` are the safety net.
+
+The audit also found a live defect. The shell analyzers declared the parameters `bash`, `batch` and `powershell` while the schema had been renamed to `command`; the binder threw "missing required parameter" for every rule and `SpecifierEngine` logged it at debug level, so every shell rule was inert and the tests encoded the same wrong names. The analyzers now take `command`, and the generated analyzer reads the names from the descriptor, so the same drift cannot recur silently.
 
 ## 17. Why not bash compatibility
 
@@ -483,10 +495,52 @@ Before `[]` and `{}` are switched on for specifiers, every existing rule in the 
 
 ## 18. Specifiers
 
-- Specifier literals that target the main argument are prose and compile as `GlobTextPattern` with `ArgumentTail`: `git:*`, `rm -rf:*`.
-- Path-typed specifier targets arrive together with analyzers generated from `[MainArgument]` and `[PathArgument]`; until then no rule can express one, which keeps `SpecifierMatcher.Match` unchanged.
-- `SpecifierMatcher` keeps the coverage logic (`FullMatch` requires every main argument part to be covered). Only its private `GlobMatch` disappears.
-- A tool that needs the paths inside a command line gets them from its own `IToolSpecifierAnalyzer`, which tokenizes. The matcher never parses a command line.
+A rule is a specifier expression over flat or filesystem glob literals, and the dialect is a property of
+**the argument a literal targets**, not of the rule text. `src/**/*.cs` is a syntax error against a command
+line and a correct path against a `path` argument.
+
+- `SpecifierTargetKind.Text` - `GlobTextPattern` with `ArgumentTail`, so `git:*` and `rm -rf:*` work.
+- `SpecifierTargetKind.Path` - a filesystem pattern matched by segments through `GlobPathMatcher`. Its base
+  directory is the tool's working directory, supplied by the invocation (`IWorkingDirectoryAccessService`);
+  comparison follows the file system (case-insensitive on Windows). `:*` is rejected for a path.
+- The kind is derived, never declared: `ToolArgumentKind.FilePath`, `DirectoryPath` and `FSPath` (a path that
+  may be either) map to `Path`, the scalars map to `Text`, and arrays and objects are not targets at all.
+- Path-ness is the one thing JSON Schema cannot express, so it is authored with `[PathArgument(File,
+  Directory)]` and written into the authored schema as `kind: file | directory | fs`. The main argument is
+  marked with `[MainArgument]` and written as `main: true`. Both keys are trimmed from the schema the model
+  sees.
+- **The main argument is not nameable.** An unnamed literal covers it, which is what `Main` exists for; a
+  second name for the same value (`command:git status:*`) would be a competing view - for the shell, the
+  whole line against its split parts - and it forced handwritten analyzer code. Only the other scalar
+  arguments are addressable as `name:value` (`ToolArgumentsDescriptor.SpecifierParameters`).
+- The analyzer is generated from the descriptor: `GeneratedSpecifierAnalyzer` is stateless and shared, reads
+  `ctx.Descriptor.Arguments`, takes the effective value (`args[name] ?? Default`) and matches. A handwritten
+  analyzer is for the one case the raw argument cannot serve - the shell splits a compound command into the
+  parts a rule covers. A tool whose arguments hold nothing targetable gets no analyzer.
+- `SpecifierMatcher` keeps the coverage logic (`FullMatch` requires every main argument part and every named
+  value to be covered). Its private `GlobMatch` is gone.
+- A rule is validated while it is written: `SpecifierPatternValidator` parses the expression with the tool's
+  names and compiles every literal exactly as the matcher will, so the card shows the problem and underlines
+  the literal (syntax highlighting comes from `SpecifierPatternTokenizer`). At runtime a broken rule stays
+  inert and is logged, so the card is the only place the mistake can be seen.
+- A tool command reuses the same description: `/tool:<name>` maps the main argument to the rest positional
+  (`/tool:shell-bash git status --short`) and the rest of the arguments to keyed ones.
+
+### 18.1. Filesystem tools
+
+All filesystem tools declare their paths, so a rule works with no per-tool code:
+
+| Tool | Main argument | Named path |
+|---|---|---|
+| `fs-get_file_info`, `fs-read_binary_file`, `fs-read_document_file`, `fs-write_binary_file`, `fs-delete_file`, `fs-edit`, `fs-write_file`, `fs-apply_diff` | file | - |
+| `fs-create_directory`, `fs-delete_directory` | directory | - |
+| `fs-read_entry`, `fs-grep` | file or directory | `fs-grep`: `pattern` is text |
+| `fs-copy_file`, `fs-rename_file` | file | `newPath` |
+| `fs-copy_directory`, `fs-move_directory` | directory | `newPath` |
+| `fs-glob` | `pattern` is **text** | `path` is a directory |
+
+The `fs-glob` case is deliberate: its main argument is a glob string, not a path, so a path rule against it
+must name `path:`; a `**` rule against the main argument is a syntax error, reported by the card.
 
 ## 19. Open
 

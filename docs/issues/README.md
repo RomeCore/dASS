@@ -80,7 +80,7 @@ Single-context layout:
 - `GLOSSARY.md` at the repo root — the ubiquitous-language glossary
 - `docs/adr/` — architecture decision records, one file per ADR
 
-Read the glossary before naming domain concepts in a spec or ticket, and add to it when a new term is settled. Nothing here exists yet — create the file or folder on first use.
+Read the glossary before naming domain concepts in a spec or ticket, and add to it when a new term is settled. `GLOSSARY.md` does not exist yet - create it on first use. The first ADR is `0001-tool-arguments-descriptor.md`.
 
 ## Agent skills pointer
 
