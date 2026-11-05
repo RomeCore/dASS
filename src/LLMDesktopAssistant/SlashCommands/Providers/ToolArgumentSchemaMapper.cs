@@ -95,7 +95,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		private static ISlashCommandArgumentFormatProvider? FormatOf(ToolArgumentDescriptor argument,
 			IServiceProvider services)
 		{
-			if (argument.Kind is ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath or ToolArgumentKind.FSPath)
+			if (argument.Kind is ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath or ToolArgumentKind.FileOrDirectory)
 			{
 				return new FileArgumentFormatProvider(services,
 					onlyDirectories: argument.Kind is ToolArgumentKind.DirectoryPath);

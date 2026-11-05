@@ -503,10 +503,10 @@ line and a correct path against a `path` argument.
 - `SpecifierTargetKind.Path` - a filesystem pattern matched by segments through `GlobPathMatcher`. Its base
   directory is the tool's working directory, supplied by the invocation (`IWorkingDirectoryAccessService`);
   comparison follows the file system (case-insensitive on Windows). `:*` is rejected for a path.
-- The kind is derived, never declared: `ToolArgumentKind.FilePath`, `DirectoryPath` and `FSPath` (a path that
-  may be either) map to `Path`, the scalars map to `Text`, and arrays and objects are not targets at all.
+- The kind is derived, never declared: `ToolArgumentKind.FilePath`, `DirectoryPath` and `FileOrDirectory` (a path
+  that may be either) map to `Path`, the scalars map to `Text`, and arrays and objects are not targets at all.
 - Path-ness is the one thing JSON Schema cannot express, so it is authored with `[PathArgument(File,
-  Directory)]` and written into the authored schema as `kind: file | directory | fs`. The main argument is
+  Directory)]` and written into the authored schema as `kind: file | directory | fileOrDirectory`. The main argument is
   marked with `[MainArgument]` and written as `main: true`. Both keys are trimmed from the schema the model
   sees.
 - **The main argument is not nameable.** An unnamed literal covers it, which is what `Main` exists for; a

@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// A filesystem path that may point to a file or a directory - what a tool like 'fs-read_entry'
 		/// takes. A specifier literal that targets it is compiled as a path pattern.
 		/// </summary>
-		FSPath,
+		FileOrDirectory,
 
 		/// <summary>
 		/// A JSON array.

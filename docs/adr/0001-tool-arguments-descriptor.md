@@ -36,7 +36,7 @@ Two more problems came from the same place:
    `Arguments.ToSchema()`, built on first read and cached; the setter is gone. The schema can no
    longer disagree with the arguments it came from.
 3. **dASS metadata lives in the authored schema and is trimmed from the model-facing one.**
-   `main: true` marks the main argument, `kind: "file" | "directory" | "fs"` marks a path. Both are
+   `main: true` marks the main argument, `kind: "file" | "directory" | "fileOrDirectory"` marks a path. Both are
    authored from C# with `[MainArgument]` and `[PathArgument(File, Directory)]`; a conversion from a
    foreign schema reads the same keys. A path declaration that contradicts the JSON type is refused
    at creation.

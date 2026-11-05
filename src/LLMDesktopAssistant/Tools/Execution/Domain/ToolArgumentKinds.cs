@@ -26,9 +26,9 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		public const string DirectoryMetadataValue = "directory";
 
 		/// <summary>
-		/// The metadata value of <see cref="ToolArgumentKind.FSPath"/>.
+		/// The metadata value of <see cref="ToolArgumentKind.FileOrDirectory"/>.
 		/// </summary>
-		public const string FileSystemMetadataValue = "fs";
+		public const string FileOrDirectoryMetadataValue = "fileOrDirectory";
 
 		/// <summary>
 		/// Classifies an argument schema.
@@ -62,8 +62,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 				case DirectoryMetadataValue:
 					kind = ToolArgumentKind.DirectoryPath;
 					return true;
-				case FileSystemMetadataValue:
-					kind = ToolArgumentKind.FSPath;
+				case FileOrDirectoryMetadataValue:
+					kind = ToolArgumentKind.FileOrDirectory;
 					return true;
 				default:
 					kind = ToolArgumentKind.Unspecified;
@@ -80,7 +80,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		{
 			ToolArgumentKind.FilePath => FileMetadataValue,
 			ToolArgumentKind.DirectoryPath => DirectoryMetadataValue,
-			ToolArgumentKind.FSPath => FileSystemMetadataValue,
+			ToolArgumentKind.FileOrDirectory => FileOrDirectoryMetadataValue,
 			_ => null
 		};
 
@@ -133,7 +133,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		public static string? ImpliedJsonType(ToolArgumentKind kind) => kind switch
 		{
 			ToolArgumentKind.String or ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath
-				or ToolArgumentKind.FSPath => "string",
+				or ToolArgumentKind.FileOrDirectory => "string",
 			ToolArgumentKind.Bool => "boolean",
 			ToolArgumentKind.Integer => "integer",
 			ToolArgumentKind.Number => "number",
@@ -150,7 +150,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// <param name="kind">The kind of the argument.</param>
 		public static SpecifierTargetKind? ToSpecifierKind(ToolArgumentKind kind) => kind switch
 		{
-			ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath or ToolArgumentKind.FSPath
+			ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath or ToolArgumentKind.FileOrDirectory
 				=> SpecifierTargetKind.Path,
 			ToolArgumentKind.String or ToolArgumentKind.Bool or ToolArgumentKind.Integer or ToolArgumentKind.Number
 				=> SpecifierTargetKind.Text,

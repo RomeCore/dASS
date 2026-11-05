@@ -233,7 +233,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 
 			return (path.File, path.Directory) switch
 			{
-				(true, true) => ToolArgumentKind.FSPath,
+				(true, true) => ToolArgumentKind.FileOrDirectory,
 				(true, false) => ToolArgumentKind.FilePath,
 				(false, true) => ToolArgumentKind.DirectoryPath,
 				_ => throw new ArgumentException(
