@@ -38,6 +38,7 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Executors;
 using RCLargeLanguageModels.Tools;
 
 namespace LLMDesktopAssistant.Tools.Scripting
