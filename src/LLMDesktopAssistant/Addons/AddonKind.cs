@@ -59,14 +59,23 @@ namespace LLMDesktopAssistant.Addons
 		SlashCommand = 1 << 6,
 
 		/// <summary>
+		/// The script that executes on specific events (especially chat- and tool-related), such as
+		/// before and after the agent message generation, before and after tool pipeline steps execution, and so on.
+		/// Most hook types can affect the execution flow (e.g. cancel a tool based on args, modify tool inputs,
+		/// change the next agent to execute, etc.). Every hook has type name (hook_type, e.g., tool.before-confirmation)
+		/// and optional key name (hook_name, tool name for example, e.g. fs-edit, web-search).
+		/// </summary>
+		Hook = 1 << 7,
+
+		/// <summary>
 		/// The template (usually LLT) that defines other addons, like skills and sub-agents, also provides the way to
 		/// define prompt parts, like system prompts, personas, and components.
 		/// </summary>
-		Template = 1 << 7,
+		Template = 1 << 8,
 
 		/// <summary>
 		/// The Lua script that can be used to define own Lua namespaces and functions, and register hooks.
 		/// </summary>
-		LuaScript = 1 << 8
+		LuaScript = 1 << 9
 	}
 }
