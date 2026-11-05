@@ -82,14 +82,16 @@ namespace LLMDesktopAssistant.MCP
 			// Use connection name as prefix
 			var name = ConvertToolPrefix(connection.Info.Name) + '-' + mcpTool.Name;
 			var description = mcpTool.Description;
+			var arguments = ToolArgumentsDescriptor.FromSchema(argSchema);
 
 			var toolInfo = new ToolInfo
 			{
 				Name = name,
 				DescriptionGetter = _ => description,
-				Arguments = ToolArgumentsDescriptor.FromSchema(argSchema),
+				Arguments = arguments,
 				OutputSchema = mcpTool.ReturnJsonSchema?.ToNodeSafe() as JsonObject,
 				Main = CreateExecutor(connection, mcpTool),
+				Specifier = arguments.HasSpecifierTargets ? GeneratedSpecifierAnalyzer.Instance : null,
 				ToolSource = ToolSource.MCP,
 				// Optimistic on purpose: an MCP server is opaque, and claiming a write would serialize
 				// every remote tool against the whole disk. A read claim lets them run in parallel while

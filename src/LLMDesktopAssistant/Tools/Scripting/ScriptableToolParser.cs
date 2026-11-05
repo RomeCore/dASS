@@ -105,12 +105,14 @@ namespace LLMDesktopAssistant.Tools.Scripting
 					["additionalProperties"] = false
 				};
 
-			addon.Arguments = ToolArgumentsDescriptor.FromSchema(argumentSchema);
+			var arguments = ToolArgumentsDescriptor.FromSchema(argumentSchema);
+			addon.Arguments = arguments;
 
 			// === Execution ===
 
 			addon.ToolSource = ToolSource.Scriptable;
 			addon.Main = engine.CreateExecutor(addon);
+			addon.Specifier = arguments.HasSpecifierTargets ? GeneratedSpecifierAnalyzer.Instance : null;
 		}
 
 		/// <summary>
