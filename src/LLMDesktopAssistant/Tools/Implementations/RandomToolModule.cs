@@ -1,7 +1,10 @@
 using System.ComponentModel;
+using System.Globalization;
+using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Utils.Dice;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations
@@ -65,11 +68,18 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			AddTool(new ToolInitializationInfo
 			{
-				Executor = GenerateRandomDiceRoll,
-				Name = "random-dice_roll",
-				Description = "Simulates rolling dice (e.g., 2d6, 1d20).",
-				NameKey = Locale.GetKey("tool.name.random-dice_roll"),
-				DescriptionKey = Locale.GetKey("tool.description.random-dice_roll"),
+				Executor = RollDice,
+				Name = "random-dice",
+				Aliases = ["random-dice_roll"],
+				Description = """
+					Rolls dice written in standard dice notation and returns the total with a per-group breakdown.
+					Notation: XdY (2d6, d20, d% for a d100), flat modifiers (1d20+5), several groups (1d8+2d6+3),
+					kh/kl (keep highest/lowest, 4d6kh3, 2d20kh1 for advantage), dh/dl (drop highest/lowest),
+					! or !N (explode on the maximum face, or on N and above), rN / rrN (reroll dice showing N once / repeatedly).
+					Examples: 2d6, 1d20+5, 2d20kh1, 4d6dl1, 3d6!, 4d6r1.
+					""",
+				NameKey = Locale.GetKey("tool.name.random-dice"),
+				DescriptionKey = Locale.GetKey("tool.description.random-dice"),
 				CategoryKey = Locale.GetKey("tool.category.random")
 			});
 
@@ -147,21 +157,72 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return ToolExecutionResult.Succeeded;
 		}
 
-		private ToolExecutionResult GenerateRandomDiceRoll(IToolExecutionContext ctx,
-			[Description("Count of dices to roll")] int numberOfDice = 1,
-			[Description("Number of sides per die")] int sides = 6)
+		private ToolExecutionResult RollDice(IToolExecutionContext ctx,
+			[Description("Dice expression in standard dice notation, e.g. '2d6+3', '2d20kh1', '4d6dl1', '3d6!'")] string expression,
+			[Description("How many times to roll the whole expression, 1 to 100")] int repeat = 1)
 		{
-			var rolls = new List<int>();
-			for (int i = 0; i < numberOfDice; i++)
+			if (repeat < 1 || repeat > DiceLimits.MaxRepeat)
 			{
-				rolls.Add(_random.Next(1, sides + 1));
+				ctx.Call.SetResult($"Invalid repeat count {repeat}: expected a value between 1 and {DiceLimits.MaxRepeat}.");
+				ctx.Call.SetStatus(MaterialIconKind.DiceMultipleOutline, expression);
+				return ToolExecutionResult.Failed;
 			}
 
-			var total = rolls.Sum();
-			var value = $"{total} (Rolls: {string.Join(", ", rolls)})";
+			DiceExpression parsed;
+			try
+			{
+				parsed = DiceExpressionParser.Parse(expression);
+			}
+			catch (DiceExpressionException exception)
+			{
+				ctx.Call.SetResult(exception.Message);
+				ctx.Call.SetStatus(MaterialIconKind.DiceMultipleOutline, expression);
+				return ToolExecutionResult.Failed;
+			}
 
-			ctx.Call.SetResult(value);
-			ctx.Call.SetStatus(sides switch
+			var roller = new DiceRoller(_random);
+			var rolls = new List<DiceRollResult>(repeat);
+			for (var index = 0; index < repeat; index++)
+				rolls.Add(roller.Roll(parsed));
+
+			ctx.Call.SetResult(repeat == 1
+				? rolls[0].ToText()
+				: string.Join(Environment.NewLine, rolls.Select((roll, index) => $"#{index + 1} {roll.ToText()}")));
+			ctx.Call.SetStatus(DiceIcon(parsed), BuildStatusTitle(parsed, rolls));
+			ctx.Call.SetStructuredResult(BuildStructuredResult(parsed, rolls));
+
+			return ToolExecutionResult.Succeeded;
+		}
+
+		/// <summary>
+		/// Builds the one-line title shown next to the call icon.
+		/// </summary>
+		/// <param name="expression">The rolled expression.</param>
+		/// <param name="rolls">The rolls produced in this call.</param>
+		/// <returns>The title, for example <c>Rolled 2d6 = 9</c>.</returns>
+		private static string BuildStatusTitle(DiceExpression expression, IReadOnlyList<DiceRollResult> rolls)
+		{
+			var rolled = LocalizationManager.LocalizeStatic("tool.status.random-dice.rolled");
+			var totals = string.Join(", ", rolls.Select(roll => roll.Total.ToString(CultureInfo.InvariantCulture)));
+			var notation = expression.ToNotation();
+
+			return rolls.Count == 1
+				? $"{rolled} {notation} = {totals}"
+				: $"{rolled} {notation} x{rolls.Count} = {totals}";
+		}
+
+		/// <summary>
+		/// Picks the icon of the expression's die, or the generic one when the groups do not agree.
+		/// </summary>
+		/// <param name="expression">The rolled expression.</param>
+		/// <returns>The icon to show next to the call title.</returns>
+		private static MaterialIconKind DiceIcon(DiceExpression expression)
+		{
+			var sides = expression.Groups.Select(group => group.Sides).Distinct().ToList();
+			if (sides.Count != 1)
+				return MaterialIconKind.DiceMultipleOutline;
+
+			return sides[0] switch
 			{
 				4 => MaterialIconKind.DiceD4,
 				6 => MaterialIconKind.DiceD6,
@@ -169,11 +230,57 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				10 => MaterialIconKind.DiceD10,
 				12 => MaterialIconKind.DiceD12,
 				20 => MaterialIconKind.DiceD20,
-				_ => MaterialIconKind.DiceMultiple
-			},
-				$"{LocalizationManager.LocalizeStatic("tool.status.random-dice_roll.rolled")} {numberOfDice}d{sides}: {string.Join(", ", rolls)}");
-			return ToolExecutionResult.Succeeded;
+				_ => MaterialIconKind.DiceMultipleOutline
+			};
 		}
+
+		/// <summary>
+		/// Projects the rolls into the structured result external APIs and Lua scripts consume.
+		/// </summary>
+		/// <param name="expression">The rolled expression.</param>
+		/// <param name="rolls">The rolls produced in this call.</param>
+		/// <returns>The JSON tree of the result.</returns>
+		private static JsonObject BuildStructuredResult(DiceExpression expression, IReadOnlyList<DiceRollResult> rolls) =>
+			new()
+			{
+				["expression"] = expression.ToNotation(),
+				["repeat"] = rolls.Count,
+				["rolls"] = new JsonArray(rolls.Select(roll => (JsonNode)BuildRollNode(roll)).ToArray())
+			};
+
+		/// <summary>
+		/// Projects one roll with its groups and their dice.
+		/// </summary>
+		/// <param name="roll">The roll to project.</param>
+		/// <returns>The structured value of the roll.</returns>
+		private static JsonObject BuildRollNode(DiceRollResult roll) =>
+			new()
+			{
+				["total"] = roll.Total,
+				["modifier"] = roll.Modifier,
+				["text"] = roll.ToText(),
+				["groups"] = new JsonArray(roll.Groups.Select(group => (JsonNode)new JsonObject
+				{
+					["text"] = group.Group.ToNotation(),
+					["value"] = group.Value,
+					["dice"] = new JsonArray(group.Dice.Select(die => (JsonNode)BuildDieNode(die)).ToArray())
+				}).ToArray())
+			};
+
+		/// <summary>
+		/// Projects one die with its face, explosion chain and selection state.
+		/// </summary>
+		/// <param name="die">The die to project.</param>
+		/// <returns>The JSON node of the die.</returns>
+		private static JsonObject BuildDieNode(DiceDie die) =>
+			new()
+			{
+				["value"] = die.Value,
+				["total"] = die.Total,
+				["kept"] = die.Kept,
+				["explosions"] = new JsonArray(die.Explosions.Select(face => (JsonNode?)face).ToArray()),
+				["rerolledFrom"] = new JsonArray(die.RerolledFrom.Select(face => (JsonNode?)face).ToArray())
+			};
 
 		private ToolExecutionResult GenerateRandomItemsFromList(IToolExecutionContext ctx,
 			[Description("List of items")] string[] items,

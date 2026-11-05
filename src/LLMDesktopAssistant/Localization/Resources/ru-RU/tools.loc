@@ -58,7 +58,7 @@ name.memory-view_logs: Просмотреть логи памяти
 name.python-get_installed_packages_list: Получить список установленных пакетов Python
 name.random-check_chance: Проверка шанса
 name.random-coin_flip: Подкинуть монетку
-name.random-dice_roll: Бросить кубик
+name.random-dice: Бросить кубики
 name.random-float: Сгенерировать дробное число
 name.random-GUID: Сгенерировать GUID
 name.random-integer: Сгенерировать целое число
@@ -135,7 +135,7 @@ description.python-get_installed_packages_list: Показывает списо�
 description.random-GUID: Создаёт новый глобально уникальный идентификатор (GUID), пригодный для обозначения или идентификации объектов.
 description.random-check_chance: Проверяет, сработает ли указанный шанс (в процентах), и сообщает об успехе или неудаче.
 description.random-coin_flip: Подбрасывает виртуальную монету и возвращает результат: «Орёл» или «Решка».
-description.random-dice_roll: Бросает одну или несколько игральных костей с заданным числом граней и показывает каждый результат и сумму.
+description.random-dice: Бросает кубики в стандартной нотации (2d6, 1d20+5, 4d6kh3, 3d6!, 4d6r1) и возвращает сумму с детализацией по группам.
 description.random-float: Выдаёт случайное дробное число в заданном диапазоне от минимума до максимума.
 description.random-integer: Выдаёт случайное целое число в заданном диапазоне, включая оба его конца.
 description.random-items_from_list: Выбирает заданное количество случайных элементов из переданного списка.
@@ -345,7 +345,7 @@ status.random-check_chance.failure: неудача
 status.random-check_chance.success: успех
 status.random-coin_flip.heads: Орёл
 status.random-coin_flip.tails: Решка
-status.random-dice_roll.rolled: Прокрутили
+status.random-dice.rolled: Брошено
 status.random-shuffle_list.shuffled: Перемешан список из {0} элементов
 status.script.lines: {0} строк
 status.sync.all_files: все файлы
