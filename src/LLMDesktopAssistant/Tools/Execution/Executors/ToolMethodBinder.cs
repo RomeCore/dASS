@@ -38,29 +38,32 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 	public static class ToolMethodBinder
 	{
 		/// <summary>
-		/// Describes the main method: builds its argument schema and the parameter metadata the other
-		/// capabilities reuse.
+		/// Describes the arguments of the main method: the single description every consumer reads,
+		/// with the model-facing schema generated from it.
 		/// </summary>
 		/// <param name="executor">The main method delegate.</param>
-		/// <returns>The schema and the argument metadata.</returns>
-		public static (JsonObject Schema, IReadOnlyDictionary<string, JsonMemberAccessor> Parameters) Describe(Delegate executor)
+		/// <param name="modifySchema">The tool's per-argument schema hook, or <see langword="null"/>.</param>
+		/// <returns>The argument descriptors of the tool.</returns>
+		public static ToolArgumentsDescriptor DescribeArguments(Delegate executor,
+			Action<string, JsonObject>? modifySchema = null)
 		{
 			ArgumentNullException.ThrowIfNull(executor);
-			return Describe(executor.Target, executor.Method);
+			return DescribeArguments(executor.Target, executor.Method, modifySchema);
 		}
 
 		/// <summary>
-		/// Describes the main method: builds its argument schema and the parameter metadata the other
-		/// capabilities reuse.
+		/// Describes the arguments of the main method: the single description every consumer reads,
+		/// with the model-facing schema generated from it.
 		/// </summary>
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The main tool method.</param>
-		/// <returns>The schema and the argument metadata.</returns>
-		public static (JsonObject Schema, IReadOnlyDictionary<string, JsonMemberAccessor> Parameters) Describe(
-			object? target, MethodInfo method)
+		/// <param name="modifySchema">The tool's per-argument schema hook, or <see langword="null"/>.</param>
+		/// <returns>The argument descriptors of the tool.</returns>
+		public static ToolArgumentsDescriptor DescribeArguments(object? target, MethodInfo method,
+			Action<string, JsonObject>? modifySchema = null)
 		{
 			var binder = new Binder(target, method, Capability.Main, null);
-			return binder.Describe();
+			return binder.DescribeArguments(modifySchema);
 		}
 
 		/// <summary>
@@ -68,7 +71,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// </summary>
 		/// <param name="executor">The main method delegate.</param>
 		/// <returns>The argument schema.</returns>
-		public static JsonObject BuildArgumentSchema(Delegate executor) => Describe(executor).Schema;
+		public static JsonObject BuildArgumentSchema(Delegate executor) => DescribeArguments(executor).ToSchema();
 
 		/// <summary>
 		/// Binds the main executor.
@@ -91,12 +94,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// </summary>
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The preview method.</param>
-		/// <param name="mainParameters">The main method's metadata, when available, so defaults stay shared.</param>
+		/// <param name="mainArguments">The main method's arguments, when available, so names and defaults stay shared.</param>
 		/// <returns>The preview executor.</returns>
 		public static IToolPreviewExecutor BindPreview(object? target, MethodInfo method,
-			IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters = null)
+			ToolArgumentsDescriptor? mainArguments = null)
 		{
-			var binder = new Binder(target, method, Capability.Preview, mainParameters);
+			var binder = new Binder(target, method, Capability.Preview, mainArguments);
 			return new PreviewAdapter(async (args, ctx, ct) =>
 			{
 				var value = binder.Invoke(args, ctx, ct, null);
@@ -109,12 +112,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// </summary>
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The streaming analyzer method.</param>
-		/// <param name="mainParameters">The main method's metadata, when available.</param>
+		/// <param name="mainArguments">The main method's arguments, when available, so names and defaults stay shared.</param>
 		/// <returns>The streaming analyzer.</returns>
 		public static IToolStreamingAnalyzer BindStreaming(object? target, MethodInfo method,
-			IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters = null)
+			ToolArgumentsDescriptor? mainArguments = null)
 		{
-			var binder = new Binder(target, method, Capability.Streaming, mainParameters);
+			var binder = new Binder(target, method, Capability.Streaming, mainArguments);
 			return new StreamingAdapter((args, ctx) =>
 			{
 				try
@@ -136,12 +139,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// </summary>
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The specifier analyzer method.</param>
-		/// <param name="mainParameters">The main method's metadata, when available.</param>
+		/// <param name="mainArguments">The main method's arguments, when available, so names and defaults stay shared.</param>
 		/// <returns>The specifier analyzer.</returns>
 		public static IToolSpecifierAnalyzer BindSpecifier(object? target, MethodInfo method,
-			IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters = null)
+			ToolArgumentsDescriptor? mainArguments = null)
 		{
-			var binder = new Binder(target, method, Capability.Specifier, mainParameters);
+			var binder = new Binder(target, method, Capability.Specifier, mainArguments);
 			return new SpecifierAdapter((specifier, args, ctx) =>
 			{
 				var value = binder.Invoke(args, ctx, default, specifier);
@@ -160,12 +163,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// </summary>
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The synchronization analyzer method.</param>
-		/// <param name="mainParameters">The main method's metadata, when available.</param>
+		/// <param name="mainArguments">The main method's arguments, when available, so names and defaults stay shared.</param>
 		/// <returns>The synchronization analyzer.</returns>
 		public static IToolSynchronizationAnalyzer BindSyncAnalyzer(object? target, MethodInfo method,
-			IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters = null)
+			ToolArgumentsDescriptor? mainArguments = null)
 		{
-			var binder = new Binder(target, method, Capability.Sync, mainParameters);
+			var binder = new Binder(target, method, Capability.Sync, mainArguments);
 			return new SyncAdapter((args, ctx) =>
 			{
 				var value = binder.Invoke(args, ctx, default, null);
@@ -185,13 +188,13 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 		/// <param name="target">The instance the method is invoked on, or <see langword="null"/> for a static method.</param>
 		/// <param name="method">The approval method.</param>
 		/// <param name="requestedDataSchema">The schema of the data the approval surface may request, or <see langword="null"/>.</param>
-		/// <param name="mainParameters">The main method's metadata, when available.</param>
+		/// <param name="mainArguments">The main method's arguments, when available, so names and defaults stay shared.</param>
 		/// <returns>The approval provider.</returns>
 		public static IToolApprovalProvider BindApproval(object? target, MethodInfo method,
 			JsonObject? requestedDataSchema = null,
-			IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters = null)
+			ToolArgumentsDescriptor? mainArguments = null)
 		{
-			var binder = new Binder(target, method, Capability.Approval, mainParameters);
+			var binder = new Binder(target, method, Capability.Approval, mainArguments);
 			return new ApprovalAdapter(requestedDataSchema, async (args, ctx, ct) =>
 			{
 				var value = binder.Invoke(args, ctx, ct, null);
@@ -371,10 +374,9 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 			private int _specifierIndex = -1;
 			private readonly Dictionary<int, Type> _injections = [];
 			private readonly Dictionary<JsonMemberAccessor, int> _arguments = [];
-			private readonly Dictionary<string, JsonMemberAccessor> _metadata = [];
 
 			public Binder(object? target, MethodInfo method, Capability capability,
-				IReadOnlyDictionary<string, JsonMemberAccessor>? mainParameters)
+				ToolArgumentsDescriptor? mainArguments)
 			{
 				ArgumentNullException.ThrowIfNull(method);
 				if (target == null && !method.IsStatic)
@@ -432,11 +434,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 					{
 						var name = parameter.Name
 							?? throw new ArgumentException("The method contains a parameter without a name.", nameof(method));
-						var accessor = mainParameters is not null && mainParameters.TryGetValue(name, out var shared)
-							? shared
-							: new JsonMemberAccessor(parameter);
+						var accessor = mainArguments is not null &&
+							mainArguments.TryGetClrName(name, out var shared) &&
+							shared.ClrParameterAccessor is { } sharedAccessor
+								? sharedAccessor
+								: new JsonMemberAccessor(parameter);
 
-						_metadata[name] = accessor;
 						if (!accessor.Include)
 							continue;
 
@@ -445,32 +448,38 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 				}
 			}
 
-			public (JsonObject Schema, IReadOnlyDictionary<string, JsonMemberAccessor> Parameters) Describe()
+			/// <summary>
+			/// Builds the argument descriptors of the main method, in declaration order.
+			/// </summary>
+			/// <param name="modifySchema">The tool's per-argument schema hook, or <see langword="null"/>.</param>
+			public ToolArgumentsDescriptor DescribeArguments(Action<string, JsonObject>? modifySchema = null)
 			{
-				var properties = new JsonObject();
-				var required = new JsonArray();
+				var arguments = ImmutableArray.CreateBuilder<ToolArgumentDescriptor>();
+				string? mainName = null;
 
-				foreach (var accessor in _metadata.Values)
+				// 'arguments' excludes the parameters the model does not see, so the order is the order of
+				// the declared arguments, not of the method signature.
+				foreach (var accessor in _arguments.Keys.OrderBy(accessor => _arguments[accessor]))
 				{
-					if (!accessor.Include)
+					var argument = ToolArgumentDescriptor.FromClr(accessor, arguments.Count, modifySchema);
+					arguments.Add(argument);
+
+					if (!argument.IsMain)
 						continue;
 
-					properties[accessor.Name] = JsonSchemaGenerator.Generate(accessor);
-					if (accessor.Required)
-						required.Add(accessor.Name);
+					if (mainName is not null)
+						throw new ArgumentException(
+							$"The tool method declares more than one [MainArgument] parameter ('{mainName}' and '{argument.Name}').",
+							nameof(_method));
+
+					mainName = argument.Name;
 				}
 
-				var schema = new JsonObject
+				return new ToolArgumentsDescriptor
 				{
-					["type"] = "object",
-					["properties"] = properties,
-					["additionalProperties"] = false
+					Arguments = arguments.ToImmutable(),
+					MainName = mainName
 				};
-
-				if (required.Count > 0)
-					schema["required"] = required;
-
-				return (schema, _metadata);
 			}
 
 			/// <summary>
@@ -484,7 +493,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 			public object? Invoke(JsonNode? args, IToolExecutionContext ctx, CancellationToken ct, Specifier? specifier)
 			{
 				var inParams = new object?[_parameters.Length];
-				var argumentObject = args as JsonObject ?? [];
+				var argumentObject = args as JsonObject;
+
+				// A tool whose arguments are not a JSON object takes one bare value: the whole node is that
+				// value. The same tolerance covers a single-argument tool that was called with a bare value.
+				var bareValue = args is not null && argumentObject is null && _arguments.Count == 1;
 
 				try
 				{
@@ -497,9 +510,14 @@ namespace LLMDesktopAssistant.Tools.Execution.Executors
 
 					foreach (var (accessor, index) in _arguments)
 					{
-						if (argumentObject.ContainsKey(accessor.Name))
+						if (argumentObject is not null && argumentObject.ContainsKey(accessor.Name))
 						{
 							inParams[index] = ToolArgsJsonNodeConverter.Convert(argumentObject[accessor.Name],
+								_parameters[index].ParameterType, accessor.Name);
+						}
+						else if (bareValue)
+						{
+							inParams[index] = ToolArgsJsonNodeConverter.Convert(args,
 								_parameters[index].ParameterType, accessor.Name);
 						}
 						else if (accessor.HasDefaultValue)

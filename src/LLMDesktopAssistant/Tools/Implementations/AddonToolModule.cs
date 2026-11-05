@@ -274,11 +274,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		/// 'kinds' parameter: the values are the <see cref="IAddonTypeDescriptor.Type"/> strings of the
 		/// descriptors that have a provider, so the model always sees the real list.
 		/// </summary>
-		private void ModifyArgumentSchema(JsonObject schema)
+		private void ModifyArgumentSchema(string name, JsonObject schema)
 		{
-			if (schema["properties"] is not JsonObject properties ||
-				properties["kinds"] is not JsonObject kindsProperty)
+			if (name != "kinds")
 				return;
+
+			var kindsProperty = schema;
 
 			var values = new JsonArray();
 			foreach (var type in _searchableTypes)

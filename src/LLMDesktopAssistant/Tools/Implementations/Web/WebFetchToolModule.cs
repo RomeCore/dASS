@@ -54,11 +54,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			});
 		}
 
-		private void RemoveUnsupportedArguments(JsonObject schema)
+		private void RemoveUnsupportedArguments(string name, JsonObject schema)
 		{
-			if (schema["properties"]?.AsObject()["fetchLevel"] is not JsonObject fetchLevelProperty)
-				return;
-			if (fetchLevelProperty["enum"] is not JsonArray enumValues)
+			if (name != "fetchLevel" || schema["enum"] is not JsonArray enumValues)
 				return;
 
 			var maxLevel = _webFetcher.MaxLevel;

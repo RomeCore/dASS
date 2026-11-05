@@ -47,7 +47,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				descriptor.Specifiers.Count > 0)
 			{
 				var specifier = SpecifierEngine.Evaluate(descriptor.Specifiers, specifierAnalyzer,
-					ctx.Arguments.Effective, ctx, descriptor.SpecifierParameters,
+					ctx.Arguments.Effective, ctx,
+					descriptor.Arguments.SpecifierParameters.Select(argument => argument.Name),
 					descriptor.SpecifierAggregationMode);
 
 				var combined = SpecifierEngine.Combine(specifier.Verdict, decision,

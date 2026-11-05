@@ -66,13 +66,11 @@ public class ShellExecutionToolModuleTests
 		return new ShellExecutionToolModule(wdAccess, new StubProcessLauncher(), new StubAddonInvalidator());
 	}
 
-	private static string MainArgumentName(string toolName) => toolName switch
-	{
-		"shell-bash" => "bash",
-		"shell-batch" => "batch",
-		"shell-powershell" => "powershell",
-		_ => throw new ArgumentOutOfRangeException(nameof(toolName))
-	};
+	/// <summary>
+	/// The JSON name of the main argument. All three shell tools call it <c>command</c>: the analyzer
+	/// parameters follow the schema, and a mismatch here makes every rule silently inert.
+	/// </summary>
+	private const string MainArgumentName = "command";
 
 	private static ToolInfo GetTool(ShellExecutionToolModule module, string toolName)
 	{
@@ -84,10 +82,11 @@ public class ShellExecutionToolModuleTests
 		bool runTerminal = false, bool wait = true)
 	{
 		var tool = GetTool(module, toolName);
-		var specifier = SpecifierParser.Parse(specifierPattern, tool.SpecifierParameters);
+		var specifier = SpecifierParser.Parse(specifierPattern,
+			tool.Arguments.SpecifierParameters.Select(argument => argument.Name));
 		var args = new JsonObject
 		{
-			[MainArgumentName(toolName)] = command,
+			[MainArgumentName] = command,
 			["runTerminal"] = runTerminal,
 			["wait"] = wait
 		};
@@ -108,7 +107,9 @@ public class ShellExecutionToolModuleTests
 		var tool = GetTool(module, toolName);
 
 		Assert.NotNull(tool.Specifier);
-		Assert.Equal(["runTerminal", "wait"], tool.SpecifierParameters);
+		// The main argument is not in the named set: an unnamed literal already targets it.
+		Assert.Equal(["runTerminal", "wait"],
+			tool.Arguments.SpecifierParameters.Select(argument => argument.Name));
 	}
 
 	// ──────────────────────────── matching basics ────────────────────────────
@@ -242,11 +243,11 @@ public class ShellExecutionToolModuleTests
 		var module = CreateModule();
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "git status:* || git log:*", Decision = SpecifierDecision.Allow };
-		var args = new JsonObject { ["powershell"] = "git status; git log --oneline", ["runTerminal"] = false, ["wait"] = true };
+		var args = new JsonObject { [MainArgumentName] = "git status; git log --oneline", ["runTerminal"] = false, ["wait"] = true };
 		var context = ToolTestContext.Create(tool).Context;
 
 		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
-			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
+			tool.Arguments.SpecifierParameters.Select(argument => argument.Name), SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.Allow, result.Verdict);
 	}
@@ -257,11 +258,11 @@ public class ShellExecutionToolModuleTests
 		var module = CreateModule();
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "rm *", Decision = SpecifierDecision.Deny };
-		var args = new JsonObject { ["powershell"] = "rm -rf node_modules; git status", ["runTerminal"] = false, ["wait"] = true };
+		var args = new JsonObject { [MainArgumentName] = "rm -rf node_modules; git status", ["runTerminal"] = false, ["wait"] = true };
 		var context = ToolTestContext.Create(tool).Context;
 
 		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
-			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
+			tool.Arguments.SpecifierParameters.Select(argument => argument.Name), SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.Deny, result.Verdict);
 	}
@@ -272,11 +273,11 @@ public class ShellExecutionToolModuleTests
 		var module = CreateModule();
 		var tool = GetTool(module, "shell-powershell");
 		var rule = new ToolSpecifierRule { Pattern = "git status:*", Decision = SpecifierDecision.Allow };
-		var args = new JsonObject { ["powershell"] = "git status; npm install", ["runTerminal"] = false, ["wait"] = true };
+		var args = new JsonObject { [MainArgumentName] = "git status; npm install", ["runTerminal"] = false, ["wait"] = true };
 		var context = ToolTestContext.Create(tool).Context;
 
 		var result = SpecifierEngine.Evaluate([rule], tool.Specifier!, args, context,
-			tool.SpecifierParameters, SpecifierAggregationMode.Sequential);
+			tool.Arguments.SpecifierParameters.Select(argument => argument.Name), SpecifierAggregationMode.Sequential);
 
 		Assert.Equal(SpecifierVerdict.None, result.Verdict);
 	}

@@ -73,11 +73,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public ImmutableList<ToolSpecifierRule> Specifiers { get; init; } = [];
 
 		/// <summary>
-		/// A list of all possible specifier parameters that can be used with the tool.
-		/// </summary>
-		public ImmutableList<string> SpecifierParameters { get; init; } = [];
-
-		/// <summary>
 		/// The task tool has no declared synchronization keys yet; the task path keeps its own
 		/// parallelism bound.
 		/// </summary>

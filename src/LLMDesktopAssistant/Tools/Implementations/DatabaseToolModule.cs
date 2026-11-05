@@ -60,12 +60,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				NameKey = Locale.GetKey("tool.name.db-switch"),
 				DescriptionKey = Locale.GetKey("tool.description.db-switch"),
 				CategoryKey = Locale.GetKey("tool.category.database"),
-				ModifyArgumentSchema = schema =>
+				ModifyArgumentSchema = (name, schema) =>
 				{
-					var properties = schema["properties"]!;
+					if (name != "connectorType")
+						return;
 
-					var connectorType = properties["connectorType"]!;
-					connectorType["enum"] = new JsonArray(_connectionManager.SupportedConnectors
+					schema["enum"] = new JsonArray(_connectionManager.SupportedConnectors
 						.Select(v => JsonValue.Create(v.ToString().ToLower())).ToArray());
 				}
 			});

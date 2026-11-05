@@ -72,8 +72,8 @@ namespace LLMDesktopAssistant.Tools.MVVM.Elements
 		/// or <see langword="null"/> when the tool has no specifier parameters.
 		/// </summary>
 		public string? SpecifierParametersHint =>
-			_context.Addon.SpecifierParameters.Count > 0
-				? Locale.Format("tool.specifier.parameters", string.Join(", ", _context.Addon.SpecifierParameters))
+			_context.Addon.Arguments.SpecifierParameters.Select(argument => argument.Name).ToList() is { Count: > 0 } names
+				? Locale.Format("tool.specifier.parameters", string.Join(", ", names))
 				: null;
 
 		/// <summary>

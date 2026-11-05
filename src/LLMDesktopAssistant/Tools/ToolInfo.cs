@@ -25,17 +25,27 @@ namespace LLMDesktopAssistant.Tools
 	{
 		private JsonObject? _argumentSchema;
 		/// <summary>
-		/// A JSON object that defines the schema of the arguments for the tool.
+		/// The JSON schema of the arguments the model sees: a projection of <see cref="Arguments"/>, built
+		/// on first read and cached, so the two can never disagree.
 		/// </summary>
-		public JsonObject ArgumentSchema
+		public JsonObject ArgumentSchema => _argumentSchema ??= Arguments.ToSchema();
+
+		/// <summary>
+		/// The arguments of the tool: the single description the model-facing schema, the slash-command
+		/// format and the specifier dialect all read.
+		/// </summary>
+		public ToolArgumentsDescriptor Arguments
 		{
-			get => _argumentSchema ??= new JsonObject
+			get => field;
+			set
 			{
-				["type"] = "object",
-				["additionalProperties"] = false
-			};
-			set => SetProperty(ref _argumentSchema, value);
-		}
+				if (!SetProperty(ref field, value))
+					return;
+
+				_argumentSchema = null;
+				RaisePropertyChanged(nameof(ArgumentSchema));
+			}
+		} = ToolArgumentsDescriptor.Empty;
 
 		/// <summary>
 		/// Whether the tool result can be compacted by the context checkpoint machinery.
@@ -152,15 +162,6 @@ namespace LLMDesktopAssistant.Tools
 		}
 
 		/// <summary>
-		/// The names of the arguments a specifier is matched against.
-		/// </summary>
-		public ImmutableList<string> SpecifierParameters
-		{
-			get => field;
-			set => SetProperty(ref field, value);
-		} = [];
-
-		/// <summary>
 		/// Which policy decisions the tool handles itself instead of the confirmation service.
 		/// </summary>
 		public ToolPolicyDecision HandledDecisions
@@ -269,31 +270,32 @@ namespace LLMDesktopAssistant.Tools
 				throw new InvalidOperationException(
 					$"Description of the {nameof(ToolInitializationInfo)} must be set before tool creation.");
 
-			var (argumentSchema, parameters) = ToolMethodBinder.Describe(info.Executor);
+			var arguments = ToolMethodBinder.DescribeArguments(info.Executor, info.ModifyArgumentSchema);
 
 			var main = ToolMethodBinder.BindMain(info.Executor.Target, info.Executor.Method);
 			var preview = info.PreviewExecutor is { } previewDelegate
-				? ToolMethodBinder.BindPreview(previewDelegate.Target, previewDelegate.Method, parameters)
+				? ToolMethodBinder.BindPreview(previewDelegate.Target, previewDelegate.Method, arguments)
 				: null;
 			var streaming = info.StreamingAnalyzer is { } streamingDelegate
-				? ToolMethodBinder.BindStreaming(streamingDelegate.Target, streamingDelegate.Method, parameters)
+				? ToolMethodBinder.BindStreaming(streamingDelegate.Target, streamingDelegate.Method, arguments)
 				: null;
+			// A tool gets a specifier analyzer for free: the descriptor already knows which arguments a rule
+			// can name and which dialect each one takes. A handwritten one overrides it when the value a
+			// rule must see is not the raw argument (the shell splits a compound command).
 			var specifier = info.SpecifierAnalyzer is { } specifierDelegate
-				? ToolMethodBinder.BindSpecifier(specifierDelegate.Target, specifierDelegate.Method, parameters)
-				: null;
+				? ToolMethodBinder.BindSpecifier(specifierDelegate.Target, specifierDelegate.Method, arguments)
+				: arguments.HasSpecifierTargets ? GeneratedSpecifierAnalyzer.Instance : null;
 			var syncAnalyzer = info.SyncAnalyzer is { } syncDelegate
-				? ToolMethodBinder.BindSyncAnalyzer(syncDelegate.Target, syncDelegate.Method, parameters)
+				? ToolMethodBinder.BindSyncAnalyzer(syncDelegate.Target, syncDelegate.Method, arguments)
 				: null;
 			var approval = info.Approval is { } approvalDelegate
 				? ToolMethodBinder.BindApproval(approvalDelegate.Target, approvalDelegate.Method,
-					info.ApprovalRequestedDataSchema, parameters)
+					info.ApprovalRequestedDataSchema, arguments)
 				: null;
-
-			info.ModifyArgumentSchema?.Invoke(argumentSchema);
 
 			var tool = info.Clone();
 
-			tool.ArgumentSchema = argumentSchema;
+			tool.Arguments = arguments;
 			tool.Main = main;
 			tool.Preview = preview;
 			tool.Streaming = streaming;

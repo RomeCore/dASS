@@ -299,7 +299,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
 			[Description("The path to the file to edit.")]
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[Description("The list of patches to apply. Each patch replaces its match, and only if that match is unambiguous.")]
 			List<EditPatch> patches,
 			[Description("The number of columns a tab character occupies when measuring indentation (default: 4).")]

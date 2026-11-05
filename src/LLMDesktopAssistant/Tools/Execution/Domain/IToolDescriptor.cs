@@ -32,6 +32,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		JsonObject ArgumentSchema { get; }
 
 		/// <summary>
+		/// The arguments of the tool: the single description of what the tool accepts, which the
+		/// model-facing schema, the slash-command format and the specifier dialect all read.
+		/// </summary>
+		ToolArgumentsDescriptor Arguments => ToolArgumentsDescriptor.FromSchema(ArgumentSchema);
+
+		/// <summary>
 		/// The behaviour used when preview does not override it. The policy stage reads it.
 		/// </summary>
 		ToolBehaviour DefaultExpectedBehaviour { get; }
@@ -64,11 +70,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// How multiple specifier rules aggregate into one verdict.
 		/// </summary>
 		SpecifierAggregationMode SpecifierAggregationMode { get; }
-
-		/// <summary>
-		/// The argument names a specifier is matched against.
-		/// </summary>
-		ImmutableList<string> SpecifierParameters { get; }
 
 		/// <summary>
 		/// Tool-wide synchronization keys, claimed by every invocation of the tool.

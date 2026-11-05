@@ -1,3 +1,6 @@
+using LLMDesktopAssistant.Utils.Files;
+using LLMDesktopAssistant.Utils.Patterns;
+
 namespace LLMDesktopAssistant.Tools.Specifiers
 {
 	/// <summary>
@@ -10,14 +13,40 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 
 	/// <summary>
 	/// A literal pattern that is matched against the parts of the main tool argument.
-	/// Supports <c>*</c> (any sequence of characters) and <c>?</c> (exactly one character) wildcards.
+	/// The value is a flat glob pattern: <c>*</c> (any run of characters), <c>?</c> (exactly one),
+	/// <c>[abc]</c>/<c>[!abc]</c> (a set), <c>{a,b}</c> (alternatives) and the terminal <c>:*</c>
+	/// (the end of the text or a space and any arguments). A backslash is an ordinary character,
+	/// and <c>[*]</c>/<c>[?]</c> are the way to spell a literal star or question mark.
 	/// </summary>
 	public class SpecifierLiteralPart : SpecifierPart
 	{
+		private GlobTextPattern? _glob;
+		private GlobPattern? _pathGlob;
+
 		/// <summary>
 		/// The literal pattern value.
 		/// </summary>
 		public required string Value { get; init; }
+
+		/// <summary>
+		/// The zero-based index of <see cref="Value"/> in the specifier text it was parsed from.
+		/// Used to report where in the specifier a broken pattern sits.
+		/// </summary>
+		public int Start { get; init; }
+
+		/// <summary>
+		/// The compiled pattern, built on first use: a rule that is never evaluated costs nothing,
+		/// and a broken one throws only when it is actually matched. Throws <see cref="GlobException"/>
+		/// for a pattern the flat dialect cannot honour.
+		/// </summary>
+		public GlobTextPattern Glob => _glob ??= GlobTextPattern.Parse(Value, GlobOptions.ArgumentTail);
+
+		/// <summary>
+		/// The compiled filesystem pattern, used when the literal targets a path. Built with
+		/// <see cref="GlobPathMatcher.DefaultOptions"/>, so case sensitivity follows the file system.
+		/// Throws <see cref="GlobException"/> for a pattern the path dialect cannot honour.
+		/// </summary>
+		public GlobPattern PathGlob => _pathGlob ??= GlobPattern.Parse(Value, GlobPathMatcher.DefaultOptions);
 
 		public override string ToString()
 		{

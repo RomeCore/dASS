@@ -96,7 +96,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[SharedContext] GlobSearch? search,
 			[Description("A glob path to search in: one file such as 'src/Program.cs', or a set such as 'src/**/*.{md,cs,razor}'. " +
 				"Use '**' to recurse. For shallow search in folder use 'docs/*', for recursive search use 'docs/**/*'.")]
-			string path,
+			[MainArgument] [PathArgument] string path,
 			[Description("The .NET regex pattern to search for.")]
 			string pattern,
 			[Description("The maximum count of matched files to return.")]

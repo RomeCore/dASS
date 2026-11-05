@@ -153,7 +153,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		private async Task<ToolExecutionResult> Explore(
 			IToolExecutionContext ctx,
 			[Description("The path of the entry to read. Leave empty to read the current working directory.")]
-			string path, [SharedContext] string? fullPath,
+			[MainArgument] [PathArgument] string path, [SharedContext] string? fullPath,
 			[Description("The 1-based index of the first line to read. Only for files.")]
 			int startLine = 0,
 			[Description("The 1-based index of the last line to read. Only for files.")]

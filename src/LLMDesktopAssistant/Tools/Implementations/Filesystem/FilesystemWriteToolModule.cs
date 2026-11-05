@@ -168,7 +168,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[SharedContext] WriteFileContext? sharedCtx,
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			string content,
 			bool append = false)
 		{

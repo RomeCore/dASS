@@ -77,11 +77,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		public SpecifierAggregationMode SpecifierAggregationMode => SpecifierAggregationMode.Prioritized;
 
 		/// <summary>
-		/// No specifier parameters.
-		/// </summary>
-		public ImmutableList<string> SpecifierParameters => [];
-
-		/// <summary>
 		/// No static synchronization keys: a missing tool claims nothing.
 		/// </summary>
 		public ImmutableList<ToolSyncKey> StaticSyncKeys => [];

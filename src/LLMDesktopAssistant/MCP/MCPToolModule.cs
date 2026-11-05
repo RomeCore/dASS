@@ -74,7 +74,9 @@ namespace LLMDesktopAssistant.MCP
 
 		private static ToolInfo ConvertTool(MCPConnection connection, McpClientTool mcpTool)
 		{
-			var argSchema = JsonObject.Create(mcpTool.JsonSchema)
+			// A server may declare a schema whose root is not an object; the descriptor models that as one
+			// bare argument, so the node is passed through as it is.
+			var argSchema = JsonNode.Parse(mcpTool.JsonSchema.GetRawText())
 				?? throw new InvalidOperationException($"Unsupported JSON schema type: {mcpTool.JsonSchema.ValueKind}");
 
 			// Use connection name as prefix
@@ -85,7 +87,7 @@ namespace LLMDesktopAssistant.MCP
 			{
 				Name = name,
 				DescriptionGetter = _ => description,
-				ArgumentSchema = argSchema,
+				Arguments = ToolArgumentsDescriptor.FromSchema(argSchema),
 				OutputSchema = mcpTool.ReturnJsonSchema?.ToNodeSafe() as JsonObject,
 				Main = CreateExecutor(connection, mcpTool),
 				ToolSource = ToolSource.MCP,

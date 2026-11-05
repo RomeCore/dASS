@@ -156,7 +156,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			[SharedContext] FSApplyDiffSharedContext? sharedCtx,
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[Description("Range of lines to delete, e.g. '10-20' or '10'. If not specified, no lines will be deleted.")]
 			string? deleteLines = null,
 			[Description("The line number at which to insert text (specified in 'insertText' or 'deleteLines').")]

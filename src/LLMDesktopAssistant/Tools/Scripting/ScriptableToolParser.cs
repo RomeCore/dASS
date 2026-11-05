@@ -105,7 +105,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 					["additionalProperties"] = false
 				};
 
-			addon.ArgumentSchema = argumentSchema;
+			addon.Arguments = ToolArgumentsDescriptor.FromSchema(argumentSchema);
 
 			// === Execution ===
 

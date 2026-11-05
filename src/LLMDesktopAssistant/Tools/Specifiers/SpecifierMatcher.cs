@@ -1,25 +1,78 @@
-using System.Collections.Frozen;
+using LLMDesktopAssistant.Utils.Files;
 
 namespace LLMDesktopAssistant.Tools.Specifiers
 {
 	/// <summary>
-	/// Matches <see cref="Specifier"/> instances against the parts of the main tool argument
-	/// and the named tool parameters.
+	/// Matches <see cref="Specifier"/> instances against the targets of a tool call: the parts of the
+	/// main argument and the values of the named parameters.
 	/// </summary>
 	public static class SpecifierMatcher
 	{
 		/// <summary>
-		/// Matches the specifier against the provided argument parts and parameters.
+		/// Matches the specifier against the provided targets. Each literal part is compiled in the
+		/// dialect of the target it covers - flat text for a command line, a filesystem pattern for a
+		/// path - on its first use.
 		/// </summary>
 		/// <param name="specifier">The specifier to match. Cannot be <see langword="null"/>.</param>
-		/// <param name="mainArgumentParts">The parts of the main argument (for example, individual commands of a compound shell command).</param>
-		/// <param name="parameters">The named tool parameters (parameter name → string value).</param>
+		/// <param name="targets">The values the literals are matched against. Cannot be <see langword="null"/>.</param>
 		/// <returns>
 		/// <see cref="SpecifierMatchResult.FullMatch"/> when every target of the matched groups
 		/// (the main argument parts and the values of the referenced parameters) is covered,
 		/// <see cref="SpecifierMatchResult.PartialMatch"/> when only some targets are covered,
 		/// and <see cref="SpecifierMatchResult.NoMatch"/> when no group of the specifier matches anything.
 		/// </returns>
+		public static SpecifierMatchResult Match(Specifier specifier, IEnumerable<SpecifierTarget> targets)
+		{
+			ArgumentNullException.ThrowIfNull(specifier);
+			ArgumentNullException.ThrowIfNull(targets);
+
+			var parts = new Dictionary<string, SpecifierTarget>(StringComparer.Ordinal);
+			var parameters = new Dictionary<string, SpecifierTarget>(StringComparer.Ordinal);
+
+			foreach (var target in targets)
+			{
+				if (target.Name is { } name)
+				{
+					// The first value of a duplicated parameter is the one the tool used.
+					parameters.TryAdd(name, target);
+				}
+				else
+				{
+					parts.TryAdd(target.Value, target);
+				}
+			}
+
+			HashSet<string>? matchedTargets = null;
+			HashSet<string>? covered = null;
+
+			foreach (var group in specifier.Parts)
+			{
+				var (matched, groupTargets, groupCovered) = MatchGroup(group, parts, parameters);
+				if (!matched)
+					continue;
+
+				matchedTargets ??= new HashSet<string>(StringComparer.Ordinal);
+				covered ??= new HashSet<string>(StringComparer.Ordinal);
+				matchedTargets.UnionWith(groupTargets);
+				covered.UnionWith(groupCovered);
+			}
+
+			if (matchedTargets == null)
+				return SpecifierMatchResult.NoMatch;
+
+			return covered!.IsSupersetOf(matchedTargets)
+				? SpecifierMatchResult.FullMatch
+				: SpecifierMatchResult.PartialMatch;
+		}
+
+		/// <summary>
+		/// Matches the specifier against flat-text targets: the parts of the main argument and the
+		/// named parameters, all compiled as text patterns.
+		/// </summary>
+		/// <param name="specifier">The specifier to match. Cannot be <see langword="null"/>.</param>
+		/// <param name="mainArgumentParts">The parts of the main argument (for example, individual commands of a compound shell command).</param>
+		/// <param name="parameters">The named tool parameters (parameter name → string value).</param>
+		/// <returns>The match of the specifier against the targets.</returns>
 		public static SpecifierMatchResult Match(Specifier specifier,
 			IEnumerable<string> mainArgumentParts, IEnumerable<KeyValuePair<string, string>> parameters)
 		{
@@ -27,30 +80,8 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 			ArgumentNullException.ThrowIfNull(mainArgumentParts);
 			ArgumentNullException.ThrowIfNull(parameters);
 
-			var parts = mainArgumentParts.ToHashSet(StringComparer.Ordinal);
-			var parameterValues = parameters
-				.GroupBy(p => p.Key, StringComparer.Ordinal)
-				.ToFrozenDictionary(g => g.Key, g => g.First().Value, StringComparer.Ordinal);
-
-			HashSet<string>? targets = null;
-			HashSet<string>? covered = null;
-
-			foreach (var group in specifier.Parts)
-			{
-				var (matched, groupTargets, groupCovered) = MatchGroup(group, parts, parameterValues);
-				if (!matched)
-					continue;
-
-				targets ??= new HashSet<string>(StringComparer.Ordinal);
-				covered ??= new HashSet<string>(StringComparer.Ordinal);
-				targets.UnionWith(groupTargets);
-				covered.UnionWith(groupCovered);
-			}
-
-			if (targets == null)
-				return SpecifierMatchResult.NoMatch;
-
-			return covered!.IsSupersetOf(targets) ? SpecifierMatchResult.FullMatch : SpecifierMatchResult.PartialMatch;
+			return Match(specifier, mainArgumentParts.Select(SpecifierTarget.Text)
+				.Concat(parameters.Select(p => SpecifierTarget.Parameter(p.Key, p.Value))));
 		}
 
 		/// <summary>
@@ -58,7 +89,8 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 		/// its targets and its covered targets.
 		/// </summary>
 		private static (bool Matched, IEnumerable<string> Targets, IEnumerable<string> Covered) MatchGroup(
-			SpecifierPart group, IReadOnlySet<string> parts, FrozenDictionary<string, string> parameterValues)
+			SpecifierPart group, Dictionary<string, SpecifierTarget> parts,
+			Dictionary<string, SpecifierTarget> parameters)
 		{
 			if (group is SpecifierAndPart andPart)
 			{
@@ -67,7 +99,7 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 
 				foreach (var literal1 in andPart.Parts)
 				{
-					var (literalTargets, literalCovered) = MatchLiteral(literal1, parts, parameterValues);
+					var (literalTargets, literalCovered) = MatchLiteral(literal1, parts, parameters);
 
 					// AND semantics: every literal must cover ALL of its targets, because
 					// all literals describe the same object (x == 1 && x == 2 is impossible).
@@ -83,7 +115,7 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 
 			if (group is SpecifierLiteralPart literal2)
 			{
-				var (targets, covered) = MatchLiteral(literal2, parts, parameterValues);
+				var (targets, covered) = MatchLiteral(literal2, parts, parameters);
 				return (covered.Count > 0, targets, covered);
 			}
 
@@ -95,100 +127,53 @@ namespace LLMDesktopAssistant.Tools.Specifiers
 		/// for <see cref="SpecifierParameterPart"/>, or all main argument parts otherwise.
 		/// </summary>
 		private static (HashSet<string> Targets, HashSet<string> Covered) MatchLiteral(
-			SpecifierLiteralPart literal, IReadOnlySet<string> parts, FrozenDictionary<string, string> parameterValues)
+			SpecifierLiteralPart literal, Dictionary<string, SpecifierTarget> parts,
+			Dictionary<string, SpecifierTarget> parameters)
 		{
 			if (literal is SpecifierParameterPart parameterPart)
 			{
 				var targets = new HashSet<string>(StringComparer.Ordinal);
 				var covered = new HashSet<string>(StringComparer.Ordinal);
 
-				if (parameterValues.TryGetValue(parameterPart.Name, out var value))
+				if (parameters.TryGetValue(parameterPart.Name, out var target))
 				{
-					targets.Add(value);
-					if (GlobMatch(parameterPart.Value, value))
-						covered.Add(value);
+					targets.Add(target.Value);
+					if (Matches(parameterPart, target))
+						covered.Add(target.Value);
 				}
 
 				return (targets, covered);
 			}
 
 			var coveredParts = new HashSet<string>(StringComparer.Ordinal);
-			foreach (var part in parts)
+			foreach (var (value, target) in parts)
 			{
-				if (GlobMatch(literal.Value, part))
-					coveredParts.Add(part);
+				if (Matches(literal, target))
+					coveredParts.Add(value);
 			}
 
-			return (new HashSet<string>(parts, StringComparer.Ordinal), coveredParts);
+			return (new HashSet<string>(parts.Keys, StringComparer.Ordinal), coveredParts);
 		}
 
 		/// <summary>
-		/// Matches a glob pattern against a text: <c>*</c> matches any sequence of characters
-		/// (including an empty one), <c>?</c> matches exactly one character and the <c>:*</c> suffix
-		/// matches either the end of the text or a space followed by anything (any arguments, including none).
-		/// Matching is case-sensitive.
+		/// Matches one literal against one target. An empty pattern matches only an empty text:
+		/// the glob compiler refuses an empty pattern, and a literal that parsed to nothing
+		/// must stay inert instead of matching everything.
 		/// </summary>
-		private static bool GlobMatch(string pattern, string text)
+		private static bool Matches(SpecifierLiteralPart literal, SpecifierTarget target)
 		{
-			return GlobMatch(pattern.AsSpan(), text.AsSpan());
-		}
+			if (literal.Value.Length == 0)
+				return target.Value.Length == 0;
 
-		private static bool GlobMatch(ReadOnlySpan<char> pattern, ReadOnlySpan<char> text)
-		{
-			int pi = 0;
-			int ti = 0;
+			if (target.Kind == SpecifierTargetKind.Text)
+				return literal.Glob.Matches(target.Value);
 
-			while (pi < pattern.Length)
-			{
-				switch (pattern[pi])
-				{
-					case '*':
-						while (pi < pattern.Length && pattern[pi] == '*')
-							pi++;
-						if (pi == pattern.Length)
-							return true;
-						for (int i = ti; i <= text.Length; i++)
-						{
-							if (GlobMatch(pattern[pi..], text[i..]))
-								return true;
-						}
-						return false;
+			if (target.BaseDirectory is not { } baseDirectory)
+				throw new ArgumentException(
+					$"A path target requires a base directory ('{target.Name ?? "main argument"}').",
+					nameof(target));
 
-					case '?':
-						if (ti >= text.Length)
-							return false;
-						pi++;
-						ti++;
-						break;
-
-					case ':':
-						if (pi + 1 < pattern.Length && pattern[pi + 1] == '*')
-						{
-							// ":*" matches either the end of the text or a space followed by anything.
-							if (ti == text.Length)
-								return true;
-							if (text[ti] != ' ')
-								return false;
-							pi++;
-							ti++;
-							break;
-						}
-						if (ti >= text.Length || pattern[pi] != text[ti])
-							return false;
-						pi++;
-						ti++;
-						break;
-
-					default:
-						if (ti >= text.Length || pattern[pi] != text[ti])
-							return false;
-						pi++;
-						ti++;
-						break;
-				}
-			}
-
-			return ti == text.Length;
+			return GlobPathMatcher.Matches(literal.PathGlob, target.Value, baseDirectory);
 		}
 	}
 }

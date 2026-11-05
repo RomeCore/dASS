@@ -45,7 +45,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				DescriptionKey = Locale.GetKey("tool.description.shell-bash"),
 				CategoryKey = Locale.GetKey("tool.category.scripting"),
 				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
-				SpecifierParameters = ["runTerminal", "wait"],
 			});
 
 			AddTool(new ToolInitializationInfo
@@ -62,7 +61,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				DescriptionKey = Locale.GetKey("tool.description.shell-batch"),
 				CategoryKey = Locale.GetKey("tool.category.scripting"),
 				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
-				SpecifierParameters = ["runTerminal", "wait"],
 			});
 
 			AddTool(new ToolInitializationInfo
@@ -79,7 +77,6 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 				DescriptionKey = Locale.GetKey("tool.description.shell-powershell"),
 				CategoryKey = Locale.GetKey("tool.category.scripting"),
 				DefaultExpectedBehaviour = ToolBehaviour.ExecuteExternalProcess | ToolBehaviour.PossiblyUnexpected | ToolBehaviour.RunTerminal,
-				SpecifierParameters = ["runTerminal", "wait"],
 			});
 		}
 
@@ -133,7 +130,8 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecuteBash(
 			IToolExecutionContext context,
-			[Description("The bash command to run.")] string command,
+			[Description("The bash command to run.")]
+			[MainArgument] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -181,7 +179,8 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecuteBatch(
 			IToolExecutionContext context,
-			[Description("The batch command to run.")] string command,
+			[Description("The batch command to run.")]
+			[MainArgument] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -230,7 +229,8 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private Task<ToolExecutionResult> ExecutePowerShell(
 			IToolExecutionContext context,
-			[Description("The powershell command to run.")] string command,
+			[Description("The powershell command to run.")]
+			[MainArgument] string command,
 			[Description("Whether to run the output in an embedded terminal emulator. Use `true` for long-running scripts.")] bool runTerminal,
 			[Description("Whether to wait for the script to finish before returning. Use false for fire-and-forget scripts.")] bool wait = true,
 			CancellationToken cancellationToken = default)
@@ -263,37 +263,46 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		private SpecifierMatchResult AnalyzeBashSpecifier(
 			Specifier specifier,
-			string bash,
-			bool runTerminal = false,
-			bool wait = true)
-		{
-			return SpecifierMatcher.Match(specifier, ShellCommandSplitter.Split(bash), ShellParameters(runTerminal, wait));
-		}
-
-		private SpecifierMatchResult AnalyzeBatchSpecifier(
-			Specifier specifier,
-			string batch,
+			string command,
 			bool runTerminal = false,
 			bool wait = true)
 		{
 			return SpecifierMatcher.Match(specifier,
-				ShellCommandSplitter.Split(batch, singleAmpersandIsSeparator: true), ShellParameters(runTerminal, wait));
+				ShellTargets(ShellCommandSplitter.Split(command), runTerminal, wait));
+		}
+
+		private SpecifierMatchResult AnalyzeBatchSpecifier(
+			Specifier specifier,
+			string command,
+			bool runTerminal = false,
+			bool wait = true)
+		{
+			return SpecifierMatcher.Match(specifier, ShellTargets(
+				ShellCommandSplitter.Split(command, singleAmpersandIsSeparator: true), runTerminal, wait));
 		}
 
 		private SpecifierMatchResult AnalyzePowerShellSpecifier(
 			Specifier specifier,
-			string powershell,
+			string command,
 			bool runTerminal = false,
 			bool wait = true)
 		{
-			var result = SpecifierMatcher.Match(specifier, ShellCommandSplitter.Split(powershell), ShellParameters(runTerminal, wait));
-			return result;
+			return SpecifierMatcher.Match(specifier,
+				ShellTargets(ShellCommandSplitter.Split(command), runTerminal, wait));
 		}
 
-		private static IEnumerable<KeyValuePair<string, string>> ShellParameters(bool runTerminal, bool wait)
+		/// <summary>
+		/// Builds the targets of a shell call: the split commands as the main argument - an unnamed literal
+		/// covers them - and the flags as named ones.
+		/// </summary>
+		private static IEnumerable<SpecifierTarget> ShellTargets(IEnumerable<string> parts,
+			bool runTerminal, bool wait)
 		{
-			yield return new KeyValuePair<string, string>("runTerminal", runTerminal ? "true" : "false");
-			yield return new KeyValuePair<string, string>("wait", wait ? "true" : "false");
+			foreach (var part in parts)
+				yield return SpecifierTarget.Text(part);
+
+			yield return SpecifierTarget.Parameter("runTerminal", runTerminal ? "true" : "false");
+			yield return SpecifierTarget.Parameter("wait", wait ? "true" : "false");
 		}
 	}
 }

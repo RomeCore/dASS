@@ -95,9 +95,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			IToolExecutionContext ctx,
 			[SharedContext] GlobSearch? search,
 			[Description("The glob pattern to search for, e.g. '**/*.cs' or '*.txt'")]
-			string pattern,
+			[MainArgument] string pattern,
 			[Description("The starting directory path. If empty or '.', uses the current working directory.")]
-			string path = ".",
+			[PathArgument(File = false, Directory = true)] string path = ".",
 			[Description("The maximum number of results to return. Use 0 for unlimited.")]
 			int limit = 100,
 			[Description("Include files in results.")]

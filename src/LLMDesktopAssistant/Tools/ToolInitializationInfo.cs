@@ -55,8 +55,12 @@ namespace LLMDesktopAssistant.Tools
 		public JsonObject? ApprovalRequestedDataSchema { get; init; }
 
 		/// <summary>
-		/// The action to modify the generated argument schema before the tool is frozen.
+		/// The hook that adjusts the schema of one argument after it was generated, for the cases
+		/// reflection cannot know: an <c>enum</c> narrowed to the values this machine supports, a
+		/// description filled from the real list. It receives the JSON name of the argument - the same
+		/// name a specifier rule writes - and that argument's original schema, so it can never reshape
+		/// the argument set or another argument.
 		/// </summary>
-		public Action<JsonObject>? ModifyArgumentSchema { get; init; }
+		public Action<string, JsonObject>? ModifyArgumentSchema { get; init; }
 	}
 }

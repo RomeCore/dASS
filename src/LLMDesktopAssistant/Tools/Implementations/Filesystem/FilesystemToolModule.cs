@@ -8,6 +8,7 @@ using Material.Icons;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Tools.Specifiers;
 using LLMDesktopAssistant.Addons.Loading;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Management;
@@ -222,7 +223,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			};
 		}
 
-		private ToolExecutionResult GetFileInfo(IToolExecutionContext context, string path,
+		private ToolExecutionResult GetFileInfo(IToolExecutionContext context,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[SharedContext] string? fullPath = null)
 		{
 			try
@@ -318,7 +320,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult ReadBinaryFile(
 			IToolExecutionContext context,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[Description("The 1-based index of the first byte to read.")]
 			int startByte = 1,
 			int endByte = 4096,
@@ -421,7 +423,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult ReadDocumentFile(
 			IToolExecutionContext context,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[Description("The 1-based index of the first page to read.")]
 			int startPage = 1,
 			[Description("The 1-based index of the last page to read.")]
@@ -546,7 +548,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult WriteBinaryFile(
 			IToolExecutionContext context,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[Description("Hexadecimal string representing binary data in format '01 F8 2A'")]
 			string hex,
 			bool append = false,
@@ -647,7 +649,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			};
 		}
 
-		private ToolExecutionResult CreateDirectory(IToolExecutionContext context, string path,
+		private ToolExecutionResult CreateDirectory(IToolExecutionContext context,
+			[MainArgument] [PathArgument(File = false, Directory = true)] string path,
 			[SharedContext] CreateDirectoryContext? ctx = null)
 		{
 			try
@@ -713,7 +716,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			};
 		}
 
-		private ToolExecutionResult DeleteFile(IToolExecutionContext context, string path,
+		private ToolExecutionResult DeleteFile(IToolExecutionContext context,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			[SharedContext] DeleteFileContext? ctx = null)
 		{
 			try
@@ -793,7 +797,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			};
 		}
 
-		private ToolExecutionResult DeleteDirectory(IToolExecutionContext context, string path,
+		private ToolExecutionResult DeleteDirectory(IToolExecutionContext context,
+			[MainArgument] [PathArgument(File = false, Directory = true)] string path,
 			[SharedContext] DeleteDirectoryContext? ctx = null)
 		{
 			try
@@ -890,8 +895,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult RenameFile(
 			IToolExecutionContext context,
-			string oldPath,
-			string newPath,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string oldPath,
+			[PathArgument(File = true, Directory = false)] string newPath,
 			bool overwrite = false,
 			[SharedContext] RenameFileContext? ctx = null)
 		{
@@ -995,8 +1000,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult MoveDirectory(
 			IToolExecutionContext context,
-			string oldPath,
-			string newPath,
+			[MainArgument] [PathArgument(File = false, Directory = true)] string oldPath,
+			[PathArgument(File = false, Directory = true)] string newPath,
 			bool overwrite = false,
 			[SharedContext] MoveDirectoryContext? ctx = null)
 		{
@@ -1099,8 +1104,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult CopyFile(
 			IToolExecutionContext context,
-			string oldPath,
-			string newPath,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string oldPath,
+			[PathArgument(File = true, Directory = false)] string newPath,
 			bool overwrite = false,
 			[SharedContext] CopyFileContext? ctx = null)
 		{
@@ -1205,8 +1210,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 		private ToolExecutionResult CopyDirectory(
 			IToolExecutionContext context,
-			string oldPath,
-			string newPath,
+			[MainArgument] [PathArgument(File = false, Directory = true)] string oldPath,
+			[PathArgument(File = false, Directory = true)] string newPath,
 			bool overwrite = false,
 			[SharedContext] CopyDirectoryContext? ctx = null)
 		{
