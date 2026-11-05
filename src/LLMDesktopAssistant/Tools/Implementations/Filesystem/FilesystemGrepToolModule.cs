@@ -5,11 +5,18 @@ using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Utils.Files;
+using LLMDesktopAssistant.Utils.Patterns;
 using Material.Icons;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
+	/// <summary>
+	/// Tool module that searches file contents with a regular expression over the files a glob path
+	/// selects. The glob path does both jobs at once: it names the file to read, or the set of files
+	/// to search, and its literal prefix becomes the directory the walk starts from.
+	/// </summary>
 	[ToolModule]
 	public class FilesystemGrepToolModule : ToolModule
 	{
@@ -27,7 +34,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-grep",
 				Description = """
-					Searches for pattern in files using regex.
+					Searches for a regex pattern in the files selected by a glob path.
+					The path names either one file ('src/Program.cs') or a set ('src/**/*.{md,cs,razor}').
+					Use '**' to recurse; without it the pattern stays in the directory it names.
 					Use this tool with care, as it can be slow and resource-intensive.
 					""",
 				NameKey = Locale.GetKey("tool.name.fs-grep"),
@@ -47,44 +56,49 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult GrepPreview(IToolExecutionContext ctx,
-			string path, string pattern, [SharedContext] out string fullPath)
+		private PreviewToolExecutionResult GrepPreview(
+			IToolExecutionContext ctx,
+			string path, string pattern,
+			[SharedContext] out GlobSearch? search)
 		{
-			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
-			bool fileExists = File.Exists(fullPath);
-			bool dirExists = Directory.Exists(fullPath);
+			search = null;
 
-			if (!fileExists && !dirExists)
+			try
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path.MarkdownEscape()}** → `{pattern}`");
-				ctx.Call.SetResult($"File or directory not found: {path}");
+				var (resolved, outside) = ResolveSearch(path);
+
+				search = resolved;
+				ctx.Call.SetStatus(MaterialIconKind.FileSearch,
+					$"**{path.MarkdownEscape()}** → `{pattern}`");
+
+				if (resolved.Pattern.IsEmpty && Directory.Exists(resolved.Root))
+				{
+					ctx.Call.SetResult(DirectoryInsteadOfFilesMessage(path));
+					return new PreviewToolExecutionResult { InterruptingSuccess = false };
+				}
 
 				return new PreviewToolExecutionResult
 				{
-					ExpectedBehaviour = !isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None,
-					InterruptingSuccess = false
+					ExpectedBehaviour = ToolBehaviour.DirectoryRead | ToolBehaviour.FileRead
+						| (outside ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
 				};
 			}
-
-			ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path.MarkdownEscape()}** → `{pattern}`");
-
-			return new PreviewToolExecutionResult
+			catch (GlobException exception)
 			{
-				ExpectedBehaviour = ToolBehaviour.FileRead |
-					(dirExists ? ToolBehaviour.DirectoryRead : ToolBehaviour.None) |
-					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
-			};
+				ctx.Call.SetStatus(null, null);
+				ctx.Call.SetResult(exception.Message);
+				return new PreviewToolExecutionResult { InterruptingSuccess = false };
+			}
 		}
 
 		private async Task<ToolExecutionResult> Grep(
 			IToolExecutionContext ctx,
-			[SharedContext] string? fullPath,
-			[Description("The path where to search, can be file or directory path.")]
+			[SharedContext] GlobSearch? search,
+			[Description("A glob path to search in: one file such as 'src/Program.cs', or a set such as 'src/**/*.{md,cs,razor}'. " +
+				"Use '**' to recurse. For shallow search in folder use 'docs/*', for recursive search use 'docs/**/*'.")]
 			string path,
 			[Description("The .NET regex pattern to search for.")]
 			string pattern,
-			[Description("The file extensions to allow in search. Examples: [\".cs\", \".txt\"]")]
-			string[] allowedExtensions,
 			[Description("The maximum count of matched files to return.")]
 			int limitFiles = 20,
 			[Description("The maximum count of matched lines per file to return.")]
@@ -93,47 +107,56 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			bool ignoreCase = false,
 			[Description("Whether to return line numbers with the matched lines.")]
 			bool lineNumbers = true,
-			[Description("Whether to return non-matched lines instead of matched lines.")]
-			bool invert = false,
 			[Description("Whether to return only regex matches instead of entire lines.")]
 			bool onlyMatching = false,
 			[Description("The number of lines to show before each match.")]
 			int beforeContext = 0,
 			[Description("The number of lines to show after each match.")]
 			int afterContext = 0,
-			[Description("Whether to search recursively through subdirectories.")]
-			bool recursive = true,
 			[Description("The maximum length of each line to return.")]
 			int maxLineLength = 2000,
+			[Description("Names or single-segment patterns of entries to skip. A matching directory is not descended into. Pass an empty array to skip nothing.")]
+			string[]? ignore = null,
 			CancellationToken cancellationToken = default)
 		{
 			ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path.MarkdownEscape()}** → `{pattern}`");
 
 			try
 			{
+				search ??= ResolveSearch(path).Search;
+
+				// A path that resolves to a directory selects nothing, and the walk would answer
+				// "no matches" for what is really a wrong argument.
+				if (Directory.Exists(Path.Combine(_fileAccess.GetWorkingDirectory(), path)))
+				{
+					ctx.Call.SetResult(DirectoryInsteadOfFilesMessage(path));
+					return ToolExecutionResult.Failed;
+				}
+
+				// An empty pattern means the path named the entry itself, which may be a file;
+				// a non-empty one still has to be matched, so the walk needs a directory to start from.
+				var namesAFile = search.Pattern.IsEmpty && File.Exists(search.Root);
+				if (!namesAFile && !Directory.Exists(search.Root))
+				{
+					ctx.Call.SetResult($"Path not found: {path}");
+					return ToolExecutionResult.Failed;
+				}
+
 				var workingDirectory = _fileAccess.GetWorkingDirectory();
-				fullPath ??= _fileAccess.AccessPath(path, DirectoryAccessMode.Read);
 				var regexIgnoreCaseOptions = ignoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
 				var regex = new Regex(pattern, regexIgnoreCaseOptions | RegexOptions.Compiled);
 
+				var options = new GlobWalkOptions
+				{
+					Files = true,
+					Directories = false,
+					Limit = 0,
+					Ignore = ignore is null
+						? GlobTextSet.DefaultIgnore
+						: GlobTextSet.ParseNames(ignore)
+				};
+
 				var filesToSearch = new List<string>();
-				var results = new List<string>();
-				int totalFilesMatched = 0;
-
-				bool fileExists = File.Exists(fullPath);
-				bool dirExists = Directory.Exists(fullPath);
-
-				if (!fileExists && !dirExists)
-				{
-					ctx.Call.SetResult($"File or directory not found: {path}");
-					return ToolExecutionResult.Failed;
-				}
-
-				if (dirExists && (allowedExtensions == null || allowedExtensions.Length == 0))
-				{
-					ctx.Call.SetResult("Allowed extensions cannot be empty when searching inside directory.");
-					return ToolExecutionResult.Failed;
-				}
 
 				return await Task.Run(() =>
 				{
@@ -142,43 +165,34 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						ctx.Call.SetStatus(MaterialIconKind.FileMultiple, $"**{path.MarkdownEscape()}** → `{pattern}` " +
 							LocalizationManager.LocalizeStatic("tool.status.fs-grep.collecting_files"));
 
-						if (fileExists)
+						foreach (var entry in GlobWalker.Enumerate(search, options, cancellationToken))
 						{
-							filesToSearch.Add(fullPath);
-						}
-						else if (dirExists)
-						{
-							var searchOption = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
-							var allFiles = Directory.EnumerateFiles(fullPath, "*", searchOption);
+							cancellationToken.ThrowIfCancellationRequested();
 
-							foreach (var file in allFiles)
-							{
-								cancellationToken.ThrowIfCancellationRequested();
-
-								var ext = Path.GetExtension(file);
-								if (!allowedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase))
-									continue;
-
-								filesToSearch.Add(file);
-								ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → `{pattern}` " + string.Format(
-									LocalizationManager.LocalizeStatic("tool.status.fs-grep.collecting_files_count"),
-									filesToSearch.Count));
-							}
+							filesToSearch.Add(entry.FullPath);
+							ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → `{pattern}` " + string.Format(
+								LocalizationManager.LocalizeStatic("tool.status.fs-grep.collecting_files_count"),
+								filesToSearch.Count));
 						}
 
 						ctx.Call.SetStatus(MaterialIconKind.FileSearch, $"**{path.MarkdownEscape()}** → `{pattern}` " +
 							LocalizationManager.LocalizeStatic("tool.status.fs-grep.scanning_files"));
 						ctx.Call.SetProgress(0, 0, filesToSearch.Count);
 
+						int totalFilesMatched = 0;
+						int totalMatches = 0;
 						int progress = 0;
+
 						foreach (var file in filesToSearch)
 						{
 							ctx.Call.SetProgress(++progress, 0, filesToSearch.Count);
 							cancellationToken.ThrowIfCancellationRequested();
 
 							var relativePath = Path.GetRelativePath(workingDirectory, file);
-							var fileMatches = SearchInFile(workingDirectory, file, regex, limitLinesPerFile, invert, onlyMatching,
-															lineNumbers, beforeContext, afterContext, cancellationToken);
+							var (fileMatches, matchCount) = SearchInFile(workingDirectory, file, regex, limitLinesPerFile,
+								onlyMatching, lineNumbers, beforeContext, afterContext, cancellationToken);
+							totalMatches += matchCount;
+
 							if (fileMatches.Count > 0)
 							{
 								fileMatches = fileMatches.Select(m =>
@@ -193,17 +207,30 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 									ctx.Call.AppendResultLine(fileMatch);
 
 								totalFilesMatched++;
-								if (totalFilesMatched >= limitFiles)
-									break;
 							}
+
+							// The counters live in the title, so the caller watches the match count grow while the
+							// scan runs instead of learning it only from the final status.
+							ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → `{pattern}` " + string.Format(
+								LocalizationManager.LocalizeStatic("tool.status.fs-grep.scanning_progress"),
+								progress, filesToSearch.Count, totalMatches, totalFilesMatched));
+
+							if (fileMatches.Count > 0 && totalFilesMatched >= limitFiles)
+								break;
 						}
 
 						if (ctx.Call.GetResultLines().Length == 0)
 							ctx.Call.AppendResultLine("No matches found.");
 
 						ctx.Call.SetStatus(MaterialIconKind.FileCheck, $"**{path.MarkdownEscape()}** → `{pattern}` " +
-							string.Format(LocalizationManager.LocalizeStatic("tool.status.fs-grep.completed"), totalFilesMatched));
+							string.Format(LocalizationManager.LocalizeStatic("tool.status.fs-grep.completed"),
+								totalFilesMatched, totalMatches));
 						return ToolExecutionResult.Succeeded;
+					}
+					catch (OperationCanceledException)
+					{
+						ctx.Call.AppendResultLine("Grep cancelled.");
+						return ToolExecutionResult.Failed;
 					}
 					catch (Exception ex)
 					{
@@ -213,26 +240,54 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					}
 				}, cancellationToken);
 			}
+			catch (GlobException exception)
+			{
+				ctx.Call.AppendResultLine(exception.Message);
+				return ToolExecutionResult.Failed;
+			}
 			catch (Exception ex)
 			{
-				ctx.Call.SetResult($"Grep error: {ex.Message}");
+				ctx.Call.AppendResultLine($"Grep error: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
 		}
 
-		private List<string> SearchInFile(
+		/// <summary>
+		/// Resolves the glob path against the working directory and checks the root it lands on.
+		/// Only the resolved root matters: the pattern prefix can move it anywhere.
+		/// </summary>
+		private (GlobSearch Search, bool Outside) ResolveSearch(string path)
+		{
+			var resolved = GlobSearch.From(path, _fileAccess.GetWorkingDirectory());
+
+			var root = _fileAccess.CheckedAccessPath(resolved.Root, DirectoryAccessMode.Read,
+				out var isRootAccessed);
+
+			return (resolved.WithRoot(root), !isRootAccessed);
+		}
+
+		/// <summary>
+		/// The message for a path that names a directory, where the caller meant files: a directory
+		/// alone selects nothing, which would otherwise read as "no matches".
+		/// </summary>
+		private static string DirectoryInsteadOfFilesMessage(string path)
+		{
+			var basePath = path.TrimEnd('/', '\\');
+			return $"'{path}' names a directory, not files. Use a file pattern such as '{basePath}/**/*'.";
+		}
+
+		private (List<string> Lines, int MatchCount) SearchInFile(
 			string workDir,
 			string filePath,
 			Regex regex,
 			int limitLinesPerFile,
-			bool invert,
 			bool onlyMatching,
 			bool showLineNumbers,
 			int beforeContext,
 			int afterContext,
 			CancellationToken cancellationToken = default)
 		{
-			string[] lines = File.ReadAllLines(filePath);
+			string[] lines;
 			try
 			{
 				lines = File.ReadAllLines(filePath);
@@ -240,7 +295,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			catch
 			{
 				var relativePath = Path.GetRelativePath(workDir, filePath);
-				return [$"Cannot read file {relativePath}: it may be corrupted or taken by another process."];
+				return ([$"Cannot read file {relativePath}: it may be corrupted or taken by another process."], 0);
 			}
 
 			var matches = new List<string>();
@@ -252,9 +307,6 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 				var line = lines[i];
 				var isMatch = regex.IsMatch(line);
-
-				if (invert)
-					isMatch = !isMatch;
 
 				if (!isMatch)
 					continue;
@@ -316,7 +368,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					break;
 			}
 
-			return matches;
+			return (matches, count);
 		}
 	}
 }

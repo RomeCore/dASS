@@ -332,8 +332,9 @@ status.fs-glob.found_count: Найдено {0}...
 status.fs-glob.results: {0} результат(ов)
 status.fs-grep.collecting_files: Собираем файлы...
 status.fs-grep.collecting_files_count: Собираем файлы... ({0} найдено)
-status.fs-grep.completed: Найдено {0} совпадающих файлов
+status.fs-grep.completed: Найдено {0} совпадающих файлов, совпадений: {1}
 status.fs-grep.scanning_files: Сканируем файлы...
+status.fs-grep.scanning_progress: Сканируем файлы... {0}/{1}, совпадений: {2}, файлов с совпадениями: {3}
 status.fs-read_entry.secrets: {0} (содержит секреты/ключи)
 status.fs-write_file.streaming_status: {0} ({1} строк...)
 status.math-solve.no_roots: {0} *(без корней)*

@@ -332,8 +332,9 @@ status.fs-glob.found_count: Found {0} item(s)...
 status.fs-glob.results: {0} result(s)
 status.fs-grep.collecting_files: Collecting files...
 status.fs-grep.collecting_files_count: Collecting files... ({0} found)
-status.fs-grep.completed: Found {0} matching files
+status.fs-grep.completed: Found {0} matching files, {1} matches
 status.fs-grep.scanning_files: Scanning files...
+status.fs-grep.scanning_progress: Scanning files... {0}/{1}, matches: {2}, files with matches: {3}
 status.fs-read_entry.secrets: {0} (contains secrets)
 status.fs-write_file.streaming_status: {0} ({1} lines...)
 status.math-solve.no_roots: {0} *(no roots)*
