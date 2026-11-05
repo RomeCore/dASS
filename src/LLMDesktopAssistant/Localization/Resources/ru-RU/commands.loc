@@ -16,6 +16,7 @@ argument.arguments: аргументы
 argument.arguments.description: Аргументы команды.
 argument.agent.message: сообщение
 argument.agent.message.description: Сообщение, с которым запускается субагент.
+argument.value: значение
 
 // Команда навыка (command.skill.*).
 skill.used: Использован навык '{0}'.

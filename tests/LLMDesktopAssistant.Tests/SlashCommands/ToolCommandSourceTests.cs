@@ -1,10 +1,14 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
+using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.LLM.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Providers;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Tests.SlashCommands
 {
@@ -33,7 +37,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			{
 				Name = name,
 				Description = $"{name} description",
-				ArgumentSchema = JsonNode.Parse(schema ?? """{"type":"object","properties":{},"additionalProperties":false}""")!.AsObject(),
+				Arguments = ToolArgumentsDescriptor.FromSchema(JsonNode.Parse(schema ??
+					"""{"type":"object","properties":{},"additionalProperties":false}""")!.AsObject()),
 				SourcePack = pack
 			};
 
@@ -43,8 +48,33 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			return tool;
 		}
 
+		/// <summary>
+		/// The services a tool command's path completion resolves the working directory from.
+		/// </summary>
+		private static readonly IServiceProvider Services = new ServiceCollection()
+			.AddSingleton<IWorkingDirectoryAccessService>(new StubWorkingDirectory("/work"))
+			.BuildServiceProvider();
+
+		/// <summary>
+		/// A fixed working directory: the path completion of a tool command resolves against it.
+		/// </summary>
+		private sealed class StubWorkingDirectory(string root) : IWorkingDirectoryAccessService
+		{
+			public string AccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
+
+			public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
+			{
+				isAccessed = true;
+				return Path.Combine(root, path);
+			}
+
+			public string GetWorkingDirectory() => root;
+
+			public string? TryAccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
+		}
+
 		private static SlashCommandArgumentSchema Schema(string schema) => ToolArgumentSchemaMapper.Create(
-			JsonNode.Parse(schema)!.AsObject());
+			ToolArgumentsDescriptor.FromSchema(JsonNode.Parse(schema)!.AsObject()), Services);
 
 		// ==============================
 		// === Provider               ===
@@ -54,7 +84,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		public void Provider_DerivesOneCommandPerTool()
 		{
 			var provider = new ToolSlashCommandProvider(new FakeCollector<ToolInfo>(
-				[Tool("fs-read"), Tool("web-search")]));
+				[Tool("fs-read"), Tool("web-search")]), Services);
 
 			var commands = provider.Addons.ToList();
 
@@ -76,7 +106,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				IsConfigurable = true
 			};
 
-			var provider = new ToolSlashCommandProvider(new FakeCollector<ToolInfo>([Tool("fs-read", pack: pack)]));
+			var provider = new ToolSlashCommandProvider(
+				new FakeCollector<ToolInfo>([Tool("fs-read", pack: pack)]), Services);
 
 			var command = Assert.Single(provider.Addons);
 
@@ -91,7 +122,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			[
 				Tool("broken", diagnostic: new AddonDiagnostic { IsFatal = true }),
 				Tool("ok")
-			]));
+			]), Services);
 
 			var command = Assert.Single(provider.Addons);
 
@@ -210,7 +241,48 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void Schema_OfANullSchema_IsEmpty() => Assert.Empty(ToolArgumentSchemaMapper.Create(null).Keyed);
+		public void Schema_OfAToolWithoutArguments_IsEmpty() =>
+			Assert.Empty(ToolArgumentSchemaMapper.Create(ToolArgumentsDescriptor.Empty, Services).Keyed);
+
+		[Fact]
+		public void Schema_OfAPathArgument_GetsFileCompletion()
+		{
+			var schema = Schema("""
+				{
+					"type": "object",
+					"properties": {
+						"path": { "type": "string", "kind": "file" },
+						"folder": { "type": "string", "kind": "directory" },
+						"note": { "type": "string" }
+					}
+				}
+				""");
+
+			Assert.IsType<FileArgumentFormatProvider>(schema.Keyed["path"].Format);
+			Assert.IsType<FileArgumentFormatProvider>(schema.Keyed["folder"].Format);
+			Assert.Null(schema.Keyed["note"].Format);
+		}
+
+		[Fact]
+		public void Schema_OfAMainArgument_BecomesTheRestPositional()
+		{
+			// The main argument is typed, not named: '/tool:shell-bash git status --short' is one value.
+			var schema = Schema("""
+				{
+					"type": "object",
+					"properties": {
+						"command": { "type": "string", "main": true },
+						"runTerminal": { "type": "boolean", "default": false }
+					},
+					"required": ["command"]
+				}
+				""");
+
+			Assert.NotNull(schema.RestPositional);
+			Assert.True(schema.RestPositional!.Required);
+			Assert.False(schema.Keyed.ContainsKey("command"));
+			Assert.True(schema.Keyed.ContainsKey("runTerminal"));
+		}
 
 		// ==============================
 		// === JSON literal format    ===

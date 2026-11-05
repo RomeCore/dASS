@@ -14,6 +14,11 @@ namespace LLMDesktopAssistant.InputCompletion
 		public required string InsertText { get; init; }
 
 		/// <summary>
+		/// Whether the completion item should insert a space after itself when the item is accepted.
+		/// </summary>
+		public bool InsertsSpace { get; init; } = true;
+
+		/// <summary>
 		/// The text shown in the completion list. Falls back to <see cref="InsertText"/> when not set.
 		/// </summary>
 		public string? Display { get; init; }

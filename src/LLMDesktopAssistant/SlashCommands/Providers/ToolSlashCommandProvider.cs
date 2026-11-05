@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// </remarks>
 	[ChatService(typeof(ISlashCommandProvider))]
 	[ChatService(typeof(IAdditionalAddonSource<SlashCommandInfo>))]
-	public class ToolSlashCommandProvider(IAddonSetCollector<ToolInfo> sources)
+	public class ToolSlashCommandProvider(IAddonSetCollector<ToolInfo> sources, IServiceProvider services)
 		: DerivedSlashCommandProvider<ToolInfo>(sources)
 	{
 		protected override string TypeNamespace => "tool";
@@ -25,6 +25,6 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		protected override SlashCommandSource SourceKind => SlashCommandSource.Tool;
 
 		protected override ISlashCommandExecutor CreateCommandExecutor(ToolInfo source)
-			=> new ToolCommandExecutor(source);
+			=> new ToolCommandExecutor(source, services);
 	}
 }

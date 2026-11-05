@@ -27,10 +27,11 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 	/// generation: a chain of <c>/tool:</c> calls is the user building a turn by hand, and the next message they write
 	/// is what starts it.
 	/// </remarks>
-	public sealed class ToolCommandExecutor(ToolInfo tool) : ISlashCommandExecutor
+	public sealed class ToolCommandExecutor(ToolInfo tool, IServiceProvider services) : ISlashCommandExecutor
 	{
 		/// <inheritdoc/>
-		public SlashCommandArgumentSchema? ArgumentSchema { get; } = ToolArgumentSchemaMapper.Create(tool.ArgumentSchema);
+		public SlashCommandArgumentSchema? ArgumentSchema { get; } =
+			ToolArgumentSchemaMapper.Create(tool.Arguments, services);
 
 		/// <inheritdoc/>
 		public async Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
@@ -40,7 +41,7 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 				ToolCallId = $"dass-{Guid.NewGuid():N}",
 				ToolName = tool.Name,
 				Title = tool.NameKey,
-				Arguments = BuildArguments(ctx.Arguments).ToJsonString(),
+				Arguments = BuildArguments(ctx.Arguments)?.ToJsonString() ?? "null",
 				CanBeCompacted = tool.CanBeCompacted
 			};
 
@@ -67,13 +68,26 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		}
 
 		/// <summary>
-		/// Builds the tool call's argument object from the bound keyed arguments: the converted value when it already
-		/// is a JSON node (an array or an object literal) and its JSON form otherwise. Unsupplied optional arguments
+		/// Builds the tool call's argument object: the rest positional becomes the tool's main argument, and every
+		/// keyed argument lands under its own name. A converted value that already is a JSON node (an array or an
+		/// object literal) is used as is, everything else keeps its JSON form. Unsupplied optional arguments
 		/// contribute no key at all, so the tool sees exactly what the user wrote plus the schema defaults.
 		/// </summary>
-		private static JsonObject BuildArguments(SlashCommandBoundArguments arguments)
+		private JsonNode? BuildArguments(SlashCommandBoundArguments arguments)
 		{
+			var main = tool.Arguments.Main;
+			var mainValue = main is not null && arguments.RestPositional?.Value is { } rest
+				? ToJsonNode(rest)
+				: null;
+
+			// A tool whose arguments are not an object takes the rest positional as the whole argument.
+			if (!tool.Arguments.IsObject)
+				return mainValue;
+
 			var result = new JsonObject();
+
+			if (main is not null && mainValue is not null)
+				result[main.Name] = mainValue;
 
 			foreach (var (key, argument) in arguments.Keyed)
 			{

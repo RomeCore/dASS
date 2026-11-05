@@ -78,7 +78,7 @@ namespace LLMDesktopAssistant.InputCompletion
 			{
 				var replacement = item.InsertText;
 				var endText = Text[end..];
-				if (endText.Length == 0 || !char.IsWhiteSpace(endText[0]))
+				if (item.InsertsSpace && (endText.Length == 0 || !char.IsWhiteSpace(endText[0])))
 					replacement = replacement + " ";
 				return new InputCompletionAccept(Text[..start] + replacement + endText, start + replacement.Length);
 			}

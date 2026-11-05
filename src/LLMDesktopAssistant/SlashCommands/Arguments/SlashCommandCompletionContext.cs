@@ -13,6 +13,7 @@ namespace LLMDesktopAssistant.SlashCommands.Arguments
 		/// The resolved command whose argument is being completed.
 		/// </summary>
 		public required SlashCommandInfo Command { get; init; }
+
 		/// <summary>
 		/// The whole raw argument text typed so far (after the command token).
 		/// </summary>

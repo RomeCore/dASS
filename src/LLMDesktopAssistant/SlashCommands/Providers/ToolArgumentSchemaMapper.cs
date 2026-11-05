@@ -2,72 +2,86 @@ using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands.Arguments;
+using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.SlashCommands.Providers
 {
 	/// <summary>
-	/// Maps a tool's JSON-Schema argument description onto the slash-command argument schema.
+	/// Maps a tool's arguments onto the slash-command argument schema.
 	/// </summary>
 	/// <remarks>
-	/// Every property becomes a <em>keyed</em> command argument. A tool command has no positional slot at all - a call
-	/// reads as <c>/tool:fs-read path=README.md</c> - so nothing is ever inferred from the schema's property order.
-	/// The declared type picks the format provider: <c>boolean</c>, <c>number</c>/<c>integer</c>, a closed
-	/// <c>enum</c>, and <c>array</c>/<c>object</c> (a JSON literal). Everything else - <c>string</c>, a missing or
-	/// unknown type, <c>anyOf</c>/<c>oneOf</c>/<c>$ref</c>, nested <c>properties</c> - degrades to a plain string with
-	/// no validation; the tool's own argument binding stays the authority on the shape.
+	/// The main argument becomes the <em>rest</em> positional: it is one verbatim value, so
+	/// <c>/tool:shell-bash git status --short</c> reaches the tool as one string instead of forcing
+	/// <c>command=…</c> with its quoting rules. Every other argument is keyed, so nothing is inferred
+	/// from the schema's property order. The declared <see cref="ToolArgumentKind"/> picks the format
+	/// provider, and a closed <c>enum</c> wins over it: it is the only shape that carries a list of
+	/// allowed values.
 	/// </remarks>
 	public static class ToolArgumentSchemaMapper
 	{
 		/// <summary>
 		/// Builds the command argument schema for a tool.
 		/// </summary>
-		/// <param name="schema">The tool's JSON-Schema argument object, or <see langword="null"/>.</param>
-		/// <returns>
-		/// A keyed-only schema - positionals and the rest slot stay empty - or an empty schema when the tool declares
-		/// no properties.
-		/// </returns>
-		public static SlashCommandArgumentSchema Create(JsonObject? schema)
+		/// <param name="arguments">The arguments of the tool.</param>
+		/// <param name="services">
+		/// The services a path argument is completed against (its working directory). Required: a path
+		/// argument without them would be silently uncompletable.
+		/// </param>
+		/// <returns>A schema with the main argument as the rest positional and the rest as keyed arguments.</returns>
+		public static SlashCommandArgumentSchema Create(ToolArgumentsDescriptor arguments,
+			IServiceProvider services)
 		{
-			if (schema?["properties"] is not JsonObject properties || properties.Count == 0)
+			ArgumentNullException.ThrowIfNull(arguments);
+
+			if (arguments.Arguments.IsEmpty)
 				return new SlashCommandArgumentSchema();
 
-			HashSet<string> required = schema["required"] is JsonArray requiredNames
-				? requiredNames
-					.Select(name => name is JsonValue value && value.TryGetValue<string>(out var text) ? text : null)
-					.OfType<string>()
-					.ToHashSet(StringComparer.Ordinal)
-				: [];
-
 			var builder = ImmutableDictionary.CreateBuilder<string, SlashCommandArgument>(StringComparer.Ordinal);
-			foreach (var (name, node) in properties)
-			{
-				var property = node as JsonObject;
+			SlashCommandArgument? rest = null;
 
-				builder[name] = new SlashCommandArgument
+			foreach (var argument in arguments.Arguments.OrderBy(argument => argument.Order))
+			{
+				if (argument.IsMain)
 				{
-					Name = Locale.GetConstKey(name),
-					Description = Describe(property),
-					Required = required.Contains(name),
-					Default = DefaultOf(property),
-					Format = FormatOf(property)
-				};
+					rest = ToArgument(argument, services);
+					continue;
+				}
+
+				builder[argument.Name] = ToArgument(argument, services);
 			}
 
-			return new SlashCommandArgumentSchema { Keyed = builder.ToImmutable() };
+			return new SlashCommandArgumentSchema
+			{
+				Keyed = builder.ToImmutable(),
+				RestPositional = rest
+			};
 		}
 
 		/// <summary>
-		/// Reads a property's description as raw text: a tool's JSON Schema is authored by the tool, not by the
-		/// localization files, so its text is a const key rather than a locale key.
+		/// Builds the command argument of one tool argument: the name, the description, the required flag, the
+		/// authored default and the format provider of its kind.
 		/// </summary>
-		private static LocaleKeyBase? Describe(JsonObject? property) =>
-			TextOf(property?["description"]) is { Length: > 0 } text ? Locale.GetConstKey(text) : null;
+		private static SlashCommandArgument ToArgument(ToolArgumentDescriptor argument,
+			IServiceProvider services) => new()
+		{
+			// A bare-value argument has no JSON name: the label is for the palette, not for a lookup.
+			Name = argument.Name is { Length: > 0 }
+				? Locale.GetConstKey(argument.Name)
+				: Locale.GetKey("command.argument.value"),
+			Description = argument.Description is { Length: > 0 } description
+				? Locale.GetConstKey(description)
+				: null,
+			Required = argument.Required,
+			Default = DefaultOf(argument),
+			Format = FormatOf(argument, services)
+		};
 
 		/// <summary>
-		/// Reads a property's authored default. A string default is taken verbatim (it is a value, not a literal);
-		/// every other form keeps its JSON text, which is exactly what its format provider expects of a raw value.
+		/// Reads the authored default. A string default is taken verbatim (it is a value, not a literal);
+		/// every other form keeps its JSON text, which is exactly what its format provider expects of a
+		/// raw value.
 		/// </summary>
-		private static string? DefaultOf(JsonObject? property) => property?["default"] switch
+		private static string? DefaultOf(ToolArgumentDescriptor argument) => argument.Default switch
 		{
 			null => null,
 			JsonValue value when value.TryGetValue<string>(out var text) => text,
@@ -75,38 +89,36 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 		};
 
 		/// <summary>
-		/// Picks the format provider of a property, or <see langword="null"/> when the value stays a plain,
-		/// unvalidated string.
+		/// Picks the format provider of an argument, or <see langword="null"/> when the value stays a plain,
+		/// unvalidated string. An array carries its choices on the items rather than on itself.
 		/// </summary>
-		private static ISlashCommandArgumentFormatProvider? FormatOf(JsonObject? property)
+		private static ISlashCommandArgumentFormatProvider? FormatOf(ToolArgumentDescriptor argument,
+			IServiceProvider services)
 		{
-			if (property is null)
-				return null;
-
-			var type = TypeOf(property);
-
-			if (property["enum"] is JsonArray { Count: > 0 } choices && type is null or "string")
-				return new ChoiceArgumentFormatProvider(choices.Select(TextOf), strict: true);
-
-			return type switch
+			if (argument.Kind is ToolArgumentKind.FilePath or ToolArgumentKind.DirectoryPath or ToolArgumentKind.FSPath)
 			{
-				"boolean" => SlashCommandBooleanFormatProvider.Instance,
-				"number" or "integer" => NumberArgumentFormatProvider.Instance,
-				"array" or "object" => JsonArgumentFormatProvider.Instance,
+				return new FileArgumentFormatProvider(services,
+					onlyDirectories: argument.Kind is ToolArgumentKind.DirectoryPath);
+			}
+
+			var owner = argument.Kind == ToolArgumentKind.Array
+				? argument.Schema["items"] as JsonObject
+				: argument.Schema;
+
+			if (owner?["enum"] is JsonArray { Count: > 0 } choices &&
+				argument.Kind is ToolArgumentKind.String or ToolArgumentKind.Unspecified)
+			{
+				return new ChoiceArgumentFormatProvider(choices.Select(TextOf), strict: true);
+			}
+
+			return argument.Kind switch
+			{
+				ToolArgumentKind.Bool => SlashCommandBooleanFormatProvider.Instance,
+				ToolArgumentKind.Number or ToolArgumentKind.Integer => NumberArgumentFormatProvider.Instance,
+				ToolArgumentKind.Array or ToolArgumentKind.Object => JsonArgumentFormatProvider.Instance,
 				_ => null
 			};
 		}
-
-		/// <summary>
-		/// Reads a property's declared type. A type may legitimately be a union (<c>["string","null"]</c>); the first
-		/// entry decides the format, which is the common shape of an optional value.
-		/// </summary>
-		private static string? TypeOf(JsonObject property) => property["type"] switch
-		{
-			JsonValue value when value.TryGetValue<string>(out var single) => single,
-			JsonArray { Count: > 0 } many => TextOf(many[0]),
-			_ => null
-		};
 
 		/// <summary>
 		/// Reads a JSON scalar as text: a string keeps its value, anything else keeps its JSON text.

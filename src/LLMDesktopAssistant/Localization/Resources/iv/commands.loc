@@ -16,6 +16,7 @@ argument.arguments: arguments
 argument.arguments.description: The command's arguments.
 argument.agent.message: message
 argument.agent.message.description: The message the sub-agent is asked to work on.
+argument.value: value
 
 // Skill command (command.skill.*).
 skill.used: Used skill '{0}'.

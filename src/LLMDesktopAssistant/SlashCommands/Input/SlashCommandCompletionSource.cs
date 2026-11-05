@@ -216,6 +216,7 @@ namespace LLMDesktopAssistant.SlashCommands.Input
 				items.AddRange(format.Complete(argument.Prefix, context).Select(completion => new InputCompletionItem
 				{
 					InsertText = completion.Value,
+					InsertsSpace = completion.InsertsSpace,
 					Display = completion.Display,
 					Description = completion.Description,
 					Kind = InputCompletionKind.Argument
