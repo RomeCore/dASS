@@ -370,17 +370,17 @@ public static class FilePatchedReplacer
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// When the match's second line sits at the same depth as the second line it matched, the two were
-	/// written in one coordinate system: line two of the replacement takes the place of line two of
-	/// the match, and the shift is simply their difference. That is a patch copied out of the file,
-	/// and it is what keeps such a patch verbatim.
+	/// When the replacement's second line sits at the depth of the second matched file line, the patch
+	/// was copied out of the file: it already carries the file's own columns, so the shift is zero and
+	/// the block lands verbatim. The witness is read from the replacement, not from the match - a match
+	/// written in the file's columns says nothing about how the replacement was written, and reading it
+	/// there shifted every patch that copied the match and re-nested it (AR-0024).
 	/// </para>
 	/// <para>
-	/// When they differ, the patch re-nested the matched block - a brace, a wrapper, a body line that
-	/// moved a level - and pairing the lines would pair them with lines they have nothing to do with,
-	/// which moved the whole block a level up or down (AR-0024). The patch is then relative to the
-	/// match, so the shift is the difference between the first matched file line and the match's own
-	/// first line, and every replacement line keeps its offset from the match.
+	/// Otherwise the patch re-nested the matched block - a brace, a wrapper, a body line that moved a
+	/// level - and is read as relative to the match: the shift is the difference between the first
+	/// matched file line and the match's own first line, so every replacement line keeps its offset
+	/// from the match's first line.
 	/// </para>
 	/// </remarks>
 	private static int GetShift(
@@ -388,10 +388,9 @@ public static class FilePatchedReplacer
 		List<string> replaceLines, int tabSize)
 	{
 		if (matchLines.Length > 1 && replaceLines.Count > 1 && start + 1 < fileLines.Count
-			&& !string.IsNullOrWhiteSpace(matchLines[1])
 			&& !string.IsNullOrWhiteSpace(replaceLines[1])
-			&& matchIndents[1] == GetIndentation(fileLines[start + 1], tabSize))
-			return matchIndents[1] - GetIndentation(replaceLines[1], tabSize);
+			&& GetIndentation(replaceLines[1], tabSize) == GetIndentation(fileLines[start + 1], tabSize))
+			return 0;
 
 		return GetIndentation(fileLines[start], tabSize) - matchIndents[0];
 	}

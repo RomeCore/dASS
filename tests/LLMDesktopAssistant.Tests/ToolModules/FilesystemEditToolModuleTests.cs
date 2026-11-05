@@ -2288,6 +2288,81 @@ namespace LLMDesktopAssistant.Tests
 		Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, bytes[..3]);
 		Assert.Equal("x\r\ny\r\n", System.Text.Encoding.UTF8.GetString(bytes[3..]));
 	}
+	[Fact]
+	public async Task Replace_RealWorldPatch_GlobWalkerIsEmptyBranch_KeepsIndentation()
+	{
+		await TestReplaceAsync("""
+			public static IEnumerable<GlobEntry> Enumerate(GlobSearch search, GlobWalkOptions options,
+				CancellationToken cancellationToken = default)
+			{
+				if (!Directory.Exists(search.Root))
+					yield break;
+
+				var root = new DirectoryInfo(search.Root);
+
+				if (search.Pattern.IsEmpty && options.Directories)
+					yield return CreateEntry(root, [], true);
+
+				var reported = 0;
+			}
+	""", """
+			public static IEnumerable<GlobEntry> Enumerate(GlobSearch search, GlobWalkOptions options,
+				CancellationToken cancellationToken = default)
+			{
+				if (search.Pattern.IsEmpty)
+				{
+					// The prefix took everything: the root is the entry the caller named, not a place to walk.
+					if (Directory.Exists(search.Root))
+					{
+						if (options.Directories)
+							yield return CreateEntry(new DirectoryInfo(search.Root), [], true);
+					}
+					else if (File.Exists(search.Root) && options.Files)
+					{
+						yield return CreateEntry(new FileInfo(search.Root), [], false);
+					}
+
+					yield break;
+				}
+
+				if (!Directory.Exists(search.Root))
+					yield break;
+
+				var root = new DirectoryInfo(search.Root);
+
+				var reported = 0;
+			}
+	""", Patch("""
+				if (!Directory.Exists(search.Root))
+					yield break;
+
+				var root = new DirectoryInfo(search.Root);
+
+				if (search.Pattern.IsEmpty && options.Directories)
+					yield return CreateEntry(root, [], true);
+	""", """
+				if (search.Pattern.IsEmpty)
+				{
+					// The prefix took everything: the root is the entry the caller named, not a place to walk.
+					if (Directory.Exists(search.Root))
+					{
+						if (options.Directories)
+							yield return CreateEntry(new DirectoryInfo(search.Root), [], true);
+					}
+					else if (File.Exists(search.Root) && options.Files)
+					{
+						yield return CreateEntry(new FileInfo(search.Root), [], false);
+					}
+
+					yield break;
+				}
+
+				if (!Directory.Exists(search.Root))
+					yield break;
+
+				var root = new DirectoryInfo(search.Root);
+	"""));
+	}
 
 
 }

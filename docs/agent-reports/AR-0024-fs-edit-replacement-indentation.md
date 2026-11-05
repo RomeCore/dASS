@@ -128,6 +128,8 @@ The direction is not even consistent within one pass: cases 1-3 collapse, case 5
 - **2026-10-25** - session adding synchronization analyzers to the fs tools - eleven `fs-edit` calls inserting a `SyncAnalyzer` line above a `Name = "..."` line across five modules, all over-indented by the match's indentation and all repaired by a regex pass; then a multi-line edit of `ToolCallViewModel.cs` whose continuation lines landed at column 0, repaired with `fs-apply_diff`. The user interrupted mid-session to point the behaviour out ("fs-edit works with RELATIVE indents"), which is the strongest evidence that the intended rule is not the one the tool follows.
 - **2026-11-04** - session implementing the reactive addon set cache - one pass over `AddonBase.cs`, `ChatCommandSettings.cs`, `AgentPromptComposer.cs`, `SubAgentCommandExecutor.cs` and `SlashCommandSetCollectorTests.cs`: four collapsed or shifted continuation lines and one over-indented block, each repaired with a follow-up `fs-edit` or `fs-apply_diff`. Two repair calls returned `No changes were made` while also reporting `1 occurrence replaced`, which cost an extra read to decide whether the file had changed.
 
+- **2026-11-05** - session implementing the glob pattern layer, the same day as the fix above - `fs-edit` on `tests/LLMDesktopAssistant.Tests/Utils/Files/GlobWalkerTests.cs` with a two-line `match` (`[Fact]` at column 0, `\tpublic void WithRoot_...()` at one tab) against a member whose two lines both sit at one tab, and a `replace` that re-inserted the member plus a separating blank line. Line two of the match sat at the file's line-two depth, so the fix's branch 1 fired and wrote the replacement verbatim: the `[Fact]` line landed at column 0, the signature line lost its tab, and the patch left an empty line between the signature and `{`. The result echo showed `+\t[Fact]` and `+\tpublic void ...` with their tabs, so the echo and the bytes disagreed and the damage was found only by the next call. Repair cost: two `fs-apply_diff` calls (one deleting the pair and re-inserting it indented, one removing the blank line that first repair left behind), then a third after a follow-up whitespace-only `fs-edit` shifted the same block again. This is the open inference at the end of this report, now observed: line one of the patch carried no indent, which is evidence the patch was not copied out of the file, but branch 1 reads only line two and classified it as verbatim anyway.
+
 ## What I did instead
 
 - For insertions: `fs-apply_diff` with `insertBeforeLine` + `insertText`, which writes the text exactly as given (and, to its credit, is the reason the C# was repairable at all).
@@ -181,7 +183,32 @@ whose match now carries the file's tabs. Full run: 1427 tests, 0 failed, 1 skipp
 (`SkillParserTests.DescriptionWithColons_ParsesCorrectly`, a pre-existing YamlDotNet skip).
 
 **Still open.** Point 6 of the proposed fix - `No changes were made` and `1 occurrence replaced` in
-one answer - lives in `DescribeNoChange` in `FilesystemEditToolModule` and was not touched. The rule
-also still rests on one inference: "the patch was copied out of the file" is read from the depth of
-the match's second line, so a patch that happens to put its second line at the file's second line
-without having been copied is treated as verbatim.
+one answer - lives in `DescribeNoChange` in `FilesystemEditToolModule` and was not touched.
+
+## Fix 2026-11-05 (second) - the shift reads the replacement, not the match
+
+**What was still wrong.** The rule above classified a patch as "copied out of the file" from the
+depth of the *match's* second line. That condition holds for every match copied out of the file,
+which is how a patch is normally written - so a patch that copied six matched lines and wrapped the
+first statement in an `if` was shifted one level deeper instead of landing as written. Caught by
+`Replace_RealWorldPatch_GlobWalkerIsEmptyBranch_KeepsIndentation`, which is the real edit that
+introduced the empty-remainder branch in `GlobWalker`.
+
+**The rule now.** The witness belongs to the replacement, because the question is whether the
+replacement already sits in the file's columns, and a match written in those columns says nothing
+about how the replacement was written.
+
+1. When the second line of `replace` sits at the depth of the second matched file line, the
+   replacement already carries the file's own columns: the shift is zero and the block lands verbatim.
+2. Otherwise the patch re-nested the matched block: the shift is the depth of the first matched file
+   line minus the depth of the match's own first line, so every replacement line keeps its offset
+   from the match's first line.
+
+`fs-edit`'s description and `FilePatchedReplacer.GetShift`'s XML doc state the new witness. All
+`FilePatchedReplacerTests` cases pass unchanged, including the verbatim copy that must not be shifted
+twice and the two cases that re-nest the block; the full run is 1502 tests, 0 failed, 1 skipped.
+
+**Still open.** One inference stays: a relative patch whose second line happens to land exactly at
+the file's second-line depth is read as verbatim. That is only reachable when the match itself was
+dedented relative to the file, and it now errs on the side of "leave the columns alone" rather than
+on the side of moving the block.

@@ -55,9 +55,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					Writing is relative, not verbatim: the whole replacement moves by one shift, and the
 					rule does not depend on how many lines `match` has.
 
-					- A patch copied out of the file - the second line of `match` sitting where the second
-					  matched file line sits - lands verbatim: line two of `replace` takes the place of
-					  line two of the match, and the shift is their difference.
+					- A patch copied out of the file - the second line of `replace` sitting where the second
+					  matched file line sits - already carries the file's own columns and lands verbatim,
+					  with no shift.
 					- A patch that re-nests the matched block - a brace, a wrapper, a body line that moved
 					  a level - is read as relative to the match: the first line of `replace` lands
 					  where the match starts, and every other line keeps its offset from it.
