@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.IO.Enumeration;
 using System.Text;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
@@ -9,6 +8,7 @@ using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
+using LLMDesktopAssistant.Utils.Patterns;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
@@ -168,7 +168,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			int offset = 0,
 			[Description("The maximum number of filesystem entries to return. Only for directories.")]
 			int maxEntries = 500,
-			[Description("The list of directories to ignore. Each directory can be a pattern (e.g. '.*' to ignore all directories that starts with dot). Only for directories.")]
+			[Description("Names or single-segment patterns of entries to skip. A matching directory is not descended into. Examples: ['.git', 'obj'], ['.*']. Only for directories.")]
 			[DefaultValue(new string[]{ ".git", Directories.WorkingHome })]
 			string[]? ignoreDirectories = null)
 		{
@@ -240,7 +240,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 							maxDepth = 1;
 
 						int totalCount = 0;
-						ignoreDirectories ??= [".git", Directories.WorkingHome];
+						var ignorePatterns = ignoreDirectories ?? [".git", Directories.WorkingHome];
+						var ignore = GlobTextSet.ParseNames(ignorePatterns);
 
 						void Traverse(string currentPath, int depth, string indent)
 						{
@@ -279,7 +280,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 									totalCount++;
 
-									if (ignoreDirectories.Any(igdir => FileSystemName.MatchesSimpleExpression(igdir, name)))
+									if (ignore.Matches(name))
 										sb.AppendLine($"{indent}  Directory ignored");
 									else
 										Traverse(entry, depth + 1, indent + "  ");
@@ -312,8 +313,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 						sb.AppendLine($"Path: {path}");
 						sb.AppendLine($"Max depth: {maxDepth}");
 						sb.AppendLine($"Offset: {offset}, Max entries: {maxEntries}");
-						if (ignoreDirectories.Length > 0)
-							sb.AppendLine($"Ignored directories: {string.Join(", ", ignoreDirectories)}");
+						if (ignorePatterns.Length > 0)
+							sb.AppendLine($"Ignored directories: {string.Join(", ", ignorePatterns)}");
 						else
 							sb.AppendLine("No ignored directories.");
 						sb.AppendLine();

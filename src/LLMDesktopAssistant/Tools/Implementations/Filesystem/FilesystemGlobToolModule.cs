@@ -7,15 +7,14 @@ using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Files;
+using LLMDesktopAssistant.Utils.Patterns;
 using Material.Icons;
-using Microsoft.Extensions.FileSystemGlobbing;
-using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
 	/// <summary>
-	/// Tool module that provides glob-based file and directory searching.
-	/// Uses Microsoft.Extensions.FileSystemGlobbing under the hood.
+	/// Tool module that provides glob-based file and directory searching on top of the shared
+	/// pattern layer, so a wildcard means the same thing here as it does in a name filter.
 	/// </summary>
 	[ToolModule]
 	public class FilesystemGlobToolModule : ToolModule
@@ -34,20 +33,10 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 				SyncAnalyzer = FilesystemSynchronizationAnalyzer.AnalyzePathRead,
 				Name = "fs-glob",
 				Description = """
-					Finds files and directories matching a glob pattern.
-
-					Supported pattern syntax:
-					- `*`       Matches any characters except directory separator
-					- `**`      Matches any characters including directory separators (recursive)
-
-					Differences from bash's `glob`:
-					- NO one-character matching like [Aa]
-					- NO one-word matching like {abc,def}
-
-					Examples:
-					- `**/*.cs`               - all C# files recursively
-					- `*.txt`                 - all text files in root only
-					- `src/**/test*`          - files starting with 'test' in any subdirectory of 'src'
+					Finds files and directories by glob pattern.
+					Syntax: *, ?, [...], {...}, **. No backslash escaping; '**' must be a whole segment.
+					A leading directory in the pattern becomes the search root, so an absolute pattern works.
+					Syntax the dialect does not cover fails with a reason instead of returning no matches.
 					""",
 				NameKey = Locale.GetKey("tool.name.fs-glob"),
 				DescriptionKey = Locale.GetKey("tool.description.fs-glob"),
@@ -66,29 +55,45 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			return StreamingToolAnalysisResult.Continue;
 		}
 
-		private PreviewToolExecutionResult GlobPreview(IToolExecutionContext ctx,
-			string path, string pattern, [SharedContext] out string fullPath)
+		private PreviewToolExecutionResult GlobPreview(
+			IToolExecutionContext ctx,
+			string path, string pattern,
+			[SharedContext] out GlobSearch? search)
 		{
-			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
+			search = null;
 
-			if (!Directory.Exists(fullPath))
+			try
 			{
-				ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
-				ctx.Call.SetResult($"Directory not found: {path}");
+				var (resolved, outside) = ResolveSearch(path, pattern);
+
+				search = resolved;
+				ctx.Call.SetStatus(MaterialIconKind.FolderSearch,
+					$"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
+
+				if (!Directory.Exists(resolved.Root))
+				{
+					ctx.Call.SetResult(
+						$"Search root does not exist: {resolved.Root}");
+					return new PreviewToolExecutionResult { InterruptingSuccess = false };
+				}
+
+				return new PreviewToolExecutionResult
+				{
+					ExpectedBehaviour = ToolBehaviour.DirectoryRead
+						| (outside ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
+				};
 			}
-
-			ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
-
-			return new PreviewToolExecutionResult
+			catch (GlobException exception)
 			{
-				ExpectedBehaviour = ToolBehaviour.DirectoryRead |
-					(!isAccessed ? ToolBehaviour.AccessOutsideWorkdir : ToolBehaviour.None)
-			};
+				ctx.Call.SetStatus(null, null);
+				ctx.Call.SetResult(exception.Message);
+				return new PreviewToolExecutionResult { InterruptingSuccess = false };
+			}
 		}
 
 		private async Task<ToolExecutionResult> Glob(
 			IToolExecutionContext ctx,
-			[SharedContext] string? fullPath,
+			[SharedContext] GlobSearch? search,
 			[Description("The glob pattern to search for, e.g. '**/*.cs' or '*.txt'")]
 			string pattern,
 			[Description("The starting directory path. If empty or '.', uses the current working directory.")]
@@ -99,176 +104,134 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			bool files = true,
 			[Description("Include directories in results.")]
 			bool directories = false,
-			[Description("Whether to show hidden files and directories (those starting with dot).")]
-			bool showHidden = false,
-			[Description("Whether to return paths relative to the working directory.")]
-			bool relativePaths = true,
+			[Description("Names or single-segment patterns of entries to skip. A matching directory is not descended into. Pass an empty array to skip nothing.")]
+			string[]? ignore = null,
 			CancellationToken cancellationToken = default)
 		{
 			try
 			{
-				fullPath ??= _fileAccess.AccessPath(path, DirectoryAccessMode.Read);
-				var workingDirectory = _fileAccess.GetWorkingDirectory();
+				if (search is null)
+				{
+					var (resolved, _) = ResolveSearch(path, pattern);
+					search = resolved;
+				}
+
+				var options = new GlobWalkOptions
+				{
+					Files = files,
+					Directories = directories,
+					Limit = limit,
+					Ignore = ignore is null
+						? GlobTextSet.DefaultIgnore
+						: GlobTextSet.ParseNames(ignore)
+				};
+
+				var current = search;
+				var workdir = _fileAccess.GetWorkingDirectory();
 
 				return await Task.Run(() =>
 				{
 					try
 					{
-						ctx.Call.SetStatus(MaterialIconKind.FolderSearch, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
+						ctx.Call.SetStatus(MaterialIconKind.FolderSearch,
+							$"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}**");
+						int found = 0;
 
-						var matcher = new Matcher();
-						matcher.AddInclude(pattern);
-
-						var matchingFiles = new List<string>();
-						var matchingDirectories = new List<string>();
-
-						// Search files via Matcher
-						if (files)
+						foreach (var entry in GlobWalker.Enumerate(current, options, cancellationToken))
 						{
-							var globResult = matcher.Execute(new DirectoryInfoWrapper(new DirectoryInfo(fullPath)));
+							ctx.Call.AppendResultLine(Describe(current, entry, workdir));
+							found++;
 
-							foreach (var file in globResult.Files)
-							{
-								cancellationToken.ThrowIfCancellationRequested();
-
-								var filePath = Path.GetFullPath(Path.Combine(fullPath, file.Path));
-
-								if (!showHidden)
-								{
-									var fileName = Path.GetFileName(filePath);
-									if (fileName.StartsWith("."))
-										continue;
-								}
-
-								try
-								{
-									var metrics = FileUtils.GetFileMetrics(filePath);
-									var lines = metrics.LineCount != null ? $"{metrics.LineCount} lines" : "binary";
-
-									var displayPath = relativePaths
-										? Path.GetRelativePath(workingDirectory, filePath)
-										: filePath;
-
-									matchingFiles.Add($"[FILE] {displayPath} ({FileUtils.BytesToDisplaySize(metrics.Size)}, {lines}, {metrics.Modified:yyyy-MM-dd HH:mm})");
-
-									ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
-
-									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
-										break;
-								}
-								catch
-								{
-									// skip inaccessible files
-								}
-							}
+							ctx.Call.SetStatusTitle(
+								$"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** "
+								+ LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", found));
 						}
 
-						// Search directories via Directory.GetDirectories + Matcher.Match
-						if (directories && (limit == 0 || matchingFiles.Count + matchingDirectories.Count < limit))
-						{
-							var allDirs = Directory.GetDirectories(fullPath, "*", SearchOption.AllDirectories);
+						if (limit > 0 && found >= limit)
+							ctx.Call.AppendResultLine($"(Limited to {limit} results)");
 
-							foreach (var dir in allDirs)
-							{
-								cancellationToken.ThrowIfCancellationRequested();
+						if (found == 0)
+							ctx.Call.AppendResultLine("No matches found.");
 
-								if (!showHidden)
-								{
-									var dirName = Path.GetFileName(dir);
-									if (dirName.StartsWith("."))
-										continue;
-								}
+						ctx.Call.SetStatus(MaterialIconKind.FolderMultiple,
+							$"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** "
+							+ LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", found));
 
-								var relDir = Path.GetRelativePath(fullPath, dir);
-
-								// Check if directory matches the glob pattern using Matcher
-								var dirMatcher = new Matcher();
-								dirMatcher.AddInclude(pattern);
-								var dirMatchResult = dirMatcher.Match(fullPath, relDir);
-								if (!dirMatchResult.HasMatches)
-									continue;
-
-								try
-								{
-									var dirInfo = new DirectoryInfo(dir);
-									int items;
-									try
-									{
-										items = dirInfo.GetFileSystemInfos().Length;
-									}
-									catch
-									{
-										items = 0;
-									}
-
-									var displayPath = relativePaths
-										? Path.GetRelativePath(workingDirectory, dir)
-										: dir;
-
-									matchingDirectories.Add($"[DIR] {displayPath} ({items} items, {dirInfo.LastWriteTime:yyyy-MM-dd HH:mm})");
-
-									ctx.Call.SetStatusTitle($"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.found_count", matchingFiles.Count + matchingDirectories.Count)}");
-
-									if (limit > 0 && matchingFiles.Count + matchingDirectories.Count >= limit)
-										break;
-								}
-								catch
-								{
-									// skip inaccessible directories
-								}
-							}
-						}
-
-						// Build output
-						var totalFiles = matchingFiles.Count;
-						var totalDirs = matchingDirectories.Count;
-						var total = totalFiles + totalDirs;
-
-						var sb = new StringBuilder();
-						sb.AppendLine("[GLOB RESULTS]");
-						sb.AppendLine($"Pattern: {pattern}");
-						sb.AppendLine($"Path: {path}");
-						sb.AppendLine($"Found: {total} item(s)");
-						if (limit > 0 && total >= limit)
-							sb.AppendLine($"(Limited to {limit} results)");
-						sb.AppendLine();
-
-						// Directories first, then files
-						foreach (var dir in matchingDirectories)
-							sb.AppendLine(dir);
-						foreach (var file in matchingFiles)
-							sb.AppendLine(file);
-
-						if (total == 0)
-						{
-							sb.AppendLine("No matches found.");
-							ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
-						}
-						else
-						{
-							ctx.Call.SetStatus(MaterialIconKind.FolderMultiple, $"**{path.MarkdownEscape()}** → **{pattern.MarkdownEscape()}** {LocalizationManager.LocalizeStaticFormat("tool.status.fs-glob.results", total)}");
-						}
-
-						ctx.Call.SetResult(sb.ToString());
 						return ToolExecutionResult.Succeeded;
 					}
 					catch (OperationCanceledException)
 					{
-						ctx.Call.SetResult("Glob search cancelled.");
+						ctx.Call.AppendResultLine("Glob search cancelled.");
 						return ToolExecutionResult.Failed;
 					}
-					catch (Exception ex)
+					catch (GlobException exception)
 					{
 						ctx.Call.SetStatus(null, null);
-						ctx.Call.SetResult($"Error during glob search: {ex.Message}");
+						ctx.Call.AppendResultLine(exception.Message);
+						return ToolExecutionResult.Failed;
+					}
+					catch (Exception exception)
+					{
+						ctx.Call.SetStatus(null, null);
+						ctx.Call.AppendResultLine($"Error during glob search: {exception.Message}");
 						return ToolExecutionResult.Failed;
 					}
 				}, cancellationToken);
 			}
-			catch (Exception ex)
+			catch (GlobException exception)
 			{
-				ctx.Call.SetResult($"Glob error: {ex.Message}");
+				ctx.Call.AppendResultLine(exception.Message);
 				return ToolExecutionResult.Failed;
+			}
+			catch (Exception exception)
+			{
+				ctx.Call.AppendResultLine($"Glob error: {exception.Message}");
+				return ToolExecutionResult.Failed;
+			}
+		}
+
+		/// <summary>
+		/// Resolves the starting path and the pattern prefix into one root, and reports whether
+		/// either of the two paths the user named lies outside the working directory. Both are
+		/// checked: the pattern prefix can move the root anywhere, including outside the path.
+		/// </summary>
+		private (GlobSearch Search, bool Outside) ResolveSearch(string path, string pattern)
+		{
+			var startingPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read,
+				out var isAccessed);
+
+			var resolved = GlobSearch.From(pattern, startingPath);
+
+			var root = _fileAccess.CheckedAccessPath(resolved.Root, DirectoryAccessMode.Read,
+				out var isRootAccessed);
+
+			return (resolved.WithRoot(root), !(isAccessed && isRootAccessed));
+		}
+
+		/// <summary>
+		/// Renders one result line. Metrics are read here, after the walk has already applied the
+		/// limit, so an entry that never reaches the output is never opened.
+		/// </summary>
+		private static string Describe(GlobSearch search, GlobEntry entry, string workdir)
+		{
+			var display = Path.GetRelativePath(workdir, entry.FullPath);
+
+			try
+			{
+				if (entry.IsDirectory)
+				{
+					var info = new DirectoryInfo(entry.FullPath);
+					return $"[DIR] {display} ({info.GetFileSystemInfos().Length} items, {info.LastWriteTime:yyyy-MM-dd HH:mm})";
+				}
+
+				var metrics = FileUtils.GetFileMetrics(entry.FullPath);
+				var lines = metrics.LineCount != null ? $"{metrics.LineCount} lines" : "binary";
+
+				return $"[FILE] {display} ({FileUtils.BytesToDisplaySize(metrics.Size)}, {lines}, {metrics.Modified:yyyy-MM-dd HH:mm})";
+			}
+			catch
+			{
+				return entry.IsDirectory ? $"[DIR] {display}" : $"[FILE] {display}";
 			}
 		}
 	}
