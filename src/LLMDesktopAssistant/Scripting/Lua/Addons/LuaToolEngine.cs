@@ -8,7 +8,7 @@ using LLMDesktopAssistant.Tools.Execution.Executors;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Scripting;
 
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
 	/// <summary>
 	/// Lua implementation of <see cref="IScriptableToolEngine"/>.
@@ -17,16 +17,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	[Service(typeof(IScriptableToolEngine))]
 	public class LuaToolEngine : IScriptableToolEngine
 	{
-		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new LuaToolEngineDescriptor()];
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [LuaScriptEngineDescriptor.Instance];
 
 		public IToolMainExecutor CreateExecutor(ToolInfo tool)
 		{
 			return new DelegateMainExecutor(async (args, ctx, cancellationToken) =>
 			{
-				var result = new LuaToolResult(ctx.Call);
-
-				// The execution context flows through AsyncLocal, so it does not have to live in the globals.
-				LuaExecutionContext.SetTool(ctx, result);
+				var result = LuaExecutionContext.ToolResult;
+				if (result is null)
+					LuaExecutionContext.SetTool(ctx, result = new LuaToolResult(ctx.Call));
 
 				try
 				{

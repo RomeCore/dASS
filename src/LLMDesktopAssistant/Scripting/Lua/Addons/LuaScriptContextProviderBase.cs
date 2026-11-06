@@ -5,7 +5,7 @@ using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Services;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
 	/// <summary>
 	/// The shared runner of a scriptable prompt context written in Lua: the body executes in the chat's Lua state,

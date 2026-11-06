@@ -2,7 +2,7 @@ using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Services;
 
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
 	/// <summary>
 	/// Lua implementation of <see cref="IScriptablePromptContextEngine"/>.
@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	public class LuaPromptContextEngine : IScriptablePromptContextEngine
 	{
 		/// <inheritdoc/>
-		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [new LuaPromptContextEngineDescriptor()];
+		public IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; } = [LuaScriptEngineDescriptor.Instance];
 
 		/// <inheritdoc/>
 		public IPromptContextProvider CreateProvider(PromptContextInfo context) => context.Kind switch
@@ -24,27 +24,5 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				$"Scriptable context '{context.Name}' declares kind '{context.Kind}', but only 'live-tail' and " +
 				"'supersede' are scriptable. A scriptable anchored section does not exist yet.")
 		};
-	}
-
-	/// <summary>The descriptor of the Lua scriptable prompt-context engine.</summary>
-	public class LuaPromptContextEngineDescriptor : IScriptEngineDescriptor
-	{
-		/// <inheritdoc/>
-		public ScriptLanguageType Language => ScriptLanguageType.Lua;
-
-		/// <inheritdoc/>
-		public string[] Extensions => [".lua", ".alua"];
-
-		/// <inheritdoc/>
-		public string FrontmatterStart => "--[[";
-
-		/// <inheritdoc/>
-		public string FrontmatterEnd => "]]";
-
-		/// <inheritdoc/>
-		public string? FrontmatterLinePrefix => null;
-
-		/// <inheritdoc/>
-		public ScriptEngineCapabilities Capabilities => ScriptEngineCapabilities.StructuredInput;
 	}
 }

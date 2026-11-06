@@ -1,7 +1,7 @@
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
 	/// <summary>
 	/// A live-tail prompt context written in Lua: the body runs on every prompt build and its text is injected

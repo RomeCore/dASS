@@ -3,6 +3,7 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Scripting.Lua;
+using LLMDesktopAssistant.Scripting.Lua.Addons;
 using LLMDesktopAssistant.Tests.Tools;
 using Microsoft.Extensions.DependencyInjection;
 

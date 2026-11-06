@@ -1,7 +1,11 @@
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
-	public class LuaToolEngineDescriptor : IScriptEngineDescriptor
+	public class LuaScriptEngineDescriptor : IScriptEngineDescriptor
 	{
+		private LuaScriptEngineDescriptor() { }
+
+		public static LuaScriptEngineDescriptor Instance { get; } = new();
+
 		public ScriptLanguageType Language => ScriptLanguageType.Lua;
 
 		public string[] Extensions => [".lua", ".alua"];
@@ -17,5 +21,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// or <c>run-terminal</c> promise cannot be honoured here and is refused at load. It does pass a native structure.
 		/// </remarks>
 		public ScriptEngineCapabilities Capabilities => ScriptEngineCapabilities.StructuredInput;
+
 	}
 }

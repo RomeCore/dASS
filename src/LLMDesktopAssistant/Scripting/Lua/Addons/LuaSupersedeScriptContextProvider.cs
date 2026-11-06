@@ -1,13 +1,13 @@
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 
-namespace LLMDesktopAssistant.Scripting.Lua
+namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
 	/// <summary>
 	/// A supersede prompt context written in Lua: the body runs on every prompt build, receives the previously
 	/// injected text as <c>previous</c> and produces a stamp only when the rendered text actually changed.
 	/// </summary>
-	public sealed class LuaSupersedeScriptContextProvider(PromptContextInfo addon)
+	public class LuaSupersedeScriptContextProvider(PromptContextInfo addon)
 		: LuaScriptContextProviderBase(addon), IPromptSupersedeContextProvider
 	{
 		/// <inheritdoc/>
