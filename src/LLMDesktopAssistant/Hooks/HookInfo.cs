@@ -74,9 +74,10 @@ namespace LLMDesktopAssistant.Hooks
 		{
 			base.ValidatePropertiesCore(errors);
 
+			if (string.IsNullOrEmpty(HookType))
+				errors.Add("HookType is required.");
 			if (TimeoutMs is <= 0)
 				errors.Add("The timeout must be a positive number of milliseconds.");
-
 			if (Executor is null)
 				errors.Add("Executor is required.");
 		}
