@@ -29,5 +29,11 @@ namespace LLMDesktopAssistant.Scripting
 		/// structure out of it.
 		/// </summary>
 		JsonOutput = 4,
+
+		/// <summary>
+		/// The engine hands back its native value as the structured result (a table, a dict, an object), so a kind
+		/// that consumes a structure needs no <c>json-output</c> declaration: there is no output channel in between.
+		/// </summary>
+		StructuredOutput = 8,
 	}
 }

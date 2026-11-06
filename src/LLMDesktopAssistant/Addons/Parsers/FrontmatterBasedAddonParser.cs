@@ -604,7 +604,8 @@ namespace LLMDesktopAssistant.Addons.Parsers
 			if (addon.RunTerminal && !features.HasFlag(ScriptFeaturePolicy.Terminal))
 				Fatal(ref diagnostic, "This addon kind cannot run in a terminal.");
 
-			if (!features.HasFlag(ScriptFeaturePolicy.PlainOutput) && !structured)
+			if (!features.HasFlag(ScriptFeaturePolicy.PlainOutput) && !structured &&
+				!descriptor.Capabilities.HasFlag(ScriptEngineCapabilities.StructuredOutput))
 				Fatal(ref diagnostic, "This addon kind has no plain result; 'json-output' is required.");
 
 			if (addon.InputMode is ScriptInputMode.Structured &&
@@ -615,7 +616,7 @@ namespace LLMDesktopAssistant.Addons.Parsers
 			}
 
 			if (structured && !descriptor.Capabilities.HasFlag(ScriptEngineCapabilities.JsonOutput))
-				Fatal(ref diagnostic, $"'{descriptor.Language}' cannot report a structured result.");
+				Fatal(ref diagnostic, $"'{descriptor.Language}' cannot take a structured result from its output.");
 
 			if (!addon.RunTerminal)
 				return;

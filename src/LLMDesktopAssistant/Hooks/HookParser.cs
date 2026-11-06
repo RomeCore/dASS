@@ -14,7 +14,11 @@ namespace LLMDesktopAssistant.Hooks
 		{
 		}
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// A hook consumes a structure - the verdict document - and never plain output. A language that has no
+		/// output channel is not asked to declare <c>json-output</c> for it: it reports the structure through
+		/// <see cref="ScriptEngineCapabilities.StructuredOutput"/> instead.
+		/// </summary>
 		protected override ScriptFeaturePolicy Features =>
 			ScriptFeaturePolicy.JsonOutput;
 
