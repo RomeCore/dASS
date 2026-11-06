@@ -6,8 +6,13 @@ namespace LLMDesktopAssistant.Scripting
 	public enum ScriptableAddonKind
 	{
 		None = 0,
-		Tool,
+
 		SlashCommand,
-		PromptContext,
+
+		Hook,
+
+		Tool,
+
+		PromptContext
 	}
 }

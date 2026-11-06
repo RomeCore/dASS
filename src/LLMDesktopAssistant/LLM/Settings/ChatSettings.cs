@@ -128,6 +128,15 @@ namespace LLMDesktopAssistant.LLM.Settings
 		}
 
 		/// <summary>
+		/// Settings related to hooks.
+		/// </summary>
+		public ChatHookSettings Hooks
+		{
+			get => field ??= new();
+			set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// Settings related to scripts (Lua, for example).
 		/// </summary>
 		public ChatScriptSettings Scripts

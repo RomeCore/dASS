@@ -98,6 +98,7 @@ chat.model.router.hint: Agentic routing model
 chat.model.tools.hint: Agentic tools model
 chat.model.vision.hint: Vision model
 chat.commands: Commands
+chat.hooks: Hooks
 chat.models: Models
 chat.models.hint: Select the language models used for the chat, agentic routing, agentic tools and vision tasks.
 chat.prompts: Prompts
@@ -258,6 +259,16 @@ commands.enabled.hint: When disabled, a slash command will not be recognized and
 commands.refresh: Refresh commands list
 commands.search.placeholder: Search by name, description or tags...
 commands.set: Command set
+
+hooks.available.hint: Hooks are scripts that run on chat and tool events. They are discovered in addon packs and additional sources; only the enabled hooks of the effective hook set are dispatched.
+hooks.empty: No hooks found. Configure the addon sources.
+hooks.enabled: Enable hooks
+hooks.enabled.hint: When disabled, no hook of this chat is dispatched, whatever the per-hook overrides say.
+hooks.enabled_by_default: Enable unchanged hooks by default
+hooks.enabled_by_default.hint: When enabled, hooks without an explicit override are enabled by default. Uncheck to disable all unchanged hooks.
+hooks.refresh: Refresh hooks list
+hooks.search.placeholder: Search by name, description or tags...
+hooks.settings: Hooks settings
 
 skills.available: Available Skills
 skills.available.hint: Skills discovered in skill directories. Only enabled skills are injected into agent prompts.

@@ -1,0 +1,80 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
+			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+			 xmlns:loc="using:LLMDesktopAssistant.Localization"
+			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatHooksSettingsView"
+			 x:DataType="local:ChatHooksSettingsViewModel"
+			 x:Name="VMRoot">
+
+	<StackPanel Margin="8" Spacing="8">
+
+		<!-- Master gate -->
+		<CheckBox Content="{loc:Loc settings.hooks.enabled}"
+				  IsChecked="{Binding HookSettings.AddonsCategoryEnabled, Mode=TwoWay}"/>
+
+		<TextBlock Text="{loc:Loc settings.hooks.enabled.hint}"
+				   Opacity="0.5"
+				   FontSize="11"
+				   Margin="24,0,0,4"
+				   TextWrapping="Wrap"/>
+		
+		<Rectangle Height="1"
+				   Fill="{DynamicResource DefaultForeground}"
+				   Opacity="0.2"/>
+		
+		<!-- Hook set selection -->
+		<Grid ColumnDefinitions="*,Auto,Auto">
+			<TextBlock Grid.Column="0"
+					   Text="{loc:Loc settings.hooks.settings}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
+					   VerticalAlignment="Center"/>
+
+			<ComboBox Grid.Column="1"
+					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
+					  SelectedItem="{Binding SelectedHooksSetInheritance}"
+					  VerticalAlignment="Center"
+					  Margin="0,0,8,0"
+					  MinWidth="120">
+
+				<ComboBox.ItemTemplate>
+					<DataTemplate x:DataType="set:InheritanceLevelItem">
+						<TextBlock Text="{Binding DisplayName}"/>
+					</DataTemplate>
+				</ComboBox.ItemTemplate>
+
+			</ComboBox>
+			
+			<Button Grid.Column="2"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.hooks.refresh}">
+				<ico:VisualIcon Kind="Refresh"/>
+			</Button>
+		</Grid>
+		
+		<TextBlock Text="{loc:Loc settings.hooks.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
+
+		<CheckBox Content="{loc:Loc settings.hooks.enabled_by_default}"
+				  IsChecked="{Binding EffectiveHooksSet.EnabledByDefault, Mode=TwoWay}"/>
+
+		<TextBlock Text="{loc:Loc settings.hooks.enabled_by_default.hint}"
+				   Opacity="0.5"
+				   FontSize="11"
+				   Margin="24,0,0,4"
+				   TextWrapping="Wrap"/>
+
+		<!-- Search + list -->
+		<cards:AddonListView DataContext="{Binding List}"/>
+
+	</StackPanel>
+
+</UserControl>

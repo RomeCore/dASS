@@ -9,9 +9,10 @@ namespace LLMDesktopAssistant.Addons
 		None = 0,
 
 		/// <summary>
-		/// All kinds of addons, including packs, skills, sub-agents, tools, memory blocks, prompt contexts, slash commands, templates, and Lua scripts.
+		/// All kinds of addons, including packs, skills, sub-agents, tools, memory blocks, prompt contexts, slash commands,
+		/// hooks, templates, and Lua scripts.
 		/// </summary>
-		All = Pack | Skill | SubAgent | Tool | MemoryBlock | PromptContext | SlashCommand | Template | LuaScript,
+		All = Pack | Skill | SubAgent | Tool | MemoryBlock | PromptContext | SlashCommand | Hook | Template | LuaScript,
 
 		/// <summary>
 		/// The addon pack itself, used in the invalidation methods to invalidate packs along with other addon types.

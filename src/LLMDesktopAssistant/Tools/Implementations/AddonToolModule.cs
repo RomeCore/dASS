@@ -87,8 +87,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				Executor = SearchAddons,
 				IsFixed = true,
 				Name = "addon-search",
-				Description = "Searches the addons available to you (skills, sub-agents, tools, prompt contexts, Lua scripts " +
-					"and slash commands) " +
+				Description = "Searches the addons available to you (skills, sub-agents, tools, etc.) " +
 					"by a free-form query over their names, tags and descriptions. Hidden addons are included.",
 				NameKey = Locale.GetKey("tool.name.addon-search"),
 				DescriptionKey = Locale.GetKey("tool.description.addon-search"),
@@ -102,8 +101,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				Executor = ListAvailableAddons,
 				IsFixed = true,
 				Name = "addon-list_available",
-				Description = "Lists the names of every addon available to you (skills, sub-agents, tools, prompt contexts, " +
-					"Lua scripts and slash commands), grouped by kind. Hidden addons are included.",
+				Description = "Lists the names of every addon available to you (skills, sub-agents, tools, etc.), grouped by kind. Hidden addons are included.",
 				NameKey = Locale.GetKey("tool.name.addon-list_available"),
 				DescriptionKey = Locale.GetKey("tool.description.addon-list_available"),
 				CategoryKey = Locale.GetKey("tool.category.addons"),

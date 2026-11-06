@@ -207,6 +207,10 @@ namespace LLMDesktopAssistant.LLM.Settings
 						MaterialIconKind.Console,
 							() => new ChatCommandsSettingsViewModel(Chat.Services, Settings.Commands)),
 
+					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.hooks"),
+						MaterialIconKind.Webhook,
+							() => new ChatHooksSettingsViewModel(Chat.Services, Settings.Hooks)),
+
 					new SettingsLeafNode(LocalizationManager.LocalizeStatic("settings.chat.prompt_contexts"),
 						MaterialIconKind.LayersOutline,
 							() => new ChatPromptContextsSettingsViewModel(Chat.Services, Settings.PromptContexts)),

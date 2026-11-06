@@ -94,6 +94,16 @@ commands.source.subagent: Sub-agent
 commands.source.tool: Tool
 
 // =====================================================
+// === Hooks                                        ===
+// =====================================================
+hooks.type: Hook type (glob pattern)
+hooks.name: Hook name filter (glob pattern)
+hooks.flow: Execution flow
+hooks.flow.fireandforget: Fire and forget
+hooks.flow.parallel: Parallel
+hooks.flow.sequential: Sequential
+
+// =====================================================
 // === Tools                                        ===
 // =====================================================
 tools.policy_mask: Policy mask
