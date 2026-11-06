@@ -26,6 +26,8 @@ namespace LLMDesktopAssistant.Tools
 				result |= ToolBehaviour.PromptEdit;
 			if (kind.HasFlag(AddonKind.LuaScript))
 				result |= ToolBehaviour.ScriptEdit;
+			if (kind.HasFlag(AddonKind.Hook))
+				result |= ToolBehaviour.ScriptEdit;
 
 			return result;
 		}
