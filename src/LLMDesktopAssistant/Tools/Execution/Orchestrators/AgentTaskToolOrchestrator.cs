@@ -16,6 +16,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	[Service]
 	public sealed class AgentTaskToolOrchestrator(
 		IToolInitializationService initialization,
+		IToolPreHookExecutionService preHook,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
 		IToolPreviewService preview,
@@ -34,20 +35,24 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 			try
 			{
 				initialization.Initialize(ctx, ref ct);
-				validation.Validate(ctx);
 
-				await synchronization.RunAsync(ctx, async () =>
+				if (await preHook.RunAsync(ctx, ct))
 				{
-					if (!await preview.RunAsync(ctx, ct))
-						return;
+					validation.Validate(ctx);
 
-					await policy.EvaluateAsync(ctx, ct);
+					await synchronization.RunAsync(ctx, async () =>
+					{
+						if (!await preview.RunAsync(ctx, ct))
+							return;
 
-					if (!await confirmation.ConfirmAsync(ctx, ct))
-						return;
+						await policy.EvaluateAsync(ctx, ct);
 
-					await execution.RunAsync(ctx, ct);
-				}, ct);
+						if (!await confirmation.ConfirmAsync(ctx, ct))
+							return;
+
+						await execution.RunAsync(ctx, ct);
+					}, ct);
+				}
 
 				settlement.Finalize(ctx, null);
 			}

@@ -15,6 +15,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	[Service]
 	public sealed class ChatRestartOrchestrator(
 		IToolInitializationService initialization,
+		IToolPreHookExecutionService preHook,
 		IToolStreamingService streaming,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
@@ -33,15 +34,19 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 			{
 				initialization.Initialize(ctx, ref ct);
 				await streaming.RunAsync(ctx, StreamingMode.Once, ct);
-				validation.Validate(ctx);
 
-				await synchronization.RunAsync(ctx, async () =>
+				if (await preHook.RunAsync(ctx, ct))
 				{
-					if (!await preview.RunAsync(ctx, ct))
-						return;
+					validation.Validate(ctx);
 
-					await execution.RunAsync(ctx, ct);
-				}, ct);
+					await synchronization.RunAsync(ctx, async () =>
+					{
+						if (!await preview.RunAsync(ctx, ct))
+							return;
+
+						await execution.RunAsync(ctx, ct);
+					}, ct);
+				}
 
 				settlement.Finalize(ctx, null);
 			}

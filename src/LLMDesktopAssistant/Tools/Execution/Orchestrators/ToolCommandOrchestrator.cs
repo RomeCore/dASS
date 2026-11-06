@@ -16,6 +16,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	public sealed class ToolCommandOrchestrator(
 		IToolInitializationService initialization,
 		IToolStreamingService streaming,
+		IToolPreHookExecutionService preHook,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
 		IToolPreviewService preview,
@@ -33,15 +34,19 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 			{
 				initialization.Initialize(ctx, ref ct);
 				await streaming.RunAsync(ctx, StreamingMode.Once, ct);
-				validation.Validate(ctx);
 
-				await synchronization.RunAsync(ctx, async () =>
+				if (await preHook.RunAsync(ctx, ct))
 				{
-					if (!await preview.RunAsync(ctx, ct))
-						return;
+					validation.Validate(ctx);
 
-					await execution.RunAsync(ctx, ct);
-				}, ct);
+					await synchronization.RunAsync(ctx, async () =>
+					{
+						if (!await preview.RunAsync(ctx, ct))
+							return;
+
+						await execution.RunAsync(ctx, ct);
+					}, ct);
+				}
 
 				settlement.Finalize(ctx, null);
 			}

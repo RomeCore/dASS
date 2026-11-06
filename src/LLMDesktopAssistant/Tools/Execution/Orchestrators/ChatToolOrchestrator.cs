@@ -17,6 +17,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 	public sealed class ChatToolOrchestrator(
 		IToolInitializationService initialization,
 		IToolStreamingService streaming,
+		IToolPreHookExecutionService preHook,
 		IToolValidationService validation,
 		IToolSynchronizationService synchronization,
 		IToolPreviewService preview,
@@ -36,20 +37,24 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 			{
 				initialization.Initialize(ctx, ref ct);
 				await streaming.RunAsync(ctx, StreamingMode.Cyclic, ct);
-				validation.Validate(ctx);
 
-				await synchronization.RunAsync(ctx, async () =>
+				if (await preHook.RunAsync(ctx, ct))
 				{
-					if (!await preview.RunAsync(ctx, ct))
-						return;
+					validation.Validate(ctx);
 
-					await policy.EvaluateAsync(ctx, ct);
+					await synchronization.RunAsync(ctx, async () =>
+					{
+						if (!await preview.RunAsync(ctx, ct))
+							return;
 
-					if (!await confirmation.ConfirmAsync(ctx, ct))
-						return;
+						await policy.EvaluateAsync(ctx, ct);
 
-					await execution.RunAsync(ctx, ct);
-				}, ct);
+						if (!await confirmation.ConfirmAsync(ctx, ct))
+							return;
+
+						await execution.RunAsync(ctx, ct);
+					}, ct);
+				}
 
 				settlement.Finalize(ctx, null);
 			}
