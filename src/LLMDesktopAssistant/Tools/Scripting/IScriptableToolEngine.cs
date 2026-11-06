@@ -13,12 +13,6 @@ namespace LLMDesktopAssistant.Tools.Scripting
 	public interface IScriptableToolEngine : IScriptableAddonEngine
 	{
 		/// <summary>
-		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
-		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
-		/// </summary>
-		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
-
-		/// <summary>
 		/// Creates an executor function for the given tool.
 		/// The executor is invoked when the LLM calls the tool.
 		/// </summary>

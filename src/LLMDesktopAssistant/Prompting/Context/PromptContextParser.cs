@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and execution.</param>
 		public PromptContextParser(IEnumerable<IScriptablePromptContextEngine> engines)
-			: base(engines, engine => engine.Descriptors)
+			: base(engines)
 		{
 		}
 

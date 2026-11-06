@@ -22,13 +22,11 @@ namespace LLMDesktopAssistant.Scripting
 		/// Builds the extension table from the registered engines.
 		/// </summary>
 		/// <param name="engines">The engines of one kind.</param>
-		/// <param name="descriptors">Reads the descriptors of an engine.</param>
-		public ScriptEngineResolver(IEnumerable<TEngine> engines,
-			Func<TEngine, IReadOnlyList<IScriptEngineDescriptor>> descriptors)
+		public ScriptEngineResolver(IEnumerable<TEngine> engines)
 		{
 			foreach (var engine in engines)
 			{
-				foreach (var descriptor in descriptors(engine))
+				foreach (var descriptor in engine.Descriptors)
 				{
 					foreach (var extension in descriptor.Extensions)
 					{

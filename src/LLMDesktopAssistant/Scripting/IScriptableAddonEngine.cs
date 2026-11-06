@@ -5,5 +5,10 @@ namespace LLMDesktopAssistant.Scripting
 	/// </summary>
 	public interface IScriptableAddonEngine
 	{
+		/// <summary>
+		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
+		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
+		/// </summary>
+		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
 	}
 }

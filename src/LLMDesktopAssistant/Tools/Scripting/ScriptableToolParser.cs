@@ -28,13 +28,11 @@
 //      Utils/MetaToolHumanizedEnumNames.cs · Utils/Directories.cs (Metatools folder)
 // ══════════════════════════════════════════════════════════════════════════════════════
 
-using System.Collections.Immutable;
 using System.Text;
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
-using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
@@ -62,7 +60,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
 		public ScriptableToolParser(IEnumerable<IScriptableToolEngine> engines)
-			: base(engines, engine => engine.Descriptors)
+			: base(engines)
 		{
 		}
 

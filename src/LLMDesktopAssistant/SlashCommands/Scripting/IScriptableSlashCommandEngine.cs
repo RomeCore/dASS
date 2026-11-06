@@ -11,12 +11,6 @@ namespace LLMDesktopAssistant.SlashCommands.Scripting
 	public interface IScriptableSlashCommandEngine : IScriptableAddonEngine
 	{
 		/// <summary>
-		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
-		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
-		/// </summary>
-		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
-
-		/// <summary>
 		/// Builds the executor that runs the command's body.
 		/// </summary>
 		/// <param name="command">The command to build the executor for.</param>

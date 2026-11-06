@@ -475,10 +475,10 @@ namespace LLMDesktopAssistant.Addons.Parsers
 		/// Initializes a new instance of the <see cref="FrontmatterBasedAddonParser{TAddon, TChange, TEngine}"/> class.
 		/// </summary>
 		/// <param name="engines">The engines of the kind.</param>
-		/// <param name="descriptors">Reads the descriptors of one engine.</param>
-		protected FrontmatterBasedAddonParser(IEnumerable<TEngine> engines,
-			Func<TEngine, IReadOnlyList<IScriptEngineDescriptor>> descriptors)
-			=> Engines = new ScriptEngineResolver<TEngine>(engines, descriptors);
+		protected FrontmatterBasedAddonParser(IEnumerable<TEngine> engines)
+		{
+			Engines = new ScriptEngineResolver<TEngine>(engines);
+		}
 
 		/// <summary>
 		/// The extension table of the kind's engines.

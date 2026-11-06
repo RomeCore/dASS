@@ -11,12 +11,6 @@ namespace LLMDesktopAssistant.Prompting.Context.Scripting
 	public interface IScriptablePromptContextEngine : IScriptableAddonEngine
 	{
 		/// <summary>
-		/// The languages this engine serves: extensions, frontmatter syntax and capabilities, one descriptor per
-		/// language. A multi-language adapter answers with the union; a single-language engine answers with one item.
-		/// </summary>
-		IReadOnlyList<IScriptEngineDescriptor> Descriptors { get; }
-
-		/// <summary>
 		/// Builds the provider that runs this context, choosing the live-tail or the supersede behaviour from
 		/// <see cref="PromptContextInfo.Kind"/>.
 		/// </summary>

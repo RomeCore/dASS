@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 		/// <summary>Initializes a new instance of the <see cref="SlashCommandParser"/> class.</summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
 		public SlashCommandParser(IEnumerable<IScriptableSlashCommandEngine> engines)
-			: base(engines, engine => engine.Descriptors)
+			: base(engines)
 		{
 		}
 
