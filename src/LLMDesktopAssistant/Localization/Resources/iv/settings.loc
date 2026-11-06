@@ -61,8 +61,8 @@ agent.read_permissions: Read permissions
 agent.read_permissions.hint: Controls what types of messages and content this agent can read in the chat.
 agent.remove: Remove agent
 agent.skills.injection_mode: Injection
-agent.skills.skill_list: Skill Overrides
-agent.skills.skill_list.hint: Override skill settings for this agent. Disabled skills are excluded from the prompt. Toggle injection mode to include full skill body in the system prompt.
+agent.skills.settings: Skills settings
+agent.skills.settings.hint: Override skill settings for this agent. Disabled skills are excluded from the prompt. Toggle injection mode to include full skill body in the system prompt.
 agent.tools.behaviour_policy: Behaviour policy
 agents: Agents
 api.add: Add API Key
@@ -242,23 +242,21 @@ scope.agent: Agent profile
 scope.application: Application
 scope.profile: Chat profile
 
-scripts.available: Available Scripts
 scripts.available.hint: Scripts are discovered in addon packs and additional sources. Disabled scripts are not loaded into the Lua environment of the chat.
 scripts.empty: No scripts found. Configure the addon sources.
 scripts.enabled_by_default: Enable unchanged scripts by default
 scripts.enabled_by_default.hint: When enabled, scripts without an explicit override are enabled by default. Uncheck to disable all unchanged scripts.
 scripts.refresh: Refresh scripts list
 scripts.search.placeholder: Search by name, description or tags...
-scripts.set: Script set
+scripts.settings: Scripts settings
 
-commands.available: Available commands
 commands.available.hint: Slash commands are user-typed and used to manually execute scripts, skills and launch sub-agents.
 commands.empty: No commands found
 commands.enabled: Enable slash commands
 commands.enabled.hint: When disabled, a slash command will not be recognized and will be treated as a regular message.
 commands.refresh: Refresh commands list
 commands.search.placeholder: Search by name, description or tags...
-commands.set: Command set
+commands.settings: Commands settings
 
 hooks.available.hint: Hooks are scripts that run on chat and tool events. They are discovered in addon packs and additional sources; only the enabled hooks of the effective hook set are dispatched.
 hooks.empty: No hooks found. Configure the addon sources.
@@ -368,8 +366,8 @@ user.profile_image.hint: Upload a profile image for the user. PNG and JPG suppor
 user.select_image: Choose Image...
 user.select_image.title: Select user profile image
 chat.sub_agents: Sub-Agents
-agent.sub_agents.sub_agent_list: Sub-Agent Overrides
-agent.sub_agents.sub_agent_list.hint: Override sub-agent settings for this agent. Disabled sub-agents cannot be called. The model can be overridden per sub-agent.
+agent.sub_agents.settings: Sub-agents settings
+agent.sub_agents.settings.hint: Override sub-agent settings for this agent. Disabled sub-agents cannot be called. The model can be overridden per sub-agent.
 sub_agents.enable: Enable sub-agents
 sub_agents.available: Available Sub-Agents
 sub_agents.available.hint: Sub-agents are loaded from the user profile, working directories and additional sources. Expand a card to see details.
@@ -474,7 +472,7 @@ agent.identity.named_agent: Named agent
 
 // Prompt contexts (the sections the system prompt is assembled from)
 
-prompt_contexts.available: Available prompt contexts
+prompt_contexts.available: Available Prompt Contexts
 prompt_contexts.available.hint: The prompt contexts are the sections the system prompt of an agent is assembled from. Fixed contexts are always enabled; the modifiable ones can be switched on and off per agent.
 prompt_contexts.refresh: Refresh the list
 prompt_contexts.search.placeholder: Search prompt contexts...

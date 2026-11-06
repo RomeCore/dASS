@@ -264,11 +264,6 @@
 
 		</StackPanel>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"/>
-
 		<CheckBox IsChecked="{Binding EffectiveToolsetConfiguration.EnabledByDefault, Mode=TwoWay}"
 							Content="{loc:Loc toolset.tools_enabled_by_default}"/>
 

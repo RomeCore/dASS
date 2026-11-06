@@ -50,9 +50,6 @@
 		<!-- ============================================================ -->
 		<!-- BEHAVIOUR POLICY -->
 		<!-- ============================================================ -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"/>
 
 		<Grid ColumnDefinitions="*,Auto">
 

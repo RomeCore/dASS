@@ -164,6 +164,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Settings.Agents
 				if (EffectiveToolset.UseCustomToolset != value)
 				{
 					EffectiveToolset.UseCustomToolset = value;
+					RaisePropertyChanged(nameof(UseCustomToolset));
 					RaisePropertyChanged(nameof(EffectiveToolsetConfiguration));
 					RaisePropertyChanged(nameof(DefaultApprovalLevel));
 					List.Update();

@@ -14,36 +14,19 @@
 
 	<StackPanel Margin="8" Spacing="8">
 
-		<!-- Available scripts header -->
-		<Grid ColumnDefinitions="*,Auto">
+		<!-- Scriptset selection -->
+		<Grid ColumnDefinitions="*,Auto,Auto">
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.scripts.available}"
+					   Text="{loc:Loc settings.scripts.settings}"
 					   FontSize="{DynamicResource FontSizeL}"
 					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
-
-			<Button Grid.Column="1"
-					Command="{Binding List.RefreshCommand}"
-					Classes="IconButton"
-					ToolTip.Tip="{loc:Loc settings.scripts.refresh}">
-				<ico:VisualIcon Kind="Refresh"/>
-			</Button>
-		</Grid>
-
-		<TextBlock Text="{loc:Loc settings.scripts.available.hint}"
-				   Opacity="0.6"
-				   TextWrapping="Wrap"/>
-
-		<!-- Scriptset selection -->
-		<Grid ColumnDefinitions="*,Auto">
-			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.scripts.set}"
 					   VerticalAlignment="Center"/>
 
 			<ComboBox Grid.Column="1"
 					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
 					  SelectedItem="{Binding SelectedScriptsetInheritance}"
 					  VerticalAlignment="Center"
+					  Margin="0,0,8,0"
 					  MinWidth="120">
 
 				<ComboBox.ItemTemplate>
@@ -53,7 +36,18 @@
 				</ComboBox.ItemTemplate>
 
 			</ComboBox>
+			
+			<Button Grid.Column="2"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.scripts.refresh}">
+				<ico:VisualIcon Kind="Refresh"/>
+			</Button>
 		</Grid>
+		
+		<TextBlock Text="{loc:Loc settings.scripts.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
 
 		<CheckBox Content="{loc:Loc settings.scripts.enabled_by_default}"
 				  IsChecked="{Binding EffectiveScriptset.EnabledByDefault, Mode=TwoWay}"/>

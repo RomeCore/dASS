@@ -14,26 +14,6 @@
 
 	<StackPanel Margin="8" Spacing="8">
 
-		<!-- Available commands header -->
-		<Grid ColumnDefinitions="*,Auto">
-			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.commands.available}"
-					   FontSize="{DynamicResource FontSizeL}"
-					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
-
-			<Button Grid.Column="1"
-					Command="{Binding List.RefreshCommand}"
-					Classes="IconButton"
-					ToolTip.Tip="{loc:Loc settings.commands.refresh}">
-				<ico:VisualIcon Kind="Refresh"/>
-			</Button>
-		</Grid>
-
-		<TextBlock Text="{loc:Loc settings.commands.available.hint}"
-				   Opacity="0.6"
-				   TextWrapping="Wrap"/>
-
 		<!-- Master gate -->
 		<CheckBox Content="{loc:Loc settings.commands.enabled}"
 				  IsChecked="{Binding CommandSettings.AddonsCategoryEnabled, Mode=TwoWay}"/>
@@ -43,17 +23,24 @@
 				   FontSize="11"
 				   Margin="24,0,0,4"
 				   TextWrapping="Wrap"/>
-
+		
+		<Rectangle Height="1"
+				   Fill="{DynamicResource DefaultForeground}"
+				   Opacity="0.2"/>
+		
 		<!-- Command set selection -->
-		<Grid ColumnDefinitions="*,Auto">
+		<Grid ColumnDefinitions="*,Auto,Auto">
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.commands.set}"
+					   Text="{loc:Loc settings.commands.settings}"
+					   FontSize="{DynamicResource FontSizeL}"
+					   FontWeight="Bold"
 					   VerticalAlignment="Center"/>
 
 			<ComboBox Grid.Column="1"
 					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
 					  SelectedItem="{Binding SelectedCommandsSetInheritance}"
 					  VerticalAlignment="Center"
+					  Margin="0,0,8,0"
 					  MinWidth="120">
 
 				<ComboBox.ItemTemplate>
@@ -63,7 +50,18 @@
 				</ComboBox.ItemTemplate>
 
 			</ComboBox>
+			
+			<Button Grid.Column="2"
+					Command="{Binding List.RefreshCommand}"
+					Classes="IconButton"
+					ToolTip.Tip="{loc:Loc settings.commands.refresh}">
+				<ico:VisualIcon Kind="Refresh"/>
+			</Button>
 		</Grid>
+		
+		<TextBlock Text="{loc:Loc settings.commands.available.hint}"
+				   Opacity="0.6"
+				   TextWrapping="Wrap"/>
 
 		<!-- Search + list -->
 		<cards:AddonListView DataContext="{Binding List}"/>

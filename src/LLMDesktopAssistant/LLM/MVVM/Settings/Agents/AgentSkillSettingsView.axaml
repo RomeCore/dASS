@@ -19,12 +19,11 @@
 
 		<Rectangle Height="1"
 				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   Margin="0,10"/>
+				   Opacity="0.2"/>
 
 		<Grid ColumnDefinitions="*,Auto">
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.agent.skills.skill_list}"
+					   Text="{loc:Loc settings.agent.skills.settings}"
 					   FontSize="{DynamicResource FontSizeL}"
 					   FontWeight="Bold"
 					   VerticalAlignment="Center"/>
@@ -33,6 +32,7 @@
 					  ItemsSource="{x:Static settings:InheritanceLevelItem.AllAgent}"
 					  SelectedItem="{Binding SelectedSkillChangesInheritance}"
 					  VerticalAlignment="Center"
+					  Margin="0,0,8,0"
 					  MinWidth="120">
 
 				<ComboBox.ItemTemplate>
@@ -44,13 +44,9 @@
 			</ComboBox>
 		</Grid>
 
-		<TextBlock Text="{loc:Loc settings.agent.skills.skill_list.hint}"
+		<TextBlock Text="{loc:Loc settings.agent.skills.settings.hint}"
 				   Opacity="0.6"
 				   TextWrapping="Wrap"/>
-
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"/>
 
 		<CheckBox IsChecked="{Binding EffectiveSkillset.EnabledByDefault, Mode=TwoWay}"
 				  Content="{loc:Loc skill.skills_enabled_by_default}"/>
