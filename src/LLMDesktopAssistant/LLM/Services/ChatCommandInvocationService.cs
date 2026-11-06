@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
@@ -62,6 +63,8 @@ namespace LLMDesktopAssistant.LLM.Services
 				GenerateIntent = generateIntent,
 				Services = chat.Services
 			};
+
+			LuaExecutionContext.Set(command: context);
 
 			SlashCommandExecutionResult result;
 			try

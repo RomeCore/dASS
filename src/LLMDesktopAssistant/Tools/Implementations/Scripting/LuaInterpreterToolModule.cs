@@ -113,16 +113,14 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 
 		private async Task<ToolExecutionResult> Execute(
 			string lua,
-			IToolExecutionContext context,
+			IToolExecutionContext ctx,
 			bool isolatedExecution = true,
 			CancellationToken cancellationToken = default)
 		{
-			context.Call.SetStatus(MaterialIconKind.LanguageLua, null);
-			var result = new LuaToolResult(context.Call);
-
-			// The execution context no longer lives in the globals - AsyncLocal carries it correctly for
-			// both isolated and non-isolated runs.
-			LuaExecutionContext.SetTool(context, result);
+			ctx.Call.SetStatus(MaterialIconKind.LanguageLua, null);
+			var result = LuaExecutionContext.ToolResult;
+			if (result is null)
+				LuaExecutionContext.SetTool(ctx, result = new LuaToolResult(ctx.Call));
 
 			try
 			{

@@ -7,12 +7,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// The ambient execution context of the Lua script currently running, carried through
 	/// <see cref="AsyncLocal{T}"/> rather than as Lua globals.
 	/// </summary>
-	/// <remarks>
-	/// The context used to be injected into <c>_G</c> as <c>_dass_tool_ctx</c>/<c>_dass_tool_result</c>. That made
-	/// non-isolated execution (running against the shared, persistent Lua state) impossible without stomping the
-	/// globals of a concurrent run. An <see cref="AsyncLocal{T}"/> is scoped to the current async flow, so the context
-	/// is correct per execution regardless of whether globals are cloned.
-	/// </remarks>
 	public static class LuaExecutionContext
 	{
 		private static readonly AsyncLocal<Ambient?> _current = new();
@@ -24,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public static SlashCommandExecutionContext? Command => _current.Value?.Command;
 
 		/// <summary>The tool result of the current tool execution, or <see langword="null"/>.</summary>
-		internal static LuaToolResult? Result => _current.Value?.Result;
+		internal static LuaToolResult? ToolResult => _current.Value?.Result;
 
 		/// <summary>
 		/// Sets the ambient execution context for the current async flow and everything it awaits.
@@ -49,7 +43,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		private static void SetAmbient(IToolExecutionContext? tool, SlashCommandExecutionContext? command,
 			LuaToolResult? result)
-			=> _current.Value = new Ambient(tool, command, result);
+			=> _current.Value = new Ambient(tool ?? Tool, command ?? Command, result ?? ToolResult);
 
 		private sealed record Ambient(IToolExecutionContext? Tool, SlashCommandExecutionContext? Command,
 			LuaToolResult? Result);

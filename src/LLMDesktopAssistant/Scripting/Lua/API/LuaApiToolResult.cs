@@ -196,7 +196,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static LuaToolResult? GetResult(LuaCallingContext ctx)
 		{
-			return LuaExecutionContext.Result;
+			return LuaExecutionContext.ToolResult;
 		}
 
 		private LuaTuple Available(LuaCallingContext ctx, LuaValue[] args)

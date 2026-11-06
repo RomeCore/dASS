@@ -1,7 +1,9 @@
+using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Orchestrators;
+using ModelContextProtocol.Protocol;
 
 namespace LLMDesktopAssistant.Tools.Execution.Dispatch
 {
@@ -38,6 +40,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Dispatch
 				EffectiveBehaviours = request.EffectiveBehaviours,
 				ArgumentStream = request.ArgumentStream
 			});
+
+			LuaExecutionContext.SetTool(ctx, new LuaToolResult(ctx.Call));
 
 			return request.Source switch
 			{
