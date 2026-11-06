@@ -50,6 +50,17 @@ namespace LLMDesktopAssistant.Hooks
 			set => SetProperty(ref field, value);
 		}
 
+		/// <summary>
+		/// The time the dispatcher gives this hook to answer, in milliseconds. Null means the dispatcher's
+		/// default, and the dispatcher caps a declared value at its own ceiling. The timeout is ignored for
+		/// <see cref="HookExecutionFlow.FireAndForget"/> hooks, which nobody waits for.
+		/// </summary>
+		public int? TimeoutMs
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
+
 		[System.Text.Json.Serialization.JsonIgnore]
 		[LiteDB.BsonIgnore]
 		[YamlDotNet.Serialization.YamlIgnore]
@@ -62,6 +73,9 @@ namespace LLMDesktopAssistant.Hooks
 		protected override void ValidatePropertiesCore(AppendOnlyList<string> errors)
 		{
 			base.ValidatePropertiesCore(errors);
+
+			if (TimeoutMs is <= 0)
+				errors.Add("The timeout must be a positive number of milliseconds.");
 
 			if (Executor is null)
 				errors.Add("Executor is required.");

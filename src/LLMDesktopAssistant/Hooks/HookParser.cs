@@ -34,6 +34,8 @@ namespace LLMDesktopAssistant.Hooks
 				addon.HookName = hookName;
 			if (frontmatter.TryRequest("execution-flow", ref diagnostic, out HookExecutionFlow executionFlow))
 				addon.ExecutionFlow = executionFlow;
+			if (frontmatter.TryRequest("timeout", ref diagnostic, out int timeoutMs))
+				addon.TimeoutMs = timeoutMs;
 
 			addon.Executor = engine.CreateExecutor(addon);
 		}

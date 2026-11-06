@@ -11,6 +11,18 @@ namespace LLMDesktopAssistant.Hooks
 		IServiceProvider services
 	) : IHookDispatcher
 	{
+		/// <summary>
+		/// The time an awaited hook gets when it declares no timeout of its own, in milliseconds.
+		/// </summary>
+		private const int defaultTimeoutMs = 2000;
+
+		/// <summary>
+		/// The ceiling of an awaited hook's timeout, in milliseconds: a hook may ask for less, never for
+		/// more, so an addon cannot stall the pipeline it is hooked into.
+		/// </summary>
+		private const int maxTimeoutMs = 10000;
+
+		/// <inheritdoc/>
 		public async Task<INodeValue?> ExecuteHooksAsync(INodeValue? payload,
 			string hookType, string? hookName, HookExecutionFlow defaultFlow,
 			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default)
@@ -35,8 +47,7 @@ namespace LLMDesktopAssistant.Hooks
 						break;
 
 					case HookExecutionFlow.Parallel:
-						parallelHookTasks.Add(WrapTask(hook.Executor.ExecuteAsync(services, payload, null,
-							hookType, hookName, cancellationToken), hook, hookType, hookName));
+						parallelHookTasks.Add(RunBoundedAsync(hook, payload, null, hookType, hookName, cancellationToken));
 						break;
 
 					case HookExecutionFlow.Sequential:
@@ -48,19 +59,48 @@ namespace LLMDesktopAssistant.Hooks
 			// Only sequential hooks can provide data to the caller.
 			INodeValue? previousHookValue = null;
 			foreach (var hook in sequentialHooks.OrderBy(h => h.Order))
-				previousHookValue = await WrapTask(hook.Executor.ExecuteAsync(services, payload, previousHookValue,
-					hookType, hookName, cancellationToken), hook, hookType, hookName);
+				previousHookValue = await RunBoundedAsync(hook, payload, previousHookValue,
+					hookType, hookName, cancellationToken);
 			await Task.WhenAll(parallelHookTasks);
 
 			return previousHookValue;
 		}
 
-		private static async Task<INodeValue?> WrapTask(Task<INodeValue?> task, HookInfo hook,
-			string hookType, string? hookName)
+		/// <summary>
+		/// Runs one hook the caller waits on, bounded by the hook's declared timeout or the dispatcher
+		/// default, whichever applies.
+		/// </summary>
+		/// <remarks>
+		/// A hook that exceeds its bound is cancelled and treated as having no opinion: a hung script must
+		/// not hold the pipeline, and failing open is the declared policy. Cancellation of the run itself
+		/// still propagates.
+		/// </remarks>
+		/// <param name="hook">The hook to run.</param>
+		/// <param name="payload">The hook input.</param>
+		/// <param name="previous">The result of the previous hook in the chain, or <see langword="null"/>.</param>
+		/// <param name="hookType">The event being fired.</param>
+		/// <param name="hookName">The identity inside the event, or <see langword="null"/>.</param>
+		/// <param name="cancellationToken">Cancellation of the run.</param>
+		/// <returns>The hook's value, or <see langword="null"/> when it failed or timed out.</returns>
+		private async Task<INodeValue?> RunBoundedAsync(HookInfo hook, INodeValue? payload, INodeValue? previous,
+			string hookType, string? hookName, CancellationToken cancellationToken)
 		{
+			var timeout = GetTimeout(hook);
+			using var timeoutSource = new CancellationTokenSource(timeout);
+			using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
+				cancellationToken, timeoutSource.Token);
+
 			try
 			{
-				return await task;
+				return await hook.Executor.ExecuteAsync(services, payload, previous,
+					hookType, hookName, linkedSource.Token);
+			}
+			catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested &&
+				!cancellationToken.IsCancellationRequested)
+			{
+				Log.Warning("Hook {HookName} of type {HookType} on key {HookKey} did not finish in {Timeout} ms " +
+					"and was cancelled.", hook.Name, hookType, hookName, (long)timeout.TotalMilliseconds);
+				return null;
 			}
 			catch (OperationCanceledException)
 			{
@@ -73,5 +113,15 @@ namespace LLMDesktopAssistant.Hooks
 				return null;
 			}
 		}
+
+		/// <summary>
+		/// Gets the bound of one awaited hook: its declared timeout capped by the dispatcher ceiling, or the
+		/// dispatcher default when the hook declares none.
+		/// </summary>
+		/// <param name="hook">The hook being dispatched.</param>
+		/// <returns>The time the hook is allowed to run.</returns>
+		private static TimeSpan GetTimeout(HookInfo hook) => hook.TimeoutMs is { } declared
+			? TimeSpan.FromMilliseconds(Math.Clamp(declared, 1, maxTimeoutMs))
+			: TimeSpan.FromMilliseconds(defaultTimeoutMs);
 	}
 }
