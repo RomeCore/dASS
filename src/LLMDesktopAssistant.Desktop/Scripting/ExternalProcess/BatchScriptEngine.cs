@@ -21,9 +21,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
 		/// <inheritdoc/>
-		public override ScriptLanguageType Language => ScriptLanguageType.Batch;
-
-		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new BatchScriptEngineDescriptor();
 
 		/// <inheritdoc/>

@@ -89,7 +89,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// A live-tail context in any out-of-process language: the body runs on every prompt build and its text is
 	/// injected into the current request only.
 	/// </summary>
-	public sealed class ExternalProcessLiveTailScriptContextProvider(PromptContextInfo addon,
+	public class ExternalProcessLiveTailScriptContextProvider(PromptContextInfo addon,
 		ExternalProcessEngineRegistry registry)
 		: ExternalProcessScriptContextProviderBase(addon, registry), IPromptLiveTailContextProvider
 	{
@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// A supersede context in any out-of-process language: the body receives the previously injected text as
 	/// <c>previous</c> and produces a stamp only when the rendered text actually changed.
 	/// </summary>
-	public sealed class ExternalProcessSupersedeScriptContextProvider(PromptContextInfo addon,
+	public class ExternalProcessSupersedeScriptContextProvider(PromptContextInfo addon,
 		ExternalProcessEngineRegistry registry)
 		: ExternalProcessScriptContextProviderBase(addon, registry), IPromptSupersedeContextProvider
 	{

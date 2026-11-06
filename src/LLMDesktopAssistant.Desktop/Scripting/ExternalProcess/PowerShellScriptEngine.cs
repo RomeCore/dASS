@@ -21,9 +21,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		IPowerShellInterpreterLocator interpreterLocator) : ExternalProcessScriptEngineBase(processLauncher)
 	{
 		/// <inheritdoc/>
-		public override ScriptLanguageType Language => ScriptLanguageType.PowerShell;
-
-		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new PowerShellScriptEngineDescriptor();
 
 		/// <inheritdoc/>

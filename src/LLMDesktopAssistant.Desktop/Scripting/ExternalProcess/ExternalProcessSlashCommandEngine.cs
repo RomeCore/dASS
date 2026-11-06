@@ -36,7 +36,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// <summary>
 	/// Runs a command body as an external process and maps its result onto the message the command produced.
 	/// </summary>
-	internal sealed class ExternalProcessCommandExecutor(SlashCommandInfo command,
+	public class ExternalProcessCommandExecutor(SlashCommandInfo command,
 		SlashCommandArgumentSchema? argumentSchema, ExternalProcessEngineRegistry registry) : ISlashCommandExecutor
 	{
 		private static readonly TimeSpan _timeout = TimeSpan.FromMinutes(10);

@@ -18,9 +18,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
 		/// <inheritdoc/>
-		public override ScriptLanguageType Language => ScriptLanguageType.Python;
-
-		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new PythonScriptEngineDescriptor();
 
 		/// <inheritdoc/>

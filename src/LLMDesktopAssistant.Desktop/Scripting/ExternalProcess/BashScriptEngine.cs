@@ -20,9 +20,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
 		/// <inheritdoc/>
-		public override ScriptLanguageType Language => ScriptLanguageType.Bash;
-
-		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new BashScriptEngineDescriptor();
 
 		/// <inheritdoc/>

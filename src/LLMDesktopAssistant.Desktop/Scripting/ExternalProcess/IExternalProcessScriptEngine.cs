@@ -15,11 +15,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public interface IExternalProcessScriptEngine
 	{
 		/// <summary>
-		/// The language this engine handles.
-		/// </summary>
-		ScriptLanguageType Language { get; }
-
-		/// <summary>
 		/// The extensions, frontmatter syntax and capabilities of the language.
 		/// </summary>
 		IScriptEngineDescriptor Descriptor { get; }

@@ -31,9 +31,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			=> _processLauncher = processLauncher;
 
 		/// <inheritdoc/>
-		public abstract ScriptLanguageType Language { get; }
-
-		/// <inheritdoc/>
 		public abstract IScriptEngineDescriptor Descriptor { get; }
 
 		/// <summary>The encoding the runtime expects for a script file (a BOM matters for Windows PowerShell 5.1).</summary>
@@ -66,7 +63,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var inputMode = ResolveInputMode(parameters.InputMode);
 			if (inputMode is null)
 				return Failure(ExternalProcessStatus.InvalidOutput,
-					$"'{Language}' cannot pass a structured value: the addon must declare 'json-input: true'.");
+					$"'{Descriptor.Language}' cannot pass a structured value: the addon must declare 'json-input: true'.");
 
 			string? scriptPath = null;
 			var launched = false;
@@ -83,7 +80,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Language, parameters.ProcessName);
+					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Descriptor.Language, parameters.ProcessName);
 					return Failure(ExternalProcessStatus.ProcessFailed, ex.Message);
 				}
 
@@ -100,9 +97,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Failed to launch a {Language} script ({Context}).", Language, parameters.ProcessName);
+					Log.Warning(ex, "Failed to launch a {Language} script ({Context}).", Descriptor.Language, parameters.ProcessName);
 					return Failure(ExternalProcessStatus.ProcessFailed,
-						$"Failed to launch the '{Language}' script: {ex.Message}");
+						$"Failed to launch the '{Descriptor.Language}' script: {ex.Message}");
 				}
 
 				int exitCode;
@@ -191,7 +188,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				{
 					Status = ExternalProcessStatus.InvalidOutput,
 					Output = string.Empty,
-					Error = $"'{Language}' cannot pass a structured value: the addon must declare 'json-input: true'."
+					Error = $"'{Descriptor.Language}' cannot pass a structured value: the addon must declare 'json-input: true'."
 				};
 			}
 
@@ -208,7 +205,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Language, parameters.ProcessName);
+					Log.Warning(ex, "Failed to build a {Language} script ({Context}).", Descriptor.Language, parameters.ProcessName);
 					return new ExternalProcessScriptTerminalResult
 					{
 						Status = ExternalProcessStatus.ProcessFailed,
@@ -230,12 +227,12 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Failed to launch a {Language} terminal ({Context}).", Language, parameters.ProcessName);
+					Log.Warning(ex, "Failed to launch a {Language} terminal ({Context}).", Descriptor.Language, parameters.ProcessName);
 					return new ExternalProcessScriptTerminalResult
 					{
 						Status = ExternalProcessStatus.ProcessFailed,
 						Output = string.Empty,
-						Error = $"Failed to launch the '{Language}' script: {ex.Message}"
+						Error = $"Failed to launch the '{Descriptor.Language}' script: {ex.Message}"
 					};
 				}
 
