@@ -99,6 +99,7 @@ commands.source.tool: Инструмент
 hooks.type: Тип хука (glob-шаблон)
 hooks.name: Фильтр имени хука (glob-шаблон)
 hooks.flow: Порядок выполнения
+hooks.flow.default: В зависимости от вызывающего
 hooks.flow.fireandforget: Без ожидания
 hooks.flow.parallel: Параллельно
 hooks.flow.sequential: Последовательно

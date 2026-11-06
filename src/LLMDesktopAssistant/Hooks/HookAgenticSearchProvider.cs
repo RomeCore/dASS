@@ -26,7 +26,10 @@ namespace LLMDesktopAssistant.Hooks
 		{
 			AddonSearchFormatting.AppendItem(builder, hook.Name, hook.Description);
 
-			builder.Append("  - execution flow: ").AppendLine(KebabEnumNames<HookExecutionFlow>.Serialize(hook.ExecutionFlow));
+			if (hook.ExecutionFlow.HasValue)
+				builder.Append("  - execution flow: ").AppendLine(KebabEnumNames<HookExecutionFlow>.Serialize(hook.ExecutionFlow.Value));
+			else
+				builder.AppendLine("  - execution flow: caller decides");
 
 			if (!detailed)
 				return;

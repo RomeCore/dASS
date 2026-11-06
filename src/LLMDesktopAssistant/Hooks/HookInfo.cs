@@ -42,12 +42,13 @@ namespace LLMDesktopAssistant.Hooks
 
 		/// <summary>
 		/// The execution flow of the hook, which determines how the hook will be dispatched.
+		/// Null means the caller's default execution flow.
 		/// </summary>
-		public HookExecutionFlow ExecutionFlow
+		public HookExecutionFlow? ExecutionFlow
 		{
 			get;
 			set => SetProperty(ref field, value);
-		} = HookExecutionFlow.FireAndForget;
+		}
 
 		[System.Text.Json.Serialization.JsonIgnore]
 		[LiteDB.BsonIgnore]

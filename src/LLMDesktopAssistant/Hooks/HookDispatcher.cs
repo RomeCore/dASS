@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.Hooks
 	) : IHookDispatcher
 	{
 		public async Task<INodeValue?> ExecuteHooksAsync(INodeValue? payload,
-			string hookType, string? hookName, CancellationToken cancellationToken = default)
+			string hookType, string? hookName, HookExecutionFlow defaultFlow, CancellationToken cancellationToken = default)
 		{
 			// Filter hooks based on hookType and hookName
 			var hookSet = hookSetCollector.GetAddonsForChat();
@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Hooks
 
 			foreach (var hook in hooks)
 			{
-				switch (hook.ExecutionFlow)
+				switch (hook.ExecutionFlow ?? defaultFlow)
 				{
 					case HookExecutionFlow.FireAndForget:
 					default:
@@ -34,7 +34,7 @@ namespace LLMDesktopAssistant.Hooks
 						break;
 
 					case HookExecutionFlow.Parallel:
-						parallelHookTasks.Add(WrapTask(hook.Executor.ExecuteAsync(services, payload, null, 
+						parallelHookTasks.Add(WrapTask(hook.Executor.ExecuteAsync(services, payload, null,
 							hookType, hookName, cancellationToken), hook, hookType, hookName));
 						break;
 
@@ -44,6 +44,7 @@ namespace LLMDesktopAssistant.Hooks
 				}
 			}
 
+			// Only sequential hooks can provide data to the caller.
 			INodeValue? previousHookValue = null;
 			foreach (var hook in sequentialHooks.OrderBy(h => h.Order))
 				previousHookValue = await WrapTask(hook.Executor.ExecuteAsync(services, payload, previousHookValue,

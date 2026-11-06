@@ -68,7 +68,7 @@ namespace LLMDesktopAssistant.Hooks.MVVM
 			{
 				Order = order,
 				Icon = GetExecutionFlowIcon(addon.ExecutionFlow),
-				Label = Locale.GetKey($"card.hooks.flow.{addon.ExecutionFlow.ToString().ToLowerInvariant()}"),
+				Label = Locale.GetKey($"card.hooks.flow.{(addon.ExecutionFlow?.ToString() ?? "default").ToLowerInvariant()}"),
 				ToolTip = Locale.GetKey("card.hooks.flow")
 			});
 		}
@@ -84,11 +84,12 @@ namespace LLMDesktopAssistant.Hooks.MVVM
 		/// <summary>
 		/// Gets the icon that hints at how the hook is dispatched relative to the other hooks of the same event.
 		/// </summary>
-		private static VisualIconKind GetExecutionFlowIcon(HookExecutionFlow flow) => flow switch
+		private static VisualIconKind GetExecutionFlowIcon(HookExecutionFlow? flow) => flow switch
 		{
 			HookExecutionFlow.FireAndForget => MaterialIconKind.RocketLaunchOutline,
 			HookExecutionFlow.Parallel => MaterialIconKind.CallSplit,
 			HookExecutionFlow.Sequential => MaterialIconKind.FormatListNumbered,
+			null => MaterialIconKind.ArrowLeftTop,
 			_ => MaterialIconKind.HelpCircle
 		};
 	}
