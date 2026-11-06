@@ -51,9 +51,9 @@ namespace LLMDesktopAssistant.Hooks
 		}
 
 		/// <summary>
-		/// The time the dispatcher gives this hook to answer, in milliseconds. Null means the dispatcher's
-		/// default, and the dispatcher caps a declared value at its own ceiling. The timeout is ignored for
-		/// <see cref="HookExecutionFlow.FireAndForget"/> hooks, which nobody waits for.
+		/// The time the dispatcher gives this hook to run, in milliseconds. Null means the dispatcher's
+		/// default for an awaited hook and no bound at all for a fire-and-forget one. The dispatcher caps a
+		/// declared value at its own ceiling, except for fire-and-forget hooks, which nobody waits for.
 		/// </summary>
 		public int? TimeoutMs
 		{

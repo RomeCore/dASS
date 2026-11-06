@@ -8,9 +8,9 @@ namespace LLMDesktopAssistant.Hooks
 	/// </summary>
 	/// <remarks>
 	/// Every hook the caller waits on is bounded: by its own <see cref="HookInfo.TimeoutMs"/>, capped at the
-	/// dispatcher ceiling, or by the dispatcher default when the hook declares none. A hook that exceeds the
-	/// bound is cancelled and treated as having no opinion. Fire-and-forget hooks are not bounded at all,
-	/// because nobody waits for them.
+	/// dispatcher ceiling, or by the dispatcher default when the hook declares none; a hook that exceeds the
+	/// bound is cancelled and treated as having no opinion. A fire-and-forget hook is bounded only by the
+	/// timeout it declares itself, with no default and no ceiling, because nobody waits for it.
 	/// </remarks>
 	public interface IHookDispatcher
 	{
