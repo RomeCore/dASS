@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Hooks
 		/// Cancellation of the awaited hooks. Fire-and-forget hooks ignore it: nobody waits for them.
 		/// </param>
 		/// <returns>The value of the last sequential hook, or <see langword="null"/>.</returns>
-		Task<INodeValue?> ExecuteHooksAsync(INodeValue? payload,
+		Task<HookExecutionResult> ExecuteHooksAsync(INodeValue? payload,
 			string hookType, string? hookName, HookExecutionFlow defaultFlow,
 			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default);
 	}

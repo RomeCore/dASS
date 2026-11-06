@@ -22,7 +22,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public class ExternalProcessHookExecutor(HookInfo hook,
 		ExternalProcessEngineRegistry registry) : IHookExecutor
 	{
-		public async Task<INodeValue?> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
 			string hookType, string? hookName, CancellationToken cancellationToken = default)
 		{
 			var engine = registry.Resolve(hook.Path ?? throw new InvalidOperationException(
@@ -50,10 +50,16 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			{
 				Log.Debug("Error executing external process script hook {HookName} of type {HookType} on key {HookKey}: {Error}",
 					hook.Name, hookType, hookName, result.Error);
-				return null;
+
+				// Exit code 2 blocks other hooks and produces a blocking message,
+				// so hook callers can interrupt tool calls for example.
+				if (result.ExitCode is 2)
+					return new HookExecutionResult(null, result.Error);
+
+				return new HookExecutionResult(null, null);
 			}
 
-			return result.Json.ToConstNodeValue();
+			return new HookExecutionResult(result.Json.ToConstNodeValue(), null);
 		}
 	}
 }

@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	public class LuaScriptHookExecutor(HookInfo hook) : IHookExecutor
 	{
 		/// <inheritdoc/>
-		public async Task<INodeValue?> ExecuteAsync(IServiceProvider services, INodeValue? payload,
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
 			INodeValue? previous, string hookType, string? hookName, CancellationToken cancellationToken = default)
 		{
 			var luaService = services.GetRequiredService<LuaService>();
@@ -40,10 +40,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			{
 				Log.Debug(ex, "Error executing Lua script hook {HookName} of type {HookType} on key {HookKey}: {Error}",
 					hook.Name, hookType, hookName, ex.Message);
-				return null;
+				return new HookExecutionResult(null, null);
 			}
 
-			return scriptResult.First.ToConstNodeValue(tolerant: true);
+			return new HookExecutionResult(scriptResult.First.ToConstNodeValue(tolerant: true), null);
 		}
 	}
 }
