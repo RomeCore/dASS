@@ -60,8 +60,8 @@ namespace LLMDesktopAssistant.Hooks
 			// Only sequential hooks can provide data to the caller.
 			INodeValue? previousHookValue = null;
 			foreach (var hook in sequentialHooks.OrderBy(h => h.Order))
-				previousHookValue = await RunBoundedAsync(hook, payload, previousHookValue,
-					hookType, hookName, cancellationToken);
+				previousHookValue = (await RunBoundedAsync(hook, payload, previousHookValue,
+					hookType, hookName, cancellationToken)) ?? previousHookValue;
 			await Task.WhenAll(parallelHookTasks);
 
 			return previousHookValue;
