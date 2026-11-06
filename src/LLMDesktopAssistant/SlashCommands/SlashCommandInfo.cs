@@ -105,10 +105,6 @@ namespace LLMDesktopAssistant.SlashCommands
 		/// <summary>
 		/// The executor that runs the command's action. Never <see langword="null"/>.
 		/// </summary>
-		/// <remarks>
-		/// Defaults to <see cref="StubCommandExecutor.Instance"/> until the real executors land (Stage 3); it is a
-		/// runtime service instance, so it is never serialized.
-		/// </remarks>
 		[System.Text.Json.Serialization.JsonIgnore]
 		[LiteDB.BsonIgnore]
 		[YamlDotNet.Serialization.YamlIgnore]
@@ -116,7 +112,7 @@ namespace LLMDesktopAssistant.SlashCommands
 		{
 			get;
 			set => SetProperty(ref field, value);
-		} = StubCommandExecutor.Instance;
+		} = null!;
 
 		protected override void ValidatePropertiesCore(AppendOnlyList<string> errors)
 		{

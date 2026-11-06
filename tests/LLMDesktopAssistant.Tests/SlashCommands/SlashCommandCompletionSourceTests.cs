@@ -52,7 +52,9 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		private static SlashCommandInfo Command(string name, params string[] namespaces) => new()
 		{
 			Name = name,
-			Namespaces = [.. namespaces]
+			Namespaces = [.. namespaces],
+			// Only the token matters here, but the analyzer reads the schema from the executor.
+			Executor = new FakeExecutor(null)
 		};
 
 		private static readonly SlashCommandInfo SkillGrilling = Command("grilling", "skill");

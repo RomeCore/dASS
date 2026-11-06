@@ -48,7 +48,13 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			Executor = new FakeExecutor(new SlashCommandArgumentSchema { RestPositional = Argument("test.rest") })
 		};
 
-		private static readonly SlashCommandInfo AgentGrilling = new() { Name = "grilling", Namespaces = ["agent"] };
+		private static readonly SlashCommandInfo AgentGrilling = new()
+		{
+			Name = "grilling",
+			Namespaces = ["agent"],
+			// Only the token matters here, but the analyzer reads the schema from the executor.
+			Executor = new FakeExecutor(null)
+		};
 
 		/// <summary>A command with one declared positional, so an unterminated quote is a parse error.</summary>
 		private static readonly SlashCommandInfo Plain = new()

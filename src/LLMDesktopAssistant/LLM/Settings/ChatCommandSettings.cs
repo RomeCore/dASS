@@ -11,8 +11,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 	public partial class ChatCommandSettings : ChatSettingsCategoryBase, IAddonCategorySettings
 	{
 		/// <summary>
-		/// Whether slash commands are enabled for this chat. Deliberately chat-local - the master gate is never
-		/// inherited from the application.
+		/// Whether slash commands are enabled for this chat.
 		/// </summary>
 		public bool AddonsCategoryEnabled
 		{
@@ -21,8 +20,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 		} = true;
 
 		/// <summary>
-		/// The per-command overrides (keyed by <see cref="SlashCommands.SlashCommandInfo.Key"/>).
-		/// Inherits the application bag by default.
+		/// The per-command overrides (keyed by <see cref="SlashCommandInfo.Key"/>).
 		/// </summary>
 		[InheritedChatSetting]
 		public SlashCommandSetConfiguration CommandsSet

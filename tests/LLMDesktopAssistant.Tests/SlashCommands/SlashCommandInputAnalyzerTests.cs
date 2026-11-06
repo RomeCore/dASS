@@ -1,5 +1,7 @@
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.SlashCommands;
+using LLMDesktopAssistant.SlashCommands.Arguments;
+using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.SlashCommands.Input;
 
 namespace LLMDesktopAssistant.Tests.SlashCommands
@@ -9,8 +11,16 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 	/// </summary>
 	public class SlashCommandInputAnalyzerTests
 	{
+		private sealed class FakeExecutor : ISlashCommandExecutor
+		{
+			public SlashCommandArgumentSchema? ArgumentSchema => null;
+
+			public Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
+				=> Task.FromResult(SlashCommandExecutionResult.Ok());
+		}
+
 		private static SlashCommandInfo Command(string name, params string[] namespaces) =>
-			new() { Name = name, Namespaces = [.. namespaces] };
+			new() { Name = name, Namespaces = [.. namespaces], Executor = new FakeExecutor() };
 
 		private static readonly SlashCommandInfo Grilling = Command("grilling", "skill");
 		private static readonly SlashCommandInfo[] Commands = [Grilling];
