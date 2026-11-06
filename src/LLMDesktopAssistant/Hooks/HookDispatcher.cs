@@ -12,7 +12,8 @@ namespace LLMDesktopAssistant.Hooks
 	) : IHookDispatcher
 	{
 		public async Task<INodeValue?> ExecuteHooksAsync(INodeValue? payload,
-			string hookType, string? hookName, HookExecutionFlow defaultFlow, CancellationToken cancellationToken = default)
+			string hookType, string? hookName, HookExecutionFlow defaultFlow,
+			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default)
 		{
 			// Filter hooks based on hookType and hookName
 			var hookSet = hookSetCollector.GetAddonsForChat();
@@ -25,7 +26,7 @@ namespace LLMDesktopAssistant.Hooks
 
 			foreach (var hook in hooks)
 			{
-				switch (hook.ExecutionFlow ?? defaultFlow)
+				switch (forcedFlow ?? hook.ExecutionFlow ?? defaultFlow)
 				{
 					case HookExecutionFlow.FireAndForget:
 					default:
