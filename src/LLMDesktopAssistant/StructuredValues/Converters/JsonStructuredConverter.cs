@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 		{
 			INodeNullValue or null => null,
 			INodeBooleanValue b => JsonValue.Create(b.Value),
-			INodeNumberValue n => JsonValue.Create(n.Value),
+			INodeNumberValue n => FormatNumber(n.Value),
 			INodeStringValue s => JsonValue.Create(s.Value),
 			INodeArrayValue a => new JsonArray(a.Items.Select(ConvertToJson).ToArray()),
 			INodeDictionaryValue d => ConvertDictionaryToJsonObject(d.Items),
@@ -110,7 +110,7 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 		private static ConstNodeValue ConvertToConst(JsonValue value) => value.GetValueKind() switch
 		{
 			JsonValueKind.Null => ConstNodeNullValue.Instance,
-			JsonValueKind.String => new ConstNodeStringValue { Value = value.GetValue<string>() },
+			JsonValueKind.String => ReadString(value),
 			JsonValueKind.Number => new ConstNodeNumberValue { Value = ReadNumber(value) },
 			JsonValueKind.True or JsonValueKind.False => new ConstNodeBooleanValue { Value = value.GetValue<bool>() },
 			_ => throw new ArgumentException($"Unsupported JSON value kind '{value.GetValueKind()}'.", nameof(value))
@@ -131,10 +131,87 @@ namespace LLMDesktopAssistant.StructuredValues.Converters
 			return double.Parse(value.ToJsonString(), CultureInfo.InvariantCulture);
 		}
 
+		private const string NotANumber = "NaN";
+		private const string PositiveInfinity = "Infinity";
+		private const string NegativeInfinity = "-Infinity";
+
+		/// <summary>
+		/// Writes a number as JSON, spelling the three values JSON cannot express as the strings
+		/// <c>"NaN"</c>, <c>"Infinity"</c> and <c>"-Infinity"</c>.
+		/// </summary>
+		/// <param name="value">The number to write.</param>
+		/// <returns>The JSON value, a number whenever JSON can carry one.</returns>
+		private static JsonValue FormatNumber(double value)
+		{
+			if (double.IsNaN(value))
+				return JsonValue.Create(NotANumber);
+
+			if (double.IsPositiveInfinity(value))
+				return JsonValue.Create(PositiveInfinity);
+
+			if (double.IsNegativeInfinity(value))
+				return JsonValue.Create(NegativeInfinity);
+
+			return JsonValue.Create(value);
+		}
+
+		/// <summary>
+		/// Reads a JSON string, turning the three non-finite spellings back into numbers.
+		/// </summary>
+		/// <param name="value">The JSON value known to be a string.</param>
+		/// <returns>A number for the non-finite spellings, a string otherwise.</returns>
+		/// <remarks>
+		/// This makes a genuine string <c>"NaN"</c> read back as a number - the price of letting
+		/// non-finite values survive a JSON round trip at all.
+		/// </remarks>
+		private static ConstNodeValue ReadString(JsonValue value)
+		{
+			var text = value.GetValue<string>();
+
+			if (TryReadNonFinite(text, out var number))
+				return new ConstNodeNumberValue { Value = number };
+
+			return new ConstNodeStringValue { Value = text };
+		}
+
+		/// <summary>
+		/// Reads a JSON string into a reactive value, turning the three non-finite spellings back into numbers.
+		/// </summary>
+		/// <param name="value">The JSON value known to be a string.</param>
+		/// <returns>A number for the non-finite spellings, a string otherwise.</returns>
+		private static ReactiveNodeValue ReadReactiveString(JsonValue value)
+		{
+			var text = value.GetValue<string>();
+
+			if (TryReadNonFinite(text, out var number))
+				return new ReactiveNodeNumberValue { Value = number };
+
+			return new ReactiveNodeStringValue { Value = text };
+		}
+
+		private static bool TryReadNonFinite(string text, out double value)
+		{
+			switch (text)
+			{
+				case NotANumber:
+					value = double.NaN;
+					return true;
+				case PositiveInfinity:
+					value = double.PositiveInfinity;
+					return true;
+				case NegativeInfinity:
+					value = double.NegativeInfinity;
+					return true;
+				default:
+					value = 0;
+					return false;
+			}
+		}
+
 		private static ReactiveNodeValue ConvertToReactive(JsonValue value) => value.GetValueKind() switch
 		{
 			JsonValueKind.Null => new ReactiveNodeNullValue(),
-			JsonValueKind.String => new ReactiveNodeStringValue { Value = value.GetValue<string>() },
+			JsonValueKind.String => ReadReactiveString(value),
 			JsonValueKind.Number => new ReactiveNodeNumberValue { Value = ReadNumber(value) },
 			JsonValueKind.True or JsonValueKind.False => new ReactiveNodeBooleanValue { Value = value.GetValue<bool>() },
 			_ => throw new ArgumentException($"Unsupported JSON value kind '{value.GetValueKind()}'.", nameof(value))
