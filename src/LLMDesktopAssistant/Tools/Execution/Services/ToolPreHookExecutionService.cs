@@ -29,9 +29,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		/// <inheritdoc/>
 		public async Task<bool> RunAsync(IToolExecutionContext ctx, CancellationToken ct)
 		{
-			if (ctx.Source is ToolInvocationSource.Script)
-				return true;
-
 			if (ctx.Services.GetService<IHookDispatcher>() is not { } hookDispatcher)
 				return true;
 

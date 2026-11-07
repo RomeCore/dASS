@@ -92,10 +92,10 @@ Two axes are spelled in the name and are easy to confuse:
 
 | Axis | Values | Meaning |
 |---|---|---|
-| `source` (event suffix) | `chat-run`, `chat-restart`, `command`, `agent-task` | who launched the call - an agent, the user, a task |
-| `{origin}` (name prefix) | `native`, `scriptable`, `mcp`, `ad-hoc` | where the tool comes from |
+| `source` (event suffix) | `chat-run`, `chat-restart`, `command`, `agent-task`, `script` | who launched the call - an agent, the user, a task |
+| `{origin}` (name prefix) | `native`, `script`, `mcp`, `ad-hoc` | where the tool comes from |
 
-So `tool.start.chat-run` + `native.fs-edit` is an agent running a native tool, and `tool.start.command` + `scriptable.*` is the user running a scripted one by hand. A call made by a script is not hooked at all - that is the recursion guard.
+So `tool.start.chat-run` + `native.fs-edit` is an agent running a native tool, and `tool.start.command` + `script.*` is the user running a scripted one by hand.
 
 ## One example
 

@@ -33,9 +33,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		/// <inheritdoc/>
 		public async Task RunAsync(IToolExecutionContext ctx, Exception? exception, CancellationToken ct = default)
 		{
-			if (ctx.Source is ToolInvocationSource.Script)
-				return;
-
 			if (ctx.Services.GetService<IHookDispatcher>() is not { } hookDispatcher)
 				return;
 
