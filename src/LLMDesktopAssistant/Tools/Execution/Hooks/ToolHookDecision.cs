@@ -3,18 +3,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 	/// <summary>
 	/// The opinion a tool hook expresses about an invocation.
 	/// </summary>
-	/// <remarks>
-	/// <para>
-	/// A plain enum on purpose: a hook answers with one value, and there is no combination for the pipeline
-	/// to interpret or to warn about. An unknown word fails deserialization and means "no opinion".
-	/// </para>
-	/// <para>
-	/// <see cref="Allow"/> and <see cref="Ask"/> are the same thing where the point runs before the policy
-	/// stage: neither can lift a decision that has not been made yet, so both mean "no objection". The two
-	/// names exist because <see cref="Ask"/> becomes a real request at a point that runs after the policy,
-	/// and a hook authored against that point should not have to be rewritten.
-	/// </para>
-	/// </remarks>
 	public enum ToolHookDecision
 	{
 		/// <summary>

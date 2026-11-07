@@ -1,15 +1,8 @@
-using System.IO;
-
 namespace LLMDesktopAssistant.Scripting
 {
 	/// <summary>
 	/// Resolves a script file to the engine that owns its extension and that engine's descriptor.
 	/// </summary>
-	/// <remarks>
-	/// The three scriptable kinds have three unrelated engine interfaces, so this is composition rather than a base
-	/// class: a parser, a locator or an adapter creates a resolver over its own engine type and gets the extension
-	/// table once, instead of every one of them rebuilding it.
-	/// </remarks>
 	public sealed class ScriptEngineResolver<TEngine> where TEngine : IScriptableAddonEngine
 	{
 		private static readonly StringComparer _extensionComparer =
