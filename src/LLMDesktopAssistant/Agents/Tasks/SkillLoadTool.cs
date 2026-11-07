@@ -30,6 +30,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			}
 		};
 
+		public override ToolSource Source => ToolSource.Native;
+
 		public override Task<AgentToolCallPreResult> PreExecuteAsync(JsonNode? arguments, CancellationToken cancellationToken = default)
 		{
 			string skillName = arguments?.AsObject()["name"]?.GetValue<string>() ?? throw new ArgumentNullException(nameof(arguments), "Skill name is required.");

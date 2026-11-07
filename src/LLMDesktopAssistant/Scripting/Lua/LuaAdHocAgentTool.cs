@@ -16,6 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public override string DisplayName { get; }
 		public override string Description { get; }
 		public override JsonObject ArgumentSchema { get; }
+		public override ToolSource Source => ToolSource.AdHoc;
 
 		/// <summary>
 		/// The calling context for the Lua script.

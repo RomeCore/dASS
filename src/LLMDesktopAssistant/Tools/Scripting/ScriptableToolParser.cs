@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.Tools.Scripting
 
 			// === Execution ===
 
-			addon.ToolSource = ToolSource.Scriptable;
+			addon.ToolSource = ToolSource.Script;
 			addon.Main = engine.CreateExecutor(addon);
 			addon.Specifier = arguments.HasSpecifierTargets ? GeneratedSpecifierAnalyzer.Instance : null;
 		}

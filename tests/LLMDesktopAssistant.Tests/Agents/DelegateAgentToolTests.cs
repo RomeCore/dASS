@@ -67,7 +67,7 @@ public class DelegateAgentToolTests
 
 	private static DelegateAgentTool CreateTool<TDelegate>(string name = "tool", string? displayName = null, string description = "desc", TDelegate? executor = null)
 		where TDelegate : Delegate
-		=> new(name, displayName, description, executor!);
+		=> new(name, displayName, description, ToolSource.Unknown, executor!);
 
 	[Fact]
 	public void Ctor_WithDelegate_SetsMetadata()
@@ -90,7 +90,7 @@ public class DelegateAgentToolTests
 	[Fact]
 	public void Ctor_NullMethod_ThrowsArgumentNullException()
 	{
-		Assert.Throws<ArgumentNullException>(() => new DelegateAgentTool("t", null, "d", null, null!));
+		Assert.Throws<ArgumentNullException>(() => new DelegateAgentTool("t", null, "d", ToolSource.Unknown, null, null!));
 	}
 
 	[Fact]
@@ -98,7 +98,7 @@ public class DelegateAgentToolTests
 	{
 		var method = typeof(InstanceHandler).GetMethod(nameof(InstanceHandler.Greet))!;
 
-		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", null, method));
+		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", ToolSource.Unknown, null, method));
 	}
 
 	[Fact]
@@ -106,7 +106,7 @@ public class DelegateAgentToolTests
 	{
 		var method = typeof(SyncHandlers).GetMethod(nameof(SyncHandlers.Echo), BindingFlags.Public | BindingFlags.Static)!;
 
-		var tool = new DelegateAgentTool("echo", null, "d", null, method);
+		var tool = new DelegateAgentTool("echo", null, "d", ToolSource.Unknown, null, method);
 
 		Assert.NotNull(tool.ArgumentSchema);
 	}
@@ -116,7 +116,7 @@ public class DelegateAgentToolTests
 	{
 		var method = typeof(SyncHandlers).GetMethod(nameof(SyncHandlers.WrongReturnType), BindingFlags.Public | BindingFlags.Static)!;
 
-		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", null, method));
+		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", ToolSource.Unknown, null, method));
 	}
 
 	[Fact]
@@ -124,7 +124,7 @@ public class DelegateAgentToolTests
 	{
 		var method = typeof(SyncHandlers).GetMethod(nameof(SyncHandlers.TwoTokens), BindingFlags.Public | BindingFlags.Static)!;
 
-		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", null, method));
+		Assert.Throws<ArgumentException>(() => new DelegateAgentTool("t", null, "d", ToolSource.Unknown, null, method));
 	}
 
 	[Fact]
@@ -313,7 +313,7 @@ public class DelegateAgentToolTests
 	{
 		var handler = new InstanceHandler();
 		var method = typeof(InstanceHandler).GetMethod(nameof(InstanceHandler.Greet))!;
-		var tool = new DelegateAgentTool("greet", null, "Greets", handler, method);
+		var tool = new DelegateAgentTool("greet", null, "Greets", ToolSource.Unknown, handler, method);
 
 		var result = await tool.ExecuteAsync(JsonNode.Parse("""{"name":"Bob"}"""), null);
 

@@ -55,7 +55,7 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 
 		private static void AddTool(ImmutableList<AgentTool>.Builder tools, string name, string description, Delegate executor)
 		{
-			tools.Add(new DelegateAgentTool(name, null, description, executor));
+			tools.Add(new DelegateAgentTool(name, null, description, ToolSource.Native, executor));
 		}
 
 		private async Task<AgentToolCallResult> CallSubAgentAsync(

@@ -307,7 +307,8 @@ namespace LLMDesktopAssistant.LLM.Services
 					{
 						Source = ToolInvocationSource.ChatRun,
 						Call = domainToolCall,
-						Descriptor = toolInfo,
+						Descriptor = (LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor?)toolInfo
+							?? new LLMDesktopAssistant.Tools.Execution.Domain.MissingToolDescriptor(toolCall.ToolName),
 						Confirmation = _confirmationSink,
 						ContextFactory = toolInfo?.ContextFactory ?? _chatContextFactory,
 						Host = domainResponseMessage,

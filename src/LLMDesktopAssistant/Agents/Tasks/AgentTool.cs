@@ -41,6 +41,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public abstract JsonObject ArgumentSchema { get; }
 
 		/// <summary>
+		/// The source of the tool.
+		/// </summary>
+		public abstract ToolSource Source { get; }
+
+		/// <summary>
 		/// The default expected behaviour for this tool.
 		/// </summary>
 		public ToolBehaviour DefaultExpectedBehaviour { get; init; } = ToolBehaviour.None;

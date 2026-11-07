@@ -6,9 +6,19 @@ namespace LLMDesktopAssistant.Tools
 	public enum ToolSource
 	{
 		/// <summary>
+		/// Indicates that the tool source is unknown.
+		/// </summary>
+		Unknown,
+
+		/// <summary>
 		/// Indicates that the tool is provided by the native application.
 		/// </summary>
 		Native,
+
+		/// <summary>
+		/// Indicates that the tool is a scriptable addon: a file the LLM created at runtime through scripting.
+		/// </summary>
+		Script,
 
 		/// <summary>
 		/// Indicates that the tool is provided by the MCP (Model Context Protocol) system.
@@ -16,8 +26,8 @@ namespace LLMDesktopAssistant.Tools
 		MCP,
 
 		/// <summary>
-		/// Indicates that the tool is a scriptable addon: a file the LLM created at runtime through scripting.
+		/// Indicates that the tool is an ad-hoc tool, created on-the-fly inside scripts or else.
 		/// </summary>
-		Scriptable
+		AdHoc
 	}
 }

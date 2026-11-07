@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Text.Json.Nodes;
+using DocumentFormat.OpenXml.Bibliography;
 using LLMDesktopAssistant.Tools;
 using RCLargeLanguageModels.Json;
 using RCLargeLanguageModels.Json.Schema;
@@ -24,12 +25,14 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 		public override JsonObject ArgumentSchema { get; }
 
-		public DelegateAgentTool(string name, string? displayName, string description, Delegate executor)
-			: this(name, displayName, description, executor.Target, executor.Method)
+		public override ToolSource Source { get; }
+
+		public DelegateAgentTool(string name, string? displayName, string description, ToolSource source, Delegate executor)
+			: this(name, displayName, description, source, executor.Target, executor.Method)
 		{
 		}
 
-		public DelegateAgentTool(string name, string? displayName, string description, object? methodTarget, MethodInfo method)
+		public DelegateAgentTool(string name, string? displayName, string description, ToolSource source, object? methodTarget, MethodInfo method)
 		{
 			ArgumentNullException.ThrowIfNull(method);
 			if (methodTarget == null && !method.IsStatic)
@@ -92,6 +95,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			DisplayName = displayName ?? name;
 			Description = description;
 			ArgumentSchema = argumentSchema;
+			Source = source;
 		}
 
 		public override async Task<AgentToolCallResult> ExecuteAsync(JsonNode? arguments, object? sharedContext, CancellationToken cancellationToken = default)

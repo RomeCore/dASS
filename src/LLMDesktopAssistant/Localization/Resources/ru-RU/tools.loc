@@ -317,7 +317,8 @@ name_suffix.hint: {0} инструментов
 result: Результат:
 settings: Настройки инструментов
 source.mcp: MCP
-source.scriptable: Скриптовый
+source.script: Скриптовый
+source.ad-hoc: Одноразовый
 status.attach-describe_image.status: Описываем... *{0} токенов*
 status.fs-apply_diff.changes_none: без изменений
 status.fs-diff.accepted: Принято

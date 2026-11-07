@@ -16,21 +16,17 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 	/// <see cref="ToolApprovalLevel.AlwaysApprove"/> - asking the user to approve a tool that does not
 	/// exist would be meaningless.
 	/// </remarks>
-	public sealed class MissingToolDescriptor : IToolDescriptor
+	public sealed class MissingToolDescriptor(string toolName = "") : IToolDescriptor
 	{
 		/// <summary>
 		/// The shared instance.
 		/// </summary>
 		public static MissingToolDescriptor Instance { get; } = new();
 
-		private MissingToolDescriptor()
-		{
-		}
-
 		/// <summary>
 		/// Empty: the name that could not be found lives on the call.
 		/// </summary>
-		public string Name => string.Empty;
+		public string Name { get; } = toolName;
 
 		/// <summary>
 		/// A description that explains the synthetic nature of the descriptor.
@@ -45,6 +41,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 			["type"] = "object",
 			["additionalProperties"] = true
 		};
+
+		public ToolSource Source => ToolSource.Unknown;
 
 		/// <summary>
 		/// No behaviour: the miss is never approved or denied by policy.

@@ -32,6 +32,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		JsonObject ArgumentSchema { get; }
 
 		/// <summary>
+		/// The source of the tool (native, script, mcp or ad-hoc).
+		/// </summary>
+		ToolSource Source { get; }
+
+		/// <summary>
 		/// The arguments of the tool: the single description of what the tool accepts, which the
 		/// model-facing schema, the slash-command format and the specifier dialect all read.
 		/// </summary>

@@ -14,13 +14,6 @@ namespace LLMDesktopAssistant.Tools
 	/// The chat world's tool descriptor. It carries its six executors - built once from the module's
 	/// methods - so a chat tool can run in an agent task by handing this descriptor over unchanged.
 	/// </summary>
-	/// <remarks>
-	/// Tools used to live in two parallel worlds: plain <see cref="ToolInfo"/> produced by tool modules,
-	/// and the separately managed "meta-tools" (the <c>Tools/Meta/*</c> subsystem, born in d859a35 on
-	/// 2026-04-09 and buried on 2026-09-12). There is only one world now - every tool is an addon,
-	/// possibly with a scripting engine behind it. See the epitaph in
-	/// <c>Tools/Scripting/ScriptableToolParser.cs</c>.
-	/// </remarks>
 	public class ToolInfo : ScriptableAddonBase<ToolInfo, ToolChange>, IToolDescriptor
 	{
 		private JsonObject? _argumentSchema;
@@ -255,6 +248,7 @@ namespace LLMDesktopAssistant.Tools
 			get; 
 			set => SetProperty(ref field, value);
 		} = ToolSource.Native;
+		ToolSource IToolDescriptor.Source => ToolSource;
 
 		/// <summary>
 		/// Creates a new instance of the <see cref="ToolInfo"/> class with the specified executor and initialization information.

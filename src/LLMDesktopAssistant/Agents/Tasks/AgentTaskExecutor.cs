@@ -510,7 +510,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			{
 				Source = ToolInvocationSource.AgentTask,
 				Call = agentToolCall,
-				Descriptor = descriptor,
+				Descriptor = descriptor ?? new Tools.Execution.Domain.MissingToolDescriptor(toolCall.ToolName),
 				Confirmation = new TaskConfirmationSink(task, GetExecutionStatusService(task), _toolMemorizationService),
 				ContextFactory = new TaskToolContextFactory(task.LaunchParameters.TriggeredChat,
 					task.LaunchParameters.TriggeredChat?.Services ?? _services),
