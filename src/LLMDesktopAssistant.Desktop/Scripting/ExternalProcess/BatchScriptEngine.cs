@@ -20,11 +20,17 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public sealed class BatchScriptEngine(IProcessLauncher processLauncher, IBatchInterpreterLocator interpreterLocator)
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
+		private static readonly HashSet<string> _reservedVariableNames =
+			new(StringComparer.OrdinalIgnoreCase) { "PATH", "COMSPEC", "PATHEXT" };
+
 		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new BatchScriptEngineDescriptor();
 
 		/// <inheritdoc/>
 		protected override Encoding ScriptEncoding => new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
+		/// <inheritdoc/>
+		protected override IReadOnlySet<string> ReservedVariableNames => _reservedVariableNames;
 
 		/// <inheritdoc/>
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,

@@ -19,11 +19,19 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public sealed class BashScriptEngine(IProcessLauncher processLauncher, IBashInterpreterLocator interpreterLocator)
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
+		private static readonly HashSet<string> _reservedVariableNames = new(StringComparer.Ordinal)
+		{
+			"PATH", "IFS", "HOME", "SHELL", "BASH_ENV", "ENV", "PWD"
+		};
+
 		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new BashScriptEngineDescriptor();
 
 		/// <inheritdoc/>
 		protected override Encoding ScriptEncoding => new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
+		/// <inheritdoc/>
+		protected override IReadOnlySet<string> ReservedVariableNames => _reservedVariableNames;
 
 		/// <inheritdoc/>
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,

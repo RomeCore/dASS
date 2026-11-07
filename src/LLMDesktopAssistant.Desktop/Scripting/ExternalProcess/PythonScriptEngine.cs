@@ -17,11 +17,16 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public sealed class PythonScriptEngine(IProcessLauncher processLauncher, PythonHelperService pythonHelperService)
 		: ExternalProcessScriptEngineBase(processLauncher)
 	{
+		private static readonly HashSet<string> _reservedVariableNames = new(StringComparer.Ordinal) { "os", "sys" };
+
 		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new PythonScriptEngineDescriptor();
 
 		/// <inheritdoc/>
 		protected override Encoding ScriptEncoding => new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+
+		/// <inheritdoc/>
+		protected override IReadOnlySet<string> ReservedVariableNames => _reservedVariableNames;
 
 		/// <inheritdoc/>
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,

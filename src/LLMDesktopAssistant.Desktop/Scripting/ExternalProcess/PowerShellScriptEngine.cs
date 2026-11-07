@@ -20,6 +20,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public sealed class PowerShellScriptEngine(IProcessLauncher processLauncher,
 		IPowerShellInterpreterLocator interpreterLocator) : ExternalProcessScriptEngineBase(processLauncher)
 	{
+		private static readonly HashSet<string> _reservedVariableNames =
+			new(StringComparer.OrdinalIgnoreCase) { "PSVersionTable" };
+
 		/// <inheritdoc/>
 		public override IScriptEngineDescriptor Descriptor { get; } = new PowerShellScriptEngineDescriptor();
 
@@ -29,6 +32,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		/// while PowerShell 7 accepts the BOM and needs nothing from it.
 		/// </remarks>
 		protected override Encoding ScriptEncoding => new UTF8Encoding(encoderShouldEmitUTF8Identifier: true);
+
+		/// <inheritdoc/>
+		protected override IReadOnlySet<string> ReservedVariableNames => _reservedVariableNames;
 
 		/// <inheritdoc/>
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,
