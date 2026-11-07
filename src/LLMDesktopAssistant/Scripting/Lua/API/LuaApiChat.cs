@@ -31,10 +31,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  does not react to later chat changes; the handles inside it stay live.
 
 			--- dass.chat.get_title() -> string
-			  Returns the chat title (read-only in v1).
+			  Returns the chat title.
 
 			--- dass.chat.get_topic() -> string
-			  Returns the chat topic (read-only in v1).
+			  Returns the chat topic.
 
 			--- dass.chat.append_part(title, icon, color)
 			  Appends a plain chip part to the CHAT object itself (not to a message).
@@ -43,8 +43,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Appends a part to the chat whose text is also appended to the model-facing content.
 
 			--- dass.chat.append_attachment_part(attachment, title, icon, color)
-			  Appends a native attachment part to the chat. 'attachment' is any handle that
-			  implements ILuaNativeAttachable (e.g. an image handle from image.load()/image.create()).
+			  Appends a native attachment part to the chat. 'attachment' is any attachable handle
+			  (e.g. an image handle from image.load()/image.create()).
 
 			--- dass.chat.append_data(...)
 			  Appends one or more attachable handles to the chat: 'uicontrol' from
@@ -69,13 +69,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - msg:append_content_part(content, title, icon, color) - a part whose text
 			      is also appended to the model-facing message content
 			    - msg:append_attachment_part(attachment, title, icon, color) - a native
-			      attachment part; 'attachment' is any ILuaNativeAttachable handle
+			      attachment part; 'attachment' is any handle that can be attached
 			      (e.g. an image handle from image.load()/image.create())
 			    - msg:append_data(...) - append one or more attachable handles: 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
 			      process.run_terminal()
 
-			  'icon' is a VisualIconKind name (e.g. "Star", "Cards"), 'color' is a hex string
+			  'icon' is a visual icon kind name (e.g. "Star", "Cards"), 'color' is a hex string
 			  (e.g. "#ff88cc"); both are optional (pass nil). Parts are not restorable on edit.
 
 			EXAMPLES:

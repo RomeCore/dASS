@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			Creates dynamic Avalonia UI controls from AXAML markup bound to a Lua table (a dynamic
 			view model). The created control is a UserData descriptor; it renders only after it is
-			appended to a running tool's result with dass.tool.result.append_data().
+			appended to a running tool's result with dass.tool.result.append_data() or else.
 
 			FUNCTIONS:
 
