@@ -13,9 +13,15 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 	public sealed class ToolPreUseHookPayload
 	{
 		/// <summary>
-		/// The name the hook was matched against: the tool's origin and name, for example <c>native.fs-edit</c>.
+		/// The bare tool name, for example <c>fs-edit</c>.
 		/// </summary>
 		public string Tool { get; init; } = string.Empty;
+
+		/// <summary>
+		/// The invocation source in kebab case: <c>chat-run</c>, <c>chat-restart</c>, <c>command</c>, <c>script</c> or
+		/// <c>agent-task</c>.
+		/// </summary>
+		public string Source { get; init; } = string.Empty;
 
 		/// <summary>
 		/// The behaviour flags of the call in kebab case, or <see langword="null"/> when the tool declares
@@ -23,13 +29,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 		/// yet at this point.
 		/// </summary>
 		public string[]? Behaviour { get; init; }
-
-		/// <summary>
-		/// The source that launched the invocation in kebab case: <c>chat-run</c>, <c>chat-restart</c>,
-		/// <c>command</c> or <c>agent-task</c>. A hook that guards an agent decision and a user's own action
-		/// differently branches on this.
-		/// </summary>
-		public string Source { get; init; } = string.Empty;
 
 		/// <summary>
 		/// The effective argument set - what the tool would actually run with, including an override a

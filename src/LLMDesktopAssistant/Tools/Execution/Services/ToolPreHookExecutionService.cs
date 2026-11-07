@@ -79,10 +79,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		/// <param name="ctx">The invocation context.</param>
 		private static ToolPreUseHookPayload CreatePayload(IToolExecutionContext ctx) => new()
 		{
-			Tool = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call),
+			Tool = ctx.Descriptor.Name,
+			Source = ToolHookEvents.DescribeSource(ctx.Source),
 			Behaviour = ToolHookEvents.DescribeBehaviour(
 				ctx.Call.ExpectedBehaviour ?? ctx.Descriptor.DefaultExpectedBehaviour),
-			Source = ToolHookEvents.DescribeSource(ctx.Source),
 			Arguments = ctx.Arguments.Effective,
 			ChatId = ctx.Chat?.Id,
 			AgentId = (ctx.Host as AssistantMessage)?.SenderAgentId

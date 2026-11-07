@@ -72,7 +72,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 
 			return new ToolResultHookPayload
 			{
-				Tool = ToolHookEvents.ComposeName(ctx.Descriptor, call),
+				Tool = ctx.Descriptor.Name,
 				Source = ToolHookEvents.DescribeSource(ctx.Source),
 				Status = ToolHookEvents.DescribeStatus(call.Status),
 				Arguments = ctx.Arguments.Effective,

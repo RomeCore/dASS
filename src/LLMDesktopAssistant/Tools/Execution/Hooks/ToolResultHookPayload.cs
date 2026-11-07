@@ -15,12 +15,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 	public sealed class ToolResultHookPayload
 	{
 		/// <summary>
-		/// The name the hook was matched against: the tool's origin and name, for example <c>native.fs-edit</c>.
+		/// The bare tool name, for example <c>fs-edit</c>.
 		/// </summary>
 		public string Tool { get; init; } = string.Empty;
 
 		/// <summary>
-		/// The invocation source in kebab case: <c>chat-run</c>, <c>chat-restart</c>, <c>command</c> or
+		/// The invocation source in kebab case: <c>chat-run</c>, <c>chat-restart</c>, <c>command</c>, <c>script</c> or
 		/// <c>agent-task</c>.
 		/// </summary>
 		public string Source { get; init; } = string.Empty;
