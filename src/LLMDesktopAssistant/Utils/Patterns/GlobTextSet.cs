@@ -23,9 +23,13 @@ namespace LLMDesktopAssistant.Utils.Patterns
 		/// '<c>.*</c>' covers every hidden entry, which is why there is no separate "show hidden"
 		/// switch anywhere.
 		/// </summary>
+		/// <remarks>
+		/// Compiled with <see cref="GlobCase.PlatformDefault"/>, like every other scanning pattern,
+		/// so on Windows 'Bin' is skipped as readily as 'bin'.
+		/// </remarks>
 		public static GlobTextSet DefaultIgnore { get; } = ParseNames([
 			".*", "node_modules", "__pycache__", "bin", "obj", "TestResults",
-		]);
+		], GlobCase.PlatformDefault);
 
 		/// <summary>
 		/// Compiles patterns meant to match a single entry name. A separator in any of them is

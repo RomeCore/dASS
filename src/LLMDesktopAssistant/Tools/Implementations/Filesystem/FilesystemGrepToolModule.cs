@@ -153,7 +153,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					Limit = 0,
 					Ignore = ignore is null
 						? GlobTextSet.DefaultIgnore
-						: GlobTextSet.ParseNames(ignore)
+						: GlobTextSet.ParseNames(ignore, GlobCase.PlatformDefault)
 				};
 
 				var filesToSearch = new List<string>();
@@ -258,7 +258,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 		/// </summary>
 		private (GlobSearch Search, bool Outside) ResolveSearch(string path)
 		{
-			var resolved = GlobSearch.From(path, _fileAccess.GetWorkingDirectory());
+			var resolved = GlobSearch.From(path, _fileAccess.GetWorkingDirectory(),
+				GlobPathMatcher.DefaultOptions);
 
 			var root = _fileAccess.CheckedAccessPath(resolved.Root, DirectoryAccessMode.Read,
 				out var isRootAccessed);

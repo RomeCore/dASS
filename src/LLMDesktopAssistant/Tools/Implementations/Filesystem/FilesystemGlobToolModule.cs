@@ -123,7 +123,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					Limit = limit,
 					Ignore = ignore is null
 						? GlobTextSet.DefaultIgnore
-						: GlobTextSet.ParseNames(ignore)
+						: GlobTextSet.ParseNames(ignore, GlobCase.PlatformDefault)
 				};
 
 				var current = search;
@@ -200,7 +200,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			var startingPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read,
 				out var isAccessed);
 
-			var resolved = GlobSearch.From(pattern, startingPath);
+			var resolved = GlobSearch.From(pattern, startingPath, GlobPathMatcher.DefaultOptions);
 
 			var root = _fileAccess.CheckedAccessPath(resolved.Root, DirectoryAccessMode.Read,
 				out var isRootAccessed);

@@ -241,7 +241,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 
 						int totalCount = 0;
 						var ignorePatterns = ignoreDirectories ?? [".git", Directories.WorkingHome];
-						var ignore = GlobTextSet.ParseNames(ignorePatterns);
+						var ignore = GlobTextSet.ParseNames(ignorePatterns, GlobCase.PlatformDefault);
 
 						void Traverse(string currentPath, int depth, string indent)
 						{

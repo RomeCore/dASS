@@ -13,15 +13,16 @@ namespace LLMDesktopAssistant.Utils.Patterns
 		private readonly GlobAlternative[] _alternatives;
 
 		private GlobPattern(IReadOnlyList<string> prefix, GlobAlternative[] alternatives,
-			bool requiresDirectory, IReadOnlyList<string> alternativeTexts)
+			bool requiresDirectory, IReadOnlyList<string> alternativeTexts, GlobOptions options)
 		{
 			Prefix = prefix;
 			_alternatives = alternatives;
 			RequiresDirectory = requiresDirectory;
 			AlternativeTexts = alternativeTexts;
+			Options = options;
 			Remainder = prefix.Count == 0
 				? this
-				: new GlobPattern([], alternatives, requiresDirectory, alternativeTexts);
+				: new GlobPattern([], alternatives, requiresDirectory, alternativeTexts, options);
 		}
 
 		/// <summary>
@@ -45,6 +46,15 @@ namespace LLMDesktopAssistant.Utils.Patterns
 		/// The expanded alternatives as text, in source order, for diagnostics and messages.
 		/// </summary>
 		public IReadOnlyList<string> AlternativeTexts { get; }
+
+		/// <summary>
+		/// The options the pattern was parsed with.
+		/// </summary>
+		/// <remarks>
+		/// The case rule has to travel with the pattern: the alternatives are compiled with it, and a
+		/// caller comparing <see cref="Prefix"/> segments as text would otherwise pick a different one.
+		/// </remarks>
+		public GlobOptions Options { get; }
 
 		/// <summary>
 		/// The same pattern with <see cref="Prefix"/> removed. Its own prefix is always empty.
@@ -122,7 +132,7 @@ namespace LLMDesktopAssistant.Utils.Patterns
 			foreach (var segments in segmentsByAlternative)
 				alternatives.Add(CompileAlternative(segments.Skip(skipped), pattern, options));
 
-			return new GlobPattern(prefix, [.. alternatives], requiresDirectory, texts);
+			return new GlobPattern(prefix, [.. alternatives], requiresDirectory, texts, options);
 		}
 
 		/// <summary>

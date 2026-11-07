@@ -37,8 +37,6 @@ namespace LLMDesktopAssistant.Utils.Files
 				yield break;
 
 			var root = new DirectoryInfo(search.Root);
-
-
 			var reported = 0;
 
 			foreach (var entry in Walk(search, root, [], options, cancellationToken))
