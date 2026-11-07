@@ -30,5 +30,15 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		/// </summary>
 		Task<ExternalProcessScriptTerminalResult> RunInTerminalAsync(ExternalProcessScriptTerminalParameters parameters,
 			IChatAttachmentHost host, IServiceProvider services, CancellationToken ct);
+
+		/// <summary>
+		/// Builds the script and launches it in a terminal, without attaching or waiting.
+		/// </summary>
+		/// <remarks>
+		/// The caller owns the process; the generated script is deleted when the process exits.
+		/// </remarks>
+		/// <param name="launchCancellationToken">Cancels the launch and, afterwards, kills the process.</param>
+		ExternalProcessScriptStartResult StartInTerminal(ExternalProcessScriptTerminalParameters parameters,
+			IServiceProvider services, CancellationToken launchCancellationToken = default);
 	}
 }
