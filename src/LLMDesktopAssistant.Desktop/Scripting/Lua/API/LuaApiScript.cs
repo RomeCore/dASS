@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Desktop.Scripting.ExternalProcess;
-using LLMDesktopAssistant.Desktop.Scripting.Lua;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Scripting.Lua;
@@ -22,7 +21,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 	[LuaApi(chatScoped: true)]
 	public class LuaApiScript(
 		ExternalProcessEngineRegistry registry,
-		IExternalProcessAvailabilityService availability,
 		IChatSettingsService chatSettings,
 		IServiceProvider services) : LuaApiBase
 	{
@@ -114,9 +112,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					(ctx, args) => RunTerminal(language.Engine, name, ctx, args));
 				// isAsync: false - an auto-await: the caller writes available(), not await available().
 				table["available"] = new LuaCallbackFunction(
-					(ctx, _) => AvailableAsync(language.Descriptor, ctx), isAsync: false);
+					(ctx, _) => AvailableAsync(language.Engine, ctx), isAsync: false);
 				table["version"] = new LuaCallbackFunction(
-					(ctx, _) => VersionAsync(language.Descriptor, ctx), isAsync: false);
+					(ctx, _) => VersionAsync(language.Engine, ctx), isAsync: false);
 
 				// The manual lives on `script`; the subtable points at the same text so manuals(script.python) works.
 				table.Set(LuaVariables.NamespaceManuals, ManualsTable());
@@ -212,20 +210,21 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			return new LuaTuple(LuaTerminal.Wrap(new LuaTerminal(start.Process!)));
 		}
 
-		private async Task<LuaTuple> AvailableAsync(IScriptEngineDescriptor descriptor, LuaCallingContext ctx)
+		private async Task<LuaTuple> AvailableAsync(IExternalProcessScriptEngine engine, LuaCallingContext ctx)
 		{
-			var check = await CheckAsync(descriptor, ctx);
+			var check = await CheckAsync(engine, ctx);
 			return new LuaTuple(LuaBoolean.FromBoolean(check.Available));
 		}
 
-		private async Task<LuaTuple> VersionAsync(IScriptEngineDescriptor descriptor, LuaCallingContext ctx)
+		private async Task<LuaTuple> VersionAsync(IExternalProcessScriptEngine engine, LuaCallingContext ctx)
 		{
-			var check = await CheckAsync(descriptor, ctx);
+			var check = await CheckAsync(engine, ctx);
 			return new LuaTuple(check.Version is null ? LuaNil.Instance : new LuaString(check.Version));
 		}
 
-		private Task<ScriptEngineAvailability> CheckAsync(IScriptEngineDescriptor descriptor, LuaCallingContext ctx)
-			=> availability.CheckAsync(descriptor.Language, chatSettings.Settings.Environment, ctx.CancellationToken);
+		private Task<ScriptEngineAvailability> CheckAsync(IExternalProcessScriptEngine engine, LuaCallingContext ctx)
+			=> engine.CheckAvailabilityAsync(chatSettings.Settings.Environment,
+				cancellationToken: ctx.CancellationToken);
 
 		private static string ReadCode(string function, LuaValue[] args)
 		{

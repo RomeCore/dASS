@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using LLMDesktopAssistant.Desktop.Execution;
+using LLMDesktopAssistant.Desktop.Scripting.ExternalProcess;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Bash
 	[Service(typeof(IScriptEngineEnvConfigurationProvider))]
 	public class BashEnvironmentConfigurationProvider(
 		IBashInterpreterLocator interpreterLocator,
-		IProcessLauncher processLauncher,
+		ExternalProcessEngineRegistry registry,
 		IExplorerOpener explorerOpener) : IScriptEngineEnvConfigurationProvider
 	{
 		/// <inheritdoc/>
@@ -39,38 +39,20 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Bash
 		public async Task<ScriptEnvironmentCheckResult> CheckConfigurationAsync(ChatEnvironmentSettings settings,
 			AdditionalEnvironmentSetting configuration, CancellationToken cancellationToken = default)
 		{
-			var configured = (configuration as BashEnvironmentConfiguration)?.ExecutablePath;
-			var interpreter = interpreterLocator.Resolve(configured);
-			if (!interpreter.Found)
-				return new ScriptEnvironmentCheckResult { Success = false, Message = interpreter.Problem };
+			if (registry.ResolveLanguage(Language) is not { } language)
+				return new ScriptEnvironmentCheckResult { Success = false, Message = $"'{Language}' is not registered." };
 
-			try
+			var availability = await language.Engine
+				.CheckAvailabilityAsync(settings, cancellationToken: cancellationToken)
+				.ConfigureAwait(false);
+
+			return new ScriptEnvironmentCheckResult
 			{
-				var parameters = new ProcessLaunchParameters
-				{
-					ProcessName = "Bash Check",
-					FileName = interpreter.Path!,
-					Arguments = ["--version"],
-					WorkingDirectory = settings.GetEffectiveWorkingDirectories().GetWorkingDirectory(),
-					TimeOut = TimeSpan.FromSeconds(10)
-				};
-
-				var process = processLauncher.Launch(parameters, cancellationToken);
-				var exitCode = await process;
-				var version = process.PlainOutput?.StdOut?.FirstOrDefault()?.Trim();
-
-				return new ScriptEnvironmentCheckResult
-				{
-					Success = exitCode == 0,
-					Message = exitCode == 0
-						? $"{version} ({interpreter.Path})"
-						: process.Output
-				};
-			}
-			catch (Exception ex)
-			{
-				return new ScriptEnvironmentCheckResult { Success = false, Message = ex.Message };
-			}
+				Success = availability.Available,
+				Message = availability.Available
+					? $"{availability.Version} ({availability.ExecutablePath})"
+					: availability.Problem
+			};
 		}
 	}
 }

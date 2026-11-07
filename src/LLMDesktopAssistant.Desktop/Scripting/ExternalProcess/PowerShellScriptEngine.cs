@@ -40,11 +40,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,
 			string scriptPath, ExternalProcessScriptTerminalParameters parameters, bool runInTerminal)
 		{
-			var configured = environment.GetEffectiveAdditionalSettings()
-				.OfType<PowerShellEnvironmentConfiguration>()
-				.FirstOrDefault()?.ExecutablePath;
-
-			var interpreter = interpreterLocator.Resolve(configured);
+			var interpreter = interpreterLocator.Resolve(ConfiguredPath(environment));
 			if (!interpreter.Found)
 				throw new InvalidOperationException(interpreter.Problem);
 
@@ -61,9 +57,34 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		}
 
 		/// <inheritdoc/>
+		protected override string AvailabilityKey(ChatEnvironmentSettings settings)
+			=> ConfiguredPath(settings) ?? string.Empty;
+
+		/// <inheritdoc/>
+		protected override ProcessLaunchParameters CreateVersionProbe(ChatEnvironmentSettings environment)
+		{
+			var interpreter = interpreterLocator.Resolve(ConfiguredPath(environment));
+			if (!interpreter.Found)
+				throw new InvalidOperationException(interpreter.Problem);
+
+			return new ProcessLaunchParameters
+			{
+				ProcessName = "PowerShell Check",
+				FileName = interpreter.Path!,
+				Arguments = ["-NoLogo", "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
+				WorkingDirectory = environment.GetEffectiveWorkingDirectories().GetWorkingDirectory()
+			};
+		}
+
+		/// <inheritdoc/>
 		protected override string BuildScript(ExternalProcessScriptTerminalParameters parameters,
 			ScriptInputMode inputMode, string workingDirectory)
 			=> PowerShellScriptBuilder.Build(parameters, inputMode);
+
+		private static string? ConfiguredPath(ChatEnvironmentSettings environment)
+			=> environment.GetEffectiveAdditionalSettings()
+				.OfType<PowerShellEnvironmentConfiguration>()
+				.FirstOrDefault()?.ExecutablePath;
 	}
 
 	/// <summary>

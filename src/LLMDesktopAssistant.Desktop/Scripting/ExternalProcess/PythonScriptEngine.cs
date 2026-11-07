@@ -14,8 +14,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	/// The Python language of the out-of-process family.
 	/// </summary>
 	[Service(typeof(IExternalProcessScriptEngine))]
-	public sealed class PythonScriptEngine(IProcessLauncher processLauncher, PythonHelperService pythonHelperService)
-		: ExternalProcessScriptEngineBase(processLauncher)
+	public sealed class PythonScriptEngine(IProcessLauncher processLauncher, PythonHelperService pythonHelperService,
+		IPythonInterpreterLocator pythonInterpreterLocator) : ExternalProcessScriptEngineBase(processLauncher)
 	{
 		private static readonly HashSet<string> _reservedVariableNames = new(StringComparer.Ordinal) { "os", "sys" };
 
@@ -49,6 +49,24 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 
 			builder.AppendLine(parameters.Body);
 			return builder.ToString();
+		}
+
+		/// <inheritdoc/>
+		/// <remarks>
+		/// There is no executable to locate - the shell picks one inside the venv - so the locator, which runs
+		/// <c>python -V</c>, is the probe.
+		/// </remarks>
+		public override async Task<ScriptEngineAvailability> CheckAvailabilityAsync(
+			ChatEnvironmentSettings settings, bool useAddonEnvironment = true,
+			CancellationToken cancellationToken = default)
+		{
+			var resolution = await pythonInterpreterLocator
+				.ResolveAsync(settings, useAddonEnvironment, cancellationToken)
+				.ConfigureAwait(false);
+
+			return resolution.Found
+				? new ScriptEngineAvailability(true, resolution.Version, null, resolution.ExecutablePath)
+				: new ScriptEngineAvailability(false, null, resolution.Problem);
 		}
 
 		private static string PythonLiteral(string value)

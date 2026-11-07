@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using LLMDesktopAssistant.Desktop.Execution;
+using LLMDesktopAssistant.Desktop.Scripting.ExternalProcess;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.PowerShell
 	[Service(typeof(IScriptEngineEnvConfigurationProvider))]
 	public class PowerShellEnvironmentConfigurationProvider(
 		IPowerShellInterpreterLocator interpreterLocator,
-		IProcessLauncher processLauncher,
+		ExternalProcessEngineRegistry registry,
 		IExplorerOpener explorerOpener) : IScriptEngineEnvConfigurationProvider
 	{
 		/// <inheritdoc/>
@@ -41,39 +41,20 @@ namespace LLMDesktopAssistant.Desktop.Scripting.PowerShell
 		public async Task<ScriptEnvironmentCheckResult> CheckConfigurationAsync(ChatEnvironmentSettings settings,
 			AdditionalEnvironmentSetting configuration, CancellationToken cancellationToken = default)
 		{
-			var configured = (configuration as PowerShellEnvironmentConfiguration)?.ExecutablePath;
-			var interpreter = interpreterLocator.Resolve(configured);
-			if (!interpreter.Found)
-				return new ScriptEnvironmentCheckResult { Success = false, Message = interpreter.Problem };
+			if (registry.ResolveLanguage(Language) is not { } language)
+				return new ScriptEnvironmentCheckResult { Success = false, Message = $"'{Language}' is not registered." };
 
-			try
+			var availability = await language.Engine
+				.CheckAvailabilityAsync(settings, cancellationToken: cancellationToken)
+				.ConfigureAwait(false);
+
+			return new ScriptEnvironmentCheckResult
 			{
-				var parameters = new ProcessLaunchParameters
-				{
-					ProcessName = "PowerShell Check",
-					FileName = interpreter.Path!,
-					// -Command keeps the check independent of the execution policy, which only guards script files.
-					Arguments = ["-NoLogo", "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"],
-					WorkingDirectory = settings.GetEffectiveWorkingDirectories().GetWorkingDirectory(),
-					TimeOut = TimeSpan.FromSeconds(30)
-				};
-
-				var process = processLauncher.Launch(parameters, cancellationToken);
-				var exitCode = await process;
-				var version = process.PlainOutput?.StdOut?.FirstOrDefault()?.Trim();
-
-				return new ScriptEnvironmentCheckResult
-				{
-					Success = exitCode == 0,
-					Message = exitCode == 0
-						? $"{version} ({interpreter.Path})"
-						: process.Output
-				};
-			}
-			catch (Exception ex)
-			{
-				return new ScriptEnvironmentCheckResult { Success = false, Message = ex.Message };
-			}
+				Success = availability.Available,
+				Message = availability.Available
+					? $"{availability.Version} ({availability.ExecutablePath})"
+					: availability.Problem
+			};
 		}
 	}
 }

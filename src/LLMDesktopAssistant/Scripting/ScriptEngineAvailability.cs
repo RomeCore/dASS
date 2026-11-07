@@ -6,5 +6,10 @@ namespace LLMDesktopAssistant.Scripting
 	/// <param name="Available">Whether the interpreter was found and answered.</param>
 	/// <param name="Version">The interpreter's own version line, or <see langword="null"/>.</param>
 	/// <param name="Problem">Why the language is unavailable, or <see langword="null"/>.</param>
-	public readonly record struct ScriptEngineAvailability(bool Available, string? Version, string? Problem);
+	/// <param name="ExecutablePath">
+	/// The executable that answered, or <see langword="null"/> when the language has nothing to locate (the shell finds
+	/// python inside the venv on its own).
+	/// </param>
+	public readonly record struct ScriptEngineAvailability(bool Available, string? Version, string? Problem,
+		string? ExecutablePath = null);
 }

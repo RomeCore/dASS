@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LLMDesktopAssistant.Desktop.Scripting.ExternalProcess;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
@@ -9,7 +10,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	[Service(typeof(IScriptEngineEnvConfigurationProvider))]
 	public class PythonEnvironmentConfigurationProvider(
 		IExplorerOpener explorerOpener,
-		IPythonInterpreterLocator interpreterLocator
+		ExternalProcessEngineRegistry registry
 	) : IScriptEngineEnvConfigurationProvider
 	{
 		public ScriptLanguageType Language => ScriptLanguageType.Python;
@@ -32,13 +33,23 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		public async Task<ScriptEnvironmentCheckResult> CheckConfigurationAsync(ChatEnvironmentSettings settings,
 			AdditionalEnvironmentSetting configuration, CancellationToken cancellationToken = default)
 		{
-			// Says which interpreter it found, like the bash and PowerShell checks do.
-			var resolution = await interpreterLocator.ResolveAsync(settings, useAddonEnvironment: false, cancellationToken);
+			if (registry.ResolveLanguage(Language) is not { } language)
+				return new ScriptEnvironmentCheckResult { Success = false, Message = $"'{Language}' is not registered." };
+
+			// This block edits the native tools' venv; the scriptable addons have one of their own.
+			var availability = await language.Engine
+				.CheckAvailabilityAsync(settings, useAddonEnvironment: false, cancellationToken)
+				.ConfigureAwait(false);
 
 			return new ScriptEnvironmentCheckResult
 			{
-				Success = resolution.Found,
-				Message = resolution.Found ? resolution.Version : resolution.Problem
+				Success = availability.Available,
+				Message = availability switch
+				{
+					{ Available: false } => availability.Problem,
+					{ ExecutablePath: { } path } => $"{availability.Version} ({path})",
+					_ => availability.Version
+				}
 			};
 		}
 	}

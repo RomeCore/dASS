@@ -37,11 +37,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		protected override ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,
 			string scriptPath, ExternalProcessScriptTerminalParameters parameters, bool runInTerminal)
 		{
-			var configured = environment.GetEffectiveAdditionalSettings()
-				.OfType<BashEnvironmentConfiguration>()
-				.FirstOrDefault()?.ExecutablePath;
-
-			var interpreter = interpreterLocator.Resolve(configured);
+			var interpreter = interpreterLocator.Resolve(ConfiguredPath(environment));
 			if (!interpreter.Found)
 				throw new InvalidOperationException(interpreter.Problem);
 
@@ -56,9 +52,34 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		}
 
 		/// <inheritdoc/>
+		protected override string AvailabilityKey(ChatEnvironmentSettings settings)
+			=> ConfiguredPath(settings) ?? string.Empty;
+
+		/// <inheritdoc/>
+		protected override ProcessLaunchParameters CreateVersionProbe(ChatEnvironmentSettings environment)
+		{
+			var interpreter = interpreterLocator.Resolve(ConfiguredPath(environment));
+			if (!interpreter.Found)
+				throw new InvalidOperationException(interpreter.Problem);
+
+			return new ProcessLaunchParameters
+			{
+				ProcessName = "Bash Check",
+				FileName = interpreter.Path!,
+				Arguments = ["--version"],
+				WorkingDirectory = environment.GetEffectiveWorkingDirectories().GetWorkingDirectory()
+			};
+		}
+
+		/// <inheritdoc/>
 		protected override string BuildScript(ExternalProcessScriptTerminalParameters parameters,
 			ScriptInputMode inputMode, string workingDirectory)
 			=> BashScriptBuilder.Build(parameters);
+
+		private static string? ConfiguredPath(ChatEnvironmentSettings environment)
+			=> environment.GetEffectiveAdditionalSettings()
+				.OfType<BashEnvironmentConfiguration>()
+				.FirstOrDefault()?.ExecutablePath;
 	}
 
 	/// <summary>

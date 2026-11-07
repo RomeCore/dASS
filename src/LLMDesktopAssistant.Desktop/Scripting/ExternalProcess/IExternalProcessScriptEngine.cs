@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Utils.Attachments;
 
@@ -40,5 +41,18 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		/// <param name="launchCancellationToken">Cancels the launch and, afterwards, kills the process.</param>
 		ExternalProcessScriptStartResult StartInTerminal(ExternalProcessScriptTerminalParameters parameters,
 			IServiceProvider services, CancellationToken launchCancellationToken = default);
+
+		/// <summary>
+		/// Checks that the language's interpreter is present and asks it for its version.
+		/// </summary>
+		/// <remarks>
+		/// The answer is cached per configured environment, so a caller may treat this as cheap; the probe itself never
+		/// takes the caller's token, because one chat's Stop must not poison the cache for the others.
+		/// </remarks>
+		/// <param name="useAddonEnvironment">
+		/// Whether the scriptable addons' environment applies instead of the native tools' one. Only python has two.
+		/// </param>
+		Task<ScriptEngineAvailability> CheckAvailabilityAsync(ChatEnvironmentSettings settings,
+			bool useAddonEnvironment = true, CancellationToken cancellationToken = default);
 	}
 }

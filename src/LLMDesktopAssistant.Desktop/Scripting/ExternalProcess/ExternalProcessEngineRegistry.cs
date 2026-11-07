@@ -77,6 +77,13 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		}
 
 		/// <summary>
+		/// Resolves the engine behind a language, for the callers that already know which one they mean.
+		/// </summary>
+		public (IExternalProcessScriptEngine Engine, IScriptEngineDescriptor Descriptor)? ResolveLanguage(
+			ScriptLanguageType language)
+			=> ResolveLanguage(language.ToString().ToLowerInvariant());
+
+		/// <summary>
 		/// Resolves the engine and the descriptor that own the given file.
 		/// </summary>
 		/// <exception cref="NotSupportedException">Thrown when no engine is registered for the file's extension.</exception>

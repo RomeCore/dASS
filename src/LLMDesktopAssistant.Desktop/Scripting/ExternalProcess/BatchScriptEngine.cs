@@ -54,6 +54,22 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		}
 
 		/// <inheritdoc/>
+		protected override ProcessLaunchParameters CreateVersionProbe(ChatEnvironmentSettings environment)
+		{
+			var interpreter = interpreterLocator.Resolve();
+			if (!interpreter.Found)
+				throw new InvalidOperationException(interpreter.Problem);
+
+			return new ProcessLaunchParameters
+			{
+				ProcessName = "Batch Check",
+				FileName = interpreter.Path!,
+				Arguments = ["/d", "/c", "ver"],
+				WorkingDirectory = environment.GetEffectiveWorkingDirectories().GetWorkingDirectory()
+			};
+		}
+
+		/// <inheritdoc/>
 		protected override string BuildScript(ExternalProcessScriptTerminalParameters parameters,
 			ScriptInputMode inputMode, string workingDirectory)
 			=> BatchScriptBuilder.Build(parameters);

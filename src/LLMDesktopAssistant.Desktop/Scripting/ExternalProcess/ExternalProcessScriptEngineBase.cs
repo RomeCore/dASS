@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
 using LLMDesktopAssistant.Addons;
@@ -25,7 +26,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public abstract class ExternalProcessScriptEngineBase : IExternalProcessScriptEngine
 	{
 		private static readonly HashSet<string> _noReservedVariableNames = new(StringComparer.Ordinal);
+		private static readonly TimeSpan _probeTimeout = TimeSpan.FromSeconds(30);
 
+		private readonly ConcurrentDictionary<string, Task<ScriptEngineAvailability>> _availability = [];
 		private readonly IProcessLauncher _processLauncher;
 
 		/// <summary>Initializes a new instance of the <see cref="ExternalProcessScriptEngineBase"/> class.</summary>
@@ -62,6 +65,19 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		/// <param name="runInTerminal">Whether the interpreter must be launched in a PTY.</param>
 		protected abstract ProcessLaunchParameters CreateLaunchParameters(ChatEnvironmentSettings environment,
 			string scriptPath, ExternalProcessScriptTerminalParameters parameters, bool runInTerminal);
+
+		/// <summary>
+		/// Builds the interpreter invocation that answers the version question.
+		/// </summary>
+		/// <exception cref="NotSupportedException">The language declares no probe.</exception>
+		protected virtual ProcessLaunchParameters CreateVersionProbe(ChatEnvironmentSettings environment)
+			=> throw new NotSupportedException($"'{Descriptor.Language}' does not declare a version probe.");
+
+		/// <summary>
+		/// The configured state the cached answer belongs to; a different value asks again.
+		/// </summary>
+		protected virtual string AvailabilityKey(ChatEnvironmentSettings settings)
+			=> Descriptor.Language.ToString();
 
 		/// <inheritdoc/>
 		public async Task<ExternalProcessScriptResult> RunAsync(ExternalProcessScriptParameters parameters,
@@ -221,6 +237,45 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		public ExternalProcessScriptStartResult StartInTerminal(ExternalProcessScriptTerminalParameters parameters,
 			IServiceProvider services, CancellationToken launchCancellationToken = default)
 			=> StartScript(parameters, services, runInTerminal: true, timeOut: null, launchCancellationToken);
+
+		/// <inheritdoc/>
+		public virtual async Task<ScriptEngineAvailability> CheckAvailabilityAsync(ChatEnvironmentSettings settings,
+			bool useAddonEnvironment = true, CancellationToken cancellationToken = default)
+		{
+			var key = $"{AvailabilityKey(settings)}|{useAddonEnvironment}";
+			var probe = _availability.GetOrAdd(key, _ => ProbeAvailabilityAsync(settings));
+			return await probe.WaitAsync(cancellationToken).ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Runs the version probe once and turns its output into an answer.
+		/// </summary>
+		private async Task<ScriptEngineAvailability> ProbeAvailabilityAsync(ChatEnvironmentSettings settings)
+		{
+			try
+			{
+				var parameters = CreateVersionProbe(settings).WithTimeout(_probeTimeout);
+				var process = _processLauncher.Launch(parameters, CancellationToken.None);
+				var exitCode = await process.ExitCodeTask.ConfigureAwait(false);
+
+				var output = process.PlainOutput;
+				IReadOnlyList<string> stdout = output?.StdOut ?? [];
+				IReadOnlyList<string> stderr = output?.StdErr ?? [];
+				var version = stdout.Concat(stderr).Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0);
+
+				if (exitCode == 0)
+					return new ScriptEngineAvailability(true, version, null, parameters.FileName);
+
+				var message = string.Join(Environment.NewLine, stdout.Concat(stderr)).Trim();
+				return new ScriptEngineAvailability(false, null, message.Length > 0
+					? message
+					: $"The version probe exited with code {exitCode} and printed nothing.");
+			}
+			catch (Exception ex)
+			{
+				return new ScriptEngineAvailability(false, null, ex.Message);
+			}
+		}
 
 		/// <summary>
 		/// Builds the document and launches the interpreter, scheduling the document's deletion for the process's exit.
