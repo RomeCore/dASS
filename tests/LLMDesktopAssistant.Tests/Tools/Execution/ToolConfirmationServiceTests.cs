@@ -26,7 +26,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.False(approved);
-			Assert.Equal(ToolStatus.Error, session.Call.Status);
+			Assert.Equal(ToolStatus.Rejected, session.Call.Status);
 			Assert.Equal("policy says no", session.Call.ResultContent);
 		}
 

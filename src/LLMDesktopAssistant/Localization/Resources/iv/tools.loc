@@ -305,6 +305,7 @@ call.status.executing: Executing...
 call.status.failed: Failed
 call.status.pending: Pending
 call.status.queued: Queued
+call.status.rejected: Rejected
 call.status.pre_executing: Analyzing...
 call.status.success: Success
 call.status.unknown: Unknown

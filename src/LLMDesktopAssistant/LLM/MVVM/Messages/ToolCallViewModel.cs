@@ -177,6 +177,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				ToolStatus.WaitingForApproval => MaterialIconKind.QuestionMarkCircle,
 				ToolStatus.ExecutionInterrupted => MaterialIconKind.CancelCircle,
 				ToolStatus.Success => MaterialIconKind.CheckCircle,
+				ToolStatus.Rejected => MaterialIconKind.Cancel,
 				ToolStatus.Cancelled => MaterialIconKind.CancelCircle,
 				ToolStatus.Error => MaterialIconKind.AlertCircle,
 				_ => MaterialIconKind.CancelCircle
@@ -191,6 +192,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				ToolStatus.WaitingForApproval => (IBrush?)null,
 				ToolStatus.ExecutionInterrupted => (IBrush?)null,
 				ToolStatus.Success => (IBrush?)null,
+				ToolStatus.Rejected => (IBrush?)null,
 				ToolStatus.Cancelled => (IBrush?)null,
 				ToolStatus.Error => (IBrush?)null,
 				_ => (IBrush?)null

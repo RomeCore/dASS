@@ -233,10 +233,11 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		{
 			var status = _toolCall.Status;
 
-			IsCompleted = status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled;
+			IsCompleted = status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Rejected
+				or ToolStatus.Cancelled;
 			IsRunning = status is ToolStatus.Pending or ToolStatus.Queued or ToolStatus.PreExecuting or ToolStatus.Executing;
 			IsConfirming = status == ToolStatus.WaitingForApproval;
-			IsFailed = status is ToolStatus.Error or ToolStatus.Cancelled;
+			IsFailed = status is ToolStatus.Error or ToolStatus.Rejected or ToolStatus.Cancelled;
 
 			(StatusIcon, StatusText) = status switch
 			{
@@ -254,6 +255,8 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 					LocalizationManager.LocalizeStatic("tool.call.status.success")),
 				ToolStatus.Error => (MaterialIconKind.AlertCircle,
 					LocalizationManager.LocalizeStatic("tool.call.status.failed")),
+				ToolStatus.Rejected => (MaterialIconKind.Cancel,
+					LocalizationManager.LocalizeStatic("tool.call.status.rejected")),
 				ToolStatus.Cancelled => (MaterialIconKind.Cancel,
 					LocalizationManager.LocalizeStatic("tool.call.status.cancelled")),
 				_ => (MaterialIconKind.HelpCircle,

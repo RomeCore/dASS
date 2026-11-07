@@ -328,6 +328,9 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			ToolStatus.Executing => ToolResultStatus.NoResult,
 			ToolStatus.Success => ToolResultStatus.Success,
 			ToolStatus.Error => ToolResultStatus.Error,
+			// The model-facing vocabulary has no "refused" member, and the rejection reason travels as the
+			// result text; the failure status is the closest thing the prompt can say.
+			ToolStatus.Rejected => ToolResultStatus.Error,
 			ToolStatus.Cancelled => ToolResultStatus.Cancelled,
 			_ => ToolResultStatus.NoResult
 		};
@@ -336,6 +339,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		{
 			ToolStatus.Success => "[TOOL RESULT WAS COMPACTED, SUCCESSFUL BEFORE]",
 			ToolStatus.Error => "[TOOL RESULT WAS COMPACTED, FAULTED BEFORE]",
+			ToolStatus.Rejected => "[TOOL RESULT WAS COMPACTED, REJECTED BEFORE]",
 			ToolStatus.Cancelled => "[TOOL RESULT WAS COMPACTED, CANCELLED BEFORE]",
 			_ => "[TOOL RESULT WAS COMPACTED]"
 		};

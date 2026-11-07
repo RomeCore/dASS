@@ -93,6 +93,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					ToolStatusModel.Success => ToolStatus.Success,
 					ToolStatusModel.Cancelled => ToolStatus.Cancelled,
 					ToolStatusModel.Error => ToolStatus.Error,
+					ToolStatusModel.Rejected => ToolStatus.Rejected,
 					_ => ToolStatus.None
 				},
 				StatusIcon = model.StatusIcon,
@@ -113,6 +114,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				ToolStatus.Executing => ToolStatusModel.ExecutionBegin,
 				ToolStatus.Success => ToolStatusModel.Success,
 				ToolStatus.Error => ToolStatusModel.Error,
+				ToolStatus.Rejected => ToolStatusModel.Rejected,
 				ToolStatus.Cancelled => ToolStatusModel.Cancelled,
 				_ => ToolStatusModel.NotExecuted,
 			};

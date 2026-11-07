@@ -149,6 +149,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		{
 			ToolStatus.Success => "[TOOL RESULT WAS COMPACTED, SUCCESSFUL BEFORE]",
 			ToolStatus.Error => "[TOOL RESULT WAS COMPACTED, FAULTED BEFORE]",
+			ToolStatus.Rejected => "[TOOL RESULT WAS COMPACTED, REJECTED BEFORE]",
 			ToolStatus.Cancelled => "[TOOL RESULT WAS COMPACTED, CANCELLED BEFORE]",
 			_ => "[TOOL RESULT WAS COMPACTED]"
 		};

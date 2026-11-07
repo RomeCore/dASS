@@ -31,7 +31,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				if (handled.HasFlag(ToolPolicyDecision.Disallow))
 					return await AskToolAsync(ctx, ct);
 
-				ctx.Call.Status = ToolStatus.Error;
+				ctx.Call.Status = ToolStatus.Rejected;
 				ctx.Call.ResultContent = ctx.PolicyReason?.Message ??
 					"The tool execution was denied by the policy.";
 				return false;

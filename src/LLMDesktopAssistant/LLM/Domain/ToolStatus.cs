@@ -51,6 +51,12 @@ namespace LLMDesktopAssistant.LLM.Domain
 		Error,
 
 		/// <summary>
+		/// The call was refused before it ran - by a policy decision or by a hook - and the model received the
+		/// reason instead of a result. Unlike <see cref="Error"/> this is not a malfunction.
+		/// </summary>
+		Rejected,
+
+		/// <summary>
 		/// The tool was cancelled by the user.
 		/// </summary>
 		Cancelled
@@ -67,9 +73,10 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		/// <param name="status">The status to check.</param>
 		/// <returns><see langword="true"/> for <see cref="ToolStatus.Success"/>,
-		/// <see cref="ToolStatus.Error"/>, <see cref="ToolStatus.Cancelled"/> and
-		/// <see cref="ToolStatus.ExecutionInterrupted"/>.</returns>
+		/// <see cref="ToolStatus.Error"/>, <see cref="ToolStatus.Rejected"/>, <see cref="ToolStatus.Cancelled"/>
+		/// and <see cref="ToolStatus.ExecutionInterrupted"/>.</returns>
 		public static bool IsTerminal(this ToolStatus status) =>
-			status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Cancelled or ToolStatus.ExecutionInterrupted;
+			status is ToolStatus.Success or ToolStatus.Error or ToolStatus.Rejected
+				or ToolStatus.Cancelled or ToolStatus.ExecutionInterrupted;
 	}
 }
