@@ -21,8 +21,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			FUNCTIONS:
 
 			--- os.platform()
-			  Returns the current platform name.
-			  Returns: string - "win", "linux", "osx", "freebsd", or "unknown"
+			  Returns the current platform name (note that not all platforms are supported on the dASS runtime).
+			  Returns: string - "win", "linux", "freebsd", "android", "osx", "maccatalyst", "macos", "ios",
+			    "tvos", "wasi", "watchos", "browser", or "unknown"
 
 			--- os.arch()
 			  Returns the processor architecture.
@@ -84,14 +85,30 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static LuaTuple Platform(LuaCallingContext ctx, LuaValue[] args)
 		{
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+			if (OperatingSystem.IsWindows())
 				return new LuaTuple(new LuaString("win"));
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+			if (OperatingSystem.IsLinux())
 				return new LuaTuple(new LuaString("linux"));
+			if (OperatingSystem.IsFreeBSD())
+				return new LuaTuple(new LuaString("freebsd"));
+			if (OperatingSystem.IsAndroid())
+				return new LuaTuple(new LuaString("android"));
 			if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
 				return new LuaTuple(new LuaString("osx"));
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
-				return new LuaTuple(new LuaString("freebsd"));
+			if (OperatingSystem.IsMacCatalyst())
+				return new LuaTuple(new LuaString("maccatalyst"));
+			if (OperatingSystem.IsMacOS())
+				return new LuaTuple(new LuaString("macos"));
+			if (OperatingSystem.IsIOS())
+				return new LuaTuple(new LuaString("ios"));
+			if (OperatingSystem.IsTvOS())
+				return new LuaTuple(new LuaString("tvos"));
+			if (OperatingSystem.IsWasi())
+				return new LuaTuple(new LuaString("wasi"));
+			if (OperatingSystem.IsWatchOS())
+				return new LuaTuple(new LuaString("watchos"));
+			if (OperatingSystem.IsBrowser())
+				return new LuaTuple(new LuaString("browser"));
 			return new LuaTuple(new LuaString("unknown"));
 		}
 
