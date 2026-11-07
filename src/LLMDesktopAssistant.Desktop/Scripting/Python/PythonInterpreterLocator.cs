@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.IO;
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Services;
@@ -6,12 +7,12 @@ using LLMDesktopAssistant.Services;
 namespace LLMDesktopAssistant.Desktop.Scripting.Python
 {
 	/// <summary>
-	/// Finds the Python an invocation would actually use, and asks it for its version.
+	/// Finds the Python an invocation would actually use, and asks it for its file and version.
 	/// </summary>
 	public interface IPythonInterpreterLocator
 	{
 		/// <summary>
-		/// Resolves the interpreter behind the chat's environment and reads the version line it prints.
+		/// Resolves the interpreter behind the chat's environment and reads what it reports about itself.
 		/// </summary>
 		/// <param name="useAddonEnvironment">
 		/// Whether the scriptable addons' venv applies instead of the native tools' one.
@@ -22,9 +23,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	}
 
 	/// <summary>
-	/// What a chat's python invocation lands on: the version line, or the reason there is none.
+	/// What a chat's python invocation lands on: its file and version, or the reason there is none.
 	/// </summary>
-	public sealed record PythonInterpreterResolution(string? Version, string? Problem)
+	public sealed record PythonInterpreterResolution(string? Version, string? Problem,
+		string? ExecutablePath = null)
 	{
 		/// <summary>
 		/// Whether an interpreter answered.
@@ -33,17 +35,27 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 	}
 
 	/// <summary>
-	/// Probes <c>python -V</c> through the same launch the scripts use, once per effective venv.
+	/// Probes the interpreter through the same launch the scripts use, once per effective venv.
 	/// </summary>
 	/// <remarks>
-	/// Python has no executable to locate - the shell picks one inside the venv - so running the probe is the only way
-	/// to learn both that the interpreter exists and what it is. The result is cached per venv path, which is also what
-	/// makes a settings change take effect without a restart.
+	/// Python has no executable to locate - the shell picks one inside the activated venv - so the probe runs
+	/// <c>python -</c> with a small program on standard input. The program, not the command line, carries the code,
+	/// so the wrapper's quoting cannot break it, and the marker lines say which answer is which: an activation script
+	/// that prints something of its own cannot be mistaken for a version. The result is cached per venv path, which
+	/// is also what makes a settings change take effect without a restart.
 	/// </remarks>
 	[Service(typeof(IPythonInterpreterLocator))]
 	public sealed class PythonInterpreterLocator(IProcessLauncher processLauncher, PythonHelperService pythonHelperService)
 		: IPythonInterpreterLocator
 	{
+		private const string pathMarker = "@@PATH@@";
+		private const string versionMarker = "@@VER@@";
+
+		// Written on one line and without indentation on purpose: a raw string would leave a leading tab, and python
+		// refuses an unexpected indent at the top of a module.
+		private const string probeCode =
+			"import sys\nprint('@@PATH@@' + sys.executable)\nprint('@@VER@@Python ' + sys.version.split()[0])\n";
+
 		private static readonly TimeSpan _probeTimeout = TimeSpan.FromSeconds(30);
 
 		private readonly ConcurrentDictionary<string, Task<PythonInterpreterResolution>> _cache = [];
@@ -52,10 +64,11 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		public async Task<PythonInterpreterResolution> ResolveAsync(ChatEnvironmentSettings settings,
 			bool useAddonEnvironment, CancellationToken cancellationToken = default)
 		{
-			var key = $"{useAddonEnvironment}|{EffectiveVenvPath(settings, useAddonEnvironment)}";
+			var venvPath = EffectiveVenvPath(settings, useAddonEnvironment);
 
 			// The probe never takes the caller's token: one chat's Stop must not poison the cached answer.
-			var probe = _cache.GetOrAdd(key, _ => ProbeAsync(settings, useAddonEnvironment));
+			var probe = _cache.GetOrAdd($"{useAddonEnvironment}|{venvPath}",
+				_ => ProbeAsync(settings, venvPath, useAddonEnvironment));
 			return await probe.WaitAsync(cancellationToken).ConfigureAwait(false);
 		}
 
@@ -69,36 +82,59 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			return path ?? string.Empty;
 		}
 
-		private async Task<PythonInterpreterResolution> ProbeAsync(ChatEnvironmentSettings settings,
+		private async Task<PythonInterpreterResolution> ProbeAsync(ChatEnvironmentSettings settings, string venvPath,
 			bool useAddonEnvironment)
 		{
+			// A configured activation script that is not there is not a python problem: name the file instead of
+			// letting cmd answer "The system cannot find the path specified".
+			if (venvPath.Length > 0 && !File.Exists(venvPath))
+			{
+				return new PythonInterpreterResolution(null,
+					$"The configured venv activation script '{venvPath}' does not exist.");
+			}
+
 			try
 			{
-				var launchParameters = pythonHelperService.CreateLaunchParameters(settings, "python -V", "Python Check",
-						runInTerminal: false, useAddonEnvironment)
-					.WithTimeout(_probeTimeout);
-				var process = processLauncher.Launch(launchParameters, CancellationToken.None);
+				var parameters = pythonHelperService
+					.CreateLaunchParameters(settings, "python -", "Python Check", runInTerminal: false,
+						useAddonEnvironment)
+					.WithTimeout(_probeTimeout)
+					.WithStdIn(probeCode);
+				var process = processLauncher.Launch(parameters, CancellationToken.None);
 				var exitCode = await process.ExitCodeTask.ConfigureAwait(false);
 
 				var output = process.PlainOutput;
-				IReadOnlyList<string> stdout = output?.StdOut ?? [];
-				IReadOnlyList<string> stderr = output?.StdErr ?? [];
+				IEnumerable<string> stdout = output?.StdOut ?? [];
+				IEnumerable<string> stderr = output?.StdErr ?? [];
+				var lines = stdout.Concat(stderr).Select(line => line.Trim()).ToList();
 
-				// -V prints to stdout since 3.4 and to stderr before it, and the Store stub complains on stderr.
-				var version = stdout.Concat(stderr).Select(line => line.Trim()).FirstOrDefault(line => line.Length > 0);
-
+				var version = Marked(lines, versionMarker);
 				if (exitCode == 0 && version is not null)
-					return new PythonInterpreterResolution(version, null);
+					return new PythonInterpreterResolution(version, null, Marked(lines, pathMarker));
 
-				var message = string.Join(Environment.NewLine, stdout.Concat(stderr)).Trim();
+				var message = string.Join(Environment.NewLine, lines).Trim();
 				return new PythonInterpreterResolution(null, message.Length > 0
 					? message
-					: $"python -V exited with code {exitCode} and printed nothing.");
+					: $"The python probe exited with code {exitCode} and printed nothing.");
 			}
 			catch (Exception ex)
 			{
 				return new PythonInterpreterResolution(null, ex.Message);
 			}
+		}
+
+		/// <summary>
+		/// Reads the value a marker line carries, or <see langword="null"/> when no line carries it.
+		/// </summary>
+		private static string? Marked(IEnumerable<string> lines, string marker)
+		{
+			foreach (var line in lines)
+			{
+				if (line.StartsWith(marker, StringComparison.Ordinal) && line.Length > marker.Length)
+					return line[marker.Length..];
+			}
+
+			return null;
 		}
 	}
 }

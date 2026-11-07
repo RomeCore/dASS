@@ -56,6 +56,24 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		public TimeSpan? CompletionExpiryTime { get; init; } = TimeSpan.FromMinutes(5);
 
 		/// <summary>
+		/// Creates a copy of these parameters with an initial standard input.
+		/// </summary>
+		/// <param name="stdIn">The text to write to the process standard input, or <see langword="null"/> for none.</param>
+		public ProcessLaunchParameters WithStdIn(string? stdIn) => new()
+		{
+			ProcessName = ProcessName,
+			FileName = FileName,
+			Arguments = Arguments,
+			VerbatimArguments = VerbatimArguments,
+			WorkingDirectory = WorkingDirectory,
+			RunInTerminal = RunInTerminal,
+			EnvironmentVariables = EnvironmentVariables,
+			StdIn = stdIn,
+			TimeOut = TimeOut,
+			CompletionExpiryTime = CompletionExpiryTime
+		};
+
+		/// <summary>
 		/// Creates a copy of these parameters with a different timeout.
 		/// </summary>
 		/// <param name="timeout">The new timeout, or <see langword="null"/> to run without one.</param>
