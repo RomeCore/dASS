@@ -28,6 +28,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 		public const string Result = "tool.result";
 
 		/// <summary>
+		/// The base of every event fired when a call reaches the confirmation stage.
+		/// </summary>
+		public const string Confirm = "tool.confirm";
+
+		/// <summary>
 		/// Composes the event fired before a call runs.
 		/// </summary>
 		/// <param name="source">The invocation source.</param>
@@ -43,6 +48,16 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 		/// <returns>For example <c>tool.result.command.rejected</c>.</returns>
 		public static string ComposeResult(ToolInvocationSource source, ToolStatus status) =>
 			Result + "." + DescribeSource(source) + "." + DescribeStatus(status);
+
+		/// <summary>
+		/// Composes the event fired when a call is about to be confirmed, carrying the decision the pipeline
+		/// arrived with.
+		/// </summary>
+		/// <param name="source">The invocation source.</param>
+		/// <param name="decision">The pending decision of the pipeline.</param>
+		/// <returns>For example <c>tool.confirm.chat-run.ask</c>.</returns>
+		public static string ComposeConfirm(ToolInvocationSource source, ToolPolicyDecision decision) =>
+			Confirm + "." + DescribeSource(source) + "." + DescribeDecision(decision);
 
 		/// <summary>
 		/// Composes the name a hook matches with <c>hook-name</c>: the origin of the tool and its name.
@@ -67,6 +82,23 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 		/// </summary>
 		public static string DescribeStatus(ToolStatus status) =>
 			KebabEnumNames<ToolStatus>.Serialize(status) ?? status.ToString().ToLowerInvariant();
+
+		/// <summary>
+		/// Renders the pending pipeline decision in kebab case.
+		/// </summary>
+		/// <param name="decision">The decision.</param>
+		/// <returns>For example <c>ask</c>.</returns>
+		public static string DescribeDecision(ToolPolicyDecision decision) =>
+			KebabEnumNames<ToolPolicyDecision>.Serialize(decision) ?? decision.ToString().ToLowerInvariant();
+
+		/// <summary>
+		/// Renders the layer that produced a decision in kebab case, or <see langword="null"/> when no layer
+		/// did.
+		/// </summary>
+		/// <param name="source">The layer, or <see langword="null"/>.</param>
+		/// <returns>For example <c>memorization</c>.</returns>
+		public static string? DescribeReasonSource(ToolDecisionSource? source) =>
+			source is { } value ? KebabEnumNames<ToolDecisionSource>.Serialize(value) : null;
 
 		/// <summary>
 		/// Renders the origin of a tool from the behaviour flags its descriptor declares.

@@ -16,6 +16,8 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 	/// </summary>
 	public class ToolConfirmationServiceTests
 	{
+		private static readonly NoConfirmationHooks NoHooks = new();
+
 		[Fact]
 		public async Task AnUnhandledDisallow_WritesTheReasonAndStops()
 		{
@@ -23,7 +25,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			session.Context.PolicyDecision = ToolPolicyDecision.Disallow;
 			session.Context.PolicyReason = new ToolPolicyReason(ToolDecisionSource.ApprovalLevel, "policy says no");
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.False(approved);
 			Assert.Equal(ToolStatus.Rejected, session.Call.Status);
@@ -37,7 +39,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool(), confirmation: sink);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.False(approved);
 			Assert.Equal(1, sink.Calls);
@@ -52,7 +54,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool(), confirmation: sink);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.True(approved);
 			var part = Assert.Single(session.Call.AdditionalData.OfType<AdditionalMessageContentPart>());
@@ -77,7 +79,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool, confirmation: sink);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.True(approved);
 			Assert.Equal(1, providerCalls);
@@ -99,7 +101,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool);
 			session.Context.PolicyDecision = ToolPolicyDecision.Disallow;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.True(approved);
 			Assert.Equal(1, providerCalls);
@@ -117,7 +119,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.False(approved);
 			Assert.Equal(ToolStatus.Error, session.Call.Status);
@@ -140,7 +142,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			session.Context.HandledDecisions = ToolPolicyDecision.Ask;
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			var approved = await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None);
+			var approved = await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None);
 
 			Assert.True(approved);
 			Assert.Equal(1, providerCalls);
@@ -164,7 +166,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 				var session = ToolTestContext.Create(tool);
 				session.Context.PolicyDecision = decision;
 
-				Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
+				Assert.True(await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None));
 			}
 
 			Assert.Equal(2, providerCalls);
@@ -187,7 +189,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool, JsonNode.Parse("""{"path":"old.txt"}"""));
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
+			Assert.True(await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None));
 
 			Assert.Equal("new.txt", session.Context.Arguments.Effective?["path"]?.GetValue<string>());
 			Assert.Equal("new.txt", JsonNode.Parse(session.Call.Arguments)?["path"]?.GetValue<string>());
@@ -210,7 +212,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool, JsonNode.Parse("""{"path":"old.txt"}"""));
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
+			Assert.True(await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None));
 
 			Assert.Equal("new.txt", session.Context.Arguments.Effective?["path"]?.GetValue<string>());
 			Assert.Equal("old.txt", JsonNode.Parse(session.Call.Arguments)?["path"]?.GetValue<string>());
@@ -233,7 +235,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
+			Assert.True(await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None));
 
 			Assert.Same(approvalData, session.Context.ApprovalData);
 		}
@@ -254,12 +256,21 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var session = ToolTestContext.Create(tool, memorization: memorization);
 			session.Context.PolicyDecision = ToolPolicyDecision.Ask;
 
-			Assert.True(await new ToolConfirmationService().ConfirmAsync(session.Context, CancellationToken.None));
+			Assert.True(await new ToolConfirmationService(NoHooks).ConfirmAsync(session.Context, CancellationToken.None));
 
 			var consent = Assert.Single(memorization.Consents);
 			Assert.True(consent.Approved);
 			Assert.Equal(ToolApprovalMemorization.Session, consent.Memorization);
 			Assert.Equal("remember it", consent.Notes);
+		}
+
+		/// <summary>
+		/// A hook point with no hooks: the stage falls back to its own decisions.
+		/// </summary>
+		private sealed class NoConfirmationHooks : IToolConfirmationHookExecutionService
+		{
+			public Task<bool> RunAsync(IToolExecutionContext ctx, CancellationToken ct = default) =>
+				Task.FromResult(true);
 		}
 
 		private sealed class FixedConfirmationSink(ToolApprovalResult result) : IConfirmationSink

@@ -29,7 +29,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Domain
 		/// <summary>
 		/// The user decided during this invocation.
 		/// </summary>
-		User
+		User,
+
+		/// <summary>
+		/// A confirmation hook answered in the user's place.
+		/// </summary>
+		Hook
 	}
 
 	/// <summary>

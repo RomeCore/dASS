@@ -18,11 +18,19 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 	/// back to the generic surface would execute something the tool never agreed to surface.
 	/// </remarks>
 	[Service(typeof(IToolConfirmationService))]
-	public sealed class ToolConfirmationService : IToolConfirmationService
+	public sealed class ToolConfirmationService(
+		IToolConfirmationHookExecutionService confirmationHooks) : IToolConfirmationService
 	{
 		/// <inheritdoc/>
 		public async Task<bool> ConfirmAsync(IToolExecutionContext ctx, CancellationToken ct)
 		{
+			ctx.Call.Status = ToolStatus.WaitingForApproval;
+
+			// The hooks answer in the user's place: they are the only point where the decision may change,
+			// so every branch below reads the value they left behind.
+			if (!await confirmationHooks.RunAsync(ctx, ct))
+				return false;
+
 			var decision = ctx.PolicyDecision;
 			var handled = ctx.HandledDecisions;
 
@@ -40,7 +48,6 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (decision != ToolPolicyDecision.Ask)
 				return true;
 
-			ctx.Call.Status = ToolStatus.WaitingForApproval;
 			using var confirmation = ctx.Services.GetService<IChatExecutionStatusService>()?.WithConfirmation();
 
 			if (handled.HasFlag(ToolPolicyDecision.Ask))
