@@ -179,6 +179,7 @@ kind:
 | `Template` | `templates/` | LLT template extensions |
 | `PromptContext` | `context/` | `context/<name>.<ext>` - one script per context |
 | `SlashCommand` | `commands/` | `commands/<name>.<ext>` - a single file, no folder form |
+| `Hook` | `hooks/` | `hooks/<name>.<ext>` - one script per tool-pipeline event, no folder form |
 
 Packs are discovered under the working directories, the user profile and `Directories.AddonPacks`, plus
 other runtimes' home folders (`.agents`, `.claude`, `.gemini`, `.codex`, `.github`, `.cursor`, ...) -
