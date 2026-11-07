@@ -73,6 +73,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["platform"] = new LuaCallbackFunction(Platform);
 			ns["arch"] = new LuaCallbackFunction(Arch);
 			ns["env"] = new LuaCallbackFunction(Env);
+			ns["getenv"] = ns["env"];
 			ns["username"] = new LuaCallbackFunction(Username);
 			ns["hostname"] = new LuaCallbackFunction(Hostname);
 			ns["sleep"] = new LuaCallbackFunction(Sleep);
