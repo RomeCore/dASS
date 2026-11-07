@@ -73,6 +73,11 @@ when the algorithm is non-obvious. `<summary>` is **always multi-line** - never
 public string Name { get; set; }
 ```
 
+Brevity is part of the standard. A `<summary>` is one sentence that says what the thing *is*; `<remarks>`
+is for the trap, the why, or the invariant a reader would otherwise break - not for restating the body,
+walking through every branch or repeating the parameter names. Three paragraphs usually mean the member
+does three things.
+
 ## Where things live
 
 | Need | Entry point |
