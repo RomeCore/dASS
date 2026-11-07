@@ -143,7 +143,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			await service.RestartAsync(CreateHost(), call, CancellationToken.None);
 
 			Assert.Equal(
-				["initialization", "streaming", "validation", "synchronization", "preview", "execution", "settlement"],
+				["initialization", "streaming", "pre-hook", "validation", "synchronization", "preview", "execution", "settlement"],
 				stages.Calls);
 		}
 
@@ -187,11 +187,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 
 			var stages = new RecordingStages();
 			var dispatcher = new ToolInvocationDispatcher(
-				new ChatToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages, stages),
-				new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages, stages),
-				new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages, stages),
-				new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages),
-				new ScriptToolOrchestrator(stages, stages, stages, stages, stages));
+				new ChatToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages, stages, stages),
+				new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages),
+				new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages),
+				new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages, stages),
+				new ScriptToolOrchestrator(stages, stages, stages, stages, stages, stages));
 
 			var service = new ChatToolCallService(
 				chat,

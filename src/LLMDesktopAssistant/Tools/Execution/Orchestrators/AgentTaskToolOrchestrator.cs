@@ -54,11 +54,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 					}, ct);
 				}
 
-				settlement.Finalize(ctx, null);
+				await settlement.FinalizeAsync(ctx, null, ct);
 			}
 			catch (Exception ex)
 			{
-				settlement.Finalize(ctx, ex);
+				await settlement.FinalizeAsync(ctx, ex, ct);
 			}
 		}
 	}

@@ -11,13 +11,14 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 	{
 		/// <summary>
 		/// Finalizes the call: applies the failure (when one was thrown), fills the default result content
-		/// when the tool produced none, based on the terminal status.
+		/// when the tool produced none, and lets the result hooks rewrite the text the model reads.
 		/// </summary>
 		/// <param name="ctx">The invocation.</param>
 		/// <param name="exception">
 		/// The exception that interrupted the sequence, or <see langword="null"/> when it ran to the end.
 		/// The parameter has no default on purpose: every call site states which outcome it is settling.
 		/// </param>
-		void Finalize(IToolExecutionContext ctx, Exception? exception);
+		/// <param name="ct">Cancellation of the run.</param>
+		Task FinalizeAsync(IToolExecutionContext ctx, Exception? exception, CancellationToken ct = default);
 	}
 }

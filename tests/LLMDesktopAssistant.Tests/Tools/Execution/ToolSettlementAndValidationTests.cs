@@ -16,73 +16,73 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		[InlineData(ToolStatus.Success, "Tool successfully returned no result.")]
 		[InlineData(ToolStatus.Error, "Tool failed with no result.")]
 		[InlineData(ToolStatus.Cancelled, "Tool execution was cancelled.")]
-		public void Finalize_FillsTheDefaultContentByStatus(ToolStatus status, string expected)
+		public async Task Finalize_FillsTheDefaultContentByStatus(ToolStatus status, string expected)
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.Status = status;
 			session.Call.ResultContent = null;
 
-			new ToolSettlementService().Finalize(session.Context, null);
+			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, null);
 
 			Assert.Equal(expected, session.Call.ResultContent);
 		}
 
 		[Fact]
-		public void Finalize_KeepsTheContentTheToolProduced()
+		public async Task Finalize_KeepsTheContentTheToolProduced()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.Status = ToolStatus.Success;
 			session.Call.ResultContent = "the tool said this";
 
-			new ToolSettlementService().Finalize(session.Context, null);
+			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, null);
 
 			Assert.Equal("the tool said this", session.Call.ResultContent);
 		}
 
 		[Fact]
-		public void Finalize_MarksCancellationAsCancelled()
+		public async Task Finalize_MarksCancellationAsCancelled()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.ResultContent = null;
 
-			new ToolSettlementService().Finalize(session.Context, new OperationCanceledException());
+			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, new OperationCanceledException());
 
 			Assert.Equal(ToolStatus.Cancelled, session.Call.Status);
 			Assert.Equal("Tool execution was interrupted.", session.Call.ResultContent);
 		}
 
 		[Fact]
-		public void Finalize_KeepsThePartialOutputOfACancelledCall()
+		public async Task Finalize_KeepsThePartialOutputOfACancelledCall()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.ResultContent = "the half I already produced";
 
-			new ToolSettlementService().Finalize(session.Context, new OperationCanceledException());
+			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, new OperationCanceledException());
 
 			Assert.Equal(ToolStatus.Cancelled, session.Call.Status);
 			Assert.Equal("the half I already produced\nTool execution was interrupted.", session.Call.ResultContent);
 		}
 
 		[Fact]
-		public void Finalize_MarksAnUnexpectedFailureAsError()
+		public async Task Finalize_MarksAnUnexpectedFailureAsError()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.ResultContent = null;
 
-			new ToolSettlementService().Finalize(session.Context, new InvalidOperationException("boom"));
+			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, new InvalidOperationException("boom"));
 
 			Assert.Equal(ToolStatus.Error, session.Call.Status);
 			Assert.Contains("boom", session.Call.ResultContent);
 		}
 
 		[Fact]
-		public void Finalize_WritesAModelFacingMessageVerbatim()
+		public async Task Finalize_WritesAModelFacingMessageVerbatim()
 		{
 			var session = ToolTestContext.Create(ToolTestContext.CreateTool());
 			session.Call.ResultContent = null;
 
-			new ToolSettlementService()
-				.Finalize(session.Context, new ToolArgumentsInvalidException("The tool arguments are invalid."));
+			await new ToolSettlementService(new NoResultHooks())
+				.FinalizeAsync(session.Context, new ToolArgumentsInvalidException("The tool arguments are invalid."));
 
 			Assert.Equal(ToolStatus.Error, session.Call.Status);
 			Assert.Equal("The tool arguments are invalid.", session.Call.ResultContent);

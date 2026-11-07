@@ -41,11 +41,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Orchestrators
 						await execution.RunAsync(ctx, ct);
 				}
 
-				settlement.Finalize(ctx, null);
+				await settlement.FinalizeAsync(ctx, null, ct);
 			}
 			catch (Exception ex)
 			{
-				settlement.Finalize(ctx, ex);
+				await settlement.FinalizeAsync(ctx, ex, ct);
 			}
 
 			// TODO(script-sync): the synchronization stage is skipped on purpose. Sync keys are not

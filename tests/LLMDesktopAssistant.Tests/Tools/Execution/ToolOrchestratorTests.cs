@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			await orchestrator.RunAsync(ctx, CancellationToken.None);
 
 			Assert.Equal(
-				["initialization", "streaming", "validation", "synchronization", "preview", "policy",
+				["initialization", "streaming", "pre-hook", "validation", "synchronization", "preview", "policy",
 					"confirmation", "execution", "settlement"],
 				stages.Calls);
 			Assert.True(stages.Settled);
@@ -60,11 +60,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var stages = new RecordingStages();
 			var ctx = ToolTestContext.Create(ToolTestContext.CreateTool()).Context;
 
-			await new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages, stages)
+			await new ChatRestartOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages)
 				.RunAsync(ctx, CancellationToken.None);
 
 			Assert.Equal(
-				["initialization", "streaming", "validation", "synchronization", "preview", "execution", "settlement"],
+				["initialization", "streaming", "pre-hook", "validation", "synchronization", "preview", "execution", "settlement"],
 				stages.Calls);
 		}
 
@@ -74,11 +74,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var stages = new RecordingStages();
 			var ctx = ToolTestContext.Create(ToolTestContext.CreateTool()).Context;
 
-			await new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages, stages)
+			await new ToolCommandOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages)
 				.RunAsync(ctx, CancellationToken.None);
 
 			Assert.Equal(
-				["initialization", "streaming", "validation", "synchronization", "preview", "execution", "settlement"],
+				["initialization", "streaming", "pre-hook", "validation", "synchronization", "preview", "execution", "settlement"],
 				stages.Calls);
 		}
 
@@ -88,10 +88,11 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var stages = new RecordingStages();
 			var ctx = ToolTestContext.Create(ToolTestContext.CreateTool()).Context;
 
-			await new ScriptToolOrchestrator(stages, stages, stages, stages, stages)
+			await new ScriptToolOrchestrator(stages, stages, stages, stages, stages, stages)
 				.RunAsync(ctx, CancellationToken.None);
 
-			Assert.Equal(["initialization", "validation", "preview", "execution", "settlement"], stages.Calls);
+			Assert.Equal(["initialization", "pre-hook", "validation", "preview", "execution", "settlement"],
+				stages.Calls);
 		}
 
 		[Fact]
@@ -100,15 +101,15 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			var stages = new RecordingStages();
 			var ctx = ToolTestContext.Create(ToolTestContext.CreateTool()).Context;
 
-			await new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages)
+			await new AgentTaskToolOrchestrator(stages, stages, stages, stages, stages, stages, stages, stages, stages)
 				.RunAsync(ctx, CancellationToken.None);
 
 			Assert.Equal(
-				["initialization", "validation", "synchronization", "preview", "policy", "confirmation", "execution", "settlement"],
+				["initialization", "pre-hook", "validation", "synchronization", "preview", "policy", "confirmation", "execution", "settlement"],
 				stages.Calls);
 		}
 
 		private static ChatToolOrchestrator CreateChatRun(RecordingStages stages) =>
-			new(stages, stages, stages, stages, stages, stages, stages, stages, stages);
+			new(stages, stages, stages, stages, stages, stages, stages, stages, stages, stages);
 	}
 }

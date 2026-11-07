@@ -9,9 +9,9 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 	/// chat, a task or a real tool: the test asserts the sequence of stage calls and the exception the
 	/// settlement stage received.
 	/// </summary>
-	internal sealed class RecordingStages : IToolInitializationService, IToolStreamingService, IToolValidationService,
-		IToolSynchronizationService, IToolPreviewService, IToolPolicyService, IToolConfirmationService,
-		IToolExecutionService, IToolSettlementService
+	internal sealed class RecordingStages : IToolInitializationService, IToolPreHookExecutionService,
+		IToolStreamingService, IToolValidationService, IToolSynchronizationService, IToolPreviewService,
+		IToolPolicyService, IToolConfirmationService, IToolExecutionService, IToolSettlementService
 	{
 		/// <summary>The stages that ran, in order.</summary>
 		public List<string> Calls { get; } = [];
@@ -28,6 +28,9 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		/// <summary>Whether the confirmation stage approves the call.</summary>
 		public bool Confirms { get; init; } = true;
 
+		/// <summary>Whether the pre-use hooks let the call continue.</summary>
+		public bool PreHooksContinue { get; init; } = true;
+
 		/// <summary>Whether the settlement stage ran.</summary>
 		public bool Settled { get; private set; }
 
@@ -37,6 +40,12 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 		void IToolInitializationService.Initialize(IToolExecutionContext ctx, ref CancellationToken ct)
 		{
 			Record("initialization");
+		}
+
+		Task<bool> IToolPreHookExecutionService.RunAsync(IToolExecutionContext ctx, CancellationToken ct)
+		{
+			Record("pre-hook");
+			return Task.FromResult(PreHooksContinue);
 		}
 
 		Task IToolStreamingService.RunAsync(IToolExecutionContext ctx, StreamingMode mode, CancellationToken ct)
@@ -78,11 +87,13 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			return Task.CompletedTask;
 		}
 
-		void IToolSettlementService.Finalize(IToolExecutionContext ctx, Exception? exception)
+		Task IToolSettlementService.FinalizeAsync(IToolExecutionContext ctx, Exception? exception,
+			CancellationToken ct)
 		{
 			Settled = true;
 			SettledException = exception;
 			Calls.Add("settlement");
+			return Task.CompletedTask;
 		}
 
 		private void Record(string stage)
@@ -92,5 +103,14 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			if (FailureStage == stage && Failure is not null)
 				throw Failure;
 		}
+	}
+
+	/// <summary>
+	/// A result-hook stage that does nothing: settlement only needs something to call.
+	/// </summary>
+	internal sealed class NoResultHooks : IToolResultHookExecutionService
+	{
+		public Task RunAsync(IToolExecutionContext ctx, Exception? exception, CancellationToken ct = default) =>
+			Task.CompletedTask;
 	}
 }
