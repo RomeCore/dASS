@@ -13,9 +13,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 	public sealed class ToolPreUseHookPayload
 	{
 		/// <summary>
-		/// The name the hook was matched against: the tool's canonical name, or the name the model emitted
-		/// when the tool is no longer in the toolset. It is the same value a <c>hook-name</c> glob matches, so
-		/// a hook never has to reconcile two names.
+		/// The name the hook was matched against: the tool's origin and name, for example <c>native.fs-edit</c>.
 		/// </summary>
 		public string Tool { get; init; } = string.Empty;
 

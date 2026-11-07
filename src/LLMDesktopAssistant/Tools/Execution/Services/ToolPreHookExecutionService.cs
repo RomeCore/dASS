@@ -2,7 +2,6 @@ using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Hooks;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
-using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Hooks;
 using LLMDesktopAssistant.Utils;
@@ -11,82 +10,53 @@ using Serilog;
 namespace LLMDesktopAssistant.Tools.Execution.Services
 {
 	/// <summary>
-	/// The pre-use hook point: fires <c>tool.pre-use</c> before the argument set is validated and before
-	/// the synchronization keys are derived from it, and either vetoes the invocation or replaces the
-	/// argument set the whole rest of the pipeline sees.
+	/// Fires <c>tool.start.{source}</c> before the arguments are validated and the synchronization keys are
+	/// derived: a hook may refuse the call or replace its argument set.
 	/// </summary>
 	/// <remarks>
-	/// <para>
-	/// This is the only point at which a hook may rewrite arguments. The synchronization keys, the
-	/// specifier verdict and the executor input are all derived from the effective set, so a rewrite after
-	/// this stage would make those findings describe a call that never runs.
-	/// </para>
-	/// <para>
-	/// A veto is an ordinary failed call, not an exception: the status and the model-facing text are
-	/// written here, and settlement leaves them alone because the result is already non-empty.
-	/// </para>
-	/// <para>
-	/// Invocations launched by a script are not hooked. A script is already outside policy and
-	/// confirmation, and firing the hooks here would run the same hook a second time from inside its own
-	/// tool call - a hook written in Lua that inspects a file would recurse until it timed out.
-	/// </para>
+	/// This is the only point that may rewrite arguments, because every later stage derives its findings
+	/// from that set. Calls launched by a script are not hooked: a script hook that calls a tool would
+	/// re-enter itself.
 	/// </remarks>
 	[Service(typeof(IToolPreHookExecutionService))]
 	public class ToolPreHookExecutionService : IToolPreHookExecutionService
 	{
 		/// <summary>
-		/// The event fired before a tool is used.
-		/// </summary>
-		private const string hookType = "tool.pre-use";
-
-		/// <summary>
-		/// The text the model reads when a hook vetoes a call without explaining itself.
+		/// The text the model reads when a hook refuses a call without explaining itself.
 		/// </summary>
 		private const string defaultDenial = "The tool execution was blocked by a hook.";
 
 		/// <inheritdoc/>
 		public async Task<bool> RunAsync(IToolExecutionContext ctx, CancellationToken ct)
 		{
-			// A script's own tool calls must not re-enter the hooks of the invocation that is running it.
 			if (ctx.Source is ToolInvocationSource.Script)
 				return true;
 
 			if (ctx.Services.GetService<IHookDispatcher>() is not { } hookDispatcher)
 				return true;
 
+			var hookType = ToolHookEvents.ComposeStart(ctx.Source);
+			var hookName = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call);
+
 			var result = await hookDispatcher.ExecuteHooksAsync<ToolPreUseHookVerdict>(
-				CreatePayload(ctx), hookType, ctx.Call.ToolName, HookExecutionFlow.Sequential,
-				cancellationToken: ct);
+				CreatePayload(ctx), hookType, hookName, HookExecutionFlow.Sequential, cancellationToken: ct);
 
-			// A hook that stopped the chain itself - a blocking exit code or a crash of an out-of-process
-			// hook - wins over any verdict, because the chain never produced one.
+			// A hook that broke the chain itself - a blocking exit code - beats any verdict: there is none.
 			if (!string.IsNullOrEmpty(result.BlockingMessage))
-			{
-				ctx.Call.Status = ToolStatus.Error;
-				ctx.Call.ResultContent = result.BlockingMessage;
-				return false;
-			}
+				return Deny(ctx, result.BlockingMessage, ToolStatus.Rejected);
 
-			var verdict = result.Value;
-			if (verdict is null)
+			if (result.Value is not { } verdict)
 				return true;
 
-			// Approve and ask mean the same thing here: the policy stage has not decided yet, so this point only
-			// has the veto left to say. A combination of flags is never a decision and is reported, not obeyed.
+			var reason = string.IsNullOrWhiteSpace(verdict.Reason) ? defaultDenial : verdict.Reason;
+
 			switch (verdict.Decision)
 			{
-				case null or ToolPolicyDecision.None or ToolPolicyDecision.Approve or ToolPolicyDecision.Ask:
-					break;
+				case ToolHookDecision.Disallow:
+					return Deny(ctx, reason, ToolStatus.Rejected);
 
-				case ToolPolicyDecision.Disallow:
-					ctx.Call.Status = ToolStatus.Error;
-					ctx.Call.ResultContent = string.IsNullOrWhiteSpace(verdict.Reason) ? defaultDenial : verdict.Reason;
-					return false;
-
-				default:
-					Log.Warning("Hook {HookType} on tool {ToolName} returned {Decision}, which is never a single decision; " +
-						"ignored.", hookType, ctx.Call.ToolName, verdict.Decision);
-					break;
+				case ToolHookDecision.Error:
+					return Deny(ctx, reason, ToolStatus.Error);
 			}
 
 			if (verdict.Arguments is JsonObject arguments)
@@ -109,44 +79,30 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		/// <summary>
 		/// Builds the document the hooks receive.
 		/// </summary>
-		/// <remarks>
-		/// The argument set is the effective one on purpose: a hook validates what will run, not what the
-		/// model typed, and an override an earlier hook installed is already part of it.
-		/// </remarks>
 		/// <param name="ctx">The invocation context.</param>
-		/// <returns>The payload of one <c>tool.pre-use</c> event.</returns>
-		private static ToolPreUseHookPayload CreatePayload(IToolExecutionContext ctx)
+		private static ToolPreUseHookPayload CreatePayload(IToolExecutionContext ctx) => new()
 		{
-			var call = ctx.Call;
-			var canonicalName = ctx.Descriptor.Name;
-
-			return new ToolPreUseHookPayload
-			{
-				Tool = string.IsNullOrEmpty(canonicalName) ? call.ToolName : canonicalName,
-				Behaviour = DescribeBehaviour(call.ExpectedBehaviour ?? ctx.Descriptor.DefaultExpectedBehaviour),
-				Source = KebabEnumNames<ToolInvocationSource>.Serialize(ctx.Source) ?? ctx.Source.ToString(),
-				Arguments = ctx.Arguments.Effective,
-				ChatId = ctx.Chat?.Id,
-				AgentId = (ctx.Host as AssistantMessage)?.SenderAgentId
-			};
-		}
+			Tool = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call),
+			Behaviour = ToolHookEvents.DescribeBehaviour(
+				ctx.Call.ExpectedBehaviour ?? ctx.Descriptor.DefaultExpectedBehaviour),
+			Source = ToolHookEvents.DescribeSource(ctx.Source),
+			Arguments = ctx.Arguments.Effective,
+			ChatId = ctx.Chat?.Id,
+			AgentId = (ctx.Host as AssistantMessage)?.SenderAgentId
+		};
 
 		/// <summary>
-		/// Renders behaviour flags as kebab-case names, dropping the two members that are not flags:
-		/// <see cref="ToolBehaviour.None"/> is set on every value and <see cref="ToolBehaviour.All"/> is set
-		/// only when every flag is.
+		/// Fails the call with a model-facing reason and the status the refusal is recorded as.
 		/// </summary>
-		/// <param name="behaviour">The behaviour flags of the call.</param>
-		/// <returns>The names, or <see langword="null"/> when nothing is declared.</returns>
-		private static string[]? DescribeBehaviour(ToolBehaviour behaviour)
+		/// <param name="ctx">The invocation context.</param>
+		/// <param name="reason">What the model is told instead of the tool output.</param>
+		/// <param name="status">The terminal status of the refused call.</param>
+		/// <returns><see langword="false"/>, so the orchestrator skips the rest of the pipeline.</returns>
+		private static bool Deny(IToolExecutionContext ctx, string reason, ToolStatus status)
 		{
-			var names = Enum.GetValues<ToolBehaviour>()
-				.Where(flag => flag is not ToolBehaviour.None and not ToolBehaviour.All)
-				.Where(flag => behaviour.HasFlag(flag))
-				.Select(flag => KebabEnumNames<ToolBehaviour>.Names[flag])
-				.ToArray();
-
-			return names.Length == 0 ? null : names;
+			ctx.Call.Status = status;
+			ctx.Call.ResultContent = reason;
+			return false;
 		}
 	}
 }
