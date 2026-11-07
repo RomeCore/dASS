@@ -184,6 +184,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - path: string - relative path
 			  Returns: string or nil if cannot resolve absolute path
 
+			--- fs.replace_separators(path, [separator])
+			  Rewrites every '/' and '\' in the path to the given separator.
+			  Parameters:
+			    - path: string - the path to rewrite
+			    - separator: string (optional) - the replacement, any string; nil or
+			      omitted means the platform separator ('\' on Windows, '/' elsewhere)
+			  Returns: string - the path with every separator replaced, doubles included
+
 			EXAMPLES:
 
 			  -- Read a file
@@ -239,6 +247,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["basename"] = new LuaCallbackFunction(BaseName);
 			ns["extname"] = new LuaCallbackFunction(ExtName);
 			ns["abs"] = new LuaCallbackFunction(Abs);
+			ns["replace_separators"] = new LuaCallbackFunction(ReplaceSeparators);
 			return null;
 		}
 
@@ -530,6 +539,27 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (full == null)
 				return new LuaTuple(LuaNil.Instance);
 			return new LuaTuple(new LuaString(full));
+		}
+
+		private static LuaTuple ReplaceSeparators(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("fs.replace_separators(path, [separator]): at least 1 argument expected.");
+			if (args[0] is not LuaString pathVal)
+				throw new LuaRuntimeException("fs.replace_separators(): first argument must be a string (path).");
+
+			var separator = Path.DirectorySeparatorChar.ToString();
+
+			if (args.Length > 1 && args[1] is not LuaNil)
+			{
+				if (args[1] is not LuaString separatorVal)
+					throw new LuaRuntimeException("fs.replace_separators(): second argument must be a string (separator).");
+
+				separator = separatorVal.Value;
+			}
+
+			return new LuaTuple(new LuaString(
+				pathVal.Value.Replace("/", separator).Replace("\\", separator)));
 		}
 
 		// --- Helpers ---
