@@ -19,25 +19,9 @@ namespace LLMDesktopAssistant.LLM.Services
 			return chatSettings.Settings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory();
 		}
 
-		public string? TryAccessPath(string path, DirectoryAccessMode mode)
-		{
-			var fullPath = CheckedAccessPath(path, mode, out bool isAccessed);
-			if (!isAccessed)
-				return null;
-			return fullPath;
-		}
-
-		public string AccessPath(string path, DirectoryAccessMode mode)
-		{
-			var fullPath = CheckedAccessPath(path, mode, out bool isAccessed);
-			if (!isAccessed)
-				throw new UnauthorizedAccessException("The path cannot be accessed because of access restrictions.");
-			return fullPath;
-		}
-
 		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
 		{
-			var baseDir = Path.GetFullPath(chatSettings.Settings.Environment.GetEffectiveWorkingDirectories().GetWorkingDirectory());
+			var baseDir = Path.GetFullPath(GetWorkingDirectory());
 			var fullPath = string.IsNullOrEmpty(path) ? baseDir : Path.GetFullPath(Path.Combine(baseDir, path));
 
 			isAccessed = false;
@@ -102,6 +86,39 @@ namespace LLMDesktopAssistant.LLM.Services
 			return normalizedFull.StartsWith(
 				normalizedBase + Path.DirectorySeparatorChar,
 				_pathComparison);
+		}
+	}
+
+	public static class WorkingDirectoryAccessServiceExtensions
+	{
+		extension(IWorkingDirectoryAccessService wdAccess)
+		{
+			public string AccessPath(string path, DirectoryAccessMode mode)
+			{
+				var fullPath = wdAccess.CheckedAccessPath(path, mode, out bool isAccessed);
+				if (!isAccessed)
+					throw new UnauthorizedAccessException("The path cannot be accessed because of access restrictions.");
+				return fullPath;
+			}
+
+			public string? TryAccessPath(string path, DirectoryAccessMode mode)
+			{
+				var fullPath = wdAccess.CheckedAccessPath(path, mode, out bool isAccessed);
+				if (!isAccessed)
+					return null;
+				return fullPath;
+			}
+
+			/// <summary>
+			/// Gets the full path relative to the current working directory without checking access.
+			/// </summary>
+			/// <param name="path">The path to get the full path for.</param>
+			/// <returns>The full path.</returns>
+			public string GetFullPath(string path)
+			{
+				var baseDir = Path.GetFullPath(wdAccess.GetWorkingDirectory());
+				return string.IsNullOrEmpty(path) ? baseDir : Path.GetFullPath(Path.Combine(baseDir, path));
+			}
 		}
 	}
 }

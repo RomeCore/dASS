@@ -92,8 +92,6 @@ public sealed class FileArgumentFormatProviderTests : IDisposable
 
 	private sealed class StubWorkingDirectory(string root) : IWorkingDirectoryAccessService
 	{
-		public string AccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
-
 		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
 		{
 			isAccessed = true;
@@ -101,7 +99,5 @@ public sealed class FileArgumentFormatProviderTests : IDisposable
 		}
 
 		public string GetWorkingDirectory() => root;
-
-		public string? TryAccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
 	}
 }

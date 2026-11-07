@@ -16,8 +16,6 @@ public class FilesystemGrepToolModuleTests
 {
 	private sealed class TempDirFileAccess(string root) : IWorkingDirectoryAccessService
 	{
-		public string AccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
-
 		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
 		{
 			isAccessed = true;
@@ -25,8 +23,6 @@ public class FilesystemGrepToolModuleTests
 		}
 
 		public string GetWorkingDirectory() => root;
-
-		public string? TryAccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
 	}
 
 	private sealed class TempDir : IDisposable

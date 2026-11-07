@@ -18,9 +18,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Manuals => """
 			--- fs - filesystem operations API
 
-			Provides safe filesystem access within the chat's working directory.
+			Provides filesystem access within the chat's working directory.
 			All paths are relative to the working directory.
-			Path traversal outside the working directory is blocked.
 
 			FUNCTIONS:
 
@@ -47,14 +46,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - path: string - path relative to working directory
 			  Returns: boolean - true when the file is non-binary;
-			           false when it is binary, missing or outside the working directory
+			           false when it is binary or missing
 			
 			--- fs.is_binary(path)
 			  Checks whether a file is binary (contains non-text characters).
 			  Parameters:
 			    - path: string - path relative to working directory
 			  Returns: boolean - true when the file looks binary;
-			           false when it is text, missing or outside the working directory
+			           false when it is text or missing
 
 			--- fs.write(path, content)
 			  Writes text content to a file (overwrites if exists).
@@ -183,7 +182,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Resolves path to an absolute path inside the working directory.
 			  Parameters:
 			    - path: string - relative path
-			  Returns: string or nil if outside working directory
+			  Returns: string or nil if cannot resolve absolute path
 
 			EXAMPLES:
 
@@ -247,7 +246,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.read(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.read()", args, 0);
 			return new LuaTuple(new LuaString(File.ReadAllText(path)));
 		}
 
@@ -255,7 +254,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.read_lines(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.read_lines()", args, 0);
 			var lines = File.ReadAllLines(path);
 			var result = new LuaTable();
 			for (int i = 0; i < lines.Length; i++)
@@ -267,7 +266,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.read_binary(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.read_binary()", args, 0);
 			var bytes = File.ReadAllBytes(path);
 			var result = new LuaTable();
 			for (int i = 0; i < bytes.Length; i++)
@@ -279,35 +278,27 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.is_text(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.is_text(): first argument must be a string.");
-
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			if (fullPath == null || !File.Exists(fullPath))
+			var path = GetPath("fs.is_text()", args, 0);
+			if (!File.Exists(path))
 				return new LuaTuple(LuaBoolean.FromBoolean(false));
-
-			return new LuaTuple(LuaBoolean.FromBoolean(!FileUtils.IsBinaryFile(fullPath)));
+			return new LuaTuple(LuaBoolean.FromBoolean(!FileUtils.IsBinaryFile(path)));
 		}
 
 		private LuaTuple IsBinary(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.is_binary(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.is_binary(): first argument must be a string.");
-
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			if (fullPath == null || !File.Exists(fullPath))
+			var path = GetPath("fs.is_binary()", args, 0);
+			if (!File.Exists(path))
 				return new LuaTuple(LuaBoolean.FromBoolean(false));
-
-			return new LuaTuple(LuaBoolean.FromBoolean(FileUtils.IsBinaryFile(fullPath)));
+			return new LuaTuple(LuaBoolean.FromBoolean(FileUtils.IsBinaryFile(path)));
 		}
 
 		private LuaTuple Write(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("fs.write(path, content): at least 2 arguments expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.write()", args, 0);
 			if (args[1] is not LuaString contentVal)
 				throw new LuaRuntimeException("fs.write(): second argument must be a string.");
 			File.WriteAllText(path, contentVal.Value);
@@ -318,12 +309,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("fs.write_binary(path, bytes): at least 2 arguments expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.write_binary()", args, 0);
 			if (args[1] is not LuaTable bytesTable)
 				throw new LuaRuntimeException("fs.write_binary(): second argument must be a table of bytes.");
-			// NOTE: iterate by numeric indexes (1..Length) instead of Entries,
-			// because LuaTable stores entries in a ConcurrentDictionary which does NOT
-			// guarantee enumeration order - bytes would be written in random order!
 			var bytes = new byte[bytesTable.Length];
 			for (int i = 0; i < bytesTable.Length; i++)
 			{
@@ -338,7 +326,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("fs.append(path, content): at least 2 arguments expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.append()", args, 0);
 			if (args[1] is not LuaString contentVal)
 				throw new LuaRuntimeException("fs.append(): second argument must be a string.");
 			File.AppendAllText(path, contentVal.Value);
@@ -349,42 +337,33 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.exists(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.exists(): first argument must be a string.");
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			return new LuaTuple(LuaBoolean.FromBoolean(fullPath != null && (File.Exists(fullPath) || Directory.Exists(fullPath))));
+			var path = GetPath("fs.exists()", args, 0);
+			return new LuaTuple(LuaBoolean.FromBoolean((File.Exists(path) || Directory.Exists(path))));
 		}
 
 		private LuaTuple IsFile(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.is_file(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.is_file(): first argument must be a string.");
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			return new LuaTuple(LuaBoolean.FromBoolean(fullPath != null && File.Exists(fullPath)));
+			var path = GetPath("fs.is_file()", args, 0);
+			return new LuaTuple(LuaBoolean.FromBoolean(File.Exists(path)));
 		}
 
 		private LuaTuple IsDir(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.is_dir(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.is_dir(): first argument must be a string.");
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			return new LuaTuple(LuaBoolean.FromBoolean(fullPath != null && Directory.Exists(fullPath)));
+			var path = GetPath("fs.is_dir()", args, 0);
+			return new LuaTuple(LuaBoolean.FromBoolean(Directory.Exists(path)));
 		}
 
 		private LuaTuple List(LuaCallingContext ctx, LuaValue[] args)
 		{
-			var path = args.Length > 0 && args[0] is LuaString pathStr ? pathStr.Value : ".";
-			var fullPath = _fileAccess.TryAccessPath(path, DirectoryAccessMode.Read);
-			if (fullPath == null)
-				throw new LuaRuntimeException($"fs.list(): path '{path}' is outside working directory.");
-			if (!Directory.Exists(fullPath))
+			var path = args.Length > 0 ? GetPath("fs.list()", args, 0) : _fileAccess.GetWorkingDirectory();
+			if (!Directory.Exists(path))
 				throw new LuaRuntimeException($"fs.list(): directory '{path}' does not exist.");
 
-			var entries = Directory.GetFileSystemEntries(fullPath);
+			var entries = Directory.GetFileSystemEntries(path);
 			var result = new LuaTable();
 			for (int i = 0; i < entries.Length; i++)
 				result[i + 1] = new LuaString(Path.GetFileName(entries[i]));
@@ -395,24 +374,22 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.detail(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.detail(): first argument must be a string.");
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			if (fullPath == null)
+			var path = GetPath("fs.detail()", args, 0);
+			if (path == null)
 				return new LuaTuple(LuaNil.Instance);
 
 			var t = new LuaTable();
-			t["name"] = new LuaString(Path.GetFileName(fullPath));
-			t["path"] = new LuaString(fullPath);
-			t["is_file"] = LuaBoolean.FromBoolean(File.Exists(fullPath));
-			t["is_dir"] = LuaBoolean.FromBoolean(Directory.Exists(fullPath));
+			t["name"] = new LuaString(Path.GetFileName(path));
+			t["path"] = new LuaString(path);
+			t["is_file"] = LuaBoolean.FromBoolean(File.Exists(path));
+			t["is_dir"] = LuaBoolean.FromBoolean(Directory.Exists(path));
 
 			try
 			{
-				var info = new FileInfo(fullPath);
+				var info = new FileInfo(path);
 				if (info.Exists)
 				{
-					var fileMetrics = FileUtils.GetFileMetrics(fullPath);
+					var fileMetrics = FileUtils.GetFileMetrics(path);
 					t["is_binary"] = LuaBoolean.FromBoolean(fileMetrics.IsBinary);
 					t["line_count"] = new LuaNumber(fileMetrics.LineCount ?? 0);
 					t["size"] = new LuaNumber(info.Length);
@@ -421,7 +398,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				}
 				else
 				{
-					var dirInfo = new DirectoryInfo(fullPath);
+					var dirInfo = new DirectoryInfo(path);
 					if (dirInfo.Exists)
 					{
 						t["size"] = new LuaNumber(0);
@@ -441,20 +418,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.size(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.size(): first argument must be a string.");
-			var fullPath = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
-			if (fullPath == null || !File.Exists(fullPath))
+			var path = GetPath("fs.size()", args, 0);
+			if (path == null || !File.Exists(path))
 				return new LuaTuple(LuaNil.Instance);
-			return new LuaTuple(new LuaNumber(new FileInfo(fullPath).Length));
+			return new LuaTuple(new LuaNumber(new FileInfo(path).Length));
 		}
 
 		private LuaTuple Copy(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("fs.copy(src, dest): at least 2 arguments expected.");
-			var src = GetPath(args, 0);
-			var dest = GetPath(args, 1);
+			var src = GetPath("fs.copy()", args, 0);
+			var dest = GetPath("fs.copy()", args, 1);
 
 			if (Directory.Exists(src))
 				CopyDirectoryRecursive(src, dest);
@@ -468,8 +443,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("fs.move(src, dest): at least 2 arguments expected.");
-			var src = GetPath(args, 0);
-			var dest = GetPath(args, 1);
+			var src = GetPath("fs.move()", args, 0);
+			var dest = GetPath("fs.move()", args, 1);
 
 			if (Directory.Exists(src))
 				Directory.Move(src, dest);
@@ -483,7 +458,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.delete(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.delete()", args, 0);
 			File.Delete(path);
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -492,7 +467,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.delete_dir(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.delete_dir()", args, 0);
 			Directory.Delete(path, recursive: true);
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -501,7 +476,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.create_dir(path): at least 1 argument expected.");
-			var path = GetPath(args, 0);
+			var path = GetPath("fs.create_dir()", args, 0);
 			Directory.CreateDirectory(path);
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -551,9 +526,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length < 1)
 				throw new LuaRuntimeException("fs.abs(path): at least 1 argument expected.");
-			if (args[0] is not LuaString pathVal)
-				throw new LuaRuntimeException("fs.abs(): first argument must be a string.");
-			var full = _fileAccess.TryAccessPath(pathVal.Value, DirectoryAccessMode.Read);
+			var full = GetPath("fs.abs()", args, 0);
 			if (full == null)
 				return new LuaTuple(LuaNil.Instance);
 			return new LuaTuple(new LuaString(full));
@@ -561,11 +534,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		// --- Helpers ---
 
-		private string GetPath(LuaValue[] args, int index)
+		private string GetPath(string function, LuaValue[] args, int index)
 		{
 			if (args[index] is not LuaString pathVal)
-				throw new LuaRuntimeException($"Argument {index + 1} must be a string (path).");
-			return _fileAccess.AccessPath(pathVal.Value, DirectoryAccessMode.Read);
+				throw new LuaRuntimeException($"{function}: argument {index + 1} must be a string (path).");
+			// Unsafe - ignore the fact that path is outside the working directory.
+			return _fileAccess.GetFullPath(pathVal.Value);
 		}
 
 		private static void CopyDirectoryRecursive(string source, string dest)

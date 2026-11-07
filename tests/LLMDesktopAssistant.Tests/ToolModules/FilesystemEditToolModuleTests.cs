@@ -23,8 +23,6 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 
 		public TempDirFileAccess(string root) => _root = root;
 
-		public string AccessPath(string path, DirectoryAccessMode mode) => Path.Combine(_root, path);
-
 		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
 		{
 			isAccessed = true;
@@ -32,8 +30,6 @@ public class FilesystemEditToolModuleTests(ITestOutputHelper output)
 		}
 
 		public string GetWorkingDirectory() => _root;
-
-		public string? TryAccessPath(string path, DirectoryAccessMode mode) => Path.Combine(_root, path);
 	}
 
 	private sealed class TempDir : IDisposable

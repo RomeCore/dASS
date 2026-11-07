@@ -95,8 +95,6 @@ public class GeneratedSpecifierAnalyzerTests
 	/// </summary>
 	private sealed class StubWorkingDirectory(string root) : IWorkingDirectoryAccessService
 	{
-		public string AccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
-
 		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
 		{
 			isAccessed = true;
@@ -104,7 +102,5 @@ public class GeneratedSpecifierAnalyzerTests
 		}
 
 		public string GetWorkingDirectory() => root;
-
-		public string? TryAccessPath(string path, DirectoryAccessMode mode) => Path.Combine(root, path);
 	}
 }
