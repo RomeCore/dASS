@@ -16,6 +16,21 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 		private readonly IExplorerOpener _explorerOpener;
 
 		/// <summary>
+		/// The venv scripts this machine can activate, plus the escape hatch for an extensionless one.
+		/// </summary>
+		private static FilePickerFileType[] CreateFileTypeFilter() =>
+		[
+			new(LocalizationManager.LocalizeStatic("env.python.venv_filter"))
+			{
+				Patterns = ["*.bat", "*.cmd", "*.ps1", "*.sh"]
+			},
+			new(LocalizationManager.LocalizeStatic("env.python.all_files_filter"))
+			{
+				Patterns = ["*"]
+			}
+		];
+
+		/// <summary>
 		/// The configuration this block edits.
 		/// </summary>
 		public PythonEnvironmentConfiguration Configuration { get; }
@@ -61,10 +76,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			var result = await App.MainTopLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 			{
 				Title = LocalizationManager.LocalizeStatic("env.python.select_venv_script"),
-				FileTypeFilter = [
-					new FilePickerFileType("Batch files") { Patterns = ["*.bat"] },
-					new FilePickerFileType("All files") { Patterns = ["*"] }
-				],
+				FileTypeFilter = CreateFileTypeFilter(),
 				AllowMultiple = false
 			});
 
@@ -88,10 +100,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Python
 			var result = await App.MainTopLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
 			{
 				Title = LocalizationManager.LocalizeStatic("env.python.select_addon_venv_script"),
-				FileTypeFilter = [
-					new FilePickerFileType("Batch files") { Patterns = ["*.bat"] },
-					new FilePickerFileType("All files") { Patterns = ["*"] }
-				],
+				FileTypeFilter = CreateFileTypeFilter(),
 				AllowMultiple = false
 			});
 
