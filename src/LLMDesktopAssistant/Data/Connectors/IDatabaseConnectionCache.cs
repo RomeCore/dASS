@@ -25,14 +25,17 @@ namespace LLMDesktopAssistant.Data.Connectors
 		IEnumerable<DatabaseConnectorType> SupportedConnectors { get; }
 
 		/// <summary>
-		/// Gets a connection for the specified connector type and connection string,
-		/// opening it lazily on the first use and reusing the cached connection afterwards.
+		/// Acquires a lease on the cached connection for the specified connector type and connection
+		/// string, opening the connection when it is not cached yet.
 		/// </summary>
 		/// <param name="type">The type of the database connector to use.</param>
 		/// <param name="connectionString">The connection string to connect to.</param>
 		/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
-		/// <returns>The cached or newly opened connection.</returns>
-		Task<IDatabaseConnection> GetAsync(DatabaseConnectorType type, string connectionString, CancellationToken cancellationToken = default);
+		/// <returns>A lease that keeps the connection alive until it is released.</returns>
+		Task<IDatabaseConnectionLease> AcquireAsync(
+			DatabaseConnectorType type,
+			string connectionString,
+			CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Tests the specified connection string by opening a temporary connection.
@@ -45,8 +48,8 @@ namespace LLMDesktopAssistant.Data.Connectors
 		Task TestAsync(DatabaseConnectorType type, string connectionString, CancellationToken cancellationToken = default);
 
 		/// <summary>
-		/// Closes and removes the connection for the specified connector type and
-		/// connection string from the cache, if any.
+		/// Closes and removes the connection for the specified connector type and connection string
+		/// from the cache, if any, even when other leases are still holding it.
 		/// </summary>
 		/// <param name="type">The type of the database connector.</param>
 		/// <param name="connectionString">The connection string of the connection to close.</param>

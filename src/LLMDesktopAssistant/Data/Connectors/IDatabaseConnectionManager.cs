@@ -8,6 +8,12 @@ namespace LLMDesktopAssistant.Data.Connectors
 	public interface IDatabaseConnectionManager
 	{
 		/// <summary>
+		/// Gets the active connection: its descriptor and the connection string resolved from
+		/// the chat settings, or <see langword="null"/> when none is configured.
+		/// </summary>
+		(DatabaseConnectorType Type, string ConnectionString, string Description)? ActiveConnection { get; }
+
+		/// <summary>
 		/// Gets a value indicating whether a non-empty connection string is currently
 		/// active in the chat settings.
 		/// </summary>
@@ -30,12 +36,19 @@ namespace LLMDesktopAssistant.Data.Connectors
 		string Activate(string nameOrConnectionString, DatabaseConnectorType? connectorType = null);
 
 		/// <summary>
-		/// Gets the connection for the active connection string, opening it lazily on the
-		/// first use and reusing the cached connection afterwards.
+		/// Acquires a lease on the connection of the active connection string, opening it lazily
+		/// on the first use and reusing the cached connection afterwards.
 		/// </summary>
 		/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
-		/// <returns>The active database connection.</returns>
-		Task<IDatabaseConnection> GetCurrentAsync(CancellationToken cancellationToken = default);
+		/// <returns>The lease of the active database connection.</returns>
+		Task<IDatabaseConnectionLease> AcquireCurrentAsync(CancellationToken cancellationToken = default);
+
+		/// <summary>
+		/// Proves that the active connection string actually connects: opens the connection, leaves it
+		/// cached and open for the chat, and evicts it when opening fails.
+		/// </summary>
+		/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+		Task OpenCurrentAsync(CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Closes and removes the connection for the active connection string from the cache, if any.

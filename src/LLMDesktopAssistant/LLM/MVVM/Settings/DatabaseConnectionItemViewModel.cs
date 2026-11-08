@@ -134,7 +134,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 					throw new InvalidOperationException(LocalizationManager.LocalizeStatic("db.test.empty_connection_string"));
 
 				_connectionManager.Activate(Setting.Name);
-				await _connectionManager.GetCurrentAsync(cancellationToken);
+				await _connectionManager.OpenCurrentAsync(cancellationToken);
 				TestResult = true;
 			}
 			catch (OperationCanceledException)

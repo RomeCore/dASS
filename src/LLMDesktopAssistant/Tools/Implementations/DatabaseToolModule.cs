@@ -22,6 +22,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			"SELECT", "WITH", "PRAGMA", "EXPLAIN", "SHOW", "DESCRIBE"
 		};
 
+		// The agent reads the result as text, so the row cap is about its context, not about the database.
+		private const int rowLimit = 500;
+
 		private readonly IChatSettingsService _chatSettings;
 		private readonly IDatabaseConnectionManager _connectionManager;
 
@@ -168,10 +171,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private async Task<ToolExecutionResult> GetSchemaAsync(IToolExecutionContext ctx, CancellationToken cancellationToken = default)
 		{
-			IDatabaseConnection connection;
+			IDatabaseConnectionLease lease;
 			try
 			{
-				connection = await _connectionManager.GetCurrentAsync(cancellationToken);
+				lease = await _connectionManager.AcquireCurrentAsync(cancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -184,6 +187,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			try
 			{
+				var connection = await lease.EnsureAsync(cancellationToken);
 				ctx.Call.UseMarkdown = true;
 				ctx.Call.SetResult(await connection.GetSchemaAsync(cancellationToken));
 				return ToolExecutionResult.Succeeded;
@@ -193,6 +197,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				ctx.Call.SetStatusIcon(MaterialIconKind.DatabaseOff);
 				ctx.Call.SetResult($"Failed to load the database schema. Error: {ex.Message}");
 				return ToolExecutionResult.Failed;
+			}
+			finally
+			{
+				await lease.DisposeAsync();
 			}
 		}
 
@@ -223,10 +231,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{
-			IDatabaseConnection connection;
+			IDatabaseConnectionLease lease;
 			try
 			{
-				connection = await _connectionManager.GetCurrentAsync(cancellationToken);
+				lease = await _connectionManager.AcquireCurrentAsync(cancellationToken);
 			}
 			catch (Exception ex)
 			{
@@ -239,7 +247,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 			try
 			{
-				var queryResult = await connection.ExecuteQueryAsync(query, cancellationToken);
+				var connection = await lease.EnsureAsync(cancellationToken);
+				var queryResult = await connection.ExecuteQueryAsync(query, maxRows: rowLimit, cancellationToken: cancellationToken);
 
 				if (queryResult.Columns.Length == 0)
 				{
@@ -270,6 +279,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				ctx.Call.SetResult($"Query execution failed. Error: {ex.Message}");
 				return ToolExecutionResult.Failed;
 			}
+			finally
+			{
+				await lease.DisposeAsync();
+			}
 		}
 
 		private static string ExtractKeyword(string query)
@@ -280,8 +293,11 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			return string.IsNullOrEmpty(keyword) ? "SQL" : keyword.ToUpperInvariant();
 		}
 
-		private static string EscapeCell(string value)
+		private static string EscapeCell(string? value)
 		{
+			if (value is null)
+				return "NULL";
+
 			if (value.Length > 300)
 				value = value[..300] + "…";
 			return value.Replace("|", "\\|").Replace("\r", " ").Replace("\n", " ");

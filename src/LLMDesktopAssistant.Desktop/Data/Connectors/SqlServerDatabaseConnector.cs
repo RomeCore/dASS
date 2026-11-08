@@ -12,8 +12,6 @@ namespace LLMDesktopAssistant.Desktop.Data.Connectors
 	[Service(typeof(IDatabaseConnector))]
 	public class SqlServerDatabaseConnector : IDatabaseConnector
 	{
-		private const int MaxRows = 500;
-
 		/// <inheritdoc/>
 		public DatabaseConnectorType Type => DatabaseConnectorType.SQLServer;
 
@@ -38,6 +36,10 @@ namespace LLMDesktopAssistant.Desktop.Data.Connectors
 			public DatabaseConnectorType Type => DatabaseConnectorType.SQLServer;
 
 			/// <inheritdoc/>
+			public Task OpenAsync(CancellationToken cancellationToken = default)
+				=> OpenIfNeededAsync(cancellationToken);
+
+			/// <inheritdoc/>
 			public async Task TestConnectionAsync(CancellationToken cancellationToken = default)
 			{
 				await _connection.OpenAsync(cancellationToken);
@@ -45,12 +47,23 @@ namespace LLMDesktopAssistant.Desktop.Data.Connectors
 			}
 
 			/// <inheritdoc/>
-			public async Task<DatabaseQueryResult> ExecuteQueryAsync(string query, CancellationToken cancellationToken = default)
+			public async Task<DatabaseQueryResult> ExecuteQueryAsync(
+				string query,
+				IReadOnlyList<object?>? parameters = null,
+				int? maxRows = null,
+				CancellationToken cancellationToken = default)
 			{
 				await OpenIfNeededAsync(cancellationToken);
 
 				await using var command = _connection.CreateCommand();
 				command.CommandText = query;
+
+				if (parameters is { Count: > 0 })
+				{
+					for (int i = 0; i < parameters.Count; i++)
+						command.Parameters.Add(new SqlParameter($"@p{i}", parameters[i] ?? DBNull.Value));
+				}
+
 				await using var reader = await command.ExecuteReaderAsync(cancellationToken);
 
 				var columns = new string[reader.FieldCount];
@@ -60,21 +73,21 @@ namespace LLMDesktopAssistant.Desktop.Data.Connectors
 				if (columns.Length == 0)
 					return new DatabaseQueryResult { Columns = [], Rows = [], RowsAffected = reader.RecordsAffected };
 
-				var rows = new List<string[]>();
+				var rows = new List<string?[]>();
 				bool truncated = false;
 				while (await reader.ReadAsync(cancellationToken))
 				{
-					if (rows.Count >= MaxRows)
+					if (maxRows is { } limit && limit > 0 && rows.Count >= limit)
 					{
 						truncated = true;
 						break;
 					}
 
-					var row = new string[columns.Length];
+					var row = new string?[columns.Length];
 					for (int i = 0; i < columns.Length; i++)
 						row[i] = reader.IsDBNull(i)
-							? "NULL"
-							: Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture) ?? "NULL";
+							? null
+							: Convert.ToString(reader.GetValue(i), CultureInfo.InvariantCulture);
 					rows.Add(row);
 				}
 

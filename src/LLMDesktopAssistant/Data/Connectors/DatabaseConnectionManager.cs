@@ -33,6 +33,9 @@ namespace LLMDesktopAssistant.Data.Connectors
 		public IEnumerable<DatabaseConnectorType> SupportedConnectors => _cache.SupportedConnectors;
 
 		/// <inheritdoc/>
+		public (DatabaseConnectorType Type, string ConnectionString, string Description)? ActiveConnection => ResolveActive();
+
+		/// <inheritdoc/>
 		public bool IsActiveConfigured
 		{
 			get
@@ -75,16 +78,37 @@ namespace LLMDesktopAssistant.Data.Connectors
 		}
 
 		/// <inheritdoc/>
-		public async Task<IDatabaseConnection> GetCurrentAsync(CancellationToken cancellationToken = default)
+		public async Task<IDatabaseConnectionLease> AcquireCurrentAsync(CancellationToken cancellationToken = default)
 		{
 			var active = ResolveActive()
-				?? throw new InvalidOperationException("No active database connection. Call db-connect first.");
+				?? throw new InvalidOperationException("No active database connection. Call db-switch first.");
 
 			var (type, connectionString, _) = active;
 			if (string.IsNullOrWhiteSpace(connectionString))
 				throw new InvalidOperationException($"Connection string for '{active.Description}' is empty.");
 
-			return await _cache.GetAsync(type, connectionString, cancellationToken);
+			return await _cache.AcquireAsync(type, connectionString, cancellationToken);
+		}
+
+		/// <inheritdoc/>
+		public async Task OpenCurrentAsync(CancellationToken cancellationToken = default)
+		{
+			var lease = await AcquireCurrentAsync(cancellationToken);
+
+			try
+			{
+				await (await lease.EnsureAsync(cancellationToken)).OpenAsync(cancellationToken);
+			}
+			catch
+			{
+				// A connection that cannot be opened must not stay cached for everyone else.
+				await lease.CloseAsync(force: true, CancellationToken.None);
+				throw;
+			}
+			finally
+			{
+				await lease.DisposeAsync();
+			}
 		}
 
 		/// <inheritdoc/>

@@ -12,9 +12,11 @@ namespace LLMDesktopAssistant.Data.Connectors
 		public required string[] Columns { get; init; }
 
 		/// <summary>
-		/// The data rows of the result set. Each row has the same length as <see cref="Columns"/>.
+		/// The data rows of the result set. Each row has the same length as <see cref="Columns"/>;
+		/// a <see langword="null"/> cell is SQL <c>NULL</c>, which callers must keep distinct from
+		/// the text <c>"NULL"</c>.
 		/// </summary>
-		public required string[][] Rows { get; init; }
+		public required string?[][] Rows { get; init; }
 
 		/// <summary>
 		/// The number of rows affected by the statement, or <c>-1</c> when not applicable.
@@ -23,7 +25,7 @@ namespace LLMDesktopAssistant.Data.Connectors
 
 		/// <summary>
 		/// Gets a value indicating whether the result set was truncated because it exceeded
-		/// the maximum number of rows returned by the connector.
+		/// the row limit the caller asked for.
 		/// </summary>
 		public bool Truncated { get; init; }
 	}

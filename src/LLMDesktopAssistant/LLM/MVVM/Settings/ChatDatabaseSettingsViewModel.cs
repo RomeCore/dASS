@@ -444,7 +444,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 					throw new InvalidOperationException(LocalizationManager.LocalizeStatic("db.test.empty_connection_string"));
 
 				_connectionManager.Activate(connection.CustomConnectionString, connection.CustomConnectorType);
-				await _connectionManager.GetCurrentAsync(cancellationToken);
+				await _connectionManager.OpenCurrentAsync(cancellationToken);
 				CustomTestResult = true;
 			}
 			catch (OperationCanceledException)
