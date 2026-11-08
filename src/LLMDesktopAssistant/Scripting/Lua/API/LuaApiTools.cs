@@ -150,7 +150,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				Descriptor = tool,
 				Confirmation = ConstantConfirmationSink.Approve,
 				ContextFactory = _contextFactory,
-
 				// A nested call is programmatic: there is no surface to render a form on and nobody to
 				// answer it. UI-requiring tools must take their non-interactive path instead of hanging.
 				RunningInUi = false
