@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using AngleSharp.Html.Parser;
 using AsyncLua;
@@ -6,6 +7,7 @@ using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Utils.Web;
+using LLMDesktopAssistant.Utils.Web.Streaming;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -17,6 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	public class LuaApiWebRequest : LuaApiBase
 	{
 		public const int DefaultTimeout = 30;
+		private const int StreamIdleTimeoutSeconds = 60;
 
 		public override string? Namespace => "web";
 
@@ -39,15 +42,51 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - use_pure_client: boolean (default: false) - If true, use http client without additional headers
 			      - headers: table (optional) - Custom headers as key-value pairs
 			      - content: string or table (optional) - Request body, if table it's serialized to JSON
-			      - contentType: string (default: "application/json") - Content-Type header
+			      - content_type: string (default: "application/json") - Content-Type header
 			      - timeout: number (optional) - Request timeout in seconds (default: $TIMEOUT$)
+			      - stream: table (optional) - Decode the response as it arrives, see STREAMING
 
 			  Returns: table with:
 			    - status_code: number - HTTP status code (e.g. 200)
 			    - status_description: string - Status description (e.g. "OK")
 			    - headers: table - Response headers as key-value pairs
 			    - content_length: number - Length of the response content
-			    - content: string - Response body (sliced by start/count)
+			    - content: string - Response body; ABSENT when the request was streamed
+			    - content_type: string - Response body type
+
+			  STREAMING:
+			    Pass params.stream to have the response decoded on arrival instead of buffered.
+			    The call returns when the stream ends, the handler stops it, or it fails.
+
+			      stream = {
+			        mode = "sse",                 -- "sse" | "jsonl" | "raw_lines" (required)
+			        on_event = function(e) end,   -- required; return false to stop the stream
+			        comments = false,             -- "sse" only: emit comment lines as events
+			        json = false,                 -- "sse" only: parse each data payload as JSON
+			        on_error = "report",          -- "ignore" | "report" | "abort"
+			        idle_timeout = 60,            -- seconds without a line before failing; 0 disables
+			      }
+
+			    Every event is a table; its fields depend on the mode:
+			      sse:            { index, line, event, id, data }
+			      sse comment:    { index, line, comment }   -- event is ABSENT, not "COMMENT"
+			      jsonl:          { index, line, data }      -- data is already decoded
+			      raw_lines:      { index, line, data }      -- data is the raw line
+			      decode failure: { index, line, error }     -- data is absent
+
+			    `index` counts emitted events, not lines. `line` is the raw text the event was built from.
+			    Return false from the handler to stop: the call then returns normally with
+			    stream.stopped = "handler". Any other return value keeps the stream going.
+
+			    A stream has no total timeout by default, but params.timeout still applies when given.
+			    A non-2xx response is NOT streamed: its body is returned whole in `content` and the
+			    handler is never called, so an error payload is never mistaken for an empty stream.
+
+			  Returns (when streamed): the same table without `content`, plus:
+			    - stream.events: number - events delivered to the handler
+			    - stream.bytes: number - bytes read from the network
+			    - stream.stopped: string - "eof" or "handler"
+			    - stream.first_event_ms: number - time to the first event (absent if none arrived)
 			
 			--- async web.status(url, [timeout])
 			  Checks if a website is accessible and returns detailed status info.
@@ -144,22 +183,52 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  local r = await web.request("POST", "https://api.example.com/data", {
 			    headers = { ["Authorization"] = "Bearer token" },
 			    content = { key = "value" },
-			    contentType = "application/json"
+			    content_type = "application/json"
 			  })
 			  print(r.status_code, r.content)
+
+			  -- Stream Server-Sent Events from an LLM endpoint
+			  local chunks = {}
+			  local r = await web.request("POST", "https://api.example.com/v1/chat", {
+			    headers = { ["Authorization"] = "Bearer token", ["Accept"] = "text/event-stream" },
+			    content = { model = "m", stream = true },
+			    timeout = 0,
+			    stream = {
+			      mode = "sse",
+			      json = true,
+			      on_event = function(e)
+			        if e.error then return false end            -- e.g. the [DONE] sentinel
+			        table.insert(chunks, e.data.choices[1].delta.content or "")
+			      end
+			    }
+			  })
+			  print(table.concat(chunks), r.stream.events, r.stream.first_event_ms)
+
+			  -- JSONL progress from a long job; the last line stops the stream
+			  await web.request("POST", url, {
+			    content = payload,
+			    timeout = 0,
+			    stream = {
+			      mode = "jsonl",
+			      on_event = function(e)
+			        dass.log.info(string.format("progress %d%%", e.data.progress))
+			        return e.data.progress < 100
+			      end
+			    }
+			  })
 			""".Replace("$TIMEOUT$", DefaultTimeout.ToString());
 
 		private readonly IWorkingDirectoryAccessService _fileAccess;
 		private readonly IWebFetcher _webFetcher;
-		private readonly HttpClient _httpClient, _pureHttpClient, _infiniteTimeoutClient;
+		private readonly HttpClient _httpClient, _infiniteTimeoutClient, _pureInfiniteTimeoutClient;
 
 		public LuaApiWebRequest(IWorkingDirectoryAccessService fileAccess, IWebFetcher webFetcher)
 		{
 			_fileAccess = fileAccess;
 			_webFetcher = webFetcher;
 			_httpClient = CreateClient(addHeaders: true, timeoutSeconds: DefaultTimeout);
-			_pureHttpClient = CreateClient(addHeaders: false, timeoutSeconds: DefaultTimeout);
 			_infiniteTimeoutClient = CreateClient(addHeaders: true, timeoutSeconds: null);
+			_pureInfiniteTimeoutClient = CreateClient(addHeaders: false, timeoutSeconds: null);
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -186,7 +255,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			string contentType = "application/json";
 			Dictionary<string, string>? headers = null;
 			bool usePureClient = false;
+			var timeoutSpecified = false;
 			int? timeout = DefaultTimeout;
+			StreamRequest? stream = null;
 
 			if (args.Length > 2 && args[2] is LuaTable opts)
 			{
@@ -204,7 +275,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					}
 				}
 
-				if (opts.Get("contentType") is LuaString ct)
+				if (opts.Get("content_type") is LuaString ct)
 					contentType = ct.Value;
 
 				if (opts.Get("headers") is LuaTable hv)
@@ -219,12 +290,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 				if (opts.Get("timeout") is LuaNumber to)
 				{
+					timeoutSpecified = true;
+
 					if (to.Value <= 0)
 						timeout = null;
 					else
 						timeout = (int)to.Value;
 				}
+
+				if (opts.Get("stream") is LuaTable streamTable)
+					stream = ParseStreamRequest(streamTable);
 			}
+
+			// A stream is supposed to outlive the buffered default: the idle deadline is what notices a dead one.
+			if (stream is not null && !timeoutSpecified)
+				timeout = null;
 
 			try
 			{
@@ -248,39 +328,210 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						request.Headers.TryAddWithoutValidation(header.Key, header.Value);
 				}
 
-				HttpClient client;
+				if (stream is not null)
+					return await RequestStreamAsync(ctx, request, usePureClient, timeout, stream);
 
-				if (timeout == DefaultTimeout)
-					client = usePureClient ? _pureHttpClient : _httpClient;
-				else
-					client = CreateClient(addHeaders: !usePureClient, timeout);
+				var client = usePureClient ? _pureInfiniteTimeoutClient : _infiniteTimeoutClient;
+				using var cts = CreateRequestTimeout(ctx.CancellationToken, timeout);
+				using var response = await client.SendAsync(request, cts.Token);
+				var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
 
-				var response = await client.SendAsync(request);
-				var responseContent = await response.Content.ReadAsStringAsync();
-
-				var result = new LuaTable();
-
-				result["status_code"] = new LuaNumber((int)response.StatusCode);
-				result["status_description"] = new LuaString(response.StatusCode.ToString());
-
-				var headersTable = new LuaTable();
-				foreach (var h in response.Headers)
-					headersTable[h.Key] = new LuaString(string.Join(", ", h.Value));
-				foreach (var h in response.Content.Headers)
-					headersTable[h.Key] = new LuaString(string.Join(", ", h.Value));
-				result["headers"] = headersTable;
-
-				result["content_length"] = new LuaNumber(responseContent.Length);
-				result["content"] = new LuaString(responseContent);
-
-				return new LuaTuple(result);
+				return new LuaTuple(BuildResponseTable(response, responseContent));
 			}
 			catch (LuaRuntimeException) { throw; }
+			catch (OperationCanceledException) when (ctx.CancellationToken.IsCancellationRequested) { throw; }
+			catch (TimeoutException ex)
+			{
+				throw new LuaRuntimeException($"web.request(): stream stalled, {ex.Message}");
+			}
+			catch (TaskCanceledException)
+			{
+				throw new LuaRuntimeException($"web.request(): timed out after {(timeout?.ToString() ?? "?")}s");
+			}
 			catch (Exception ex)
 			{
 				throw new LuaRuntimeException($"HTTP request failed: {ex.Message}");
 			}
 		}
+
+		/// <summary>
+		/// Sends a request whose response is decoded as a stream and delivered to a Lua handler event by event.
+		/// </summary>
+		/// <remarks>
+		/// A non-success response is an error payload rather than an event stream, so it is buffered and read
+		/// whole: running an SSE decoder over a JSON error body would turn the error into zero events.
+		/// </remarks>
+		private async Task<LuaTuple> RequestStreamAsync(LuaCallingContext ctx, HttpRequestMessage request,
+			bool usePureClient, int? timeout, StreamRequest stream)
+		{
+			using var cts = CreateRequestTimeout(ctx.CancellationToken, timeout);
+			var client = usePureClient ? _pureInfiniteTimeoutClient : _infiniteTimeoutClient;
+			var stopwatch = Stopwatch.StartNew();
+
+			using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				var errorBody = await response.Content.ReadAsStringAsync(cts.Token);
+				return new LuaTuple(BuildResponseTable(response, errorBody));
+			}
+
+			var counter = new CountingStream(await response.Content.ReadAsStreamAsync(cts.Token));
+			using var reader = new StreamReader(counter, Encoding.UTF8);
+
+			var events = 0;
+			double? firstEventMs = null;
+			var stopped = "eof";
+
+			await foreach (var item in StreamEventReader.ReadAsync(reader, stream.Options, cts.Token))
+			{
+				events++;
+				firstEventMs ??= stopwatch.Elapsed.TotalMilliseconds;
+
+				var returned = await ctx.CallAsync(stream.Handler, ToEventTable(item));
+				if (returned.Count > 0 && returned.First is LuaBoolean { Value: false })
+				{
+					stopped = "handler";
+					break;
+				}
+			}
+
+			var result = BuildResponseTable(response, null);
+			var streamTable = new LuaTable();
+			streamTable["events"] = new LuaNumber(events);
+			streamTable["bytes"] = new LuaNumber(counter.BytesRead);
+			streamTable["stopped"] = new LuaString(stopped);
+
+			if (firstEventMs is { } first)
+				streamTable["first_event_ms"] = new LuaNumber(Math.Round(first, 2));
+
+			result["stream"] = streamTable;
+			return new LuaTuple(result);
+		}
+
+		/// <summary>
+		/// Reads the <c>stream</c> option table and validates it before a single byte is sent.
+		/// </summary>
+		private static StreamRequest ParseStreamRequest(LuaTable table)
+		{
+			if (table.Get("on_event") is not LuaFunction handler)
+				throw new LuaRuntimeException("web.request(): stream.on_event must be a function.");
+
+			if (table.Get("mode") is not LuaString modeValue)
+				throw new LuaRuntimeException("web.request(): stream.mode is required: \"sse\", \"jsonl\" or \"raw_lines\".");
+
+			var mode = modeValue.Value switch
+			{
+				"sse" => StreamMode.Sse,
+				"jsonl" => StreamMode.JsonLines,
+				"raw_lines" => StreamMode.RawLines,
+				_ => throw new LuaRuntimeException(
+					$"web.request(): unknown stream.mode '{modeValue.Value}'. Supported: \"sse\", \"jsonl\", \"raw_lines\".")
+			};
+
+			var policy = StreamParseErrorPolicy.Report;
+			if (table.Get("on_error") is LuaString policyValue)
+			{
+				policy = policyValue.Value switch
+				{
+					"ignore" => StreamParseErrorPolicy.Ignore,
+					"report" => StreamParseErrorPolicy.Report,
+					"abort" => StreamParseErrorPolicy.Abort,
+					_ => throw new LuaRuntimeException(
+						$"web.request(): unknown stream.on_error '{policyValue.Value}'. Supported: \"ignore\", \"report\", \"abort\".")
+				};
+			}
+
+			TimeSpan? idleTimeout = TimeSpan.FromSeconds(StreamIdleTimeoutSeconds);
+			if (table.Get("idle_timeout") is LuaNumber idleValue)
+				idleTimeout = idleValue.Value <= 0 ? null : TimeSpan.FromSeconds(idleValue.Value);
+
+			return new StreamRequest(handler, new StreamReadOptions
+			{
+				Mode = mode,
+				Comments = table.Get("comments") is LuaBoolean comments && comments.Value,
+				ParseJson = table.Get("json") is LuaBoolean json && json.Value,
+				OnError = policy,
+				IdleTimeout = idleTimeout
+			});
+		}
+
+		/// <summary>
+		/// Converts a decoded stream item into the table a Lua handler receives.
+		/// </summary>
+		private static LuaTable ToEventTable(StreamEvent item)
+		{
+			var table = new LuaTable
+			{
+				["index"] = new LuaNumber(item.Index)
+			};
+
+			if (item.Line is not null)
+				table["line"] = new LuaString(item.Line);
+			if (item.Event is not null)
+				table["event"] = new LuaString(item.Event);
+			if (item.Id is not null)
+				table["id"] = new LuaString(item.Id);
+			if (item.Comment is not null)
+				table["comment"] = new LuaString(item.Comment);
+			if (item.Error is not null)
+				table["error"] = new LuaString(item.Error);
+
+			if (item.IsJsonDecoded)
+				table["data"] = item.Json?.ToConstNodeValue().ToLuaValue() ?? LuaNil.Instance;
+			else if (item.Data is not null)
+				table["data"] = new LuaString(item.Data);
+
+			return table;
+		}
+
+		/// <summary>
+		/// Builds the response table shared by every request flavour, omitting <c>content</c> when the body
+		/// was streamed instead of buffered.
+		/// </summary>
+		private static LuaTable BuildResponseTable(HttpResponseMessage response, string? content)
+		{
+			var result = new LuaTable
+			{
+				["status_code"] = new LuaNumber((int)response.StatusCode),
+				["status_description"] = new LuaString(response.StatusCode.ToString())
+			};
+
+			var headersTable = new LuaTable();
+			foreach (var h in response.Headers)
+				headersTable[h.Key] = new LuaString(string.Join(", ", h.Value));
+			foreach (var h in response.Content.Headers)
+				headersTable[h.Key] = new LuaString(string.Join(", ", h.Value));
+			result["headers"] = headersTable;
+
+			result["content_length"] = content is null
+				? new LuaNumber(response.Content.Headers.ContentLength ?? -1)
+				: new LuaNumber(content.Length);
+
+			if (content is not null)
+				result["content"] = new LuaString(content);
+
+			result["content_type"] = new LuaString(response.Content.Headers.ContentType?.ToString() ?? string.Empty);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Creates the per-request deadline instead of creating an <see cref="HttpClient"/> per request.
+		/// </summary>
+		private static CancellationTokenSource CreateRequestTimeout(CancellationToken cancellationToken, int? timeoutSeconds)
+		{
+			var source = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			if (timeoutSeconds is { } seconds)
+				source.CancelAfter(TimeSpan.FromSeconds(seconds));
+
+			return source;
+		}
+
+		/// <summary>
+		/// A validated streaming request: the handler and the decoder settings.
+		/// </summary>
+		private sealed record StreamRequest(LuaFunction Handler, StreamReadOptions Options);
 
 		private async Task<LuaTuple> StatusAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
