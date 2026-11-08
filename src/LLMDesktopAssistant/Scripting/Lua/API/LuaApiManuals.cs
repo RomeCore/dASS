@@ -10,14 +10,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => null;
 
 		public override string? Manuals => """
-			--- namespaces() - global function
+			--- namespaces([mode]) - global function
 
-			Gets the string containing the list of available Lua API namespaces.
+			Gets the value containing the available Lua API namespaces.
 
 			Parameters:
-			  - None
+			  - mode: string - the return mode (optional):
+			    - "string" (default) - returns a string containing the available
+			      namespaces, separated by newlines (e.g. "dass\ndass.tool").
+			    - "table" - returns a table containing the available namespaces
+			      (e.g. { "dass", "dass.tool" }).
 
-			Returns: string - the list of available namespaces, separated by newlines.
+			Returns: string or table, depending on the mode parameter.
 
 			--- manuals(namespace) - global function
 
@@ -27,6 +31,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			Parameters:
 			  - namespace (one or more): string or table - dot-separated namespace path,
 			    e.g. dass, dass.tool, dass.chat, fs, time
+			    strings are supported too - "dass", "dass.hook", "random", "web"
 
 			Returns: string - the manuals text for the requested namespace(s).
 
@@ -35,6 +40,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			Examples:
 			  print(namespaces())
+			  local namespaces = namespaces("table")
 			  print(manuals(dass))
 			  print(manuals(dass.tool, dass.tool.result, fs, time))
 			""";
@@ -48,22 +54,37 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
-			globals["namespaces"] = new LuaCallbackFunction(PrintNamespaces);
+			globals["namespaces"] = new LuaCallbackFunction(Namespaces);
 			globals["manuals"] = new LuaCallbackFunction(PrintManuals);
 			return null;
 		}
 
-		private LuaTuple PrintNamespaces(LuaCallingContext ctx, LuaValue[] args)
+		private LuaTuple Namespaces(LuaCallingContext ctx, LuaValue[] args)
 		{
-			var lua = _services.GetRequiredService<LuaService>();
-			var result = new StringBuilder();
-
-			foreach (var ns in lua.Namespaces)
+			bool isTable = false;
+			if (args.Length >= 1)
 			{
-				result.AppendLine(ns ?? LuaVariables.GlobalTable);
+				if (args[0] is not LuaString modeValue)
+					throw new LuaRuntimeException("namespaces([mode]): invalid argument type for 'mode' parameter. Expected 'string'.");
+				isTable = modeValue.Value == "table";
 			}
 
-			return new LuaTuple(new LuaString(result.ToString()));
+			var lua = _services.GetRequiredService<LuaService>();
+
+			if (isTable)
+			{
+				var result = new LuaTable();
+				foreach (var ns in lua.Namespaces)
+					result.Append(ns ?? LuaVariables.GlobalTable);
+				return new LuaTuple(result);
+			}
+			else
+			{
+				var result = new StringBuilder();
+				foreach (var ns in lua.Namespaces)
+					result.AppendLine(ns ?? LuaVariables.GlobalTable);
+				return new LuaTuple(new LuaString(result.ToString()));
+			}
 		}
 
 		private LuaTuple PrintManuals(LuaCallingContext ctx, LuaValue[] args)
@@ -88,7 +109,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				}
 				else
 				{
-					nsTable = ctx.Globals;
+					return new LuaTuple(new LuaString($"Error: invalid namespace argument at index {i + 1}."));
 				}
 
 				// Look for a "_manuals" subtable inside the resolved namespace
