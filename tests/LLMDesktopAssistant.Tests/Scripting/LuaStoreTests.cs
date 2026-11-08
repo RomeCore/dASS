@@ -51,7 +51,7 @@ namespace LLMDesktopAssistant.Tests.Scripting
 		}
 
 		[Fact]
-		public void Set_OnMemoryStore_CopiesTheValue()
+		public void Set_OnMemoryStore_KeepsTheValueByReference()
 		{
 			var store = new LuaStore("test", null);
 			var value = Table(("n", new LuaNumber(1)));
@@ -60,7 +60,33 @@ namespace LLMDesktopAssistant.Tests.Scripting
 			value["n"] = new LuaNumber(99);
 
 			var stored = Assert.IsType<LuaTable>(store.Get("a"));
-			Assert.Equal(1, Assert.IsType<LuaNumber>(stored.Get("n")).Value);
+			Assert.Same(value, stored);
+			Assert.Equal(99, Assert.IsType<LuaNumber>(stored.Get("n")).Value);
+		}
+
+		[Fact]
+		public void Set_SameValueUnderTwoKeys_Aliases()
+		{
+			var store = new LuaStore("test", null);
+			var value = Table(("n", new LuaNumber(1)));
+
+			store.Set("a", value, null);
+			store.Set("b", value, null);
+
+			Assert.Same(store.Get("a"), store.Get("b"));
+		}
+
+		[Fact]
+		public void GetOrAdd_KeepsTheDefaultByReference()
+		{
+			var store = new LuaStore("test", null);
+			var value = Table(("n", new LuaNumber(1)));
+
+			var stored = store.GetOrAdd("a", value, null);
+			value["n"] = new LuaNumber(2);
+
+			Assert.Same(value, stored);
+			Assert.Equal(2, Assert.IsType<LuaNumber>(Assert.IsType<LuaTable>(store.Get("a")).Get("n")).Value);
 		}
 
 		[Fact]
@@ -118,9 +144,24 @@ namespace LLMDesktopAssistant.Tests.Scripting
 		}
 
 		[Fact]
-		public void CyclicTable_RaisesAnError_InsteadOfOverflowingTheStack()
+		public void CyclicTable_IsAcceptedInMemory_AndRaisesOnCopy()
 		{
 			var store = new LuaStore("test", null);
+			var cyclic = new LuaTable();
+			cyclic["self"] = cyclic;
+
+			store.Set("a", cyclic, null);
+			Assert.Same(cyclic, store.Get("a"));
+
+			// The guard belongs to the walk, not to the write: only a copy or a snapshot walks the value.
+			Assert.Throws<LuaRuntimeException>(() => store.Copy("a", "b", null));
+		}
+
+		[Fact]
+		public void CyclicTable_RaisesWhenWrittenToAPersistedStore()
+		{
+			using var directory = new TempDirectory();
+			var store = new LuaStore("test", new LuaFileStoreBackend(directory.File("data.json")));
 			var cyclic = new LuaTable();
 			cyclic["self"] = cyclic;
 

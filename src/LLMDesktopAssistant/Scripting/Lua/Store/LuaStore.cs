@@ -9,10 +9,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 	/// or is mirrored into a backend on every change (<c>store.chat</c>, <c>store.file</c>).
 	/// </summary>
 	/// <remarks>
-	/// Reading shares and writing copies. <see cref="Get"/> hands out the live value, so mutating it is
-	/// visible to every later read; <see cref="Set"/> on an in-memory store stores a deep copy, so the
-	/// caller's table can never alias a stored one. Persisted stores keep the caller's table as-is
-	/// (its identity is the store's identity) and write a lossy snapshot of it.
+	/// Values go by reference: <see cref="Get"/> hands out the live value and <see cref="Set"/> keeps the
+	/// caller's value as it is, so mutating either side is visible on the other. Use <see cref="Copy"/> or
+	/// <see cref="LuaStoreValueConverter.Clone"/> when a copy is wanted. Persisted stores write a lossy
+	/// snapshot on every change, but what they hold in memory is still the caller's value.
 	/// </remarks>
 	public sealed class LuaStore(string name, ILuaStoreBackend? backend)
 	{
@@ -54,10 +54,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 				if (_data.TryGetValue(new LuaString(key), out var existing))
 					return existing;
 
-				var stored = backend is null ? LuaStoreValueConverter.Clone(defaultValue) : defaultValue;
-				_data.Set(key, stored);
+				_data.Set(key, defaultValue);
 				Persist(warn);
-				return stored;
+				return defaultValue;
 			}
 		}
 
@@ -65,7 +64,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// Stores the value under the key, replacing whatever was there.
 		/// </summary>
 		/// <param name="key">The key to write.</param>
-		/// <param name="value">The value to store; <c>nil</c> removes the key.</param>
+		/// <param name="value">The value to store, kept by reference; <c>nil</c> removes the key.</param>
 		/// <param name="warn">Receives one message per value that could not be persisted.</param>
 		public void Set(string key, LuaValue value, Action<string>? warn)
 		{
@@ -78,7 +77,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 					return;
 				}
 
-				_data.Set(key, backend is null ? LuaStoreValueConverter.Clone(value) : value);
+				_data.Set(key, value);
 				Persist(warn);
 			}
 		}

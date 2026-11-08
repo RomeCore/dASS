@@ -48,10 +48,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			VALUES may be anything: numbers, strings, booleans, tables - store.set("hp", 100) is fine.
 
-			READING SHARES, WRITING COPIES:
-			  local t = store.get("k"); t.x = 1   -- visible to every later get()
-			  store.set("k", t)                   -- an in-memory store keeps a DEEP COPY of t,
-			                                      -- so later changes to t are lost
+			VALUES GO BY REFERENCE:
+			  the store holds YOUR value, not a copy of it.
+				local t = {}; store.set("k", t); t.x = 1   -- visible through store.get("k")
+				store.set("a", t); store.set("b", t)       -- "a" and "b" are the same table
+			  Copy explicitly when you want one: store.copy(src, dst), table.clone(v),
+			  table.deep_clone(v). This is what lets a store keep something that cannot be copied at
+			  all, such as a database handle or a live terminal.
 
 			METHODS (every store):
 			  get(key)                        -> value or nil
@@ -75,11 +78,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			Missing directories are created. Every change is written immediately, except the in-place
 			mutation case above.
 
-			VALUE LIMITS (store.chat and store.file only):
+			PERSISTED STORES (store.chat and store.file) write a lossy snapshot on every change:
 			  only structured data survives - tables, strings, numbers, booleans.
-			  functions, userdata, threads, metatables and non-string table keys are DROPPED with a
-			  warning that names the path of the lost value.
-			  cyclic tables and nesting deeper than 200 levels raise an error.
+			  functions, userdata, threads, metatables and non-string table keys are DROPPED from the
+			  file with a warning that names the path of the lost value; the live value in memory keeps
+			  them until the store is reloaded.
+			  a cyclic table, or nesting deeper than 200 levels, raises an error at write time.
+			  An in-memory store never inspects the value, so it accepts all of the above.
 
 			ERRORS: a store never guesses. A malformed JSON file is renamed to <name>.<timestamp>.broken,
 			the store starts empty and the reason is logged. import() raises an error instead and leaves
