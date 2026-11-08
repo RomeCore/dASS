@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	/// <summary>
 	/// Lua API for firing the hooks of the chat by hand: <c>dass.hook.*</c>.
 	/// </summary>
-	[LuaApi(chatScoped: false)]
+	[LuaApi(chatScoped: true)]
 	public class LuaApiHooks(
 		IHookDispatcher hooks
 	) : LuaApiBase
@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			FUNCTIONS:
 
-			--- dass.hook.call(payload, type, [target], [default_flow], [force_flow]) -> value, blocking_message
+			--- async dass.hook.call(payload, type, [target], [default_flow], [force_flow]) -> value, blocking_message
 			  Runs every hook that matches the event and the target, and returns the value of the last
 			  sequential hook together with its blocking message.
 			  Parameters:
@@ -47,12 +47,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EXAMPLES:
 
 			  -- Ask the guards a real call would ask, without running the tool
-			  local verdict, blocked = dass.hook.call(
+			  local verdict, blocked = await dass.hook.call(
 			    { tool = "fs-edit", arguments = { path = ".env" } },
 			    "tool.start.chat-run", "native.fs-edit")
 			  if blocked then print("blocked: " .. blocked) end
 
 			  -- Force a fire-and-forget round over every hook of the event: no target, no waiting
+			  -- 'task' returning by this function can be abandoned
 			  dass.hook.call({ tool = "fs-read" }, "tool.start.chat-run", nil, "fire-and-forget", true)
 
 			CUSTOM EVENTS:
@@ -76,7 +77,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  return previous
 
 			  -- The caller
-			  local result = dass.hook.call({}, "my_hook", "counter.main")
+			  local result = await dass.hook.call({}, "my_hook", "counter.main")
 			  print(result and result.count)   -- 1
 			""";
 
