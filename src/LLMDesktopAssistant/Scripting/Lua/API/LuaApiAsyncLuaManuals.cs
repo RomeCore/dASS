@@ -54,28 +54,61 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 
 		  local result1, result2 = await task1, await task2
 
-		Also functions can be NOT defined as `async` but have `await` statements inside,
-		these functions will be WAITED by the interpreter, so this:
-		
-		  local async function fetchData()
-		      await task.delay(100)
-			  return 'data received'
-		  end
-		  local result = await fetchData()
-		
-		Will work as same as this:
-		
-		  -- No async keyword
-		  local function fetchDataSync()
-		      await task.delay(100)
-			  return 'data received'
-		  end
-		  local result = fetchDataSync() -- Will be awaited by interpreter, the code will sleep at this moment
+		───────────────────────────────────────────────────────────────
+		ASYNC IS ABOUT THE CALL, NOT ABOUT THE BODY
+		───────────────────────────────────────────────────────────────
 
-		And if we deep dive to know how interpreter works, the code will run like:
+		An `async function` call does NOT run the body for you: it hands back a task
+		immediately and the caller keeps running. The value comes only from `await`.
+		A plain function returns its value directly even when its body contains `await`:
+		such a call blocks, and the interpreter resumes with the result. Nothing is
+		"waited for" on your behalf - in the second case there is no task at all.
 
-		  await task.delay(100)
-		  local result = 'data received'
+		The keyword decides what the CALL returns; the body decides whether the call can
+		suspend. The two are independent:
+
+		  declaration                       body WITHOUT await      body WITH await
+		  --------------------------------  ----------------------  ----------------------
+		  local function f() ... end        the value               the value, call blocks
+		  local async function f() ... end  a task, already done    a task, pending
+
+		`is_async(f)` reports the declaration and nothing else: a plain function that
+		awaits inside still answers false, while its calls really do suspend. Read it as
+		"does calling f give me a task", never as "can calling f block".
+
+		An async function without a single `await` is eager rather than useless: its body
+		has already run when the call returns, so the task arrives completed. `tostring`
+		prints the status - "task: pending", "task: completed (1 result(s))" or
+		"task: faulted". Every task is truthy, a faulted one included, and the error it
+		carries surfaces only when somebody awaits it.
+
+		WHO CALLS DECIDES WHAT YOU GET
+
+		The task wrapper appears only when LUA code calls the function. Whatever calls it
+		for you - the built-in table.* helpers, metamethods, timers, tool and skill
+		callbacks - receives the value, so the declaration is invisible there: both kinds
+		are interchangeable callbacks:
+
+		  table.filter(numbers, is_odd)
+		  table.sort(numbers, greater)
+		  setmetatable(t, { __tostring = formatter })
+		  time.set_timeout(100, callback)
+		  tools = { { name = "calc", callback = handler } }   -- dass.agents callbacks
+
+		Those helpers run the callbacks one at a time, so a loop stays sequential no matter
+		how the callback is declared.
+
+		PRACTICAL RULES
+
+		- Declare `async` when LUA code is the caller and must keep working while the
+		  function runs, or when the function goes to task.run / task.pararun.
+		- Write a plain function for anything the application calls for you: table.*
+		  callbacks, metamethods, timers, tool and skill callbacks. The keyword there
+		  only adds a task that nobody unwraps.
+		- Never add `await` "just in case": awaiting the value of a plain call is a runtime
+		  error ("Cannot await a non-LuaTask..."), not a no-op.
+		- Never drop `await` at a Lua call site of an async function: you get a task where a
+		  value is expected, and the failure appears far from the missing keyword.
 
 		───────────────────────────────────────────────────────────────
 		DELAY
@@ -84,7 +117,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		`task.delay(ms)` - returns a task that completes after the specified milliseconds:
 
 		  await task.delay(500)  -- waits 500ms
-		  await task.delay(0.5) -- waits 500us
+		  -- pass whole milliseconds: a value below 1 is a no-op (0 ms)
 
 		───────────────────────────────────────────────────────────────
 		RUN (fire-and-forget)

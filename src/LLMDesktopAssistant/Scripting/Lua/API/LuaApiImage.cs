@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		--- image - Image loading, manipulation and saving API
 
 		Provides functions to load, create, manipulate and save images.
-		Uses SixLabors.ImageSharp under the hood.
+
 		All image objects are UserData with methods.
 
 		FUNCTIONS:
@@ -131,7 +131,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		      content = "Check out this chart!",
 		      attachments = { img }
 		  }
-		  local response_messages = dass.agents.execute({ system_message, user_message })
+		  local response_messages = await dass.agents.execute({ messages = { system_message, user_message } })
 
 		  -- Create an image from scratch
 		  local img = image.create(100, 100, "#ff0000")

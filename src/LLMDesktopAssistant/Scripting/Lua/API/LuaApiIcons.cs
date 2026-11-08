@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Manuals => """
 			--- icon - Material Design icons API
 
-			Provides access to Material Design icons (MaterialIconKind enum).
+			Provides access to Material Design icon names.
 			Useful for setting status icons in tool results, toasts, etc.
 
 			FUNCTIONS:
@@ -32,8 +32,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - kind: string - icon name (case-insensitive)
 			  Returns: table or nil - with fields:
-			    - name: string - canonical icon name
-			    - kind: number - numeric enum value
+			    - name: string - the icon's primary name; an alias may come back as a different name
+			    - kind: number - the icon's numeric value
 
 			--- icon.list([filter])
 			  Lists all available icon names.
@@ -61,12 +61,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  end
 
 			  -- Use with tool result
-			  dass.tool_result.set_status(icon.get("Download").name, "Downloading...")
+			  dass.tool.result.set_status(icon.get("Download").name, "Downloading...")
 
 			NOTES:
 			  - All lookups are case-insensitive.
 			  - The list is cached at startup for performance.
-			  - There are over 7000 icons available.
+			  - There are over 13 000 icons available.
 			""";
 
 		private static readonly Dictionary<string, MaterialIconKind> _iconMap;

@@ -74,7 +74,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.tool.result.set_status(icon, title)
 			  Sets the status icon and title shown in the UI next to the tool name.
 			  Parameters:
-			    - icon: string - VisualIconKind name (e.g. "File", "Web", "Check", "Download")
+			    - icon: string - an icon name from icon.list() (e.g. "File", "Web", "Check", "Download")
 			      Pass empty string or nil to keep current icon.
 			    - title: string - status title text (e.g. "Downloading file...")
 			      Pass empty string or nil to keep current title.
@@ -85,15 +85,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - data: table - structured data to return alongside text content
 
 			--- dass.tool.result.append_part(title, icon, color)
-			  Appends a plain chip part to the tool call. 'icon' is a VisualIconKind name,
+			  Appends a plain chip part to the tool call. 'icon' is an icon name from icon.list(),
 			  'color' is a hex string; both are optional (pass nil).
 
 			--- dass.tool.result.append_content_part(content, title, icon, color)
 			  Appends a part whose text is also appended to the model-facing tool result.
 
 			--- dass.tool.result.append_attachment_part(attachment, title, icon, color)
-			  Appends a native attachment part. 'attachment' is any handle that implements
-			  ILuaNativeAttachable (e.g. an image handle from image.load()/image.create()).
+			  Appends a native attachment part. 'attachment' is any attachable handle
+			  (e.g. an image from image.load()/image.create()).
 
 			--- dass.tool.result.append_data(...)
 			  Appends one or more attachable handles to the tool result: a 'uicontrol' created by
@@ -430,8 +430,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			if (args.Length == 0 || Unwrap(args[0]) is not ILuaNativeAttachable attachable)
 				throw new LuaRuntimeException(
-					"dass.tool.result.append_attachment_part(attachment, ...): 'attachment' must implement " +
-					"ILuaNativeAttachable (e.g. an image handle created by image.load()/image.create()).");
+					"dass.tool.result.append_attachment_part(attachment, ...): 'attachment' must be an " +
+					"attachable handle (e.g. an image created by image.load()/image.create()).");
 
 			host.AddAttachment(LuaAttachmentParts.CreateNativePart(
 				attachable.GetNativeAttachment(), Str(args, 1), Str(args, 2), Str(args, 3)));

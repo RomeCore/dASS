@@ -74,12 +74,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  - If multiple templates match all filters, the first one is returned.
 
 			EXAMPLES:
-			
-			  -- Import a new template from a LLT string
-			  local count = dass.templates.import([[
-			    @template hello { Hello, @name! }
-			  ]])
-			  print("Imported " .. count .. " templates")
 
 			  -- Render by template ID (string filter)
 			  local prompt = dass.templates.render("system_prompt")

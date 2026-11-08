@@ -39,8 +39,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  store.appsession   - in memory, shared by ALL open chats; dies when the application exits
 			  store.chat         - persisted in the chat database, follows the chat
 			  store.file(path)   - one JSON file; the SAME store instance is returned for the same path
-			  store.workdir[(n)] - shortcut for <working directory>/.llmassist/store/<n>.json
-			  store.user[(n)]    - shortcut for %LOCALAPPDATA%\.llmassist\store\<n>.json
+			  store.workdir([name]) - shortcut for <working directory>/.llmassist/store/<name>.json
+			  store.user([name])    - shortcut for %LOCALAPPDATA%\.llmassist\store\<name>.json
 
 			The default name for store.workdir and store.user is "shared", so store.workdir and
 			store.workdir("shared") are the same store. Names are file names; anything outside

@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Manuals => """
 			--- random - random number generation and sampling API
 
-			Provides various randomisation functions backed by System.Random.
+			Provides various randomisation functions.
 
 			FUNCTIONS:
 

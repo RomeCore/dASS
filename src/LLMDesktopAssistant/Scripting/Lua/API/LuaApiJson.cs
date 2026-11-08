@@ -69,7 +69,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  - Lua tables with string/non-sequential keys are encoded as JSON objects.
 		  - Mixed tables (array part + object part) are encoded as objects,
 		    with numeric keys converted to strings.
-		  - Userdata, functions, and threads are encoded as null.
+		  - Values that cannot be encoded (functions, userdata, threads) are dropped: an object key disappears, and an array element disappears with the later elements shifting down.
 
 		EXAMPLES:
 

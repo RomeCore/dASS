@@ -143,8 +143,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			if (args.Length == 0 || Unwrap(args[0]) is not ILuaNativeAttachable attachable)
 				throw new LuaRuntimeException(
-					"dass.chat.append_attachment_part(attachment, ...): 'attachment' must implement " +
-					"ILuaNativeAttachable (e.g. an image handle created by image.load()/image.create()).");
+					"dass.chat.append_attachment_part(attachment, ...): 'attachment' must be an " +
+					"attachable handle (e.g. an image created by image.load()/image.create()).");
 
 			_chat.AdditionalData.Add(LuaAttachmentParts.CreateNativePart(
 				attachable.GetNativeAttachment(), Str(args, 1), Str(args, 2), Str(args, 3)));

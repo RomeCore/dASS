@@ -178,7 +178,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  -- Download a file
 			  local r = await web.download("https://example.com/image.png", "downloaded_image.png")
-			  print("Saved", r.file_size, "bytes to", r.save_path)
+			  print("Saved", r.file_size, "bytes, status", r.status_code)
 
 			  -- Request with custom headers
 			  local r = await web.request("POST", "https://api.example.com/data", {

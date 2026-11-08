@@ -64,10 +64,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns: string - wrapped text
 
 			--- string.truncate(str, max_len, [suffix])
-			  Truncates a string to a maximum length, appending a suffix if trimmed.
+			  Cuts a string to at most max_len characters, suffix included; the suffix is dropped when it does not fit.
 			  Parameters:
 			    - str: string - input text
-			    - max_len: number - maximum length
+			    - max_len: number - maximum length of the result, suffix included
 			    - suffix: string (optional, default "...") - suffix to append
 			  Returns: string
 
@@ -97,7 +97,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  if string.startswith("hello", "he") then end
 			  print(string.slug("Hello World!")) -- "hello-world"
 			  print(string.wrap("long text...", 40))
-			  print(string.truncate("long text", 6)) -- "long t..."
+			  print(string.truncate("long text", 6)) -- "lon..."
 			""";
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
