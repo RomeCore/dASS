@@ -57,22 +57,22 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  all, such as a database handle or a live terminal.
 
 			METHODS (every store):
-			  get(key)                        -> value or nil
-			  get_or_add(key [, default={}])  -> the value, writing the default when the key is missing
-			  set(key, value)                 -> nil; set(key, nil) removes the key
-			  remove(key)                     -> boolean (was the key there)
-			  contains(key)                   -> boolean
-			  keys([prefix])                  -> array of strings, sorted alphabetically
-			  size()                          -> number of keys
-			  clear()                         -> nil
-			  move(old, new)                  -> boolean; silent overwrite, keeps the value identity
-			  copy(src, dst)                  -> boolean; silent overwrite, copies as a deep clone
-			  save()                          -> rewrites the whole store; needed after mutating a value
-			                                 obtained from get() in place. No-op for session stores.
-			  reload()                        -> re-reads the backend, DISCARDING unsaved in-memory changes
-			  path                            -> absolute file path for store.file, nil otherwise
-			  import(path)                    -> true, count; merges a JSON object over the existing keys
-			  export(path)                    -> true, count; writes every key as a JSON object
+			  get(key)                      -> value or nil
+			  get_or_add(key, [default={}]) -> the value, writing the default when the key is missing
+			  set(key, value)               -> nil; set(key, nil) removes the key
+			  remove(key)                   -> boolean (was the key there)
+			  contains(key)                 -> boolean
+			  keys([prefix])                -> array of strings, sorted alphabetically
+			  size()                        -> number of keys
+			  clear()                       -> nil
+			  move(old, new)                -> boolean; silent overwrite, keeps the value identity
+			  copy(src, dst)                -> boolean; silent overwrite, copies as a deep clone
+			  save()                        -> rewrites the whole store; needed after mutating a value
+			                                   obtained from get() in place. No-op for session stores.
+			  reload()                      -> re-reads the backend, DISCARDING unsaved in-memory changes
+			  path                          -> absolute file path for store.file, nil otherwise
+			  import(path)                  -> true, count; merges a JSON object over the existing keys
+			  export(path)                  -> true, count; writes every key as a JSON object
 
 			Paths in store.file/import/export are relative to the working directory unless absolute.
 			Missing directories are created. Every change is written immediately, except the in-place
