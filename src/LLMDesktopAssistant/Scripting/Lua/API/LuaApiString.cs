@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using AsyncLua;
+using AsyncLua.Libraries;
 using AsyncLua.Values;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
@@ -21,12 +22,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			FUNCTIONS:
 
-			--- string.split(str, delimiter)
-			  Splits a string by a delimiter.
+			--- string.split(str, [delimiter], [plain])
+			  Splits a string around every match of a delimiter.
 			  Parameters:
 			    - str: string - string to split
-			    - delimiter: string or pattern (optional, default "%s+") - delimiter pattern
-			  Returns: table - array of substrings
+			    - delimiter: string or pattern (optional, default "%s+") - a delimiter with '%' is a
+			      Lua pattern, any other one is matched literally
+			    - plain: boolean (optional) - true forces a literal match, false forces a pattern;
+			      omitted, the '%' rule above decides, so pass false for "[A-Z]+" or "^,"
+			  Returns: table - array of substrings; the default whitespace split drops empty
+			    fields, an explicit delimiter keeps them
 
 			--- string.trim(str)
 			--- string.trim_left(str)
@@ -117,30 +122,38 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private static LuaTuple Split(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
-				throw new LuaRuntimeException("string.split(str, [delimiter]): at least 1 argument expected.");
+				throw new LuaRuntimeException("string.split(str, [delimiter], [plain]): at least 1 argument expected.");
 			if (args[0] is not LuaString strVal)
 				throw new LuaRuntimeException("string.split(): first argument must be a string.");
 
+			bool defaultDelimiter = args.Length < 2 || args[1] is LuaNil;
 			string delimiter = "%s+";
-			if (args.Length > 1 && args[1] is not LuaNil)
+			if (!defaultDelimiter)
 			{
 				if (args[1] is not LuaString dVal)
 					throw new LuaRuntimeException("string.split(): delimiter must be a string.");
 				delimiter = dVal.Value;
 			}
 
-			// Escape Lua magic characters for literal splitting,
-			// but allow Lua patterns if explicitly using % patterns
-			string pattern;
-			if (delimiter.Contains('%'))
-				pattern = delimiter;
-			else
-				pattern = EscapeLuaPattern(delimiter);
+			// A '%' makes the delimiter a pattern; without one every character is literal,
+			// which is what "split by ','" means to a caller.
+			bool plain = !delimiter.Contains('%');
+			if (args.Length > 2 && args[2] is not LuaNil)
+			{
+				if (args[2] is not LuaBoolean plainVal)
+					throw new LuaRuntimeException("string.split(): plain must be a boolean.");
+				plain = plainVal.Value;
+			}
 
 			var result = new LuaTable();
-			var parts = SplitByPattern(strVal.Value, pattern);
-			for (int i = 0; i < parts.Length; i++)
-				result[i + 1] = new LuaString(parts[i]);
+			int index = 0;
+			foreach (string part in SplitByPattern(strVal.Value, delimiter, plain))
+			{
+				// The default whitespace split drops empty fields; an explicit delimiter keeps them.
+				if (defaultDelimiter && part.Length == 0)
+					continue;
+				result[++index] = new LuaString(part);
+			}
 
 			return new LuaTuple(result);
 		}
@@ -363,46 +376,24 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		// --- Helpers ---
 
-		private static string EscapeLuaPattern(string s)
+		/// <summary>
+		/// Splits <paramref name="source"/> around every non-empty match of a Lua pattern or of a literal delimiter.
+		/// </summary>
+		/// <remarks>
+		/// An empty match splits nothing, so a pattern such as <c>x*</c> leaves the source whole instead of
+		/// cutting it at every position.
+		/// </remarks>
+		private static IEnumerable<string> SplitByPattern(string source, string pattern, bool plain)
 		{
-			return s.Replace("\\", "\\\\")
-					.Replace("^", "\\^")
-					.Replace("$", "\\$")
-					.Replace("(", "\\(")
-					.Replace(")", "\\)")
-					.Replace("%", "\\%")
-					.Replace(".", "\\.")
-					.Replace("[", "\\[")
-					.Replace("]", "\\]")
-					.Replace("*", "\\*")
-					.Replace("+", "\\+")
-					.Replace("-", "\\-")
-					.Replace("?", "\\?");
-		}
-
-		private static string EscapeLuaString(string s)
-		{
-			return "\"" + s.Replace("\\", "\\\\")
-						   .Replace("\"", "\\\"")
-						   .Replace("\n", "\\n")
-						   .Replace("\r", "\\r")
-						   .Replace("\t", "\\t") + "\"";
-		}
-
-		private static string[] SplitByPattern(string str, string pattern)
-		{
-			if (pattern.StartsWith("\\"))
+			int position = 0;
+			foreach (var (start, end) in LuaPatternMatcher.EnumerateMatches(source, pattern, 1, plain))
 			{
-				var unescaped = pattern.Replace("\\", "");
-				if (string.IsNullOrEmpty(unescaped))
-					return [str];
-				return str.Split(new[] { unescaped }, StringSplitOptions.None);
+				if (start == end)
+					continue;
+				yield return source.Substring(position, start - position);
+				position = end;
 			}
-
-			if (pattern == "%s+")
-				return str.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
-
-			return str.Split(new[] { pattern }, StringSplitOptions.None);
+			yield return source[position..];
 		}
 
 		private static string RemoveDiacritics(string text)
