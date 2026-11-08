@@ -1,6 +1,6 @@
 ---
 name: hook-authoring
-description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .bat / .cmd file in a hooks/ addon folder - keeping its frontmatter (hook-type, hook-name, execution-flow, timeout) true to the event it targets and the verdict its body returns true to what the pipeline does with it. Use when creating a hook, when editing or debugging one, when a hook never fires, when a guard silently allows what it should block or approves what the user denied, or when the user asks how a hook addon is shaped.
+description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .bat / .cmd file in a hooks/ addon folder - keeping its frontmatter (hook-type, hook-target, execution-flow, timeout) true to the event it targets and the verdict its body returns true to what the pipeline does with it. Use when creating a hook, when editing or debugging one, when a hook never fires, when a guard silently allows what it should block or approves what the user denied, or when the user asks how a hook addon is shaped.
 ---
 
 # Hook authoring (dASS)
@@ -11,7 +11,7 @@ There are three points: `tool.start`, `tool.confirm` and `tool.result`. Their ev
 
 Two failure modes dominate, and neither raises:
 
-- a `hook-type` or `hook-name` that matches nothing - the hook exists, loads and is never called;
+- a `hook-type` or `hook-target` that matches nothing - the hook exists, loads and is never called;
 - a guard that answers "no opinion" by accident - an empty return, a typo in `decision`, or a timeout.
 
 A third belongs to `tool.confirm`: a verdict that tries to lift a denial without naming the layer it pierces. It is accepted and ignored, and the call stays denied.
@@ -28,14 +28,14 @@ List the `hooks/` folders of the addon sources and grep for the name. Hooks are 
 
 ### 2. Read the contract before the body
 
-`hook-type` says the moment, `hook-name` says the tool, `execution-flow` says whether anything waits for the answer. Then read the body's return against the type's page.
+`hook-type` says the moment, `hook-target` says the tool, `execution-flow` says whether anything waits for the answer. Then read the body's return against the type's page.
 
 *Done when:* the event in the frontmatter and the fields in the returned document agree with **Event types**.
 
 ### 3. Change the hook
 
 - the moment changes → `hook-type` moves with it
-- the tool the hook is about changes → `hook-name` moves with it
+- the tool the hook is about changes → `hook-target` moves with it
 - a long body appears → `timeout` moves with it (the default is 2 seconds)
 
 *Done when:* the body's return is a valid verdict, and the frontmatter still names the right event.
@@ -67,7 +67,7 @@ The path, plus what was verified and by which move.
 name: secret-guard
 description: Denies any filesystem tool call whose arguments name a secret file.
 hook-type: tool.start.*
-hook-name: "native.fs-*"
+hook-target: "native.fs-*"
 execution-flow: sequential
 timeout: 2000
 ]]
@@ -76,7 +76,7 @@ timeout: 2000
 | Key | Default | Meaning |
 |---|---|---|
 | `hook-type` | **required** | anchored, case-insensitive glob over the event name |
-| `hook-name` | all tools | anchored, case-insensitive glob over `{origin}.{name}` |
+| `hook-target` | all tools | anchored, case-insensitive glob over `{origin}.{name}` |
 | `execution-flow` | caller's default (sequential at all three tool points) | `sequential`, `parallel`, `fire-and-forget` |
 | `timeout` | awaited: 2000, capped at 30000; fire-and-forget: none unless declared | milliseconds an awaited hook gets before it is cancelled |
 | `json-output` | - | **required on every out-of-process engine**, refused on Lua |
@@ -114,7 +114,7 @@ Not every source reaches every point, because the orchestrators differ:
 
 The confirm point exists only where policy and confirmation run. A user's own re-run and a `/tool:<name>` call skip both; a script call skips policy, confirmation, the hard floor and the synchronization lock, but it **is** hooked at start and result.
 
-The payload's `tool` field is the **bare** name (`fs-edit`), while `hook-name` and the `hook_name` global are origin-qualified (`native.fs-edit`). A tool that does not exist matches `unknown.<name>`, and its payload still carries the emitted name in `tool`.
+The payload's `tool` field is the **bare** name (`fs-edit`), while `hook-target` and the `hook_target` global are origin-qualified (`native.fs-edit`). A tool that does not exist matches `unknown.<name>`, and its payload still carries the emitted name in `tool`.
 
 So `tool.start.chat-run` + `native.fs-edit` is an agent running a native tool, `tool.start.command` + `script.*` is the user running a scripted one by hand, and `tool.result.script.error` is any tool that a Lua script called and that failed.
 
@@ -137,7 +137,7 @@ So `tool.start.chat-run` + `native.fs-edit` is an agent running a native tool, `
 name: secret-guard
 description: Denies any filesystem tool call whose arguments name a secret file.
 hook-type: tool.start.*
-hook-name: "native.fs-*"
+hook-target: "native.fs-*"
 execution-flow: sequential
 timeout: 2000
 ]]
@@ -191,7 +191,7 @@ return previous
 | Lua | `--[[ ]]` | nothing, in-process | a table (`payload.tool`) |
 | Python, Bash, PowerShell, Batch | `"""` / `#---` / `REM ---` | `json-output: true`, Desktop build | a structure, or JSON text with `json-input: true`; Bash and Batch always get JSON text |
 
-Lua is the default: every build has it, it runs in-process and hands the verdict back natively. An out-of-process hook must declare `json-output: true` - without it the addon fails to load with `InvalidKind`, because a hook always answers with a structure. In an out-of-process hook the variables are `payload`, `previous`, `hook_type` and `hook_name`; exiting with code **2** blocks the chain with the error text as the message, which the start and confirm points turn into a refusal and the result point only logs.
+Lua is the default: every build has it, it runs in-process and hands the verdict back natively. An out-of-process hook must declare `json-output: true` - without it the addon fails to load with `InvalidKind`, because a hook always answers with a structure. In an out-of-process hook the variables are `payload`, `previous`, `hook_type` and `hook_target`; exiting with code **2** blocks the chain with the error text as the message, which the start and confirm points turn into a refusal and the result point only logs.
 
 A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook that calls a tool through them re-enters the pipeline as the `script` source: no policy, no confirmation, no lock - but the start and result points fire again, so a hook that matches `tool.start.*` and calls a tool can re-enter itself. Keep a hook that calls tools narrow in `hook-type`, or do not call tools from it.
 
@@ -204,4 +204,4 @@ A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook 
 - `json-output` on a Lua hook: refused at load, Lua has no stdout channel.
 - At `tool.confirm`, `allow` skips the user. Turning a pending `ask` into an approval is the point; lifting a pending `disallow` needs `override`, and it defaults to `policy`, which cannot pierce a memorized "no" or a tool's `AlwaysDisallow`.
 - The confirm hook runs for every decision, including the ones already approved or refused. Target one case with the `{pending}` suffix instead of branching in the body.
-- The payload's `tool` is bare. A guard that keys off the origin must use the `hook-name` glob or the `hook_name` global.
+- The payload's `tool` is bare. A guard that keys off the origin must use the `hook-target` glob or the `hook_target` global.

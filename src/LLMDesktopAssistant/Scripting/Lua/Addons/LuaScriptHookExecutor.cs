@@ -10,7 +10,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	{
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
-			INodeValue? previous, string hookType, string? hookName, CancellationToken cancellationToken = default)
+			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var luaService = services.GetRequiredService<LuaService>();
 
@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 					globals["payload"] = luaPayload;
 					globals["previous"] = luaPrevious;
 					globals["hook_type"] = new LuaString(hookType);
-					globals["hook_name"] = string.IsNullOrEmpty(hookName) ? LuaNil.Instance : new LuaString(hookName);
+					globals["hook_target"] = string.IsNullOrEmpty(hookTarget) ? LuaNil.Instance : new LuaString(hookTarget);
 				}, cancellationToken);
 			}
 			catch (OperationCanceledException)
@@ -38,8 +38,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			}
 			catch (Exception ex)
 			{
-				Log.Debug(ex, "Error executing Lua script hook {HookName} of type {HookType} on key {HookKey}: {Error}",
-					hook.Name, hookType, hookName, ex.Message);
+				Log.Debug(ex, "Error executing Lua script hook {HookName} of type {HookType} on target {HookTarget}: {Error}",
+					hook.Name, hookType, hookTarget, ex.Message);
 				return new HookExecutionResult(null, null);
 			}
 

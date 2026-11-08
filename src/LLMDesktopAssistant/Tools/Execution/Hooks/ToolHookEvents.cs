@@ -7,7 +7,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 {
 	/// <summary>
 	/// The event vocabulary of the tool pipeline: the names a hook matches with <c>hook-type</c>, and the
-	/// name it matches with <c>hook-name</c>.
+	/// target it matches with <c>hook-target</c>.
 	/// </summary>
 	/// <remarks>
 	/// The event suffix is the invocation source (<c>chat-run</c>, <c>command</c>, ...), the name prefix is the
@@ -60,12 +60,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 			Confirm + "." + DescribeSource(source) + "." + DescribeDecision(decision);
 
 		/// <summary>
-		/// Composes the name a hook matches with <c>hook-name</c>: the origin of the tool and its name.
+		/// Composes the target a hook matches with <c>hook-target</c>: the origin of the tool and its name.
 		/// </summary>
 		/// <param name="descriptor">The tool, or the missing-tool descriptor.</param>
 		/// <param name="call">The call, which still carries the name the model emitted.</param>
 		/// <returns>For example <c>native.fs-edit</c>.</returns>
-		public static string ComposeName(IToolDescriptor descriptor, IToolCall call) =>
+		public static string ComposeTarget(IToolDescriptor descriptor, IToolCall call) =>
 			DescribeOrigin(descriptor.Source) + "." +
 			(string.IsNullOrEmpty(descriptor.Name) ? call.ToolName : descriptor.Name);
 

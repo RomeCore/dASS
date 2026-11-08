@@ -97,7 +97,7 @@ commands.source.tool: Инструмент
 // === Hooks                                        ===
 // =====================================================
 hooks.type: Тип хука (glob-шаблон)
-hooks.name: Фильтр имени хука (glob-шаблон)
+hooks.target: Фильтр по цели хука (glob-шаблон)
 hooks.flow: Порядок выполнения
 hooks.flow.default: В зависимости от вызывающего
 hooks.flow.fireandforget: Без ожидания

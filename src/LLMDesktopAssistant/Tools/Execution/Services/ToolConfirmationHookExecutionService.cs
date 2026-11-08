@@ -39,10 +39,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				return true;
 
 			var hookType = ToolHookEvents.ComposeConfirm(ctx.Source, ctx.PolicyDecision);
-			var hookName = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call);
+			var hookTarget = ToolHookEvents.ComposeTarget(ctx.Descriptor, ctx.Call);
 
 			var result = await hookDispatcher.ExecuteHooksAsync<ToolConfirmHookVerdict>(
-				CreatePayload(ctx), hookType, hookName, HookExecutionFlow.Sequential, cancellationToken: ct);
+				CreatePayload(ctx), hookType, hookTarget, HookExecutionFlow.Sequential, cancellationToken: ct);
 
 			ApplyArguments(ctx, result);
 

@@ -6,8 +6,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 	/// The document a <c>tool.confirm.{source}.{pending}</c> hook receives.
 	/// </summary>
 	/// <remarks>
-	/// The event and its origin are not repeated: both are in <c>hook_type</c> and <c>hook_name</c>.
-	/// <see cref="Tool"/> carries the bare name, which the origin-qualified <c>hook_name</c> cannot give
+	/// The event and its origin are not repeated: both are in <c>hook_type</c> and <c>hook_target</c>.
+	/// <see cref="Tool"/> carries the bare name, which the origin-qualified <c>hook_target</c> cannot give
 	/// back without parsing.
 	/// </remarks>
 	public sealed class ToolConfirmHookPayload

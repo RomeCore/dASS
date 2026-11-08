@@ -16,7 +16,7 @@ Fires **after** the call is settled: the status is final, the text the model wil
 
 | Field | Type | Meaning |
 |---|---|---|
-| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_name` |
+| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_target` |
 | `source` | string | who launched the call |
 | `status` | string | `success`, `error`, `cancelled`, `rejected` |
 | `arguments` | object or nil | the argument set the call ran with |

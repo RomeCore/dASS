@@ -18,7 +18,7 @@ The `{pending}` suffix lets a hook target exactly one case instead of branching 
 
 | Field | Type | Meaning |
 |---|---|---|
-| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_name` |
+| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_target` |
 | `source` | string | `chat-run` or `agent-task` |
 | `decision` | string | the pending decision: `approve`, `ask` or `disallow` |
 | `reason_source` | string or nil | the layer that produced it: `approval-level`, `policy-mask`, `specifier`, `memorization`, `user`, `hook` |

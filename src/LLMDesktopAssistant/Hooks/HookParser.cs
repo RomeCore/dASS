@@ -33,8 +33,8 @@ namespace LLMDesktopAssistant.Hooks
 			var engine = Resolve(addon).Engine;
 
 			addon.HookType = frontmatter.Require<string>("hook-type", ref diagnostic);
-			if (frontmatter.TryRequest("hook-name", ref diagnostic, out string hookName))
-				addon.HookName = hookName;
+			if (frontmatter.TryRequest("hook-target", ref diagnostic, out string hookTarget))
+				addon.HookTarget = hookTarget;
 			if (frontmatter.TryRequest("execution-flow", ref diagnostic, out HookExecutionFlow executionFlow))
 				addon.ExecutionFlow = executionFlow;
 			if (frontmatter.TryRequest("timeout", ref diagnostic, out int timeoutMs))

@@ -63,8 +63,8 @@ namespace LLMDesktopAssistant.Addons
 		/// The script that executes on specific events (especially chat- and tool-related), such as
 		/// before and after the agent message generation, before and after tool pipeline steps execution, and so on.
 		/// Most hook types can affect the execution flow (e.g. cancel a tool based on args, modify tool inputs,
-		/// change the next agent to execute, etc.). Every hook has type name (hook_type, e.g., tool.before-confirmation)
-		/// and optional key name (hook_name, tool name for example, e.g. fs-edit, web-search).
+		/// change the next agent to execute, etc.). Every hook has a type name (hook_type, e.g., tool.before-confirmation)
+		/// and an optional target (hook_target, a tool name for example, e.g. fs-edit, web-search).
 		/// </summary>
 		Hook = 1 << 7,
 

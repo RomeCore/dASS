@@ -12,10 +12,10 @@ namespace LLMDesktopAssistant.Hooks
 		/// <param name="payload">The input data for the hook that received from the caller.</param>
 		/// <param name="previous">The result of the previous hook in the chain, if any. If this is the first hook, this will be null.</param>
 		/// <param name="hookType">The type of hook that is being executed.</param>
-		/// <param name="hookName">The name (or key) of the hook that is being executed. This is usually a tool name or command name.</param>
+		/// <param name="hookTarget">The target of the event being fired. This is usually a tool name or command name.</param>
 		/// <param name="cancellationToken">The cancellation token to use for the operation.</param>
 		/// <returns>The result of the hook.</returns>
 		Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
-			string hookType, string? hookName, CancellationToken cancellationToken = default);
+			string hookType, string? hookTarget, CancellationToken cancellationToken = default);
 	}
 }

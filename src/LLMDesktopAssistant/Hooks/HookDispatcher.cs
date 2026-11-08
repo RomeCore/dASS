@@ -17,14 +17,14 @@ namespace LLMDesktopAssistant.Hooks
 
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteHooksAsync(INodeValue? payload,
-			string hookType, string? hookName, HookExecutionFlow defaultFlow,
+			string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
 			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default)
 		{
-			// Filter hooks based on hookType and hookName
+			// Filter hooks based on hookType and hookTarget
 			var hookSet = hookSetCollector.GetAddonsForChat();
 			var hooks = hookSet.Where(h => h.HookTypePattern.Matches(hookType));
-			if (!string.IsNullOrEmpty(hookName))
-				hooks = hooks.Where(h => h.HookName is null || h.HookNamePattern!.Matches(hookName));
+			if (!string.IsNullOrEmpty(hookTarget))
+				hooks = hooks.Where(h => h.HookTarget is null || h.HookTargetPattern!.Matches(hookTarget));
 
 			var parallelHookTasks = new List<Task>();
 			var sequentialHooks = new List<HookInfo>();
@@ -35,11 +35,11 @@ namespace LLMDesktopAssistant.Hooks
 				{
 					case HookExecutionFlow.FireAndForget:
 					default:
-						RunDetached(hook, payload, hookType, hookName);
+						RunDetached(hook, payload, hookType, hookTarget);
 						break;
 
 					case HookExecutionFlow.Parallel:
-						parallelHookTasks.Add(RunBoundedAsync(hook, payload, null, hookType, hookName, cancellationToken));
+						parallelHookTasks.Add(RunBoundedAsync(hook, payload, null, hookType, hookTarget, cancellationToken));
 						break;
 
 					case HookExecutionFlow.Sequential:
@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.Hooks
 			foreach (var hook in sequentialHooks.OrderBy(h => h.Order))
 			{
 				var result = await RunBoundedAsync(hook, payload, previousHookValue.Value,
-					hookType, hookName, cancellationToken);
+					hookType, hookTarget, cancellationToken);
 				if (!string.IsNullOrEmpty(result.BlockingMessage))
 				{
 					previousHookValue = result;
@@ -67,7 +67,7 @@ namespace LLMDesktopAssistant.Hooks
 			return previousHookValue;
 		}
 
-		private void RunDetached(HookInfo hook, INodeValue? payload, string hookType, string? hookName)
+		private void RunDetached(HookInfo hook, INodeValue? payload, string hookType, string? hookTarget)
 		{
 			_ = Task.Run(async () =>
 			{
@@ -79,23 +79,23 @@ namespace LLMDesktopAssistant.Hooks
 
 				try
 				{
-					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookName, token);
+					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget, token);
 				}
 				catch (OperationCanceledException) when (timeoutSource?.IsCancellationRequested == true)
 				{
-					Log.Warning("Fire-and-forget hook {HookName} of type {HookType} on key {HookKey} did not finish " +
-						"in {Timeout} ms and was cancelled.", hook.Name, hookType, hookName, hook.TimeoutMs);
+					Log.Warning("Fire-and-forget hook {HookName} of type {HookType} on target {HookTarget} did not finish " +
+						"in {Timeout} ms and was cancelled.", hook.Name, hookType, hookTarget, hook.TimeoutMs);
 				}
 				catch (Exception ex)
 				{
-					Log.Warning(ex, "Error executing fire-and-forget hook {HookName} of type {HookType} on key " +
-						"{HookKey}: {Error}", hook.Name, hookType, hookName, ex.Message);
+					Log.Warning(ex, "Error executing fire-and-forget hook {HookName} of type {HookType} on target " +
+						"{HookTarget}: {Error}", hook.Name, hookType, hookTarget, ex.Message);
 				}
 			}, CancellationToken.None);
 		}
 
 		private async Task<HookExecutionResult> RunBoundedAsync(HookInfo hook, INodeValue? payload, INodeValue? previous,
-			string hookType, string? hookName, CancellationToken cancellationToken)
+			string hookType, string? hookTarget, CancellationToken cancellationToken)
 		{
 			var timeout = GetBoundedTimeout(hook);
 			using var timeoutSource = new CancellationTokenSource(timeout);
@@ -105,13 +105,13 @@ namespace LLMDesktopAssistant.Hooks
 			try
 			{
 				return await hook.Executor.ExecuteAsync(services, payload, previous,
-					hookType, hookName, linkedSource.Token);
+					hookType, hookTarget, linkedSource.Token);
 			}
 			catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested &&
 				!cancellationToken.IsCancellationRequested)
 			{
-				Log.Warning("Hook {HookName} of type {HookType} on key {HookKey} did not finish in {Timeout} ms " +
-					"and was cancelled.", hook.Name, hookType, hookName, (long)timeout.TotalMilliseconds);
+				Log.Warning("Hook {HookName} of type {HookType} on target {HookTarget} did not finish in {Timeout} ms " +
+					"and was cancelled.", hook.Name, hookType, hookTarget, (long)timeout.TotalMilliseconds);
 				return new HookExecutionResult(null, null);
 			}
 			catch (OperationCanceledException)
@@ -120,8 +120,8 @@ namespace LLMDesktopAssistant.Hooks
 			}
 			catch (Exception ex)
 			{
-				Log.Warning(ex, "Error executing hook {HookName} of type {HookType} on key {HookKey}: {Error}",
-					hook.Name, hookType, hookName, ex.Message);
+				Log.Warning(ex, "Error executing hook {HookName} of type {HookType} on target {HookTarget}: {Error}",
+					hook.Name, hookType, hookTarget, ex.Message);
 				return new HookExecutionResult(null, null);
 			}
 		}

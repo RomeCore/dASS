@@ -33,10 +33,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				return true;
 
 			var hookType = ToolHookEvents.ComposeStart(ctx.Source);
-			var hookName = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call);
+			var hookTarget = ToolHookEvents.ComposeTarget(ctx.Descriptor, ctx.Call);
 
 			var result = await hookDispatcher.ExecuteHooksAsync<ToolPreUseHookVerdict>(
-				CreatePayload(ctx), hookType, hookName, HookExecutionFlow.Sequential, cancellationToken: ct);
+				CreatePayload(ctx), hookType, hookTarget, HookExecutionFlow.Sequential, cancellationToken: ct);
 
 			// A hook that broke the chain itself - a blocking exit code - beats any verdict: there is none.
 			if (!string.IsNullOrEmpty(result.BlockingMessage))

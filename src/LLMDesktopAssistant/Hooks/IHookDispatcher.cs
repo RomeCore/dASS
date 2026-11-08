@@ -15,16 +15,16 @@ namespace LLMDesktopAssistant.Hooks
 	public interface IHookDispatcher
 	{
 		/// <summary>
-		/// Runs every hook that matches the event and the key, and returns the value of the last sequential
+		/// Runs every hook that matches the event and the target, and returns the value of the last sequential
 		/// hook, or <see langword="null"/> when no sequential hook produced one.
 		/// </summary>
 		/// <param name="payload">The neutral document the hooks receive as their input.</param>
 		/// <param name="hookType">
 		/// The event being fired; a hook matches it with its <see cref="HookInfo.HookType"/> glob.
 		/// </param>
-		/// <param name="hookName">
-		/// The identity inside the event - a tool name, a command name - or <see langword="null"/> when the
-		/// event has none. A hook matches it with its <see cref="HookInfo.HookName"/> glob.
+		/// <param name="hookTarget">
+		/// The target inside the event - a tool name, a command name - or <see langword="null"/> when the
+		/// event has none. A hook matches it with its <see cref="HookInfo.HookTarget"/> glob.
 		/// </param>
 		/// <param name="defaultFlow">The flow applied to a hook that declares none.</param>
 		/// <param name="forcedFlow">
@@ -36,7 +36,7 @@ namespace LLMDesktopAssistant.Hooks
 		/// </param>
 		/// <returns>The value of the last sequential hook, or <see langword="null"/>.</returns>
 		Task<HookExecutionResult> ExecuteHooksAsync(INodeValue? payload,
-			string hookType, string? hookName, HookExecutionFlow defaultFlow,
+			string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
 			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default);
 	}
 }

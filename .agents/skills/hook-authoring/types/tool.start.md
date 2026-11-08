@@ -16,7 +16,7 @@ A `hook-type` of `tool.start.*` covers all five. Script-launched calls reach thi
 
 | Field | Type | Meaning |
 |---|---|---|
-| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_name` and in what `hook-name` matched |
+| `tool` | string | the **bare** tool name, e.g. `fs-edit`; the origin-qualified name is in `hook_target` and in what `hook-target` matched |
 | `source` | string | `chat-run`, `chat-restart`, `command`, `agent-task`, `script` |
 | `behaviour` | list or nil | declared behaviour flags in kebab case |
 | `arguments` | object or nil | the effective argument set - what the tool would really run with |
@@ -25,7 +25,7 @@ A `hook-type` of `tool.start.*` covers all five. Script-launched calls reach thi
 
 `arguments` is the set as it stands when the event fires. A rewrite made by an earlier hook of the same event is not reflected in it: that arrives in `previous`.
 
-For an out-of-process engine these arrive as variables of the same names; with `json-input: true` the two structures are JSON text. `hook_type` and `hook_name` are separate variables in every engine.
+For an out-of-process engine these arrive as variables of the same names; with `json-input: true` the two structures are JSON text. `hook_type` and `hook_target` are separate variables in every engine.
 
 ## Verdict
 

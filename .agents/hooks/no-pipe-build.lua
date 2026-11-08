@@ -4,7 +4,7 @@ title: No pipe in terminal builds
 description: Strips any piping from a project build that runs in the embedded terminal - a filtered build log loses live streaming and comes back as mojibake.
 category: Hooks
 hook-type: tool.start.*
-hook-name: "native.shell-*"
+hook-target: "native.shell-*"
 execution-flow: sequential
 timeout: 2000
 ]]

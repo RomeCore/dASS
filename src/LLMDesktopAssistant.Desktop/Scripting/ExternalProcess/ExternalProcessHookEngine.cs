@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		ExternalProcessEngineRegistry registry) : IHookExecutor
 	{
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
-			string hookType, string? hookName, CancellationToken cancellationToken = default)
+			string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var engine = registry.Resolve(hook.Path ?? throw new InvalidOperationException(
 				$"The path of the hook '{hook.Name}' is not set.")).Engine;
@@ -32,8 +32,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				.Add("payload", payload)
 				.Add("previous", previous)
 				.Add("hook_type", new ConstNodeStringValue { Value = hookType })
-				.Add("hook_name", string.IsNullOrEmpty(hookName) ? ConstNodeNullValue.Instance :
-					new ConstNodeStringValue { Value = hookName });
+				.Add("hook_target", string.IsNullOrEmpty(hookTarget) ? ConstNodeNullValue.Instance :
+					new ConstNodeStringValue { Value = hookTarget });
 
 			var result = await engine.RunAsync(new ExternalProcessScriptParameters
 			{
@@ -48,8 +48,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 
 			if (result.Status is not ExternalProcessStatus.Succeeded)
 			{
-				Log.Debug("Error executing external process script hook {HookName} of type {HookType} on key {HookKey}: {Error}",
-					hook.Name, hookType, hookName, result.Error);
+				Log.Debug("Error executing external process script hook {HookName} of type {HookType} on target {HookTarget}: {Error}",
+					hook.Name, hookType, hookTarget, result.Error);
 
 				// Exit code 2 blocks other hooks and produces a blocking message,
 				// so hook callers can interrupt tool calls for example.

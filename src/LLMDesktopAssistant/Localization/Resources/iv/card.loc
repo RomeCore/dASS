@@ -97,7 +97,7 @@ commands.source.tool: Tool
 // === Hooks                                        ===
 // =====================================================
 hooks.type: Hook type (glob pattern)
-hooks.name: Hook name filter (glob pattern)
+hooks.target: Hook target filter (glob pattern)
 hooks.flow: Execution flow
 hooks.flow.default: Caller's default
 hooks.flow.fireandforget: Fire and forget

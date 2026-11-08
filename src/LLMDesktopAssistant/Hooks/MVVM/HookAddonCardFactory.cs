@@ -14,7 +14,7 @@ namespace LLMDesktopAssistant.Hooks.MVVM
 	/// replaces the default enabled/hidden editor of <see cref="AddonCardFactoryBase{TAddon, TChange}"/> with the
 	/// enabled-only one and lets the group cards aggregate the enabled state only. On top of the base elements it
 	/// adds the chips that answer the questions the list can answer - which events the hook listens to
-	/// ('hook-type'), which keys of those events ('hook-name') and how it is dispatched ('execution-flow'). The
+	/// ('hook-type'), which targets of those events ('hook-target') and how it is dispatched ('execution-flow'). The
 	/// body and the metadata are produced by the base helpers.
 	/// </remarks>
 	[Service(typeof(IAddonCardFactory<HookInfo, HookChange>))]
@@ -53,14 +53,14 @@ namespace LLMDesktopAssistant.Hooks.MVVM
 				ToolTip = Locale.GetKey("card.hooks.type")
 			});
 
-			if (!string.IsNullOrEmpty(addon.HookName))
+			if (!string.IsNullOrEmpty(addon.HookTarget))
 			{
 				elements.Add(new AddonCardChip
 				{
 					Order = order++,
 					Icon = MaterialIconKind.TagMultiple,
-					Label = Locale.GetConstKey(addon.HookName),
-					ToolTip = Locale.GetKey("card.hooks.name")
+					Label = Locale.GetConstKey(addon.HookTarget),
+					ToolTip = Locale.GetKey("card.hooks.target")
 				});
 			}
 

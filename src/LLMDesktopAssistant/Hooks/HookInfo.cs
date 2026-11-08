@@ -25,10 +25,10 @@ namespace LLMDesktopAssistant.Hooks
 		public GlobTextPattern HookTypePattern => field ??= GlobTextPattern.Parse(HookType, GlobOptions.IgnoreCase);
 
 		/// <summary>
-		/// The glob pattern string that matches the hook names (or keys) which this hook can be applied to.
-		/// This is usually tool names or command names. Leave null to apply to all hook names.
+		/// The glob pattern string that matches the target of an event - usually a tool name or a command name -
+		/// which this hook can be applied to. Leave null to apply to every target.
 		/// </summary>
-		public string? HookName
+		public string? HookTarget
 		{
 			get;
 			set => SetProperty(ref field, value);
@@ -37,8 +37,8 @@ namespace LLMDesktopAssistant.Hooks
 		[System.Text.Json.Serialization.JsonIgnore]
 		[LiteDB.BsonIgnore]
 		[YamlDotNet.Serialization.YamlIgnore]
-		public GlobTextPattern? HookNamePattern => string.IsNullOrEmpty(HookName) ? null :
-			(field ??= GlobTextPattern.Parse(HookName, GlobOptions.IgnoreCase));
+		public GlobTextPattern? HookTargetPattern => string.IsNullOrEmpty(HookTarget) ? null :
+			(field ??= GlobTextPattern.Parse(HookTarget, GlobOptions.IgnoreCase));
 
 		/// <summary>
 		/// The execution flow of the hook, which determines how the hook will be dispatched.

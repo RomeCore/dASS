@@ -37,10 +37,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				return;
 
 			var hookType = ToolHookEvents.ComposeResult(ctx.Source, ctx.Call.Status);
-			var hookName = ToolHookEvents.ComposeName(ctx.Descriptor, ctx.Call);
+			var hookTarget = ToolHookEvents.ComposeTarget(ctx.Descriptor, ctx.Call);
 
 			var result = await hookDispatcher.ExecuteHooksAsync<ToolResultHookVerdict>(
-				CreatePayload(ctx, exception), hookType, hookName, HookExecutionFlow.Sequential,
+				CreatePayload(ctx, exception), hookType, hookTarget, HookExecutionFlow.Sequential,
 				cancellationToken: ct);
 
 			// A blocking message has nothing to stop here: the call is already over. It is worth a line in the
