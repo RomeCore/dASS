@@ -152,6 +152,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["slice"] = new LuaCallbackFunction(Slice);
 			ns["keys"] = new LuaCallbackFunction(Keys);
 			ns["values"] = new LuaCallbackFunction(Values);
+			// TODO: table.merge runs through DeepMergeWith, which overwrites array elements by index
+			// instead of appending them, while the manual promises "For arrays, appends elements"
+			// and says nothing about the deep merge. Decide the semantics here or fix the manual.
 			ns["merge"] = new LuaCallbackFunction(Merge);
 			ns["clone"] = new LuaCallbackFunction(Clone);
 			ns["deep_clone"] = new LuaCallbackFunction(DeepClone);
