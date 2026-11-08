@@ -70,9 +70,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("glob.test(pattern, input, [flags]): at least 2 arguments expected.");
 
-			var pattern = GetString("glob.test()", args, 0, "pattern");
-			var input = GetString("glob.test()", args, 1, "input");
-			var options = ParseFlags("glob.test()", args, 2, allowArgumentTail: true);
+			var pattern = GetString("glob.test(pattern, input, [flags])", args, 0, "pattern");
+			var input = GetString("glob.test(pattern, input, [flags])", args, 1, "input");
+			var options = ParseFlags("glob.test(pattern, input, [flags])", args, 2, allowArgumentTail: true);
 
 			try
 			{
@@ -90,9 +90,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("glob.test_path(pattern, path, [flags]): at least 2 arguments expected.");
 
-			var pattern = GetString("glob.test_path()", args, 0, "pattern");
-			var path = GetString("glob.test_path()", args, 1, "path");
-			var options = ParseFlags("glob.test_path()", args, 2, allowArgumentTail: false);
+			var pattern = GetString("glob.test_path(pattern, path, [flags])", args, 0, "pattern");
+			var path = GetString("glob.test_path(pattern, path, [flags])", args, 1, "path");
+			var options = ParseFlags("glob.test_path(pattern, path, [flags])", args, 2, allowArgumentTail: false);
 
 			try
 			{
