@@ -6,6 +6,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.StructuredValues.Converters;
+using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Web;
 using LLMDesktopAssistant.Utils.Web.Streaming;
 
@@ -59,7 +60,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    The call returns when the stream ends, the handler stops it, or it fails.
 
 			      stream = {
-			        mode = "sse",                 -- "sse" | "jsonl" | "raw_lines" (required)
+			        mode = "sse",                 -- "sse" | "jsonl" | "raw-lines" (required)
 			        on_event = function(e) end,   -- required; return false to stop the stream
 			        comments = false,             -- "sse" only: emit comment lines as events
 			        json = false,                 -- "sse" only: parse each data payload as JSON
@@ -105,14 +106,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - content_length: number or nil - Content-Length header
 			    - server: string or nil - Server header
 			
-			--- async web.fetch(url, [contentType], [fetchLevel])
+			--- async web.fetch(url, [content_type], [fetch_level])
 			  Fetches a web page and converts it to the specified content type.
 			  The fetch level escalates automatically when the page denies access.
 
 			  Parameters:
 			    - url: string - URL to fetch
-			    - contentType: string (default: "markdown") - "html", "sanitized_html", or "markdown"
-			    - fetchLevel: string (default: "http_client") - "http_client", "browser", or "stealth_browser"
+			    - content_type: string (default: "markdown") - "html", "sanitized-html", or "markdown"
+			    - fetch_level: string (default: "http_client") - "http-client", "browser", or "stealth-browser"
 
 			  Returns: table with:
 			    - url: string - the fetched URL
@@ -120,14 +121,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - content_length: number - total length of fetched content
 			    - content: string - the converted content
 
-			--- async web.parse(url, selector, [fetchLevel])
+			--- async web.parse(url, selector, [fetch_level])
 			  Fetches HTML content and parses specific elements using a CSS selector.
 			  The fetch level escalates automatically when the page denies access.
 
 			  Parameters:
 			    - url: string - URL to fetch HTML from
 			    - selector: string - CSS selector (e.g. "h1", ".content", "#main > p")
-			    - fetchLevel: string (default: "http_client") - "http_client", "browser", or "stealth_browser"
+			    - fetch_level: string (default: "http-client") - "http-client", "browser", or "stealth-browser"
 
 			  Returns: table with:
 			    - url: string - the fetched URL
@@ -136,12 +137,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - contents: array of strings - text content of each matched element
 			    - html: string - combined HTML of matched elements (sliced)
 
-			--- async web.download(url, savePath, [options])
+			--- async web.download(url, save_path, [options])
 			  Downloads a file from a URL and saves it to the local filesystem.
 
 			  Parameters:
 			    - url: string - URL of the file to download
-			    - savePath: string - Path to save the file (relative to the working directory)
+			    - save_path: string - Path to save the file (relative to the working directory)
 			    - options: table (optional):
 			      - headers: table (optional) - Custom headers as key-value pairs
 
@@ -418,15 +419,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				throw new LuaRuntimeException("web.request(): stream.on_event must be a function.");
 
 			if (table.Get("mode") is not LuaString modeValue)
-				throw new LuaRuntimeException("web.request(): stream.mode is required: \"sse\", \"jsonl\" or \"raw_lines\".");
+				throw new LuaRuntimeException("web.request(): stream.mode is required: \"sse\", \"jsonl\" or \"raw-lines\".");
 
 			var mode = modeValue.Value switch
 			{
 				"sse" => StreamMode.Sse,
 				"jsonl" => StreamMode.JsonLines,
-				"raw_lines" => StreamMode.RawLines,
+				"raw-lines" => StreamMode.RawLines,
 				_ => throw new LuaRuntimeException(
-					$"web.request(): unknown stream.mode '{modeValue.Value}'. Supported: \"sse\", \"jsonl\", \"raw_lines\".")
+					$"web.request(): unknown stream.mode '{modeValue.Value}'. Supported: \"sse\", \"jsonl\", \"raw-lines\".")
 			};
 
 			var policy = StreamParseErrorPolicy.Report;
@@ -588,7 +589,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private async Task<LuaTuple> FetchAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
-				throw new LuaRuntimeException("web.fetch(url, [contentType], [fetchLevel]): at least 1 argument expected.");
+				throw new LuaRuntimeException("web.fetch(url, [content_type], [fetch_level]): at least 1 argument expected.");
 
 			if (args[0] is not LuaString urlVal)
 				throw new LuaRuntimeException("First argument must be a string (URL).");
@@ -609,7 +610,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 				switch (contentType)
 				{
-					case "sanitized_html":
+					case "sanitized-html":
 						content = HtmlSanitizer.Sanitize(content);
 						break;
 					case "markdown":
@@ -635,7 +636,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private async Task<LuaTuple> ParseAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 2)
-				throw new LuaRuntimeException("web.parse(url, selector, [fetchLevel]): at least 2 arguments expected.");
+				throw new LuaRuntimeException("web.parse(url, selector, [fetch_level]): at least 2 arguments expected.");
 
 			if (args[0] is not LuaString urlVal)
 				throw new LuaRuntimeException("First argument must be a string (URL).");
@@ -684,7 +685,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private async Task<LuaTuple> DownloadAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 2)
-				throw new LuaRuntimeException("web.download(url, savePath, [options]): at least 2 arguments expected.");
+				throw new LuaRuntimeException("web.download(url, save_path, [options]): at least 2 arguments expected.");
 
 			if (args[0] is not LuaString urlVal)
 				throw new LuaRuntimeException("First argument must be a string (URL).");
@@ -754,12 +755,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static WebFetchLevel ParseFetchLevel(LuaValue[] args, int index)
 		{
-			if (args.Length > index && args[index] is LuaString levelVal &&
-				Enum.TryParse<WebFetchLevel>(levelVal.Value.Replace("_", ""), ignoreCase: true, out var level))
-			{
-				return level;
-			}
-
+			if (args.Length > index && args[index] is LuaString levelVal)
+				return KebabEnumNames<WebFetchLevel>.Deserialize(levelVal.Value, WebFetchLevel.HttpClient);
 			return WebFetchLevel.HttpClient;
 		}
 

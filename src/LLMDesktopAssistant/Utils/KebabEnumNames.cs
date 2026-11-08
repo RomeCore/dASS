@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Utils
 			return _kebabCaseRegex.Replace(name, "-").ToLowerInvariant();
 		}
 
-		public static TEnum Deserialize(string str)
+		public static TEnum Deserialize(string str, TEnum defaultValue = default)
 		{
 			var normalized = str.Trim().ToLowerInvariant().Replace('_', '-');
 
@@ -29,7 +29,7 @@ namespace LLMDesktopAssistant.Utils
 			if (Enum.TryParse<TEnum>(str, ignoreCase: true, out var parsed))
 				return parsed;
 
-			return default;
+			return defaultValue;
 		}
 
 		public static TEnum DeserializeFlags(params string[]? strs)
