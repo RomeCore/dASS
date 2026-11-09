@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	/// Provides a base class for Lua API parts (namespaces).
 	/// These should be registered using <see cref="LuaApiAttribute"/>.
 	/// </summary>
-	public abstract class LuaApiBase
+	public abstract class LuaApiBase : Disposable
 	{
 		/// <summary>
 		/// Gets the name of the Lua namespace for this API. Examples: "dass.agents", "fs", "image", etc.
