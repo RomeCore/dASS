@@ -326,15 +326,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void OpenConversation(AvailableChatViewModel available)
 		{
-			try
-			{
-				_currentChatScope?.Dispose();
-				CurrentChat?.Dispose();
-			}
-			catch (Exception ex)
-			{
-				Log.Debug(ex, "Failed to cleanup old chat scope: {Error}", ex.Message);
-			}
+			CloseCurrentChat();
 
 			_currentChatScope = available.TemporaryScope ?? ChatManager.OpenChatScope(available.Id);
 			var chatServices = _currentChatScope.ServiceProvider;
@@ -343,30 +335,45 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			LockAvailableChat(_selectedAvailable!, chat);
 		}
 
+		/// <summary>
+		/// Closes the conversation that is open in this tab: notifies the chat's closing handlers,
+		/// then disposes its view model and its service scope.
+		/// </summary>
+		/// <remarks>
+		/// Switching the conversation and disposing the tab both come through here, so
+		/// <see cref="IChatClosingHandler.OnChatClosing"/> means one thing and always runs while the
+		/// chat services are still alive.
+		/// </remarks>
+		private void CloseCurrentChat()
+		{
+			try
+			{
+				foreach (var chatClose in _currentChatScope?.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
+					try
+					{
+						chatClose.OnChatClosing();
+					}
+					catch { }
+				CurrentChat?.Dispose();
+				_currentChatScope?.Dispose();
+				_currentChatScope = null;
+			}
+			catch (Exception ex)
+			{
+				Log.Debug(ex, "Failed to close the current chat: {Error}", ex.Message);
+			}
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
 
 			if (disposing)
 			{
-				try
-				{
-					_selectedAvailable?.IsSelected = false;
-					SelectedAvailable = null;
-					foreach (var chatClose in _currentChatScope?.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
-						try
-						{
-							chatClose.OnChatClosing();
-						}
-						catch { }
-					CurrentChat?.Dispose();
-					_currentChatScope?.Dispose();
-					_currentChatScope = null;
-				}
-				catch (Exception ex)
-				{
-					Log.Debug(ex, "Failed to dispose OpenedChatViewModel: {Error}", ex.Message);
-				}
+				_selectedAvailable?.IsSelected = false;
+				SelectedAvailable = null;
+
+				CloseCurrentChat();
 			}
 		}
 

@@ -50,6 +50,19 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Appends one or more attachable handles to the chat: 'uicontrol' from
 			  dass.ui.create_control(), or a live 'terminal' from process.run_terminal().
 
+			--- dass.chat.on_close(func) -> close_hook
+			  Registers func to run when this chat closes: switching to another chat, closing the
+			  tab, or shutting the application down.
+
+			  Parameters:
+				- func: function - a plain function, called with no arguments. It cannot await: the
+				  close path is synchronous, so a task started here outlives the chat.
+
+			  Returns: close_hook - the registration (see below).
+
+			  Hooks run LIFO, the last registered first, at a point where the chat's services are
+			  still alive. An exception in one hook is logged and the rest still run.
+
 			MESSAGE HANDLE ('chat_message'):
 
 			  Properties (read/write):
@@ -77,7 +90,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  'icon' is a visual icon kind name (e.g. "Star", "Cards"), 'color' is a hex string
 			  (e.g. "#ff88cc"); both are optional (pass nil). Parts are not restorable on edit.
-
+			
+			CLOSE HOOK HANDLE ('close_hook'):
+			
+			  Properties (read-only):
+				- registered: boolean - true while the hook will still run
+			
+			  Methods:
+				- h:cancel() -> boolean - unregisters it; true when it was still registered
+			
+			NOTES:
+			  - The hook runs detached from the cancellation of the call that registered it: a Stop
+				later does not skip it, and a hook cannot cancel the chat close.
+			  - A process kill runs nothing. This is a courtesy, not a guarantee.
+			  - Scripts reload without closing the chat and a hook survives that reload, so
+				registering unconditionally whenever a script loads makes it run twice. Register from
+				a tool or a command (one call, one hook), or keep a flag in store.session.
+			
 			EXAMPLES:
 
 			  local messages = dass.chat.get_messages()
@@ -88,15 +117,28 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  -- A live terminal can be attached to any host, including the chat.
 			  local t = process.run_terminal("claude")
 			  if t then dass.chat.append_data(t) end
+
+			  -- Something small and synchronous: a close hook cannot await
+			  local hook = dass.chat.on_close(function()
+				-- remember: no awaits inside a hook!
+				-- it runs in a synchronous context where `await` keyword is not allowed
+				-- (same as addon-based Lua scripts (inside .agents/scripts/lua)).
+				fs.write(".llmassist/notes.md", table.concat(notes, "\n"))
+			  end)
+
+			  -- The player changed their mind
+			  hook:cancel()
 			""";
 
 		private readonly Chat _chat;
 		private readonly LuaDataAttachmentDispatcher _dispatcher;
+		private readonly LuaChatClosingHandler _closingHandler;
 
-		public LuaApiChat(Chat chat, LuaDataAttachmentDispatcher dispatcher)
+		public LuaApiChat(Chat chat, LuaDataAttachmentDispatcher dispatcher, LuaChatClosingHandler closingHandler)
 		{
 			_chat = chat;
 			_dispatcher = dispatcher;
+			_closingHandler = closingHandler;
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -108,7 +150,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
 			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
+			ns["on_close"] = new LuaCallbackFunction(OnClose);
 			return null;
+		}
+
+		private LuaTuple OnClose(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length == 0 || args[0] is not LuaFunction function)
+				throw new LuaRuntimeException("dass.chat.on_close(func): a function is expected.");
+
+			return new LuaTuple(LuaCloseHook.Wrap(_closingHandler.Register(function, ctx)));
 		}
 
 		private LuaTuple GetMessages(LuaCallingContext ctx, LuaValue[] args)
