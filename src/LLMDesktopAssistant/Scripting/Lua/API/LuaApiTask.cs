@@ -97,9 +97,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				- cancellation_requested: boolean - true once it fired
 
 			  Methods:
-				- c:cancel() - fires it now
+				- c:cancel() -> boolean - fires it now; false when it had already fired or was closed
 				- c:cancel_after(ms) - fires it after the given milliseconds
-				- c:close() - fires it and releases it; later cancel calls are silent no-ops
+				- c:close() - fires it and releases it; later cancel calls return false
 
 			  Handles are chat-scoped: the chat closes whatever a script left open when it ends.
 

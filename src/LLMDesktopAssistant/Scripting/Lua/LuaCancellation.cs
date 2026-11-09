@@ -5,6 +5,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	public class LuaCancellation : IDisposable
 	{
 		private readonly CancellationTokenSource _cts;
+		private readonly Lock _lock = new();
 		private bool _disposed = false;
 
 		[LuaHidden]
@@ -22,24 +23,44 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		[LuaHidden]
 		public void Dispose()
 		{
-			if (_disposed)
-				return;
-			_disposed = true;
-			try
+			lock (_lock)
 			{
-				_cts.Cancel();
+				if (_disposed)
+					return;
+				_disposed = true;
+				try
+				{
+					_cts.Cancel();
+				}
+				catch { }
+				_cts.Dispose();
 			}
-			catch { }
-			_cts.Dispose();
 		}
 		
-		public void Cancel()
+		/// <summary>
+		/// Fires the handle now.
+		/// </summary>
+		/// <returns>
+		/// <see langword="true"/> when this call fired it; <see langword="false"/> when it had already
+		/// fired or was closed.
+		/// </returns>
+		public bool Cancel()
 		{
-			try
+			lock (_lock)
 			{
-				_cts.Cancel();
+				if (_disposed || _cts.IsCancellationRequested)
+					return false;
+
+				try
+				{
+					_cts.Cancel();
+					return true;
+				}
+				catch
+				{
+					return false;
+				}
 			}
-			catch { }
 		}
 
 		public void CancelAfter(int millisecondsDelay)
