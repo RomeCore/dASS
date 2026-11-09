@@ -17,9 +17,22 @@ namespace LLMDesktopAssistant.Utils.Rpc
 		public required string Target { get; init; }
 
 		/// <summary>
-		/// Gets the arguments a process-shaped transport passes verbatim, without re-quoting.
+		/// Gets the arguments of a process-shaped peer, one array element per argument.
 		/// </summary>
+		/// <remarks>
+		/// The provider escapes each element for the platform. When <see cref="CommandLine"/> is set this list
+		/// is ignored, because the caller already wrote the whole argument string.
+		/// </remarks>
 		public IReadOnlyList<string> Arguments { get; init; } = [];
+
+		/// <summary>
+		/// Gets the arguments of a process-shaped peer as one command line, or <see langword="null"/> when they
+		/// are given as <see cref="Arguments"/>.
+		/// </summary>
+		/// <remarks>
+		/// Passed to the process as is, so the caller's quoting is what the program parses.
+		/// </remarks>
+		public string? CommandLine { get; init; }
 
 		/// <summary>
 		/// Gets the working directory of a process-shaped peer, or <see langword="null"/> to use the

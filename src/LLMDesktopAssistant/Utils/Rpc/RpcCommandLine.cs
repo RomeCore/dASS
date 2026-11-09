@@ -3,44 +3,46 @@ using System.Text;
 namespace LLMDesktopAssistant.Utils.Rpc
 {
 	/// <summary>
-	/// Splits a command line string into the argument vector a process will receive.
+	/// Separates the executable from the rest of a command line.
 	/// </summary>
 	/// <remarks>
-	/// A raw command line is a convenience for scripts, not the canonical form: the array of arguments is,
-	/// because it needs no quoting rules at all. The rules implemented here are the common subset of the
-	/// Windows and POSIX conventions - single and double quotes group, a backslash escapes the enclosing
-	/// quote, whitespace outside quotes separates. Windows path backslashes are therefore left untouched.
+	/// A raw command line is a convenience for scripts, not the canonical form: an array of arguments is,
+	/// because it needs no quoting rules at all. Only the executable has to be understood here - the process
+	/// needs it as its file name - while everything after it is handed to the child verbatim, so the quoting
+	/// the caller wrote is what the program parses. Single and double quotes group, a backslash escapes the
+	/// enclosing quote, and whitespace outside quotes separates. Windows path backslashes are left untouched.
 	/// </remarks>
 	public static class RpcCommandLine
 	{
 		/// <summary>
-		/// Splits the given command line.
+		/// Splits a command line into its executable and the arguments that follow it.
 		/// </summary>
 		/// <param name="commandLine">The command line to split.</param>
-		/// <returns>The argument vector, empty for a blank line.</returns>
-		/// <exception cref="FormatException">A quote was opened and never closed.</exception>
-		public static IReadOnlyList<string> Split(string commandLine)
+		/// <returns>
+		/// The executable with its quotes removed and the remaining text, untouched apart from leading
+		/// whitespace; both are empty for a blank line.
+		/// </returns>
+		/// <exception cref="FormatException">The executable opened a quote and never closed it.</exception>
+		public static (string Executable, string Arguments) SplitExecutable(string commandLine)
 		{
-			var result = new List<string>();
-
 			if (string.IsNullOrWhiteSpace(commandLine))
-				return result;
+				return (string.Empty, string.Empty);
 
-			var current = new StringBuilder();
-			var hasToken = false;
+			var executable = new StringBuilder();
 			var quote = '\0';
+			var index = 0;
 
-			for (var i = 0; i < commandLine.Length; i++)
+			for (; index < commandLine.Length; index++)
 			{
-				var value = commandLine[i];
+				var value = commandLine[index];
 
 				if (quote != '\0')
 				{
 					// Only the enclosing quote is escapable, so "C:\dir\" keeps its backslashes.
-					if (value == '\\' && i + 1 < commandLine.Length && commandLine[i + 1] == quote)
+					if (value == '\\' && index + 1 < commandLine.Length && commandLine[index + 1] == quote)
 					{
-						current.Append(quote);
-						i++;
+						executable.Append(quote);
+						index++;
 						continue;
 					}
 
@@ -50,41 +52,30 @@ namespace LLMDesktopAssistant.Utils.Rpc
 						continue;
 					}
 
-					current.Append(value);
+					executable.Append(value);
 					continue;
 				}
 
 				if (value is '"' or '\'')
 				{
 					quote = value;
-					// An empty pair of quotes is an argument, not nothing.
-					hasToken = true;
 					continue;
 				}
 
 				if (char.IsWhiteSpace(value))
-				{
-					if (hasToken)
-					{
-						result.Add(current.ToString());
-						current.Clear();
-						hasToken = false;
-					}
+					break;
 
-					continue;
-				}
-
-				current.Append(value);
-				hasToken = true;
+				executable.Append(value);
 			}
 
 			if (quote != '\0')
 				throw new FormatException($"The command line has an unterminated {quote} quote.");
 
-			if (hasToken)
-				result.Add(current.ToString());
+			var arguments = index < commandLine.Length
+				? commandLine[(index + 1)..].TrimStart()
+				: string.Empty;
 
-			return result;
+			return (executable.ToString(), arguments);
 		}
 	}
 }

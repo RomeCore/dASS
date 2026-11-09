@@ -53,9 +53,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  argument throws.
 
 			  target: for stdio a command line as a string ("srv --json --flag") or an array of arguments
-			  {"srv", "--json", "--flag"}; the array is the canonical form, a string is split with the
-			  common quoting rules, and a path with spaces needs quotes. For tcp the target is
-			  "host:port" and the array form is rejected.
+			  {"srv", "--json", "--flag"}; the array is the canonical form. In the string form only the
+			  executable is parsed - it is the first token, and a path with spaces needs quotes - while
+			  everything after it is handed to the process VERBATIM, so the quoting you write is what the
+			  program parses. For tcp the target is "host:port" and the array form is rejected.
 
 			  routing: a table mapping a method name to a handler. Keys are method names as the peer sends
 			  them - use ["textDocument/publishDiagnostics"] for names that are not identifiers. One
@@ -73,9 +74,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  options:
 			    cwd               string  - working directory of the peer (default: the chat's)
-			    env               table   - extra environment variables; nil value removes one
+			    env               table   - extra environment variables; 0 value (number) removes one
 			    framing           string  - "auto" (default), "content_length" or "lines"
-			    stderr            - nil, a file path, a table or a function (see below)
+			    stderr                    - nil, a file path, a table or a function (see below)
 			    stderr_limit      number  - lines kept by a buffer or table sink (default 1000, 0 = unlimited)
 			    invoke_timeout_ms number  - default timeout of a request; absent means none
 
@@ -104,7 +105,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  notify     rpc_notifier  - the notification proxy: h.notify:method(x)
 			  :stderr() -> string, dropped | nil, reason
 			  async :close() -> boolean  ends the connection and kills the peer's process tree;
-										 true when it closed it, false when it was already closed
+			                             true when it closed it, false when it was already closed
 
 			invoke, notify and close all wait for something, so all of them need await. An unawaited
 			notify may also be written after the request that follows it, because the write order is only
@@ -116,11 +117,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  arguments before the handler sees them:
 
 			  local r = await h.invoke:mymethod({ a = 1 })     -- asks, then waits for the answer
-			  local r = await h.invoke["some.method"]({ })     -- the same, for names that are not identifiers
-			  local r = await h.invoke("some.method", { })     -- and the call form
+			  local r = await h.invoke("some.method", { })     -- the same, for names that are not identifiers
 
 			  await h.notify:mymethod({ a = 1 })               -- sends, then waits only for the write
-			  await h.notify["some.method"]({ })
 			  await h.notify("some.method", { })
 
 			  A result is decoded JSON: a table, a string, a number, a boolean or nil for JSON null.
@@ -225,7 +224,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					$"rpc.connect('{transportName.Value}'): no such transport. Available: {(available.Length == 0 ? "none" : available)}.");
 			}
 
-			var (target, arguments) = ParseTarget(args[1]);
+			var (target, arguments, commandLine) = ParseTarget(args[1]);
 
 			if (args[2] is not LuaTable routing)
 				throw new LuaRuntimeException("rpc.connect(): the third argument must be a table (method routing).");
@@ -245,6 +244,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			{
 				Target = target,
 				Arguments = arguments,
+				CommandLine = commandLine,
 				WorkingDirectory = directory,
 				Environment = environment
 			};
@@ -255,7 +255,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					"Lua rpc.connect: {Transport} '{File}' {Arguments} in {Directory}",
 					provider.Name,
 					target,
-					string.Join(' ', arguments),
+					commandLine ?? string.Join(' ', arguments),
 					directory);
 			}
 
@@ -293,29 +293,31 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		}
 
 		/// <summary>
-		/// Reads the target: a command line to split, or an argument array used verbatim.
+		/// Reads the target: an executable plus its verbatim command line, or an argument array.
 		/// </summary>
 		/// <param name="target">The second argument of <c>rpc.connect</c>.</param>
-		/// <returns>The executable and its arguments.</returns>
-		private static (string Target, IReadOnlyList<string> Arguments) ParseTarget(LuaValue target)
+		/// <returns>The executable, the argument array and the raw command line of the string form.</returns>
+		private static (string Target, IReadOnlyList<string> Arguments, string? CommandLine) ParseTarget(LuaValue target)
 		{
 			if (target is LuaString commandLine)
 			{
-				IReadOnlyList<string> parts;
+				string executable;
+				string arguments;
 
 				try
 				{
-					parts = RpcCommandLine.Split(commandLine.Value);
+					(executable, arguments) = RpcCommandLine.SplitExecutable(commandLine.Value);
 				}
 				catch (FormatException ex)
 				{
 					throw new LuaRuntimeException($"rpc.connect(): {ex.Message}");
 				}
 
-				if (parts.Count == 0)
+				if (executable.Length == 0)
 					throw new LuaRuntimeException("rpc.connect(): the target command line is empty.");
 
-				return (parts[0], [.. parts.Skip(1)]);
+				// Only the executable is parsed: the rest goes to the peer as the caller wrote it.
+				return (executable, [], string.IsNullOrWhiteSpace(arguments) ? null : arguments);
 			}
 
 			if (target is LuaTable table)
@@ -336,7 +338,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				if (parts.Count == 0)
 					throw new LuaRuntimeException("rpc.connect(): the target array is empty.");
 
-				return (parts[0], parts.Skip(1).ToArray());
+				return (parts[0], parts.Skip(1).ToArray(), null);
 			}
 
 			throw new LuaRuntimeException(
@@ -365,7 +367,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				result[name.Value] = entry.Value switch
 				{
 					LuaString value => value.Value,
-					LuaNil => null,
+					LuaNumber number when (number.Value == 0) => null,
 					LuaNumber number => number.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
 					LuaBoolean flag => flag.Value ? "true" : "false",
 					_ => throw new LuaRuntimeException(

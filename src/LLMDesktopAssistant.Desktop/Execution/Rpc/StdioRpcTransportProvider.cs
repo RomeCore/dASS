@@ -42,8 +42,17 @@ namespace LLMDesktopAssistant.Desktop.Execution.Rpc
 				StandardErrorEncoding = Encoding.UTF8
 			};
 
-			foreach (var argument in request.Arguments)
-				startInfo.ArgumentList.Add(argument);
+			if (!string.IsNullOrEmpty(request.CommandLine))
+			{
+				// The caller already wrote the whole argument string: hand it over as is, so the quoting it
+				// wrote is what the peer parses.
+				startInfo.Arguments = request.CommandLine;
+			}
+			else
+			{
+				foreach (var argument in request.Arguments)
+					startInfo.ArgumentList.Add(argument);
+			}
 
 			foreach (var (name, value) in request.Environment)
 			{
