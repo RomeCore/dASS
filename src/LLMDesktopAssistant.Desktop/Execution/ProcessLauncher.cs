@@ -14,6 +14,12 @@ namespace LLMDesktopAssistant.Desktop.Execution
 	[Service(typeof(IProcessLauncher))]
 	public class ProcessLauncher : IProcessLauncher
 	{
+		/// <summary>
+		/// UTF-8 without a byte order mark: a child that reads text sees a BOM as data, and the stream writer
+		/// of the redirected stdin emits it on its first flush - which the very first write triggers.
+		/// </summary>
+		private static readonly UTF8Encoding _stdinEncoding = new(encoderShouldEmitUTF8Identifier: false);
+
 		private readonly IProcessDispatcher _dispatcher;
 
 		public ProcessLauncher(IProcessDispatcher dispatcher)
@@ -34,6 +40,9 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			var encoding = Encoding.UTF8;
 
 			var stdinAvailable = !string.IsNullOrEmpty(parameters.StdIn);
+			// A caller that wants to write later asks for the redirect even without a payload; a payload
+			// implies it.
+			var redirectStdIn = parameters.RedirectStdIn || stdinAvailable;
 			var psi = new ProcessStartInfo
 			{
 				FileName = parameters.FileName,
@@ -42,10 +51,10 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				UseShellExecute = false,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
-				RedirectStandardInput = stdinAvailable,
+				RedirectStandardInput = redirectStdIn,
 				StandardOutputEncoding = encoding,
 				StandardErrorEncoding = encoding,
-				StandardInputEncoding = stdinAvailable ? encoding : null,
+				StandardInputEncoding = redirectStdIn ? _stdinEncoding : null,
 			};
 			if (parameters.VerbatimArguments)
 				psi.Arguments = string.Join(" ", parameters.Arguments);
@@ -56,6 +65,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				psi.Environment.Add(envVar);
 
 			var process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start process.");
+			var standardInput = redirectStdIn ? new ProcessStandardInput(process.StandardInput) : null;
 
 			var tcs = new TaskCompletionSource<int>();
 			var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -76,6 +86,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				IsRunning = true,
 
 				PlainOutput = output,
+				StandardInput = standardInput,
 				TerminalSession = null
 			};
 
@@ -109,11 +120,12 @@ namespace LLMDesktopAssistant.Desktop.Execution
 
 					cancellationToken.ThrowIfCancellationRequested();
 
-					if (stdinAvailable)
+					if (stdinAvailable && standardInput is not null)
 					{
-						// Write the payload verbatim: the caller owns its line endings.
-						await process.StandardInput.WriteAsync(parameters.StdIn);
-						process.StandardInput.Close();
+						// Write the payload verbatim: the caller owns its line endings, and a payload is the
+						// whole input, so the pipe is closed right after it.
+						standardInput.WriteText(parameters.StdIn!);
+						standardInput.Close();
 					}
 
 					var stdoutTask = ProcessOutputAsync(process.StandardOutput, output.StdOut, cancellationToken);
@@ -140,6 +152,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				{
 					_dispatcher.OnProcessEnd(descriptor);
 					descriptor.IsRunning = false;
+					standardInput?.Dispose();
 					process.Dispose();
 				}
 			}, CancellationToken.None);
@@ -153,6 +166,10 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			{
 				ConvertEol = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
 			});
+
+			// The size must be set before the spawn: PtyOptions copies it from the emulation.
+			if (parameters.Columns is { } columns && parameters.Rows is { } rows)
+				terminal.Resize(columns, rows);
 
 			var ptyOptions = new PtyOptions
 			{
@@ -214,6 +231,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				IsRunning = true,
 
 				PlainOutput = null,
+				StandardInput = null,
 				TerminalSession = session
 			};
 
@@ -222,6 +240,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			Task.Run(async () =>
 			{
 				var exitHandled = 0;
+				var lastOutputTicks = Environment.TickCount64;
 				void Complete(int exitCode)
 				{
 					if (Interlocked.Exchange(ref exitHandled, 1) != 0)
@@ -233,9 +252,27 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				}
 				async void OnPtyExited(object? sender, PtyExitedEventArgs e)
 				{
-					// Wait a bit to ensure that all output has been readed.
-					// This is because pty.ProcessExited is fired BEFORE all output has been readed.
-					await Task.Delay(500);
+					// ProcessExited fires BEFORE the last bytes are read, so the exit is reported once the reader
+					// has been quiet for a moment. A fixed sleep here used to cost every wait() half a second.
+					const int quietMs = 150;
+					const int ceilingMs = 2000;
+
+					var started = Environment.TickCount64;
+					while (Environment.TickCount64 - Volatile.Read(ref lastOutputTicks) < quietMs
+						&& Environment.TickCount64 - started < ceilingMs)
+					{
+						await Task.Delay(25);
+					}
+
+					// A kill requested while the process was dying is a cancellation, not whatever exit code the
+					// dying process emitted - otherwise the same kill reports "cancelled" or "failed" by race.
+					if (cts.IsCancellationRequested)
+					{
+						tcs.TrySetCanceled(cts.Token);
+						descriptor.Status = ProcessStatus.Cancelled;
+						return;
+					}
+
 					Complete(e.ExitCode);
 				}
 
@@ -304,6 +341,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 							{
 								WriteToTerminal(new string(chars, 0, trailingChars));
 								session.RaiseOutputUpdated();
+								Interlocked.Exchange(ref lastOutputTicks, Environment.TickCount64);
 							}
 							break;
 						}
@@ -317,6 +355,7 @@ namespace LLMDesktopAssistant.Desktop.Execution
 						// Notify views so they can repaint - XTerm.Terminal.BufferChanged
 						// only fires on buffer switches, not on writes.
 						session.RaiseOutputUpdated();
+						Interlocked.Exchange(ref lastOutputTicks, Environment.TickCount64);
 					}
 
 					if (cts.IsCancellationRequested)

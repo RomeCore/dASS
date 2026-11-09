@@ -35,6 +35,16 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		public bool RunInTerminal { get; init; } = false;
 
 		/// <summary>
+		/// The initial width of a terminal session in columns, or <see langword="null"/> for the default.
+		/// </summary>
+		public int? Columns { get; init; }
+
+		/// <summary>
+		/// The initial height of a terminal session in rows, or <see langword="null"/> for the default.
+		/// </summary>
+		public int? Rows { get; init; }
+
+		/// <summary>
 		/// The environment variables to set for the process.
 		/// </summary>
 		public ImmutableDictionary<string, string?> EnvironmentVariables { get; init; } = [];
@@ -43,6 +53,15 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		/// The initial standard input to pass to the process.
 		/// </summary>
 		public string? StdIn { get; init; }
+
+		/// <summary>
+		/// Whether to redirect the standard input even when no initial payload is given, so a caller can
+		/// keep writing to it.
+		/// </summary>
+		/// <remarks>
+		/// Without it a payloadless process inherits the host's standard input and has no writable pipe.
+		/// </remarks>
+		public bool RedirectStdIn { get; init; } = false;
 
 		/// <summary>
 		/// The time span after which the process should be terminated if it has not completed.
@@ -67,8 +86,11 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			VerbatimArguments = VerbatimArguments,
 			WorkingDirectory = WorkingDirectory,
 			RunInTerminal = RunInTerminal,
+			Columns = Columns,
+			Rows = Rows,
 			EnvironmentVariables = EnvironmentVariables,
 			StdIn = stdIn,
+			RedirectStdIn = RedirectStdIn,
 			TimeOut = TimeOut,
 			CompletionExpiryTime = CompletionExpiryTime
 		};
@@ -85,8 +107,11 @@ namespace LLMDesktopAssistant.Desktop.Execution
 			VerbatimArguments = VerbatimArguments,
 			WorkingDirectory = WorkingDirectory,
 			RunInTerminal = RunInTerminal,
+			Columns = Columns,
+			Rows = Rows,
 			EnvironmentVariables = EnvironmentVariables,
 			StdIn = StdIn,
+			RedirectStdIn = RedirectStdIn,
 			TimeOut = timeout,
 			CompletionExpiryTime = CompletionExpiryTime
 		};

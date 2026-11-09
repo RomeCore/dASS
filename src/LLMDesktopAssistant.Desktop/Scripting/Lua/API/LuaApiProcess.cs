@@ -32,34 +32,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 
 			FUNCTIONS:
 
-			--- async process.exec(command, [args], [options])
-			  Executes a command and waits for completion.
-			  Returns a table with the execution result.
-
-			  Parameters:
-			    - command: string - The command or executable to run (e.g. "git", "node").
-			      On Windows, also searches PATHEXT for executables.
-			    - args: string or table (optional) - Arguments for the command.
-			      As string: "status --short" (quoted tokens supported: '--grep "fix bug"').
-			      As table: {"status", "--short"}.
-			      If omitted, the command runs with no arguments.
-			    - options: table (optional) - Execution options:
-			      - cwd: string - Working directory (default: current directory)
-			      - env: table - Additional environment variables as key-value pairs
-			      - stdin: string - Data to write to the process standard input
-			      - timeout_seconds: number (default: 30) - Maximum execution time.
-			        If exceeded, the process is killed and timed_out is true.
-
-			  Returns: table with:
-			    - exit_code: number - Process exit code (0 = success)
-			    - stdout: string - Standard output of the command
-			    - stderr: string - Standard error of the command
-			    - timed_out: boolean - Whether the process was killed due to timeout
-			    - duration_ms: number - Wall-clock execution time in milliseconds
-			    - command: string - The full command that was executed (for logging)
-
-			  Throws: If the command cannot be started or arguments are invalid.
-
 			--- process.which(command)
 			  Resolves the full path of an executable by searching the PATH
 			  environment variable (and PATHEXT on Windows).
@@ -77,77 +49,167 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				- pid: number - The process ID to kill
 
 			  Returns: boolean - Whether the process was killed.
-
+			
+			--- process.exec(command, [args], [options]) -> handle, error
+			  Starts a process and returns a handle to it IMMEDIATELY, without waiting. Read its output,
+			  write to its input, kill it and wait for the exit through the handle (see PROCESS HANDLE).
+			
+			  Parameters:
+			    - command: string - The command or executable to run (e.g. "git", "node").
+			      On Windows, also searches PATHEXT for executables.
+			    - args: string or table (optional) - Arguments for the command.
+				  As string: "status --short" - passed to the process VERBATIM as its command line, so the
+					quoting you write is exactly what the program parses; no tokenizer sits in between.
+				  As table: {"status", "--short"} - each element is one argument, escaped by the launcher.
+				  If omitted, the command runs with no arguments.
+			    - options: table (optional) - Execution options:
+			      - cwd: string - Working directory (default: current directory)
+			      - env: table - Additional environment variables as key-value pairs
+			      - stdin: string - Data to write to the process standard input. It is written and the pipe
+			        is closed at once, so a payload is the whole input; use handle:write() to keep writing.
+			      - timeout_seconds: number (default: 30) - Wall-clock limit of the run; 0 disables it.
+			        When it passes, the process is killed and its status becomes "timed_out".
+			
+			  Returns: handle, or nil plus the reason when the process cannot be started.
+			
+			  Throws: only when the arguments themselves are malformed (wrong types, unknown mode).
+			
 			--- process.run_terminal(command, [args], [options]) -> terminal, error
-			  Starts an interactive terminal (a PTY) and returns a handle to it. Unlike process.exec
-			  it does NOT wait and never times out: the process lives until it exits or is killed.
-			  Nothing is attached for you: pass the handle to an append_data() of the host you want
-			  it in (chat_message:append_data, dass.chat.append_data, dass.tool.result.append_data).
-
+			  Starts an interactive terminal (a PTY) and returns a handle to it. A PTY merges the streams
+			  and emulates a screen, so it is for interactive programs, not for reading output: use
+			  process.exec when you want stdout and stderr separately. Nothing is attached for you: pass
+			  the handle to an append_data() of the host you want it in (chat_message:append_data,
+			  dass.chat.append_data, dass.tool.result.append_data). An unattached terminal still runs,
+			  but the user cannot see or stop it - kill it yourself when you are done.
+			
 			  Parameters:
 				- command: string - the executable to run
-				- args: string or table (optional) - arguments
+				- args: string or table (optional) - arguments; a string is passed verbatim as the command line,
+				  a table element is one argument
 				- options: table (optional):
 				  - cwd: string - working directory (default: the current one)
 				  - env: table - additional environment variables (key-value pairs)
-				  - timeout_seconds: number (default: nil - infinite) - Maximum execution time.
-
+				  - cols: number - initial width in columns (default: the emulation's own)
+				  - rows: number - initial height in rows (default: the emulation's own)
+				  - timeout_seconds: number (default: nil - infinite; 0 also means infinite)
+			
 			  Returns: terminal, or nil plus the error message.
 				A missing executable, an inaccessible working directory or a failed spawn
 				returns nil and the reason instead of throwing.
+			
+			PROCESS HANDLE ('process'):
+
+			  Properties (read-only):
+				- pid: number - the OS process id
+				- status: string - "running", "success", "failed", "cancelled" or "timed_out"
+				- exit_code: number or nil - nil while the process runs; -1 when it was killed
+				- is_running: boolean - whether the process is still running
+				- timed_out: boolean - whether its own deadline killed it
+				- duration_ms: number or nil - the lifetime, nil while it runs
+				- command: string - the command line as it was launched
+				- stdin_closed: boolean - whether the standard input is closed or was never redirected
+
+			  Snapshots (the whole output; the read cursors are not touched):
+				- h:stdout([mode]) -> string | table - standard output
+				- h:stderr([mode]) -> string | table - standard error
+				- h:output([mode]) -> string | table - both streams in arrival order
+				  mode is "string" (default, lines joined by "\n") or "table" (an array of lines);
+				  an empty stream is "" or {}.
+
+			  Incremental reads (independent cursors, non-destructive to every other consumer):
+				- async h:read_stdout([ms], [mode]) -> text, state
+				- async h:read_stderr([ms], [mode]) -> text, state
+				- async h:read_output([ms], [mode]) -> text, state
+				  Returns everything accumulated since the previous read of the same view.
+				  state is "data" (text is non-empty), "eof" (the process is gone and everything was
+				  read) or "timeout" (ms passed with nothing new). ms omitted waits forever, 0 returns
+				  at once with whatever is buffered.
+
+			  Control:
+				- h:write(value) -> boolean - a string goes as UTF-8 text, a table of integers 0..255 as raw bytes;
+				  the call returns only once the bytes are in the pipe, so ordering and EOF are guaranteed
+				- h:write_line([text]) -> boolean - the text followed by "\n"
+				- h:close_stdin() -> boolean - sends end-of-file
+				- h:kill() -> boolean - kills the process tree; false when it had already exited
+				- async h:wait([ms]) -> exit_code | nil - nil when the wait timed out; the process keeps running
+
+			  NOTES:
+				- The process is bound to the script's cancellation token: Stop, a cancelled tool or a
+				  closed chat kills it. Launch it under task.without_cancellation() to detach it.
+				- A process still running when the script ends keeps running; kill it if you care.
+				- Nothing is attached to the UI: the output is read through the handle, not rendered.
+				- Hosts without the desktop process launcher have no 'process' namespace at all.
 
 			TERMINAL HANDLE ('terminal'):
 
 			  Properties (read-only):
 				- pid: number - the OS process id
+				- status: string - "running", "success", "failed", "cancelled" or "timed_out"
+				- exit_code: number or nil - nil while the process runs; -1 when it was killed
 				- is_running: boolean - whether the process is still running
-				- exit_code: number or nil - nil while the process runs
+				- timed_out: boolean - whether its own deadline killed it
+				- duration_ms: number or nil - the lifetime, nil while it runs
+				- command: string - the command line as it was launched
 
-			  Methods:
-				- t:text() -> string - the current buffer contents (scrollback plus the visible screen)
-				- t:write(text) - writes raw text into the terminal input
-				- t:write_line(text) - writes the text followed by a carriage return
-				- t:kill() - kills the process
-				- t:wait() -> number - waits for the exit and returns the exit code
-				  (the same value on every call; -1 when the process was killed)
+			  Screen:
+				- t:text() -> string - the rendered buffer: scrollback plus the visible screen, escape sequences
+				  already interpreted and repaints already applied
+				- async t:read([ms]) -> text, state - waits until the screen CHANGES and returns the whole buffer
+				  (a PTY has no stream to take a delta from). state is "data", "timeout" (ms passed with no
+				  change) or "eof" (the process is gone). ms omitted waits forever, 0 returns at once.
+				- t:resize(cols, rows) -> boolean - resizes the screen and the PTY behind it
+
+			  Input:
+				- t:write(text) -> boolean - raw text, escape sequences sent as is
+				- t:write_line([text]) -> boolean - the text followed by a carriage return
+				- t:send_key(name) -> boolean - Enter, Tab, Escape, Backspace, Delete, Insert, Up, Down, Left,
+				  Right, Home, End, PageUp, PageDown, F1-F12, Space or Ctrl+A..Ctrl+Z
+				- t:paste(text) -> boolean - wraps the text in the bracketed-paste markers
+
+			  Control:
+				- t:kill() -> boolean - kills the process tree; false when it had already exited
+				- async t:wait([ms]) -> exit_code | nil - nil when the wait timed out; the process keeps running
 
 			  NOTES:
-				- Removing the attachment that holds a terminal kills its process.
+				- Removing the attachment that holds a terminal kills its process; the card's Leave button frees
+				  it instead and lets it outlive the call.
+				- The screen is re-rendered from the emulation, so a read returns a snapshot, never a delta.
 				- Hosts without the desktop process launcher have no 'process' namespace at all.
 
 			EXAMPLES:
 
-			  -- Args as table
-			  local r = await process.exec("git", {"status", "--short"}, {
-			    cwd = "/path/to/repo"
-			  })
+			  -- Run and collect
+			  local h, err = process.exec("git", {"status", "--short"}, { cwd = "/path/to/repo" })
+			  if not h then print("Cannot start:", err) return end
+			  local code = await h:wait()
+			  print("Exit:", code, "in", h.duration_ms, "ms")
+			  if h.stderr ~= "" then print("Errors:", h.stderr) end
+			  for _, line in ipairs(h:stdout("table")) do print(line) end
 
-			  -- Args as string
-			  local r = await process.exec("git", "status --short", {
-			    cwd = "/path/to/repo"
-			  })
+			  -- Watch a long process live
+			  local h2 = process.exec("npm", { "install" }, { timeout_seconds = 0 })
+			  while true do
+				local chunk, state = await h2:read_output(1000)
+				if chunk ~= "" then print(chunk) end
+				if state == "eof" then break end
+			  end
+			  print("npm finished:", h2.status)
 
-			  -- No args at all
-			  local r = await process.exec("ls", nil, { cwd = "/tmp" })
-
-			  -- With stdin input
-			  local r = await process.exec("python", {"-c", "print(input().upper())"}, {
-			    stdin = "hello world"
-			  })
+			  -- Drive a child that reads its input
+			  local h3 = process.exec("sort")
+			  h3:write_line("banana")
+			  h3:write_line("apple")
+			  h3:close_stdin()
+			  await h3:wait()
+			  print(h3:stdout())
 
 			  -- With environment variables
-			  local r = await process.exec("node", "script.js", {
-			    cwd = "/project",
-			    env = { NODE_ENV = "production", DEBUG = "true" },
-			    timeout_seconds = 60
+			  local h4 = process.exec("node", "script.js", {
+				cwd = "/project",
+				env = { NODE_ENV = "production", DEBUG = "true" },
+				timeout_seconds = 60
 			  })
-
-			  -- Inspect result
-			  print("Exit:", r.exit_code)
-			  print("Took:", r.duration_ms, "ms")
-			  if r.stderr ~= "" then
-			    print("Errors:", r.stderr)
-			  end
+			  await h4:wait()
 
 			  -- Start an interactive terminal, attach it to the command's message and wait for it
 			  local term, err = process.run_terminal("claude", nil, { cwd = "/project" })
@@ -182,27 +244,27 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
-			ns["exec"] = new LuaCallbackFunction(ExecAsync);
+			ns["exec"] = new LuaCallbackFunction(Exec);
 			ns["run_terminal"] = new LuaCallbackFunction(RunTerminal);
 			ns["which"] = new LuaCallbackFunction(Which);
 			ns["kill"] = new LuaCallbackFunction(Kill, isAsync: false);
 			return null;
 		}
 
-		private async Task<LuaTuple> ExecAsync(LuaCallingContext ctx, LuaValue[] args)
+		private LuaTuple Exec(LuaCallingContext ctx, LuaValue[] args)
 		{
 			var invocation = ParseInvocation("process.exec", args);
+			var verbatim = !string.IsNullOrWhiteSpace(invocation.CommandLine);
 
 			var resolvedCommand = ResolveCommandPath(invocation.Command);
 			var displayCommand = resolvedCommand ?? invocation.Command;
 
-			var cwd = _fileAccess.TryAccessPath(invocation.WorkingDirectory ?? "", DirectoryAccessMode.Execute);
+			var cwd = _fileAccess.GetFullPath(invocation.WorkingDirectory ?? "");
 			if (string.IsNullOrEmpty(cwd))
-				throw new LuaRuntimeException("process.exec(): unable to access working directory.");
+				return InvocationError("process.exec(): unable to access working directory.");
 			if (!Directory.Exists(cwd))
-				throw new LuaRuntimeException("process.exec(): working directory does not exist.");
+				return InvocationError("process.exec(): working directory does not exist.");
 
-			var startTime = DateTime.UtcNow;
 			ProcessDescriptor descriptor;
 			try
 			{
@@ -210,49 +272,24 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				{
 					ProcessName = invocation.Command,
 					FileName = displayCommand,
-					Arguments = [.. invocation.Arguments],
+					Arguments = verbatim ? [invocation.CommandLine!] : [.. invocation.Arguments],
+					VerbatimArguments = verbatim,
 					WorkingDirectory = cwd,
 					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
 					StdIn = invocation.StdIn,
-					TimeOut = TimeSpan.FromSeconds(invocation.TimeoutSeconds ?? DefaultTimeoutSeconds)
+					// The handle owns the deadline, so a timeout can be told apart from a kill.
+					RedirectStdIn = true,
+					TimeOut = null
 				}, ctx.CancellationToken);
 			}
 			catch (Exception ex)
 			{
-				return BuildErrorResult($"Failed to start process '{invocation.Command}': {ex.Message}",
-					displayCommand, (int)(DateTime.UtcNow - startTime).TotalMilliseconds);
+				return InvocationError($"Failed to start process '{invocation.Command}': {ex.Message}");
 			}
 
-			var timedOut = false;
-			var exitCode = -1;
-			try
-			{
-				exitCode = await descriptor.ExitCodeTask.ConfigureAwait(false);
-			}
-			catch (OperationCanceledException)
-			{
-				// The launcher cancels the task when the timeout fires.
-				timedOut = true;
-			}
-			catch (Exception)
-			{
-				// The process died with an error; its captured output is still readable below.
-			}
-
-			var output = descriptor.PlainOutput;
-			var stdout = output is null ? string.Empty : string.Join("\n", output.StdOut);
-			var stderr = output is null ? string.Empty : string.Join("\n", output.StdErr);
-
-			var result = new LuaTable();
-			result["exit_code"] = new LuaNumber(timedOut ? -1 : exitCode);
-			result["stdout"] = new LuaString(stdout);
-			result["stderr"] = new LuaString(stderr);
-			result["timed_out"] = LuaBoolean.FromBoolean(timedOut);
-			result["duration_ms"] = new LuaNumber((int)(DateTime.UtcNow - startTime).TotalMilliseconds);
-			result["command"] = new LuaString(displayCommand +
-				(invocation.Arguments.Length > 0 ? " " + string.Join(" ", invocation.Arguments) : ""));
-
-			return new LuaTuple(result);
+			var timeoutSeconds = invocation.TimeoutSeconds ?? DefaultTimeoutSeconds;
+			var handle = new LuaProcess(descriptor, timeoutSeconds > 0 ? timeoutSeconds : null);
+			return new LuaTuple(LuaProcess.Wrap(handle));
 		}
 
 		/// <summary>
@@ -268,18 +305,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					return false;
 			}
 			return true;
-		}
-
-		private static LuaTuple BuildErrorResult(string errorMessage, string command, int durationMs)
-		{
-			var result = new LuaTable();
-			result["exit_code"] = new LuaNumber(-1);
-			result["stdout"] = new LuaString("");
-			result["stderr"] = new LuaString(errorMessage);
-			result["timed_out"] = LuaBoolean.False;
-			result["duration_ms"] = new LuaNumber(durationMs);
-			result["command"] = new LuaString(command);
-			return new LuaTuple(result);
 		}
 
 		/// <summary>
@@ -301,8 +326,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			// (cmd.exe is a classic case where PATH does not list System32), and a spawn
 			// failure below reports the real reason.
 			var resolved = ResolveCommandPath(invocation.Command);
+			var verbatim = !string.IsNullOrWhiteSpace(invocation.CommandLine);
 
-			var workDir = _fileAccess.TryAccessPath(invocation.WorkingDirectory ?? "", DirectoryAccessMode.Execute);
+			var workDir = _fileAccess.GetFullPath(invocation.WorkingDirectory ?? "");
 			if (string.IsNullOrEmpty(workDir))
 				return InvocationError("process.run_terminal(): unable to access working directory.");
 			if (!Directory.Exists(workDir))
@@ -317,11 +343,15 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				{
 					ProcessName = invocation.Command,
 					FileName = resolved ?? invocation.Command,
-					Arguments = [.. invocation.Arguments],
+					Arguments = verbatim ? [invocation.CommandLine!] : [.. invocation.Arguments],
+					VerbatimArguments = verbatim,
 					WorkingDirectory = workDir,
 					RunInTerminal = true,
+					Columns = invocation.Columns,
+					Rows = invocation.Rows,
 					EnvironmentVariables = invocation.Environment.ToImmutableDictionary(),
-					TimeOut = invocation.TimeoutSeconds is { } timeoutSecs ? TimeSpan.FromSeconds(timeoutSecs) : null
+					// The handle owns the deadline, so a timeout can be told apart from a kill.
+					TimeOut = null
 				}, ctx.CancellationToken);
 			}
 			catch (Exception ex)
@@ -329,7 +359,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				return InvocationError($"Failed to start terminal '{invocation.Command}': {ex.Message}");
 			}
 
-			return new LuaTuple(LuaTerminal.Wrap(new LuaTerminal(descriptor)));
+			return new LuaTuple(LuaTerminal.Wrap(new LuaTerminal(descriptor, invocation.TimeoutSeconds)));
 		}
 
 		/// <summary>
@@ -353,14 +383,19 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 			var cmdArgs = Array.Empty<string>();
 			string? cwd = null;
 			string? stdin = null;
+			string? commandLine = null;
 			int? timeoutSeconds = null;
 			var envVars = new Dictionary<string, string?>();
+			int? columns = null;
+			int? rows = null;
 
 			if (args.Length > 1 && args[1] is not LuaNil)
 			{
 				if (args[1] is LuaString argsString)
 				{
-					cmdArgs = TokenizeArgs(argsString.Value);
+					// A whole command line: it goes to the child verbatim, so the quoting the caller wrote is what
+					// the program parses - no tokenizer, no round trip, no mangled backslashes.
+					commandLine = argsString.Value;
 				}
 				else if (args[1] is LuaTable argsTable)
 				{
@@ -393,7 +428,13 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 					stdin = stdinVal.Value;
 
 				if (opts.Get("timeout_seconds") is LuaNumber tsVal)
-					timeoutSeconds = Math.Max(1, (int)tsVal.Value);
+					timeoutSeconds = Math.Max(0, (int)tsVal.Value);
+
+				if (opts.Get("cols") is LuaNumber colsVal)
+					columns = Math.Clamp((int)colsVal.Value, 1, 1000);
+
+				if (opts.Get("rows") is LuaNumber rowsVal)
+					rows = Math.Clamp((int)rowsVal.Value, 1, 500);
 
 				if (opts.Get("env") is LuaTable envTable)
 				{
@@ -405,7 +446,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 				}
 			}
 
-			return new Invocation(command, cmdArgs, cwd, envVars, stdin, timeoutSeconds);
+			return new Invocation(command, cmdArgs, commandLine, cwd, envVars, stdin, timeoutSeconds, columns, rows);
 		}
 
 		/// <summary>
@@ -413,57 +454,12 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua.API
 		/// </summary>
 		/// <remarks>
 		/// <paramref name="StdIn"/> and <paramref name="TimeoutSeconds"/> only make sense for
-		/// <c>process.exec</c>: a terminal has no initial stdin and never times out.
+		/// <c>process.exec</c>: a terminal has no initial stdin and never times out. A null timeout
+		/// means the default of 30 seconds, and zero means no limit at all.
 		/// </remarks>
-		private sealed record Invocation(string Command, string[] Arguments, string? WorkingDirectory,
-			Dictionary<string, string?> Environment, string? StdIn, int? TimeoutSeconds);
-
-		/// <summary>
-		/// Tokenizes a command-line string into individual arguments,
-		/// respecting single and double quotes.
-		/// </summary>
-		private static string[] TokenizeArgs(string argsString)
-		{
-			var tokens = new List<string>();
-			var current = new StringBuilder();
-			var inQuotes = false;
-			var quoteChar = '\0';
-
-			for (var i = 0; i < argsString.Length; i++)
-			{
-				var c = argsString[i];
-
-				if (inQuotes)
-				{
-					if (c == quoteChar)
-						inQuotes = false;
-					else
-						current.Append(c);
-				}
-				else if (c is '"' or '\'')
-				{
-					inQuotes = true;
-					quoteChar = c;
-				}
-				else if (char.IsWhiteSpace(c))
-				{
-					if (current.Length > 0)
-					{
-						tokens.Add(current.ToString());
-						current.Clear();
-					}
-				}
-				else
-				{
-					current.Append(c);
-				}
-			}
-
-			if (current.Length > 0)
-				tokens.Add(current.ToString());
-
-			return tokens.ToArray();
-		}
+		private sealed record Invocation(string Command, string[] Arguments, string? CommandLine,
+			string? WorkingDirectory, Dictionary<string, string?> Environment, string? StdIn, int? TimeoutSeconds,
+			int? Columns, int? Rows);
 
 		/// <summary>
 		/// Resolves the full path of a command by searching PATH (and PATHEXT on Windows).

@@ -40,6 +40,11 @@ namespace LLMDesktopAssistant.Desktop.Execution
 		public required ProcessOutput? PlainOutput { get; init; }
 
 		/// <summary>
+		/// The writable standard input of a plain process, or <see langword="null"/> when it was not redirected.
+		/// </summary>
+		public ProcessStandardInput? StandardInput { get; init; }
+
+		/// <summary>
 		/// The output associated with this process, either from a terminal session or plain output.
 		/// </summary>
 		public string Output => TerminalSession?.Output ?? string.Join(Environment.NewLine, PlainOutput!.Output);

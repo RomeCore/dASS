@@ -67,7 +67,11 @@ local function split_lines(s)
 end
 
 local async function git(...)
-	return await process.exec("git", { "--no-pager", ... }, { timeout_seconds = 180 })
+    -- process.exec hands back a live handle at once; wait for it and shape the text here.
+    local handle = process.exec("git", { "--no-pager", ... }, { timeout_seconds = 180 })
+    if not handle then return nil end
+    await handle:wait()
+    return handle:stdout()
 end
 
 _NS.split_lines = split_lines

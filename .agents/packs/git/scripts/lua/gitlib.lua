@@ -93,7 +93,18 @@ local function repo_join(repo, rel)
 end
 
 local async function run_git(cwd, ...)
-	return await process.exec("git", { "--no-pager", ... }, { cwd = cwd, timeout_seconds = 180 })
+    local handle, err = process.exec("git", { "--no-pager", ... }, { cwd = cwd, timeout_seconds = 180 })
+    if not handle then
+        return { exit_code = -1, stdout = "", stderr = tostring(err), timed_out = false }
+    end
+
+    local exit_code = await handle:wait()
+    return {
+        exit_code = exit_code or -1,
+        stdout = handle:stdout(),
+        stderr = handle:stderr(),
+        timed_out = handle.timed_out,
+    }
 end
 
 -- Parses conventional-commit subjects into `{ name = <scope>, count = <n> }`, count desc,

@@ -15,18 +15,25 @@ if not process.which("git") then
 	return
 end
 
-local r = await process.exec("git", {
-	"--no-pager", "--no-optional-locks",
-	"-c", "core.quotepath=false",
-	"status", "--porcelain=v1", "--branch",
+local handle, err = process.exec("git", {
+    "--no-pager", "--no-optional-locks",
+    "-c", "core.quotepath=false",
+    "status", "--porcelain=v1", "--branch",
 }, { timeout_seconds = 3 })
 
-if r.exit_code ~= 0 or r.timed_out then
-	return
+if not handle then
+    return
 end
 
+local exit_code = await handle:wait()
+if exit_code ~= 0 or handle.timed_out then
+    return
+end
+
+local status_text = handle:stdout()
+
 local lines = {}
-for line in string.gmatch(r.stdout, "([^\r\n]+)") do
+for line in string.gmatch(status_text, "([^\r\n]+)") do
 	lines[#lines + 1] = line
 end
 
