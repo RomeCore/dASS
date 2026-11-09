@@ -27,28 +27,27 @@ namespace LLMDesktopAssistant.Hooks
 		extension(IHookDispatcher dispatcher)
 		{
 			public void ExecuteHooksFnF(INodeValue? payload,
-				string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
-				CancellationToken cancellationToken = default)
+				string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 			{
-				_ = dispatcher.ExecuteHooksAsync(payload, hookType, hookTarget, defaultFlow,
-					forcedFlow: HookExecutionFlow.FireAndForget, cancellationToken);
+				_ = dispatcher.ExecuteHooksAsync(payload, hookType, hookTarget, HookExecutionFlow.FireAndForget,
+					isFlowForced: true, cancellationToken);
 			}
 
 			public void ExecuteHooksFnF(object? payload,
-				string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
-				CancellationToken cancellationToken = default)
+				string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 			{
 				var serializedPayload = JsonSerializer.SerializeToNode(payload, _jsonSerializerOptions).ToConstNodeValue();
-				_ = dispatcher.ExecuteHooksAsync(serializedPayload, hookType, hookTarget, defaultFlow,
-					forcedFlow: HookExecutionFlow.FireAndForget, cancellationToken);
+				_ = dispatcher.ExecuteHooksAsync(serializedPayload, hookType, hookTarget, HookExecutionFlow.FireAndForget,
+					isFlowForced: true, cancellationToken);
 			}
 
 			public async Task<HookExecutionResult<T?>> ExecuteHooksAsync<T>(object? payload,
 				string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
-				HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default)
+				bool isFlowForced = false, CancellationToken cancellationToken = default)
 			{
 				var serializedPayload = JsonSerializer.SerializeToNode(payload, _jsonSerializerOptions).ToConstNodeValue();
-				var hookResult = await dispatcher.ExecuteHooksAsync(serializedPayload, hookType, hookTarget, defaultFlow, forcedFlow, cancellationToken);
+				var hookResult = await dispatcher.ExecuteHooksAsync(serializedPayload, hookType, hookTarget, defaultFlow,
+					isFlowForced, cancellationToken);
 
 				// A blocking hook produces a message and no value: deserializing the absent value would throw
 				// and take the message with it, turning a veto into "no opinion".

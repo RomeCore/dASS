@@ -116,7 +116,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			var result = await hooks.ExecuteHooksAsync(payload, type, target, defaultFlow,
-				forceFlow ? defaultFlow : null, ctx.CancellationToken);
+				forceFlow, ctx.CancellationToken);
 
 			return new LuaTuple(result.Value.ToLuaValue(), string.IsNullOrEmpty(result.BlockingMessage) ?
 				LuaNil.Instance : new LuaString(result.BlockingMessage));

@@ -3,7 +3,6 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.Settings.Application;
 using Serilog;
 
 namespace LLMDesktopAssistant.Scripting.Lua

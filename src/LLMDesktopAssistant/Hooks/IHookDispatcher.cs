@@ -27,9 +27,8 @@ namespace LLMDesktopAssistant.Hooks
 		/// event has none. A hook matches it with its <see cref="HookInfo.HookTarget"/> glob.
 		/// </param>
 		/// <param name="defaultFlow">The flow applied to a hook that declares none.</param>
-		/// <param name="forcedFlow">
-		/// A flow that overrides both the hook's declaration and <paramref name="defaultFlow"/>, or
-		/// <see langword="null"/> to honour them.
+		/// <param name="isFlowForced">
+		/// Whether <paramref name="defaultFlow"/> is force overrides the hook's own flow declaration.
 		/// </param>
 		/// <param name="cancellationToken">
 		/// Cancellation of the awaited hooks. Fire-and-forget hooks ignore it: nobody waits for them.
@@ -37,6 +36,6 @@ namespace LLMDesktopAssistant.Hooks
 		/// <returns>The value of the last sequential hook, or <see langword="null"/>.</returns>
 		Task<HookExecutionResult> ExecuteHooksAsync(INodeValue? payload,
 			string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
-			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default);
+			bool isFlowForced = false, CancellationToken cancellationToken = default);
 	}
 }

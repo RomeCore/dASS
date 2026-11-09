@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Hooks
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteHooksAsync(INodeValue? payload,
 			string hookType, string? hookTarget, HookExecutionFlow defaultFlow,
-			HookExecutionFlow? forcedFlow = null, CancellationToken cancellationToken = default)
+			bool isFlowForced, CancellationToken cancellationToken = default)
 		{
 			// Filter hooks based on hookType and hookTarget
 			var hookSet = hookSetCollector.GetAddonsForChat();
@@ -31,7 +31,8 @@ namespace LLMDesktopAssistant.Hooks
 
 			foreach (var hook in hooks)
 			{
-				switch (forcedFlow ?? hook.ExecutionFlow ?? defaultFlow)
+				var flow = isFlowForced ? defaultFlow : hook.ExecutionFlow ?? defaultFlow;
+				switch (flow)
 				{
 					case HookExecutionFlow.FireAndForget:
 					default:
