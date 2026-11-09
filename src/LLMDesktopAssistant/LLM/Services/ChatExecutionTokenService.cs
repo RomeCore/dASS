@@ -1,11 +1,14 @@
+using LLMDesktopAssistant.Services.Instances;
+
 namespace LLMDesktopAssistant.LLM.Services
 {
 	/// <inheritdoc cref="IChatExecutionTokenService"/>
 	[ChatService(typeof(IChatExecutionTokenService))]
-	public class ChatExecutionTokenService : Disposable, IChatExecutionTokenService
+	[ChatService(typeof(IChatClosingHandler))]
+	public class ChatExecutionTokenService : Disposable, IChatExecutionTokenService, IChatClosingHandler
 	{
 		private readonly object _gate = new();
-		private readonly SortedDictionary<ChatExecutionLevel, CancellationTokenSource> _levels = new();
+		private readonly SortedDictionary<ChatExecutionLevel, CancellationTokenSource> _levels = [];
 
 		private CancellationTokenSource? _root;
 
@@ -169,8 +172,11 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		private void RaiseChanged() => ExecutionCancellationTokenChanged?.Invoke();
 
-		private static void CancelAndDispose(CancellationTokenSource source)
+		private static void CancelAndDispose(CancellationTokenSource? source)
 		{
+			if (source is null)
+				return;
+
 			try
 			{
 				source.Cancel();
@@ -211,11 +217,16 @@ namespace LLMDesktopAssistant.LLM.Services
 					_root = null;
 
 					foreach (var source in sources)
-						DisposeOnly(source);
+						CancelAndDispose(source);
 
-					DisposeOnly(root);
+					CancelAndDispose(root);
 				}
 			}
+		}
+
+		void IChatClosingHandler.OnChatClosing()
+		{
+			CancelLevels(_ => true);
 		}
 
 		private sealed class LevelHandle(ChatExecutionTokenService owner, ChatExecutionLevel level,

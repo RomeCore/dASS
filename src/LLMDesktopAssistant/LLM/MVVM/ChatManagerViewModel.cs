@@ -353,6 +353,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				{
 					_selectedAvailable?.IsSelected = false;
 					SelectedAvailable = null;
+					foreach (var chatClose in _currentChatScope?.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
+						try
+						{
+							chatClose.OnChatClosing();
+						}
+						catch { }
 					CurrentChat?.Dispose();
 					_currentChatScope?.Dispose();
 					_currentChatScope = null;
@@ -405,14 +411,27 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			CreateChatCommand = new RelayCommand(CreateChat);
 			CreateTemporaryChatCommand = new RelayCommand(CreateTemporaryChat);
 
-			Initialize();
-		}
-
-		private void Initialize()
-		{
 			ChatManager.ClearEmptyChats();
 			LoadChats();
 			CreateChat();
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				AvailableChats.Clear();
+				foreach (var chat in OpenedChats)
+				{
+					try
+					{
+						chat.Dispose();
+					} catch { }
+				}
+				OpenedChats.Clear();
+			}
 		}
 
 		private AvailableChatViewModel CreateAvailableChatViewModel(ChatInfo info)

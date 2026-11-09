@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Startup;
 using LLMDesktopAssistant.Startup.Stages;
 using Microsoft.Extensions.Logging;
@@ -60,6 +61,7 @@ namespace LLMDesktopAssistant
 			AvaloniaXamlLoader.Load(this);
 		}
 
+		public static MainViewModel? MainViewModel { get; private set; }
 		public static MainView? MainView { get; private set; }
 		public static MainWindow? MainWindow { get; private set; }
 
@@ -128,6 +130,7 @@ namespace LLMDesktopAssistant
 		protected virtual async Task ShowMainContentAsync()
 		{
 			var viewModel = new MainViewModel();
+			MainViewModel = viewModel;
 
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
@@ -144,8 +147,19 @@ namespace LLMDesktopAssistant
 					window.LayoutUpdated -= OnRendered;
 					rendered.TrySetResult();
 				}
+				void Window_Closed(object? sender, EventArgs e)
+				{
+					MainViewModel?.Dispose();
+					foreach (var appClose in ServiceRegistry.Provider.GetServices<IAppClosingHandler>())
+						try
+						{
+							appClose.OnAppClosing();
+						}
+						catch { }
+				}
 
 				window.LayoutUpdated += OnRendered;
+				window.Closed += Window_Closed;
 
 				MainWindow = window;
 				desktop.MainWindow = window;

@@ -29,6 +29,14 @@ namespace LLMDesktopAssistant.MVVM
 			get => _isSelected;
 			set => SetProperty(ref _isSelected, value);
 		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+				(Content as IDisposable)?.Dispose();
+		}
 	}
 
 	public class MainViewModel : ViewModelBase
@@ -160,6 +168,20 @@ namespace LLMDesktopAssistant.MVVM
 #endif
 
 			SelectedTopSidebarItem = TopSidebarItems[0];
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				foreach (var item in TopSidebarItems)
+					item.Dispose();
+
+				foreach (var item in BottomSidebarItems)
+					item.Dispose();
+			}
 		}
 	}
 }
