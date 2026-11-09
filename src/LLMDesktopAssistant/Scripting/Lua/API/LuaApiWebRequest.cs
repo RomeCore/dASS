@@ -708,7 +708,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			try
 			{
-				var fullSavePath = _fileAccess.AccessPath(savePathVal.Value, DirectoryAccessMode.Write);
+				var fullSavePath = _fileAccess.GetFullPath(savePathVal.Value);
 
 				var dir = Path.GetDirectoryName(fullSavePath);
 				if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
