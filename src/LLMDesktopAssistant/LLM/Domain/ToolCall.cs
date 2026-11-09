@@ -207,7 +207,21 @@ namespace LLMDesktopAssistant.LLM.Domain
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing)
+			{
+				try
+				{
+					_cancellationTokenSource?.Cancel();
+				}
+				catch { }
 				_cancellationTokenSource?.Dispose();
+
+				try
+				{
+					_synchronizationWait?.Cancel();
+				}
+				catch { }
+				_synchronizationWait?.Dispose();
+			}
 
 			base.Dispose(disposing);
 		}
