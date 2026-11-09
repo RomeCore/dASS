@@ -18,7 +18,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			Supplements the built-in Lua table library.
 
 			FUNCTIONS:
-
+			
+			--- table.empty_array()
+			  Creates an empty array table. This table will be encoded as an array in JSON
+			  or other structured formats, instead of an objects.
+			  Returns: table
+			
 			--- table.contains(t, value)
 			  Checks if a value exists in the table (shallow comparison).
 			  Parameters:
