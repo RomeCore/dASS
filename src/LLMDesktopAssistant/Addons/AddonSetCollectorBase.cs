@@ -37,6 +37,9 @@ namespace LLMDesktopAssistant.Addons
 		private readonly IServiceProvider _services;
 		private readonly IFileAddonAccessor<TAddon> _accessor;
 		private IAdditionalAddonSource<TAddon>[] _sources = [];
+		// The captured collections that have been subscribed to.
+		// IFileAddonAccessor.Addons triggers reloading on every property get, causing exceptions on disposal.
+		private readonly List<ReadOnlyObservableCollection<TAddon>> _subscriptions = [];
 
 		private readonly AddonSet<TAddon> _available = new();
 		private readonly Dictionary<string, List<TAddon>> _groups = new(StringComparer.Ordinal);
@@ -77,16 +80,24 @@ namespace LLMDesktopAssistant.Addons
 
 				_sources = [.. (_services.GetService<IEnumerable<IAdditionalAddonSource<TAddon>>>() ?? [])];
 
-				if (_accessor.Addons.CanRaiseCollectionChanged)
-					_accessor.Addons.CollectionChanged += OnSourcesChanged;
-				foreach (var addon in _accessor.Addons)
+				var accessorAddons = _accessor.Addons;
+				if (accessorAddons.CanRaiseCollectionChanged)
+				{
+					_subscriptions.Add(accessorAddons);
+					accessorAddons.CollectionChanged += OnSourcesChanged;
+				}
+				foreach (var addon in accessorAddons)
 					AddToGroup(addon);
 
 				foreach (var source in _sources)
 				{
-					if (source.Addons.CanRaiseCollectionChanged)
-						source.Addons.CollectionChanged += OnSourcesChanged;
-					foreach (var addon in source.Addons)
+					var sourceAddons = source.Addons;
+					if (sourceAddons.CanRaiseCollectionChanged)
+					{
+						_subscriptions.Add(sourceAddons);
+						sourceAddons.CollectionChanged += OnSourcesChanged;
+					}
+					foreach (var addon in sourceAddons)
 						AddToGroup(addon);
 				}
 
@@ -223,11 +234,8 @@ namespace LLMDesktopAssistant.Addons
 
 			if (_initialized)
 			{
-				if (_accessor.Addons.CanRaiseCollectionChanged)
-					_accessor.Addons.CollectionChanged -= OnSourcesChanged;
-				foreach (var source in _sources)
-					if (source.Addons.CanRaiseCollectionChanged)
-						source.Addons.CollectionChanged -= OnSourcesChanged;
+				foreach (var subscription in _subscriptions)
+					subscription.CollectionChanged -= OnSourcesChanged;
 			}
 
 			foreach (var (config, hooks) in _configs)

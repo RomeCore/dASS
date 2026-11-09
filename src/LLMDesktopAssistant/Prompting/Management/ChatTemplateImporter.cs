@@ -15,6 +15,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 		private readonly TemplateLibrary _library;
 		private readonly IAppTemplateImporter _appTemplateImporter;
 		private readonly IFileAddonAccessor<ITemplate> _templatesAccessor;
+		private readonly ReadOnlyObservableCollection<ITemplate> _templatesSubscription;
 		private readonly Dictionary<string, IImportablePromptPartManager> _promptPartManagers;
 		private readonly RangeObservableCollection<ITemplate> _templates = [];
 
@@ -45,9 +46,10 @@ namespace LLMDesktopAssistant.Prompting.Management
 				}
 			}
 
-			_templatesAccessor.Addons.CollectionChanged += Templates_CollectionChanged;
+			_templatesSubscription = _templatesAccessor.Addons;
+			_templatesSubscription.CollectionChanged += Templates_CollectionChanged;
 			Templates_CollectionChanged(null, new NotifyCollectionChangedEventArgs(
-				NotifyCollectionChangedAction.Add, _templatesAccessor.Addons));
+				NotifyCollectionChangedAction.Add, _templatesSubscription));
 		}
 
 		protected override void Dispose(bool disposing)
@@ -56,7 +58,7 @@ namespace LLMDesktopAssistant.Prompting.Management
 
 			if (disposing)
 			{
-				_templatesAccessor.Addons.CollectionChanged -= Templates_CollectionChanged;
+				_templatesSubscription.CollectionChanged -= Templates_CollectionChanged;
 			}
 		}
 
