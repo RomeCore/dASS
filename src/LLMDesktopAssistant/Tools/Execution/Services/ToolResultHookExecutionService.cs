@@ -39,9 +39,15 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			var hookType = ToolHookEvents.ComposeResult(ctx.Source, ctx.Call.Status);
 			var hookTarget = ToolHookEvents.ComposeTarget(ctx.Descriptor, ctx.Call);
 
-			var result = await hookDispatcher.ExecuteHooksAsync<ToolResultHookVerdict>(
-				CreatePayload(ctx, exception), hookType, hookTarget, HookExecutionFlow.Sequential,
-				cancellationToken: ct);
+			HookExecutionResult<ToolResultHookVerdict?> result;
+			if (ct.IsCancellationRequested)
+				result = await hookDispatcher.ExecuteHooksAsync<ToolResultHookVerdict>(
+					CreatePayload(ctx, exception), hookType, hookTarget, HookExecutionFlow.FireAndForget,
+					isFlowForced: true, cancellationToken: ct);
+			else
+				result = await hookDispatcher.ExecuteHooksAsync<ToolResultHookVerdict>(
+					CreatePayload(ctx, exception), hookType, hookTarget, HookExecutionFlow.Sequential,
+					cancellationToken: ct);
 
 			// A blocking message has nothing to stop here: the call is already over. It is worth a line in the
 			// log only because an author who reached for it misunderstood the point.
