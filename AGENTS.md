@@ -102,7 +102,7 @@ locators and their settings blocks), `Scripting/Lua/API/LuaApiProcess.cs`,
 (explorer and link openers), `Markdown/MermaidPreviewProvider`.
 
 A feature that shells out, spawns an interpreter or paints a terminal belongs there - the core project
-must stay portable (`.Android`, `.Browser`, `.Blazor` builds reference it).
+must stay portable (`.Android` and `.Blazor` builds reference it).
 
 ## Localization
 
