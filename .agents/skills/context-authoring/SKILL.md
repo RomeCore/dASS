@@ -148,3 +148,8 @@ The collected text is wrapped into an XML tag named after the addon (a leading d
 - **A trailing newline from `print`** - harmless for `live-tail` (a blank line inside the tag), but for `supersede` it is a guaranteed "change" the first time the script switches between `print` styles.
 - **A slow body.** A live-tail runs on every build; an expensive probe quietly taxes every message.
 - **Expecting chat APIs to matter.** A context cannot mutate the chat, cannot render UI and is invisible to `addon-search`; if the thing needs to *do* something, it is a tool or a slash command, not a context.
+
+## Neighbours
+
+- User-editable context settings (`params-schema`, the card editor, `params` in the body): the `addon-parameterization` skill.
+- The same engine table for other scriptable kinds: the `tool-authoring`, `command-authoring` and `hook-authoring` skills.

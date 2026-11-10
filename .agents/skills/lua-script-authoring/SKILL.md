@@ -160,5 +160,6 @@ Two consequences:
 
 - Scriptable tools and their frontmatter: the `tool-authoring` skill.
 - Slash commands and their argument schema: the `command-authoring` skill.
+- User-editable script settings (`params-schema`, the card editor, `params` at load): the `addon-parameterization` skill.
 - AXAML + dynamic view models (`dass.ui.create_control`, `append_data`): the `lua-ui-controls` skill.
 - Live API surface: `print(namespaces())`, `print(manuals(dass, fs, process, dass.tool))`.

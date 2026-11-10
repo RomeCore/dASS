@@ -120,6 +120,7 @@ The toggle is per agent and lives in `AgentContextSettings.ContextSet` (`Context
 
 ## Pointers
 
-- Template authoring, `params_schema`, localization of prompt parts: the `llt-prompt-parts` skill.
+- Template authoring and localization of prompt parts: the `llt-prompt-parts` skill.
+- Parameter schemas (`params-schema` in addon frontmatter, `params_schema` in LLT, `params` in a script): the `addon-parameterization` skill.
 - `AGENTS.md` -> **Prompting & SCM** for the modes, checkpoints and section list.
 - Reference implementation: `Providers/WorkingDirectories/` (custom delta engine, `State = null` handling) and `Providers/Skills/` (addon-backed sections on `AddonSectionDeltaEngine`).

@@ -141,6 +141,7 @@ An unknown variable is left **verbatim** - a typo must not silently eat text. A 
 ## Neighbours
 
 - The shape of a scriptable tool: the `tool-authoring` skill.
-- Skills and sub-agents as LLT templates (`params_schema`, localization): the `llt-prompt-parts` skill.
+- Skills and sub-agents as LLT templates (localization): the `llt-prompt-parts` skill.
+- User-editable parameters (`params_schema` in LLT, `params` in the body): the `addon-parameterization` skill.
 - The craft of the writing itself: the `writing-for-agents` skill.
 - Deciding *which* skill is worth writing at all: `equip`. A contract that contradicts its own behaviour: `dass-report`.

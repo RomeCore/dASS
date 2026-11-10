@@ -205,3 +205,8 @@ A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook 
 - At `tool.confirm`, `allow` skips the user. Turning a pending `ask` into an approval is the point; lifting a pending `disallow` needs `override`, and it defaults to `policy`, which cannot pierce a memorized "no" or a tool's `AlwaysDisallow`.
 - The confirm hook runs for every decision, including the ones already approved or refused. Target one case with the `{pending}` suffix instead of branching in the body.
 - The payload's `tool` is bare. A guard that keys off the origin must use the `hook-target` glob or the `hook_target` global.
+
+## Neighbours
+
+- User-editable hook settings (`params-schema`, the card editor, `params` in the body): the `addon-parameterization` skill.
+- The same engine table for other scriptable kinds: the `tool-authoring`, `command-authoring` and `context-authoring` skills.

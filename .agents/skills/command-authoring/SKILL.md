@@ -204,6 +204,7 @@ A `commands/` folder inside an addon source: `.agents/` or `.llmassist/` in a re
 
 - The shape of a scriptable tool, and the shared engine table: the `tool-authoring` skill.
 - The shape of a skill and the bracket-hint grammar in full: the `skill-authoring` skill.
-- Commands and skills as LLT templates (`params_schema`, localization): the `llt-prompt-parts` skill.
+- Commands and skills as LLT templates (localization): the `llt-prompt-parts` skill.
+- User-editable command settings (`params-schema`, the card editor, `params` in the body): the `addon-parameterization` skill.
 - The craft of the writing itself: the `writing-for-agents` skill.
 - Deciding *which* command is worth writing: `equip`. A contract that contradicts its own behaviour: `dass-report`.

@@ -165,3 +165,8 @@ A `tools/` folder inside an addon source: `.agents/` in a repo, `.llmassist/pack
 - `json-output` on a Lua tool: refused at load, because Lua runs in-process and has no stdout to take a structure from.
 - `run-terminal` together with `json-output`: refused at load - a terminal has no separate output channel to parse.
 - `kind` is not cross-checked against `type` for a scripted tool: `{"type":"integer","kind":"file"}` is accepted and the argument then never matches a path rule. The contradiction is only refused for a tool declared in C#.
+
+## Neighbours
+
+- User-editable tool settings (`params-schema`, the card editor, `params` in the body): the `addon-parameterization` skill.
+- The same engine table for other scriptable kinds: the `command-authoring`, `context-authoring` and `hook-authoring` skills.

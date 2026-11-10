@@ -1,6 +1,6 @@
 ---
 name: llt-prompt-parts
-description: Authors and edits dASS prompt-part templates in LLT (.llt) - components, system/persona/specialization slots, template-based skills and sub-agents, including params_schema parameterization and localization. Use when the user asks to create, change, translate or review .llt prompt parts or prompt parts inside addon packs.
+description: Authors and edits dASS prompt-part templates in LLT (.llt) - components, system/persona/specialization slots, template-based skills and sub-agents, including localization. Use when the user asks to create, change, translate or review .llt prompt parts or prompt parts inside addon packs.
 allowed-tools: [fs-read_entry, fs-grep, fs-glob, fs-edit, fs-write_file, fs-create_directory]
 ---
 
@@ -145,7 +145,7 @@ The syntax exists, but it is **not used** by prompt parts (a part body must rend
 | `lang` | - | locale (`'en-US'`, `'iv'`) | without it you get a non-fatal diagnostic, locale becomes invariant |
 | `localized_for` | localization files | source locale | links a translation to its original |
 | `slot` | `type: 'slot'` | `'system'`, `'persona'`, `'specialization'` | anything else/empty is **fatal** |
-| `params_schema` | - | object | parameterization (see below) |
+| `params_schema` | - | object | parameterization - the `addon-parameterization` skill |
 
 Plus keys recognized by LLTSharp: `lang`, `model`, `model_family`, `version`. Everything else is "additional metadata"
 (available for filtering, shown in the UI).
@@ -159,41 +159,6 @@ That is, a template from the working directory overrides everything else, and a 
 A separate file in `templates/` with the same `guid`/`strid`, `lang: '<target>'` and `localized_for: '<source>'`.
 Reference (read-only, do not edit): `src/LLMDesktopAssistant/Prompting/Resources/ru-RU/components.llt` -
 there the translation bodies are empty and only the metadata (`title` etc.) is overridden.
-
-## Parameterization (`params_schema` + `@params`)
-
-```llt
-params_schema: {
-	// text field
-	name:    { type: 'textbox/string',  title: 'Name', placeholder: 'Your name', default: 'world', isMultiline: false },
-	// dropdown (isEditable: true allows a custom value)
-	tone:    { type: 'combobox/string', title: 'Tone', choices: [ 'formal', 'casual' ], default: 'formal' },
-	// boolean "combobox" with labels
-	shout:   { type: 'combobox/boolean', default: false, trueTitle: 'Yes', falseTitle: 'No' },
-	// checkbox
-	strict:  { type: 'checkbox', default: true },
-	// slider (min/max are mandatory; for integer the default step is 1)
-	count:   { type: 'slider/integer', min: 1, max: 10, step: 1, default: 3 },
-	temp:    { type: 'slider/number',  min: 0, max: 2, step: 0.1, default: 1.0 },
-	// list of homogeneous items
-	tags:    { type: 'list', items: { type: 'textbox/string' }, min: 0, max: 5 },
-	// nested object
-	level1:  { type: 'object', properties: { level2: { type: 'textbox/string' } } }
-}
-```
-
-Elements: `textbox`, `slider`, `combobox`, `checkbox`, `list`, `object`.
-The value type follows the `/`: `string`, `number`, `integer`, `boolean`, `object`, or nothing.
-Allowed pairs: `textbox` (string|number), `slider` (integer|number), `combobox` (string|boolean),
-`checkbox` (-|boolean), `list` (-), `object` (-).
-Common properties of any element: `title`, `description`.
-The schema root is a dictionary `key → schema`.
-
-Usage in the body: `@params.name`, `@params.tags[0]`, `@(params ?: 'count' ? params.count : 3)`.
-
-Important: `params` is injected into the context **only if** the part has a `params_schema` (and is removed after
-rendering). Values come from settings (per-agent/chat overrides) and are "repaired" by the schema (`CreateOrFixValue`) -
-defaults are substituted automatically.
 
 ## How a part body is rendered
 
@@ -215,10 +180,8 @@ defaults are substituted automatically.
 6. The template `id` (`@template <id>`) is also a public identifier (library search by id). Renaming breaks references.
 7. `description` for `skill`/`sub-agent` is not a "human" description but the model's selection trigger:
    phrase it as "Use when …".
-8. A broken `params_schema` is not fatal on import, but then there are no parameters → `@params.x` fails at render time.
-   Keep the schema and its usage in the body in sync.
-9. Do not create `type: 'slider'` - the type is obsolete.
-10. Five backticks is the only "string" construct in LLT: three backticks inside a body are safe and often needed for code fences.
+8. Do not create `type: 'slider'` - the type is obsolete.
+9. Five backticks is the only "string" construct in LLT: three backticks inside a body are safe and often needed for code fences.
 
 ## Workflow
 
@@ -229,7 +192,7 @@ defaults are substituted automatically.
 3. Decide where to write: the user/workdir pack (`templates/<name>.llt`) - not the built-in resources.
 4. Assemble the template: `@template <id>` → `@metadata` → body; textual fragments with special characters go into
    a raw block / escapes.
-5. If user settings are needed, add `params_schema` and use `@params.*`; verify the keys match.
+5. If user settings are needed, add `params_schema` and use `@params.*` - the `addon-parameterization` skill has the schema grammar.
 6. For a translation, use a separate file with the same `guid`/`strid`, `lang` and `localized_for`.
 7. Run the checklist below and show the user the finished template/diff.
 
@@ -243,7 +206,7 @@ defaults are substituted automatically.
 - [ ] `description` is filled in for `skill`/`sub-agent`.
 - [ ] Literal `@`, `{`, `}` are escaped (`@@`, `{{`, `}}`) or wrapped in a five-backtick raw block.
 - [ ] Binary expressions are parenthesized `@(…)`.
-- [ ] `params_schema` keys match `@params.*` in the body; slider `min/max` are set.
+- [ ] `params_schema` kinds and defaults are valid - the `addon-parameterization` skill.
 - [ ] Blocks `{ }` and `@if/@foreach` are balanced; indentation is one level per block.
 - [ ] The file lives in `templates/` and has the `.llt` extension.
 
@@ -350,6 +313,10 @@ defaults are substituted automatically.
 ## Useful links (read-only)
 
 - Prompt-part samples: `src/LLMDesktopAssistant/Prompting/Resources/components.llt` (components + a slot with `params_schema`).
-- Parameter schema: `src/LLMDesktopAssistant/StructuredValues/Parameterization/Parsers/*Parser.cs`.
 - Part managers (types and required metadata): `src/LLMDesktopAssistant/Prompting/Management/Prompt*Manager.cs`.
 - Render entry points: `src/LLMDesktopAssistant/Prompting/Context/Providers/**` and `**/*setCollector.cs`.
+
+## Neighbours
+
+- Parameter schemas (`params_schema`, `@params`, the card editor): the `addon-parameterization` skill.
+- Skills and sub-agents as addon files: the `skill-authoring` skill.
