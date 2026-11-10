@@ -5,7 +5,7 @@ description: Name the current diff as commits. Injects the commit-naming rules a
 category: Git
 generate: true
 model-facing: neutral
-argument-schema: '[mode:$manual|auto] [content:$full|brief]'
+argument-schema: '[mode:$auto|manual] [content:$full|brief]'
 ]]
 
 -- mode    = manual (default) - name the commits, the user commits
