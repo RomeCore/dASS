@@ -122,12 +122,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static LuaTuple Now(LuaCallingContext ctx, LuaValue[] args)
 		{
-			return new LuaTuple(DateTimeToTable(DateTimeOffset.UtcNow));
+			return new LuaTuple(DateTimeToTable(DateTime.UtcNow));
 		}
 
 		private static LuaTuple Local(LuaCallingContext ctx, LuaValue[] args)
 		{
-			return new LuaTuple(DateTimeToTable(DateTimeOffset.Now));
+			return new LuaTuple(DateTimeToTable(DateTime.Now));
 		}
 
 		private static LuaTuple Parse(LuaCallingContext ctx, LuaValue[] args)
