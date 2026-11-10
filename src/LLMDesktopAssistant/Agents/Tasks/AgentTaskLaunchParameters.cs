@@ -16,6 +16,15 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public required string? TaskName { get; init; }
 
 		/// <summary>
+		/// Whether the task is hidden from the message that triggered it and from the chat's task list.
+		/// </summary>
+		/// <remarks>
+		/// The application-wide dispatcher list ignores this flag: a hidden task is an internal step of a
+		/// longer job, not a secret.
+		/// </remarks>
+		public bool Hidden { get; init; }
+
+		/// <summary>
 		/// The message that this task is associated with.
 		/// This could be a message containing the tool call that triggered this task
 		/// (via <see cref="AgenticToolModule"/> or <see cref="LuaApiAgents"/>).

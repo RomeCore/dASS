@@ -43,6 +43,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			    - task_title: string (optional) - Title of the task used for UI display.
 
+				- hidden: boolean (optional) - Keep this task out of the message it was triggered by and
+				  out of the chat's task list. The application-wide task list still shows it. Use it for
+				  internal steps of a longer job - a game loop, a pipeline - that would otherwise flood
+				  the chat with dozens of cards.
+
 			    - messages: table (required) - Array of message tables.
 			      The LAST message MUST be a "user" message.
 
@@ -696,6 +701,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			var taskTitle = parameters.Get("task_title") is LuaString taskTitleStr ? taskTitleStr.Value : null;
+			var hiddenValue = parameters.Get("hidden");
+			var hidden = hiddenValue is not LuaNil && hiddenValue.ToBoolean();
 
 			async Task<LuaTable> ExecuteAgent()
 			{
@@ -713,6 +720,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				var agentTask = _agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 				{
 					TaskName = taskTitle,
+					Hidden = hidden,
 					TriggeredChat = tec?.Chat,
 					TriggeredMessage = chatContext?.Message,
 					Model = llm,

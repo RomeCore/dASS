@@ -55,7 +55,9 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		{
 			AllTasks = new AgentTaskListViewModel
 			{
-				Filtering = AgentTaskListFiltering.AllNotParented
+				Filtering = AgentTaskListFiltering.AllNotParented,
+				// The application-wide list is the place a hidden task is still discoverable.
+				ShowHiddenTasks = true
 			};
 			AllTasks.BindToSource(dispatcher.AllTasks);
 

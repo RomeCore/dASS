@@ -22,6 +22,15 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 
 		public required AgentTaskListFiltering Filtering { get; init; }
 
+		/// <summary>
+		/// Whether tasks flagged as <see cref="AgentTaskLaunchParameters.Hidden"/> are listed.
+		/// </summary>
+		/// <remarks>
+		/// Off by default: the inline card under a message and the chat's own task list stay quiet about
+		/// internal steps, while the application-wide list opts in to see everything.
+		/// </remarks>
+		public bool ShowHiddenTasks { get; init; }
+
 		private Orientation _orientation = Orientation.Vertical;
 		/// <summary>
 		/// The orientation of the list. Can be either vertical or horizontal.
@@ -99,6 +108,11 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 		private bool FitsFilter(AgentTask task)
 		{
 			if (!Filtering.HasFlag(AgentTaskListFiltering.Parented) && task.Parent != null)
+			{
+				return false;
+			}
+
+			if (!ShowHiddenTasks && task.LaunchParameters.Hidden)
 			{
 				return false;
 			}
