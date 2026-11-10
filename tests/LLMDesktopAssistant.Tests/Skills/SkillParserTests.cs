@@ -2,12 +2,15 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Prompting.Skills;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.StructuredValues;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Tests.Skills;
 
 public class SkillParserTests
 {
-	private static readonly SkillParser Parser = new();
+	private static readonly SkillParser Parser = new(
+		new ParameterSchemaParserManager(new ServiceCollection().BuildServiceProvider()));
 
 	private static SkillInfo Parse(string content, string? path = null)
 		=> Parser.Parse(content, new AddonPathInfo(path ?? "C:\\skills\\test-skill\\SKILL.md", false)).First();

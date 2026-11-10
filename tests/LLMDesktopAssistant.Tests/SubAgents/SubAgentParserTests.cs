@@ -2,12 +2,15 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.StructuredValues;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Tests.SubAgents;
 
 public class SubAgentParserTests
 {
-	private static readonly SubAgentParser Parser = new();
+	private static readonly SubAgentParser Parser = new(
+		new ParameterSchemaParserManager(new ServiceCollection().BuildServiceProvider()));
 
 	private static SubAgentInfo Parse(string content, string? path = null)
 		=> Parser.Parse(content, new AddonPathInfo(path ?? "C:\\agents\\test-agent.md", true)).First();
