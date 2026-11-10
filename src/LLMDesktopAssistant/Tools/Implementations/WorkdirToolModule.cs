@@ -91,7 +91,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult SwitchWorkingDirectory(
-			string name,
+			[MainArgument] string name,
 			IToolExecutionContext ctx)
 		{
 			var workingDirectories = _chatSettings.Settings.Environment.GetEffectiveWorkingDirectories();

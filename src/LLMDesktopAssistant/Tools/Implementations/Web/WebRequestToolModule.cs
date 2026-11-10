@@ -87,7 +87,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 		private async Task<ToolExecutionResult> CheckWebsiteStatus(
 			IToolExecutionContext ctx,
 			[Description("URL to check")]
-			string url,
+			[MainArgument] string url,
 			[Description("Timeout in seconds (default: 30)")]
 			int timeoutSeconds = 30,
 			CancellationToken cancellationToken = default)
@@ -142,7 +142,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 			[Description("Method of the request"), Enum(["GET", "POST", "PUT", "DELETE"])]
 			string method,
 			[Description("URL to send request to")]
-			string url,
+			[MainArgument] string url,
 			[Description("The starting index of character to return")]
 			int start = 0,
 			[Description("The maximum count of characters to return")]
@@ -253,8 +253,9 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 
 		private async Task<ToolExecutionResult> DownloadFile(
 			IToolExecutionContext ctx,
-			[Description("URL of the file to download")] string url,
-			[Description("Local working directory path to save the file")] string savePath,
+			[Description("URL of the file to download")] [MainArgument] string url,
+			[Description("Local working directory path to save the file")]
+			[PathArgument(File = true, Directory = false)] string savePath,
 			[Description("Optional: Additional headers as JSON")] JsonObject? headersJson = null,
 			CancellationToken cancellationToken = default)
 		{

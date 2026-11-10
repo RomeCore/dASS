@@ -95,7 +95,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 		private async Task<ToolExecutionResult> AppendAsync(
 			[Description("The memory block where the log should be appended")] string block,
-			[Description("The text of the log describing what happened. Must not be empty.")] string text,
+			[Description("The text of the log describing what happened. Must not be empty.")] [MainArgument] string text,
 			[Description("The importance of the log, from 0.0 (least important) to 1.0 (most important)")] double importance,
 			IToolExecutionContext ctx,
 			[Description("The real-time timestamp when the log began in UTC ISO 8601 format (e.g. 2026-08-10T15:00:00Z). Defaults to now.")] DateTime? timeStampBegin = null,
@@ -148,7 +148,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 		private async Task<ToolExecutionResult> SearchAsync(
 			[Description("The memory blocks where the logs should be searched. Use null to search in all enabled memory blocks")] string[]? blocks,
-			[Description("The search query text")] string query,
+			[Description("The search query text")] [MainArgument] string query,
 			IToolExecutionContext ctx,
 			[Description("The maximum number of logs to return")] int maxCount = 5,
 			[Description("The minimum importance score of the logs. Logs with lower scores are excluded.")] double minImportance = 0.0,

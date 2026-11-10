@@ -103,7 +103,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult Calculate(IToolExecutionContext ctx,
-			[Description("Expression to evaluate")] string expression)
+			[Description("Expression to evaluate")] [MainArgument] string expression)
 		{
 			try
 			{
@@ -132,7 +132,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult Solve(IToolExecutionContext ctx,
-			[Description("Equation to solve. Examples: 'x^2 - 4 = 0', 'sin(x) - 0.5', 'x^3 - 2*x - 5 = 0'")] string equation,
+			[Description("Equation to solve. Examples: 'x^2 - 4 = 0', 'sin(x) - 0.5', 'x^3 - 2*x - 5 = 0'")]
+			[MainArgument] string equation,
 			[Description("Variable to solve for. Default: 'x'")] string variable = "x",
 			[Description("Left bound of the search range. Default: -100")] double rangeStart = -100.0,
 			[Description("Right bound of the search range. Default: 100")] double rangeEnd = 100.0,
@@ -180,7 +181,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult SolveComplex(IToolExecutionContext ctx,
-			[Description("Equation to solve. Examples: 'x^2 + 1 = 0', 'x^3 - 1 = 0', 'x^2 + x + 1 = 0'")] string equation,
+			[Description("Equation to solve. Examples: 'x^2 + 1 = 0', 'x^3 - 1 = 0', 'x^2 + x + 1 = 0'")]
+			[MainArgument] string equation,
 			[Description("Variable to solve for. Default: 'z'")] string variable = "z",
 			[Description("Half-range for real part. Scans [-reRange, reRange]. Default: 10")] double reRange = 10.0,
 			[Description("Half-range for imaginary part. Scans [-imRange, imRange]. Default: 10")] double imRange = 10.0,

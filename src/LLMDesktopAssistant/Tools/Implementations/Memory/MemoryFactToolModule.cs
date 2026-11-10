@@ -75,7 +75,8 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 
 		private async Task<ToolExecutionResult> StoreAsync(
 			[Description("The memory block where the fact should be stored")] string block,
-			[Description("The fact to store in the memory block in user's language. Examples: 'User is vegetarian' or 'User likes pizza'")] string fact,
+			[Description("The fact to store in the memory block in user's language. Examples: 'User is vegetarian' or 'User likes pizza'")]
+			[MainArgument] string fact,
 			[Description("The importance of the fact, from 0.0 (least important) to 1.0 (most important)")] double importance,
 			IToolExecutionContext ctx,
 			[Description("The ID of the fact to supersede. If not provided, conflicts will be reported. If 0, the fact will be stored without superseding any existing facts.")] int? supersedeId = null,
@@ -170,7 +171,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Memory
 				Avoid direct questions (such as "What user's preferences about food?"),
 				use hypothetical answers instead (e.g. "The user's food preferences is vegetarian or meat eater.")
 				or keywords (e.g. "food preferences" or "dietary restrictions")
-				""")] string[] queries,
+				""")] [MainArgument] string[] queries,
 			IToolExecutionContext ctx,
 			[Description("The minimum importance score of facts to return, from 0.0 (any importance) to 1.0 (only the most important)")] double minImportance = 0.0,
 			CancellationToken cancellationToken = default)

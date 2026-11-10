@@ -120,7 +120,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private async Task<ToolExecutionResult> ReadImage(
 			[SharedContext] string? fullPath,
-			[Description("The path to the image file to describe")] string path,
+			[Description("The path to the image file to describe")]
+			[MainArgument] [PathArgument(File = true, Directory = false)]
+			string path,
 			IToolExecutionContext ctx,
 			[Description("Relative crop coordinate from left")] double cropX = 0,
 			[Description("Relative crop coordinate from top")] double cropY = 0,
@@ -175,7 +177,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				ctx.Call.AddAttachment(new NativeAttachmentMessagePart
 				{
 					NativeAttachment = new SerializableImageAttachment(image),
-					IsVisible = false
+					ChipTitle = Locale.GetConstKey(Path.GetFileName(fullPath)),
+					ChipIcon = MaterialIconKind.Image,
+					IsVisible = true
 				});
 				ctx.Call.SetResult(message);
 
@@ -272,7 +276,9 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		private async Task<ToolExecutionResult> DescribeImage(
 			[SharedContext] string? fullPath,
 			[Description("The title of the agent call to be visible in UI")] string? callTitle,
-			[Description("The path to the image file to describe")] string path,
+			[Description("The path to the image file to describe")]
+			[MainArgument] [PathArgument(File = true, Directory = false)]
+			string path,
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{

@@ -125,6 +125,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private ToolExecutionResult SearchAddons(
 			[Description("The free-form search query, for example 'code review' or 'postgres migrations'.")]
+			[MainArgument]
 			string query,
 			IToolExecutionContext ctx,
 			[Description("Optional filters by addon type. Omit the parameter to use all available kinds.")]
@@ -228,6 +229,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private ToolExecutionResult GetAddonInfo(
 			[Description("The exact addon name, it can be a tool name or skill name.")]
+			[MainArgument]
 			string name,
 			IToolExecutionContext ctx)
 		{

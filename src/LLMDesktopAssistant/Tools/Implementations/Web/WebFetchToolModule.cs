@@ -85,7 +85,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 		private async Task<ToolExecutionResult> Fetch(
 			IToolExecutionContext ctx,
 			[Description("URL to fetch HTML from")]
-			string url,
+			[MainArgument] string url,
 			[Description("The starting index of character to return")]
 			int start = 0,
 			[Description("The maximum count of characters to return")]
@@ -146,7 +146,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 		private async Task<ToolExecutionResult> ParseHtml(
 			IToolExecutionContext ctx,
 			[Description("URL to fetch HTML from")]
-			string url,
+			[MainArgument] string url,
 			[Description("The query selector to select values with")]
 			string selector,
 			[Description("The fetch level: plain HTTP request, headless browser (renders JavaScript), or stealth browser (evades advanced anti-bot checks). Escalates automatically when the page denies access.")]

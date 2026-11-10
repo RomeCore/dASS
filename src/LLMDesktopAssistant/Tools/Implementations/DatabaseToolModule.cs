@@ -145,7 +145,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private Task<ToolExecutionResult> ConnectAsync(
-			[Description("The name of the configured database connection (see db-list) or a raw connection string")] string nameOrConnectionString,
+			[Description("The name of the configured database connection (see db-list) or a raw connection string")]
+			[MainArgument] string nameOrConnectionString,
 			IToolExecutionContext ctx,
 			[Description("The connector type for a custom connection string. Ignored when connecting to a named connection.")] string? connectorType = null)
 		{
@@ -227,7 +228,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private async Task<ToolExecutionResult> ExecuteAsync(
-			[Description("The SQL statement to execute")] string query,
+			[Description("The SQL statement to execute")]
+			[MainArgument] string query,
 			IToolExecutionContext ctx,
 			CancellationToken cancellationToken = default)
 		{

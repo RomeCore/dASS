@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private ToolExecutionResult TimeGet(IToolExecutionContext ctx,
 			[Description("Timezone to get the time for (e.g., 'UTC', 'UTC+5', 'GMT+3'). Default is current user's timezone.")]
-			string? timezone = null)
+			[MainArgument] string? timezone = null)
 		{
 			try
 			{
@@ -113,7 +113,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 
 		private async Task<ToolExecutionResult> TimeWait(IToolExecutionContext ctx,
 			[Description("Duration to wait in format 'hours:minutes:seconds' or 'minutes:seconds' (e.g., '0:05', '1:30', '1:00:10')")]
-			string span = "0:00",
+			[MainArgument] string span = "0:00",
 			CancellationToken cancellationToken = default)
 		{
 			try

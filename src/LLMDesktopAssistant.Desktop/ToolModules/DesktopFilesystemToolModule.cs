@@ -85,7 +85,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		public ToolExecutionResult OpenFile(
 			[SharedContext] string? fullPath,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = false)] string path,
 			IToolExecutionContext ctx)
 		{
 			try
@@ -135,7 +135,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 		public PreviewToolExecutionResult OpenInExplorerPreview(IToolExecutionContext ctx,
 			string path, [SharedContext] out string fullPath)
 		{
-			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Execute, out var isAccessed);
+			fullPath = _fileAccess.CheckedAccessPath(path, DirectoryAccessMode.Read, out var isAccessed);
 
 			ctx.Call.SetStatus(MaterialIconKind.FolderOpen, $"**{path}**");
 
@@ -148,7 +148,7 @@ namespace LLMDesktopAssistant.Desktop.ToolModules
 
 		public ToolExecutionResult OpenInExplorer(
 			[SharedContext] string? fullPath,
-			string path,
+			[MainArgument] [PathArgument(File = true, Directory = true)] string path,
 			IToolExecutionContext ctx)
 		{
 			try

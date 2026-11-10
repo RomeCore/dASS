@@ -36,7 +36,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult LoadSkill(
-			[Description("The name of the skill to load.")] string name,
+			[Description("The name of the skill to load.")] [MainArgument] string name,
 			IToolExecutionContext ctx)
 		{
 			var senderAgent = ctx is ChatToolExecutionContext chatContext

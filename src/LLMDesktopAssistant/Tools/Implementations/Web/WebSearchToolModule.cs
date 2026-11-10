@@ -99,7 +99,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Web
 		/// </summary>
 		private async Task<ToolExecutionResult> Search(
 			IToolExecutionContext ctx,
-			[Description("The query to search by")] string query,
+			[Description("The query to search by")] [MainArgument] string query,
 			[Description("The page number to return results for (1-based)"), Range(1, 10)] int page = 1,
 			[Description("Language code (auto, en, ru, etc.)")] string language = "auto",
 			[Description("Time range filter: day, week, month, year, or empty for no filter")]

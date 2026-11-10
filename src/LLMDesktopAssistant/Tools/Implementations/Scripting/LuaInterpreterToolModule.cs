@@ -112,7 +112,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 		}
 
 		private async Task<ToolExecutionResult> Execute(
-			string lua,
+			[MainArgument] string lua,
 			IToolExecutionContext ctx,
 			bool isolatedExecution = true,
 			CancellationToken cancellationToken = default)
