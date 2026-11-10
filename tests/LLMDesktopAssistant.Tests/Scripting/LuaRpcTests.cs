@@ -119,6 +119,92 @@ namespace LLMDesktopAssistant.Tests.Scripting
 			Assert.Equal("worker/do", body["result"]!["handled"]!.GetValue<string>());
 		}
 
+		[Fact]
+		public async Task ListenAcceptsAConnectionAndAnswersItsRequest()
+		{
+			var lua = new LuaState().LoadDefaultLibraries();
+			var api = new LuaApiRpc(
+				[new TcpRpcTransportProvider()],
+				[new TcpRpcListenerProvider()],
+				new LuaRpcHandleRegistry(),
+				new LuaRpcServerRegistry(),
+				new FakeWorkingDirectory());
+
+			var ns = new LuaTable();
+			lua.Globals.Set("rpc", ns);
+			api.Populate(lua.Globals, ns, null!);
+
+			var bound = await lua.ExecuteAsync("""
+				srv = rpc.listen("tcp", "127.0.0.1:0", {
+				  ping = function(p) return { echo = p.value } end
+				}, { framing = "lines" })
+				return srv.port
+				""");
+
+			var port = (int)Assert.IsType<LuaNumber>(bound[0]).Value;
+
+			var accept = lua.ExecuteAsync("""
+				local h = await srv:accept()
+				return h.is_alive
+				""");
+
+			var transport = await new TcpRpcTransportProvider().ConnectAsync(
+				new RpcTransportRequest { Target = $"127.0.0.1:{port}" });
+
+			Assert.True(Assert.IsType<LuaBoolean>((await accept)[0]).Value);
+
+			await using (var connection = new JsonRpcConnection(
+				transport.Input,
+				transport.Output,
+				new NoopHandler(),
+				RpcFraming.Lines))
+			{
+				connection.Start();
+
+				var result = await connection.InvokeAsync(
+					"ping",
+					new JsonObject { ["value"] = 42 },
+					TimeSpan.FromSeconds(5));
+
+				Assert.Equal(42, result!["echo"]!.GetValue<int>());
+			}
+
+			await transport.DisposeAsync();
+
+			var closed = await lua.ExecuteAsync("return srv:close()");
+			Assert.True(Assert.IsType<LuaBoolean>(closed[0]).Value);
+		}
+
+		[Fact]
+		public async Task AHandlerReceivesTheConnectionTheMessageArrivedOn()
+		{
+			var (lua, output, feed) = CreateRuntime();
+
+			var script = lua.ExecuteAsync("""
+				h = await rpc.connect("fake", "peer", {
+				  named = function(params, connection) return { handler = "named", id = connection.id } end,
+				  function(method, params, connection)
+					return { handler = method, id = connection.id }
+				  end
+				}, { framing = "content_length" })
+				return h.id
+				""");
+
+			feed.Write(ContentLengthFrame("{\"jsonrpc\":\"2.0\",\"id\":\"srv-1\",\"method\":\"named\"}"));
+			feed.Write(ContentLengthFrame("{\"jsonrpc\":\"2.0\",\"id\":\"srv-2\",\"method\":\"worker/do\"}"));
+
+			var connectionId = (int)Assert.IsType<LuaNumber>((await script)[0]).Value;
+
+			var named = JsonNode.Parse(await output.WaitForWrittenFrameAsync(0))!;
+			var fallback = JsonNode.Parse(await output.WaitForWrittenFrameAsync(1))!;
+
+			Assert.Equal("named", named["result"]!["handler"]!.GetValue<string>());
+			Assert.Equal(connectionId, named["result"]!["id"]!.GetValue<int>());
+
+			Assert.Equal("worker/do", fallback["result"]!["handler"]!.GetValue<string>());
+			Assert.Equal(connectionId, fallback["result"]!["id"]!.GetValue<int>());
+		}
+
 		private static (LuaState Lua, FrameCapturingStream Output, FeedStream Feed) CreateRuntime()
 		{
 			var feed = new FeedStream();
@@ -128,7 +214,12 @@ namespace LLMDesktopAssistant.Tests.Scripting
 
 			var lua = new LuaState().LoadDefaultLibraries();
 			var registry = new LuaRpcHandleRegistry();
-			var api = new LuaApiRpc([new FakeTransportProvider(feed, output)], registry, new FakeWorkingDirectory());
+			var api = new LuaApiRpc(
+				[new FakeTransportProvider(feed, output)],
+				[],
+				registry,
+				new LuaRpcServerRegistry(),
+				new FakeWorkingDirectory());
 
 			var ns = new LuaTable();
 			lua.Globals.Set("rpc", ns);
@@ -178,6 +269,23 @@ namespace LLMDesktopAssistant.Tests.Scripting
 		{
 			var body = Encoding.UTF8.GetBytes(payload);
 			return $"Content-Length: {body.Length}\r\n\r\n{payload}";
+		}
+
+		private sealed class NoopHandler : IJsonRpcMessageHandler
+		{
+			public Task<JsonNode?> HandleRequestAsync(
+				IJsonRpcPeer peer,
+				string method,
+				JsonNode? parameters,
+				CancellationToken cancellationToken = default)
+				=> Task.FromResult<JsonNode?>(null);
+
+			public Task HandleNotificationAsync(
+				IJsonRpcPeer peer,
+				string method,
+				JsonNode? parameters,
+				CancellationToken cancellationToken = default)
+				=> Task.CompletedTask;
 		}
 
 		private sealed class FakeTransportProvider(Stream input, Stream output) : IRpcTransportProvider

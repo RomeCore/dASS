@@ -17,7 +17,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	[LuaApi(chatScoped: true)]
 	public class LuaApiRpc(
 		IEnumerable<IRpcTransportProvider> providers,
+		IEnumerable<IRpcListenerProvider> listenerProviders,
 		LuaRpcHandleRegistry registry,
+		LuaRpcServerRegistry serverRegistry,
 		IWorkingDirectoryAccessService workingDirectory) : LuaApiBase
 	{
 		private const int defaultStderrLimit = LuaRpcStandardError.DefaultLimit;
@@ -37,7 +39,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			TRANSPORTS: see rpc.transports(); a name that is not in that list cannot be used.
 			  stdio - spawns a process and talks over its standard streams
 			  tcp   - connects to a listening server; the target is "host:port"
-					  (an IPv6 literal goes in brackets: "[::1]:9333")
+			          (an IPv6 literal goes in brackets: "[::1]:9333")
 
 			A transport that starts nothing has no pid, no exit_code and no stderr; on tcp those
 			properties read nil, handle:stderr() returns an empty buffer, and close() closes the
@@ -61,8 +63,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  routing: a table mapping a method name to a handler. Keys are method names as the peer sends
 			  them - use ["textDocument/publishDiagnostics"] for names that are not identifiers. One
 			  positional element is allowed:
-				routing[1] = function(method, params) ... end   -- every method without its own key
-			  A named handler is called as function(params); the fallback as function(method, params).
+				routing[1] = function(method, params, connection) ... end  -- every method without its own key
+			  A named handler is called as function(params, connection); the fallback as
+			  function(method, params, connection). The connection is the rpc_handle the message arrived
+			  on: the same handle this call returns, or the one :accept() returned for a listener. It is a
+			  fresh wrapper each time, so compare it with another handle by `id`, not by identity.
 
 			  The table is read on EVERY message, not copied: assign a key later to subscribe
 			  (routing["x"] = function(params) ... end) or clear it to unsubscribe.
@@ -97,6 +102,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			HANDLE (an rpc_handle userdata):
 
+			  id         number        - process-wide identity of the connection, unique for the app run
 			  is_alive   boolean       - false once the peer ended or close() ran
 			  exit_code  number or nil - the peer's process exit code, nil while it runs
 			  pid        number or nil - the peer's process id, nil for a transport without a process
@@ -125,11 +131,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  A result is decoded JSON: a table, a string, a number, a boolean or nil for JSON null.
 
 			  An error is a Lua error whose VALUE is a table - use try/catch or pcall:
-				try
-				  local r = await h.invoke:mymethod()
-				catch e
-				  print(e.code, e.message)   -- e.data holds the payload, if the peer sent any
-				end
+			    try
+			      local r = await h.invoke:mymethod()
+			    catch e
+			      print(e.code, e.message)   -- e.data holds the payload, if the peer sent any
+			    end
 
 			  A timeout is a plain error message, not a table. The connection dying is -32000.
 
@@ -143,12 +149,26 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  There is no auto-reconnect. When the peer dies, is_alive turns false, pending requests fail
 			  with -32000 and close() reports false; connecting again is a new rpc.connect.
 
+			  WHO HUNG UP: a handle you closed yourself answers invoke with a plain error ("the handle is
+			  closed"), while a peer that died answers with the -32000 table. That is the only way to tell
+			  "I hung up" from "they hung up".
+
+			  CLOSING FROM INSIDE A HANDLER: the connection ends at once and the handler itself stops at
+			  that await, because closing cancels the token the request runs under - nothing after the call
+			  runs, and the requester receives -32000. To answer and then hang up, detach the close by
+			  calling an async helper without awaiting it, and return the answer normally:
+				local async function hangUp()
+				  await task.delay(200)
+				  await connection:close()
+				end
+				hangUp()
+
 			  Script loading is synchronous, so `await rpc.connect(...)` at file scope is impossible.
 			  Connect inside a function that is invoked from a tool or a command, or make the first use
 			  connect lazily and cache the handle in store.session.
-
+			
 			EXAMPLES:
-
+			
 			  -- A calculator server, with an unrouted-method fallback
 			  local h, err = await rpc.connect("stdio", { "calc-server", "--json" }, {
 			    add = function(p) return p.a + p.b end,
@@ -159,11 +179,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    end
 			  })
 			  if not h then print("connect failed:", err) return end
-
+			
 			  print(await h.invoke:add({ a = 2, b = 3 }))
 			  await h.notify:client_ready({ version = 1 })
 			  print("closed:", await h:close())
-
+			
 			  -- Long-lived, survives a script reload
 			  local lsp = store.session.get("lsp")
 			  if not lsp then
@@ -177,18 +197,91 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    }, { framing = "content_length" })
 			    store.session.set("lsp", lsp)
 			  end
-
+			
 			  -- stderr to a file next to the chat
 			  local h2 = await rpc.connect("stdio", "myserver --verbose", {}, { stderr = "rpc-server.log" })
 			  print(h2:stderr())   -- nil, "stderr is redirected"
 			  await h2:close()
+
+			LISTENING - the same protocol with the other side connecting to you:
+
+			--- rpc.listen_transports() -> array of strings
+			  The listener names this platform can bind, e.g. {"tcp"}.
+
+			--- rpc.listen(transport, target, routing, [options]) -> server, error
+			  Binds an endpoint and returns a server handle. A failure returns nil plus the reason; a
+			  malformed argument throws. Nothing is accepted until :accept() is called - the operating
+			  system queues the connections in the meantime. Binding is synchronous, so this call needs
+			  no await and works in a cleanup block; only :accept() waits.
+
+			  target: "host:port" - "127.0.0.1:9333", "localhost:9333", "[::1]:9333", or "*:9333" for
+			  every IPv4 interface. Port 0 asks for an ephemeral one and server.port reports what was
+			  bound. A host name is resolved once, while the listener is bound.
+
+			  routing: the same table as rpc.connect, shared by every accepted connection and read on each
+			  message - assigning routing["x"] later subscribes every peer. Handlers of one listener run
+			  one at a time, because the chat has a single Lua state.
+
+			  options:
+			    framing           string  - "auto" (default), "content_length" or "lines"
+			    invoke_timeout_ms number  - default timeout of a request sent through an accepted handle
+			    backlog           number  - connections the operating system queues before an accept
+
+			  There is no stderr option: a socket peer has no standard error, so handle:stderr() reads an
+			  empty buffer.
+
+			SERVER (an rpc_server userdata):
+
+			  address      string  - the bound address
+			  port         number  - the bound port
+			  is_alive     boolean - false once close() ran
+			  connections  number  - accepted connections that are still open
+
+			  async :accept([timeout_ms]) -> handle | nil, reason
+			    Waits for one connection and returns it as an ordinary rpc_handle, so invoke, notify,
+			    is_alive, pid (nil) and close behave exactly as on a connected handle. Without a timeout
+			    it waits for the listener; a closed listener returns nil plus the reason.
+
+			  :close() -> boolean
+			    Ends the listener and every connection it accepted; true when this call closed it. The
+			    port is free before it returns, so a script can rebind at once; the accepted peers are
+			    closed in the background, because a handle's close waits for the peer to end.
+
+			  The listener belongs to the chat: closing the chat closes it. It survives a script reload,
+			  so a server created once and kept in store.session is still the same bound port. There is
+			  no implicit accept loop: whoever calls :accept() owns the next peer, so a tool that serves
+			  one request simply accepts once.
+
+			EXAMPLES:
+
+			  -- Listen and answer method calls, one peer at a time
+			  local srv = rpc.listen("tcp", "127.0.0.1:9333", {
+			    ping = function(p) return "pong" end,
+			    ["tool.call"] = async function(p) return await dass.tool.call(p.name, p.args) end
+			  })
+			  print("listening on", srv.address, srv.port)
+
+			  while srv.is_alive do
+			    local h, err = await srv:accept()
+			    if not h then print("accept ended:", err) break end
+			    -- h is an ordinary rpc_handle: answer it, invoke it, notify it
+			  end
+
+			  -- A one-shot server that waits for a single client
+			  local once = rpc.listen("tcp", "127.0.0.1:0", { echo = function(p) return p end })
+			  print("connect to port", once.port)
+			  local h = await once:accept(30000)
+			  if not h then print("nobody came") end
+			  once:close()
 			""";
 
 		/// <inheritdoc />
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["transports"] = new LuaCallbackFunction(Transports);
+			ns["listen_transports"] = new LuaCallbackFunction(ListenTransports);
 			ns["connect"] = new LuaCallbackFunction(ConnectAsync);
+			ns["listen"] = new LuaCallbackFunction(Listen);
 			return null;
 		}
 
@@ -198,6 +291,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var index = 1;
 
 			foreach (var provider in providers)
+				result[index++] = new LuaString(provider.Name);
+
+			return new LuaTuple(result);
+		}
+
+		private LuaTuple ListenTransports(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var result = new LuaTable();
+			var index = 1;
+
+			foreach (var provider in listenerProviders)
 				result[index++] = new LuaString(provider.Name);
 
 			return new LuaTuple(result);
@@ -267,6 +371,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				{
 					var router = new LuaRpcRouter(routing, ctx);
 					var handle = new LuaRpcHandle(transport, router, registry, standardError, framing, timeout, ctx);
+					router.Connection = handle;
 					registry.Register(handle);
 
 					return new LuaTuple(LuaRpcHandle.Wrap(handle));
@@ -281,6 +386,80 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			catch (OperationCanceledException)
 			{
 				throw;
+			}
+			catch (LuaRuntimeException)
+			{
+				throw;
+			}
+			catch (Exception ex)
+			{
+				return new LuaTuple(LuaNil.Instance, new LuaString(ex.Message));
+			}
+		}
+
+		private LuaTuple Listen(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 3)
+			{
+				throw new LuaRuntimeException(
+					"rpc.listen(transport, target, routing, [options]): at least 3 arguments expected.");
+			}
+
+			if (args[0] is not LuaString transportName)
+				throw new LuaRuntimeException("rpc.listen(): the first argument must be a string (listener name).");
+
+			var provider = listenerProviders.FirstOrDefault(p =>
+				string.Equals(p.Name, transportName.Value, StringComparison.OrdinalIgnoreCase));
+
+			if (provider is null)
+			{
+				var available = string.Join(", ", listenerProviders.Select(p => p.Name));
+				throw new LuaRuntimeException(
+					$"rpc.listen('{transportName.Value}'): no such listener. Available: {(available.Length == 0 ? "none" : available)}.");
+			}
+
+			if (args[1] is not LuaString target)
+			{
+				throw new LuaRuntimeException(
+					"rpc.listen(): the second argument must be a string (host:port); a listener starts no process, so there is no argument array.");
+			}
+
+			if (args[2] is not LuaTable routing)
+				throw new LuaRuntimeException("rpc.listen(): the third argument must be a table (method routing).");
+
+			var options = args.Length > 3 && args[3] is LuaTable optionTable ? optionTable : null;
+
+			var framing = ReadFraming(options);
+			var timeout = ReadTimeout(options);
+			var backlog = ReadBacklog(options);
+
+			try
+			{
+				var listener = provider.Listen(new RpcListenRequest { Target = target.Value, Backlog = backlog });
+
+				var server = new LuaRpcServer(
+					listener,
+					routing,
+					registry,
+					serverRegistry,
+					framing,
+					timeout,
+					ctx,
+					workingDirectory);
+
+				serverRegistry.Register(server);
+
+				if (Log.IsEnabled(Serilog.Events.LogEventLevel.Information))
+				{
+					Log.Information(
+						"Lua rpc.listen: {Listener} '{Target}' bound to {Address}:{Port}",
+						provider.Name,
+						target.Value,
+						server.Address,
+						server.Port);
+				}
+
+				return new LuaTuple(LuaRpcServer.Wrap(server));
 			}
 			catch (LuaRuntimeException)
 			{
@@ -399,6 +578,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return defaultStderrLimit;
 
 			return limit.Value <= 0 ? 0 : (int)Math.Min(limit.Value, int.MaxValue);
+		}
+
+		private static int ReadBacklog(LuaTable? options)
+		{
+			if (options?.Get("backlog") is not LuaNumber backlog)
+				return 0;
+
+			return backlog.Value <= 0 ? 0 : (int)Math.Min(backlog.Value, int.MaxValue);
 		}
 
 		private static TimeSpan? ReadTimeout(LuaTable? options)

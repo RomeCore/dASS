@@ -10,16 +10,40 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 	/// Routes the messages a peer initiates into a Lua table that the script owns.
 	/// </summary>
 	/// <remarks>
+	/// <para>
 	/// The table is the source of truth and is read on every message, not copied at connect time, so a
 	/// script can subscribe to a notification later by assigning the key. A numeric key <c>[1]</c> is the
 	/// fallback and receives every method no named key covers.
+	/// </para>
+	/// <para>
+	/// Every handler also receives the connection the message arrived on, so one routing table can serve
+	/// many peers: <c>function(params, connection)</c> by name, <c>function(method, params, connection)</c>
+	/// for the fallback.
+	/// </para>
+	/// <para>
+	/// A gate is passed by listeners only: the handlers of one listener share a single chat Lua state, and
+	/// two peers must not interleave in it. A client handle has a peer that is already serialized by its
+	/// own read loop, so it passes none.
+	/// </para>
 	/// </remarks>
-	public sealed class LuaRpcRouter(LuaTable routing, LuaCallingContext context) : IJsonRpcMessageHandler
+	public sealed class LuaRpcRouter(
+		LuaTable routing,
+		LuaCallingContext context,
+		SemaphoreSlim? gate = null) : IJsonRpcMessageHandler
 	{
 		/// <summary>
 		/// Gets the routing table this router reads.
 		/// </summary>
 		public LuaTable Routing => routing;
+
+		/// <summary>
+		/// Gets or sets the connection this router answers on.
+		/// </summary>
+		/// <remarks>
+		/// Assigned after construction: a handle owns its router and the router has to hand that same handle
+		/// to Lua, so one of the two has to come second.
+		/// </remarks>
+		public LuaRpcHandle? Connection { get; set; }
 
 		/// <inheritdoc/>
 		public async Task<JsonNode?> HandleRequestAsync(
@@ -87,9 +111,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 		}
 
 		/// <summary>
-		/// Calls a handler: <c>function(params)</c> by name, <c>function(method, params)</c> for the fallback.
+		/// Calls a handler: <c>function(params, connection)</c> by name,
+		/// <c>function(method, params, connection)</c> for the fallback.
 		/// </summary>
-		private Task<LuaTuple> InvokeAsync(
+		private async Task<LuaTuple> InvokeAsync(
 			LuaFunction handler,
 			string method,
 			JsonNode? parameters,
@@ -97,12 +122,27 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 			CancellationToken cancellationToken)
 		{
 			var arguments = parameters.ToConstNodeValue().ToLuaValue();
+			LuaValue connection = Connection is null ? LuaNil.Instance : LuaRpcHandle.Wrap(Connection);
 			var args = isFallback
-				? new LuaValue[] { new LuaString(method), arguments }
-				: [arguments];
+				? new LuaValue[] { new LuaString(method), arguments, connection }
+				: [arguments, connection];
 
-			// The connect call's own token belongs to that one execution and is dead by now.
-			return context.WithCancellation(cancellationToken).CallAsync(handler, args);
+			if (gate is null)
+			{
+				// The call's own token belongs to that one execution and is dead by now.
+				return await context.WithCancellation(cancellationToken).CallAsync(handler, args).ConfigureAwait(false);
+			}
+
+			await gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+			try
+			{
+				return await context.WithCancellation(cancellationToken).CallAsync(handler, args).ConfigureAwait(false);
+			}
+			finally
+			{
+				gate.Release();
+			}
 		}
 
 		private static JsonNode? ToJson(LuaValue value)

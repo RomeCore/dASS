@@ -23,6 +23,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 	/// </remarks>
 	public sealed class LuaRpcHandle : IAsyncDisposable
 	{
+		private static int _nextId;
+
 		private readonly IRpcTransport _transport;
 		private readonly JsonRpcConnection _connection;
 		private readonly LuaRpcHandleRegistry _registry;
@@ -80,6 +82,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 			{
 				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaRpcHandle))
 			};
+
+		/// <summary>
+		/// Gets the process-wide identity of this connection.
+		/// </summary>
+		/// <remarks>
+		/// The counter belongs to the application, not to the chat, so an id is unique for the lifetime of
+		/// the process. It exists because a handler is handed a fresh wrapper of the connection: compare
+		/// handles by id, not by identity.
+		/// </remarks>
+		public int Id { get; } = Interlocked.Increment(ref _nextId);
 
 		/// <summary>
 		/// Gets a value indicating whether the connection can still be used.

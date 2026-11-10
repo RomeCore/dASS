@@ -28,7 +28,7 @@ namespace LLMDesktopAssistant.Utils.Rpc
 					"The tcp transport takes its whole target as host:port and starts no process, so it accepts no arguments.");
 			}
 
-			var (host, port) = ParseTarget(request.Target);
+			var (host, port) = RpcEndpoint.Split(request.Target);
 
 			var client = new TcpClient { NoDelay = true };
 
@@ -43,30 +43,6 @@ namespace LLMDesktopAssistant.Utils.Rpc
 			}
 
 			return new TcpRpcTransport(client);
-		}
-
-		/// <summary>
-		/// Splits <c>host:port</c>, keeping a bracketed IPv6 literal intact.
-		/// </summary>
-		/// <param name="target">The target to split.</param>
-		/// <returns>The host and the port.</returns>
-		private static (string Host, int Port) ParseTarget(string target)
-		{
-			var separator = target.LastIndexOf(':');
-
-			if (separator <= 0 || separator == target.Length - 1)
-				throw new FormatException($"The tcp target '{target}' is not host:port.");
-
-			var host = target[..separator];
-			var portText = target[(separator + 1)..];
-
-			if (host.StartsWith('[') && host.EndsWith(']'))
-				host = host[1..^1];
-
-			if (!int.TryParse(portText, out var port) || port is < 0 or > 65535)
-				throw new FormatException($"The tcp target '{target}' has no valid port.");
-
-			return (host, port);
 		}
 	}
 }
