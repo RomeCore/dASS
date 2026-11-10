@@ -21,12 +21,6 @@ namespace LLMDesktopAssistant.Desktop
 
 		protected override IStartupSplashHandle? CreateSplashContent()
 		{
-			if (CommandLineExecutor.Parameters.NoSplash)
-				return null;
-
-			if (!ApplicationStartupSettingsAccessor.Current.ShowSplash)
-				return null;
-
 			return new SplashWindow();
 		}
 	}

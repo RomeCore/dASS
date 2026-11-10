@@ -4,9 +4,11 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using LLMDesktopAssistant.Cli;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Settings.Application;
 using LLMDesktopAssistant.Startup;
 using LLMDesktopAssistant.Startup.Stages;
 using Microsoft.Extensions.Logging;
@@ -71,7 +73,9 @@ namespace LLMDesktopAssistant
 		/// <inheritdoc />
 		public override void OnFrameworkInitializationCompleted()
 		{
-			var splash = CreateSplashContent();
+			IStartupSplashHandle? splash = null;
+			if (!CommandLineExecutor.Parameters.NoSplash && ApplicationStartupSettingsAccessor.Current.ShowSplash)
+				splash = CreateSplashContent();
 			if (splash is not null)
 				StartupSplashManager.Attach(splash);
 
