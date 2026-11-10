@@ -158,5 +158,4 @@ public class MarkdownCodeBlockHighlightConfigurator
 			Log.Error(ex, "[MarkdownCodeBlockHighlightConfigurator] Failed to load grammars");
 		}
 	}
-
 }
