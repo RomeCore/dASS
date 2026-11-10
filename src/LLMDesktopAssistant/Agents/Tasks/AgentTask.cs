@@ -46,6 +46,16 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// </summary>
 		public RangeObservableCollection<AgentChatMessage> Messages => _messages;
 
+		private int _initialMessageCount;
+		/// <summary>
+		/// How many leading <see cref="Messages"/> were supplied as the task's initial context.
+		/// </summary>
+		public int InitialMessageCount
+		{
+			get => _initialMessageCount;
+			internal set => SetProperty(ref _initialMessageCount, value);
+		}
+
 		private AgentAssistantMessage? _lastGeneratedMessage;
 		/// <summary>
 		/// The last generated message by the agent associated with this task.

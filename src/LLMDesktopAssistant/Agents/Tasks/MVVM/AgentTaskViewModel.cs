@@ -216,8 +216,11 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 			{
 				if (e.NewItems != null)
 				{
-					foreach (var message in e.NewItems)
+					foreach (AgentChatMessage message in e.NewItems)
 					{
+						if (_task.Messages.IndexOf(message) < _task.InitialMessageCount)
+							continue;
+
 						if (message is AgentAssistantMessage assistantMessage)
 						{
 							// Add existing tool calls
@@ -311,7 +314,9 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 
 		private void SyncToolCalls()
 		{
-			foreach (var message in _task.Messages)
+			// The initial messages are context handed to the task, not work it did: their tool calls
+			// belong to an earlier run and would otherwise show up here as fresh pending calls.
+			foreach (var message in _task.Messages.Skip(_task.InitialMessageCount))
 			{
 				if (message is AgentAssistantMessage assistantMessage)
 				{

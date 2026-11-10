@@ -216,6 +216,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				(_, _) => throw new Exception("This tool is not expected to be invoked directly."))));
 
 			task.Messages.AddRange(parameters.InitialMessages);
+			task.InitialMessageCount = task.Messages.Count;
 			var nativeMessages = new List<IMessage>();
 			foreach (var message in task.Messages)
 				nativeMessages.AddRange(ConvertMessageFromAgent(message, ref additionalPrompt));
