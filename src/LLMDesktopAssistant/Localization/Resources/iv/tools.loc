@@ -60,7 +60,7 @@ name.random-check_chance: Check chance
 name.random-coin_flip: Flip a coin
 name.random-dice: Roll dice
 name.random-float: Generate random decimal number
-name.random-GUID: Generate GUID
+name.random-guid: Generate GUID
 name.random-integer: Generate random integer
 name.random-items_from_list: Select random items from list
 name.random-shuffle_list: Shuffle list
@@ -132,7 +132,7 @@ description.memory-search_log: Searches the event logs of memory blocks for entr
 description.memory-store_fact: Stores a fact in a memory block with a given importance rating.
 description.memory-view_logs: Shows event log entries from memory blocks, newest first, with optional time filtering.
 description.python-get_installed_packages_list: Lists the packages installed in the current Python virtual environment.
-description.random-GUID: Generates a new globally unique identifier (GUID) that can be used to label or identify objects.
+description.random-guid: Generates a new globally unique identifier (GUID) that can be used to label or identify objects.
 description.random-check_chance: Checks whether a given probability (as a percentage) comes true and returns success or failure.
 description.random-coin_flip: Simulates a coin toss and returns either 'Heads' or 'Tails'.
 description.random-dice: Rolls dice written in standard dice notation (2d6, 1d20+5, 4d6kh3, 3d6!, 4d6r1) and returns the total with a per-group breakdown.

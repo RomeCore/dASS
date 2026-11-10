@@ -60,7 +60,7 @@ name.random-check_chance: Проверка шанса
 name.random-coin_flip: Подкинуть монетку
 name.random-dice: Бросить кубики
 name.random-float: Сгенерировать дробное число
-name.random-GUID: Сгенерировать GUID
+name.random-guid: Сгенерировать GUID
 name.random-integer: Сгенерировать целое число
 name.random-items_from_list: Выбрать случайные элементы из списка
 name.random-shuffle_list: Перемешать список
@@ -132,7 +132,7 @@ description.memory-search_log: Ищет записи в журнале собы�
 description.memory-store_fact: Сохраняет факт в указанном блоке памяти с заданной степенью важности.
 description.memory-view_logs: Показывает записи журнала событий блоков памяти, сначала самые новые; можно задать временной диапазон.
 description.python-get_installed_packages_list: Показывает список пакетов, установленных в текущем виртуальном окружении Python.
-description.random-GUID: Создаёт новый глобально уникальный идентификатор (GUID), пригодный для обозначения или идентификации объектов.
+description.random-guid: Создаёт новый глобально уникальный идентификатор (GUID), пригодный для обозначения или идентификации объектов.
 description.random-check_chance: Проверяет, сработает ли указанный шанс (в процентах), и сообщает об успехе или неудаче.
 description.random-coin_flip: Подбрасывает виртуальную монету и возвращает результат: «Орёл» или «Решка».
 description.random-dice: Бросает кубики в стандартной нотации (2d6, 1d20+5, 4d6kh3, 3d6!, 4d6r1) и возвращает сумму с детализацией по группам.

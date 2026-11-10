@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Text.Json.Nodes;
+using AngleSharp.Dom;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Support;
@@ -19,10 +20,10 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			AddTool(new ToolInitializationInfo
 			{
 				Executor = GenerateGUID,
-				Name = "random-GUID",
+				Name = "random-guid",
 				Description = "Generates a globally unique identifier (GUID).",
-				NameKey = Locale.GetKey("tool.name.random-GUID"),
-				DescriptionKey = Locale.GetKey("tool.description.random-GUID"),
+				NameKey = Locale.GetKey("tool.name.random-guid"),
+				DescriptionKey = Locale.GetKey("tool.description.random-guid"),
 				CategoryKey = Locale.GetKey("tool.category.random")
 			});
 
@@ -145,7 +146,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult GenerateCheckChance(IToolExecutionContext ctx,
-			[Description("The probability of success as a percentage from 0 to 100")] double chance)
+			[Description("The probability of success as a percentage from 0 to 100")]
+			[MainArgument] double chance)
 		{
 			var gained = _random.NextDouble() * 100;
 			var result = gained <= chance;
@@ -158,7 +160,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult RollDice(IToolExecutionContext ctx,
-			[Description("Dice expression in standard dice notation, e.g. '2d6+3', '2d20kh1', '4d6dl1', '3d6!'")] string expression,
+			[Description("Dice expression in standard dice notation, e.g. '2d6+3', '2d20kh1', '4d6dl1', '3d6!'")]
+			[MainArgument] string expression,
 			[Description("How many times to roll the whole expression, 1 to 100")] int repeat = 1)
 		{
 			if (repeat < 1 || repeat > DiceLimits.MaxRepeat)
@@ -188,27 +191,39 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			ctx.Call.SetResult(repeat == 1
 				? rolls[0].ToText()
 				: string.Join(Environment.NewLine, rolls.Select((roll, index) => $"#{index + 1} {roll.ToText()}")));
-			ctx.Call.SetStatus(DiceIcon(parsed), BuildStatusTitle(parsed, rolls));
-			ctx.Call.SetStructuredResult(BuildStructuredResult(parsed, rolls));
 
-			return ToolExecutionResult.Succeeded;
-		}
-
-		/// <summary>
-		/// Builds the one-line title shown next to the call icon.
-		/// </summary>
-		/// <param name="expression">The rolled expression.</param>
-		/// <param name="rolls">The rolls produced in this call.</param>
-		/// <returns>The title, for example <c>Rolled 2d6 = 9</c>.</returns>
-		private static string BuildStatusTitle(DiceExpression expression, IReadOnlyList<DiceRollResult> rolls)
-		{
 			var rolled = LocalizationManager.LocalizeStatic("tool.status.random-dice.rolled");
 			var totals = string.Join(", ", rolls.Select(roll => roll.Total.ToString(CultureInfo.InvariantCulture)));
-			var notation = expression.ToNotation();
 
-			return rolls.Count == 1
-				? $"{rolled} {notation} = {totals}"
-				: $"{rolled} {notation} x{rolls.Count} = {totals}";
+			ctx.Call.SetStatus(DiceIcon(parsed), rolls.Count == 1
+				? $"{rolled} {expression} = {totals}"
+				: $"{rolled} {expression} x{rolls.Count} = {totals}");
+			ctx.Call.SetStructuredResult(new JsonObject()
+			{
+				["expression"] = expression,
+				["repeat"] = rolls.Count,
+				["rolls"] = new JsonArray(rolls.Select(roll => (JsonNode)new JsonObject()
+				{
+					["total"] = roll.Total,
+					["modifier"] = roll.Modifier,
+					["text"] = roll.ToText(),
+					["groups"] = new JsonArray(roll.Groups.Select(group => (JsonNode)new JsonObject
+					{
+						["text"] = group.Group.ToNotation(),
+						["value"] = group.Value,
+						["dice"] = new JsonArray(group.Dice.Select(die => (JsonNode)new JsonObject()
+						{
+							["value"] = die.Value,
+							["total"] = die.Total,
+							["kept"] = die.Kept,
+							["explosions"] = new JsonArray(die.Explosions.Select(face => (JsonNode?)face).ToArray()),
+							["rerolledFrom"] = new JsonArray(die.RerolledFrom.Select(face => (JsonNode?)face).ToArray())
+						}).ToArray())
+					}).ToArray())
+				}).ToArray())
+			});
+
+			return ToolExecutionResult.Succeeded;
 		}
 
 		/// <summary>
@@ -234,56 +249,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			};
 		}
 
-		/// <summary>
-		/// Projects the rolls into the structured result external APIs and Lua scripts consume.
-		/// </summary>
-		/// <param name="expression">The rolled expression.</param>
-		/// <param name="rolls">The rolls produced in this call.</param>
-		/// <returns>The JSON tree of the result.</returns>
-		private static JsonObject BuildStructuredResult(DiceExpression expression, IReadOnlyList<DiceRollResult> rolls) =>
-			new()
-			{
-				["expression"] = expression.ToNotation(),
-				["repeat"] = rolls.Count,
-				["rolls"] = new JsonArray(rolls.Select(roll => (JsonNode)BuildRollNode(roll)).ToArray())
-			};
-
-		/// <summary>
-		/// Projects one roll with its groups and their dice.
-		/// </summary>
-		/// <param name="roll">The roll to project.</param>
-		/// <returns>The structured value of the roll.</returns>
-		private static JsonObject BuildRollNode(DiceRollResult roll) =>
-			new()
-			{
-				["total"] = roll.Total,
-				["modifier"] = roll.Modifier,
-				["text"] = roll.ToText(),
-				["groups"] = new JsonArray(roll.Groups.Select(group => (JsonNode)new JsonObject
-				{
-					["text"] = group.Group.ToNotation(),
-					["value"] = group.Value,
-					["dice"] = new JsonArray(group.Dice.Select(die => (JsonNode)BuildDieNode(die)).ToArray())
-				}).ToArray())
-			};
-
-		/// <summary>
-		/// Projects one die with its face, explosion chain and selection state.
-		/// </summary>
-		/// <param name="die">The die to project.</param>
-		/// <returns>The JSON node of the die.</returns>
-		private static JsonObject BuildDieNode(DiceDie die) =>
-			new()
-			{
-				["value"] = die.Value,
-				["total"] = die.Total,
-				["kept"] = die.Kept,
-				["explosions"] = new JsonArray(die.Explosions.Select(face => (JsonNode?)face).ToArray()),
-				["rerolledFrom"] = new JsonArray(die.RerolledFrom.Select(face => (JsonNode?)face).ToArray())
-			};
-
 		private ToolExecutionResult GenerateRandomItemsFromList(IToolExecutionContext ctx,
-			[Description("List of items")] string[] items,
+			[Description("List of items")] [MainArgument] string[] items,
 			[Description("Number of items to select")] int count = 1)
 		{
 			var values = _random.GetItems(items, count);
@@ -295,7 +262,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 		}
 
 		private ToolExecutionResult GenerateRandomShuffledList(IToolExecutionContext ctx,
-			[Description("List of items to shuffle")] string[] items)
+			[Description("List of items to shuffle")] [MainArgument] string[] items)
 		{
 			_random.Shuffle(items);
 			var value = string.Join(", ", items);
