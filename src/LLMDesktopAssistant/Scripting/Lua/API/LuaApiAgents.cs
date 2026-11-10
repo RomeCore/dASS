@@ -820,14 +820,19 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			foreach (var attachmentValue in (attachmentsTable as LuaTable)?.Values ?? [])
 				attachments.Add(ConvertAttachmentFromLua(attachmentValue));
 
+			var success = resultSuccess is LuaNil || resultSuccess.ToBoolean();
+
 			return new AgentToolCall
 			{
 				ToolCallId = toolCallId,
 				ToolName = toolName,
 				Arguments = arguments?.ToJsonString() ?? "{}",
+				// The call was executed before the message was handed to us - leaving the default
+				// Pending would report replayed history as a call that is still running.
+				Status = success ? ToolStatus.Success : ToolStatus.Error,
 				Result = new AgentToolCallResult
 				{
-					Success = resultSuccess is LuaNil || resultSuccess.ToBoolean(),
+					Success = success,
 					Content = resultContent
 				}
 			};
