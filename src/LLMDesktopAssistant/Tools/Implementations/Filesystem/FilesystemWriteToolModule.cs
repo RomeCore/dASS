@@ -64,7 +64,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 					lines++;
 
 			ctx.Call.SetStatusTitle(LocalizationManager.LocalizeStaticFormat("tool.status.fs-write_file.streaming_status",
-				path != null ? $"**{path}**" : string.Empty,
+				path != null ? $"**{path.MarkdownEscape()}**" : string.Empty,
 				lines));
 
 			return StreamingToolAnalysisResult.Continue;
