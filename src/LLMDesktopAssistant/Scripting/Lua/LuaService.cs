@@ -3,6 +3,7 @@ using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using Serilog;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -69,9 +70,23 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			var globals = _lua.Globals;
 			var ns = script.Namespace != null ? ResolveNamespace(script.Namespace) : null;
-			var cleanup = script.Loader(globals, ns, this);
-			if (cleanup is not null)
-				_cleanups.Push(cleanup);
+			var parameters = ScriptAddonParameters.Resolve(script.ParameterSchema, script.Change);
+
+			// The load is the script's only input surface: `params` exists while the body runs and never leaks
+			// into the shared state or into the next script.
+			if (parameters is not null)
+				globals["params"] = parameters.ToLuaValue();
+
+			try
+			{
+				var cleanup = script.Loader(globals, ns, this);
+				if (cleanup is not null)
+					_cleanups.Push(cleanup);
+			}
+			finally
+			{
+				globals.Remove("params");
+			}
 
 			if (ns is not null)
 			{

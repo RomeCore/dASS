@@ -3,12 +3,17 @@ using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
 	[Service(typeof(IAddonFileParser<LuaScriptInfo>))]
-	public class LuaScriptParser : FrontmatterBasedAddonParser<LuaScriptInfo, LuaScriptChange>
+	public class LuaScriptParser(IParameterSchemaParserManager paramsSchemaParser)
+		: FrontmatterBasedAddonParser<LuaScriptInfo, LuaScriptChange>(paramsSchemaParser)
 	{
+		/// <inheritdoc/>
+		protected override bool SupportsParamsSchema => true;
+
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{
 			return new AddonParserDescriptor

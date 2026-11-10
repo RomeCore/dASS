@@ -33,9 +33,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			// The arguments are converted once and shared via the (cloned) globals of this run. json-input: true passes
 			// them as JSON text the body decodes itself; auto and false keep the table.
 			var commandArgs = CommandArgsNode.Create(ctx.Arguments, ctx.RawArguments);
-			var luaCommandArgs = command.InputMode is ScriptInputMode.Json
+			var luaCommandArgs = ctx.Command.InputMode is ScriptInputMode.Json
 				? new LuaString(commandArgs.ToJsonNode()?.ToJsonString() ?? "null")
 				: commandArgs.ToLuaValue();
+			var parameters = ScriptAddonParameters.Resolve(ctx.Command.ParameterSchema, ctx.Command.Change);
 
 			LuaTuple scriptResult;
 			try
@@ -43,6 +44,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 				scriptResult = await luaService.ExecuteAsync(command.Body, _ => { }, globals =>
 				{
 					globals["command_args"] = luaCommandArgs;
+
+					if (parameters is not null)
+					{
+						globals["params"] = ctx.Command.InputMode is ScriptInputMode.Json
+							? new LuaString(parameters.ToJsonNode()?.ToJsonString() ?? "null")
+							: parameters.ToLuaValue();
+					}
 				}, ct);
 			}
 			catch (OperationCanceledException)

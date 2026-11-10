@@ -10,7 +10,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	{
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
-			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
+			INodeValue? previous, string hookType, string? hookTarget, INodeValue? parameters = null,
+			CancellationToken cancellationToken = default)
 		{
 			var luaService = services.GetRequiredService<LuaService>();
 
@@ -30,6 +31,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 					globals["previous"] = luaPrevious;
 					globals["hook_type"] = new LuaString(hookType);
 					globals["hook_target"] = string.IsNullOrEmpty(hookTarget) ? LuaNil.Instance : new LuaString(hookTarget);
+
+					if (parameters is not null)
+					{
+						globals["params"] = hook.InputMode is ScriptInputMode.Json
+							? new LuaString(parameters.ToJsonNode()?.ToJsonString() ?? "null")
+							: parameters.ToLuaValue();
+					}
 				}, cancellationToken);
 			}
 			catch (OperationCanceledException)

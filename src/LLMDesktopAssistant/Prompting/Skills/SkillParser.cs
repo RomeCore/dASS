@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.Prompting.Skills
 {
@@ -11,7 +12,8 @@ namespace LLMDesktopAssistant.Prompting.Skills
 	/// The parser for <c>SKILL.md</c> / <c>SKILL.mdx</c> addon files.
 	/// </summary>
 	[Service(typeof(IAddonFileParser<SkillInfo>))]
-	public class SkillParser : FrontmatterBasedAddonParser<SkillInfo, SkillChange>
+	public class SkillParser(IParameterSchemaParserManager paramsSchemaParser)
+		: FrontmatterBasedAddonParser<SkillInfo, SkillChange>(paramsSchemaParser)
 	{
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{

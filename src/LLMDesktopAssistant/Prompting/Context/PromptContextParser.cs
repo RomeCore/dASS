@@ -5,6 +5,7 @@ using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Prompting.Context.Scripting;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.Prompting.Context
 {
@@ -27,8 +28,8 @@ namespace LLMDesktopAssistant.Prompting.Context
 		/// Initializes a new instance of the <see cref="PromptContextParser"/> class.
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and execution.</param>
-		public PromptContextParser(IEnumerable<IScriptablePromptContextEngine> engines)
-			: base(engines)
+		public PromptContextParser(IParameterSchemaParserManager paramsSchemaParser, IEnumerable<IScriptablePromptContextEngine> engines)
+			: base(paramsSchemaParser, engines)
 		{
 		}
 

@@ -23,7 +23,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		ExternalProcessEngineRegistry registry) : IHookExecutor
 	{
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
-			string hookType, string? hookTarget, CancellationToken cancellationToken = default)
+			string hookType, string? hookTarget, INodeValue? parameters = null, CancellationToken cancellationToken = default)
 		{
 			var engine = registry.Resolve(hook.Path ?? throw new InvalidOperationException(
 				$"The path of the hook '{hook.Name}' is not set.")).Engine;
@@ -34,6 +34,8 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				.Add("hook_type", new ConstNodeStringValue { Value = hookType })
 				.Add("hook_target", string.IsNullOrEmpty(hookTarget) ? ConstNodeNullValue.Instance :
 					new ConstNodeStringValue { Value = hookTarget });
+			if (parameters is not null)
+				variables = variables.Add("params", parameters);
 
 			var result = await engine.RunAsync(new ExternalProcessScriptParameters
 			{

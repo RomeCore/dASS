@@ -28,6 +28,13 @@ namespace LLMDesktopAssistant.Prompting.Context.MVVM
 		}
 
 		/// <inheritdoc/>
+		protected override void AddBlocks(AddonCardContext<PromptContextInfo, PromptContextChange> context,
+			List<IAddonCardElement> elements)
+		{
+			AddParametersBlock(context, elements);
+		}
+
+		/// <inheritdoc/>
 		protected override void AddTypeChips(AddonCardContext<PromptContextInfo, PromptContextChange> context,
 			List<IAddonCardElement> elements, int order)
 		{

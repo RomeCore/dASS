@@ -3,14 +3,15 @@ using LLMDesktopAssistant.Addons.Parsers;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.Hooks
 {
 	[Service(typeof(IAddonFileParser<HookInfo>))]
 	public class HookParser : FrontmatterBasedAddonParser<HookInfo, HookChange, IScriptableHookEngine>
 	{
-		public HookParser(IEnumerable<IScriptableHookEngine> engines)
-			: base(engines)
+		public HookParser(IParameterSchemaParserManager paramsSchemaParser, IEnumerable<IScriptableHookEngine> engines)
+			: base(paramsSchemaParser, engines)
 		{
 		}
 

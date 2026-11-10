@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using AsyncLua.Values;
 using LLMDesktopAssistant.Prompting.Context;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Addons
@@ -32,10 +33,22 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 		{
 			var luaService = context.Services.GetRequiredService<LuaService>();
 			var output = new StringBuilder();
+			var parameters = ScriptAddonParameters.Resolve(context.PromptContext.ParameterSchema, context.PromptContext.Change);
 
-			await luaService.ExecuteAsync(Addon.Body, text => output.AppendLine(text),
-				globals => globals["previous"] = ToPreviousValue(previous),
-				cancellationToken);
+			Action<string> printOutput = text => output.AppendLine(text);
+			Action<LuaTable> modifyGlobals = globals =>
+			{
+				globals["previous"] = ToPreviousValue(previous);
+
+				if (parameters is not null)
+				{
+					globals["params"] = context.PromptContext.InputMode is ScriptInputMode.Json
+						? new LuaString(parameters.ToJsonNode()?.ToJsonString() ?? "null")
+						: parameters.ToLuaValue();
+				}
+			};
+
+			await luaService.ExecuteAsync(Addon.Body, printOutput, modifyGlobals, cancellationToken);
 
 			return output.ToString();
 		}

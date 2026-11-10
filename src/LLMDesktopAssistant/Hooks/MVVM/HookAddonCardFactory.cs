@@ -77,6 +77,7 @@ namespace LLMDesktopAssistant.Hooks.MVVM
 		protected override void AddBlocks(AddonCardContext<HookInfo, HookChange> context,
 			List<IAddonCardElement> elements)
 		{
+			AddParametersBlock(context, elements);
 			AddTextBlock(elements, Locale.GetKey("card.body"), context.Addon.Body, BlockOrder + 10);
 			AddMetadataBlock(context, elements, order: BlockOrder + 30);
 		}

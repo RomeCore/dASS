@@ -7,6 +7,7 @@ using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Scripting;
 using LLMDesktopAssistant.StructuredValues.Const;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.SlashCommands.Loading
 {
@@ -24,8 +25,8 @@ namespace LLMDesktopAssistant.SlashCommands.Loading
 	{
 		/// <summary>Initializes a new instance of the <see cref="SlashCommandParser"/> class.</summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
-		public SlashCommandParser(IEnumerable<IScriptableSlashCommandEngine> engines)
-			: base(engines)
+		public SlashCommandParser(IParameterSchemaParserManager paramsSchemaParser, IEnumerable<IScriptableSlashCommandEngine> engines)
+			: base(paramsSchemaParser, engines)
 		{
 		}
 

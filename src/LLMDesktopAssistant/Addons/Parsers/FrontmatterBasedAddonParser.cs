@@ -2,10 +2,12 @@ using System.Collections.Concurrent;
 using System.Text;
 using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Localization;
-using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Const;
+using LLMDesktopAssistant.StructuredValues.Converters;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
+using LLMDesktopAssistant.Utils;
 using RCParsing;
 using RCParsing.Building;
 using YamlDotNet.RepresentationModel;
@@ -448,6 +450,26 @@ namespace LLMDesktopAssistant.Addons.Parsers
 		where TAddon : AddonChangedBase<TAddon, TChange>, new()
 		where TChange : AddonChangeBase
 	{
+		private readonly IParameterSchemaParserManager _paramsSchemaParser;
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FrontmatterBasedAddonParser{TAddon, TChange}"/> class.
+		/// </summary>
+		/// <param name="paramsSchemaParser">The parameters schema parser.</param>
+		protected FrontmatterBasedAddonParser(IParameterSchemaParserManager paramsSchemaParser)
+		{
+			_paramsSchemaParser = paramsSchemaParser;
+		}
+
+		/// <summary>
+		/// Whether this kind's body can consume parameters, which makes <c>params-schema</c> meaningful.
+		/// </summary>
+		/// <remarks>
+		/// A plain-text skill or sub-agent renders no <c>params</c>, so a schema there would only produce an editor
+		/// that changes nothing. Only the scriptable kinds opt in.
+		/// </remarks>
+		protected virtual bool SupportsParamsSchema => false;
+
 		protected override void Populate(TAddon addon, AddonFrontmatterDocument frontmatter, ref AddonDiagnostic? diagnostic)
 		{
 			if (frontmatter.TryRequest("enabled", ref diagnostic, out bool enabled))
@@ -455,6 +477,35 @@ namespace LLMDesktopAssistant.Addons.Parsers
 
 			if (frontmatter.TryRequest("hidden", ref diagnostic, out bool hidden))
 				addon.Hidden = hidden;
+
+			if (SupportsParamsSchema &&
+				frontmatter.TryRequest("params-schema", ref diagnostic, out ConstNodeValue parameterSchemaNode))
+			{
+				try
+				{
+					var errors = new AppendOnlyList<ParameterSchemaParsingError>();
+					addon.ParameterSchema = _paramsSchemaParser.ParseRoot(parameterSchemaNode, errors);
+
+					if (errors.Count > 0)
+					{
+						diagnostic = diagnostic.Combine(new AddonDiagnostic
+						{
+							IsFatal = false,
+							Codes = AddonDiagnosticCode.InvalidParameterSchema,
+							Messages = [.. errors.Select(error => error.Message!).Where(m => !string.IsNullOrEmpty(m))]
+						});
+					}
+				}
+				catch (Exception ex)
+				{
+					diagnostic = diagnostic.Combine(new AddonDiagnostic
+					{
+						IsFatal = false,
+						Codes = AddonDiagnosticCode.InvalidParameterSchema,
+						Exceptions = [ex]
+					});
+				}
+			}
 		}
 	}
 
@@ -474,8 +525,10 @@ namespace LLMDesktopAssistant.Addons.Parsers
 		/// <summary>
 		/// Initializes a new instance of the <see cref="FrontmatterBasedAddonParser{TAddon, TChange, TEngine}"/> class.
 		/// </summary>
+		/// <param name="paramsSchemaParser">The parameters schema parser.</param>
 		/// <param name="engines">The engines of the kind.</param>
-		protected FrontmatterBasedAddonParser(IEnumerable<TEngine> engines)
+		protected FrontmatterBasedAddonParser(IParameterSchemaParserManager paramsSchemaParser, IEnumerable<TEngine> engines)
+			: base(paramsSchemaParser)
 		{
 			Engines = new ScriptEngineResolver<TEngine>(engines);
 		}
@@ -484,6 +537,9 @@ namespace LLMDesktopAssistant.Addons.Parsers
 		/// The extension table of the kind's engines.
 		/// </summary>
 		protected ScriptEngineResolver<TEngine> Engines { get; }
+
+		/// <inheritdoc/>
+		protected override bool SupportsParamsSchema => true;
 
 		/// <summary>
 		/// Which result channels this kind consumes.

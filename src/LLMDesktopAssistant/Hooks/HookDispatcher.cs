@@ -1,5 +1,6 @@
 ﻿using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.StructuredValues;
 using Serilog;
 
@@ -80,7 +81,8 @@ namespace LLMDesktopAssistant.Hooks
 
 				try
 				{
-					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget, token);
+					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget,
+						ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change), token);
 				}
 				catch (OperationCanceledException) when (timeoutSource?.IsCancellationRequested == true)
 				{
@@ -106,7 +108,7 @@ namespace LLMDesktopAssistant.Hooks
 			try
 			{
 				return await hook.Executor.ExecuteAsync(services, payload, previous,
-					hookType, hookTarget, linkedSource.Token);
+					hookType, hookTarget, ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change), linkedSource.Token);
 			}
 			catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested &&
 				!cancellationToken.IsCancellationRequested)

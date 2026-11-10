@@ -46,6 +46,13 @@ namespace LLMDesktopAssistant.SlashCommands
 		}
 
 		/// <inheritdoc/>
+		protected override void AddBlocks(AddonCardContext<SlashCommandInfo, SlashCommandChange> context,
+			List<IAddonCardElement> elements)
+		{
+			AddParametersBlock(context, elements);
+		}
+
+		/// <inheritdoc/>
 		protected override void AddTypeChips(AddonCardContext<SlashCommandInfo, SlashCommandChange> context, List<IAddonCardElement> elements, int order)
 		{
 			elements.Add(new AddonCardChip

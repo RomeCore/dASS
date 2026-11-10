@@ -37,6 +37,7 @@ using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Executors;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 using RCLargeLanguageModels.Tools;
 
 namespace LLMDesktopAssistant.Tools.Scripting
@@ -59,8 +60,8 @@ namespace LLMDesktopAssistant.Tools.Scripting
 		/// Initializes a new instance of the <see cref="ScriptableToolParser"/> class.
 		/// </summary>
 		/// <param name="engines">The scripting engines that provide frontmatter syntax and executors.</param>
-		public ScriptableToolParser(IEnumerable<IScriptableToolEngine> engines)
-			: base(engines)
+		public ScriptableToolParser(IParameterSchemaParserManager paramsSchemaParser, IEnumerable<IScriptableToolEngine> engines)
+			: base(paramsSchemaParser, engines)
 		{
 		}
 

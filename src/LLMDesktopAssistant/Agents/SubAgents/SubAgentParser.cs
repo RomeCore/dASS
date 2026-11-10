@@ -4,6 +4,7 @@ using LLMDesktopAssistant.Addons.Parsers.Frontmatter;
 using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
+using LLMDesktopAssistant.StructuredValues.Parameterization;
 
 namespace LLMDesktopAssistant.Agents.SubAgents
 {
@@ -11,7 +12,8 @@ namespace LLMDesktopAssistant.Agents.SubAgents
 	/// The parser for sub-agent addon files (<c>agent.md</c>, <c>AGENT.md</c>, <c>*.mdx</c>).
 	/// </summary>
 	[Service(typeof(IAddonFileParser<SubAgentInfo>))]
-	public class SubAgentParser : FrontmatterBasedAddonParser<SubAgentInfo, SubAgentChange>
+	public class SubAgentParser(IParameterSchemaParserManager paramsSchemaParser)
+		: FrontmatterBasedAddonParser<SubAgentInfo, SubAgentChange>(paramsSchemaParser)
 	{
 		protected override AddonParserDescriptor GetDescriptorFor(string content, AddonPathInfo fileInfo)
 		{

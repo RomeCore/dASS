@@ -57,13 +57,20 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var engine = registry.Resolve(Addon.Path ?? throw new InvalidOperationException(
 				$"The path of the context '{Addon.Name}' is not set.")).Engine;
 
+			var promptContext = context.PromptContext;
+			var parameters = ScriptAddonParameters.Resolve(promptContext.ParameterSchema, promptContext.Change);
+
+			var variables = ImmutableDictionary<string, INodeValue?>.Empty.Add("previous", previous is null
+				? null
+				: new ConstNodeStringValue { Value = previous });
+			if (parameters is not null)
+				variables = variables.Add("params", parameters);
+
 			var result = await engine.RunAsync(new ExternalProcessScriptParameters
 			{
 				Kind = ScriptableAddonKind.PromptContext,
 				Body = Addon.Body,
-				Variables = ImmutableDictionary<string, INodeValue?>.Empty.Add("previous", previous is null
-					? null
-					: new ConstNodeStringValue { Value = previous }),
+				Variables = variables,
 				InputMode = Addon.InputMode,
 				// A context has no JSON channel, and its budget is the caller's cancellation token, not a deadline here.
 				OutputMode = ScriptOutputMode.None,

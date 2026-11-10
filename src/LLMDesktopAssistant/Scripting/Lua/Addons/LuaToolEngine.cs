@@ -30,13 +30,26 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 				try
 				{
 					var luaService = ctx.Services.GetRequiredService<LuaService>();
+
+					// The descriptor is the per-chat clone (it carries the change); the captured addon is the
+					// parse-time original, whose Change is always null.
+					var effectiveTool = ctx.Descriptor as ToolInfo ?? tool;
+					var parameters = ScriptAddonParameters.Resolve(effectiveTool.ParameterSchema, effectiveTool.Change);
+
 					var scriptResult = await luaService.ExecuteAsync(tool.Body, print => result.Write(print), g =>
 					{
 						// json-input: true hands the arguments over as JSON text the body decodes itself; auto and
 						// false keep the native table, which is what a Lua script usually wants.
-						g["tool_args"] = tool.InputMode is ScriptInputMode.Json
+						g["tool_args"] = effectiveTool.InputMode is ScriptInputMode.Json
 							? new LuaString(args?.ToJsonString() ?? "null")
 							: args.ToConstNodeValue().ToLuaValue();
+
+						if (parameters is not null)
+						{
+							g["params"] = effectiveTool.InputMode is ScriptInputMode.Json
+								? new LuaString(parameters.ToJsonNode()?.ToJsonString() ?? "null")
+								: parameters.ToLuaValue();
+						}
 					}, cancellationToken);
 					if (ctx.Call.StructuredResult is null)
 						ctx.Call.SetStructuredResult(scriptResult.ToConstNodeValue(tolerant: true).ToJsonNode());

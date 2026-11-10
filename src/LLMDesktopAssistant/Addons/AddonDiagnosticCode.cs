@@ -46,5 +46,10 @@ namespace LLMDesktopAssistant.Addons
 		/// The addon's <c>kind</c> has invalid value.
 		/// </summary>
 		InvalidKind = 1UL << 13,
+
+		/// <summary>
+		/// The addon's <c>params-schema</c> could not be parsed.
+		/// </summary>
+		InvalidParameterSchema = 1UL << 14,
 	}
 }
