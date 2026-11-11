@@ -211,8 +211,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- rpc.listen(transport, target, routing, [options]) -> server, error
 			  Binds an endpoint and returns a server handle. A failure returns nil plus the reason; a
 			  malformed argument throws. Nothing is accepted until :accept() is called - the operating
-			  system queues the connections in the meantime. Binding is synchronous, so this call needs
-			  no await and works in a cleanup block; only :accept() waits.
+			  system queues the connections in the meantime.
 
 			  target: "host:port" - "127.0.0.1:9333", "localhost:9333", "[::1]:9333", or "*:9333" for
 			  every IPv4 interface. Port 0 asks for an ephemeral one and server.port reports what was
@@ -220,7 +219,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  routing: the same table as rpc.connect, shared by every accepted connection and read on each
 			  message - assigning routing["x"] later subscribes every peer. Handlers of one listener run
-			  one at a time, because the chat has a single Lua state.
+			  one at a time.
 
 			  options:
 			    framing           string  - "auto" (default), "content_length" or "lines"
