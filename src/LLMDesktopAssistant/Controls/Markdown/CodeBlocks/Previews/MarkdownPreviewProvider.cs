@@ -59,10 +59,10 @@ namespace LLMDesktopAssistant.Controls.Markdown.CodeBlocks
 		public LocaleKeyBase Title => Locale.GetKey("common.preview");
 
 		/// <inheritdoc />
-		public bool IsDefault => true;
+		public bool IsDefault => false;
 
 		/// <inheritdoc />
-		public bool IsShownSplitByDefault => true;
+		public bool IsShownSplitByDefault => false;
 
 		/// <inheritdoc />
 		public object Content { get; }
