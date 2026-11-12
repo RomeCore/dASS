@@ -3,6 +3,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Utils.Files;
+using LLMDesktopAssistant.Utils.Patterns;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -192,6 +193,36 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      omitted means the platform separator ('\' on Windows, '/' elsewhere)
 			  Returns: string - the path with every separator replaced, doubles included
 
+			--- fs.glob(pattern, [path], [opts])
+			  Finds files and directories by glob pattern.
+			  Syntax: *, ?, [...], {...}, **. A leading literal part of the pattern becomes the
+			  search root, so an absolute pattern works as well as a relative one.
+			  Scanning follows the platform's case rules (case-insensitive on Windows).
+			
+			  Parameters:
+			    - pattern: string - the glob pattern, e.g. "**/*.cs" or "src/**/*.{md,txt}"
+			    - path: string (optional) - the starting directory, default ".", i.e. the
+			      working directory. An absolute path is allowed.
+			    - opts: table (optional) - options:
+			        limit: number - maximum entries, 0 for unlimited (default 100)
+			        files: boolean - include files (default true)
+			        directories: boolean - include directories (default false)
+			        ignore: table - names or single-segment patterns to skip; a matching
+			          directory is not descended into. The default set is
+			          {".*", "node_modules", "__pycache__", "bin", "obj", "TestResults"} and any
+			          table you pass replaces it - an empty table skips nothing and so includes
+			          hidden entries and build output.
+			
+			  Returns: table - array of entries in file system order. Each entry:
+			    - path: string - absolute path, ready for fs.read()
+			    - relative: string - path relative to the 'path' argument, so with the default
+			      path it is relative to the working directory
+			    - name: string - the last segment
+			    - is_dir: boolean
+			
+			  Errors: an invalid pattern or a 'path' that is missing or not a directory raises a
+			  runtime error. No matches is not an error and returns an empty table.
+
 			EXAMPLES:
 
 			  -- Read a file
@@ -212,6 +243,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  -- File info
 			  local info = fs.detail("README.md")
 			  print(info.size, info.modified)
+
+			  -- Glob every C# file under the working directory
+			  for _, e in ipairs(fs.glob("**/*.cs")) do
+			    print(e.relative)
+			  end
+			
+			  -- One directory, unlimited, including directories
+			  local all = fs.glob("*", "docs", { limit = 0, directories = true })
+			
+			  -- Search that also walks node_modules and hidden folders
+			  local everything = fs.glob("**/*.json", ".", { ignore = {} })
 			""";
 
 		private readonly IWorkingDirectoryAccessService _fileAccess;
@@ -248,6 +290,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["extname"] = new LuaCallbackFunction(ExtName);
 			ns["abs"] = new LuaCallbackFunction(Abs);
 			ns["replace_separators"] = new LuaCallbackFunction(ReplaceSeparators);
+			ns["glob"] = new LuaCallbackFunction(Glob);
 			return null;
 		}
 
@@ -562,7 +605,118 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				pathVal.Value.Replace("/", separator).Replace("\\", separator)));
 		}
 
+		private LuaTuple Glob(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("fs.glob(pattern, [path], [opts]): at least 1 argument expected.");
+
+			var pattern = GetString("fs.glob()", args, 0, "pattern");
+			var path = args.Length > 1 && args[1] is not LuaNil
+				? GetString("fs.glob()", args, 1, "path")
+				: ".";
+
+			var limit = 100;
+			var files = true;
+			var directories = false;
+			var ignore = GlobTextSet.DefaultIgnore;
+
+			if (args.Length > 2 && args[2] is not LuaNil)
+			{
+				if (args[2] is not LuaTable options)
+					throw new LuaRuntimeException("fs.glob(): third argument must be a table (options).");
+
+				var limitValue = options.Get("limit");
+				if (limitValue is LuaNumber limitNumber)
+					limit = (int)limitNumber.Value;
+				else if (limitValue is not LuaNil)
+					throw new LuaRuntimeException("fs.glob(): 'limit' must be a number.");
+
+				var filesValue = options.Get("files");
+				if (filesValue is LuaBoolean filesBoolean)
+					files = filesBoolean.Value;
+				else if (filesValue is not LuaNil)
+					throw new LuaRuntimeException("fs.glob(): 'files' must be a boolean.");
+
+				var directoriesValue = options.Get("directories");
+				if (directoriesValue is LuaBoolean directoriesBoolean)
+					directories = directoriesBoolean.Value;
+				else if (directoriesValue is not LuaNil)
+					throw new LuaRuntimeException("fs.glob(): 'directories' must be a boolean.");
+
+				var ignoreValue = options.Get("ignore");
+				if (ignoreValue is LuaTable ignoreTable)
+				{
+					var patterns = new List<string>(ignoreTable.Length);
+
+					for (var i = 1; i <= ignoreTable.Length; i++)
+					{
+						var value = ignoreTable.Get(i);
+
+						if (value is LuaString ignorePattern)
+							patterns.Add(ignorePattern.Value);
+						else if (value is not LuaNil)
+							throw new LuaRuntimeException("fs.glob(): 'ignore' must be a table of strings.");
+					}
+
+					ignore = GlobTextSet.ParseNames(patterns, GlobCase.PlatformDefault);
+				}
+				else if (ignoreValue is not LuaNil)
+					throw new LuaRuntimeException("fs.glob(): 'ignore' must be a table of strings.");
+			}
+
+			var start = _fileAccess.GetFullPath(path);
+
+			if (!Directory.Exists(start))
+			{
+				if (File.Exists(start))
+					throw new LuaRuntimeException($"fs.glob(): not a directory: {path}");
+
+				throw new LuaRuntimeException($"fs.glob(): directory does not exist: {path}");
+			}
+
+			try
+			{
+				var search = GlobSearch.From(pattern, start, GlobPathMatcher.DefaultOptions);
+				var walkOptions = new GlobWalkOptions
+				{
+					Files = files,
+					Directories = directories,
+					Limit = limit,
+					Ignore = ignore,
+				};
+
+				var result = new LuaTable();
+				var index = 1;
+
+				foreach (var entry in GlobWalker.Enumerate(search, walkOptions))
+				{
+					var item = new LuaTable();
+					item["path"] = new LuaString(entry.FullPath);
+					item["relative"] = new LuaString(
+						Path.GetRelativePath(search.StartingPath, entry.FullPath));
+					item["name"] = new LuaString(entry.Name);
+					item["is_dir"] = LuaBoolean.FromBoolean(entry.IsDirectory);
+
+					result[index++] = item;
+				}
+
+				return new LuaTuple(result);
+			}
+			catch (GlobException exception)
+			{
+				throw new LuaRuntimeException(exception.Message);
+			}
+		}
+
 		// --- Helpers ---
+
+		private static string GetString(string function, LuaValue[] args, int index, string name)
+		{
+			if (args[index] is not LuaString value)
+				throw new LuaRuntimeException($"{function}: argument {index + 1} must be a string ({name}).");
+
+			return value.Value;
+		}
 
 		private string GetPath(string function, LuaValue[] args, int index)
 		{
