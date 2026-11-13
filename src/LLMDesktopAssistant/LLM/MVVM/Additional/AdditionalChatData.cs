@@ -1,41 +1,51 @@
 using LiteDB;
+using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
 {
 	/// <summary>
-	/// The base class for additional message view models.
+	/// The base class for additional chat data.
 	/// This class is required to be BSON-serializable if not temporary.
 	/// </summary>
 	public class AdditionalChatData : NotifyPropertyChanged, IChatAttachment
 	{
 		/// <summary>
-		/// Gets the order of this additional view model. Used for sorting in the UI. Lower values appear first.
+		/// Gets the order of this additional chat data. Used for sorting in the UI. Lower values appear first.
 		/// </summary>
 		[BsonIgnore]
 		public virtual int Order { get; } = 0;
 
-		private bool _isVisible = true;
 		/// <summary>
-		/// Gets or sets a value indicating whether the additional view model is visible.
-		/// Tip: view model can be invisible when used only to store data that is not displayed in the UI.
+		/// Gets or sets a value indicating whether the additional chat data is visible.
+		/// Tip: chat data can be invisible when used only to store data that is not displayed in the UI.
 		/// </summary>
 		public bool IsVisible
 		{
-			get => _isVisible;
-			set => SetProperty(ref _isVisible, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = true;
 
-		private bool _isTemporary = false;
 		/// <summary>
-		/// Gets or sets a value indicating whether the additional view model is temporary.
-		/// Temporary view models are not stored in the database, and are only used for short-lived operations.
+		/// Gets or sets a value indicating whether the additional chat data is intended to be disposed manually.
+		/// If set to <see langword="true"/>, the <see cref="ChatObjectBase"/> will not dispose this instance upon
+		/// chat object disposal or when this data is removed from the chat object.
+		/// </summary>
+		public bool ManualDispose
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the additional chat data is temporary.
+		/// Temporary chat data are not stored in the database, and are only used for short-lived operations.
 		/// </summary>
 		[BsonIgnore]
 		public bool IsTemporary
 		{
-			get => _isTemporary;
-			set => SetProperty(ref _isTemporary, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
 	}
 }

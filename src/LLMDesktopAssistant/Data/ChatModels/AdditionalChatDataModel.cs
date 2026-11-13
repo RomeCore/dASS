@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		public AdditionalChatData Data
 		{
 			get => field ??= new();
-			set => field = value;
+			set;
 		}
 	}
 }

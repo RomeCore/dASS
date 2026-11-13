@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Utils.Attachments;
@@ -26,6 +27,22 @@ namespace LLMDesktopAssistant.LLM.Domain
 		}
 
 		private readonly ConditionalWeakTable<IChatAttachment, AdditionalChatData> _attachmentMap = [];
+
+		public ChatObjectBase()
+		{
+			AdditionalData!.CollectionChanged += AdditionalDataCollectionChanged;
+		}
+
+		private void AdditionalDataCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.Action is NotifyCollectionChangedAction.Move)
+				return;
+
+			if (e.OldItems != null)
+				foreach (var _data in e.OldItems)
+					if (_data is AdditionalChatData data && !data.ManualDispose)
+						data.Dispose();
+		}
 
 		public void AddAttachment(IChatAttachment attachment)
 		{
@@ -69,18 +86,15 @@ namespace LLMDesktopAssistant.LLM.Domain
 
 		public bool RemoveAttachment(IChatAttachment attachment)
 		{
-			AdditionalChatData? removedPart = null;
 			bool removed;
 
 			if (attachment is AdditionalChatData data)
 			{
 				removed = AdditionalData.Remove(data);
-				removedPart = data;
 			}
 			else if (_attachmentMap.TryGetValue(attachment, out var existing))
 			{
 				removed = AdditionalData.Remove(existing);
-				removedPart = existing;
 				if (removed)
 					_attachmentMap.Remove(attachment);
 			}
@@ -89,21 +103,12 @@ namespace LLMDesktopAssistant.LLM.Domain
 				removed = false;
 			}
 
-			// A removed payload may own a live resource (a terminal session owns a process),
-			// so detaching it is its only death signal.
-			if (removed)
-				removedPart?.Dispose();
-
 			return removed;
 		}
 
 		public void ClearAttachments()
 		{
-			var parts = AdditionalData.ToArray();
 			AdditionalData.Clear();
-
-			foreach (var part in parts)
-				part.Dispose();
 		}
 
 		public IEnumerable<IChatAttachment> GetAttachments()
@@ -123,8 +128,10 @@ namespace LLMDesktopAssistant.LLM.Domain
 
 			if (disposing)
 			{
-				foreach (var viewModel in AdditionalData)
-					viewModel.Dispose();
+				foreach (var data in AdditionalData)
+					if (!data.ManualDispose)
+						data.Dispose();
+				AdditionalData.Dispose();
 			}
 		}
 	}
