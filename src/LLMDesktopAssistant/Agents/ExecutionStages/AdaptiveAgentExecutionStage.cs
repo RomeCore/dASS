@@ -85,7 +85,8 @@ namespace LLMDesktopAssistant.Agents.ExecutionStages
 			var agentTaskExecutor = context.Services.GetRequiredService<IAgentTaskExecutor>();
 
 			var agents = selectFrom
-				.Select(a => context.AgentManager.GetAgentDescriptor(a.AgentId))
+				.Select(a => context.AgentManager.TryGetAgentDescriptor(a.AgentId)!)
+				.Where(a => a is not null)
 				.ToList();
 
 			if (agents.Count == 0)

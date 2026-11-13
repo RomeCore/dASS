@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using LLMDesktopAssistant.Agents.Tasks;
-using LLMDesktopAssistant.Utils;
-
 namespace LLMDesktopAssistant.LLM.Domain
 {
 	/// <summary>
@@ -27,10 +23,27 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public bool IsUserLike { get; init; }
 
+		private string? _reasoningSignature = null;
+		/// <summary>
+		/// Gets or sets the reasoning signature for the message.
+		/// </summary>
+		/// <remarks>
+		/// Used by some providers to track the real reasoning data that is hidden from API.
+		/// If provider uses signatures, the <see cref="ReasoningContent"/> becomes read-only.
+		/// </remarks>
+		public string? ReasoningSignature
+		{
+			get => _reasoningSignature;
+			set => SetProperty(ref _reasoningSignature, value);
+		}
+
 		private string? _reasoningContent = null;
 		/// <summary>
 		/// Gets or sets the reasoning content of the message.
 		/// </summary>
+		/// <remarks>
+		/// If providers use signatures, this property becomes read-only.
+		/// </remarks>
 		public string? ReasoningContent
 		{
 			get => _reasoningContent;

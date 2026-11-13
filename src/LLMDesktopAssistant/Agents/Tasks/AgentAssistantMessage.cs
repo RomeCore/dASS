@@ -5,6 +5,16 @@ namespace LLMDesktopAssistant.Agents.Tasks
 {
 	public class AgentAssistantMessage : AgentChatMessage, IToolCallHost
 	{
+		private string? _reasoningSignature;
+		/// <summary>
+		/// The reasoning signature of the assistant's message.
+		/// </summary>
+		public string? ReasoningSignature
+		{
+			get => _reasoningSignature;
+			set => SetProperty(ref _reasoningSignature, value);
+		}
+
 		private string? _reasoningContent;
 		/// <summary>
 		/// The reasoning content of the assistant's message.
@@ -15,7 +25,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			set => SetProperty(ref _reasoningContent, value);
 		}
 
-		private RangeObservableCollection<AgentAttachment> _attachments = [];
+		private readonly RangeObservableCollection<AgentAttachment> _attachments = [];
 		/// <summary>
 		/// A collection of attachments associated with the assistant's message.
 		/// </summary>
@@ -25,7 +35,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			set => _attachments.Reset(value);
 		}
 
-		private RangeObservableCollection<AgentToolCall> _toolCalls = [];
+		private readonly RangeObservableCollection<AgentToolCall> _toolCalls = [];
 		/// <summary>
 		/// A collection of tool calls associated with the assistant's message.
 		/// </summary>
@@ -34,7 +44,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			get => _toolCalls;
 			set => _toolCalls.Reset(value);
 		}
-
 		IReadOnlyList<IToolCall> IToolCallHost.ToolCalls => ToolCalls;
 
 		private AgentUsageStatistics? _usageStatistics;

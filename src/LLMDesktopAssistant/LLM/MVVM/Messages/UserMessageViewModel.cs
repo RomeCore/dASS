@@ -61,7 +61,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				{
 					SenderAvatar = null;
 				}
-				SenderName = user?.Name ?? _userMessage.SenderLogin;
+				SenderName = user?.Name ?? (string.IsNullOrEmpty(_userMessage.Sender)
+					? _userMessage.SenderLogin : _userMessage.Sender);
 				ShowAvatar = true;
 			}
 

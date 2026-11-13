@@ -31,9 +31,14 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		public MessageStatusModel Status { get; set; }
 
 		/// <summary>
-		/// Gets or sets the sender of the message. This can be GUID for assistant message and login name for user message.
+		/// Gets or sets the sender of the message. This is used for displaying the message in the UI and for agents as fallback.
 		/// </summary>
 		public string Sender { get; set; } = string.Empty;
+
+		/// <summary>
+		/// Gets or sets the sender ID of the message. This can be GUID for assistant message and login name for user message.
+		/// </summary>
+		public string SenderId { get; set; } = string.Empty;
 
 		/// <summary>
 		/// Gets or sets the ID of the agent stage associated with this message.
@@ -69,6 +74,11 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		/// Gets or sets the main content of the message.
 		/// </summary>
 		public string Content { get; set; } = string.Empty;
+
+		/// <summary>
+		/// Gets or sets the reasoning signature of the assistant message.
+		/// </summary>
+		public string? ReasoningSignature { get; set; }
 
 		/// <summary>
 		/// Gets or sets the reasoning content of the assistant message.

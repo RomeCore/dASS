@@ -3,6 +3,7 @@
 %locale: 
 %namespace: chat
 
+agent.unknown: Unknown agent
 follow_up.chip: Messages queued: {0}
 follow_up.clear: Clear queue
 follow_up.clear.action: Clear

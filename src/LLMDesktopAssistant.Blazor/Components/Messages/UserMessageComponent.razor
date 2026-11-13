@@ -84,7 +84,6 @@
 			</div>
 		}
 
-		@* The one action that is live today: load the message into the input, as on the desktop. *@
 		@* Editing truncates the branch for everyone, so until a rights model exists only the author may do it. *@
 		@if (_isOwn)
 		{
@@ -160,7 +159,8 @@
 		if (_showAvatar)
 		{
 			var user = UserManager.FindByLogin(Message.SenderLogin);
-			_senderName = user?.Name ?? Message.SenderLogin;
+			_senderName = user?.Name ?? (string.IsNullOrEmpty(Message.Sender)
+				? Message.SenderLogin : Message.Sender);
 
 			try
 			{

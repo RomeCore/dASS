@@ -15,8 +15,12 @@ namespace LLMDesktopAssistant.Agents.ExecutionStages
 		protected virtual Task<Guid?> DetectMentionAsync(List<ChatAgentInstance> selectFrom,
 			AgentPreExecutionContext context, CancellationToken cancellationToken = default)
 		{
-			if (context.PreviousAgentExecuted.HasValue && 
-				!context.AgentManager.GetAgentDescriptor(context.PreviousAgentExecuted.Value).ExecutionConditions.GetEffectiveMention(context.Chat.Services.GetRequiredService<IChatSettingsService>().Settings).CanMentionOthers)
+			// Check if the previous agent can mention others
+			// Unknown agents can mention others
+			if (context.PreviousAgentExecuted.HasValue &&
+				!(context.AgentManager.TryGetAgentDescriptor(context.PreviousAgentExecuted.Value)?
+					.ExecutionConditions.GetEffectiveMention(context.Chat.Services
+					.GetRequiredService<IChatSettingsService>().Settings).CanMentionOthers ?? true))
 				return Task.FromResult<Guid?>(null);
 
 			var strToSearch = context.Chat.Messages.LastOrDefault()?.Message.Content;
@@ -25,7 +29,8 @@ namespace LLMDesktopAssistant.Agents.ExecutionStages
 				return Task.FromResult<Guid?>(null);
 
 			var agents = selectFrom
-				.Select(a => context.AgentManager.GetAgentDescriptor(a.AgentId))
+				.Select(a => context.AgentManager.TryGetAgentDescriptor(a.AgentId)!)
+				.Where(a => a is not null)
 				.Where(a => a.ExecutionConditions.GetEffectiveMention(context.Chat.Services.GetRequiredService<IChatSettingsService>().Settings).CanBeMentioned)
 				.ToList();
 

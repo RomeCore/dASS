@@ -3,6 +3,7 @@
 %locale: ru-RU
 %namespace: chat
 
+agent.unknown: Неизвестный агент
 follow_up.chip: Сообщений в очереди: {0}
 follow_up.clear: Очистить очередь
 follow_up.clear.action: Очистить

@@ -162,7 +162,9 @@
 			}
 			catch
 			{
-				_senderName = LocalizationManager.LocalizeStatic("webui.assistant");
+				_senderName = string.IsNullOrEmpty(Message.Sender)
+					? Locale.Get("chat.agent.unknown")
+					: Message.Sender;
 				_avatarBase64 = string.Empty;
 			}
 		}

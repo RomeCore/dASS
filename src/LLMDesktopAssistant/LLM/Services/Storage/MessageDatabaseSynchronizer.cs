@@ -93,8 +93,9 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				RoleModel.User => new UserMessage
 				{
 					CreatedAt = model.CreatedAt,
+					SenderLogin = model.SenderId,
+					Sender = model.Sender,
 					Content = model.Content,
-					SenderLogin = model.Sender,
 					Visibility = model.Visibility,
 					IsRevealed = model.IsRevealed,
 					VisibleTo = model.VisibleTo,
@@ -105,9 +106,11 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				RoleModel.Assistant => new AssistantMessage
 				{
 					CreatedAt = model.CreatedAt,
-					SenderAgentId = Guid.TryParse(model.Sender, out var senderAgent) ? senderAgent : Guid.Empty,
+					SenderAgentId = Guid.TryParse(model.SenderId, out var senderAgent) ? senderAgent : Guid.Empty,
+					Sender = model.Sender,
 					AgentStageId = model.AgentStageId,
 					IsUserLike = model.IsUserLike,
+					ReasoningSignature = model.ReasoningSignature,
 					ReasoningContent = model.ReasoningContent,
 					Content = model.Content,
 					Error = model.Error,
@@ -131,6 +134,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		private static void CopyToModel(MessageModel model, ChatMessage from)
 		{
 			model.CreatedAt = from.CreatedAt;
+			model.Sender = from.Sender;
 			model.Content = from.Content;
 			model.Error = from.Error;
 			model.IsDisabledForAgents = from.IsDisabledForAgents;
@@ -139,7 +143,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 			{
 				case UserMessage userMessage:
 					model.Role = RoleModel.User;
-					model.Sender = userMessage.SenderLogin;
+					model.SenderId = userMessage.SenderLogin;
 					model.Visibility = userMessage.Visibility;
 					model.IsRevealed = userMessage.IsRevealed;
 					model.VisibleTo = userMessage.VisibleTo;
@@ -148,9 +152,10 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 
 				case AssistantMessage assistantMessage:
 					model.Role = RoleModel.Assistant;
-					model.Sender = assistantMessage.SenderAgentId.ToString();
+					model.SenderId = assistantMessage.SenderAgentId.ToString();
 					model.AgentStageId = assistantMessage.AgentStageId;
 					model.IsUserLike = assistantMessage.IsUserLike;
+					model.ReasoningSignature = assistantMessage.ReasoningSignature;
 					model.ReasoningContent = assistantMessage.ReasoningContent;
 					model.Status = assistantMessage.Status switch
 					{

@@ -1,8 +1,6 @@
 using LLMDesktopAssistant.Agents;
-using LLMDesktopAssistant.Agents.Settings;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Agents;
-using LLMDesktopAssistant.LLM.Settings;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
@@ -46,49 +44,77 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 				if (messageAgentId == agent.Id)
 					return new MessageVisibilityResult(true, true, MessagePartsFacet.All, MessageAuthorIdentity.Default);
 
-				var senderAgent = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
-
 				var readFilters = agent.Read.GetEffectiveReadFilters(chatSettings.Settings);
 				var readFilter = assistantMessage.IsUserLike ? readFilters.User : readFilters.Agent;
-				
-				var defaultShares = senderAgent.Read.GetEffectiveDefaultShareFilters(chatSettings.Settings);
-				var defaultShare = agent.Info.IdentifyAsUser ? defaultShares.User : defaultShares.Agent;
-				var share = senderAgent.Read.ParticipantsShareFilters.GetValueOrDefault(agent.Id);
 
-				bool shareVisible = share is { OverrideVisible: true } ? share.Visible : defaultShare.Visible;
-				if (!shareVisible || !readFilter.Visible)
-					return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+				var senderAgent = agentManager.TryGetAgentDescriptor(assistantMessage.SenderAgentId);
 
-				var compoundVisibility = defaultShare.VisibleMessages;
-				if (share != null)
-					compoundVisibility = (compoundVisibility & ~share.OverridenVisibleMessages)
-						| (share.VisibleMessages & share.OverridenVisibleMessages);
-				compoundVisibility &= readFilter.VisibleMessages;
+				if (senderAgent is not null)
+				{
+					var defaultShares = senderAgent.Read.GetEffectiveDefaultShareFilters(chatSettings.Settings);
+					var defaultSenderShare = agent.Info.IdentifyAsUser ? defaultShares.User : defaultShares.Agent;
+					var senderShare = senderAgent.Read.ParticipantsShareFilters.GetValueOrDefault(agent.Id);
 
-				bool visibilityResult =
-					(compoundVisibility is MessageVisibilityFacet.Unknown) ||
-					(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithToolCalls) && assistantMessage.ToolCalls.Count > 0) ||
-					(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithoutToolCalls) && assistantMessage.ToolCalls.Count == 0);
-				if (!visibilityResult)
-					return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+					bool shareVisible = senderShare is { OverrideVisible: true } ? senderShare.Visible : defaultSenderShare.Visible;
+					if (!shareVisible || !readFilter.Visible)
+						return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
 
-				var compoundParts = defaultShare.VisibleParts;
-				if (share != null)
-					compoundParts = (compoundParts & ~share.OverridenVisibleParts)
-						| (share.VisibleParts & share.OverridenVisibleParts);
-				compoundParts &= readFilter.VisibleParts;
+					var compoundVisibility = defaultSenderShare.VisibleMessages;
+					if (senderShare != null)
+						compoundVisibility = (compoundVisibility & ~senderShare.OverridenVisibleMessages)
+							| (senderShare.VisibleMessages & senderShare.OverridenVisibleMessages);
+					compoundVisibility &= readFilter.VisibleMessages;
 
-				var compoundIdentity = defaultShare.Identity;
-				if (share != null && share.Identity is not MessageAuthorIdentity.Default)
-					compoundIdentity = share.Identity;
-				if (readFilter.Identity is not MessageAuthorIdentity.Default)
-					compoundIdentity = readFilter.Identity;
-				if (compoundIdentity is MessageAuthorIdentity.Default)
-					compoundIdentity = assistantMessage.IsUserLike
-						? MessageAuthorIdentity.NamedUser
-						: MessageAuthorIdentity.NamedAgent;
+					bool visibilityResult =
+						(compoundVisibility is MessageVisibilityFacet.Unknown) ||
+						(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithToolCalls) && assistantMessage.ToolCalls.Count > 0) ||
+						(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithoutToolCalls) && assistantMessage.ToolCalls.Count == 0);
+					if (!visibilityResult)
+						return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
 
-				return new MessageVisibilityResult(true, false, compoundParts, compoundIdentity);
+					var compoundParts = defaultSenderShare.VisibleParts;
+					if (senderShare != null)
+						compoundParts = (compoundParts & ~senderShare.OverridenVisibleParts)
+							| (senderShare.VisibleParts & senderShare.OverridenVisibleParts);
+					compoundParts &= readFilter.VisibleParts;
+
+					var compoundIdentity = defaultSenderShare.Identity;
+					if (senderShare != null && senderShare.Identity is not MessageAuthorIdentity.Default)
+						compoundIdentity = senderShare.Identity;
+					if (readFilter.Identity is not MessageAuthorIdentity.Default)
+						compoundIdentity = readFilter.Identity;
+					if (compoundIdentity is MessageAuthorIdentity.Default)
+						compoundIdentity = assistantMessage.IsUserLike
+							? MessageAuthorIdentity.NamedUser
+							: MessageAuthorIdentity.NamedAgent;
+
+					return new MessageVisibilityResult(true, false, compoundParts, compoundIdentity);
+				}
+				else
+				{
+					// If agent is not found (unknown, or removed), we don't apply the share filters - every agent can read every parts of the message.
+					if (!readFilter.Visible)
+						return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+
+					var compoundVisibility = readFilter.VisibleMessages;
+
+					bool visibilityResult =
+						(compoundVisibility is MessageVisibilityFacet.Unknown) ||
+						(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithToolCalls) && assistantMessage.ToolCalls.Count > 0) ||
+						(compoundVisibility.HasFlag(MessageVisibilityFacet.MessagesWithoutToolCalls) && assistantMessage.ToolCalls.Count == 0);
+					if (!visibilityResult)
+						return new MessageVisibilityResult(false, false, MessagePartsFacet.None, MessageAuthorIdentity.Default);
+
+					var compoundParts = readFilter.VisibleParts;
+
+					var compoundIdentity = readFilter.Identity;
+					if (compoundIdentity is MessageAuthorIdentity.Default)
+						compoundIdentity = assistantMessage.IsUserLike
+							? MessageAuthorIdentity.NamedUser
+							: MessageAuthorIdentity.NamedAgent;
+
+					return new MessageVisibilityResult(true, false, compoundParts, compoundIdentity);
+				}
 			}
 			throw new InvalidOperationException("Invalid message type: " + message?.Message?.GetType() ?? "null");
 		}

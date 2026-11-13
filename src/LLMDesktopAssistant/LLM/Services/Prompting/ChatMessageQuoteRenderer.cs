@@ -43,13 +43,19 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					return new MessageRenderingResult(rawUserMessage.Content, NativeAttachments: []);
 
 				case UserMessage userMessage:
-					name = userManager.FindByLogin(userMessage.SenderLogin)?.GetAgentShownName() ?? userMessage.SenderLogin;
+					name = userManager.FindByLogin(userMessage.SenderLogin)?.GetAgentShownName() ??
+						(string.IsNullOrEmpty(userMessage.Sender)
+							? userMessage.SenderLogin
+							: userMessage.Sender);
 					isUserLike = true;
 					break;
 
 				case AssistantMessage assistantMessage:
-					var senderDescriptor = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
-					name = senderDescriptor.Info.Name ?? senderDescriptor.Id.ToString()[..8];
+					var senderDescriptor = agentManager.TryGetAgentDescriptor(assistantMessage.SenderAgentId);
+					name = senderDescriptor?.Info.Name ??
+						(string.IsNullOrEmpty(assistantMessage.Sender)
+							? "Unknown " + assistantMessage.SenderAgentId.ToString()[..8]
+							: assistantMessage.Sender);
 					isUserLike = assistantMessage.IsUserLike;
 					break;
 

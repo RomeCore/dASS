@@ -34,11 +34,11 @@
 				</Border>
 
 				<ico:VisualIcon Kind="Robot" Width="32" Height="32" Margin="4"
-													IsVisible="{Binding SenderAvatar, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
+												IsVisible="{Binding SenderAvatar, Converter={StaticResource NotnullToBooleanConverterInverted}}"/>
 
 			</Panel>
 
-			<TextBlock Text="{Binding SenderName}"
+			<TextBlock Text="{loc:Loc {Binding SenderName}}"
 								 FontSize="16"
 								 FontWeight="Bold"
 								 Margin="4"

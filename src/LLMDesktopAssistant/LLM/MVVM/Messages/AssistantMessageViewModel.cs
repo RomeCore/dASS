@@ -1,8 +1,8 @@
 using System.ComponentModel;
 using Avalonia.Media.Imaging;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.UIExtensions.MessageExtensions;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Messages
@@ -15,7 +15,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 
 		public bool ShowAvatar { get; }
 		public Bitmap? SenderAvatar { get; }
-		public string? SenderName { get; }
+		public LocaleKeyBase? SenderName { get; }
 
 		private bool _isCompleted;
 		public bool IsCompleted
@@ -51,23 +51,33 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			if (prevMessage == null || assistantMessage.SenderAgentId != prevMessage.SenderAgentId)
 			{
 				var agentManager = chatVM.Chat.Services.GetRequiredService<IAgentManagementService>();
-				var agent = agentManager.GetAgentDescriptor(assistantMessage.SenderAgentId);
+				var agent = agentManager.TryGetAgentDescriptor(assistantMessage.SenderAgentId);
 
-				try
+				if (agent != null)
 				{
-					if (!string.IsNullOrWhiteSpace(agent.Info.Base64ProfileImage))
+					try
 					{
-						var bytes = Convert.FromBase64String(agent.Info.Base64ProfileImage);
-						using var ms = new MemoryStream(bytes);
-						SenderAvatar = new Bitmap(ms);
+						if (!string.IsNullOrWhiteSpace(agent.Info.Base64ProfileImage))
+						{
+							var bytes = Convert.FromBase64String(agent.Info.Base64ProfileImage);
+							using var ms = new MemoryStream(bytes);
+							SenderAvatar = new Bitmap(ms);
+						}
 					}
+					catch
+					{
+						SenderAvatar = null;
+					}
+					SenderName = Locale.GetConstKey(agent.Info.Name);
+					ShowAvatar = true;
 				}
-				catch
+				else
 				{
-					SenderAvatar = null;
+					SenderName = string.IsNullOrEmpty(assistantMessage.Sender)
+						? Locale.GetKey("chat.agent.unknown")
+						: Locale.GetConstKey(assistantMessage.Sender);
+					ShowAvatar = true;
 				}
-				SenderName = agent.Info.Name;
-				ShowAvatar = true;
 			}
 
 			ReasoningPart = new AssistantMessageReasoningPartViewModel(this);

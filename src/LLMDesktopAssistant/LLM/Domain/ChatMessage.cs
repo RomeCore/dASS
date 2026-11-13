@@ -1,10 +1,7 @@
 using LLMDesktopAssistant.Agents.Tasks;
-using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
-using LLTSharp;
-using RCLargeLanguageModels.Messages.Attachments;
 
 namespace LLMDesktopAssistant.LLM.Domain
 {
@@ -14,11 +11,20 @@ namespace LLMDesktopAssistant.LLM.Domain
 	public abstract class ChatMessage : ChatObjectBase, IToolCallHost
 	{
 		/// <summary>
+		/// Gets or sets the sender name of the message. This is displayed in UI and for agents as fallback.
+		/// </summary>
+		public string Sender
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = string.Empty;
+
+		/// <summary>
 		/// Gets or sets the content of the message.
 		/// </summary>
 		public string Content
 		{
-			get => field;
+			get;
 			set => SetProperty(ref field, value);
 		} = string.Empty;
 

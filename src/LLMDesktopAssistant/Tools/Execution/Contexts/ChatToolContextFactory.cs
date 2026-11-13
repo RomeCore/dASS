@@ -39,9 +39,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Contexts
 			Action<bool>? persistAlways = null;
 			if (message is AssistantMessage { SenderAgentId: var senderAgentId } && senderAgentId != Guid.Empty)
 			{
-				var sender = agentManager.GetAgentDescriptor(senderAgentId);
+				var sender = agentManager.TryGetAgentDescriptor(senderAgentId);
 				persistAlways = approved =>
-					ToolConsentPersister.MemorizeAlways(sender, chatSettings, call.ToolName, approved);
+				{
+					if (sender is not null)
+						ToolConsentPersister.MemorizeAlways(sender, chatSettings, call.ToolName, approved);
+				};
 			}
 
 			var consent = new ToolConsentMemorizationContext(memorization, chat, call.ToolName, persistAlways);
