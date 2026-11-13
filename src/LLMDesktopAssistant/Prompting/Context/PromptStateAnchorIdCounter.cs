@@ -16,5 +16,10 @@ namespace LLMDesktopAssistant.Prompting.Context
 			get => _lastId;
 			set => SetProperty(ref _lastId, value);
 		}
+
+		public PromptStateAnchorIdCounter()
+		{
+			IsVisible = false;
+		}
 	}
 }

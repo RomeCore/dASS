@@ -28,6 +28,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		public ChatBottomPanelViewModel ChatBottomPanel { get; }
 
+		/// <summary>
+		/// Gets the fallback side panel over the chat's own additional data.
+		/// </summary>
+		public ChatSidePanelViewModel ChatSidePanel { get; }
+
 		private AgentTaskListViewModel? _agentTaskList;
 		/// <summary>
 		/// Gets the view model for the list of agent tasks associated with this chat.
@@ -74,6 +79,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public ChatViewModel(Chat chat)
 		{
 			Chat = chat;
+			ChatSidePanel = new ChatSidePanelViewModel(chat.AdditionalData);
 			ChatBottomPanel = new ChatBottomPanelViewModel(this);
 			ChatStatus = new ChatStatusViewModel(chat);
 			MessageSequence = new MessageSequenceViewModel(this, ChatBottomPanel.UserInput);
@@ -115,6 +121,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					AgentTaskList.PropertyChanged -= OnAgentTaskListPropertyChanged;
 
 				MessageSequence.Dispose();
+				ChatSidePanel.Dispose();
 				ChatBottomPanel.Dispose();
 				ChatStatus.Dispose();
 				AgentTaskList?.Dispose();

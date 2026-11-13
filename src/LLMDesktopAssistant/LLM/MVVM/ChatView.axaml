@@ -4,127 +4,165 @@
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 						 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:additional="using:LLMDesktopAssistant.LLM.MVVM.Additional"
 						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
 						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatView"
 						 x:DataType="local:ChatViewModel">
-	
-	<Grid RowDefinitions="*,Auto">
 
-		<!-- Messages Area -->
-		<Panel Grid.Row="0">
+	<Grid>
 
-			<!-- Agent Tasks button (top-right) -->
-			<Button x:Name="AgentTasksButton"
-							IsHitTestVisible="{Binding HasRunningTasks}"
-							Opacity="{Binding HasRunningTasks, Converter={StaticResource BooleanToOpacityConverter}}"
-							Classes="BigIconButton"
-							HorizontalAlignment="Right"
-							VerticalAlignment="Top"
-							Margin="32,16"
-							ClipToBounds="False"
-							ZIndex="10">
-				
-				<Button.Transitions>
-					<Transitions>
-						<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
-					</Transitions>
-				</Button.Transitions>
+		<Grid.ColumnDefinitions>
+			<!-- Two-way: the splitter writes the chosen width back to the panel. -->
+			<ColumnDefinition Width="{Binding ChatSidePanel.PanelWidth, Mode=TwoWay}"/>
+			<ColumnDefinition Width="{Binding ChatSidePanel.SplitterWidth}"/>
+			<ColumnDefinition Width="*"/>
+		</Grid.ColumnDefinitions>
 
-				<Panel>
-					<ico:VisualIcon Kind="{Binding AgentTaskIcon}"
-												  Width="32" Height="32"/>
+		<!-- Side panel: the fallback surface for the chat's own additional data. -->
+		<Border Grid.Column="0"
+						IsVisible="{Binding ChatSidePanel.HasItems}">
 
-					<!-- Running task count badge -->
-					<Border Background="#F44336"
-									CornerRadius="9"
-									HorizontalAlignment="Right"
-									VerticalAlignment="Top"
-									Padding="5,1"
-									Margin="0,-6,-6,0"
-									ZIndex="1">
-						<TextBlock Text="{Binding RunningTaskCount}"
-										   FontSize="10"
-										   Foreground="White"
-										   FontWeight="Bold"/>
-					</Border>
-				</Panel>
-
-				<!-- Agent Tasks Popup -->
-				<Button.Flyout>
-					<Flyout Placement="BottomEdgeAlignedRight"
-									HorizontalOffset="-16"
-									VerticalOffset="4">
-						
-						<StackPanel Spacing="4" Orientation="Vertical">
-							<StackPanel Orientation="Horizontal"
-													Spacing="8"
-													Margin="0,0,0,8">
-								<ico:VisualIcon Kind="TimerSandComplete"
-																Width="18" Height="18"
-																VerticalAlignment="Center"/>
-								<TextBlock Text="{loc:Loc task.title}"
-													 FontSize="15" FontWeight="Bold"
-													 VerticalAlignment="Center"/>
-							</StackPanel>
-							<ScrollViewer MaxHeight="450">
-								<ContentControl Content="{Binding AgentTaskList}"/>
-							</ScrollViewer>
-						</StackPanel>
-
-					</Flyout>
-				</Button.Flyout>
-			</Button>
-
-			<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
-																 ScrollChanged="MessagesScrollViewer_ScrollChanged"
-																 VerticalScrollBarVisibility="Visible"
-																 AllowAutoHide="False"
-																 BringIntoViewOnFocusChange="False"
-																 FollowEnd="True"
-																 Step="75">
-
-				<StackPanel>
-					<ContentControl Content="{Binding MessageSequence}"/>
-					<ContentControl Content="{Binding ChatStatus}"/>
-				</StackPanel>
+			<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
+																 Padding="12,12"
+																 Step="65">
+				<ItemsControl ItemsSource="{Binding ChatSidePanel.Items}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="additional:AdditionalChatData">
+							<ContentControl Content="{Binding}"
+															IsVisible="{Binding IsVisible}"
+															Margin="0,0,0,12"/>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
 			</scroll:SmoothScrollViewer>
 
-			<Button x:Name="ScrollToBottomButton"
-							Classes="BigIconButton"
-							Click="ScrollToBottomButton_Click"
-							HorizontalAlignment="Right"
-							VerticalAlignment="Bottom"
-							Margin="32,16">
-				
-				<Button.Transitions>
-					<Transitions>
-						<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
-					</Transitions>
-				</Button.Transitions>
-
-				<ico:VisualIcon Kind="ArrowDown"/>
-
-			</Button>
-
-			<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->
-			<ContentControl HorizontalAlignment="Right"
-											VerticalAlignment="Bottom"
-											Margin="16,0,96,0"
-											ZIndex="20"
-											Content="{Binding ChatBottomPanel.UserInput.Chips}"/>
-
-		</Panel>
-
-		<!-- Input Area -->
-		<Border Grid.Row="1"
-						Padding="16,8"
-						BorderBrush="{DynamicResource PrimaryAccentBrush}"
-						BorderThickness="0,1,0,0">
-
-			<ContentControl Content="{Binding ChatBottomPanel}"/>
 		</Border>
+
+		<GridSplitter Grid.Column="1"
+									Width="2" MinWidth="1"
+									ResizeDirection="Columns"
+									Background="{DynamicResource PrimaryAccentBrush}"
+									IsVisible="{Binding ChatSidePanel.HasItems}"/>
+
+		<Grid Grid.Column="2" RowDefinitions="*,Auto">
+
+			<!-- Messages Area -->
+			<Panel Grid.Row="0">
+
+				<!-- Agent Tasks button (top-right) -->
+				<Button x:Name="AgentTasksButton"
+								IsHitTestVisible="{Binding HasRunningTasks}"
+								Opacity="{Binding HasRunningTasks, Converter={StaticResource BooleanToOpacityConverter}}"
+								Classes="BigIconButton"
+								HorizontalAlignment="Right"
+								VerticalAlignment="Top"
+								Margin="32,16"
+								ClipToBounds="False"
+								ZIndex="10">
+
+					<Button.Transitions>
+						<Transitions>
+							<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+						</Transitions>
+					</Button.Transitions>
+
+					<Panel>
+						<ico:VisualIcon Kind="{Binding AgentTaskIcon}"
+														Width="32" Height="32"/>
+
+						<!-- Running task count badge -->
+						<Border Background="#F44336"
+										CornerRadius="9"
+										HorizontalAlignment="Right"
+										VerticalAlignment="Top"
+										Padding="5,1"
+										Margin="0,-6,-6,0"
+										ZIndex="1">
+							<TextBlock Text="{Binding RunningTaskCount}"
+											   FontSize="10"
+											   Foreground="White"
+											   FontWeight="Bold"/>
+						</Border>
+					</Panel>
+
+					<!-- Agent Tasks Popup -->
+					<Button.Flyout>
+						<Flyout Placement="BottomEdgeAlignedRight"
+										HorizontalOffset="-16"
+										VerticalOffset="4">
+
+							<StackPanel Spacing="4" Orientation="Vertical">
+								<StackPanel Orientation="Horizontal"
+														Spacing="8"
+														Margin="0,0,0,8">
+									<ico:VisualIcon Kind="TimerSandComplete"
+																	Width="18" Height="18"
+																	VerticalAlignment="Center"/>
+									<TextBlock Text="{loc:Loc task.title}"
+														   FontSize="15" FontWeight="Bold"
+														   VerticalAlignment="Center"/>
+								</StackPanel>
+								<ScrollViewer MaxHeight="450">
+									<ContentControl Content="{Binding AgentTaskList}"/>
+								</ScrollViewer>
+							</StackPanel>
+
+						</Flyout>
+					</Button.Flyout>
+				</Button>
+
+				<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
+																	 ScrollChanged="MessagesScrollViewer_ScrollChanged"
+																	 VerticalScrollBarVisibility="Visible"
+																	 AllowAutoHide="False"
+																	 BringIntoViewOnFocusChange="False"
+																	 FollowEnd="True"
+																	 Step="75">
+
+					<StackPanel>
+						<ContentControl Content="{Binding MessageSequence}"/>
+						<ContentControl Content="{Binding ChatStatus}"/>
+					</StackPanel>
+				</scroll:SmoothScrollViewer>
+
+				<Button x:Name="ScrollToBottomButton"
+								Classes="BigIconButton"
+								Click="ScrollToBottomButton_Click"
+								HorizontalAlignment="Right"
+								VerticalAlignment="Bottom"
+								Margin="32,16">
+
+					<Button.Transitions>
+						<Transitions>
+							<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+						</Transitions>
+					</Button.Transitions>
+
+					<ico:VisualIcon Kind="ArrowDown"/>
+
+				</Button>
+
+				<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->
+				<ContentControl HorizontalAlignment="Right"
+												VerticalAlignment="Bottom"
+												Margin="16,0,96,0"
+												ZIndex="20"
+												Content="{Binding ChatBottomPanel.UserInput.Chips}"/>
+
+			</Panel>
+
+			<!-- Input Area -->
+			<Border Grid.Row="1"
+							Padding="16,8"
+							BorderBrush="{DynamicResource PrimaryAccentBrush}"
+							BorderThickness="0,1,0,0">
+
+				<ContentControl Content="{Binding ChatBottomPanel}"/>
+			</Border>
+		</Grid>
+
 	</Grid>
-	
+
 </UserControl>
