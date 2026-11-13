@@ -5,8 +5,8 @@ namespace LLMDesktopAssistant.Utils.Attachments
 	/// </summary>
 	/// <remarks>
 	/// This is the C# side of the contract the Lua attachment handlers rely on
-	/// (<c>ILuaDataAttachmentHandler.TryAttach</c>): a handler does not build a return value,
-	/// it converts a Lua-side handle into an <see cref="IChatAttachment"/> and gives it to the host.
+	/// (<c>ILuaDataAttachmentHandler.TryResolve</c>): a handler builds the payload a Lua handle stands for,
+	/// and the host receives it here, together with whatever placement the script asked for.
 	/// </remarks>
 	public interface IChatAttachmentHost
 	{

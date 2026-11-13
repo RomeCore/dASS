@@ -46,9 +46,30 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Appends a native attachment part to the chat. 'attachment' is any attachable handle
 			  (e.g. an image handle from image.load()/image.create()).
 
-			--- dass.chat.append_data(...)
-			  Appends one or more attachable handles to the chat: 'uicontrol' from
-			  dass.ui.create_control(), or a live 'terminal' from process.run_terminal().
+			--- dass.chat.append_data(handle, [options])
+			  Appends ONE attachable handle to the chat: a 'uicontrol' from dass.ui.create_control(),
+			  or a live 'terminal' from process.run_terminal(). The same handle can be appended more
+			  than once: every call shows the payload in its own place, while the payload itself is
+			  shared, so ui:set_xaml() re-renders every copy of it.
+
+			  Parameters:
+			    - handle: uicontrol or terminal - the attachable handle
+			    - options: table (optional) - where the payload is shown and how it behaves:
+			        surface: string - "rail" puts the payload on the input rail
+			        horizontal: string - "left" or "right" (rail only, default "left")
+			        vertical: string - "top" or "bottom" (rail only, default "bottom")
+			        visible: boolean - show or hide the payload (default true)
+			        temporary: boolean - do not persist the payload (default false)
+			      Without a surface the payload is plain additional chat data and lands in the side
+			      panel. An unknown key, an unknown value or a rail placement without the rail surface
+			      is an error, not a silent fallback.
+
+			  Returns: nil
+
+			--- dass.chat.remove_data(handle) -> boolean
+			  Removes everything dass.chat.append_data() attached with this handle: the payload and
+			  every rail item wrapping it. A live terminal goes away with its process.
+			  Returns: boolean - true when something of this handle was attached to this chat.
 
 			--- dass.chat.on_close(func) -> chat_close_hook
 			  Registers func to run when this chat closes: switching to another chat, closing the
@@ -88,9 +109,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - msg:append_attachment_part(attachment, title, icon, color) - a native
 			      attachment part; 'attachment' is any handle that can be attached
 			      (e.g. an image handle from image.load()/image.create())
-			    - msg:append_data(...) - append one or more attachable handles: 'uicontrol'
+			    - msg:append_data(handle, [options]) - append ONE attachable handle: a 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
-			      process.run_terminal()
+			      process.run_terminal(). Options are the same as for dass.chat.append_data(),
+			      except 'surface': the rail exists on the chat only
+			    - msg:remove_data(handle) -> boolean - remove everything appended with this handle
 
 			  'icon' is a visual icon kind name (e.g. "Star", "Cards"), 'color' is a hex string
 			  (e.g. "#ff88cc"); both are optional (pass nil). Parts are not restorable on edit.
@@ -134,6 +157,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  local t = process.run_terminal("claude")
 			  if t then dass.chat.append_data(t) end
 
+			  -- A control on the input rail: the right group of the strip above the input.
+			  local ui = dass.ui.create_control("...", model)
+			  dass.chat.append_data(ui, { surface = "rail", horizontal = "right", vertical = "top" })
+			  dass.chat.remove_data(ui) -- takes the rail item and the control with it
+
 			  -- Something small and synchronous: a close hook cannot await
 			  local hook = dass.chat.on_close(function()
 			    -- remember: no awaits inside a hook!
@@ -167,6 +195,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
 			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
+			ns["remove_data"] = new LuaCallbackFunction(RemoveData);
 			ns["on_close"] = new LuaCallbackFunction(OnClose);
 			return null;
 		}
@@ -221,10 +250,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private LuaTuple AppendData(LuaCallingContext ctx, LuaValue[] args)
 		{
-			foreach (var arg in args)
-				_dispatcher.Attach(_chat, Unwrap(arg), "dass.chat.append_data(...)");
+			const string call = "dass.chat.append_data(handle, options)";
+
+			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
+			var options = LuaAttachmentOptions.Parse(args.Length > 1 ? args[1] : null, call);
+			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+
+			_chat.AddAttachment(options.Apply(payload, isChatHost: true, call));
 
 			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple RemoveData(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
+
+			var removed = _dispatcher.TryRemove(_chat, handle);
+			return new LuaTuple(removed ? LuaBoolean.True : LuaBoolean.False);
 		}
 
 		private static string? Str(LuaValue[] args, int index)

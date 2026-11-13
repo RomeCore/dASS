@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Desktop.Execution;
 using LLMDesktopAssistant.Desktop.ToolModules.Terminal;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Utils.Attachments;
@@ -21,10 +22,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua
 		public int Order => 0;
 
 		/// <inheritdoc/>
-		public bool TryAttach(IChatAttachmentHost host, IChatAttachment attachment)
+		public AdditionalChatData? TryResolve(IChatAttachment attachment)
 		{
 			if (attachment is not LuaTerminal terminal)
-				return false;
+				return null;
 
 			var descriptor = terminal.Descriptor;
 			var viewModel = new TerminalAdditionalViewModel
@@ -36,10 +37,9 @@ namespace LLMDesktopAssistant.Desktop.Scripting.Lua
 			};
 			viewModel.SetCancellationTokenSource(descriptor.CancellationTokenSource);
 
-			host.AddAttachment(viewModel);
-
+			// One watcher per handle: the payload is resolved once, however many times it is attached.
 			_ = CompleteWhenExitedAsync(descriptor, viewModel);
-			return true;
+			return viewModel;
 		}
 
 		private static async Task CompleteWhenExitedAsync(ProcessDescriptor descriptor,

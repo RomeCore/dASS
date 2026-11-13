@@ -14,10 +14,10 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public int Order => 0;
 
 		/// <inheritdoc/>
-		public bool TryAttach(IChatAttachmentHost host, IChatAttachment attachment)
+		public AdditionalChatData? TryResolve(IChatAttachment attachment)
 		{
 			if (attachment is not LuaUiControl uiControl)
-				return false;
+				return null;
 
 			var additional = new DynamicAxamlControlAdditionalData(uiControl.Xaml, uiControl.ViewModel);
 
@@ -26,8 +26,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			uiControl.XamlChanged += OnXamlChanged;
 			additional.OnDispose += (_, _) => uiControl.XamlChanged -= OnXamlChanged;
 
-			host.AddAttachment(additional);
-			return true;
+			return additional;
 		}
 	}
 }

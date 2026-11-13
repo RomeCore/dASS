@@ -149,10 +149,27 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				LuaAttachmentParts.CreateNativePart(attachable.GetNativeAttachment(), title, icon, color));
 		}
 
-		public void AppendData(params object?[] controls)
+		/// <summary>
+		/// Appends one attachable handle to the message.
+		/// </summary>
+		/// <param name="handle">The Lua-side attachable handle.</param>
+		/// <param name="options">The presentation options, or <see langword="null"/> when none were passed.</param>
+		public void AppendData(object? handle, object? options = null)
 		{
-			foreach (var control in controls)
-				_dispatcher.Attach(Message.Message, control, "chat_message:append_data(...)");
+			const string call = "chat_message:append_data(handle, options)";
+
+			var parsed = LuaAttachmentOptions.Parse(options, call);
+			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+
+			Message.Message.AddAttachment(parsed.Apply(payload, isChatHost: false, call));
 		}
+
+		/// <summary>
+		/// Removes everything the handle appended to the message.
+		/// </summary>
+		/// <param name="handle">The Lua-side attachable handle.</param>
+		/// <returns><see langword="true"/> when something of this handle was attached to this message.</returns>
+		public bool RemoveData(object? handle)
+			=> _dispatcher.TryRemove(Message.Message, handle);
 	}
 }

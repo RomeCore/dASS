@@ -95,14 +95,23 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Appends a native attachment part. 'attachment' is any attachable handle
 			  (e.g. an image from image.load()/image.create()).
 
-			--- dass.tool.result.append_data(...)
-			  Appends one or more attachable handles to the tool result: a 'uicontrol' created by
+			--- dass.tool.result.append_data(handle, [options])
+			  Appends ONE attachable handle to the tool result: a 'uicontrol' created by
 			  dass.ui.create_control(), or a live 'terminal' from process.run_terminal().
-			  Each argument is attached in order; appending the same handle more than once is allowed.
+			  The same handle can be appended more than once: every call shows the payload in its
+			  own place, while the payload itself is shared.
 			  Parameters:
-				- ...handle - one or more attachable handles
+				- handle: uicontrol or terminal - the attachable handle
+				- options: table (optional) - 'visible' and 'temporary' (booleans); 'surface' is
+				  refused here, because the rail exists on the chat only
 			  Returns: nil
 			  No-op if not in a tool execution context.
+
+			--- dass.tool.result.remove_data(handle) -> boolean
+			  Removes everything dass.tool.result.append_data() attached with this handle. A live
+			  terminal goes away with its process.
+			  Returns: boolean - true when something of this handle was attached to this call.
+			  No-op (false) if not in a tool execution context.
 
 			--- dass.tool.result.use_markdown(enabled)
 			  Sets whether the result content should be rendered as Markdown.
@@ -186,6 +195,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
 			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
+			ns["remove_data"] = new LuaCallbackFunction(RemoveData);
 			ns["use_markdown"] = new LuaCallbackFunction(UseMarkdown);
 			ns["complete"] = new LuaCallbackFunction(Complete);
 			ns["complete_with_success"] = new LuaCallbackFunction(CompleteWithSuccess);
@@ -349,14 +359,31 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private LuaTuple AppendData(LuaCallingContext ctx, LuaValue[] args)
 		{
+			const string call = "dass.tool.result.append_data(handle, options)";
+
 			var result = GetResult(ctx);
 			if (result == null)
 				return new LuaTuple(LuaNil.Instance);
 
-			foreach (var arg in args)
-				_dispatcher.Attach(result.Host, Unwrap(arg), "dass.tool.result.append_data(...)");
+			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
+			var options = LuaAttachmentOptions.Parse(args.Length > 1 ? args[1] : null, call);
+			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+
+			result.Host.AddAttachment(options.Apply(payload, isChatHost: false, call));
 
 			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple RemoveData(LuaCallingContext ctx, LuaValue[] args)
+		{
+			var result = GetResult(ctx);
+			if (result == null)
+				return new LuaTuple(LuaBoolean.False);
+
+			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
+
+			var removed = _dispatcher.TryRemove(result.Host, handle);
+			return new LuaTuple(removed ? LuaBoolean.True : LuaBoolean.False);
 		}
 
 		private LuaTuple UseMarkdown(LuaCallingContext ctx, LuaValue[] args)
