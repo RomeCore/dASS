@@ -101,7 +101,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					viewModel = new DictionaryDynamicViewModel();
 					break;
 				case LuaTable table:
-					viewModel = new LuaValueDynamicViewModel(table, ctx);
+					// The control outlives the call that created it: by the time a button is clicked, the turn this
+					// context came from is over and its token belongs to a disposed source. A callback is not part of
+					// any turn, so it runs without one.
+					viewModel = new LuaValueDynamicViewModel(table, ctx.WithoutCancellation());
 					break;
 				default:
 					throw new LuaRuntimeException("dass.ui.create_control(xaml, view_model): second argument must be a Lua table or nil.");

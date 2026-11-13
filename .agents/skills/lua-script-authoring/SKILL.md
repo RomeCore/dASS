@@ -127,6 +127,8 @@ Rules the body has to satisfy:
 | command (`commands/*.lua`) | `command_args`, `dass.command.context.get_message()` | every namespace, `dass.chat`, `dass.ui` |
 | `lua-execute` | nothing extra | every namespace (tool context is ambient) |
 
+A tool and a command run **inside** a turn, and `dass.chat` enforces it: `send`, `continue_generation`, `flush`, `stop_and_flush`, `wait_for_idle`, `regenerate`, `resend`, `edit`, `switch_branch` and `delete` take the chat operation level, which cancels the turn they would run in, so they throw from a tool or a command. Only `dass.chat.queue({ content = ... })` - a message into the follow-up queue, no execution scope at all - and `dass.chat.stop()` work there. A `dass.ui` control callback and a `dass.chat.on_close` hook are not part of a turn and get the whole surface.
+
 A namespace function can also call a tool by name - `await dass.tool.call("git-full-diff", { path = "." })` - which is a trusted, in-memory call: no policy, no confirmation, **no UI surface** (a form or a `append_data` panel from a nested call has nowhere to render). The result arrives as `content` (text), `structured` and `success`.
 
 A command (or a tool) can raise an interactive terminal with `process.run_terminal(command, [args], { cwd, env })` and attach the returned `terminal` handle with `append_data()` on any host. The handle is not attached implicitly, and the process lives exactly as long as the attachment does - removing the attachment kills it.

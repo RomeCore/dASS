@@ -1,7 +1,6 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Services;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -150,15 +149,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private readonly Chat _chat;
 		private readonly LuaDataAttachmentDispatcher _dispatcher;
 		private readonly LuaChatClosingHandler _closingHandler;
-		private readonly IChatOperationService _chatOperation;
 
 		public LuaApiChat(Chat chat, LuaDataAttachmentDispatcher dispatcher,
-			LuaChatClosingHandler closingHandler, IChatOperationService chatOperation)
+			LuaChatClosingHandler closingHandler)
 		{
 			_chat = chat;
 			_dispatcher = dispatcher;
 			_closingHandler = closingHandler;
-			_chatOperation = chatOperation;
 		}
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
