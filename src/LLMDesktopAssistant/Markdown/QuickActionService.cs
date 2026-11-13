@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Markdown
 				if (@this._chat != chat)
 					return;
 
-				_ = @this._chatOperator.SendUserInputAsync(new UserInput
+				_ = @this._chatOperator.SendUserInputAsync(new UserInputState
 				{
 					Content = action,
 					SenderLogin = @this._userManager.GetLocalUsers().FirstOrDefault()?.Login ?? "user"

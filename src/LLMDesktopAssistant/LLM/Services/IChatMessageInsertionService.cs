@@ -21,7 +21,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// Checks whether <paramref name="input"/> can be inserted. Pure and side-effect free.
 		/// </summary>
 		/// <param name="input">The user input to check.</param>
-		UserInputInsertionCheckResult CanInsertUserInput(UserInput input);
+		UserInputInsertionCheckResult CanInsertUserInput(UserInputState input);
 
 		/// <summary>
 		/// Appends <paramref name="input"/> (or replaces the message at <paramref name="editIndex"/>) and resolves its
@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <param name="input">The user input to insert.</param>
 		/// <param name="editIndex">The edited message index, or <see langword="null"/> for a new message.</param>
 		/// <param name="ct">The cancellation token (the caller's execution token).</param>
-		Task<UserInputInsertion> AppendUserInputAsync(UserInput input, int? editIndex = null,
+		Task<UserInputInsertion> AppendUserInputAsync(UserInputState input, int? editIndex = null,
 			CancellationToken ct = default);
 
 		/// <summary>

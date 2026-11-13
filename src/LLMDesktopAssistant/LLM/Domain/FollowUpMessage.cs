@@ -9,64 +9,14 @@ namespace LLMDesktopAssistant.LLM.Domain
 	/// </summary>
 	public class FollowUpMessage : NotifyPropertyChanged
 	{
-		private string _content = string.Empty;
+		private DateTime _createdAt = DateTime.Now;
 		/// <summary>
-		/// Gets or sets the text exactly as the user composed it, including any command token that never ran.
+		/// Gets or sets the moment the message was queued, used for ordering the queue dialog.
 		/// </summary>
-		public string Content
+		public DateTime CreatedAt
 		{
-			get => _content;
-			set => SetProperty(ref _content, value);
-		}
-
-		private string _senderLogin = "user";
-		/// <summary>
-		/// Gets or sets the login of the participant that queued the message.
-		/// </summary>
-		public string SenderLogin
-		{
-			get => _senderLogin;
-			set => SetProperty(ref _senderLogin, value);
-		}
-
-		private readonly AdditionalChatDataCollection _parts = [];
-		/// <summary>
-		/// The message parts attached when the message was queued, as copies of the draft's parts.
-		/// </summary>
-		public AdditionalChatDataCollection Parts
-		{
-			get => _parts;
-			set => _parts.Reset(value);
-		}
-
-		private MessageVisibility _visibility = MessageVisibility.Always;
-		/// <summary>
-		/// Gets or sets the visibility the message will be inserted with.
-		/// </summary>
-		public MessageVisibility Visibility
-		{
-			get => _visibility;
-			set => SetProperty(ref _visibility, value);
-		}
-
-		private List<string> _visibleTo = [];
-		/// <summary>
-		/// Gets or sets the logins or agent ids the message is restricted to when the visibility requires it.
-		/// </summary>
-		public List<string> VisibleTo
-		{
-			get => _visibleTo;
-			set => SetProperty(ref _visibleTo, value);
-		}
-
-		private bool _isVisibleToWhiteList;
-		/// <summary>
-		/// Gets or sets a value indicating whether <see cref="VisibleTo"/> is a whitelist filter.
-		/// </summary>
-		public bool IsVisibleToWhiteList
-		{
-			get => _isVisibleToWhiteList;
-			set => SetProperty(ref _isVisibleToWhiteList, value);
+			get => _createdAt;
+			set => SetProperty(ref _createdAt, value);
 		}
 
 		private FollowUpInjectionLevel _level = FollowUpInjectionLevel.Message;
@@ -90,40 +40,14 @@ namespace LLMDesktopAssistant.LLM.Domain
 			set => SetProperty(ref _generateIntent, value);
 		}
 
-		private bool _canExecuteCommand = true;
+		private UserInputState _userInput = new();
 		/// <summary>
-		/// Gets or sets a value indicating whether this message may run a slash command. When false the content is
-		/// inserted verbatim: no token extraction, no execution and no escape removal.
+		/// Gets or sets the user input that contains the content, visibility, sender and other data to create the user message.
 		/// </summary>
-		public bool CanExecuteCommand
+		public UserInputState UserInput
 		{
-			get => _canExecuteCommand;
-			set => SetProperty(ref _canExecuteCommand, value);
+			get => _userInput;
+			set => SetProperty(ref _userInput, value);
 		}
-
-		private DateTime _createdAt = DateTime.Now;
-		/// <summary>
-		/// Gets or sets the moment the message was queued, used for ordering the queue dialog.
-		/// </summary>
-		public DateTime CreatedAt
-		{
-			get => _createdAt;
-			set => SetProperty(ref _createdAt, value);
-		}
-
-		/// <summary>
-		/// Projects the entry back onto the input of the send pipeline, so a follow-up travels the same path as a
-		/// freshly typed message.
-		/// </summary>
-		public UserInput ToUserInput() => new()
-		{
-			Content = Content,
-			SenderLogin = SenderLogin,
-			Parts = [.. Parts],
-			Visibility = Visibility,
-			VisibleTo = [.. VisibleTo],
-			IsVisibleToWhiteList = IsVisibleToWhiteList,
-			CanExecuteCommand = CanExecuteCommand,
-		};
 	}
 }

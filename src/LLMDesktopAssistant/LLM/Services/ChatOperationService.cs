@@ -22,7 +22,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		}
 
 		/// <inheritdoc/>
-		public async Task SendUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default)
+		public async Task SendUserInputAsync(UserInputState userInput, bool generate, CancellationToken cancellationToken = default)
 		{
 			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
@@ -41,7 +41,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		}
 
 		/// <inheritdoc/>
-		public async Task SendEditedUserInputAsync(int messageIndex, UserInput userInput, bool generate,
+		public async Task SendEditedUserInputAsync(int messageIndex, UserInputState userInput, bool generate,
 			CancellationToken cancellationToken = default)
 		{
 			if (messageIndex < 0 || messageIndex >= chat.Messages.Count)
@@ -59,7 +59,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		}
 
 		/// <inheritdoc/>
-		public async Task QueueUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default)
+		public async Task QueueUserInputAsync(UserInputState userInput, bool generate, CancellationToken cancellationToken = default)
 		{
 			// No execution scope on purpose: taking one would cancel the very run this message is meant to outlive.
 			var entry = followUps.Enqueue(userInput, followUps.DefaultLevel, generate, userInput.CanExecuteCommand);
@@ -236,7 +236,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				UserInputInsertion appended;
 				try
 				{
-					appended = await insertion.AppendUserInputAsync(entry.ToUserInput(), editIndex: null, token);
+					appended = await insertion.AppendUserInputAsync(entry.UserInput, editIndex: null, token);
 				}
 				catch
 				{
@@ -255,7 +255,6 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			return new FlushOutcome(inserted, intent);
 		}
-
 
 		/// <summary>
 		/// Cancels the running turn and waits until it has fully unwound. The wait is observed on the execution status,

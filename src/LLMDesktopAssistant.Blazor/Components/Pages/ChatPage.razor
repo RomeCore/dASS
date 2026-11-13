@@ -92,7 +92,7 @@
 							<div class="chat-queue-item">
 								<div class="chat-queue-preview">@Preview(entry)</div>
 								<div class="chat-queue-meta">
-									<span>@LocalizationManager.LocalizeStaticFormat("chat.follow_up.item.sender", entry.SenderLogin)</span>
+									<span>@LocalizationManager.LocalizeStaticFormat("chat.follow_up.item.sender", entry.UserInput.SenderLogin)</span>
 									<span>@LevelTitle(entry.Level)</span>
 									<span>@entry.CreatedAt.ToLocalTime().ToString("g")</span>
 								</div>
@@ -305,14 +305,14 @@
 		}
 	}
 
-	private UserInput CreateUserInput(string text) => new()
+	private UserInputState CreateUserInput(string text) => new()
 	{
 		Content = text,
 		SenderLogin = UserState.GetCurrentUser()?.Login ?? "anonymous",
 		Parts = [],
 		Visibility = _selectedVisibility,
 		VisibleTo = [],
-		// Rights are not modelled yet: every participant may run a command.
+		// TODO: Rights are not modelled yet: every participant may run a command.
 		CanExecuteCommand = true
 	};
 
@@ -419,7 +419,7 @@
 
 	private static string Preview(FollowUpMessage entry)
 	{
-		var text = entry.Content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
+		var text = entry.UserInput.Content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
 		return text.Length <= 120 ? text : text[..117] + "...";
 	}
 

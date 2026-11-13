@@ -40,6 +40,11 @@ namespace LLMDesktopAssistant.LLM.Services
 		FollowUpInjectionLevel? MinLevel { get; }
 
 		/// <summary>
+		/// Raised after any change of the queue, so the tab strip and the dialog can follow it.
+		/// </summary>
+		event Action? Changed;
+
+		/// <summary>
 		/// Gets a value indicating whether the queue may be drained at the given barrier: it must be non-empty and its
 		/// gate must not be later than the barrier.
 		/// </summary>
@@ -47,13 +52,13 @@ namespace LLMDesktopAssistant.LLM.Services
 		bool HasEligible(FollowUpInjectionLevel barrier);
 
 		/// <summary>
-		/// Adds an entry at the tail, copying the input's parts into it.
+		/// Adds an entry at the tail.
 		/// </summary>
 		/// <param name="input">The composed message.</param>
 		/// <param name="level">The level the entry is enqueued with.</param>
 		/// <param name="generateIntent">Whether the message asked for an answer.</param>
 		/// <param name="canExecuteCommand">Whether the message may run a slash command.</param>
-		FollowUpMessage Enqueue(UserInput input, FollowUpInjectionLevel level, bool generateIntent, bool canExecuteCommand);
+		FollowUpMessage Enqueue(UserInputState input, FollowUpInjectionLevel level, bool generateIntent, bool canExecuteCommand);
 
 		/// <summary>
 		/// Takes the head of the queue and marks it in flight for this turn. Returns <see langword="false"/> when the
@@ -86,10 +91,5 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// Drops every pending entry.
 		/// </summary>
 		void Clear();
-
-		/// <summary>
-		/// Raised after any change of the queue, so the tab strip and the dialog can follow it.
-		/// </summary>
-		event Action? Changed;
 	}
 }

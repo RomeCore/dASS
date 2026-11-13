@@ -21,13 +21,13 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// Sends a message as a turn. With pending follow-ups the message joins the tail of the queue, the queue is
 		/// inserted first and one answer covers the batch; with an empty queue the message is inserted at once.
 		/// </summary>
-		Task SendUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default);
+		Task SendUserInputAsync(UserInputState userInput, bool generate, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Commits an edit: stops the running turn, waits for it to unwind, replaces the message, then drains the queue
 		/// after the new branch.
 		/// </summary>
-		Task SendEditedUserInputAsync(int messageIndex, UserInput userInput, bool generate,
+		Task SendEditedUserInputAsync(int messageIndex, UserInputState userInput, bool generate,
 			CancellationToken cancellationToken = default);
 
 		/// <summary>
@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// purpose: the queue must outlive the run it is filled during. An entry with
 		/// <see cref="FollowUpInjectionLevel.Immediate"/> then stops the run and drains.
 		/// </summary>
-		Task QueueUserInputAsync(UserInput userInput, bool generate, CancellationToken cancellationToken = default);
+		Task QueueUserInputAsync(UserInputState userInput, bool generate, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Drains the pending follow-ups as a turn: inserts them in order, runs their commands, and generates once if

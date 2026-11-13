@@ -54,9 +54,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		{
 			Entry = entry;
 
-			var text = entry.Content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
+			var text = entry.UserInput.Content.Replace('\r', ' ').Replace('\n', ' ').Replace('\t', ' ').Trim();
 			Preview = text.Length <= PreviewLength ? text : text[..(PreviewLength - 3)] + "...";
-			Sender = LocalizationManager.LocalizeStaticFormat("chat.follow_up.item.sender", entry.SenderLogin);
+			Sender = LocalizationManager.LocalizeStaticFormat("chat.follow_up.item.sender", entry.UserInput.SenderLogin);
 			Level = LocalizationManager.LocalizeStatic(LevelKey(entry.Level));
 			CreatedAt = entry.CreatedAt.ToLocalTime().ToString("g");
 

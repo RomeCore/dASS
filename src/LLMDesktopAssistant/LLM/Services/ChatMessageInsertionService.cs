@@ -2,6 +2,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Execution;
+using LLMDesktopAssistant.Users;
 
 namespace LLMDesktopAssistant.LLM.Services
 {
@@ -10,11 +11,12 @@ namespace LLMDesktopAssistant.LLM.Services
 	public class ChatMessageInsertionService(
 		IChatStorageService storage,
 		IChatSettingsService chatSettings,
-		IChatCommandInvocationService commands
+		IChatCommandInvocationService commands,
+		IUserManagementService users
 	) : IChatMessageInsertionService
 	{
 		/// <inheritdoc/>
-		public UserInputInsertionCheckResult CanInsertUserInput(UserInput input)
+		public UserInputInsertionCheckResult CanInsertUserInput(UserInputState input)
 		{
 			// With commands off, or with the permission denied, the whole command path is disabled.
 			if (!CommandsEnabled || !input.CanExecuteCommand)
@@ -30,7 +32,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		}
 
 		/// <inheritdoc/>
-		public Task<UserInputInsertion> AppendUserInputAsync(UserInput input, int? editIndex = null,
+		public Task<UserInputInsertion> AppendUserInputAsync(UserInputState input, int? editIndex = null,
 			CancellationToken ct = default)
 		{
 			// The permission is read here and only here, so the direct path and the queued path cannot diverge.
@@ -95,15 +97,16 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		private bool CommandsEnabled => chatSettings.Settings.Commands.AddonsCategoryEnabled;
 
-		private static UserMessage CreateUserMessage(UserInput userInput, string content)
+		private UserMessage CreateUserMessage(UserInputState userInput, string content)
 		{
 			var message = new UserMessage
 			{
 				CreatedAt = DateTime.Now,
-				Content = content,
+				Sender = users.FindByLogin(userInput.SenderLogin)?.Name ?? userInput.SenderLogin,
 				SenderLogin = userInput.SenderLogin,
+				Content = content,
 				Visibility = userInput.Visibility,
-				VisibleTo = userInput.VisibleTo,
+				VisibleTo = [..userInput.VisibleTo],
 				IsVisibleToWhiteList = userInput.IsVisibleToWhiteList
 			};
 			message.AdditionalData.Reset(userInput.Parts);

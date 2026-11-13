@@ -147,6 +147,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
+		// The draft parts are owned by the persisted UserInputState; the edit parts live only in memory.
+		private readonly AdditionalChatDataCollectionViewModel _draftData;
+		private readonly AdditionalChatDataCollectionViewModel _editData;
+
 		/// <summary>
 		/// Gets the current chat instance.
 		/// </summary>
@@ -158,14 +162,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public ChatViewModel ChatViewModel { get; }
 
 		/// <summary>
+		/// Gets the editing user input state.
+		/// </summary>
+		public UserInputState EditUserInputState { get; } = new();
+
+		/// <summary>
 		/// Gets the persisted user input state (the NEW-message draft: text, parts, sender and visibility).
 		/// </summary>
 		public UserInputState UserInputState => Chat.UserInputState;
-
-		// The draft parts are owned by the persisted UserInputState; the edit parts live only in memory.
-		private readonly AdditionalChatDataCollectionViewModel _draftData;
-		private readonly AdditionalChatDataCollection _editParts = [];
-		private readonly AdditionalChatDataCollectionViewModel _editData;
 
 		/// <summary>
 		/// Gets the message parts currently shown in the input: the edited message parts while editing,
@@ -191,29 +195,27 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		private string _editText = string.Empty;
 		/// <summary>
 		/// Gets or sets the text shown in the input.
 		/// While editing it is the edited message content (in memory); otherwise it is the persisted draft text.
 		/// </summary>
 		public string Text
 		{
-			get => EditingMessage != null ? _editText : UserInputState.Text;
+			get => EditingMessage != null ? EditUserInputState.Content : UserInputState.Content;
 			set
 			{
 				if (EditingMessage != null)
 				{
-					if (_editText != value)
+					if (EditUserInputState.Content != value)
 					{
-						_editText = value;
-						RaisePropertyChanged(nameof(Text));
+						EditUserInputState.Content = value;
 						RaiseInputStateDependentProperties();
 						CompletionViewModel.Update(value, _completionCaretIndex);
 					}
 				}
-				else if (UserInputState.Text != value)
+				else if (UserInputState.Content != value)
 				{
-					UserInputState.Text = value;
+					UserInputState.Content = value;
 					RaiseInputStateDependentProperties();
 					CompletionViewModel.Update(value, _completionCaretIndex);
 				}
@@ -316,12 +318,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			CompletionViewModel = new InputCompletionViewModel(inputCompletionService);
 			CompletionTransformProvider = inputCompletionService.CompletionTransformProvider;
 
-			_draftData = new AdditionalChatDataCollectionViewModel(Chat.UserInputState.Parts);
-			_draftData.Parts.IsEditing = true;
-
-			_editData = new AdditionalChatDataCollectionViewModel(_editParts);
+			_editData = new AdditionalChatDataCollectionViewModel(EditUserInputState.Parts);
 			_editData.Parts.IsEditing = true;
 
+			_draftData = new AdditionalChatDataCollectionViewModel(UserInputState.Parts);
+			_draftData.Parts.IsEditing = true;
+
+			EditUserInputState.PropertyChanged += OnUserInputStatePropertyChanged;
 			UserInputState.PropertyChanged += OnUserInputStatePropertyChanged;
 
 			SendMessageCommand = new SendMessageCommandObject(this, generate: false);
@@ -346,7 +349,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void OnUserInputStatePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(UserInputState.Text) && EditingMessage == null)
+			if (e.PropertyName == nameof(UserInputState.Content))
 				RaisePropertyChanged(nameof(Text));
 		}
 
@@ -370,7 +373,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		public bool IsEmpty =>
 			EditingMessage != null
-				? string.IsNullOrWhiteSpace(_editText) && _editParts.Count == 0
+				? EditUserInputState.IsEmpty
 				: UserInputState.IsEmpty;
 
 		/// <summary>
@@ -413,32 +416,20 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		public UserInput? GetCurrentUserInput()
+		public UserInputState? GetCurrentUserInput()
 		{
 			if (EditingMessage != null)
 			{
-				if (string.IsNullOrWhiteSpace(_editText) && _editParts.Count == 0)
+				if (EditUserInputState.IsEmpty)
 					return null;
 
-				return new UserInput
-				{
-					Content = _editText,
-					SenderLogin = UserInputState.SenderLogin,
-					Parts = [.. _editParts],
-					Visibility = UserInputState.Visibility,
-				};
+				return EditUserInputState.Clone();
 			}
 
 			if (UserInputState.IsEmpty)
 				return null;
 
-			return new UserInput
-			{
-				Content = UserInputState.Text,
-				SenderLogin = UserInputState.SenderLogin,
-				Parts = [.. UserInputState.Parts],
-				Visibility = UserInputState.Visibility,
-			};
+			return UserInputState.Clone();
 		}
 
 		/// <summary>
@@ -450,19 +441,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			if (branchedMessage.Message is not UserMessage userMessage)
 				throw new ArgumentException("The branched message does not contain a user message.");
 
-			_editParts.Clear();
-			foreach (var part in userMessage.AdditionalData.GetRestorableParts())
-				_editParts.Add(part.Clone());
-
-			_editText = userMessage.Content ?? string.Empty;
+			EditUserInputState.FillFromMessage(userMessage);
 			EditingMessage = branchedMessage;
 		}
 
 		public void Clear()
 		{
 			EndEditing();
-			UserInputState.Text = string.Empty;
-			UserInputState.Parts.Clear();
+			UserInputState.Clear();
 			CompletionViewModel.Close();
 		}
 
@@ -472,7 +458,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public void AddPart(AdditionalChatData part)
 		{
 			if (EditingMessage != null)
-				_editParts.Add(part);
+				EditUserInputState.Parts.Add(part);
 			else
 				UserInputState.Parts.Add(part);
 		}
@@ -482,12 +468,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		public void EndEditing()
 		{
-			if (EditingMessage == null && _editParts.Count == 0 && string.IsNullOrEmpty(_editText))
+			if (EditingMessage == null && EditUserInputState.IsEmpty)
 				return;
 
 			EditingMessage = null;
-			_editText = string.Empty;
-			_editParts.Clear();
+			EditUserInputState.Clear();
 		}
 
 		public async Task AcceptDropAsync(DragEventArgs args)
@@ -542,7 +527,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			else
 			{
 				// Sending a new message: clear the just-sent draft.
-				UserInputState.Text = string.Empty;
+				UserInputState.Content = string.Empty;
 				UserInputState.Parts.Clear();
 			}
 
@@ -576,7 +561,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			// The entry already exists: QueueUserInputAsync does all its queue work before its first await, so the draft
 			// can be dropped now even when an immediate entry then stops and drains the run.
-			UserInputState.Text = string.Empty;
+			UserInputState.Content = string.Empty;
 			UserInputState.Parts.Clear();
 
 			await queued;
@@ -618,15 +603,16 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			if (disposing)
 			{
+				EditUserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
 				UserInputState.PropertyChanged -= OnUserInputStatePropertyChanged;
 				_executionTokens.ExecutionCancellationTokenChanged -= OnExecutionStateChanged;
 				Chat.Messages.CollectionChanged -= OnChatMessagesChanged;
 				_followUps.Changed -= OnFollowUpsChanged;
 				Chips.Dispose();
 
+				EditUserInputState.Dispose();
 				_draftData.Dispose();
 				_editData.Dispose();
-				_editParts.Dispose();
 			}
 		}
 	}
