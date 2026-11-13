@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Providers
 			}
 			if (!foundProvider.Models.Concat(foundProvider.CustomModels).Any(m => m.Name == reference.ModelId))
 				return false;
-			return reference.Modifier is null || FindModifier(reference.Modifier) is not null;
+			return (reference.Modifiers?.Count ?? 0) == 0 || reference.Modifiers!.All(m => FindModifier(m) is not null);
 		}
 
 		public LLModel GetModel(string fullName)
@@ -38,8 +38,9 @@ namespace LLMDesktopAssistant.Providers
 			var reference = ModelReference.Parse(fullName);
 			var client = CreateClient(reference.Provider);
 			var model = new LLModel(client, reference.ModelId);
-			if (reference.Modifier is not null)
-				model = model.WithProperties(FindModifier(reference.Modifier).ToCompletionProperties());
+			// TODO: Count all modifiers, not only first one.
+			if (reference.Modifiers?.Count > 0)
+				model = model.WithProperties(FindModifier(reference.Modifiers[0]).ToCompletionProperties());
 			return model;
 		}
 

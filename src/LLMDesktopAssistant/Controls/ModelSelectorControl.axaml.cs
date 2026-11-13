@@ -203,22 +203,22 @@ namespace LLMDesktopAssistant.Controls
 					if (ModelSelector.SelectedItem != modelItem)
 					{
 						ModelSelector.SelectedItem = modelItem;
-						RebuildModifiers(reference.Modifier);
+						RebuildModifiers(reference.Modifiers?.FirstOrDefault());
 					}
 
-					var modifierItem = FindModifierItem(reference.Modifier);
-					if (modifierItem == null && reference.Modifier != null)
+					var modifierItem = FindModifierItem(reference.Modifiers?.FirstOrDefault());
+					if (modifierItem == null && reference.Modifiers?.FirstOrDefault() != null)
 					{
 						modifierItem = new ModifierSelectorItem
 						{
-							Name = reference.Modifier,
+							Name = reference.Modifiers.FirstOrDefault(),
 							Hint = null,
-							DisplayText = Locale.GetConstKey(reference.Modifier),
+							DisplayText = Locale.GetConstKey(reference.Modifiers.FirstOrDefault()!),
 							IsInvalid = true
 						};
 						ModifierSelector.Items.Insert(0, modifierItem);
 					}
-					if (reference.Modifier == null)
+					if (reference.Modifiers?.FirstOrDefault() == null)
 					{
 						ModifierSelector.SelectedIndex = 0;
 					}
@@ -346,7 +346,7 @@ namespace LLMDesktopAssistant.Controls
 			if (ModelSelector.SelectedItem == null)
 				ModelSelector.SelectedIndex = 0;
 
-			RebuildModifiers(prevReference.Modifier);
+			RebuildModifiers(prevReference.Modifiers?.FirstOrDefault());
 		}
 
 		private void RebuildModifiers(string? selectedModifierName)

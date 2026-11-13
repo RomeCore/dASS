@@ -3,7 +3,7 @@ namespace LLMDesktopAssistant.Providers
 	/// <summary>
 	/// Represents a parsed model full name in format "Provider$Model" or "Provider$Model$Modifier".
 	/// </summary>
-	public readonly record struct ModelReference(string Provider, string ModelId, string? Modifier)
+	public readonly record struct ModelReference(string Provider, string ModelId, IReadOnlyList<string>? Modifiers)
 	{
 		/// <summary>
 		/// Parses a model full name.
@@ -40,15 +40,23 @@ namespace LLMDesktopAssistant.Providers
 			if (parts.Length == 3 && string.IsNullOrWhiteSpace(parts[2]))
 				return false;
 
-			reference = new ModelReference(parts[0], parts[1], parts.Length == 3 ? parts[2] : null);
+			if (parts.Length == 2)
+			{
+				reference = new ModelReference(parts[0], parts[1], []);
+				return true;
+			}
+
+			reference = new ModelReference(parts[0], parts[1], [.. parts[2].Split(',')]);
 			return true;
 		}
 
 		/// <summary>
-		/// Returns the full name in format "Provider$Model" or "Provider$Model$Modifier".
+		/// Returns the full name in format "Provider$Model" or "Provider$Model$Mod1,Mod2,...".
 		/// </summary>
 		/// <returns>The full name of the model.</returns>
 		public override string ToString()
-			=> Modifier is null ? $"{Provider}${ModelId}" : $"{Provider}${ModelId}${Modifier}";
+			=> (Modifiers is null || Modifiers.Count == 0)
+				? $"{Provider}${ModelId}"
+				: $"{Provider}${ModelId}${string.Join(',', Modifiers)}";
 	}
 }
