@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
+using LLMDesktopAssistant.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LLMDesktopAssistant.Blazor.Services
@@ -10,7 +11,7 @@ namespace LLMDesktopAssistant.Blazor.Services
 	public class GenerationReadinessService : NotifyPropertyChanged, IGenerationReadinessService
 	{
 		private readonly ConcurrentDictionary<string, UserReadinessState> _userReadinessStates = [];
-		private readonly IOnlineStateService _onlineState;
+		private readonly IRemoteOnlineUsersService _onlineState;
 		private readonly Chat _chat;
 		private readonly IChatOperationService _chatOperator;
 		private readonly IChatExecutionTokenService _executionTokens;
@@ -29,7 +30,8 @@ namespace LLMDesktopAssistant.Blazor.Services
 			private set => SetProperty(ref _readyCount, value);
 		}
 
-		public GenerationReadinessService(IOnlineStateService onlineState, Chat chat, IChatOperationService chatOperator)
+		public GenerationReadinessService(IRemoteOnlineUsersService onlineState, Chat chat,
+			IChatOperationService chatOperator)
 		{
 			_onlineState = onlineState ?? throw new ArgumentNullException(nameof(onlineState));
 			_chat = chat ?? throw new ArgumentNullException(nameof(chat));
