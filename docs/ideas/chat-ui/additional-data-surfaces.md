@@ -89,7 +89,20 @@ Blocked by:
 
 ## Comments
 
-- Open: who chooses the surface - the item's own default, the script request, or the user by moving the item.
+- Settled: the script chooses the surface (`surface` in the append options), the item type carries the default, and
+  the user never moves an item between surfaces.
 - Open: whether one item may live on two surfaces at once. The current assumption is no.
 - Open: whether the agent-tasks entry keeps its flyout when it moves into the side tabs, becoming a panel instead.
-- The side panel slice exists in the working tree; nothing else from the catalogue is implemented.
+- Implemented: the side panel (the fallback) and the input rail. Nothing else from the catalogue is.
+- The rail is the second surface: `AdditionalChatDataInputRailItem`, an `AdditionalChatDataItemBase` envelope carrying
+  `Content`, `HorizontalPlacement` and `VerticalPlacement`, lands in `ChatBottomPanelView` through two
+  `ChatInputRailViewModel`s - the strip above the input and the strip between the input and the native toolbars.
+  The catalogue collapsed to this single row: the bottom toolbar, the middle toolbar and the middle dock are one
+  surface, and the dock is not implemented.
+- Placement is the script's: `dass.chat.append_data(handle, options)` with `surface = "rail"`, `horizontal` and
+  `vertical`. `visible` and `temporary` are payload flags, placement keys are refused without `surface = "rail"` and
+  refused outside the chat, because the rail reads `chat.AdditionalData`. `remove_data(handle)` detaches the payload
+  and every envelope wrapping it; a payload without `surface` stays plain chat data and lands in the side panel.
+- The strip is one line with a horizontal scroll on overflow, a 1px separator between neighbours and no chrome of
+  its own; it collapses entirely while both groups are empty. Order comes from the payload (`Order` is forwarded by
+  the envelope). Identity by `Key`, close/restore state and the wrapper family are not implemented.
