@@ -64,6 +64,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			      role = "assistant":
 			        - content: string - assistant response text
+			        - reasoning_signature: string (optional) - reasoning/thinking signature
 			        - reasoning_content: string (optional) - reasoning/thinking text
 			        - tool_calls: table (optional) - array of tool call tables
 			          Each tool call (table):
@@ -180,11 +181,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - "system" messages: { role = "system", content = "..." }
 			    - "user" messages: { role = "user", content = "...", attachments = {...} }
 			    - "assistant" messages:
-			      { role = "assistant", content = "...", reasoning_content = "...",
+			      { role = "assistant", content = "...", reasoning_signature = "...", reasoning_content = "...",
 			        tool_calls = { { tool_name, tool_call_id, arguments, result_success, result_content, result_attachments }, ... },
 			        attachments = {...},
-			        usage = { input_tokens, output_tokens, input_cache_hit_tokens,
-			          input_cache_miss_tokens, time_to_first_token (ms),
+			        usage = { input_tokens, output_tokens, cache_create_tokens,
+			          input_cache_hit_tokens, input_cache_miss_tokens, time_to_first_token (ms),
 			          inference_time (ms), execution_time (ms) } }
 
 			  Notes:
@@ -394,7 +395,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  - Tool call results are embedded directly in the tool_call table
 			    (result_success, result_content, result_attachments), not as separate messages.
 			  - Assistant messages may include a "usage" table with token counts and timing
-			    information: input_tokens, output_tokens, input_cache_hit_tokens,
+			    information: input_tokens, output_tokens, cache_create_tokens, input_cache_hit_tokens,
 			    input_cache_miss_tokens, time_to_first_token (ms), inference_time (ms),
 			    execution_time (ms). Each property can be 0 if unknown.
 			  - BATCH EXECUTION: pass multiple property tables to `execute()` to run
@@ -761,6 +762,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					return new AgentUserMessage { Content = content, Attachments = [..attachments] };
 
 				case "assistant":
+					var reasoningSignature = messageTable.Get("reasoning_signature").ToString();
 					var reasoningContent = messageTable.Get("reasoning_content").ToString();
 
 					var toolCallsTable = messageTable.Get("tool_calls");
@@ -775,6 +777,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 					return new AgentAssistantMessage
 					{
+						ReasoningSignature = reasoningSignature,
 						ReasoningContent = reasoningContent,
 						Content = content,
 						Attachments = [.. attachments],
@@ -862,6 +865,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				case AgentAssistantMessage assistantMessage:
 					var assistantMessageTable = new LuaTable();
 					assistantMessageTable.Set("role", "assistant");
+					assistantMessageTable.Set("reasoning_signature", assistantMessage.ReasoningSignature);
 					assistantMessageTable.Set("reasoning_content", assistantMessage.ReasoningContent);
 					assistantMessageTable.Set("content", assistantMessage.Content);
 					attachmentsTable = new LuaTable();
@@ -878,6 +882,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						var usageTable = new LuaTable();
 						usageTable.Set("input_tokens", assistantMessage.UsageStatistics.InputTokens);
 						usageTable.Set("output_tokens", assistantMessage.UsageStatistics.OutputTokens);
+						usageTable.Set("cache_create_tokens", assistantMessage.UsageStatistics.CacheCreateTokens);
 						usageTable.Set("input_cache_hit_tokens", assistantMessage.UsageStatistics.InputCacheHitTokens);
 						usageTable.Set("input_cache_miss_tokens", assistantMessage.UsageStatistics.InputCacheMissTokens);
 						usageTable.Set("time_to_first_token", assistantMessage.UsageStatistics.TimeToFirstToken.TotalMilliseconds);

@@ -52,7 +52,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		[LuaHidden]
 		public static LuaUserData Wrap(LuaCloseHook hook)
-			=> new(hook, "close_hook")
+			=> new(hook, "chat_close_hook")
 			{
 				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaCloseHook))
 			};

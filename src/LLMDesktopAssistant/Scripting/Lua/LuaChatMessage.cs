@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional.Context;
 using LLMDesktopAssistant.Localization;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -23,7 +24,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// </remarks>
 	public sealed class LuaChatMessage
 	{
-		private static readonly ConditionalWeakTable<BranchedMessage, LuaChatMessage> _cache = new();
+		private static readonly ConditionalWeakTable<BranchedMessage, LuaChatMessage> _cache = [];
 
 		/// <summary>
 		/// Wraps a branched message into a <c>chat_message</c> userdata, reusing the cached handle when one exists.
@@ -38,9 +39,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			};
 		}
 
-		/// <summary>
-		/// The underlying branched message. Hidden from Lua.
-		/// </summary>
 		[LuaHidden]
 		public BranchedMessage Message { get; }
 
@@ -58,6 +56,28 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			get => Message.Message.Content;
 			set => Message.Message.Content = value ?? string.Empty;
+		}
+
+		public string? ReasoningSignature
+		{
+			get => (Message.Message as AssistantMessage)?.ReasoningSignature;
+			set
+			{
+				if (Message.Message is not AssistantMessage assistant)
+					throw new LuaRuntimeException("chat_message.reasoning_signature can only be set on assistant messages");
+				assistant.ReasoningSignature = value;
+			}
+		}
+
+		public string? ReasoningContent
+		{
+			get => (Message.Message as AssistantMessage)?.ReasoningContent;
+			set
+			{
+				if (Message.Message is not AssistantMessage assistant)
+					throw new LuaRuntimeException("chat_message.reasoning_content can only be set on assistant messages");
+				assistant.ReasoningContent = value;
+			}
 		}
 
 		public string? Error
@@ -87,11 +107,24 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		public int Id => Message.MessageId;
 
-		public int Index => Message.MessageIndex;
+		public int Index => Message.MessageIndex + 1;
 
-		public int BranchIndex => Message.SelectedBranchIndex;
+		public int BranchIndex => Message.SelectedBranchIndex + 1;
 
 		public int BranchesCount => Message.AvailableBranchesCount;
+
+		public bool? IsUserLike
+		{
+			get
+			{
+				if (Message.Message is AssistantMessage assistant)
+					return assistant.IsUserLike;
+				return null;
+			}
+		}
+
+		public LuaChatMessageUsage? Usage => field ??= Message.Message.AdditionalData.TryGet<TokenCostViewModel>() is { } tokenCost ?
+			new LuaChatMessageUsage(tokenCost) : null;
 
 		// === Appending parts ===
 
@@ -109,8 +142,8 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			if (attachment is not ILuaNativeAttachable attachable)
 				throw new LuaRuntimeException(
-					"chat_message:append_attachment_part(attachment, ...): 'attachment' must implement " +
-					"ILuaNativeAttachable (e.g. an image handle created by image.load()/image.create()).");
+					"chat_message:append_attachment_part(attachment, ...): 'attachment' must be " +
+					"attachable (e.g. an image handle created by image.load()/image.create()).");
 
 			Message.Message.AdditionalData.Add(
 				LuaAttachmentParts.CreateNativePart(attachable.GetNativeAttachment(), title, icon, color));
