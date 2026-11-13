@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="40"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:chat="using:LLMDesktopAssistant.LLM.MVVM.Additional.Chat"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatInputRailView"
+						 x:DataType="local:ChatInputRailViewModel">
+
+	<UserControl.Resources>
+		<!-- A rail item has no chrome of its own: the payload is the whole visual. -->
+		<DataTemplate x:Key="RailItemTemplate" x:DataType="chat:AdditionalChatDataInputRailItem">
+			<StackPanel Orientation="Horizontal" Spacing="6">
+				<Border Classes="rail-separator"
+								Width="1"
+								Opacity="0.35"
+								VerticalAlignment="Stretch"
+								Background="{DynamicResource PrimaryAccentBrush}"/>
+				<ContentControl Content="{Binding Content}"/>
+			</StackPanel>
+		</DataTemplate>
+	</UserControl.Resources>
+
+	<UserControl.Styles>
+		<!-- The first element of a group has no separator in front of it. -->
+		<Style Selector="ItemsControl.rail ContentPresenter:nth-child(1) Border.rail-separator">
+			<Setter Property="IsVisible" Value="False"/>
+		</Style>
+	</UserControl.Styles>
+
+	<!-- One row: the left group takes the free space, the right one what it needs; an overflowing
+	     strip scrolls as a whole instead of hiding the elements that did not fit. -->
+	<ScrollViewer HorizontalScrollBarVisibility="Auto"
+								VerticalScrollBarVisibility="Disabled">
+		<Grid ColumnDefinitions="*,Auto"
+					MinWidth="{Binding $parent[ScrollViewer].Bounds.Width}">
+
+			<ItemsControl Grid.Column="0"
+										Classes="rail"
+										HorizontalAlignment="Left"
+										ItemsSource="{Binding Left}"
+										ItemTemplate="{StaticResource RailItemTemplate}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<StackPanel Orientation="Horizontal" Spacing="6"/>
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+			</ItemsControl>
+
+			<ItemsControl Grid.Column="1"
+										Classes="rail"
+										HorizontalAlignment="Right"
+										ItemsSource="{Binding Right}"
+										ItemTemplate="{StaticResource RailItemTemplate}">
+				<ItemsControl.ItemsPanel>
+					<ItemsPanelTemplate>
+						<StackPanel Orientation="Horizontal" Spacing="6"/>
+					</ItemsPanelTemplate>
+				</ItemsControl.ItemsPanel>
+			</ItemsControl>
+
+		</Grid>
+	</ScrollViewer>
+
+</UserControl>
