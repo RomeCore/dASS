@@ -38,6 +38,11 @@ addon_reload.name: Перезагрузка аддонов
 addon_reload.description: Перечитать аддон-паки и перезагрузить все менеджеры аддонов.
 addon_reload.done: Аддоны перезагружены
 
+// Lua reset command (command.lua_reset.*).
+lua_reset.name: Сброс Lua
+lua_reset.description: Сбросить общее Lua-состояние чата и заново загрузить все Lua-скрипты.
+lua_reset.done: Lua-состояние сброшено
+
 // Call command (command.call.*, command.argument.call.*, command.error.agent_not_found).
 call.name: Вызвать агента
 call.description: Принудительно запустить конкретного чат-агента следующим ходом, минуя роутер.

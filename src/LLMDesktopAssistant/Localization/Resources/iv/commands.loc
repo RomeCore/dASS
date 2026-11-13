@@ -38,6 +38,11 @@ addon_reload.name: Addon reload
 addon_reload.description: Rescan the addon packs and reload every addon manager.
 addon_reload.done: Addons reloaded
 
+// Lua reset command (command.lua_reset.*).
+lua_reset.name: Lua reset
+lua_reset.description: Drop the chat's shared Lua state and load every Lua script addon again.
+lua_reset.done: Lua state reset
+
 // Call command (command.call.*, command.argument.call.*, command.error.agent_not_found).
 call.name: Call agent
 call.description: Force the next turn to run a specific chat agent, bypassing the router.

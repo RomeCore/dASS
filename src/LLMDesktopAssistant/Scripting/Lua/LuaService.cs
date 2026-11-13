@@ -47,12 +47,12 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			_namespacesSnapshot = [.. _namespaces];
 			_typeMetatablesSnapshot = _lua.TypeMetatables.ToDictionary();
 
-			RefreshScripts();
+			RefreshAllScripts();
 		}
 
 		private void ScriptsCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
 		{
-			RefreshScripts();
+			RefreshAllScripts();
 		}
 
 		protected override void Dispose(bool disposing)
@@ -138,7 +138,16 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			_namespaces.AddRange(_namespacesSnapshot);
 		}
 
-		private void RefreshScripts()
+		/// <summary>
+		/// Drops the shared Lua state back to the snapshot taken before any script loaded and runs every script addon
+		/// again, the native API addons included.
+		/// </summary>
+		/// <remarks>
+		/// This is the way back from a script that overwrote an API member - <c>dass.chat.get_messages</c> being the
+		/// classic casualty - because the state belongs to this service and no Lua-side code can rebuild it. A refresh
+		/// already in progress makes the call a no-op, since the running refresh is about to do exactly this.
+		/// </remarks>
+		public void RefreshAllScripts()
 		{
 			if (!_lock.TryEnter())
 				return;
