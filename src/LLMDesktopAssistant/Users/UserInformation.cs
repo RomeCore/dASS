@@ -12,14 +12,19 @@
 			set => SetProperty(ref _login, value);
 		}
 
-		private bool _isLocallyActive = true;
+		private bool _isAvailable = true;
 		/// <summary>
-		/// Indicates whether the user is currently active as a local user.
+		/// Indicates whether the user may send messages in the chat.
 		/// </summary>
-		public bool IsLocallyActive
+		/// <remarks>
+		/// Not a presence flag: an unavailable user is simply not offered as a sender, while the messages it already
+		/// sent keep their signature, name and description. Remote users are governed by
+		/// <see cref="IRemoteOnlineUsersService"/> instead.
+		/// </remarks>
+		public bool IsAvailable
 		{
-			get => _isLocallyActive;
-			set => SetProperty(ref _isLocallyActive, value);
+			get => _isAvailable;
+			set => SetProperty(ref _isAvailable, value);
 		}
 
 		private string? _passwordHash;

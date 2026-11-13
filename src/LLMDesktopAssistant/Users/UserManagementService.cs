@@ -8,7 +8,8 @@ namespace LLMDesktopAssistant.Users
 	[ChatService(typeof(IUserManagementService))]
 	public class UserManagementService(
 		IChatSettingsService chatSettings,
-		IPasswordHashingService hasher
+		IPasswordHashingService hasher,
+		IRemoteOnlineUsersService onlineUsers
 	) : IUserManagementService
 	{
 		public IEnumerable<UserInformation> GetAllUsers()
@@ -31,9 +32,19 @@ namespace LLMDesktopAssistant.Users
 			return chatSettings.Settings.Users.Users.Any(u => u.Login == userLogin);
 		}
 
-		public IEnumerable<UserInformation> GetActiveUsers()
+		public IEnumerable<UserInformation> GetAvailableLocalUsers()
 		{
-			return GetLocalUsers().Where(u => u.IsLocallyActive);
+			return GetLocalUsers().Where(u => u.IsAvailable);
+		}
+
+		public IEnumerable<UserInformation> GetOnlineRemoteUsers()
+		{
+			return GetRemoteUsers().Where(u => onlineUsers.IsOnline(u.Login));
+		}
+
+		public bool IsOnline(string userLogin)
+		{
+			return onlineUsers.IsOnline(userLogin);
 		}
 
 		public UserInformation? FindByLogin(string login)

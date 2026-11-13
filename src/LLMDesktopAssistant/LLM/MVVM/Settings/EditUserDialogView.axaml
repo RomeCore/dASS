@@ -71,6 +71,16 @@
 						 TextWrapping="Wrap"/>
 			</StackPanel>
 
+			<!-- Available -->
+			<StackPanel Orientation="Vertical" Spacing="4">
+				<CheckBox Content="{loc:Loc settings.user.available}"
+						  IsChecked="{Binding IsAvailable, Mode=TwoWay}"/>
+				<TextBlock Text="{loc:Loc settings.user.available.hint}"
+						   Opacity="0.6"
+						   FontSize="11"
+						   TextWrapping="Wrap"/>
+			</StackPanel>
+
 			<!-- Profile image -->
 			<StackPanel Orientation="Vertical" Spacing="4">
 				<TextBlock Text="{loc:Loc settings.user.profile_image}"

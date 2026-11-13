@@ -181,7 +181,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		private void RefreshUsers()
 		{
 			var currentLogin = SelectedUser?.Login ?? UserInputState.SenderLogin;
-			Users.Reset(_settingsService.Settings.Users.Users.Select(CreateUserItem));
+			// An unavailable user is not offered as a sender; its past messages stay signed and stay resolvable.
+			Users.Reset(_settingsService.Settings.Users.Users
+				.Where(user => user.IsAvailable)
+				.Select(CreateUserItem));
 
 			SelectedUser = Users.FirstOrDefault(u => u.Login == currentLogin) ?? Users.FirstOrDefault();
 			RaisePropertyChanged(nameof(HasMultipleUsers));

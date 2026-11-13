@@ -33,7 +33,8 @@ namespace LLMDesktopAssistant.Markdown
 				_ = @this._chatOperator.SendUserInputAsync(new UserInputState
 				{
 					Content = action,
-					SenderLogin = @this._userManager.GetLocalUsers().FirstOrDefault()?.Login ?? "user"
+					SenderLogin = @this._userManager.GetAvailableLocalUsers().FirstOrDefault()?.Login ??
+						@this._userManager.GetLocalUsers().FirstOrDefault()?.Login ?? "user"
 				}, generate: true);
 			}
 			QuickActionUiNode.OnActionClicked += OnActionClicked;

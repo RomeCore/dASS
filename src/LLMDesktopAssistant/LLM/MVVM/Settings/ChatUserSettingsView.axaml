@@ -51,7 +51,7 @@
 							Padding="8"
 							Margin="0,0,0,8">
 						<Grid RowDefinitions="Auto,Auto"
-							  ColumnDefinitions="Auto,*,Auto,Auto"
+							  ColumnDefinitions="Auto,*,Auto,Auto,Auto"
 							  ColumnSpacing="6">
 
 							<!-- Row 0: Avatar icon | Name + Login | Edit | Delete -->
@@ -74,7 +74,12 @@
 										   ToolTip.Tip="{Binding Login}"/>
 							</StackPanel>
 
-							<Button Grid.Row="0" Grid.Column="2"
+							<CheckBox Grid.Row="0" Grid.Column="2"
+									  IsChecked="{Binding IsAvailable, Mode=TwoWay}"
+									  VerticalAlignment="Center"
+									  ToolTip.Tip="{loc:Loc settings.user.available}"/>
+
+							<Button Grid.Row="0" Grid.Column="3"
 									Command="{Binding #VMRoot.DataContext.EditCommand}"
 									CommandParameter="{Binding}"
 									Classes="IconButton"
@@ -83,7 +88,7 @@
 								<ico:VisualIcon Kind="Edit"/>
 							</Button>
 
-							<Button Grid.Row="0" Grid.Column="3"
+							<Button Grid.Row="0" Grid.Column="4"
 									Command="{Binding #VMRoot.DataContext.DeleteCommand}"
 									CommandParameter="{Binding}"
 									Classes="IconButton"
@@ -93,7 +98,7 @@
 							</Button>
 
 							<!-- Row 1: Description -->
-							<TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
+							<TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="4"
 									   Text="{Binding Description}"
 									   Opacity="0.6"
 									   FontSize="12"

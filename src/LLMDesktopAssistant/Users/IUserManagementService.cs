@@ -31,11 +31,24 @@
 		bool IsLocalUser(string userLogin);
 
 		/// <summary>
-		/// Lists all active users. Returns an empty collection if no active users are found.
-		/// User is active when 
+		/// Lists the local users that are available to send messages in the chat. Returns an empty collection when
+		/// every local user is unavailable.
 		/// </summary>
-		/// <returns></returns>
-		IEnumerable<UserInformation> GetActiveUsers();
+		/// <returns>A collection of user information.</returns>
+		IEnumerable<UserInformation> GetAvailableLocalUsers();
+
+		/// <summary>
+		/// Lists the remote users that are online in this chat, meaning they hold an open WebUI connection.
+		/// </summary>
+		/// <returns>A collection of user information.</returns>
+		IEnumerable<UserInformation> GetOnlineRemoteUsers();
+
+		/// <summary>
+		/// Determines whether the login is online in this chat.
+		/// </summary>
+		/// <param name="userLogin">The login to check.</param>
+		/// <returns><see langword="true"/> when the login holds at least one open WebUI session.</returns>
+		bool IsOnline(string userLogin);
 
 		/// <summary>
 		/// Finds a user by their login. Returns null if no such user exists.

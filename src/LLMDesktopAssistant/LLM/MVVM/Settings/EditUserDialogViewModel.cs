@@ -69,6 +69,16 @@ namespace LLMDesktopAssistant.LLM.Settings
 			set => SetProperty(ref _description, value);
 		}
 
+		private bool _isAvailable = true;
+		/// <summary>
+		/// Gets or sets a value indicating whether the user may send messages in the chat.
+		/// </summary>
+		public bool IsAvailable
+		{
+			get => _isAvailable;
+			set => SetProperty(ref _isAvailable, value);
+		}
+
 		private string _base64ProfileImage = string.Empty;
 		/// <summary>
 		/// Gets or sets the base64 encoded profile image of the user being edited.
@@ -131,6 +141,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 			Name = target?.Name ?? string.Empty;
 			Description = target?.Description ?? string.Empty;
 			Base64ProfileImage = target?.Base64ProfileImage ?? string.Empty;
+			IsAvailable = target?.IsAvailable ?? true;
 
 			SaveCommand = new RelayCommand(Save);
 			CancelCommand = new RelayCommand(Cancel);
@@ -156,6 +167,7 @@ namespace LLMDesktopAssistant.LLM.Settings
 				target.Name = Name;
 				target.Description = Description;
 				target.Base64ProfileImage = Base64ProfileImage;
+				target.IsAvailable = IsAvailable;
 				Result = target;
 			}
 			else
@@ -165,7 +177,8 @@ namespace LLMDesktopAssistant.LLM.Settings
 					Login = Login.Trim(),
 					Name = Name,
 					Description = Description,
-					Base64ProfileImage = Base64ProfileImage
+					Base64ProfileImage = Base64ProfileImage,
+					IsAvailable = IsAvailable
 				};
 			}
 

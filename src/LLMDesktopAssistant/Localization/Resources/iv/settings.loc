@@ -352,6 +352,8 @@ tools.empty: No tools found. Configure the addon sources.
 tools.refresh: Refresh tools list
 tools.search.placeholder: Search by name, description or tags...
 user.add.title: Add user
+user.available: Available
+user.available.hint: When off, the user is not offered as the sender of a new message; the messages it already sent stay signed.
 user.clear_image: Clear
 user.description: Description
 user.description.hint: Additional information about the user that agents can use to personalize responses
