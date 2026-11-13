@@ -23,15 +23,23 @@ dass.tool.result.append_data(ui)              -- render it under this tool call
 - `xaml` - a non-empty string, loaded at runtime, so it uses reflection bindings: `{Binding key}` and `{Binding [key]}`. Keep compiled bindings and `x:DataType` out of the string. The **root element must declare the Avalonia namespace** - `xmlns="https://github.com/avaloniaui"` - or the loader resolves no element types and the control renders as an error box (see *What bites*).
 - `view_model` - a Lua table, or `nil`. A table becomes the dynamic view model (step 3); `nil` gives an empty one for purely static markup.
 
-The result is a handle: a plain value, no methods, reusable. The same handle may be appended any number of times.
+The result is a handle: a plain value, no methods, reusable. The same handle may be appended any number of times, but every append shares one payload: `ui:set_xaml` re-renders all the copies, while removing one host's copy disposes the object the others still show. Keep a handle to one host unless the sharing is exactly what you want.
 
 *Done when:* the call returns a handle and every key the markup binds exists on the table.
 
 ### 2. Append it from a tool
 
-`dass.tool.result.append_data(...)`
+`dass.tool.result.append_data(handle, [options])`
 
-One UI element is appended per argument, in call order. Outside a running tool the call is a no-op; on anything that is not a `uicontrol` it raises. The append belongs in the tool body - a script that packs a handle and is never run as a tool shows nothing, silently.
+One handle per call: the second argument is the options table, not another handle. Outside a running tool the call is a no-op; on anything that is not an attachable handle it raises. The append belongs in the tool body - a script that packs a handle and is never run as a tool shows nothing, silently.
+
+`options` is the same table on every host that takes one - `dass.tool.result.append_data`, `dass.chat.append_data` and `chat_message:append_data`:
+
+- `visible` (boolean) - hide the payload without detaching it (`false` on a rail item takes it off the strip entirely).
+- `temporary` (boolean) - keep it out of the database.
+- `surface = "rail"` with `horizontal` (`"left"` / `"right"`) and `vertical` (`"top"` / `"bottom"`) - put the payload on the chat's **input rail** instead of rendering it in place. The rail reads `chat.AdditionalData`, so only `dass.chat.append_data` accepts `surface`; the message and tool-result hosts refuse it. Without `surface` the payload is plain chat additional data.
+
+`dass.chat.remove_data(handle)`, `chat_message:remove_data(handle)` and `dass.tool.result.remove_data(handle)` detach everything the handle attached to that host, and return `false` when there was nothing to detach.
 
 *Done when:* the append runs inside the tool body, or the author has named the no-op as the reason nothing renders.
 
@@ -175,7 +183,10 @@ The additional data stores its AXAML string plus a `BsonValue` snapshot of the v
 |---|---|
 | `dass.ui.create_control` | `Scripting/Lua/API/LuaApiUi.cs` |
 | The `uicontrol` handle | `Scripting/Lua/LuaUiControl.cs` |
-| `append_data` | `Scripting/Lua/API/LuaApiToolResult.cs` |
+| `append_data` | `Scripting/Lua/API/LuaApiToolResult.cs`, `LuaApiChat.cs`, `LuaChatMessage.cs` |
+| `remove_data`, the handle → payload table | `Scripting/Lua/LuaDataAttachmentDispatcher.cs` |
+| The `[options]` table (`visible`, `temporary`, `surface`) | `Scripting/Lua/LuaAttachmentOptions.cs` |
+| The rail item and the input rail itself | `LLM/MVVM/Additional/Chat/AdditionalChatDataInputRailItem.cs`, `LLM/MVVM/ChatInputRailViewModel.cs` |
 | The renderer | `Controls/DynamicAxamlControl.cs` |
 | The additional data + view | `LLM/MVVM/Additional/DynamicAxamlControlAdditionalData.cs` (+ `.axaml`) |
 | Tolerant Lua → structured conversion | `StructuredValues/Converters/LuaStructuredConverter.cs` |
@@ -191,6 +202,7 @@ The additional data stores its AXAML string plus a `BsonValue` snapshot of the v
 - **A bind that misses the table** renders empty - nothing validates the string, so nothing warns.
 - **Markup written for compiled bindings** (`x:DataType`, `{CompiledBinding}`) fails at render time, not at `create_control` time.
 - **`append_data` from a script that is not a running tool** is a silent no-op.
+- **`append_data(a, b)` with two handles** raises `options must be a table` - the multi-handle form is gone, one handle per call.
 - **A member written with plain `vm.key = ...`** stays frozen until `vm:notify(key)` runs.
 - **`set_result` called twice** raises - resolve the handle behind an idempotent guard.
 - **A member set from inside `__changed`** re-enters the handler - guard it with a flag.
