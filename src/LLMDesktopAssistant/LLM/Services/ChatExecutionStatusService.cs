@@ -1,87 +1,60 @@
-using System.ComponentModel;
-using LLMDesktopAssistant.LLM.Domain;
-
 namespace LLMDesktopAssistant.LLM.Services
 {
 	/// <summary>
-	/// The default implementation of <see cref="IChatExecutionStatusService"/>.
-	/// Maintains counters of active executions and confirmations and updates the
-	/// <see cref="Status"/> with the priority: Confirming &gt; Executing &gt; Idle.
+	/// Manages the status of chat execution flow.
+	/// Counts only the main flow (the <see cref="IChatExecutionService"/>),
+	/// while <see cref="IExecutionInfoStatusService"/> couns all (including agentic tasks and tools).
 	/// </summary>
 	[ChatService(typeof(IChatExecutionStatusService))]
 	public class ChatExecutionStatusService : NotifyPropertyChanged, IChatExecutionStatusService
 	{
+		private readonly Lock _lock = new();
 		private int _executionCount;
-		private int _confirmationCount;
+		private TaskCompletionSource? _executionCompletionSource;
 
-		private ChatStatus _status;
 		/// <inheritdoc/>
-		public ChatStatus Status
+		public bool IsExecuting
 		{
-			get => _status;
-			private set => SetProperty(ref _status, value);
+			get;
+			private set => SetProperty(ref field, value);
 		}
 
 		/// <inheritdoc/>
 		public IDisposable WithExecution()
 		{
-			Interlocked.Increment(ref _executionCount);
-			UpdateStatus();
-			return new Disposable(() =>
+			lock (_lock)
 			{
-				Interlocked.Decrement(ref _executionCount);
-				UpdateStatus();
-			});
-		}
-
-		/// <inheritdoc/>
-		public IDisposable WithConfirmation()
-		{
-			Interlocked.Increment(ref _confirmationCount);
-			UpdateStatus();
-			return new Disposable(() =>
-			{
-				Interlocked.Decrement(ref _confirmationCount);
-				UpdateStatus();
-			});
-		}
-
-		/// <inheritdoc/>
-		public async Task WaitUntilIdleAsync(CancellationToken ct = default)
-		{
-			while (Status != ChatStatus.Idle)
-			{
-				var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-				void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-				{
-					if (e.PropertyName == nameof(Status) && Status == ChatStatus.Idle)
-						tcs.TrySetResult();
-				}
-
-				PropertyChanged += OnPropertyChanged;
-				try
-				{
-					// Re-check inside the subscription: the transition may have happened before it was attached.
-					if (Status == ChatStatus.Idle)
-						return;
-
-					using var registration = ct.Register(() => tcs.TrySetCanceled(ct));
-					await tcs.Task;
-				}
-				finally
-				{
-					PropertyChanged -= OnPropertyChanged;
-				}
+				_executionCount++;
+				IsExecuting = _executionCount > 0;
 			}
+			return new Disposable(() =>
+			{
+				lock (_lock)
+				{
+					_executionCount--;
+					var prevIsExecuting = IsExecuting;
+					IsExecuting = _executionCount > 0;
+
+					if (prevIsExecuting && !IsExecuting)
+					{
+						_executionCompletionSource?.SetResult();
+						_executionCompletionSource = null;
+					}
+				}
+			});
 		}
 
-		private void UpdateStatus()
+		/// <inheritdoc/>
+		public Task WaitUntilIdleAsync(CancellationToken cancellationToken = default)
 		{
-			var status = _confirmationCount > 0 ? ChatStatus.Confirming
-				: _executionCount > 0 ? ChatStatus.Executing
-				: ChatStatus.Idle;
-			Status = status;
+			lock (_lock)
+			{
+				if (!IsExecuting)
+					return cancellationToken.IsCancellationRequested
+						? Task.FromCanceled(cancellationToken)
+						: Task.CompletedTask;
+				return (_executionCompletionSource ?? new()).Task.WaitAsync(cancellationToken);
+			}
 		}
 	}
 }

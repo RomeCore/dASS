@@ -48,7 +48,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (decision != ToolPolicyDecision.Ask)
 				return true;
 
-			using var confirmation = ctx.Services.GetService<IChatExecutionStatusService>()?.WithConfirmation();
+			using var confirmation = ctx.Services.GetService<IExecutionInfoStatusService>()?.WithConfirmation();
 
 			if (handled.HasFlag(ToolPolicyDecision.Ask))
 				return await AskToolAsync(ctx, ct);

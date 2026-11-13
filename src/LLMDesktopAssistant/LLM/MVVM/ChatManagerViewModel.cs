@@ -115,7 +115,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			private set => SetProperty(ref _currentChat, value);
 		}
 
-		private IChatExecutionStatusService? _executionStatusService;
+		private IExecutionInfoStatusService? _executionStatusService;
 
 		private AvailableChatViewModel? _selectedAvailable;
 		public AvailableChatViewModel? SelectedAvailable
@@ -274,7 +274,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			available.IsSelected = true;
 			chat.PropertyChanged += OnChatPropertyChanged;
 
-			_executionStatusService = chat.Services.GetRequiredService<IChatExecutionStatusService>();
+			_executionStatusService = chat.Services.GetRequiredService<IExecutionInfoStatusService>();
 			_executionStatusService.PropertyChanged += OnExecutionStatusServicePropertyChanged;
 
 			RaisePropertyChanged(nameof(StatusIcon));
@@ -291,7 +291,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void OnExecutionStatusServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(IChatExecutionStatusService.Status))
+			if (e.PropertyName == nameof(IExecutionInfoStatusService.Status))
 			{
 				RaisePropertyChanged(nameof(StatusIcon));
 				RaisePropertyChanged(nameof(HasStatus));

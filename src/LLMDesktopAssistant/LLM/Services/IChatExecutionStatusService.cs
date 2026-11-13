@@ -1,39 +1,29 @@
-using System.ComponentModel;
-using LLMDesktopAssistant.LLM.Domain;
+﻿using System.ComponentModel;
 
 namespace LLMDesktopAssistant.LLM.Services
 {
-	/// <summary>
-	/// Tracks the execution status of a chat session and provides scoped markers
-	/// for executions and user confirmations.
-	/// </summary>
 	public interface IChatExecutionStatusService : INotifyPropertyChanged
 	{
 		/// <summary>
-		/// Gets the current execution status of the chat session.
+		/// Gets a value indicating whether the chat is currently executing.
+		/// This is observable and will raise a PropertyChanged event when its value changes.
 		/// </summary>
-		ChatStatus Status { get; }
+		bool IsExecuting { get; }
 
 		/// <summary>
-		/// Marks the chat as executing. The returned <see cref="IDisposable"/> must be
-		/// disposed when the execution finishes; the status is restored automatically.
+		/// Brings the chat into an executing state, incrementing the inner counter.
 		/// </summary>
-		/// <returns>A disposable that ends the execution marker.</returns>
+		/// <returns>
+		/// A disposable object that, when disposed,
+		/// will decrement the inner counter and potentially exit the executing state.
+		/// </returns>
 		IDisposable WithExecution();
 
 		/// <summary>
-		/// Marks the chat as waiting for a user confirmation. The returned
-		/// <see cref="IDisposable"/> must be disposed when the confirmation is resolved;
-		/// the status is restored automatically.
+		/// Waits until the chat is idle (<see cref="IsExecuting"/> != true).
 		/// </summary>
-		/// <returns>A disposable that ends the confirmation marker.</returns>
-		IDisposable WithConfirmation();
-
-		/// <summary>
-		/// Completes when no execution and no confirmation is alive, i.e. when the previous turn has fully unwound.
-		/// Returns immediately when the chat is already idle.
-		/// </summary>
-		/// <param name="ct">The cancellation token.</param>
-		Task WaitUntilIdleAsync(CancellationToken ct = default);
+		/// <param name="cancellationToken">Token to cancel the operation.</param>
+		/// <returns>A task that completes when the chat is idle.</returns>
+		Task WaitUntilIdleAsync(CancellationToken cancellationToken = default);
 	}
 }

@@ -15,9 +15,9 @@ namespace LLMDesktopAssistant.Tools.Implementations;
 [ToolModule]
 public class FormsToolModule : ToolModule
 {
-	private readonly IChatExecutionStatusService _chatExecutionStatusService;
+	private readonly IExecutionInfoStatusService _chatExecutionStatusService;
 
-	public FormsToolModule(IChatExecutionStatusService chatExecutionStatusService)
+	public FormsToolModule(IExecutionInfoStatusService chatExecutionStatusService)
 	{
 		_chatExecutionStatusService = chatExecutionStatusService;
 
