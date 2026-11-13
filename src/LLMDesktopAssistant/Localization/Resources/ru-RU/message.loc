@@ -19,12 +19,16 @@ next_branch: Следующая ветка
 previous_branch: Предыдущая ветка
 quick_action.send: Отправить "{0}"
 summary: Сводка
-token_cost.cache_hit: Попадание в кеш
-token_cost.cache_miss: Промах кеша
+token_cost.cache: Кэш
+token_cost.cache_create: Создано
+token_cost.cache_created: создан
+token_cost.cache_hit: Попадание в кэш
+token_cost.cache_miss: Промахи
 token_cost.generation_time: Время генерации
 token_cost.input: Вход
 token_cost.model: Модель
 token_cost.output: Выход
+token_cost.seconds: с
 token_cost.ttft: Первый токен
 visibility.always: Всегда
 visibility.hidden: Сообщение скрыто

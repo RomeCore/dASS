@@ -1,104 +1,125 @@
 using System.Globalization;
+using Avalonia.Controls;
 using LiteDB;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Providers;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional.Context
 {
 	[ViewModelFor(typeof(TokenCostView))]
 	public class TokenCostViewModel : AdditionalChatData
 	{
+		private const double cacheGoodPercent = 70;
+		private const double cacheWarningPercent = 30;
+
 		public override int Order => 10;
 
 		public required string ModelName { get; init; }
-
 		public required int? InputTokens { get; init; }
-
+		public required int? CacheCreateTokens { get; init; }
 		public required int? InputCacheHitTokens { get; init; }
-
 		public required int? InputCacheMissTokens { get; init; }
-
 		public required int? OutputTokens { get; init; }
-
 		public required double TTFT { get; init; }
-
 		public required double GenerationTime { get; init; }
 
-		/// <summary>
-		/// Localized label: "Model".
-		/// </summary>
 		[BsonIgnore]
-		public string ModelLabel => LocalizationManager.LocalizeStatic("message.token_cost.model");
+		public string ProviderName => ModelParts.Provider;
+		[BsonIgnore]
+		public bool HasProvider => !string.IsNullOrWhiteSpace(ProviderName);
+		[BsonIgnore]
+		public string ModelDisplayName => ModelParts.ModelId;
+		[BsonIgnore]
+		public IReadOnlyList<string> Modifiers => ModelParts.Modifiers ?? [];
+		[BsonIgnore]
+		public bool HasModifiers => Modifiers.Count > 0;
+		[BsonIgnore]
+		public string FirstModifier => HasModifiers ? Modifiers[0] : string.Empty;
+		[BsonIgnore]
+		public bool HasMoreModifiers => Modifiers.Count > 1;
+		[BsonIgnore]
+		public string MoreModifiersText => $"+{Modifiers.Count - 1}";
 
-		/// <summary>
-		/// Localized label: "Input tokens".
-		/// </summary>
+		private ModelReference? _modelNameParts;
 		[BsonIgnore]
-		public string InputTokensLabel => LocalizationManager.LocalizeStatic("message.token_cost.input");
+		public ModelReference ModelParts
+		{
+			get
+			{
+				if (_modelNameParts.HasValue)
+					return _modelNameParts.Value;
 
-		/// <summary>
-		/// Localized label: "Cache hit".
-		/// </summary>
-		[BsonIgnore]
-		public string CacheHitLabel => LocalizationManager.LocalizeStatic("message.token_cost.cache_hit");
+				try
+				{
+					_modelNameParts = ModelReference.Parse(ModelName);
+				}
+				catch
+				{
+					_modelNameParts = new ModelReference(string.Empty, ModelName, []);
+				}
+				return _modelNameParts.Value;
+			}
+		}
 
-		/// <summary>
-		/// Localized label: "Cache miss".
-		/// </summary>
 		[BsonIgnore]
-		public string CacheMissLabel => LocalizationManager.LocalizeStatic("message.token_cost.cache_miss");
+		public bool HasInputTokens => InputTokens > 0;
+		[BsonIgnore]
+		public bool HasOutputTokens => OutputTokens > 0;
+		[BsonIgnore]
+		public bool HasTokenCounts => HasInputTokens || HasOutputTokens;
+		[BsonIgnore]
+		public bool HasBothTokenCounts => HasInputTokens && HasOutputTokens;
 
-		/// <summary>
-		/// Localized label: "Output tokens".
-		/// </summary>
 		[BsonIgnore]
-		public string OutputTokensLabel => LocalizationManager.LocalizeStatic("message.token_cost.output");
+		public bool HasCacheHit => InputCacheHitTokens > 0;
+		[BsonIgnore]
+		public bool HasCacheMiss => InputCacheMissTokens > 0;
+		[BsonIgnore]
+		public bool HasCacheCreate => CacheCreateTokens > 0;
+		[BsonIgnore]
+		public bool HasCacheBlock => HasCacheHit || HasCacheMiss || HasCacheCreate;
+		[BsonIgnore]
+		public bool HasCachePercent => HasCacheHit || HasCacheMiss;
+		[BsonIgnore]
+		public bool IsCacheJustCreated => !HasCachePercent && HasCacheCreate;
 
-		/// <summary>
-		/// Localized label: "TTFT" (Time to First Token).
-		/// </summary>
 		[BsonIgnore]
-		public string TTFTLabel => LocalizationManager.LocalizeStatic("message.token_cost.ttft");
+		public double CacheHitPercent => CacheShare(InputCacheHitTokens) * 100;
+		[BsonIgnore]
+		public string CacheHitPercentText => $"{CacheHitPercent.ToString("F2", CultureInfo.CurrentCulture)}%";
 
-		/// <summary>
-		/// Localized label: "Generation time".
-		/// </summary>
 		[BsonIgnore]
-		public string GenerationTimeLabel => LocalizationManager.LocalizeStatic("message.token_cost.generation_time");
+		public GridLength CacheHitLength => new(CacheShare(InputCacheHitTokens), GridUnitType.Star);
+		[BsonIgnore]
+		public GridLength CacheMissLength => new(CacheShare(InputCacheMissTokens), GridUnitType.Star);
+		[BsonIgnore]
+		public GridLength CacheCreateLength => new(CacheShare(CacheCreateTokens), GridUnitType.Star);
 
-		/// <summary>
-		/// Formatted input tokens with thousands separator.
-		/// </summary>
 		[BsonIgnore]
-		public string InputTokensFormatted => InputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
+		public bool IsCacheGood => CacheHitPercent >= cacheGoodPercent;
+		[BsonIgnore]
+		public bool IsCacheWarning => CacheHitPercent is >= cacheWarningPercent and < cacheGoodPercent;
+		[BsonIgnore]
+		public bool IsCacheBad => HasCachePercent && CacheHitPercent < cacheWarningPercent;
 
-		/// <summary>
-		/// Formatted cache hit tokens (or "-" if unavailable).
-		/// </summary>
-		[BsonIgnore]
-		public string CacheHitFormatted => InputCacheHitTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
+		private int CacheTotal => (InputCacheHitTokens ?? 0) + (InputCacheMissTokens ?? 0) + (CacheCreateTokens ?? 0);
+		private double CacheShare(int? tokens) => CacheTotal > 0 ? (tokens ?? 0) / (double)CacheTotal : 0;
 
-		/// <summary>
-		/// Formatted cache miss tokens (or "-" if unavailable).
-		/// </summary>
 		[BsonIgnore]
-		public string CacheMissFormatted => InputCacheMissTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
+		public string InputTokensFormatted => FormatTokens(InputTokens);
+		[BsonIgnore]
+		public string CacheCreateFormatted => FormatTokens(CacheCreateTokens);
+		[BsonIgnore]
+		public string CacheHitFormatted => FormatTokens(InputCacheHitTokens);
+		[BsonIgnore]
+		public string CacheMissFormatted => FormatTokens(InputCacheMissTokens);
+		[BsonIgnore]
+		public string OutputTokensFormatted => FormatTokens(OutputTokens);
+		[BsonIgnore]
+		public string TTFTValue => TTFT.ToString("F2", CultureInfo.CurrentCulture);
+		[BsonIgnore]
+		public string GenerationTimeValue => GenerationTime.ToString("F2", CultureInfo.CurrentCulture);
 
-		/// <summary>
-		/// Formatted output tokens with thousands separator.
-		/// </summary>
-		[BsonIgnore]
-		public string OutputTokensFormatted => OutputTokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
-
-		/// <summary>
-		/// Formatted TTFT in seconds (e.g. "1.23s").
-		/// </summary>
-		[BsonIgnore]
-		public string TTFTFormatted => $"{TTFT:F2}s";
-
-		/// <summary>
-		/// Formatted generation time in seconds (e.g. "4.56s").
-		/// </summary>
-		[BsonIgnore]
-		public string GenerationTimeFormatted => $"{GenerationTime:F2}s";
+		private static string FormatTokens(int? tokens) => tokens?.ToString("N0", CultureInfo.CurrentCulture) ?? "-";
 	}
 }

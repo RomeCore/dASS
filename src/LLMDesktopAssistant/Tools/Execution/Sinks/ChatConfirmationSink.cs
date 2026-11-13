@@ -13,7 +13,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 	/// into a <see cref="ToolApprovalResult"/>. The "always" persistence belongs to the confirmation
 	/// stage, which owns the sender agent and the settings.
 	/// </remarks>
-	public sealed class ChatConfirmationSink(IChatExecutionStatusService statusService) : IConfirmationSink
+	public sealed class ChatConfirmationSink(IExecutionInfoStatusService statusService) : IConfirmationSink
 	{
 		/// <summary>
 		/// Surfaces the confirmation and awaits the user's decision.

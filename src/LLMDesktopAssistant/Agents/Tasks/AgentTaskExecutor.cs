@@ -60,10 +60,10 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			_memoryLogStore = memoryLogStore;
 		}
 
-		private static IChatExecutionStatusService? GetExecutionStatusService(AgentTask task)
+		private static IExecutionInfoStatusService? GetExecutionStatusService(AgentTask task)
 		{
 			var chat = task.LaunchParameters.TriggeredChat;
-			return chat?.Services.GetService<IChatExecutionStatusService>();
+			return chat?.Services.GetService<IExecutionInfoStatusService>();
 		}
 
 		public AgentTask Execute(AgentTaskLaunchParameters parameters, CancellationToken cancellationToken = default)
@@ -274,7 +274,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			executionTimer.Start();
 
 			int totalInputTokens = 0, totalOutputTokens = 0;
-			int totalCacheHitTokens = 0, totalCacheMissTokens = 0;
+			int totalCacheCreateTokens = 0, totalCacheHitTokens = 0, totalCacheMissTokens = 0;
 			TimeSpan totalTtft = TimeSpan.Zero, totalInferenceTime = TimeSpan.Zero;
 
 			while (true)
@@ -331,7 +331,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					{
 						void PartAdded(object? sender, AssistantMessageDelta delta)
 						{
-							ttft ??= executionTimer.Elapsed;
+							ttft ??= messageExecutionTimer.Elapsed;
 
 							if (delta.DeltaReasoningContent != null)
 								agentMessage.ReasoningContent = responseMessage.ReasoningContent;
@@ -373,7 +373,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					totalInferenceTime += inferenceTime;
 
 					int inputTokens = 0, outputTokens = 0;
-					int cacheHitTokens = 0, cacheMissTokens = 0;
+					int cacheCreateTokens = 0, cacheHitTokens = 0, cacheMissTokens = 0;
 
 					if (response.UsageMetadata is IUsageMetadata usageMetadata)
 					{
@@ -382,9 +382,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 						if (usageMetadata is IUsageCacheMetadata cacheMetadata)
 						{
+							cacheCreateTokens = cacheMetadata.CachedTokens;
 							cacheHitTokens = cacheMetadata.InputCacheHitTokens;
 							cacheMissTokens = cacheMetadata.InputCacheMissTokens;
 
+							if (cacheCreateTokens < 0) cacheCreateTokens = 0;
 							if (cacheHitTokens < 0) cacheHitTokens = 0;
 							if (cacheMissTokens < 0) cacheMissTokens = 0;
 						}
@@ -395,6 +397,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 					totalInputTokens += inputTokens;
 					totalOutputTokens += outputTokens;
+					totalCacheCreateTokens += cacheCreateTokens;
 					totalCacheHitTokens += cacheHitTokens;
 					totalCacheMissTokens += cacheMissTokens;
 
@@ -402,6 +405,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					{
 						InputTokens = inputTokens,
 						OutputTokens = outputTokens,
+						CacheCreateTokens = cacheCreateTokens,
 						InputCacheHitTokens = cacheHitTokens,
 						InputCacheMissTokens = cacheMissTokens,
 						TimeToFirstToken = ttft.Value,
@@ -413,6 +417,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					{
 						InputTokens = totalInputTokens,
 						OutputTokens = totalOutputTokens,
+						CacheCreateTokens = totalCacheCreateTokens,
 						InputCacheHitTokens = totalCacheHitTokens,
 						InputCacheMissTokens = totalCacheMissTokens,
 						TimeToFirstToken = totalTtft,

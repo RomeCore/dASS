@@ -19,12 +19,16 @@ next_branch: Next branch
 previous_branch: Previous branch
 quick_action.send: Send "{0}"
 summary: Summary
+token_cost.cache: Cache
+token_cost.cache_create: Created
+token_cost.cache_created: created
 token_cost.cache_hit: Cache hit
-token_cost.cache_miss: Cache miss
+token_cost.cache_miss: Misses
 token_cost.generation_time: Gen. time
 token_cost.input: Input
 token_cost.model: Model
 token_cost.output: Output
+token_cost.seconds: s
 token_cost.ttft: TTFT
 visibility.always: Always
 visibility.hidden: Message hidden

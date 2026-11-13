@@ -16,6 +16,11 @@
 		public required int OutputTokens { get; init; }
 
 		/// <summary>
+		/// The number of tokens that were cached during the agent task.
+		/// </summary>
+		public required int CacheCreateTokens { get; init; }
+
+		/// <summary>
 		/// The number of input tokens that were served from the provider cache.
 		/// </summary>
 		public required int InputCacheHitTokens { get; init; }

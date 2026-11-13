@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 	/// </remarks>
 	public sealed class TaskConfirmationSink(
 		AgentTask task,
-		IChatExecutionStatusService? statusService,
+		IExecutionInfoStatusService? statusService,
 		IToolMemorizationService memorization) : IConfirmationSink
 	{
 		/// <inheritdoc/>
@@ -78,8 +78,10 @@ namespace LLMDesktopAssistant.Tools.Execution.Sinks
 			if (agentManager is null || chatSettings is null)
 				return;
 
-			var agent = agentManager.GetAgentDescriptor(senderAgentId.Value);
-			ToolConsentPersister.MemorizeAlways(agent, chatSettings, toolName, approved);
+			var agent = agentManager.TryGetAgentDescriptor(senderAgentId.Value);
+			if (agent is not null)
+				ToolConsentPersister.MemorizeAlways(agent, chatSettings, toolName, approved);
+			// TODO: Handle the case where the agent is not found - show the error to user in UI.
 		}
 	}
 }

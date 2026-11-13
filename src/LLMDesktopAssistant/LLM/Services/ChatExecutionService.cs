@@ -51,6 +51,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		IMCPManagementService mcpManager,
 		IUsageStatsCollector usageStatsCollector,
 		IToastService toastService,
+		IExecutionInfoStatusService executionInfoStatusService,
 		IChatExecutionStatusService executionStatusService,
 		IChatStatusService statusService,
 		IPromptDumpService promptDumpService,
@@ -60,13 +61,14 @@ namespace LLMDesktopAssistant.LLM.Services
 		private const bool EnablePrefixCompletions = false;
 
 		private readonly List<IChatExecutionHook> _executionHooks = executionHooks.OrderBy(h => h.Order).ToList();
-		private readonly ChatConfirmationSink _confirmationSink = new(executionStatusService);
+		private readonly ChatConfirmationSink _confirmationSink = new(executionInfoStatusService);
 		private readonly IToolExecutionContextFactory _chatContextFactory =
 			new ChatToolContextFactory(chat, toolMemorizer, agentManager, chatSettings);
 
 		/// <inheritdoc/>
 		public async Task<bool> GenerateResponseAsync(CancellationToken cancellationToken = default)
 		{
+			using var executionInfo = executionInfoStatusService.WithExecution();
 			using var execution = executionStatusService.WithExecution();
 
 			try
@@ -141,6 +143,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		public async Task<bool> GenerateResponseWithAgentAsync(Guid agentId, Guid agentStageId,
 			CancellationToken cancellationToken = default)
 		{
+			using var execution = executionStatusService.WithExecution();
+
 			try
 			{
 				using var scope = tokens.WithToken(ChatExecutionLevel.Agent, cancellationToken, out var token);
@@ -196,6 +200,8 @@ namespace LLMDesktopAssistant.LLM.Services
 			Guid agentId, Guid agentStageId, ChatAgentDescriptor agent, int cycle,
 			CancellationToken cancellationToken = default)
 		{
+			using var execution = executionStatusService.WithExecution();
+
 			try
 			{
 				using var scope = tokens.WithToken(ChatExecutionLevel.Message, cancellationToken, out var token);
@@ -230,6 +236,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					CreatedAt = DateTime.Now,
 					Status = AssistantMessageStatus.Pending,
 					SenderAgentId = agentId,
+					Sender = agent.Info.Name,
 					AgentStageId = agentStageId,
 					IsUserLike = agent.Info.IdentifyAsUser
 				};
@@ -371,6 +378,7 @@ namespace LLMDesktopAssistant.LLM.Services
 								{
 									ModelName = modelName,
 									InputTokens = usageMetadata.InputTokens,
+									CacheCreateTokens = usageCacheMetadata.CachedTokens,
 									InputCacheHitTokens = usageCacheMetadata.InputCacheHitTokens,
 									InputCacheMissTokens = usageCacheMetadata.InputCacheMissTokens,
 									OutputTokens = usageMetadata.OutputTokens,
@@ -393,6 +401,7 @@ namespace LLMDesktopAssistant.LLM.Services
 								{
 									ModelName = modelName,
 									InputTokens = usageMetadata.InputTokens,
+									CacheCreateTokens = null,
 									InputCacheHitTokens = null,
 									InputCacheMissTokens = null,
 									OutputTokens = usageMetadata.OutputTokens,
@@ -424,6 +433,7 @@ namespace LLMDesktopAssistant.LLM.Services
 							{
 								ModelName = modelName,
 								InputTokens = null,
+								CacheCreateTokens = null,
 								InputCacheHitTokens = null,
 								InputCacheMissTokens = null,
 								OutputTokens = null,
