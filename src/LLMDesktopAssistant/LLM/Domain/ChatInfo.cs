@@ -1,3 +1,5 @@
+using LLMDesktopAssistant.LLM.MVVM.Additional;
+
 namespace LLMDesktopAssistant.LLM.Domain
 {
 	/// <summary>
@@ -30,5 +32,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// Gets the last modified timestamp for this instance. Used to track when the chat session was last updated.
 		/// </summary>
 		public required DateTime LastModifiedAt { get; init; }
+
+		/// <summary>
+		/// Gets the parts attached to the chat itself, in their stored order - the chips the chat list renders under
+		/// the title and the topic.
+		/// </summary>
+		public IReadOnlyList<AdditionalMessagePart> Parts { get; init; } = [];
 	}
 }

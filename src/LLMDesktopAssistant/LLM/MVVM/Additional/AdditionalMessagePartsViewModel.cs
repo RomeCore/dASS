@@ -11,12 +11,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 	[ViewModelFor(typeof(AdditionalMessagePartsView))]
 	public class AdditionalMessagePartsViewModel : ViewModelBase
 	{
-		private readonly AdditionalChatDataCollection _source;
+		private AdditionalChatDataCollection _source;
 
 		/// <summary>
 		/// The live view over the message parts of the source collection.
 		/// </summary>
-		public FilteredObservableCollection<AdditionalChatData> Parts { get; }
+		public FilteredObservableCollection<AdditionalChatData> Parts
+		{
+			get => field;
+			private set => SetProperty(ref field, value);
+		}
 
 		/// <summary>
 		/// Gets or sets the alignment of the parts, derived from the role of the message that owns them.
@@ -52,6 +56,24 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		{
 			if (part != null)
 				_source.Remove(part);
+		}
+
+		/// <summary>
+		/// Re-points the chips at another collection, keeping every subscription alive.
+		/// </summary>
+		/// <remarks>
+		/// The chat list holds a snapshot while a chat is closed and the chat's own collection while it is open,
+		/// so that a script appending a part updates the list entry the user is looking at.
+		/// </remarks>
+		public void SetSource(AdditionalChatDataCollection source)
+		{
+			if (ReferenceEquals(_source, source))
+				return;
+
+			_source = source;
+			var previous = Parts;
+			Parts = new FilteredObservableCollection<AdditionalChatData>(source, item => item is AdditionalMessagePart);
+			previous.Dispose();
 		}
 
 		protected override void Dispose(bool disposing)

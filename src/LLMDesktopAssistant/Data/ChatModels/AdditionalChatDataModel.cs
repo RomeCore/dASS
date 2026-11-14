@@ -20,6 +20,16 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		public int Order { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value indicating whether <see cref="Data"/> is an <see cref="AdditionalMessagePart"/>.
+		/// </summary>
+		/// <remarks>
+		/// A column of its own, because a predicate like <c>d =&gt; d.Data is AdditionalMessagePart</c> cannot be
+		/// translated into a BSON filter: LiteDB would build every row before it could answer. This flag filters the
+		/// raw documents instead, so only the rows that really are parts are ever materialised.
+		/// </remarks>
+		public bool IsPart { get; set; }
+
+		/// <summary>
 		/// Gets or sets a value indicating kind of parent for this additional chat data model.
 		/// </summary>
 		public ChatDataParentKind ParentKind { get; set; }

@@ -1,4 +1,5 @@
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 
 namespace LLMDesktopAssistant.LLM.Services
 {
@@ -13,6 +14,13 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// </summary>
 		/// <returns>An enumerable collection of <see cref="ChatInfo"/> objects. The collection is empty if no chats are available.</returns>
 		IEnumerable<ChatInfo> GetChats();
+
+		/// <summary>
+		/// Loads the parts one chat carries itself - the chips its entry in the chat list draws.
+		/// </summary>
+		/// <param name="chatId">The ID of the chat to load the parts of.</param>
+		/// <returns>The parts in their stored order; empty when the chat carries none.</returns>
+		IReadOnlyList<AdditionalMessagePart> GetChatParts(int chatId);
 
 		/// <summary>
 		/// Opens a new service scope for the given chat information.

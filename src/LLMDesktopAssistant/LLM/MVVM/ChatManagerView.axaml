@@ -5,7 +5,7 @@
 			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
 			 xmlns:loc="using:LLMDesktopAssistant.Localization"
 			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatManagerView"
 			 x:DataType="local:ChatManagerViewModel"
@@ -40,87 +40,175 @@
 				</StackPanel>
 
 				<!-- Sidebar: list of all available chats (no edit controls) -->
-				<ListBox ItemsSource="{Binding AvailableChats}"
-								 SelectedItem="{Binding SelectedChat.SelectedAvailable}"
-								 Margin="8">
+				<scroll:SmoothScrollViewer Margin="8"
+																	 VerticalScrollBarVisibility="Auto">
 
-					<ListBox.ItemTemplate>
-						<DataTemplate>
-							
-							<DockPanel beh:ListBoxItemBehaviour.IsParentListBoxItemEnabled="{Binding !IsSelected}"
-												 beh:ListBoxItemBehaviour.IsParentListBoxItemVisible="{Binding !IsTemporary}">
+					<scroll:SmoothScrollViewer.Styles>
 
-								<StackPanel VerticalAlignment="Center"
-														DockPanel.Dock="Right">
-									
+						<!-- A chat entry is a surface, not a themed button: only the hover and press tints show. -->
+						<Style Selector="Button.ChatListRow">
+							<Setter Property="Background" Value="Transparent"/>
+							<Setter Property="BorderThickness" Value="0"/>
+							<Setter Property="Padding" Value="0"/>
+							<Setter Property="HorizontalAlignment" Value="Stretch"/>
+							<Setter Property="VerticalAlignment" Value="Stretch"/>
+							<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+						</Style>
+						<Style Selector="Button.ChatListRow:pointerover">
+							<Setter Property="Background" Value="#16FFFFFF"/>
+						</Style>
+						<Style Selector="Button.ChatListRow:pressed">
+							<Setter Property="Background" Value="#26FFFFFF"/>
+						</Style>
+
+						<!--
+							The chips of a chat entry are lighter than a message's, which sit in a pill of their own. The
+							override lives inside this list on purpose: a scope on the view would reach the chat as well.
+						-->
+						<Style Selector="Border.messagePartChip" x:CompileBindings="False">
+							<Setter Property="Background" Value="#00000000"/>
+							<Setter Property="CornerRadius" Value="6"/>
+							<Setter Property="Padding" Value="4,0"/>
+							<Setter Property="BorderBrush" Value="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}, ConverterParameter=0.35}"/>
+						</Style>
+						<Style Selector="Border.messagePartChip TextBlock">
+							<Setter Property="FontSize" Value="10"/>
+							<Setter Property="Opacity" Value="0.85"/>
+						</Style>
+						<Style Selector="Border.messagePartChip ico|VisualIcon">
+							<Setter Property="Width" Value="11"/>
+							<Setter Property="Height" Value="11"/>
+						</Style>
+
+						<!-- One line of chips: a wrapped second line would change the height of the entry. -->
+						<Style Selector="ContentControl.ChatListChips ItemsControl">
+							<Setter Property="ItemsPanel">
+								<Setter.Value>
+									<ItemsPanelTemplate>
+										<StackPanel Orientation="Horizontal"/>
+									</ItemsPanelTemplate>
+								</Setter.Value>
+							</Setter>
+						</Style>
+
+					</scroll:SmoothScrollViewer.Styles>
+
+					<ItemsControl ItemsSource="{Binding AvailableChats}">
+
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<VirtualizingStackPanel/>
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+
+						<ItemsControl.ItemTemplate>
+							<DataTemplate>
+
+								<Panel IsVisible="{Binding !IsTemporary}"
+											 Height="62"
+											 Margin="0,0,0,2">
+
+									<!-- The row itself. Disabled while the chat is already open in a tab, and the only thing that opens it. -->
+									<Button Classes="ChatListRow"
+												Command="{Binding OpenCommand}"
+												IsEnabled="{Binding !IsSelected}"
+												ToolTip.Tip="{Binding Topic}">
+										<Button.Template>
+											<ControlTemplate>
+												<Border Background="{TemplateBinding Background}"
+																CornerRadius="6">
+													<ContentPresenter Content="{TemplateBinding Content}"/>
+												</Border>
+											</ControlTemplate>
+										</Button.Template>
+									</Button>
+
+									<!-- Chrome above the button: never hit-testable, so the click falls through to it. -->
+									<Grid Margin="8,6"
+												ColumnDefinitions="Auto,*"
+												Opacity="{Binding ContentOpacity}"
+												IsHitTestVisible="False">
+
+										<Border Width="8" Height="8"
+												CornerRadius="4"
+												Background="{Binding TopicColorHex}"
+												VerticalAlignment="Top"
+												Margin="0,5,6,0"/>
+								
+								<StackPanel Grid.Column="1" Spacing="1">
+
+											<TextBlock Text="{Binding Title}"
+																 FontSize="14"
+																 TextWrapping="NoWrap"
+																 TextTrimming="CharacterEllipsis"/>
+
+											<TextBlock Text="{Binding Topic}"
+																 IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+																 Foreground="{Binding TopicColorHex}"
+																 FontSize="11"
+																 Opacity="0.8"
+																 TextWrapping="NoWrap"
+																 TextTrimming="CharacterEllipsis"/>
+
+											<TextBlock Text="{loc:Loc chat.no_topic}"
+																 IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"
+																 Foreground="{Binding TopicColorHex}"
+																 FontSize="11"
+																 Opacity="0.8"
+																 TextWrapping="NoWrap"
+																 TextTrimming="CharacterEllipsis"/>
+
+										</StackPanel>
+
+									</Grid>
+
+									<!-- The chat's own parts: real chips, hit-testable, above the row button -->
+									<ContentControl Classes="ChatListChips"
+															Content="{Binding Parts}"
+															Opacity="{Binding ContentOpacity}"
+															HorizontalAlignment="Left"
+															VerticalAlignment="Bottom"
+															Margin="22,0,8,5"
+															ClipToBounds="True"/>
+
 									<Label Content="{Binding LastModifiedAt}"
+												 HorizontalAlignment="Right"
+												 VerticalAlignment="Bottom"
+												 Margin="0,0,8,4"
 												 Opacity="0.5"
 												 FontSize="11"/>
 
 									<StackPanel Orientation="Horizontal"
-															HorizontalAlignment="Right"
-															Spacing="4">
-										
+													HorizontalAlignment="Right"
+													VerticalAlignment="Top"
+													Margin="0,4,4,0"
+													Spacing="4">
+
 										<Button Command="{Binding OpenInNewTabCommand}"
-														IsEnabled="{Binding !IsTemporary}"
+														IsEnabled="{Binding CanAct}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc chat.open_in_new_tab}">
 											<ico:VisualIcon Kind="TabPlus"/>
 										</Button>
-										
+
 										<Button Command="{Binding DeleteCommand}"
-														IsEnabled="{Binding !IsTemporary}"
+														IsEnabled="{Binding CanAct}"
 														Classes="SmallIconButton"
 														ToolTip.Tip="{loc:Loc common.delete}">
 											<ico:VisualIcon Kind="Delete"/>
 										</Button>
-										
+
 									</StackPanel>
 
-								</StackPanel>
+								</Panel>
 
-								<Border Width="8" Height="8"
-												CornerRadius="4"
-												Background="{Binding TopicColorHex}"
-												VerticalAlignment="Center"
-												Margin="0,0,6,0"
-												DockPanel.Dock="Left"
-												ToolTip.Tip="{Binding Topic}"/>
-								
-								<StackPanel VerticalAlignment="Center">
-									
-									<TextBlock Text="{Binding Title}"
-														 FontSize="14"
-														 TextWrapping="NoWrap"
-														 TextTrimming="CharacterEllipsis"/>
-									
-									<TextBlock Text="{Binding Topic}"
-															IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-															Foreground="{Binding TopicColorHex}"
-															FontSize="11"
-															Opacity="0.8"
-															VerticalAlignment="Center"
-															TextWrapping="NoWrap"
-															TextTrimming="CharacterEllipsis"/>
-								
-									<TextBlock Text="{loc:Loc chat.no_topic}"
-															IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"
-															Foreground="{Binding TopicColorHex}"
-															FontSize="11"
-															Opacity="0.8"
-															VerticalAlignment="Center"
-															TextWrapping="NoWrap"
-															TextTrimming="CharacterEllipsis"/>
-								
-								</StackPanel>
-								
-							</DockPanel>
-							
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-					
-				</ListBox>
-				
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+
+					</ItemsControl>
+
+				</scroll:SmoothScrollViewer>
+
 			</DockPanel>
 
 		</SplitView.Pane>

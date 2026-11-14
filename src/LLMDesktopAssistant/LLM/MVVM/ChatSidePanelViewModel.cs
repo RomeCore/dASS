@@ -64,7 +64,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// The panel takes visible items that render nowhere else.
 		/// </summary>
 		private static bool IsPanelItem(AdditionalChatData item)
-			=> item.IsVisible && item is not AdditionalChatDataItemBase;
+			=> item.IsVisible && item is not AdditionalChatDataItemBase and not AdditionalMessagePart;
 
 		private void OnItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{

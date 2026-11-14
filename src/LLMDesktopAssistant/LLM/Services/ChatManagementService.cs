@@ -2,6 +2,7 @@ using System.Diagnostics;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Storage;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
@@ -23,13 +24,23 @@ namespace LLMDesktopAssistant.LLM.Services
 				Title = model.Title,
 				Topic = model.Topic,
 				CreatedAt = model.CreatedAt,
-				LastModifiedAt = model.LastModifiedAt
+				LastModifiedAt = model.LastModifiedAt,
+				Parts = GetChatParts(model.Id)
 			};
 		}
 
 		public IEnumerable<ChatInfo> GetChats()
 		{
-			return database.Chats.FindAll().Select(CreateChatInfo).ToList();
+			return database.Chats.FindAll().Select(model => CreateChatInfo(model)).ToList();
+		}
+
+		public IReadOnlyList<AdditionalMessagePart> GetChatParts(int chatId)
+		{
+			return [.. database.AdditionalChatData
+				.Find(d => d.ParentId == chatId && d.ParentKind == ChatDataParentKind.Chat && d.IsPart)
+				.OrderBy(d => d.Order).ThenBy(d => d.Id)
+				.Select(d => d.Data)
+				.OfType<AdditionalMessagePart>()];
 		}
 
 		private IServiceScope OpenChatScope(ChatDatabase database, int chatId)

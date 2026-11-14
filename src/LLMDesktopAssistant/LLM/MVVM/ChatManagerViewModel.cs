@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services.Instances;
@@ -17,6 +18,16 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public IServiceScope? TemporaryScope { get; init; }
 		public required ICommand OpenInNewTabCommand { get; init; }
 		public required ICommand DeleteCommand { get; init; }
+
+		/// <summary>
+		/// Gets the command the entry itself runs: it opens this chat in the current tab.
+		/// </summary>
+		public required ICommand OpenCommand { get; init; }
+
+		/// <summary>
+		/// Gets the chips rendered under the title and the topic of this chat in the list.
+		/// </summary>
+		public required AdditionalMessagePartsViewModel Parts { get; init; }
 
 		private string? _title = string.Empty;
 		public string? Title
@@ -47,8 +58,26 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public bool IsSelected
 		{
 			get => _isSelected;
-			set => SetProperty(ref _isSelected, value);
+			set
+			{
+				if (SetProperty(ref _isSelected, value))
+				{
+					RaisePropertyChanged(nameof(CanAct));
+					RaisePropertyChanged(nameof(ContentOpacity));
+				}
+			}
 		}
+
+		/// <summary>
+		/// Gets a value indicating whether this entry's actions (open in a new tab, delete) are available:
+		/// the chat it stands for is already open in this tab, and the row says so by being locked.
+		/// </summary>
+		public bool CanAct => !IsSelected && !IsTemporary;
+
+		/// <summary>
+		/// Gets the opacity of the entry's content: an opened chat dims, so the lock reads at a glance.
+		/// </summary>
+		public double ContentOpacity => IsSelected ? 0.5 : 1.0;
 
 
 
@@ -259,6 +288,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void UnlockAvailableChat(AvailableChatViewModel available, Chat chat)
 		{
+			available.Parts.SetSource(available.IsTemporary ? [] : [..ChatManager.GetChatParts(available.Id)]);
 			available.IsSelected = false;
 			chat.PropertyChanged -= OnChatPropertyChanged;
 
@@ -271,6 +301,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void LockAvailableChat(AvailableChatViewModel available, Chat chat)
 		{
+			available.Parts.SetSource(chat.AdditionalData);
 			available.IsSelected = true;
 			chat.PropertyChanged += OnChatPropertyChanged;
 
@@ -448,6 +479,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				OpenChat(newAvailableChatViewModel);
 			});
+			var openCommand = new RelayCommand(() => SelectChat(newAvailableChatViewModel));
 			var deleteCommand = new RelayCommand(() =>
 			{
 				var openedChats = OpenedChats.Where(o => o.SelectedAvailable?.Id == info.Id).ToList();
@@ -462,14 +494,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				if (OpenedChats.Count == 0)
 					CreateChat();
 			});
+
 			newAvailableChatViewModel = new AvailableChatViewModel
 			{
 				Id = info.Id,
 				OpenInNewTabCommand = openInNewTabCommand,
 				DeleteCommand = deleteCommand,
+				OpenCommand = openCommand,
 				Title = info.Title,
 				Topic = info.Topic,
-				LastModifiedAt = info.LastModifiedAt
+				LastModifiedAt = info.LastModifiedAt,
+				Parts = new AdditionalMessagePartsViewModel([.. info.Parts])
 			};
 			return newAvailableChatViewModel;
 		}
@@ -479,6 +514,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			AvailableChats.Clear();
 			foreach (var chat in ChatManager.GetChats().OrderByDescending(c => c.LastModifiedAt))
 				AvailableChats.Add(CreateAvailableChatViewModel(chat));
+		}
+
+		/// <summary>
+		/// Opens a chat from the list in the current tab - the list's replacement for the ListBox selection.
+		/// </summary>
+		private void SelectChat(AvailableChatViewModel chat)
+		{
+			if (SelectedChat is { } selected)
+				selected.SelectedAvailable = chat;
+			else
+				OpenChat(chat);
 		}
 
 		private void OpenChat(AvailableChatViewModel chat)
@@ -519,9 +565,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				TemporaryScope = chatScope,
 				OpenInNewTabCommand = new RelayCommand(() => { }, () => false),
 				DeleteCommand = new RelayCommand(() => { }, () => false),
+				OpenCommand = new RelayCommand(() => { }, () => false),
 				Title = chat.Title,
 				Topic = chat.Topic,
-				LastModifiedAt = DateTime.Now
+				LastModifiedAt = DateTime.Now,
+				Parts = new AdditionalMessagePartsViewModel(chat.AdditionalData)
 			};
 			AvailableChats.Insert(0, newAvailableChat);
 			OpenChat(newAvailableChat);

@@ -31,6 +31,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				{
 					ParentKind = parentKind,
 					ParentId = parentId,
+					IsPart = target is AdditionalMessagePart,
 					Data = target
 				};
 				database.AdditionalChatData.Insert(model);
@@ -65,6 +66,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 							Order = _order,
 							ParentKind = parentKind,
 							ParentId = parentId,
+							IsPart = target is AdditionalMessagePart,
 							Data = target
 						};
 						_database.AdditionalChatData.Insert(_model);
