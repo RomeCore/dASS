@@ -116,3 +116,11 @@ Blocked by:
   own key is a no-op - replacing there would dispose the live payload the new item is built from.
 - Open: `order` on a part (order is the order of appending), and whether a Lua-created part can be `restorable`
   (today it is not).
+- Implemented: the chips surface. The chat list draws a chat's own parts under the title and topic, in the same
+  `AdditionalMessagePartsView` a message uses, from `AdditionalChatDataModel.IsPart` - a column, because a predicate
+  over the stored payload cannot be translated and LiteDB would materialise every row to answer it. The chip look
+  moved to `Styles/Chips.axaml` (`Border.messagePartChip`) so a surface can override it; the list overrides it for
+  a lighter chip on one line. The list itself is an `ItemsControl` behind a row-wide `Button`: the button is
+  disabled while the chat is already open (the lock the user must see), the chrome above it is not hit-testable so
+  the click falls through, and the chips above that take their own clicks - so a locked entry still shows its
+  previews. Chips follow `Chat.AdditionalData` while the chat is open and a database snapshot while it is closed.
