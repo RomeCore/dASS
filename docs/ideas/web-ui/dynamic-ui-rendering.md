@@ -22,9 +22,11 @@ Blocked by:
 The pair is accepted as the authoring model. Corrections and additions:
 
 - **The axis is `data + actions + N presentations`, not `XAML ↔ HTML`.** A widget persists its markup (`Axaml`) and
-  its view model (`Data`, a BSON snapshot); Lua functions are dropped by the tolerant conversion. A widget is already
-  data-persistent and behaviour-session-only on the desktop: after a reload its buttons render disabled. The persisted
-  data is therefore already the exact payload a template engine wants.
+  its view model (`Data`, a BSON snapshot). A Lua function now travels in that snapshot too: it is stored as a marker
+  string carrying the dumped bytecode (`LuaStructuredConverter.FunctionMarker`) and revived for the desktop after a
+  reload. The persisted data is therefore still the exact payload a template engine wants - but `Data` is no longer
+  scalar-and-container-only, so the web side has to read a marker string as "an action exists, it is not renderable
+  here" rather than as member data (see *Unavailable actions* below).
 - **The WebUI is not a separate data path and needs no RPC layer.** The web host is Blazor Server started from a
   chat-scoped service that lifts the chat's own service instances into the ASP.NET host as singletons, and the chat
   page injects the same `Chat` object. Components run in-process with the Lua interpreter and with the live view
@@ -45,8 +47,10 @@ The pair is accepted as the authoring model. Corrections and additions:
 - **Buttons dispatch by member name into the existing asynchronous command surface.** The Lua idiom reads `self`, so a
   payload is optional, and the two-way problem reduces to getting the field values into the view model before the
   click.
-- **Unavailable actions need no special machinery:** after a reload the member is not a command, so the desktop's
-  `{Binding refresh}` and the template's `{{#unless refresh}}disabled{{/unless}}` degrade from the same rule.
+- **Unavailable actions need no special machinery:** a member is an action only when it is a live command. On the
+  desktop that is a revived function; on the web it is a recognised marker string, and any other member is data, so
+  `{{#unless refresh}}disabled{{/unless}}` works on the same distinction. A marker the running build cannot revive
+  stays a string and renders as a disabled action, never as data to interpolate.
 - **The desktop keeps its direct command binding.** The desktop user is the application owner and the shared
   null-command rule already yields parity on the disabled state; routing desktop clicks through the interaction
   service would add a second dispatch path for no behavioural gain. Revisit if the desktop ever needs an
