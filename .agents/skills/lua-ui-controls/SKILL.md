@@ -38,6 +38,7 @@ One handle per call: the second argument is the options table, not another handl
 - `visible` (boolean) - hide the payload without detaching it (`false` on a rail item takes it off the strip entirely).
 - `temporary` (boolean) - keep it out of the database.
 - `surface = "rail"` with `horizontal` (`"left"` / `"right"`) and `vertical` (`"top"` / `"bottom"`) - put the payload on the chat's **input rail** instead of rendering it in place. The rail reads `chat.AdditionalData`, so only `dass.chat.append_data` accepts `surface`; the message and tool-result hosts refuse it. Without `surface` the payload is plain chat additional data.
+- `surface = "overlay"` with `title`, `closeable`, `left`, `top`, `width`, `height` - open the payload as a floating window over the chat's messages. `left`/`top`/`width`/`height` are fractions `0..1` of the messages area; without them the window lands in a cascade and is as large as the payload needs. The window is the host's: the user collapses it in place, hides it into the tray or (with `closeable = true`, which destroys the payload - a terminal dies with it) closes it, and that state survives the script's next append under the same `replacement_key`. `visible = false` removes the window entirely, tray row included. Chat only, like the rail.
 
 `dass.chat.remove_data(handle)`, `chat_message:remove_data(handle)` and `dass.tool.result.remove_data(handle)` detach everything the handle attached to that host, and return `false` when there was nothing to detach.
 
