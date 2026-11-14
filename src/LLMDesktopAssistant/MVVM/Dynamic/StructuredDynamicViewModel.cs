@@ -188,14 +188,19 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 				return;
 
 			SetRawValue(key, raw);
-			InvalidateMember(key);
 			NotifyMemberChanged(key);
 			OnMemberWritten(key, oldRaw, raw);
 		}
 
 		/// <summary>Raises every change notification required for a member update.</summary>
+		/// <remarks>
+		/// The cached member is dropped first. A value the script wrote straight into its own table is already there,
+		/// while the cache still holds the old materialised copy - a notification that kept serving it would leave the
+		/// view showing the value before the write, which is exactly what <c>notify</c> exists to avoid.
+		/// </remarks>
 		protected void NotifyMemberChanged(string key)
 		{
+			InvalidateMember(key);
 			RaisePropertyChangedFor(key);
 			RaisePropertyChanged(nameof(Count));
 			RaisePropertyChanged(nameof(Keys));

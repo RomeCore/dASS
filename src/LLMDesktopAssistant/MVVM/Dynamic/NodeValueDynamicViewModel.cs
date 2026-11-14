@@ -228,7 +228,6 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			if (sender is not ReactiveNodeValue reactive || !_scalarKeys.TryGetValue(reactive, out var key))
 				return;
 
-			InvalidateMember(key);
 			NotifyMemberChanged(key);
 		}
 
