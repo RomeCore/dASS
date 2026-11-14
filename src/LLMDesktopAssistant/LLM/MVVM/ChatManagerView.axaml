@@ -110,9 +110,8 @@
 
 									<!-- The row itself. Disabled while the chat is already open in a tab, and the only thing that opens it. -->
 									<Button Classes="ChatListRow"
-												Command="{Binding OpenCommand}"
-												IsEnabled="{Binding !IsSelected}"
-												ToolTip.Tip="{Binding Topic}">
+													Command="{Binding OpenCommand}"
+													IsEnabled="{Binding !IsSelected}">
 										<Button.Template>
 											<ControlTemplate>
 												<Border Background="{TemplateBinding Background}"
@@ -130,12 +129,12 @@
 												IsHitTestVisible="False">
 
 										<Border Width="8" Height="8"
-												CornerRadius="4"
-												Background="{Binding TopicColorHex}"
-												VerticalAlignment="Top"
-												Margin="0,5,6,0"/>
+														CornerRadius="4"
+														Background="{Binding TopicColorHex}"
+														VerticalAlignment="Top"
+														Margin="0,5,6,0"/>
 								
-								<StackPanel Grid.Column="1" Spacing="1">
+										<StackPanel Grid.Column="1" Spacing="1">
 
 											<TextBlock Text="{Binding Title}"
 																 FontSize="14"
