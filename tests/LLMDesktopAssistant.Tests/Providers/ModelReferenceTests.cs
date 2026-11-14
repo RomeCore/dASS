@@ -11,7 +11,7 @@ public class ModelReferenceTests
 
 		Assert.Equal("DeepSeek", reference.Provider);
 		Assert.Equal("deepseek-v4-flash", reference.ModelId);
-		Assert.Null(reference.Modifier);
+		Assert.Empty(reference.Modifiers!);
 	}
 
 	[Fact]
@@ -21,7 +21,15 @@ public class ModelReferenceTests
 
 		Assert.Equal("DeepSeek", reference.Provider);
 		Assert.Equal("deepseek-v4-flash", reference.ModelId);
-		Assert.Equal("Max", reference.Modifier);
+		Assert.Equal("Max", Assert.Single(reference.Modifiers!));
+	}
+
+	[Fact]
+	public void Parse_WithSeveralModifiers_ReturnsAllOfThem()
+	{
+		var reference = ModelReference.Parse("DeepSeek$deepseek-v4-flash$Max,Fast");
+
+		Assert.Equal(["Max", "Fast"], reference.Modifiers!);
 	}
 
 	[Fact]
@@ -35,9 +43,17 @@ public class ModelReferenceTests
 	[Fact]
 	public void ToString_WithModifier_ReturnsProviderModelModifier()
 	{
-		var reference = new ModelReference("DeepSeek", "deepseek-v4-flash", "Max");
+		var reference = new ModelReference("DeepSeek", "deepseek-v4-flash", ["Max"]);
 
 		Assert.Equal("DeepSeek$deepseek-v4-flash$Max", reference.ToString());
+	}
+
+	[Fact]
+	public void ToString_WithSeveralModifiers_JoinsThemWithCommas()
+	{
+		var reference = new ModelReference("DeepSeek", "deepseek-v4-flash", ["Max", "Fast"]);
+
+		Assert.Equal("DeepSeek$deepseek-v4-flash$Max,Fast", reference.ToString());
 	}
 
 	[Theory]
@@ -59,13 +75,14 @@ public class ModelReferenceTests
 	[Theory]
 	[InlineData("DeepSeek$deepseek-v4-flash", false)]
 	[InlineData("DeepSeek$deepseek-v4-flash$Max", true)]
+	[InlineData("DeepSeek$deepseek-v4-flash$Max,Fast", true)]
 	[InlineData("OpenAI$gpt-4o$Fast", true)]
 	public void TryParse_ValidInput_ReturnsTrue(string fullName, bool hasModifier)
 	{
 		var result = ModelReference.TryParse(fullName, out var reference);
 
 		Assert.True(result);
-		Assert.Equal(hasModifier, reference.Modifier is not null);
+		Assert.Equal(hasModifier, reference.Modifiers is { Count: > 0 });
 	}
 
 	[Fact]
@@ -77,10 +94,13 @@ public class ModelReferenceTests
 	[Fact]
 	public void Parse_ToString_RoundTrip()
 	{
-		var original = new ModelReference("DeepSeek", "deepseek-v4-flash", "Max");
+		var original = new ModelReference("DeepSeek", "deepseek-v4-flash", ["Max", "Fast"]);
 
 		var parsed = ModelReference.Parse(original.ToString());
 
-		Assert.Equal(original, parsed);
+		// The modifier list compares by reference inside the record struct, so the parts are compared one by one.
+		Assert.Equal(original.Provider, parsed.Provider);
+		Assert.Equal(original.ModelId, parsed.ModelId);
+		Assert.Equal(original.Modifiers, parsed.Modifiers);
 	}
 }
