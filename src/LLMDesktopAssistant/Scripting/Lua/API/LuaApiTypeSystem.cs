@@ -189,7 +189,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return new LuaTuple(LuaNil.Instance);
 
 			if (ctx.State.TypeMetatables.TryGetValue(luaType.Value, out var mt))
-				return new LuaTuple(mt.ToTable());
+				return new LuaTuple(mt);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -206,8 +206,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			if (args.Length >= 2 && args[1] is LuaTable table)
 			{
-				var mt = LuaMetatable.FromTable(table);
-				ctx.State.TypeMetatables[luaType.Value] = mt;
+				ctx.State.TypeMetatables[luaType.Value] = table;
 			}
 			else
 			{
@@ -233,7 +232,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			// Get existing metatable as LuaTable, or start with an empty table
 			LuaTable existingTable;
 			if (ctx.State.TypeMetatables.TryGetValue(luaType.Value, out var existingMt))
-				existingTable = existingMt.ToTable();
+				existingTable = existingMt;
 			else
 				existingTable = new LuaTable();
 
@@ -241,7 +240,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var mergedTable = existingTable.DeepMergeWith(extensions);
 
 			// Convert back to LuaMetatable and store
-			ctx.State.TypeMetatables[luaType.Value] = LuaMetatable.FromTable(mergedTable);
+			ctx.State.TypeMetatables[luaType.Value] = mergedTable;
 
 			return new LuaTuple(LuaNil.Instance);
 		}

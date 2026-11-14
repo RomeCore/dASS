@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		private readonly IAddonSetCollector<LuaScriptInfo> _scriptSetCollector;
 		private readonly AddonSet<LuaScriptInfo> _scripts;
 		private readonly LuaTable _globalTableSnapshot;
-		private readonly Dictionary<LuaType, LuaMetatable> _typeMetatablesSnapshot;
+		private readonly Dictionary<LuaType, LuaTable> _typeMetatablesSnapshot;
 		private readonly List<string?> _namespacesSnapshot;
 		private readonly Stack<Action> _cleanups;
 

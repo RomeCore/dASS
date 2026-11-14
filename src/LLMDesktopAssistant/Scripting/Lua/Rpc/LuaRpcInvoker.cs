@@ -19,7 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 	/// </remarks>
 	public sealed class LuaRpcInvoker(LuaRpcHandle handle, bool isNotification = false)
 	{
-		private static LuaMetatable? _metatable;
+		private static LuaTable? _metatable;
 
 		/// <summary>
 		/// Gets the handle every call on this proxy is sent through.
@@ -40,15 +40,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.Rpc
 		public static LuaUserData Wrap(LuaRpcInvoker invoker)
 			=> new(invoker, invoker.IsNotification ? "rpc_notifier" : "rpc_invoker") { Metatable = GetMetatable() };
 
-		private static LuaMetatable GetMetatable()
+		private static LuaTable GetMetatable()
 		{
 			// Two threads may build one each; the last wins and both are equivalent.
 			return _metatable ??= BuildMetatable();
 		}
 
-		private static LuaMetatable BuildMetatable()
+		private static LuaTable BuildMetatable()
 		{
-			var metatable = new LuaMetatable();
+			var metatable = new LuaTable();
 			metatable.Set("__index", new LuaCallbackFunction(Index));
 			metatable.Set("__call", new LuaCallbackFunction(CallAsync));
 			return metatable;

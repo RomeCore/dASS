@@ -105,8 +105,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 			return value switch
 			{
 				LuaNil or LuaBoolean => value,
-				LuaNumber number => new LuaNumber(number.Value) { Metatable = CloneMetatable(number.Metatable, depth, path) },
-				LuaString text => new LuaString(text.Value) { Metatable = CloneMetatable(text.Metatable, depth, path) },
+				LuaNumber number => new LuaNumber(number.Value) { Metatable = CloneTable(number.Metatable!, depth, path) },
+				LuaString text => new LuaString(text.Value) { Metatable = CloneTable(text.Metatable!, depth, path) },
 				LuaTable table => CloneTable(table, depth, path),
 				_ => value,
 			};
@@ -114,9 +114,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 
 		private static LuaTable CloneTable(LuaTable table, int depth, string path)
 		{
+			if (table is null) return null!;
+
 			var result = new LuaTable
 			{
-				Metatable = CloneMetatable(table.Metatable, depth, path)
+				Metatable = CloneTable(table.Metatable!, depth, path)
 			};
 
 			foreach (var kvp in table.Entries)
@@ -128,20 +130,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 				var childPath = kvp.Key is LuaString name ? $"{path}.{name.Value}" : path;
 				result.Set(kvp.Key, CloneCore(kvp.Value, depth + 1, childPath));
 			}
-
-			return result;
-		}
-
-		private static LuaMetatable? CloneMetatable(LuaMetatable? metatable, int depth, string path)
-		{
-			if (metatable is null)
-				return null;
-
-			ThrowIfTooDeep(depth, path);
-
-			var result = new LuaMetatable();
-			foreach (var kvp in metatable)
-				result.Set(kvp.Key, CloneCore(kvp.Value, depth + 1, path));
 
 			return result;
 		}

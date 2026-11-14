@@ -154,7 +154,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var table = CreateStoreTable(factory(DefaultStoreName));
 
-			var metatable = new LuaMetatable();
+			var metatable = new LuaTable();
 			metatable.Set(LuaMetatableEvent.Call, new LuaCallbackFunction((ctx, args) =>
 			{
 				var name = args.Length > 1 && args[1] is not LuaNil
@@ -172,7 +172,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var table = CreateStoreTable(factory(name));
 
-			var metatable = new LuaMetatable();
+			var metatable = new LuaTable();
 			metatable.Set(LuaMetatableEvent.Call, new LuaCallbackFunction((ctx, args) =>
 			{
 				var next = args.Length > 1 && args[1] is not LuaNil
