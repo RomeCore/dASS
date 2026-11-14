@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Platform.Storage;
 
@@ -16,16 +17,30 @@ public partial class AdditionalMessagePartView : UserControl
 
 	private void OnDataContextChanged(object? sender, EventArgs e)
 	{
-		Cursor = DataContext is AttachmentMessagePart attachment && HasOpenTarget(attachment)
-			? new Cursor(StandardCursorType.Hand)
-			: Cursor.Default;
+		Cursor = DataContext switch
+		{
+			AttachmentMessagePart attachment when HasOpenTarget(attachment) => new Cursor(StandardCursorType.Hand),
+			AdditionalMessageContentPart content when !string.IsNullOrWhiteSpace(content.Content) => new Cursor(StandardCursorType.Hand),
+			_ => Cursor.Default
+		};
 	}
 
 	private static bool HasOpenTarget(AttachmentMessagePart attachment)
 		=> !string.IsNullOrWhiteSpace(attachment.SourceUrl) || !string.IsNullOrWhiteSpace(attachment.LocalPath);
 
-	private async void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+	private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
 	{
+		if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+			return;
+
+		// A content chip hides text behind it: the click opens the whole thing where the cursor already is.
+		if (DataContext is AdditionalMessageContentPart content && !string.IsNullOrWhiteSpace(content.Content))
+		{
+			FlyoutBase.ShowAttachedFlyout(ChipBorder);
+			e.Handled = true;
+			return;
+		}
+
 		if (DataContext is not AttachmentMessagePart attachment)
 			return;
 
@@ -38,8 +53,8 @@ public partial class AdditionalMessagePartView : UserControl
 			return;
 
 		if (uri.IsFile && File.Exists(uri.LocalPath))
-			await launcher.LaunchFileInfoAsync(new FileInfo(uri.LocalPath));
+			launcher.LaunchFileInfoAsync(new FileInfo(uri.LocalPath));
 		else
-			await launcher.LaunchUriAsync(uri);
+			launcher.LaunchUriAsync(uri);
 	}
 }

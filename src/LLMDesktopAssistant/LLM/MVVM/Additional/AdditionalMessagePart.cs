@@ -1,5 +1,7 @@
 using Avalonia.Media;
+using LiteDB;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
@@ -54,6 +56,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			get => _isRestorable;
 			set => SetProperty(ref _isRestorable, value);
 		}
+
+		/// <summary>
+		/// Gets the preview shown while the pointer hovers the chip, or <see langword="null"/> when the part hides
+		/// nothing worth showing.
+		/// </summary>
+		/// <remarks>
+		/// It belongs to the part rather than to the view: the chip is one template serving a chat, a message and a
+		/// tool call, and what the part hides is what decides the preview.
+		/// </remarks>
+		[BsonIgnore]
+		[ChangeTracker.Untracked]
+		public virtual object? Preview => null;
 
 		/// <summary>
 		/// Creates a shallow copy of this part. Used when editing messages to avoid

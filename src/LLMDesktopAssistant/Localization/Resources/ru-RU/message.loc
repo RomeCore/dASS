@@ -66,3 +66,9 @@ terminal.error.no_session: Терминальная сессия недосту�
 terminal.tooltip.expand: Развернуть терминал
 terminal.tooltip.collapse: Свернуть терминал
 terminal.tooltip.resize: Потяните, чтобы изменить высоту терминала
+
+// Превью чипа сообщения: тултип показывает кусок того, что чип скрывает, клик по контентному чипу - целиком.
+chip.preview.truncated: … ещё {0} символов
+chip.media.image: Изображение
+chip.media.audio: Аудио
+chip.media.video: Видео

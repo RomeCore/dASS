@@ -39,5 +39,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			get => _size;
 			set => SetProperty(ref _size, value);
 		}
+
+		/// <summary>
+		/// The copied file is the most useful thing to show under the picture; the source URL is the fallback.
+		/// </summary>
+		protected override string? PreviewSource => LocalPath ?? SourceUrl;
 	}
 }

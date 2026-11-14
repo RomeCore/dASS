@@ -66,3 +66,9 @@ terminal.error.no_session: No terminal session available.
 terminal.tooltip.expand: Expand terminal
 terminal.tooltip.collapse: Collapse terminal
 terminal.tooltip.resize: Drag to resize the terminal
+
+// The preview of a message chip: the tooltip peeks at what the chip hides, a click on a content chip shows it whole.
+chip.preview.truncated: … {0} more characters
+chip.media.image: Image
+chip.media.audio: Audio
+chip.media.video: Video

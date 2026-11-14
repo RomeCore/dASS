@@ -1,3 +1,6 @@
+using LiteDB;
+using LLMDesktopAssistant.LLM.MVVM.Additional.Preview;
+using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Attachments;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
@@ -21,6 +24,31 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		{
 			get => _content;
 			set => SetProperty(ref _content, value);
+		}
+
+		private ChipTextPreviewViewModel? _preview;
+
+		/// <inheritdoc/>
+		[BsonIgnore]
+		[ChangeTracker.Untracked]
+		public override object? Preview => _preview ??= new ChipTextPreviewViewModel(this);
+
+		/// <summary>
+		/// Copies the part without the preview: the copy previews its own text, not the original's.
+		/// </summary>
+		public override AdditionalMessagePart Clone()
+		{
+			var clone = (AdditionalMessageContentPart)base.Clone();
+			clone._preview = null;
+			return clone;
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+				_preview?.Dispose();
 		}
 	}
 }

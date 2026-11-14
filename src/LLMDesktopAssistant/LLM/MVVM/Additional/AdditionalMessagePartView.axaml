@@ -1,20 +1,48 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:conv="using:LLMDesktopAssistant.Converters"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
-			 x:DataType="local:AdditionalMessagePart">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="32"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+						 xmlns:preview="using:LLMDesktopAssistant.LLM.MVVM.Additional.Preview"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.AdditionalMessagePartView"
+						 x:DataType="local:AdditionalMessagePart">
 
+	<UserControl.Resources>
+
+		<!-- The whole content behind a click: the tooltip peeks, this shows everything. -->
+		<DataTemplate x:Key="ChipFullPreview" DataType="preview:ChipTextPreviewViewModel">
+			<Border MinWidth="420" MaxWidth="1060" MaxHeight="520" Padding="12">
+				<ctrl:MarkdownControl MarkdownText="{Binding FullMarkdown}"
+															CompactCodeBlocks="True"/>
+			</Border>
+		</DataTemplate>
+
+	</UserControl.Resources>
+
+	<UserControl.Styles>
+		<Style Selector="FlyoutPresenter">
+			<Setter Property="Cursor" Value="Arrow"/>
+		</Style>
+	</UserControl.Styles>
+
+	<!-- A part that hides nothing (a plain chip) has no preview, and a null Tip shows no tooltip at all. -->
 	<Border Background="{DynamicResource MessageBackground}"
 					BorderThickness="1"
 					CornerRadius="8"
 					Padding="6,3"
-					x:Name="Border">
+					x:Name="ChipBorder"
+					ToolTip.Tip="{Binding Preview}">
+
+		<FlyoutBase.AttachedFlyout>
+			<Flyout Placement="Bottom">
+				<ContentControl Content="{Binding Preview}"
+												ContentTemplate="{StaticResource ChipFullPreview}"/>
+			</Flyout>
+		</FlyoutBase.AttachedFlyout>
 
 		<Border.BorderBrush>
 			<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
@@ -26,7 +54,7 @@
 		<StackPanel Orientation="Horizontal" Spacing="4">
 			
 			<ico:VisualIcon Kind="{Binding ChipIcon}"
-											Foreground="{Binding #Border.BorderBrush}"
+											Foreground="{Binding #ChipBorder.BorderBrush}"
 											IsVisible="{Binding ChipIcon, Converter={StaticResource NotnullToBooleanConverter}}"
 											Width="14" Height="14"
 											VerticalAlignment="Center"/>
