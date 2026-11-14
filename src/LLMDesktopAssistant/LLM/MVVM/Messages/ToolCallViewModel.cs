@@ -305,7 +305,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			StatusTitle = toolCall.StatusTitle;
 			ExpectedBehaviour = toolCall.ExpectedBehaviour;
 
-			AdditionalData = new AdditionalChatDataCollectionViewModel(toolCall.AdditionalData);
+			AdditionalData = new AdditionalChatDataCollectionViewModel(toolCall.AdditionalData, _chat.Services);
 
 			ConsentCommand = new RelayCommand<ToolApprovalResult>(ResolveConsent);
 			CancelCommand = new RelayCommand(Cancel);

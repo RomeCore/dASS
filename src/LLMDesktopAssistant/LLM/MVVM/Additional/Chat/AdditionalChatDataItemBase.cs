@@ -12,7 +12,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 	/// decide the envelope's own <see cref="Order"/> and <see cref="IsEffectivelyVisible"/> are re-raised as the
 	/// envelope's, so a surface subscribes to the envelope and never to the payload.
 	/// </remarks>
-	public class AdditionalChatDataItemBase : AdditionalChatData
+	public class AdditionalChatDataItemBase : AdditionalChatData, IChatServicesAttachable
 	{
 		/// <summary>
 		/// Gets or sets the payload this envelope presents.
@@ -60,6 +60,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 				Content.PropertyChanged -= OnContentPropertyChanged;
 				Content.Dispose();
 			}
+		}
+
+		/// <summary>
+		/// Forwards the chat's service scope to the payload.
+		/// </summary>
+		/// <param name="services">The chat's service scope.</param>
+		public void AttachChatServices(IServiceProvider services)
+		{
+			if (Content is IChatServicesAttachable attachable)
+				attachable.AttachChatServices(services);
 		}
 	}
 }
