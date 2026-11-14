@@ -1,6 +1,7 @@
 using AsyncLua;
 using AsyncLua.Values;
 using LLMDesktopAssistant.StructuredValues.Converters;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Store
 {
@@ -263,7 +264,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		{
 			lock (_lock)
 			{
-				var dropped = new List<string>();
+				var dropped = new AppendOnlyList<string>();
 				var snapshot = LuaStoreValueConverter.ToSnapshot(_data, dropped);
 				LuaFileStoreBackend.ReportDropped(Name, dropped, warn);
 				LuaStoreJson.WriteFile(path, snapshot);

@@ -5,6 +5,7 @@ using AsyncLua.Values;
 using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Const;
 using LLMDesktopAssistant.StructuredValues.Converters;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Store
 {
@@ -14,6 +15,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 	/// <remarks>
 	/// Both directions are depth-limited. The runtime's own deep clone has no cycle guard, so a cyclic
 	/// table would not raise a Lua error - it would overflow the stack and take the whole application down.
+	/// A Lua function is kept as the marker string that carries its bytecode (see
+	/// <see cref="LuaStructuredConverter.DumpFunction"/>): the code survives, the upvalues do not.
 	/// </remarks>
 	public static class LuaStoreValueConverter
 	{
@@ -39,9 +42,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// <param name="value">The value to convert.</param>
 		/// <param name="depth">The nesting depth of <paramref name="value"/>.</param>
 		/// <param name="path">The dotted path used in diagnostics.</param>
-		/// <param name="dropped">Collects the paths of the values that cannot be persisted.</param>
+		/// <param name="dropped">
+		/// Collects the paths of the values that cannot be persisted. A Lua function is not one of them - it
+		/// is written as bytecode, while a C# callback, a userdata or a task still lands here.
+		/// </param>
 		/// <returns>The structured value, or <see langword="null"/> when the value itself was dropped.</returns>
-		public static ConstNodeValue? ToSnapshot(LuaValue value, int depth, string path, List<string> dropped)
+		public static ConstNodeValue? ToSnapshot(LuaValue value, int depth, string path, AppendOnlyList<string> dropped)
 		{
 			ThrowIfTooDeep(depth, path);
 
@@ -55,6 +61,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 					return new ConstNodeNumberValue { Value = number.Value };
 				case LuaString text:
 					return new ConstNodeStringValue { Value = text.Value };
+				case LuaNativeFunction function:
+					return new ConstNodeStringValue { Value = LuaStructuredConverter.DumpFunction(function) };
 				case LuaTable table:
 					return ToSnapshotTable(table, depth, path, dropped);
 				default:
@@ -69,7 +77,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// <param name="data">The live store data.</param>
 		/// <param name="dropped">Collects the paths of the values that cannot be persisted.</param>
 		/// <returns>The dictionary snapshot, never <see langword="null"/>.</returns>
-		public static ConstNodeDictionaryValue ToSnapshot(LuaTable data, List<string> dropped)
+		public static ConstNodeDictionaryValue ToSnapshot(LuaTable data, AppendOnlyList<string> dropped)
 		{
 			var items = ImmutableDictionary.CreateBuilder<string, ConstNodeValue>();
 
@@ -93,9 +101,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// </summary>
 		/// <param name="snapshot">The snapshot to restore, or <see langword="null"/> for an empty store.</param>
 		/// <returns>The live key table, never <see langword="null"/>.</returns>
+		/// <remarks>
+		/// This is the one place that revives a serialized function, and it may: the snapshot belongs to the
+		/// store, so a marker in it is a value a script wrote earlier. <c>store.import</c> deliberately does
+		/// not revive - the file it reads belongs to someone else.
+		/// </remarks>
 		public static LuaTable Restore(INodeValue? snapshot)
 		{
-			return snapshot?.ToLuaValue() as LuaTable ?? new LuaTable();
+			return snapshot?.ToLuaValue(functions: true) as LuaTable ?? new LuaTable();
 		}
 
 		private static LuaValue CloneCore(LuaValue value, int depth, string path)
@@ -134,9 +147,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 			return result;
 		}
 
-		private static ConstNodeValue ToSnapshotTable(LuaTable table, int depth, string path, List<string> dropped)
+		private static ConstNodeValue ToSnapshotTable(LuaTable table, int depth, string path, AppendOnlyList<string> dropped)
 		{
-			if (IsArrayTable(table))
+			if (table.IsArrayTable())
 			{
 				var items = ImmutableList.CreateBuilder<ConstNodeValue>();
 
@@ -180,29 +193,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		private static string Shorten(string path)
 		{
 			return path.Length <= 80 ? path : "..." + path[^77..];
-		}
-
-		private static bool IsArrayTable(LuaTable table)
-		{
-			int length = table.Length;
-
-			if (length == 0 && !table.Keys.Any())
-				return true;
-
-			if (length == 0)
-				return false;
-
-			foreach (var key in table.Keys)
-			{
-				if (key is not LuaNumber numberKey)
-					return false;
-
-				double index = numberKey.Value;
-				if (index < 1 || index > length || index != Math.Truncate(index))
-					return false;
-			}
-
-			return true;
 		}
 
 		private static string? KeyToString(LuaValue key)

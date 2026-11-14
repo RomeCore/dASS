@@ -280,6 +280,37 @@ namespace LLMDesktopAssistant.Tests.Scripting
 		}
 
 		[Fact]
+		public void FileStore_KeepsALuaFunctionAcrossAReload()
+		{
+			using var directory = new TempDirectory();
+			var state = new LuaState().LoadDefaultLibraries();
+			var table = (LuaTable)state.Execute("""
+				local captured = 41
+				return {
+					n = 0,
+					bump = function(self) self.n = self.n + 1; return self.n end,
+					read = function() return captured end
+				}
+				""").First;
+
+			var store = new LuaStore("test", new LuaFileStoreBackend(directory.File("store.json")));
+			store.Set("counter", table, null);
+
+			// A fresh instance loads the JSON back: the function has to arrive as bytecode, not a string.
+			var reopened = new LuaStore("test", new LuaFileStoreBackend(directory.File("store.json")));
+			var restored = Assert.IsType<LuaTable>(reopened.Get("counter"));
+			var bump = Assert.IsType<LuaNativeFunction>(restored.Get("bump"));
+
+			var context = state.CreateContext();
+			Assert.Equal(1d, Assert.IsType<LuaNumber>(bump.Invoke(context, restored).First).Value);
+			Assert.Equal(2d, Assert.IsType<LuaNumber>(bump.Invoke(context, restored).First).Value);
+
+			// A captured local is the one thing the dump leaves behind: the slot is there, the value is not.
+			var read = Assert.IsType<LuaNativeFunction>(restored.Get("read"));
+			Assert.IsType<LuaNil>(read.Invoke(context).First);
+		}
+
+		[Fact]
 		public void Import_DoesNotTouchABrokenSourceFile()
 		{
 			using var directory = new TempDirectory();

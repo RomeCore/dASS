@@ -51,8 +51,20 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			NOTES:
 			  - The handle is reusable: the same uicontrol may be appended multiple times.
 			  - The AXAML source is mutable (ui:set_xaml); the view model is fixed at creation.
-			  - Commands (Lua functions) survive only for the live session; after a chat reload the
-				UI is restored from persisted data, but functions are lost.
+			  - Commands survive a chat reload: a Lua function is stored as bytecode together with the
+				view model data and revived when the widget is restored. What does NOT survive: upvalues
+				and the environment. A captured local comes back as nil, while globals (dass.*, your own
+				scripts' namespaces) resolve normally against the chat's current state. So write commands
+				as `function(self, ...)` and keep their state in the table itself - `self` is the restored
+				view model and the only state a revived function still has:
+
+					counter = 0,
+					bump = function(self)
+					  self:set('counter', self.counter + 1)   -- survives
+					end
+
+				Don't rely on a captured `local` or on a function value that is not Lua code (an API
+				callback), those are session-only and come back missing.
 
 			EXAMPLES:
 

@@ -79,12 +79,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			mutation case above.
 
 			PERSISTED STORES (store.chat and store.file) write a lossy snapshot on every change:
-			  only structured data survives - tables, strings, numbers, booleans.
-			  functions, userdata, threads, metatables and non-string table keys are DROPPED from the
-			  file with a warning that names the path of the lost value; the live value in memory keeps
-			  them until the store is reloaded.
+			  tables, strings, numbers and booleans survive as they are.
+			  a LUA FUNCTION survives as bytecode and comes back callable, without its upvalues: a
+			  captured local reads as nil, globals (dass.*, your namespaces) resolve at call time.
+			  everything else that is not data is DROPPED with a warning naming its path - a C# callback,
+			  a userdata, a task, a metatable, a non-string key. Functions nested in tables survive; the
+			  live value keeps the dropped ones until the store is reloaded.
 			  a cyclic table, or nesting deeper than 200 levels, raises an error at write time.
 			  An in-memory store never inspects the value, so it accepts all of the above.
+			  store.import() does NOT revive (the file belongs to someone else), store.export() writes the
+			  marker verbatim - so export -> import leaves a function as a string.
 
 			ERRORS: a store never guesses. A malformed JSON file is renamed to <name>.<timestamp>.broken,
 			the store starts empty and the reason is logged. import() raises an error instead and leaves
@@ -111,6 +115,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  -- Named stores
 			  store.workdir("dnd").set("character1", { name = "Tav", level = 3 })
 			  store.user("global").set("theme", "dark")
+
+			  -- A handler that outlives the script, the chat and the application restart
+			  local s = store.file(".llmassist/handlers.json")
+			  s.set("tag", function(text) return "[" .. tostring(text) .. "]" end)
+			  -- after a restart s.get("tag") is callable again; anything it closed over is nil
+			  s.get("tag")("hello")   -- "[hello]"
 			""";
 
 		/// <inheritdoc />

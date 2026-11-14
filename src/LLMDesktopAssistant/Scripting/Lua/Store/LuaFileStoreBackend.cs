@@ -1,4 +1,5 @@
 using AsyncLua.Values;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Store
 {
@@ -19,13 +20,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// <inheritdoc />
 		public void Persist(LuaTable data, Action<string>? warn)
 		{
-			var dropped = new List<string>();
+			var dropped = new AppendOnlyList<string>();
 			var snapshot = LuaStoreValueConverter.ToSnapshot(data, dropped);
 			ReportDropped("store.file", dropped, warn);
 			LuaStoreJson.WriteFile(path, snapshot);
 		}
 
-		internal static void ReportDropped(string storeName, List<string> dropped, Action<string>? warn)
+		internal static void ReportDropped(string storeName, AppendOnlyList<string> dropped, Action<string>? warn)
 		{
 			foreach (var path in dropped)
 				warn?.Invoke($"{storeName}: dropped a value that cannot be persisted at '{path}'");
