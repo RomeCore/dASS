@@ -149,6 +149,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
+			ns["empty_array"] = new LuaCallbackFunction(EmptyArray);
 			ns["contains"] = new LuaCallbackFunction(Contains);
 			ns["find"] = new LuaCallbackFunction(Find);
 			ns["map"] = new LuaCallbackFunction(Map);
@@ -170,6 +171,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["each"] = new LuaCallbackFunction(Each);
 			ns["times"] = new LuaCallbackFunction(Times);
 			return null;
+		}
+
+		private static LuaTuple EmptyArray(LuaCallingContext ctx, LuaValue[] args)
+		{
+			return new LuaTuple(LuaExtensions.CreateArrayTable());
 		}
 
 		private static LuaTuple Contains(LuaCallingContext ctx, LuaValue[] args)

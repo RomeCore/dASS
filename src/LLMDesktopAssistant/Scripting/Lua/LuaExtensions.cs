@@ -11,25 +11,29 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// Determines whether a Lua table should be serialized as a JSON array.
 		/// A table is considered an array if it has a contiguous sequence of
 		/// integer keys from 1 to <see cref="Table.Length"/> and no keys
-		/// outside that range.
+		/// outside that range. When table is empty, the metamethod <c>__json_array</c>
+		/// is required to be <see langword="true"/>.
 		/// </summary>
 		public static bool IsArrayTable(this LuaTable table)
 		{
 			int len = table.Length;
-
-			if (len == 0 && table.Keys.Count() == 0)
-				return true;
+			var keys = table.Keys;
 
 			if (len == 0)
-				return false;
+			{
+				if (keys.Count == 0)
+					return true;
+				return (table.Metatable?.TryGetValue(new LuaString("__json_array"), out var value) ?? false)
+					&& value == LuaBoolean.True;
+			}
 
 			for (int i = 1; i <= len; i++)
 			{
-				if (!table.Keys.Contains(new LuaNumber(i)))
+				if (!keys.Contains(new LuaNumber(i)))
 					return false;
 			}
 
-			foreach (var key in table.Keys)
+			foreach (var key in keys)
 			{
 				if (key is not LuaNumber numberKey)
 					return false;
@@ -41,25 +45,20 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			return true;
 		}
 
-		public static T? TryGetUserData<T>(this LuaCallingContext ctx, string variableName)
-			where T : class
+		/// <summary>
+		/// Creates a table that is considered array when it empty.
+		/// This method just creates a table and puts <c>__json_array</c> to <see langword="true"/>
+		/// in their metatable.
+		/// </summary>
+		public static LuaTable CreateArrayTable()
 		{
-			var globals = ctx.Globals;
-			return globals.Get<T>(variableName);
+			return new LuaTable
+			{
+				Metatable = new LuaTable
+				{
+					["__json_array"] = LuaBoolean.True
+				}
+			};
 		}
-
-		/// <summary>
-		/// Gets the tool execution the current script belongs to, or <see langword="null"/> when the script is not
-		/// running as a tool. Read from the ambient <see cref="LuaExecutionContext"/>, not from a global.
-		/// </summary>
-		public static IToolExecutionContext? TryGetToolExecutionContext(this LuaCallingContext ctx)
-			=> LuaExecutionContext.Tool;
-
-		/// <summary>
-		/// Gets the slash-command execution the current script belongs to, or <see langword="null"/> when the script is
-		/// not running as a slash command.
-		/// </summary>
-		public static SlashCommandExecutionContext? TryGetCommandExecutionContext(this LuaCallingContext ctx)
-			=> LuaExecutionContext.Command;
 	}
 }

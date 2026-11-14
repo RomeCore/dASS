@@ -679,7 +679,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var memoryBlocksOption = parameters.Get("memory_blocks");
 			if (memoryBlocksOption is LuaTable memoryBlocksOptionTable)
 			{
-				var tec = ctx.TryGetToolExecutionContext();
+				var tec = LuaExecutionContext.Tool;
 				var chatContext = tec as ChatToolExecutionContext;
 				var senderAgent = chatContext?.Message is AssistantMessage am ?
 					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
@@ -707,7 +707,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			async Task<LuaTable> ExecuteAgent()
 			{
-				var tec = ctx.TryGetToolExecutionContext();
+				var tec = LuaExecutionContext.Tool;
 				var chatContext = tec as ChatToolExecutionContext;
 				var senderAgent = chatContext?.Message is AssistantMessage am ?
 					_agentManager.TryGetAgentDescriptor(am.SenderAgentId) : null;
