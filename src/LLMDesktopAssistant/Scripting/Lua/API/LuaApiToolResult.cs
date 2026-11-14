@@ -84,16 +84,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - data: table - structured data to return alongside text content
 
-			--- dass.tool.result.append_part(title, icon, color)
-			  Appends a plain chip part to the tool call. 'icon' is an icon name from icon.list(),
-			  'color' is a hex string; both are optional (pass nil).
-
-			--- dass.tool.result.append_content_part(content, title, icon, color)
-			  Appends a part whose text is also appended to the model-facing tool result.
-
-			--- dass.tool.result.append_attachment_part(attachment, title, icon, color)
-			  Appends a native attachment part. 'attachment' is any attachable handle
-			  (e.g. an image from image.load()/image.create()).
+			--- dass.tool.result.append_part(spec) -> chat_part or nil
+			  Appends one part - a compact chip with an optional payload - to the tool call.
+			  'spec' is the same table dass.chat.append_part() takes: title, icon, color,
+			  content (text this part also contributes to the MODEL-FACING tool result),
+			  attachment (a native attachment, e.g. an image from image.load()/image.create()),
+			  visible, temporary and replacement_key. 'content' and 'attachment' are mutually
+			  exclusive; a handle that is not a native attachment goes to append_data().
+			  Returns: chat_part (see manuals(dass.chat) for the handle) or nil outside a tool
+			  execution context.
 
 			--- dass.tool.result.append_data(handle, [options])
 			  Appends ONE attachable handle to the tool result: a 'uicontrol' created by
@@ -102,8 +101,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  own place, while the payload itself is shared.
 			  Parameters:
 				- handle: uicontrol or terminal - the attachable handle
-				- options: table (optional) - 'visible' and 'temporary' (booleans); 'surface' is
-				  refused here, because the rail exists on the chat only
+				- options: table (optional) - 'visible' and 'temporary' (booleans) and
+				  'replacement_key' (a string; re-appending the same handle under the same key
+				  changes nothing). 'surface' is refused here, because the rail exists on the
+				  chat only
 			  Returns: nil
 			  No-op if not in a tool execution context.
 
@@ -192,8 +193,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["set_status"] = new LuaCallbackFunction(SetStatus);
 			ns["set_structured"] = new LuaCallbackFunction(SetStructured);
 			ns["append_part"] = new LuaCallbackFunction(AppendPart);
-			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
-			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
 			ns["remove_data"] = new LuaCallbackFunction(RemoveData);
 			ns["use_markdown"] = new LuaCallbackFunction(UseMarkdown);
@@ -366,10 +365,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return new LuaTuple(LuaNil.Instance);
 
 			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
-			var options = LuaAttachmentOptions.Parse(args.Length > 1 ? args[1] : null, call);
+			var options = LuaAttachmentDataOptions.Parse(args.Length > 1 ? args[1] : null, call);
 			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+			var item = options.Apply(payload, isChatHost: false, call);
 
-			result.Host.AddAttachment(options.Apply(payload, isChatHost: false, call));
+			// Re-appending a payload under its own key would replace and dispose the live object itself.
+			if (!LuaAttachmentDataOptions.IsAlreadyAttached(result.Host, item))
+				result.Host.AddAttachment(item);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -437,36 +439,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private LuaTuple AppendPart(LuaCallingContext ctx, LuaValue[] args)
 		{
-			var host = GetResult(ctx)?.Host;
-			host?.AddAttachment(LuaAttachmentParts.CreatePart(Str(args, 0), Str(args, 1), Str(args, 2)));
-			return new LuaTuple(LuaNil.Instance);
-		}
-
-		private LuaTuple AppendContentPart(LuaCallingContext ctx, LuaValue[] args)
-		{
-			var host = GetResult(ctx)?.Host;
-			host?.AddAttachment(LuaAttachmentParts.CreateContentPart(Str(args, 0), Str(args, 1), Str(args, 2), Str(args, 3)));
-			return new LuaTuple(LuaNil.Instance);
-		}
-
-		private LuaTuple AppendAttachmentPart(LuaCallingContext ctx, LuaValue[] args)
-		{
-			var host = GetResult(ctx)?.Host;
-			if (host is null)
+			var result = GetResult(ctx);
+			if (result == null)
 				return new LuaTuple(LuaNil.Instance);
 
-			if (args.Length == 0 || Unwrap(args[0]) is not ILuaNativeAttachable attachable)
-				throw new LuaRuntimeException(
-					"dass.tool.result.append_attachment_part(attachment, ...): 'attachment' must be an " +
-					"attachable handle (e.g. an image created by image.load()/image.create()).");
+			var part = LuaAttachmentPartAppender.Append(result.Host, args.Length > 0 ? args[0] : null,
+				"dass.tool.result.append_part(spec)");
 
-			host.AddAttachment(LuaAttachmentParts.CreateNativePart(
-				attachable.GetNativeAttachment(), Str(args, 1), Str(args, 2), Str(args, 3)));
-			return new LuaTuple(LuaNil.Instance);
+			return new LuaTuple(LuaChatPart.Wrap(new LuaChatPart(result.Host, part)));
 		}
-
-		private static string? Str(LuaValue[] args, int index)
-			=> args.Length > index && args[index] is LuaString value ? value.Value : null;
 
 		private static object? Unwrap(LuaValue value)
 			=> value is LuaUserData userData ? userData.Target : value;

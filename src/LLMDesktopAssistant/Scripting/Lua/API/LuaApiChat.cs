@@ -36,15 +36,30 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.chat.get_topic() -> string
 			  Returns the chat topic.
 
-			--- dass.chat.append_part(title, icon, color)
-			  Appends a plain chip part to the CHAT object itself (not to a message).
+			--- dass.chat.append_part(spec) -> chat_part
+			  Appends one part - a compact chip with an optional payload - to the CHAT object
+			  itself, not to a message.
 
-			--- dass.chat.append_content_part(content, title, icon, color)
-			  Appends a part to the chat whose text is also appended to the model-facing content.
+			  Parameters:
+				- spec: table - the part, every field optional:
+					title: string - the chip label
+					icon: string - an icon name from icon.list()
+					color: string - a hex accent color, e.g. "#ff88cc"
+					content: string - text this part also contributes to the MODEL-FACING
+					  content of the host (the chat, the message or the tool result)
+					attachment: handle - a native attachment (e.g. an image from
+					  image.load()/image.create())
+					visible: boolean - show the chip (default true)
+					temporary: boolean - do not persist the part (default false)
+					replacement_key: string - update the part already carrying this key
 
-			--- dass.chat.append_attachment_part(attachment, title, icon, color)
-			  Appends a native attachment part to the chat. 'attachment' is any attachable handle
-			  (e.g. an image handle from image.load()/image.create()).
+			  'content' and 'attachment' are mutually exclusive: a part is either text or an
+			  attachment. A part with neither is a plain chip. The table describes the part
+			  WHOLE: a field you leave out gets its default, also when the call updates a part
+			  that already exists. An unknown key, a wrong value type or a handle that is not a
+			  native attachment is an error - a control or a terminal goes to append_data().
+
+			  Returns: chat_part - the appended part (see below).
 
 			--- dass.chat.append_data(handle, [options])
 			  Appends ONE attachable handle to the chat: a 'uicontrol' from dass.ui.create_control(),
@@ -59,7 +74,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			        horizontal: string - "left" or "right" (rail only, default "left")
 			        vertical: string - "top" or "bottom" (rail only, default "bottom")
 			        visible: boolean - show or hide the payload (default true)
-			        temporary: boolean - do not persist the payload (default false)
+					temporary: boolean - do not persist the payload (default false)
+					replacement_key: string - replace the item already carrying this key;
+					  re-appending the same handle under the same key changes nothing
 			      Without a surface the payload is plain additional chat data and lands in the side
 			      panel. An unknown key, an unknown value or a rail placement without the rail surface
 			      is an error, not a silent fallback.
@@ -103,20 +120,25 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - usage: chat_message_usage or nil - usage statistics (see below)
 
 			  Methods:
-			    - msg:append_part(title, icon, color) - a plain chip part
-			    - msg:append_content_part(content, title, icon, color) - a part whose text
-			      is also appended to the model-facing message content
-			    - msg:append_attachment_part(attachment, title, icon, color) - a native
-			      attachment part; 'attachment' is any handle that can be attached
-			      (e.g. an image handle from image.load()/image.create())
+				- msg:append_part(spec) -> chat_part - the same spec table as
+				  dass.chat.append_part(); 'content' here reaches the model-facing content of
+				  THIS message
 			    - msg:append_data(handle, [options]) - append ONE attachable handle: a 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
 			      process.run_terminal(). Options are the same as for dass.chat.append_data(),
 			      except 'surface': the rail exists on the chat only
 			    - msg:remove_data(handle) -> boolean - remove everything appended with this handle
 
-			  'icon' is a visual icon kind name (e.g. "Star", "Cards"), 'color' is a hex string
-			  (e.g. "#ff88cc"); both are optional (pass nil). Parts are not restorable on edit.
+			  Parts created from Lua are never restored into the input draft when the message is
+			  edited: there is no draft state that produced them.
+
+			PART HANDLE ('chat_part'):
+
+			  Methods:
+				- part:remove() -> boolean - detach the part from its host, disposing it (a part
+				  can own a native attachment). true when the part was still there; false when it
+				  was replaced by 'replacement_key', removed earlier, or its host is gone.
+				  Never raises.
 			
 			MESSAGE USAGE HANDLE ('chat_message_usage'):
 			
@@ -151,7 +173,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  local messages = dass.chat.get_messages()
 			  local last = messages[#messages]
 			  print(last.role, last.content)
-			  last:append_part("handled", "Star", "#ff88cc")
+			  last:append_part{ title = "handled", icon = "Star", color = "#ff88cc" }
+
+			  -- A chip that is also a text contribution, replaced in place while a job runs.
+			  local chip = msg:append_part{ title = "Step 1/3", icon = "Download",
+				  content = "Reading files...", replacement_key = "job" }
+			  msg:append_part{ title = "Step 2/3", icon = "Download", content = "Writing...",
+				  replacement_key = "job" } -- the same chip, updated
+			  chip:remove() -- nothing to remove any more: it was replaced
+
+			  -- An image as a chip.
+			  local image = image.load("shot.png")
+			  msg:append_part{ attachment = image, title = "Screenshot" }
 
 			  -- A live terminal can be attached to any host, including the chat.
 			  local t = process.run_terminal("claude")
@@ -192,8 +225,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["get_title"] = new LuaCallbackFunction(GetTitle);
 			ns["get_topic"] = new LuaCallbackFunction(GetTopic);
 			ns["append_part"] = new LuaCallbackFunction(AppendPart);
-			ns["append_content_part"] = new LuaCallbackFunction(AppendContentPart);
-			ns["append_attachment_part"] = new LuaCallbackFunction(AppendAttachmentPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
 			ns["remove_data"] = new LuaCallbackFunction(RemoveData);
 			ns["on_close"] = new LuaCallbackFunction(OnClose);
@@ -225,27 +256,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private LuaTuple AppendPart(LuaCallingContext ctx, LuaValue[] args)
 		{
-			_chat.AdditionalData.Add(LuaAttachmentParts.CreatePart(Str(args, 0), Str(args, 1), Str(args, 2)));
-			return new LuaTuple(LuaNil.Instance);
-		}
+			var part = LuaAttachmentPartAppender.Append(_chat, args.Length > 0 ? args[0] : null,
+				"dass.chat.append_part(spec)");
 
-		private LuaTuple AppendContentPart(LuaCallingContext ctx, LuaValue[] args)
-		{
-			_chat.AdditionalData.Add(
-				LuaAttachmentParts.CreateContentPart(Str(args, 0), Str(args, 1), Str(args, 2), Str(args, 3)));
-			return new LuaTuple(LuaNil.Instance);
-		}
-
-		private LuaTuple AppendAttachmentPart(LuaCallingContext ctx, LuaValue[] args)
-		{
-			if (args.Length == 0 || Unwrap(args[0]) is not ILuaNativeAttachable attachable)
-				throw new LuaRuntimeException(
-					"dass.chat.append_attachment_part(attachment, ...): 'attachment' must be an " +
-					"attachable handle (e.g. an image created by image.load()/image.create()).");
-
-			_chat.AdditionalData.Add(LuaAttachmentParts.CreateNativePart(
-				attachable.GetNativeAttachment(), Str(args, 1), Str(args, 2), Str(args, 3)));
-			return new LuaTuple(LuaNil.Instance);
+			return new LuaTuple(LuaChatPart.Wrap(new LuaChatPart(_chat, part)));
 		}
 
 		private LuaTuple AppendData(LuaCallingContext ctx, LuaValue[] args)
@@ -253,10 +267,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			const string call = "dass.chat.append_data(handle, options)";
 
 			var handle = args.Length > 0 ? Unwrap(args[0]) : null;
-			var options = LuaAttachmentOptions.Parse(args.Length > 1 ? args[1] : null, call);
+			var options = LuaAttachmentDataOptions.Parse(args.Length > 1 ? args[1] : null, call);
 			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+			var item = options.Apply(payload, isChatHost: true, call);
 
-			_chat.AddAttachment(options.Apply(payload, isChatHost: true, call));
+			// Re-appending a payload under its own key would replace and dispose the live object itself.
+			if (!LuaAttachmentDataOptions.IsAlreadyAttached(_chat, item))
+				_chat.AddAttachment(item);
 
 			return new LuaTuple(LuaNil.Instance);
 		}
@@ -268,9 +285,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var removed = _dispatcher.TryRemove(_chat, handle);
 			return new LuaTuple(removed ? LuaBoolean.True : LuaBoolean.False);
 		}
-
-		private static string? Str(LuaValue[] args, int index)
-			=> args.Length > index && args[index] is LuaString value ? value.Value : null;
 
 		private static object? Unwrap(LuaValue value)
 			=> value is LuaUserData userData ? userData.Target : value;

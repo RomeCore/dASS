@@ -496,8 +496,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				if (table.Get(index) is not LuaTable part)
 					throw new LuaRuntimeException($"{call}: options.parts must be an array of tables.");
 
-				parts.Add(LuaAttachmentParts.CreatePart(
-					GetString(part, "title"), GetString(part, "icon"), GetString(part, "color")));
+				parts.Add(LuaAttachmentPartOptions.Parse(part, call).Create());
 			}
 
 			return parts;

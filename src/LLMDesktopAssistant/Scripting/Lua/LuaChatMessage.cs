@@ -128,25 +128,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 		// === Appending parts ===
 
-		public void AppendPart(string? title, string? icon, string? color)
+		/// <summary>
+		/// Appends one part described by a spec table, updating the part that already carries its key.
+		/// </summary>
+		/// <param name="spec">The spec table; see <c>dass.chat.append_part</c> for its fields.</param>
+		/// <returns>The appended or updated part as a <c>chat_part</c> handle.</returns>
+		public LuaUserData AppendPart(object? spec)
 		{
-			Message.Message.AdditionalData.Add(LuaAttachmentParts.CreatePart(title, icon, color));
-		}
-
-		public void AppendContentPart(string? content, string? title, string? icon, string? color)
-		{
-			Message.Message.AdditionalData.Add(LuaAttachmentParts.CreateContentPart(content, title, icon, color));
-		}
-
-		public void AppendAttachmentPart(object? attachment, string? title, string? icon, string? color)
-		{
-			if (attachment is not ILuaNativeAttachable attachable)
-				throw new LuaRuntimeException(
-					"chat_message:append_attachment_part(attachment, ...): 'attachment' must be " +
-					"attachable (e.g. an image handle created by image.load()/image.create()).");
-
-			Message.Message.AdditionalData.Add(
-				LuaAttachmentParts.CreateNativePart(attachable.GetNativeAttachment(), title, icon, color));
+			var part = LuaAttachmentPartAppender.Append(Message.Message, spec, "chat_message:append_part(spec)");
+			return LuaChatPart.Wrap(new LuaChatPart(Message.Message, part));
 		}
 
 		/// <summary>
@@ -158,10 +148,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			const string call = "chat_message:append_data(handle, options)";
 
-			var parsed = LuaAttachmentOptions.Parse(options, call);
+			var parsed = LuaAttachmentDataOptions.Parse(options, call);
 			var payload = _dispatcher.TryResolve(handle) ?? throw _dispatcher.CreateError(handle, call);
+			var item = parsed.Apply(payload, isChatHost: false, call);
 
-			Message.Message.AddAttachment(parsed.Apply(payload, isChatHost: false, call));
+			// Re-appending a payload under its own key would replace and dispose the live object itself.
+			if (LuaAttachmentDataOptions.IsAlreadyAttached(Message.Message, item))
+				return;
+
+			Message.Message.AddAttachment(item);
 		}
 
 		/// <summary>

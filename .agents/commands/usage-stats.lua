@@ -383,4 +383,4 @@ end
 msg:append_data(dass.ui.create_control(xaml, vm))
 
 -- The part is what the model reads: the card itself is user-only and does not travel to it.
-msg:append_content_part(summary(state, m), "Chat usage", "PieChart", "#58A6FF")
+msg:append_part{ content = summary(state, m), title = "Chat usage", icon = "PieChart", color = "#58A6FF" }

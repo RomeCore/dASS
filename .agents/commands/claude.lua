@@ -34,7 +34,7 @@ msg:append_data(term)
 
 try
 	local code = await term:wait()
-	msg:append_content_part(term:text(), "Terminal contents", "Robot", "#cc9c00")
+	msg:append_part{ content = term:text(), title = "Terminal contents", icon = "Robot", color = "#cc9c00" }
 	if code ~= 0 then
 		msg.error = string.format("Claude Code exited with code %d.", code)
 		return false

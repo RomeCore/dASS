@@ -106,3 +106,13 @@ Blocked by:
 - The strip is one line with a horizontal scroll on overflow, a 1px separator between neighbours and no chrome of
   its own; it collapses entirely while both groups are empty. Order comes from the payload (`Order` is forwarded by
   the envelope). Identity by `Key`, close/restore state and the wrapper family are not implemented.
+- The append surface is unified: one `append_part{...}` spec table - `title`, `icon`, `color`, `content`,
+  `attachment`, `visible`, `temporary`, `replacement_key` - on the chat, on a `chat_message` handle and on a tool
+  result, replacing `append_content_part` and `append_attachment_part`. `content` and `attachment` are mutually
+  exclusive and only native attachments are accepted: a control or a terminal goes to `append_data`. A part
+  redrawn under one key is updated in place, so a progress chip costs one object instead of one per update, and
+  `append_part` returns a `chat_part` handle with `remove()`. `replacement_key` is now an `append_data` option too:
+  the same key with a different payload replaces it (and disposes it), while re-appending the same handle under its
+  own key is a no-op - replacing there would dispose the live payload the new item is built from.
+- Open: `order` on a part (order is the order of appending), and whether a Lua-created part can be `restorable`
+  (today it is not).

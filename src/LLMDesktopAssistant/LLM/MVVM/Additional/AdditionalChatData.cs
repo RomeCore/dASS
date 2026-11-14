@@ -20,7 +20,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		/// Gets or sets the replacement key that can be used to replace other instance stored in
 		/// <see cref="AdditionalChatDataCollection"/> with the same key.
 		/// </summary>
-		public string? ReplacementKey { get; init; }
+		public string? ReplacementKey
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the additional chat data is visible.

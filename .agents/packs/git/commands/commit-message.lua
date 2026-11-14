@@ -156,7 +156,7 @@ Without the `auto` argument, stop at step 5 - the message is the whole product. 
 
 local function add_part(text, title, icon)
 	if text == nil or text == "" then return end
-	msg:append_content_part(text, title, icon, "#8B949E")
+	msg:append_part{ content = text, title = title, icon = icon, color = "#8B949E" }
 end
 
 local summary = git.summary_markdown(data)
@@ -177,10 +177,10 @@ msg:append_data(git.uicontrol(data))
 
 -- Chips describe what was requested; the injected directive carries the same information to the model.
 if mode == "auto" then
-	msg:append_part("auto", "Play", "#3FB950")
+	msg:append_part{ title = "auto", icon = "Play", color = "#3FB950" }
 end
 if content == "brief" then
-	msg:append_part("brief", "TextShort", "#8B949E")
+	msg:append_part{ title = "brief", icon = "TextShort", color = "#8B949E" }
 end
 
 -- The diff is in the message: the model names it, nothing else needs a turn.

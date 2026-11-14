@@ -628,6 +628,6 @@ await refresh()
 -- append_data is user-only, so the model would otherwise see a bare token. This part joins
 -- the model-facing content; it is appended once, because the reload button refreshes the
 -- card only and a second part would duplicate the balance in the history.
-msg:append_content_part(summary(), "DeepSeek balance", "AccountBalanceWallet", "#58A6FF")
+msg:append_part{ content = summary(), title = "DeepSeek balance", icon = "AccountBalanceWallet", color = "#58A6FF" }
 
 return true
