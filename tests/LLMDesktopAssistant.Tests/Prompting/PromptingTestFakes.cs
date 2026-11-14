@@ -5,14 +5,10 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
+using LLMDesktopAssistant.Tests.Fakes;
 using RCLargeLanguageModels.Tasks;
 
 namespace LLMDesktopAssistant.Tests.Prompting;
-
-internal sealed class EmptyServiceProvider : IServiceProvider
-{
-	public object? GetService(Type serviceType) => null;
-}
 
 /// <summary>
 /// A <see cref="IMessageVisibilityService"/> fake with configurable predicates (everything visible by default).

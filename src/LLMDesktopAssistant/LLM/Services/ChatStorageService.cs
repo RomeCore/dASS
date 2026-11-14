@@ -21,7 +21,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		Chat chat,
 		IChatCreationConfig config,
 		IChatSettingsService chatSettings,
-		IChatStorageLock storageLock
+		IChatStorageLock storageLock,
+		IServiceProvider services
 	) : Disposable, IChatStorageService
 	{
 		readonly int chatId = config.ChatId;
@@ -46,7 +47,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				UnloadMessage(message);
 
 			// Loads/creates the chat model, applies title/topic/settings and attaches UserInputState.
-			_chatSync = new ChatDatabaseSynchronizer(database, chat, chatSettings);
+			_chatSync = new ChatDatabaseSynchronizer(database, chat, chatSettings, services);
 
 			var messages = new List<BranchedMessage>();
 			var currentNodeId = _chatSync.Model.RootNodeId;
@@ -73,7 +74,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		private BranchedMessage LoadMessageFromNode(MessageNodeModel nodeModel, int messageIndex)
 		{
 			var messageModel = database.Messages.FindById(nodeModel.MessageId);
-			var sync = MessageDatabaseSynchronizer.FromModel(database, messageModel);
+			var sync = MessageDatabaseSynchronizer.FromModel(database, messageModel, services);
 			_messageSyncs[sync.Target] = sync;
 			return CreateBranchedMessage(nodeModel, sync.Target, messageIndex);
 		}
@@ -106,7 +107,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				RunStorageTransaction(chatSync, () =>
 				{
-					sync = MessageDatabaseSynchronizer.FromTarget(database, chatMessage);
+					sync = MessageDatabaseSynchronizer.FromTarget(database, chatMessage, services);
 					int messageId = sync.ModelId;
 
 					var chatModel = chatSync.Model;
@@ -299,7 +300,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				RunStorageTransaction(chatSync, () =>
 				{
-					sync = MessageDatabaseSynchronizer.FromTarget(database, newMessage);
+					sync = MessageDatabaseSynchronizer.FromTarget(database, newMessage, services);
 					int messageId = sync.ModelId;
 
 					var chatModel = chatSync.Model;

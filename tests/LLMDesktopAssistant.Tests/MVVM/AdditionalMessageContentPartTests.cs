@@ -3,6 +3,7 @@ using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Storage;
 using LLMDesktopAssistant.Localization;
+using LLMDesktopAssistant.Tests.Fakes;
 
 namespace LLMDesktopAssistant.Tests.MVVM
 {
@@ -24,7 +25,7 @@ namespace LLMDesktopAssistant.Tests.MVVM
 			};
 
 			using var synchronizer = AdditionalChatDataSynchronizer.FromTarget(
-				database, part, ChatDataParentKind.Message, 1);
+				database, part, ChatDataParentKind.Message, 1, new EmptyServiceProvider());
 
 			var stored = Assert.IsType<AdditionalMessageContentPart>(
 				database.AdditionalChatData.FindAll().Single().Data);

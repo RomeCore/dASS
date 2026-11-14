@@ -1,4 +1,5 @@
 using System.Collections.Specialized;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
@@ -19,27 +20,28 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		private readonly ChatDataParentKind _parentKind;
 		private readonly int _parentId;
 		private readonly Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer> _syncs = [];
+		private readonly IServiceProvider _services;
 
 		/// <summary>
 		/// For a BRAND NEW parent: inserts rows for the items already in the collection
 		/// and subscribes to all further changes.
 		/// </summary>
 		public static AdditionalChatDataCollectionSynchronizer FromTarget(ChatDatabase database, ChatObjectBase owner,
-			ChatDataParentKind parentKind, int parentId)
+			ChatDataParentKind parentKind, int parentId, IServiceProvider services)
 		{
 			var syncs = new Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer>();
 
 			foreach (var data in owner.AdditionalData)
-				syncs[data] = AdditionalChatDataSynchronizer.FromTarget(database, data, parentKind, parentId);
+				syncs[data] = AdditionalChatDataSynchronizer.FromTarget(database, data, parentKind, parentId, services);
 
-			return new AdditionalChatDataCollectionSynchronizer(database, owner, parentKind, parentId, syncs);
+			return new AdditionalChatDataCollectionSynchronizer(database, owner, parentKind, parentId, syncs, services);
 		}
 
 		/// <summary>
 		/// For a parent LOADED from the database: loads its rows into the collection and subscribes.
 		/// </summary>
 		public static AdditionalChatDataCollectionSynchronizer FromOwnerModels(ChatDatabase database, ChatObjectBase owner,
-			ChatDataParentKind parentKind, int parentId)
+			ChatDataParentKind parentKind, int parentId, IServiceProvider services)
 		{
 			var loaded = new List<AdditionalChatData>();
 			var syncs = new Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer>();
@@ -50,24 +52,26 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				.Find(d => d.ParentId == parentId && d.ParentKind == parentKind)
 				.OrderBy(d => d.Order).ThenBy(d => d.Id))
 			{
-				var sync = AdditionalChatDataSynchronizer.FromModel(database, model);
+				var sync = AdditionalChatDataSynchronizer.FromModel(database, model, services);
 				syncs[sync.Target] = sync;
 				loaded.Add(sync.Target);
 			}
 
-			var synchronizer = new AdditionalChatDataCollectionSynchronizer(database, owner, parentKind, parentId, syncs);
+			var synchronizer = new AdditionalChatDataCollectionSynchronizer(database, owner, parentKind, parentId, syncs, services);
 			owner.AdditionalData.Reset(loaded);
 			return synchronizer;
 		}
 
 		private AdditionalChatDataCollectionSynchronizer(ChatDatabase database, ChatObjectBase owner,
-			ChatDataParentKind parentKind, int parentId, Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer> syncs)
+			ChatDataParentKind parentKind, int parentId, Dictionary<AdditionalChatData, AdditionalChatDataSynchronizer> syncs,
+			IServiceProvider services)
 		{
 			_database = database;
 			_collection = owner.AdditionalData;
 			_parentKind = parentKind;
 			_parentId = parentId;
 			_syncs = syncs;
+			_services = services;
 
 			owner.AdditionalData.CollectionChanged += OnCollectionChanged;
 		}
@@ -82,7 +86,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 			if (e.NewItems != null)
 				foreach (AdditionalChatData newData in e.NewItems)
 					if (!_syncs.ContainsKey(newData)) // idempotent: collection events can arrive deferred
-						_syncs[newData] = AdditionalChatDataSynchronizer.FromTarget(_database, newData, _parentKind, _parentId);
+						_syncs[newData] = AdditionalChatDataSynchronizer.FromTarget(_database, newData, _parentKind,
+							_parentId, _services);
 
 			int i = 0;
 			foreach (var item in _collection)

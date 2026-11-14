@@ -4,6 +4,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Storage;
 using LLMDesktopAssistant.LLM.Settings;
+using LLMDesktopAssistant.Tests.Fakes;
 
 namespace LLMDesktopAssistant.Tests.Storage;
 
@@ -31,7 +32,7 @@ internal sealed class ChatStorageTestContext : IDisposable
 
 		storageLockFactory ??= config => new ChatStorageLock(config);
 		StorageLock = storageLockFactory(Config);
-		Service = new ChatStorageService(Chat, Config, new FakeChatSettingsService(), StorageLock);
+		Service = new ChatStorageService(Chat, Config, new FakeChatSettingsService(), StorageLock, Chat.Services);
 		Service.Reload();
 	}
 
@@ -65,10 +66,6 @@ internal sealed class ChatStorageTestContext : IDisposable
 		Database.Dispose();
 	}
 
-	private sealed class EmptyServiceProvider : IServiceProvider
-	{
-		public object? GetService(Type serviceType) => null;
-	}
 }
 
 /// <summary>Minimal <see cref="IChatSettingsService"/> for storage tests.</summary>

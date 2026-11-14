@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
@@ -17,6 +18,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		private readonly MessageModel _model;
 		private readonly Dictionary<ToolCall, ToolCallDatabaseSynchronizer> _toolCallSyncs = [];
 		private readonly AdditionalChatDataCollectionSynchronizer _additionalDataSync;
+		private readonly IServiceProvider _services;
 
 		/// <summary>
 		/// The ID of the <see cref="MessageModel"/> where data is stored in the database.
@@ -28,36 +30,39 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		/// </summary>
 		public ChatMessage Target { get; }
 
-		public static MessageDatabaseSynchronizer FromTarget(ChatDatabase database, ChatMessage target)
+		public static MessageDatabaseSynchronizer FromTarget(ChatDatabase database, ChatMessage target, IServiceProvider services)
 		{
 			var model = new MessageModel();
 			CopyToModel(model, target);
 			database.Messages.Insert(model);
 			var toolCallSyncs = target.ToolCalls.Select(t => ToolCallDatabaseSynchronizer.FromTarget
-				(database, t, model.Id)).ToDictionary(t => t.Target);
-			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromTarget(database, target, ChatDataParentKind.Message, model.Id);
-			return new MessageDatabaseSynchronizer(database, target, model, toolCallSyncs, additionalDataSync);
+				(database, t, model.Id, services)).ToDictionary(t => t.Target);
+			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromTarget(database,
+				target, ChatDataParentKind.Message, model.Id, services);
+			return new MessageDatabaseSynchronizer(database, target, model, toolCallSyncs, additionalDataSync, services);
 		}
 		
-		public static MessageDatabaseSynchronizer FromModel(ChatDatabase database, MessageModel model)
+		public static MessageDatabaseSynchronizer FromModel(ChatDatabase database, MessageModel model, IServiceProvider services)
 		{
 			var toolCalls = database.ToolCalls.Find(t => t.MessageId == model.Id).OrderBy(d => d.Order).ThenBy(d => d.Id);
-			var toolCallSyncs = toolCalls.Select(t => ToolCallDatabaseSynchronizer.FromModel(database, t)).ToDictionary(t => t.Target);
+			var toolCallSyncs = toolCalls.Select(t => ToolCallDatabaseSynchronizer.FromModel(database, t, services)).ToDictionary(t => t.Target);
 			var target = CreateFromModel(model);
 			target.ToolCalls.Reset(toolCallSyncs.Keys);
-			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database, target, ChatDataParentKind.Message, model.Id);
-			return new MessageDatabaseSynchronizer(database, target, model, toolCallSyncs, additionalDataSync);
+			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database,
+				target, ChatDataParentKind.Message, model.Id, services);
+			return new MessageDatabaseSynchronizer(database, target, model, toolCallSyncs, additionalDataSync, services);
 		}
 
 		private MessageDatabaseSynchronizer(ChatDatabase database, ChatMessage target, MessageModel model,
 			Dictionary<ToolCall, ToolCallDatabaseSynchronizer> toolCallSyncs,
-			AdditionalChatDataCollectionSynchronizer additionalDataSync)
+			AdditionalChatDataCollectionSynchronizer additionalDataSync, IServiceProvider services)
 		{
 			_database = database;
 			Target = target;
 			_model = model;
 			_toolCallSyncs = toolCallSyncs;
 			_additionalDataSync = additionalDataSync;
+			_services = services;
 
 			Target.PropertyChanged += OnTargetPropertyChanged;
 			Target.ToolCalls.CollectionChanged += OnToolCallsCollectionChanged;
@@ -78,7 +83,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 
 			if (e.NewItems != null)
 				foreach (ToolCall newToolCall in e.NewItems)
-					_toolCallSyncs[newToolCall] = ToolCallDatabaseSynchronizer.FromTarget(_database, newToolCall, _model.Id);
+					_toolCallSyncs[newToolCall] = ToolCallDatabaseSynchronizer.FromTarget(_database,
+						newToolCall, _model.Id, _services);
 
 			int i = 0;
 			foreach (var toolCall in Target.ToolCalls)

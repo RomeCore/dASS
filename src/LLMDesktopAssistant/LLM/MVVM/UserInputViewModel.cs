@@ -318,10 +318,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			CompletionViewModel = new InputCompletionViewModel(inputCompletionService);
 			CompletionTransformProvider = inputCompletionService.CompletionTransformProvider;
 
-			_editData = new AdditionalChatDataCollectionViewModel(EditUserInputState.Parts, Chat.Services);
+			_editData = new AdditionalChatDataCollectionViewModel(EditUserInputState.Parts);
 			_editData.Parts.IsEditing = true;
 
-			_draftData = new AdditionalChatDataCollectionViewModel(UserInputState.Parts, Chat.Services);
+			_draftData = new AdditionalChatDataCollectionViewModel(UserInputState.Parts);
 			_draftData.Parts.IsEditing = true;
 
 			EditUserInputState.PropertyChanged += OnUserInputStatePropertyChanged;

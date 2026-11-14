@@ -23,7 +23,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		/// </summary>
 		public ToolCall Target { get; }
 
-		public static ToolCallDatabaseSynchronizer FromTarget(ChatDatabase database, ToolCall target, int messageId)
+		public static ToolCallDatabaseSynchronizer FromTarget(ChatDatabase database, ToolCall target,
+			int messageId, IServiceProvider services)
 		{
 			var model = new ToolCallModel
 			{
@@ -31,14 +32,17 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 			};
 			CopyToModel(model, target);
 			database.ToolCalls.Insert(model);
-			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromTarget(database, target, ChatDataParentKind.ToolCall, model.Id);
+			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromTarget(database,
+				target, ChatDataParentKind.ToolCall, model.Id, services);
 			return new ToolCallDatabaseSynchronizer(database, target, model, additionalDataSync);
 		}
 
-		public static ToolCallDatabaseSynchronizer FromModel(ChatDatabase database, ToolCallModel model)
+		public static ToolCallDatabaseSynchronizer FromModel(ChatDatabase database, ToolCallModel model,
+			IServiceProvider services)
 		{
 			var target = CreateFromModel(model);
-			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database, target, ChatDataParentKind.ToolCall, model.Id);
+			var additionalDataSync = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database,
+				target, ChatDataParentKind.ToolCall, model.Id, services);
 			return new ToolCallDatabaseSynchronizer(database, target, model, additionalDataSync);
 		}
 

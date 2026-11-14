@@ -34,7 +34,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		/// Loads (or creates when missing) the chat model, applies its values to the domain object
 		/// and subscribes to all changes.
 		/// </summary>
-		public ChatDatabaseSynchronizer(ChatDatabase database, Chat target, IChatSettingsService chatSettings)
+		public ChatDatabaseSynchronizer(ChatDatabase database, Chat target,
+			IChatSettingsService chatSettings, IServiceProvider services)
 		{
 			_database = database;
 			Target = target;
@@ -66,7 +67,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				chatSettings.LoadFromProfile(model.SettingsProfile);
 			}
 
-			_additionalDataSynchronizer = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database, target, ChatDataParentKind.Chat, target.Id);
+			_additionalDataSynchronizer = AdditionalChatDataCollectionSynchronizer.FromOwnerModels(database,
+				target, ChatDataParentKind.Chat, target.Id, services);
 			Model = model;
 
 			// Attach the persisted input state: the same object lives in both the domain and the model,

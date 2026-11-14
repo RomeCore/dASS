@@ -22,9 +22,10 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		public AdditionalChatData Target { get; }
 
 		public static AdditionalChatDataSynchronizer FromTarget(ChatDatabase database,
-			AdditionalChatData target, ChatDataParentKind parentKind, int parentId)
+			AdditionalChatData target, ChatDataParentKind parentKind, int parentId, IServiceProvider services)
 		{
 			AdditionalChatDataModel? model = null;
+			(target as IChatServicesAttachable)?.AttachChatServices(services);
 			if (!target.IsTemporary)
 			{
 				model = new AdditionalChatDataModel
@@ -40,8 +41,9 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		}
 
 		public static AdditionalChatDataSynchronizer FromModel(ChatDatabase database,
-			AdditionalChatDataModel model)
+			AdditionalChatDataModel model, IServiceProvider services)
 		{
+			(model.Data as IChatServicesAttachable)?.AttachChatServices(services);
 			return new AdditionalChatDataSynchronizer(database, model.Data, model, model.ParentKind, model.ParentId);
 		}
 

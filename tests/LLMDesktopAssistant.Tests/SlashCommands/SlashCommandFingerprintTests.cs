@@ -6,6 +6,7 @@ using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
+using LLMDesktopAssistant.Tests.Fakes;
 
 namespace LLMDesktopAssistant.Tests.SlashCommands
 {
@@ -101,7 +102,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				generateIntent: true, generateOutcome: true, SlashCommandExecutionStatus.Executed, effectSummary: "summary");
 
 			using var synchronizer = AdditionalChatDataSynchronizer.FromTarget(
-				database, fingerprint, ChatDataParentKind.Message, 1);
+				database, fingerprint, ChatDataParentKind.Message, 1, new EmptyServiceProvider());
 
 			var stored = Assert.IsType<SlashCommandFingerprint>(database.AdditionalChatData.FindAll().Single().Data);
 

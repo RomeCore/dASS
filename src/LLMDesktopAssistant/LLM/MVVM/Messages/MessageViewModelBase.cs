@@ -169,7 +169,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 				?? wdAccess.GetWorkingDirectory();
 
 			ToolCalls = new ToolCallListViewModel(branchedMessage.Message, chatVM.Chat) { Alignment = alignment };
-			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData, chatVM.Chat.Services) { Alignment = alignment };
+			AdditionalData = new AdditionalChatDataCollectionViewModel(branchedMessage.Message.AdditionalData) { Alignment = alignment };
 
 			Error = Message.Error;
 			Message.PropertyChanged += OnMessagePropertyChanged;
