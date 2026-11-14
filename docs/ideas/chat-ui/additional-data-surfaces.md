@@ -116,6 +116,27 @@ Blocked by:
   own key is a no-op - replacing there would dispose the live payload the new item is built from.
 - Open: `order` on a part (order is the order of appending), and whether a Lua-created part can be `restorable`
   (today it is not).
+- Implemented: the overlay window surface. `AdditionalChatDataOverlayItem` is the envelope: `Title`, `CanClose`
+  (Lua `closeable`, off by default), `State` (`AdditionalChatDataOverlayState`: `Normal`, `Collapsed`, `Hidden`),
+  fractional geometry (`Left`/`Top`/`Width`/`Height` of the messages area) and `Z`. The window binds
+  `IsEffectivelyVisible && State != Hidden`, the tray `IsEffectivelyVisible && State == Hidden`, the body
+  `State == Normal` - the payload's own `IsVisible` stays a separate axis that removes the whole thing, tray row
+  included.
+- `InheritFrom` lives on `AdditionalChatDataItemBase` and is what the collection calls when it replaces an
+  envelope under one `replacement_key`: the overlay carries over the state, the place, the stacking order and
+  (when the update brings none) the title, so a script's update neither resurrects a collapsed window nor moves it.
+  The collection names no surface.
+- `FractionPanel` (`Controls/Layout`) places children by `RelativeLeft`/`RelativeTop`/`RelativeWidth`/
+  `RelativeHeight` fractions and clamps them, so a window cannot leave the area; the items' fractions are set on the
+  `ContentPresenter`, which is what the panel lays out.
+- Closing is destructive on purpose: `CanClose` opens the cross, the cross goes through `RemoveAttachment` and the
+  payload is disposed with it - a terminal dies with its process. The tray offers the same close next to the restore.
+- Chrome is always there and quiet: the header is the drag handle and the buttons are dimmed until the header is
+  hovered. A drag writes the fractions only on drop, because every change of an item is persisted.
+- The tray is a flyout on a button in the top-left of the messages area - it will move when the tab host arrives.
+  It lists titles and falls back to a localized "widget" for a window without one.
+- Lua: `surface = "overlay"` with `title`, `closeable`, `left`, `top`, `width`, `height`. A fraction outside `0..1`,
+  an overlay key without its surface, or a rail key with the overlay surface is an error.
 - Implemented: the chips surface. The chat list draws a chat's own parts under the title and topic, in the same
   `AdditionalMessagePartsView` a message uses, from `AdditionalChatDataModel.IsPart` - a column, because a predicate
   over the stored payload cannot be translated and LiteDB would materialise every row to answer it. The chip look
