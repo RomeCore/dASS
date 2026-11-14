@@ -17,41 +17,37 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets or sets the payload this envelope presents.
 		/// </summary>
-		public AdditionalChatData? Content
+		public required AdditionalChatData Content
 		{
-			get => field;
-			set
+			get;
+			init
 			{
-				var previous = field;
-				if (!SetProperty(ref field, value))
-					return;
-
-				previous?.PropertyChanged -= OnContentPropertyChanged;
-				value?.PropertyChanged += OnContentPropertyChanged;
-				RaisePropertyChanged(nameof(Order));
-				RaisePropertyChanged(nameof(IsEffectivelyVisible));
+				ArgumentNullException.ThrowIfNull(value);
+				field = value;
+				ReplacementKey = value.ReplacementKey;
+				value.PropertyChanged += OnContentPropertyChanged;
 			}
 		}
 
 		/// <summary>
 		/// Gets the order of the payload: the envelope has no order of its own.
 		/// </summary>
-		public override int Order => Content?.Order ?? 0;
+		public override int Order => Content.Order;
 
 		/// <summary>
 		/// Gets a value indicating whether the envelope and its payload are both visible.
 		/// </summary>
-		public bool IsEffectivelyVisible => IsVisible && (Content?.IsVisible ?? false);
+		public bool IsEffectivelyVisible => IsVisible && Content.IsVisible;
 
 		/// <summary>
 		/// The payload decides the order and the visibility, so its changes are re-raised as the envelope's own.
 		/// </summary>
 		private void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(IsVisible))
+			if (e.PropertyName is null or nameof(IsVisible))
 				RaisePropertyChanged(nameof(IsEffectivelyVisible));
 
-			if (string.IsNullOrEmpty(e.PropertyName) || e.PropertyName == nameof(Order))
+			if (e.PropertyName is null or nameof(Order))
 				RaisePropertyChanged(nameof(Order));
 		}
 
@@ -59,10 +55,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		{
 			base.Dispose(disposing);
 
-			if (disposing && Content is { ManualDispose: false } content)
+			if (disposing && !Content.ManualDispose)
 			{
-				content.PropertyChanged -= OnContentPropertyChanged;
-				content.Dispose();
+				Content.PropertyChanged -= OnContentPropertyChanged;
+				Content.Dispose();
 			}
 		}
 	}

@@ -15,6 +15,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			Comparer = AdditionalViewModelComparer.Instance;
 		}
 
+		public override void Add(AdditionalChatData item)
+		{
+			if (item.ReplacementKey is not null)
+				for (int i = 0; i < Items.Count; i++)
+					if (Items[i].ReplacementKey == item.ReplacementKey)
+					{
+						Set(i, item);
+						return;
+					}
+			base.Add(item);
+		}
+
 		/// <summary>
 		/// Tries to get the first additional view model of a specific type.
 		/// </summary>

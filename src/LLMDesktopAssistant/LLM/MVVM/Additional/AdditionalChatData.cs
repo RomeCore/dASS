@@ -17,6 +17,12 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		public virtual int Order { get; } = 0;
 
 		/// <summary>
+		/// Gets or sets the replacement key that can be used to replace other instance stored in
+		/// <see cref="AdditionalChatDataCollection"/> with the same key.
+		/// </summary>
+		public string? ReplacementKey { get; init; }
+
+		/// <summary>
 		/// Gets or sets a value indicating whether the additional chat data is visible.
 		/// Tip: chat data can be invisible when used only to store data that is not displayed in the UI.
 		/// </summary>
