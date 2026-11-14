@@ -70,22 +70,37 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - handle: uicontrol or terminal - the attachable handle
 			    - options: table (optional) - where the payload is shown and how it behaves:
-			        surface: string - "rail" puts the payload on the input rail
-			        horizontal: string - "left" or "right" (rail only, default "left")
-			        vertical: string - "top" or "bottom" (rail only, default "bottom")
-			        visible: boolean - show or hide the payload (default true)
+					surface: string - "rail" puts the payload on the input rail, "overlay" opens
+					  it in a floating window over the messages
+					horizontal: string - "left" or "right" (rail only, default "left")
+					vertical: string - "top" or "bottom" (rail only, default "bottom")
+					title: string - the title of the window (overlay only)
+					closeable: boolean - the user may close the window, which REMOVES it from the
+					  chat and disposes the payload: a live terminal goes away with its process
+					  (overlay only, default false)
+					left, top: number - the place of the window, as fractions 0..1 of the messages
+					  area (overlay only, default: a cascade, so two windows never land on each other)
+					width, height: number - the size of the window, as fractions 0..1 of the messages
+					  area (overlay only, default: as large as the payload needs)
+					visible: boolean - show or hide the payload (default true)
 					temporary: boolean - do not persist the payload (default false)
 					replacement_key: string - replace the item already carrying this key;
 					  re-appending the same handle under the same key changes nothing
-			      Without a surface the payload is plain additional chat data and lands in the side
-			      panel. An unknown key, an unknown value or a rail placement without the rail surface
-			      is an error, not a silent fallback.
+				  Without a surface the payload is plain additional chat data and lands in the side
+				  panel. An unknown key, an unknown value, a key of another surface or a placement
+				  without its surface is an error, not a silent fallback.
+
+			  A window belongs to the user: it can be collapsed in place or hidden into the chat's
+			  tray, and both survive the next append under the same replacement_key, together with the
+			  place it was dragged to. I.e. updating a window never brings it back or moves it.
+			  visible = false is something else: it removes the window entirely, the tray row with it,
+			  until it is set back to true.
 
 			  Returns: nil
 
 			--- dass.chat.remove_data(handle) -> boolean
 			  Removes everything dass.chat.append_data() attached with this handle: the payload and
-			  every rail item wrapping it. A live terminal goes away with its process.
+			  every surface item wrapping it. A live terminal goes away with its process.
 			  Returns: boolean - true when something of this handle was attached to this chat.
 
 			--- dass.chat.on_close(func) -> chat_close_hook
@@ -126,7 +141,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - msg:append_data(handle, [options]) - append ONE attachable handle: a 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
 			      process.run_terminal(). Options are the same as for dass.chat.append_data(),
-			      except 'surface': the rail exists on the chat only
+				  except 'surface': surfaces exist on the chat only
 			    - msg:remove_data(handle) -> boolean - remove everything appended with this handle
 
 			  Parts created from Lua are never restored into the input draft when the message is

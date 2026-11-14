@@ -45,6 +45,12 @@ new: Новый чат
 new_temporary: Новый временный чат
 no_topic: без темы
 open_in_new_tab: Открыть в новой вкладке
+overlay.close: Закрыть и удалить
+overlay.hide: Убрать в трей
+overlay.restore: Показать снова
+overlay.toggle: Свернуть или развернуть
+overlay.tray: Скрытые виджеты
+overlay.untitled: Виджет
 rename.cancel: Отмена
 rename.save: Сохранить
 rename_with_ai: Переименовать через ИИ

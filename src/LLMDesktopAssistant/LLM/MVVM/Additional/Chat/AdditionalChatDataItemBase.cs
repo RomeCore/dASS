@@ -40,9 +40,27 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		public bool IsEffectivelyVisible => IsVisible && Content.IsVisible;
 
 		/// <summary>
+		/// Takes over what a script's update must not reset when the envelope is replaced under one
+		/// <see cref="AdditionalChatData.ReplacementKey"/>.
+		/// </summary>
+		/// <remarks>
+		/// Nothing is carried over by default: what the payload shows is the script's to declare on every append.
+		/// A surface that owns presentation state of its own - the place the user dragged a window to, the state
+		/// they put it in - overrides this, so the collection can stay indifferent to which surfaces exist.
+		/// </remarks>
+		/// <param name="previous">The envelope this one replaces.</param>
+		public virtual void InheritFrom(AdditionalChatDataItemBase previous)
+		{
+		}
+
+		/// <summary>
 		/// The payload decides the order and the visibility, so its changes are re-raised as the envelope's own.
 		/// </summary>
-		private void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		/// <remarks>
+		/// A surface that derives further computed members from <see cref="IsEffectivelyVisible"/> overrides this
+		/// and calls the base first.
+		/// </remarks>
+		protected virtual void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName is null or nameof(IsVisible))
 				RaisePropertyChanged(nameof(IsEffectivelyVisible));

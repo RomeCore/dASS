@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using LLMDesktopAssistant.LLM.MVVM.Additional.Chat;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional
@@ -21,6 +22,10 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 				for (int i = 0; i < Items.Count; i++)
 					if (Items[i].ReplacementKey == item.ReplacementKey)
 					{
+						// A surface envelope holds what the user chose: a script's update must not reset it.
+						if (Items[i] is AdditionalChatDataItemBase previous && item is AdditionalChatDataItemBase envelope)
+							envelope.InheritFrom(previous);
+
 						Set(i, item);
 						return;
 					}

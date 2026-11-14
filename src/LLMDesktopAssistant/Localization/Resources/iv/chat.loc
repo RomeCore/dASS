@@ -45,6 +45,12 @@ new: New chat
 new_temporary: New temporary chat
 no_topic: no topic
 open_in_new_tab: Open in new tab
+overlay.close: Close and remove
+overlay.hide: Hide to the tray
+overlay.restore: Show again
+overlay.toggle: Collapse or expand
+overlay.tray: Hidden widgets
+overlay.untitled: Widget
 rename.cancel: Cancel
 rename.save: Save
 rename_with_ai: Rename with AI

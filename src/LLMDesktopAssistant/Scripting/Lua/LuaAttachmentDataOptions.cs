@@ -11,18 +11,26 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// </summary>
 	/// <remarks>
 	/// Every member is an override, never a default: an option the script did not set leaves the payload as it is.
-	/// A rail placement without <c>surface = "rail"</c> is refused rather than silently dropped, because the author
-	/// would have no way to find where the payload went.
+	/// A placement key without its surface is refused rather than silently dropped, because the author would have no
+	/// way to find where the payload went - and a key that belongs to another surface is refused for the same reason.
 	/// </remarks>
 	public sealed class LuaAttachmentDataOptions : LuaAttachmentOptions
 	{
 		/// <summary>
-		/// The only surface a script may ask for today.
+		/// The surface that puts the payload on the input rail.
 		/// </summary>
 		public const string RailSurface = "rail";
 
+		/// <summary>
+		/// The surface that opens the payload as a floating window over the messages.
+		/// </summary>
+		public const string OverlaySurface = "overlay";
+
 		private static readonly string[] _allowedKeys =
-			["visible", "temporary", "replacement_key", "surface", "horizontal", "vertical"];
+		[
+			"visible", "temporary", "replacement_key", "surface", "horizontal", "vertical",
+			"title", "closeable", "left", "top", "width", "height",
+		];
 
 		/// <summary>
 		/// Gets the value of <c>visible</c>, or <see langword="null"/> when it was not given.
@@ -54,6 +62,36 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		private ChatInputRailVerticalPlacement Vertical { get; init; } = ChatInputRailVerticalPlacement.Bottom;
 
+		/// <summary>
+		/// Gets the title of the overlay window, or <see langword="null"/> when it was not given.
+		/// </summary>
+		private string? Title { get; init; }
+
+		/// <summary>
+		/// Gets the value of <c>closeable</c>, or <see langword="null"/> when it was not given.
+		/// </summary>
+		private bool? Closeable { get; init; }
+
+		/// <summary>
+		/// Gets the offset of the overlay window from the left edge of the messages area, as a fraction.
+		/// </summary>
+		private double? Left { get; init; }
+
+		/// <summary>
+		/// Gets the offset of the overlay window from the top edge of the messages area, as a fraction.
+		/// </summary>
+		private double? Top { get; init; }
+
+		/// <summary>
+		/// Gets the width of the overlay window, as a fraction of the messages area.
+		/// </summary>
+		private double? Width { get; init; }
+
+		/// <summary>
+		/// Gets the height of the overlay window, as a fraction of the messages area.
+		/// </summary>
+		private double? Height { get; init; }
+
 		private LuaAttachmentDataOptions()
 		{
 		}
@@ -72,12 +110,49 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			var table = OpenTable(value, call, _allowedKeys, "options must be a table.");
 
 			var surface = ReadString(table, "surface", call);
+			bool isRail = string.Equals(surface, RailSurface, StringComparison.Ordinal);
+			bool isOverlay = string.Equals(surface, OverlaySurface, StringComparison.Ordinal);
+
+			if (surface is not null && !isRail && !isOverlay)
+				throw new LuaRuntimeException(
+					$"{call}: options.surface '{surface}' is unknown. Supported: \"{RailSurface}\", \"{OverlaySurface}\".");
+
 			var horizontal = table.Get("horizontal");
 			var vertical = table.Get("vertical");
+			var title = ReadString(table, "title", call);
+			var closeable = ReadBool(table, "closeable", call);
+			var left = ReadFraction(table, "left", call);
+			var top = ReadFraction(table, "top", call);
+			var width = ReadFraction(table, "width", call);
+			var height = ReadFraction(table, "height", call);
 
-			if (surface is null && (horizontal is not LuaNil || vertical is not LuaNil))
+			if (!isRail && (horizontal is not LuaNil || vertical is not LuaNil))
 				throw new LuaRuntimeException(
 					$"{call}: options.horizontal and options.vertical require options.surface = \"{RailSurface}\".");
+
+			List<string> overlayOnly = [];
+
+			if (title is not null)
+				overlayOnly.Add("title");
+
+			if (closeable is not null)
+				overlayOnly.Add("closeable");
+
+			if (left is not null)
+				overlayOnly.Add("left");
+
+			if (top is not null)
+				overlayOnly.Add("top");
+
+			if (width is not null)
+				overlayOnly.Add("width");
+
+			if (height is not null)
+				overlayOnly.Add("height");
+
+			if (!isOverlay && overlayOnly.Count > 0)
+				throw new LuaRuntimeException(
+					$"{call}: options.{string.Join(", options.", overlayOnly)} require options.surface = \"{OverlaySurface}\".");
 
 			return new LuaAttachmentDataOptions
 			{
@@ -90,7 +165,13 @@ namespace LLMDesktopAssistant.Scripting.Lua
 					: ReadHorizontal(horizontal, call),
 				Vertical = vertical is LuaNil
 					? ChatInputRailVerticalPlacement.Bottom
-					: ReadVertical(vertical, call)
+					: ReadVertical(vertical, call),
+				Title = title,
+				Closeable = closeable,
+				Left = left,
+				Top = top,
+				Width = width,
+				Height = height
 			};
 		}
 
@@ -98,13 +179,13 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// Applies the payload-level flags and, when a surface was asked for, wraps the payload for that surface.
 		/// </summary>
 		/// <param name="payload">The payload the handle resolved to.</param>
-		/// <param name="isChatHost">Whether the host is the chat itself, the only host the rail exists on.</param>
+		/// <param name="isChatHost">Whether the host is the chat itself, the only host surfaces exist on.</param>
 		/// <param name="call">The Lua call being executed, for the error message.</param>
 		/// <returns>The object to hand to the host.</returns>
-		/// <exception cref="LuaRuntimeException">The surface is unknown, unavailable on this host, or the payload is already placed.</exception>
+		/// <exception cref="LuaRuntimeException">The surface is unavailable on this host, or the payload is already placed.</exception>
 		public AdditionalChatData Apply(AdditionalChatData payload, bool isChatHost, string call)
 		{
-			// A rail item of a rail item would have to be searched for recursively and has no use: one payload, one surface.
+			// A placed item would have to be searched for recursively and has no use: one payload, one surface.
 			if (payload is AdditionalChatDataItemBase)
 				throw new LuaRuntimeException($"{call}: the payload is already placed on a surface.");
 
@@ -121,13 +202,23 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			if (Surface is null)
 				return payload;
 
-			if (!string.Equals(Surface, RailSurface, StringComparison.Ordinal))
-				throw new LuaRuntimeException(
-					$"{call}: options.surface '{Surface}' is unknown. Supported: \"{RailSurface}\".");
-
 			if (!isChatHost)
 				throw new LuaRuntimeException(
-					$"{call}: the rail is a chat surface - append it to dass.chat.");
+					$"{call}: '{Surface}' is a chat surface - append it to dass.chat.");
+
+			if (string.Equals(Surface, OverlaySurface, StringComparison.Ordinal))
+				return new AdditionalChatDataOverlayItem
+				{
+					Content = payload,
+					Title = Title,
+					CanClose = Closeable ?? false,
+					Left = Left,
+					Top = Top,
+					Width = Width,
+					Height = Height,
+					// A temporary payload inside a persisted envelope is a row pointing at an object the database never saw.
+					IsTemporary = payload.IsTemporary
+				};
 
 			return new AdditionalChatDataInputRailItem
 			{
@@ -193,5 +284,18 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 			throw new LuaRuntimeException($"{call}: options.vertical must be \"top\" or \"bottom\".");
 		}
+
+		/// <summary>
+		/// Reads a fraction member: a number in 0..1, or <see langword="null"/> when the script did not set it.
+		/// </summary>
+		/// <exception cref="LuaRuntimeException">The member holds a value of another type or outside the range.</exception>
+		private static double? ReadFraction(LuaTable table, string key, string call)
+			=> table.Get(key) switch
+			{
+				LuaNil => null,
+				LuaNumber number when number.Value is >= 0 and <= 1 => number.Value,
+				LuaNumber => throw new LuaRuntimeException($"{call}: options.{key} must be between 0 and 1."),
+				_ => throw new LuaRuntimeException($"{call}: options.{key} must be a number between 0 and 1.")
+			};
 	}
 }

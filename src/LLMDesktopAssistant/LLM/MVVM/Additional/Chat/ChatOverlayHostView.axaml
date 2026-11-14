@@ -1,0 +1,232 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional.Chat"
+						 xmlns:layout="using:LLMDesktopAssistant.Controls.Layout"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.Chat.ChatOverlayHostView"
+						 x:DataType="local:ChatOverlayHostViewModel">
+
+	<UserControl.Styles>
+
+		<Style Selector="Border.overlayWindow">
+			<Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+			<Setter Property="BorderThickness" Value="1"/>
+			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="ClipToBounds" Value="True"/>
+			<Setter Property="BoxShadow" Value="0 4 20 0 #33000000"/>
+		</Style>
+
+		<!-- The whole header is the drag handle, so it looks like one. -->
+		<Style Selector="Border.overlayHeader">
+			<Setter Property="Background" Value="{DynamicResource MessageBackground}"/>
+			<Setter Property="CornerRadius" Value="8,8,0,0"/>
+			<Setter Property="Padding" Value="8,2"/>
+			<Setter Property="Cursor" Value="SizeAll"/>
+		</Style>
+
+		<!-- Quiet chrome: the buttons are there, they just do not compete with the payload until used. -->
+		<Style Selector="Button.overlayButton">
+			<Setter Property="Opacity" Value="0.45"/>
+			<Setter Property="Background" Value="Transparent"/>
+		</Style>
+
+		<Style Selector="Border.overlayHeader:pointerover Button.overlayButton">
+			<Setter Property="Opacity" Value="1"/>
+		</Style>
+
+		<Style Selector="Button.overlayButton:pointerover">
+			<Setter Property="Opacity" Value="1"/>
+		</Style>
+
+	</UserControl.Styles>
+
+	<Panel>
+
+		<ItemsControl Classes="overlays"
+									HorizontalAlignment="Stretch"
+									VerticalAlignment="Stretch"
+									ItemsSource="{Binding Windows}">
+
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<layout:FractionPanel/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+
+			<ItemsControl.ItemTemplate>
+				<DataTemplate x:DataType="local:AdditionalChatDataOverlayItem">
+
+					<!--
+						The fractions and the stacking order live here, on the template root: the panel reads them off this
+						element instead of off the content presenter the items control wraps around it.
+					-->
+					<Border Classes="overlayWindow"
+									IsVisible="{Binding IsWindowShown}"
+									ZIndex="{Binding Z}"
+									layout:FractionPanel.RelativeLeft="{Binding Left}"
+									layout:FractionPanel.RelativeTop="{Binding Top}"
+									layout:FractionPanel.RelativeWidth="{Binding EffectiveWidth}"
+									layout:FractionPanel.RelativeHeight="{Binding EffectiveHeight}">
+
+						<Grid RowDefinitions="Auto,*">
+
+							<Border Grid.Row="0"
+											Classes="overlayHeader"
+											PointerPressed="OnHeaderPointerPressed">
+
+								<Grid ColumnDefinitions="*,Auto,Auto,Auto">
+
+									<TextBlock Grid.Column="0"
+														 Text="{Binding Title}"
+														 IsVisible="{Binding HasTitle}"
+														 FontSize="12"
+														 VerticalAlignment="Center"
+														 TextTrimming="CharacterEllipsis"
+														 Margin="2,0,8,0"/>
+
+									<Button Grid.Column="1"
+													Classes="MiniIconButton overlayButton"
+													ToolTip.Tip="{loc:Loc chat.overlay.toggle}"
+													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).ToggleCommand}"
+													CommandParameter="{Binding}">
+										<Panel>
+											<ico:VisualIcon Kind="ChevronUp" IsVisible="{Binding IsContentShown}"/>
+											<ico:VisualIcon Kind="ChevronDown" IsVisible="{Binding !IsContentShown}"/>
+										</Panel>
+									</Button>
+
+									<Button Grid.Column="2"
+													Classes="MiniIconButton overlayButton"
+													ToolTip.Tip="{loc:Loc chat.overlay.hide}"
+													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).HideCommand}"
+													CommandParameter="{Binding}">
+										<ico:VisualIcon Kind="TrayArrowDown"/>
+									</Button>
+
+									<Button Grid.Column="3"
+													Classes="MiniIconButton overlayButton"
+													IsVisible="{Binding CanClose}"
+													ToolTip.Tip="{loc:Loc chat.overlay.close}"
+													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"
+													CommandParameter="{Binding}">
+										<ico:VisualIcon Kind="Close"/>
+									</Button>
+
+								</Grid>
+
+							</Border>
+
+							<!-- The body stays in the tree while collapsed: a terminal or a live control comes back as it was. -->
+							<ContentControl Grid.Row="1"
+															Content="{Binding Content}"
+															IsVisible="{Binding IsContentShown}"
+															Margin="2"/>
+
+						</Grid>
+
+					</Border>
+
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+
+		</ItemsControl>
+
+		<!-- Tray: the windows the user put away, back on a click. The agent task button sits at the other side. -->
+		<Button Classes="BigIconButton"
+						IsVisible="{Binding HasTrayItems}"
+						ClipToBounds="False"
+						HorizontalAlignment="Left"
+						VerticalAlignment="Top"
+						Margin="16,16"
+						ZIndex="1000"
+						ToolTip.Tip="{loc:Loc chat.overlay.tray}">
+
+			<Panel>
+				<ico:VisualIcon Kind="TrayArrowDown" Width="26" Height="26"/>
+
+				<Border Background="#F44336"
+								CornerRadius="9"
+								HorizontalAlignment="Right"
+								VerticalAlignment="Top"
+								Padding="5,1"
+								Margin="0,-6,-6,0"
+								ZIndex="1">
+					<TextBlock Text="{Binding TrayCount}"
+										 FontSize="10"
+										 Foreground="White"
+										 FontWeight="Bold"/>
+				</Border>
+			</Panel>
+
+			<Button.Flyout>
+				<Flyout Placement="BottomEdgeAlignedLeft">
+
+					<StackPanel Spacing="4" MinWidth="220">
+
+						<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+							<ico:VisualIcon Kind="TrayArrowDown" Width="18" Height="18" VerticalAlignment="Center"/>
+							<TextBlock Text="{loc:Loc chat.overlay.tray}"
+												 FontSize="15"
+												 FontWeight="Bold"
+												 VerticalAlignment="Center"/>
+						</StackPanel>
+
+						<ItemsControl ItemsSource="{Binding Tray}">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate x:DataType="local:AdditionalChatDataOverlayItem">
+
+									<Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
+
+										<TextBlock Grid.Column="0"
+															 Text="{Binding Title}"
+															 IsVisible="{Binding HasTitle}"
+															 VerticalAlignment="Center"
+															 TextTrimming="CharacterEllipsis"
+															 Margin="2,0,8,0"/>
+
+										<TextBlock Grid.Column="0"
+															 Text="{loc:Loc chat.overlay.untitled}"
+															 IsVisible="{Binding !HasTitle}"
+															 Opacity="0.6"
+															 VerticalAlignment="Center"
+															 TextTrimming="CharacterEllipsis"
+															 Margin="2,0,8,0"/>
+
+										<Button Grid.Column="1"
+														Classes="MiniIconButton overlayButton"
+														ToolTip.Tip="{loc:Loc chat.overlay.restore}"
+														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).RestoreCommand}"
+														CommandParameter="{Binding}">
+											<ico:VisualIcon Kind="ArrowUp"/>
+										</Button>
+
+										<Button Grid.Column="2"
+														Classes="MiniIconButton overlayButton"
+														IsVisible="{Binding CanClose}"
+														ToolTip.Tip="{loc:Loc chat.overlay.close}"
+														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"
+														CommandParameter="{Binding}">
+											<ico:VisualIcon Kind="Close"/>
+										</Button>
+
+									</Grid>
+
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+					</StackPanel>
+
+				</Flyout>
+			</Button.Flyout>
+
+		</Button>
+
+	</Panel>
+
+</UserControl>

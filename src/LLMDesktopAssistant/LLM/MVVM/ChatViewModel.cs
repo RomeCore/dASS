@@ -1,5 +1,6 @@
 using LLMDesktopAssistant.Agents.Tasks.MVVM;
 using LLMDesktopAssistant.LLM.Domain;
+using LLMDesktopAssistant.LLM.MVVM.Additional.Chat;
 using LLMDesktopAssistant.LLM.MVVM.Messages;
 using Material.Icons;
 
@@ -32,6 +33,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// Gets the fallback side panel over the chat's own additional data.
 		/// </summary>
 		public ChatSidePanelViewModel ChatSidePanel { get; }
+
+		/// <summary>
+		/// Gets the overlay layer over the message sequence, with the tray its windows are restored from.
+		/// </summary>
+		public ChatOverlayHostViewModel ChatOverlay { get; }
 
 		private AgentTaskListViewModel? _agentTaskList;
 		/// <summary>
@@ -80,6 +86,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		{
 			Chat = chat;
 			ChatSidePanel = new ChatSidePanelViewModel(chat.AdditionalData);
+			ChatOverlay = new ChatOverlayHostViewModel(chat, chat.AdditionalData);
 			ChatBottomPanel = new ChatBottomPanelViewModel(this);
 			ChatStatus = new ChatStatusViewModel(chat);
 			MessageSequence = new MessageSequenceViewModel(this, ChatBottomPanel.UserInput);
@@ -122,6 +129,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 				MessageSequence.Dispose();
 				ChatSidePanel.Dispose();
+				ChatOverlay.Dispose();
 				ChatBottomPanel.Dispose();
 				ChatStatus.Dispose();
 				AgentTaskList?.Dispose();
