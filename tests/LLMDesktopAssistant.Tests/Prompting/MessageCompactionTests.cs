@@ -4,6 +4,7 @@ using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services.Agents;
 using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Prompting;
+using LLMDesktopAssistant.Tests.Fakes;
 using LLMDesktopAssistant.Tests.Storage;
 using LLMDesktopAssistant.Users;
 using LLTSharp;
@@ -233,17 +234,6 @@ public class MessageCompactionTests
 			=> throw new NotSupportedException();
 
 		public ITextTemplate GetTextTemplate(string id, params IMetadata[] metadata) => template;
-	}
-
-	private sealed class FakeUserManagementService : IUserManagementService
-	{
-		public IEnumerable<UserInformation> GetAllUsers() => [];
-		public IEnumerable<UserInformation> GetLocalUsers() => [];
-		public IEnumerable<UserInformation> GetRemoteUsers() => [];
-		public bool IsLocalUser(string userLogin) => false;
-		public IEnumerable<UserInformation> GetActiveUsers() => [];
-		public UserInformation? FindByLogin(string login) => null;
-		public UserInformation? RegisterUser(string login, string password, string? name, string? description) => null;
 	}
 
 	private sealed class FakeAgentManagementService : IAgentManagementService

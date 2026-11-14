@@ -5,6 +5,7 @@ using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.SlashCommands.Resolution;
+using LLMDesktopAssistant.Tests.Fakes;
 using LLMDesktopAssistant.Tests.Storage;
 
 namespace LLMDesktopAssistant.Tests.SlashCommands
@@ -55,7 +56,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				Service = new ChatMessageInsertionService(
 					Storage.Service,
 					Settings,
-					new ChatCommandInvocationService(Storage.Chat, Resolver, new ChatExecutionTokenService()));
+					new ChatCommandInvocationService(Storage.Chat, Resolver, new ChatExecutionTokenService()),
+					new FakeUserManagementService());
 			}
 
 			public UserMessage LastMessage => (UserMessage)Storage.Chat.Messages[^1].Message;
@@ -64,7 +66,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			/// Appends the input and runs the command it carries, which is what the production caller does in two
 			/// steps so that the queue can drop an entry in between.
 			/// </summary>
-			public async Task<UserInputInsertionResult> InsertAsync(UserInput input, bool generateIntent,
+			public async Task<UserInputInsertionResult> InsertAsync(UserInputState input, bool generateIntent,
 				int? editIndex = null)
 			{
 				var insertion = await Service.AppendUserInputAsync(input, editIndex);
@@ -74,7 +76,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			public void Dispose() => Storage.Dispose();
 		}
 
-		private static UserInput Input(string content) => new() { Content = content, SenderLogin = "user" };
+		private static UserInputState Input(string content) => new() { Content = content, SenderLogin = "user" };
 
 		private static SlashCommandInfo Command(string name, ISlashCommandExecutor executor, bool generate = true) => new()
 		{
