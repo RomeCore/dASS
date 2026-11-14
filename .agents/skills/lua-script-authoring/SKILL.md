@@ -142,6 +142,17 @@ Two consequences:
 - **anything a helper provides can be switched off by the user.** A caller should fail with a readable message, not `attempt to index nil (global 'git')`.
 - **the state is per chat**, so N open chats = N loads of every script.
 
+## State that outlives a reload
+
+| Store | Survives | Dies with |
+|---|---|---|
+| `store.session` | a Lua script reload | the chat |
+| `store.appsession` | a Lua script reload | the application |
+| `store.chat` | the application restart - it lives in the chat database | the chat |
+| `store.file` / `workdir` / `user` | everything, it is a JSON file | - |
+
+A persisted store keeps a Lua **function** as bytecode: it comes back callable, its upvalues do not - a captured local reads as nil, globals (`dass.*`, another script's namespace) resolve at call time. Write such a function against its arguments and against what it reads back out of the store, not against a `local` of the chunk that created it. A value that is not Lua code - a C# callback, a userdata, a task - is still lost, with a warning that names the path.
+
 ## What bites
 
 - **A namespace nobody can type.** `namespace: local` parses, loads, and is unreachable as `local.git`.

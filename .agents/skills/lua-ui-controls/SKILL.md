@@ -117,13 +117,14 @@ The control renders and stays interactive **while the script is parked on `await
 
 ### 5. Expect the reload
 
-The tool call persists the UI: the AXAML string and a BSON **snapshot** of the view model travel with it, and on reload the view model is rebuilt from that snapshot. Consequences:
+The tool call persists the UI: the AXAML string and a BSON **snapshot** of the view model travel with it, and on reload the view model is rebuilt from that snapshot. Functions are part of the snapshot: each one is stored as bytecode and revived on load, so command-bound buttons keep working. Consequences:
 
-- **Data survives, closures do not.** Scalars and containers come back; functions - commands and `__changed` - are dropped, so command-bound buttons render disabled. An interactive control persists as *state*, never as behaviour.
+- **The code survives, the upvalues do not.** Scalars, containers and `function(self, ...)` commands come back; a captured `local` comes back as nil, so a command that closed over it fails at the click (logged, not rendered). Write commands against `self` and keep their state in the table - `self` is the only state a revived function still has. `__changed` follows the same rule; a value that is not Lua code (an API callback, a userdata) never survives and comes back missing.
 - **Only top-level members are snapshotted.** Nested mutation reaches the snapshot at the next top-level write.
-- **Re-arm by re-running the tool.** Re-running the same `lua-execute` re-injects the closures under the persisted layout.
+- **Re-arm only if you relied on a closure.** Re-running the same `lua-execute` re-injects fresh functions and re-binds captured state under the persisted layout.
+- **Bytecode is versioned.** A function whose bytecode the running build cannot read stays a marker string and renders as a disabled command - never erased.
 
-*Done when:* the author has accepted dead-after-reload commands, or routed the control's live behaviour through persisted state / a re-run.
+*Done when:* every command on the control is written as `function(self, ...)` with its state in the table, so a reload leaves the buttons working.
 
 ### 6. Verify in a real tool call
 
@@ -175,7 +176,9 @@ Any Avalonia markup, with any root `Control` (not only panels). The root element
 
 ### What persists, and how
 
-The additional data stores its AXAML string plus a `BsonValue` snapshot of the view model. The snapshot is built from the Lua table through the structured-values pipeline (`LuaStructuredConverter` → `BsonStructuredConverter`) in tolerant mode: functions, userdata and other unsupported values are dropped, while containers keep the entries that convert. On load the snapshot becomes a `NodeValueDynamicViewModel`.
+The additional data stores its AXAML string plus a `BsonValue` snapshot of the view model, built from the Lua table through `LuaStructuredConverter` → `BsonStructuredConverter` in tolerant mode. A Lua function is written as a marker string carrying its bytecode (`"\u0000dass:lua-fn:v1:" + base64`); everything that is not Lua code - a C# callback, a userdata, a task - is dropped, while containers keep the entries that convert. On load the markers are revived and the table is wrapped in `LuaValueDynamicViewModel`: that, not the flag, is what turns a member back into a command, since `NodeValueDynamicViewModel` never creates one.
+
+The same marker is what `store.chat` and `store.file` keep, so a function parked in a store outlives a reload the same way - the one difference is that `store.import` reads somebody else's file and does not revive.
 
 ### Where the code lives
 
@@ -190,6 +193,7 @@ The additional data stores its AXAML string plus a `BsonValue` snapshot of the v
 | The renderer | `Controls/DynamicAxamlControl.cs` |
 | The additional data + view | `LLM/MVVM/Additional/DynamicAxamlControlAdditionalData.cs` (+ `.axaml`) |
 | Tolerant Lua → structured conversion | `StructuredValues/Converters/LuaStructuredConverter.cs` |
+| The same marker for `store.*` | `Scripting/Lua/Store/LuaStoreValueConverter.cs` |
 | The array/list surface (a container member as `ItemsSource`) | `MVVM/Dynamic/StructuredDynamicViewModel.cs` (`Items`, list projection) |
 | The read-only array view | `MVVM/Dynamic/DynamicArrayView.cs` |
 | Dynamic member reflection (how `{Binding key}` resolves) | `MVVM/Dynamic/DynamicViewModelTypeInfo.cs` |
