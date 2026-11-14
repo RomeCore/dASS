@@ -1,0 +1,30 @@
+<Styles xmlns="https://github.com/avaloniaui"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+		xmlns:conv="clr-namespace:LLMDesktopAssistant.Converters">
+
+	<Styles.Resources>
+		<!-- Local to this file: a converter referenced from a style setter resolves too late through the app dictionary. -->
+		<conv:ColorToBrushConverter x:Key="ChipColorBrush" />
+	</Styles.Resources>
+
+	<!--
+		A message part chip. The look lives here rather than in AdditionalMessagePartView because a local value in
+		the view beats any style - and a surface that wants a lighter chip has to win over this one.
+	-->
+	<Style Selector="Border.messagePartChip" x:CompileBindings="False">
+		<Setter Property="Background" Value="{DynamicResource MessageBackground}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="BorderBrush" Value="{Binding ChipColor, Converter={StaticResource ChipColorBrush}}" />
+		<Setter Property="CornerRadius" Value="8" />
+		<Setter Property="Padding" Value="6,3" />
+	</Style>
+
+	<Style Selector="Border.messagePartChip ico|VisualIcon" x:CompileBindings="False">
+		<Setter Property="Foreground" Value="{Binding ChipColor, Converter={StaticResource ChipColorBrush}}" />
+		<Setter Property="Width" Value="14" />
+		<Setter Property="Height" Value="14" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+	</Style>
+
+</Styles>

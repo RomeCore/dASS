@@ -34,6 +34,7 @@
 		<StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/CommonStyles.axaml"/>
 		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/ButtonsIcons.axaml"/>
+		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Chips.axaml"/>
 		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/ParameterElements.axaml"/>
 		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/MarkdownStyles.axaml"/>
 
