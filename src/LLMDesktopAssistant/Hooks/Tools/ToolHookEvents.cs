@@ -3,7 +3,7 @@ using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Utils;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The event vocabulary of the tool pipeline: the names a hook matches with <c>hook-type</c>, and the

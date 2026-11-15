@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The document a <c>tool.confirm.{source}.{pending}</c> hook receives.

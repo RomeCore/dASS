@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The document a <c>tool.pre-use</c> hook receives.

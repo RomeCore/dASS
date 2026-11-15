@@ -1,8 +1,8 @@
 using LLMDesktopAssistant.Hooks;
+using LLMDesktopAssistant.Hooks.Tools;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
-using LLMDesktopAssistant.Tools.Execution.Hooks;
 using Serilog;
 
 namespace LLMDesktopAssistant.Tools.Execution.Services

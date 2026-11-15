@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The document a <c>tool.result.*</c> hook receives: what the call ended with, and the text the model

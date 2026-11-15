@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// What a <c>tool.confirm.{source}.{pending}</c> hook returns: the answer given in the user's place and,

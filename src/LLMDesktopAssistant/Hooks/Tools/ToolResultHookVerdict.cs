@@ -1,4 +1,4 @@
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// What a <c>tool.result.*</c> hook returns: the text the model reads instead of the one the call

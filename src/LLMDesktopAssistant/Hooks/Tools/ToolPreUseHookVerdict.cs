@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// What a <c>tool.start.{source}</c> hook returns: its opinion about the invocation and, optionally, the

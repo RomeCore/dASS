@@ -1,4 +1,4 @@
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The opinion a tool hook expresses about an invocation.

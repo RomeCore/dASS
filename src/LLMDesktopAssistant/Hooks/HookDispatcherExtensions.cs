@@ -26,19 +26,17 @@ namespace LLMDesktopAssistant.Hooks
 
 		extension(IHookDispatcher dispatcher)
 		{
-			public void ExecuteHooksFnF(INodeValue? payload,
-				string hookType, string? hookTarget, CancellationToken cancellationToken = default)
+			public void ExecuteHooksFnF(INodeValue? payload, string hookType, string? hookTarget)
 			{
 				_ = dispatcher.ExecuteHooksAsync(payload, hookType, hookTarget, HookExecutionFlow.FireAndForget,
-					isFlowForced: true, cancellationToken);
+					isFlowForced: true);
 			}
 
-			public void ExecuteHooksFnF(object? payload,
-				string hookType, string? hookTarget, CancellationToken cancellationToken = default)
+			public void ExecuteHooksFnF(object? payload, string hookType, string? hookTarget)
 			{
 				var serializedPayload = JsonSerializer.SerializeToNode(payload, _jsonSerializerOptions).ToConstNodeValue();
 				_ = dispatcher.ExecuteHooksAsync(serializedPayload, hookType, hookTarget, HookExecutionFlow.FireAndForget,
-					isFlowForced: true, cancellationToken);
+					isFlowForced: true);
 			}
 
 			public async Task<HookExecutionResult<T?>> ExecuteHooksAsync<T>(object? payload,

@@ -1,4 +1,6 @@
-namespace LLMDesktopAssistant.Tools.Execution.Hooks
+using LLMDesktopAssistant.Tools;
+
+namespace LLMDesktopAssistant.Hooks.Tools
 {
 	/// <summary>
 	/// The deepest layer a confirmation hook may override, ordered by strictness.
@@ -20,7 +22,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Hooks
 		Memorization,
 
 		/// <summary>
-		/// Every layer, including <see cref="LLMDesktopAssistant.Tools.ToolApprovalLevel.AlwaysDisallow"/>.
+		/// Every layer, including <see cref="ToolApprovalLevel.AlwaysDisallow"/>.
 		/// </summary>
 		All
 	}
