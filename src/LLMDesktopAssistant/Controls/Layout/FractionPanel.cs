@@ -108,9 +108,18 @@ namespace LLMDesktopAssistant.Controls.Layout
 				if (!child.IsVisible || !source.IsVisible)
 					continue;
 
-				child.Measure(new Size(
-					Constraint(availableSize.Width, GetRelativeWidth(source)),
-					Constraint(availableSize.Height, GetRelativeHeight(source))));
+				child.Measure(MeasureConstraint(availableSize, source));
+
+				// An items control builds the item's root inside the measure of its own presenter, and the fractions that
+				// root carries arrive detached, where no change reaches this panel. The root exists now, so the
+				// constraint has to be taken from it: a child measured for the whole area keeps that layout inside the
+				// smaller frame it is arranged at, and whatever sits at its right and bottom edges - a header's buttons,
+				// a resize grip - ends up outside the frame until something unrelated forces a second pass.
+				if (GeometrySource(child) is { } settled && !ReferenceEquals(settled, source))
+				{
+					source = settled;
+					child.Measure(MeasureConstraint(availableSize, source));
+				}
 
 				contentWidth = Math.Max(contentWidth, child.DesiredSize.Width + Offset(availableSize.Width, GetRelativeLeft(source)));
 				contentHeight = Math.Max(contentHeight, child.DesiredSize.Height + Offset(availableSize.Height, GetRelativeTop(source)));
@@ -167,7 +176,15 @@ namespace LLMDesktopAssistant.Controls.Layout
 			=> child is ContentPresenter { Child: Control inner } ? inner : child;
 
 		/// <summary>
-		/// The measure constraint a child gets: its fraction of the area, or the whole area when it sizes itself.
+		/// The measure constraint a child gets: its fractions of the area, or the whole area on an axis it sizes itself.
+		/// </summary>
+		private static Size MeasureConstraint(Size available, Control source)
+			=> new(
+				Constraint(available.Width, GetRelativeWidth(source)),
+				Constraint(available.Height, GetRelativeHeight(source)));
+
+		/// <summary>
+		/// The measure constraint an axis gets: its fraction of the area, or the whole area when it sizes itself.
 		/// </summary>
 		private static double Constraint(double available, double? fraction)
 			=> fraction is { } value && !double.IsInfinity(available) ? available * value : available;
