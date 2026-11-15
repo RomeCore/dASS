@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.Tools.Execution.Domain;
 
@@ -21,6 +22,12 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		internal static LuaToolResult? ToolResult => _current.Value?.Result;
 
 		/// <summary>
+		/// The chat message the current flow belongs to - the one being generated or inserted - or
+		/// <see langword="null"/> when the script runs outside such a window.
+		/// </summary>
+		public static BranchedMessage? Message => _current.Value?.Message;
+
+		/// <summary>
 		/// Sets the ambient execution context for the current async flow and everything it awaits.
 		/// </summary>
 		/// <param name="tool">The tool execution the script belongs to, or <see langword="null"/>.</param>
@@ -41,11 +48,22 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		internal static void SetTool(IToolExecutionContext tool, LuaToolResult result)
 			=> SetAmbient(tool, null, result);
 
+		/// <summary>
+		/// Opens or closes the ambient message window for the current async flow.
+		/// </summary>
+		/// <param name="message">The message the flow belongs to, or <see langword="null"/> to close the window.</param>
+		/// <remarks>
+		/// Unlike <see cref="Set"/> this replaces the slot instead of merging it: closing a window means setting it to
+		/// <see langword="null"/>, and a merge would keep the previous value alive.
+		/// </remarks>
+		public static void SetMessage(BranchedMessage? message)
+			=> _current.Value = new Ambient(Tool, Command, ToolResult, message);
+
 		private static void SetAmbient(IToolExecutionContext? tool, SlashCommandExecutionContext? command,
 			LuaToolResult? result)
-			=> _current.Value = new Ambient(tool ?? Tool, command ?? Command, result ?? ToolResult);
+			=> _current.Value = new Ambient(tool ?? Tool, command ?? Command, result ?? ToolResult, Message);
 
 		private sealed record Ambient(IToolExecutionContext? Tool, SlashCommandExecutionContext? Command,
-			LuaToolResult? Result);
+			LuaToolResult? Result, BranchedMessage? Message);
 	}
 }

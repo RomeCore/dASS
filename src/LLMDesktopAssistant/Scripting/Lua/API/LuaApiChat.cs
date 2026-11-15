@@ -36,6 +36,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.chat.get_topic() -> string
 			  Returns the chat topic.
 
+			--- dass.chat.current_message() -> chat_message or nil
+			  Returns the message the running flow belongs to: the assistant message currently
+			  being generated. Outside such a window (no generation in progress) it returns
+			  nil. The handle is the same one get_messages() returns for that message, so it
+			  stays live and writable.
+
 			--- dass.chat.append_part(spec) -> chat_part
 			  Appends one part - a compact chip with an optional payload - to the CHAT object
 			  itself, not to a message.
@@ -239,6 +245,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ns["get_messages"] = new LuaCallbackFunction(GetMessages);
 			ns["get_title"] = new LuaCallbackFunction(GetTitle);
 			ns["get_topic"] = new LuaCallbackFunction(GetTopic);
+			ns["current_message"] = new LuaCallbackFunction(CurrentMessage);
 			ns["append_part"] = new LuaCallbackFunction(AppendPart);
 			ns["append_data"] = new LuaCallbackFunction(AppendData);
 			ns["remove_data"] = new LuaCallbackFunction(RemoveData);
@@ -268,6 +275,15 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private LuaTuple GetTopic(LuaCallingContext ctx, LuaValue[] args)
 			=> new(new LuaString(_chat.Topic));
+
+		private LuaTuple CurrentMessage(LuaCallingContext ctx, LuaValue[] args)
+		{
+			LuaValue message = LuaExecutionContext.Message is { } current
+				? LuaChatMessage.Wrap(current, _dispatcher)
+				: LuaNil.Instance;
+
+			return new LuaTuple(message);
+		}
 
 		private LuaTuple AppendPart(LuaCallingContext ctx, LuaValue[] args)
 		{
