@@ -243,8 +243,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			var registration = runtimeHooks.Register(hook);
-			return new LuaTuple(LuaAddonRevokeHandle.Wrap(
-				new LuaAddonRevokeHandle(() => !registration.Revoked, registration.Revoke)));
+			return new LuaTuple(LuaAddonRevokeHandle<HookInfo>.Wrap(registration));
 		}
 
 		/// <summary>
