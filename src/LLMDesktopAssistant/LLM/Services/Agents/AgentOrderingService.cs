@@ -1,6 +1,9 @@
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Agents.ExecutionStages;
+using LLMDesktopAssistant.Hooks;
+using LLMDesktopAssistant.Hooks.Chat;
 using LLMDesktopAssistant.LLM.Domain;
+using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services.Agents
 {
@@ -8,6 +11,8 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 	public class AgentOrderingService(
 		Chat chat,
 		IChatSettingsService chatSettings,
+		IAgentManagementService agentManager,
+		IHookDispatcher hookDispatcher,
 		IServiceProvider services
 	) : IAgentOrderingService
 	{
@@ -28,6 +33,12 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			var executedInThisRound = CollectExecutedAgents(roundAssistantMessages);
 			var (prevAgentId, prevStageId, prevAgentMessages) = GetPreviousExecutionInfo(roundAssistantMessages, stages);
 			var (currentStageExecuted, currentStageMessages) = GetCurrentStageInfo(roundAssistantMessages, prevStageId);
+
+			var hookSelection = await RunAgentBeginHookAsync(stages, roundUserMessages, roundAssistantMessages,
+				executedInThisRound, prevAgentId, prevStageId, cancellationToken);
+
+			if (hookSelection.Handled)
+				return hookSelection.Selection;
 
 			int targetStageIndex = FindTargetStageIndex(prevStageId);
 
@@ -261,5 +272,107 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			messages.Reverse();
 			return (agentIds.AsReadOnly(), messages.AsReadOnly());
 		}
+
+		private async Task<HookSelection> RunAgentBeginHookAsync(IReadOnlyList<AgentExecutionStage> stages,
+			IReadOnlyList<UserMessage> roundUserMessages, IReadOnlyList<AssistantMessage> roundAssistantMessages,
+			IReadOnlyList<(Guid AgentId, Guid StageId)> executedInThisRound, Guid? previousAgentId,
+			Guid? previousStageId, CancellationToken cancellationToken)
+		{
+			// One pass for the ids instead of a lookup per message: the round is a tail window, and the messages are
+			// compared by reference.
+			var ids = new Dictionary<ChatMessage, int>(ReferenceEqualityComparer.Instance);
+			foreach (var branched in chat.Messages)
+			{
+				if (branched.MessageId >= 0)
+					ids[branched.Message] = branched.MessageId;
+			}
+
+			ChatHookMessageInfo Describe(ChatMessage message) =>
+				ChatHookMessageInfo.Create(message, ids.TryGetValue(message, out var id) ? id : null);
+
+			var available = new List<ChatHookAgentInfo>();
+			foreach (var _stage in stages)
+			{
+				if (!_stage.Enabled)
+					continue;
+
+				foreach (var instance in _stage.AgentInstances)
+					available.Add(DescribeAgent(instance.AgentId, _stage.Id));
+			}
+
+			var payload = new AgentBeginHookPayload
+			{
+				ChatId = chat.Id,
+				Messages = [.. roundUserMessages.Cast<ChatMessage>().Concat(roundAssistantMessages).Select(Describe)],
+				ExecutedInThisRound = [.. executedInThisRound.Select(entry => DescribeAgent(entry.AgentId, entry.StageId))],
+				PreviousAgent = previousAgentId is { } agent && previousStageId is { } stage
+					? DescribeAgent(agent, stage)
+					: null,
+				Available = [.. available]
+			};
+
+			var result = await hookDispatcher.ExecuteHooksAsync<AgentSelectionHookVerdict>(payload,
+				ChatHookEvents.TurnAgentBegin, null, HookExecutionFlow.Sequential,
+				cancellationToken: cancellationToken);
+
+			// A hook that broke the chain itself - a blocking exit code - ends the turn: there is no verdict to weigh.
+			if (!string.IsNullOrEmpty(result.BlockingMessage))
+			{
+				Log.Warning("A hook blocked the agent selection: {Reason}", result.BlockingMessage);
+				return new HookSelection(true, null);
+			}
+
+			if (result.Value is not { } verdict)
+				return default;
+
+			if (verdict.Decision is ChatHookDecision.Disallow or ChatHookDecision.Error)
+			{
+				Log.Warning("A hook refused the agent selection: {Reason}", verdict.Reason ?? "no reason given");
+				return new HookSelection(true, null);
+			}
+
+			if (string.IsNullOrWhiteSpace(verdict.Agent))
+				return default;
+
+			if (ResolveAgent(verdict.Agent) is not { } resolvedAgentId)
+			{
+				Log.Warning("A hook selected an agent that does not exist: {Agent}", verdict.Agent);
+				return default;
+			}
+
+			var resolvedStageId = stages.FirstOrDefault(stage => stage.Enabled && ContainsAgent(stage, resolvedAgentId))?.Id
+				?? stages.FirstOrDefault(stage => ContainsAgent(stage, resolvedAgentId))?.Id
+				?? Guid.Empty;
+
+			return new HookSelection(true, (resolvedAgentId, resolvedStageId));
+		}
+
+		private Guid? ResolveAgent(string reference)
+		{
+			var trimmed = reference.Trim();
+
+			if (Guid.TryParse(trimmed, out var id))
+				return agentManager.TryGetAgentDescriptor(id) is null ? null : id;
+
+			foreach (var (descriptor, _) in agentManager.ListAgents())
+				if (string.Equals(descriptor.Info.Name, trimmed, StringComparison.OrdinalIgnoreCase))
+					return descriptor.Id;
+
+			return null;
+		}
+
+		private ChatHookAgentInfo DescribeAgent(Guid agentId, Guid stageId) => new()
+		{
+			AgentId = agentId,
+			Agent = agentManager.TryGetAgentDescriptor(agentId)?.Info.Name ?? string.Empty,
+			StageId = stageId
+		};
+
+		/// <summary>
+		/// The answer of the selection hook: whether it took the decision, and what it decided.
+		/// </summary>
+		/// <param name="Handled">Whether the hook ended the selection, by naming an agent or by refusing.</param>
+		/// <param name="Selection">The chosen agent and its stage, or <see langword="null"/> for a refusal.</param>
+		private readonly record struct HookSelection(bool Handled, (Guid AgentId, Guid StageId)? Selection);
 	}
 }

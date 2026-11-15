@@ -3,6 +3,8 @@ using LLMDesktopAssistant.Addons.Management;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Controls.Toasts;
 using LLMDesktopAssistant.Data;
+using LLMDesktopAssistant.Hooks;
+using LLMDesktopAssistant.Hooks.Chat;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional.Context;
 using LLMDesktopAssistant.LLM.Services.Agents;
@@ -10,12 +12,14 @@ using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Providers;
+using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Dispatch;
 using LLMDesktopAssistant.Tools.Execution.Sinks;
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Messages;
@@ -55,7 +59,8 @@ namespace LLMDesktopAssistant.LLM.Services
 		IChatExecutionStatusService executionStatusService,
 		IChatStatusService statusService,
 		IPromptDumpService promptDumpService,
-		IFollowUpChatMessageQueue followUps
+		IFollowUpChatMessageQueue followUps,
+		IHookDispatcher hookDispatcher
 	) : IChatExecutionService
 	{
 		private const bool EnablePrefixCompletions = false;
@@ -71,24 +76,35 @@ namespace LLMDesktopAssistant.LLM.Services
 			using var executionInfo = executionInfoStatusService.WithExecution();
 			using var execution = executionStatusService.WithExecution();
 
+			// Hoisted for the exit paths: the turn stop hook fires once, from the finally, and only for a turn that
+			// actually began.
+			var token = cancellationToken;
+			var agents = new List<ChatHookAgentInfo>();
+			var cutByFollowUp = false;
+			var started = false;
+
 			try
 			{
 				int cycles = 0;
-				using var scope = tokens.WithToken(ChatExecutionLevel.AgentSequence, cancellationToken, out var token);
+				using var scope = tokens.WithToken(ChatExecutionLevel.AgentSequence, cancellationToken, out token);
+
+				if (!await RunTurnBeginHookAsync(token))
+					return false;
+
+				started = true;
 
 				while (true)
 				{
 					token.ThrowIfCancellationRequested();
 
-					var lastAssistantMessage = chat.Messages.LastOrDefault()?.Message as Domain.AssistantMessage;
-					Guid? nextAgentId = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0
-						? lastAssistantMessage.SenderAgentId
-						: null;
-					Guid? agentStageId = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0
-						? lastAssistantMessage.AgentStageId
-						: null;
+					var lastEntry = chat.Messages.LastOrDefault();
+					var lastAssistantMessage = lastEntry?.Message as Domain.AssistantMessage;
+					var continuesToolBatch = lastAssistantMessage != null && lastAssistantMessage.ToolCalls.Count != 0;
 
-					if (nextAgentId == null || agentStageId == null)
+					Guid? nextAgentId = continuesToolBatch ? lastAssistantMessage!.SenderAgentId : null;
+					Guid? agentStageId = continuesToolBatch ? lastAssistantMessage!.AgentStageId : null;
+
+					if (!continuesToolBatch)
 					{
 						statusService.Icon = MaterialIconKind.RobotConfused;
 						statusService.Text = LocalizationManager.LocalizeStatic("chat.status.selecting_agent");
@@ -96,6 +112,13 @@ namespace LLMDesktopAssistant.LLM.Services
 						var agentTuple = await agentOrderer.GetNextAgentAsync(token);
 						nextAgentId = agentTuple?.Item1;
 						agentStageId = agentTuple?.Item2;
+					}
+					else if (nextAgentId is { } continuedAgentId && agentStageId is { } continuedStageId)
+					{
+						// No selection happens on this path, so the selection hook is skipped - the continuation hook is
+						// what reports it. The cycle is unknown: the earlier ones belong to a previous turn.
+						FireAgentContinueHook(lastEntry, continuedAgentId, continuedStageId, cycle: null,
+							AgentContinueReason.PendingToolCalls, token);
 					}
 
 					if (nextAgentId == null || agentStageId == null)
@@ -105,13 +128,28 @@ namespace LLMDesktopAssistant.LLM.Services
 								LocalizationManager.LocalizeStatic("chat.toast.agent_selection_failed.description"));
 						else
 							await RunExecutionFinishedHooksAsync(token);
-						return followUps.HasEligible(FollowUpInjectionLevel.MultiAgentSequence);
+
+						cutByFollowUp = followUps.HasEligible(FollowUpInjectionLevel.MultiAgentSequence);
+						return cutByFollowUp;
 					}
 
 					token.ThrowIfCancellationRequested();
 
+					if (agentManager.TryGetAgentDescriptor(nextAgentId.Value) is { } selectedAgent)
+					{
+						agents.Add(new ChatHookAgentInfo
+						{
+							AgentId = nextAgentId.Value,
+							Agent = selectedAgent.Info.Name,
+							StageId = agentStageId.Value
+						});
+					}
+
 					if (await GenerateResponseWithAgentAsync(nextAgentId.Value, agentStageId.Value, token))
-						return true;
+					{
+						cutByFollowUp = true;
+						return cutByFollowUp;
+					}
 
 					cycles++;
 				}
@@ -136,6 +174,9 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				statusService.Icon = MaterialIconKind.ChatProcessing;
 				statusService.Text = null;
+
+				if (started)
+					FireTurnStopHook(agents, cutByFollowUp, token);
 			}
 		}
 
@@ -145,10 +186,21 @@ namespace LLMDesktopAssistant.LLM.Services
 		{
 			using var execution = executionStatusService.WithExecution();
 
+			// Hoisted for the exit paths: the agent stop hook fires once, from the finally, with what the run
+			// produced and whether a follow-up cut it short.
+			var token = cancellationToken;
+			var agentName = string.Empty;
+			Domain.AssistantMessage? lastResponse = null;
+			BranchedMessage? lastEntry = null;
+			List<int> messageIds = [];
+			var producedMessages = 0;
+			var cutByFollowUp = false;
+
 			try
 			{
-				using var scope = tokens.WithToken(ChatExecutionLevel.Agent, cancellationToken, out var token);
+				using var scope = tokens.WithToken(ChatExecutionLevel.Agent, cancellationToken, out token);
 				var agent = agentManager.GetAgentDescriptor(agentId);
+				agentName = agent.Info.Name;
 				toolMemorizer.PushTaskAsyncScope();
 
 				var responsesBuilder = ImmutableList.CreateBuilder<Domain.AssistantMessage>();
@@ -156,11 +208,28 @@ namespace LLMDesktopAssistant.LLM.Services
 
 				while (true)
 				{
-					var (response, interrupted) = await GenerateMessageResponseAsync(agentId, agentStageId, agent, cycles, token);
+					if (cycles > 0)
+					{
+						// The agent produced tool calls and continues with their results: no selection happens, so the
+						// continuation hook reports this cycle.
+						FireAgentContinueHook(lastEntry, agentId, agentStageId, cycle: cycles,
+							AgentContinueReason.ToolCycle, token);
+					}
+
+					var (response, entry, interrupted) = await GenerateMessageResponseAsync(agentId, agentStageId, agent, cycles, token);
+					lastResponse = response;
+					lastEntry = entry;
+					producedMessages++;
+
+					if (entry is { MessageId: >= 0 })
+						messageIds.Add(entry.MessageId);
 
 					// The message barrier fired: the message is committed, the sequence ends here.
 					if (interrupted)
+					{
+						cutByFollowUp = true;
 						return true;
+					}
 
 					cycles++;
 					responsesBuilder.Add(response);
@@ -176,7 +245,8 @@ namespace LLMDesktopAssistant.LLM.Services
 						}, token);
 
 						// The agent barrier sits after the hooks: the agent finished its cycle honestly.
-						return followUps.HasEligible(FollowUpInjectionLevel.Agent);
+						cutByFollowUp = followUps.HasEligible(FollowUpInjectionLevel.Agent);
+						return cutByFollowUp;
 					}
 				}
 			}
@@ -193,18 +263,27 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				statusService.Icon = MaterialIconKind.ChatProcessing;
 				statusService.Text = null;
+
+				FireAgentStopHook(agentId, agentName, agentStageId, lastResponse, producedMessages, messageIds,
+					cutByFollowUp, token);
 			}
 		}
 
-		private async Task<(Domain.AssistantMessage Message, bool Interrupted)> GenerateMessageResponseAsync(
-			Guid agentId, Guid agentStageId, ChatAgentDescriptor agent, int cycle,
+		private async Task<(Domain.AssistantMessage Message, BranchedMessage? Entry, bool Interrupted)>
+			GenerateMessageResponseAsync(Guid agentId, Guid agentStageId, ChatAgentDescriptor agent, int cycle,
 			CancellationToken cancellationToken = default)
 		{
 			using var execution = executionStatusService.WithExecution();
 
+			// Hoisted for the exit paths: the stop hook fires once, from the finally, with the status the message
+			// ended with, and the ambient message window needs the history entry the write produced.
+			Domain.AssistantMessage domainResponseMessage = null!;
+			BranchedMessage? branchedMessage = null;
+			var token = cancellationToken;
+
 			try
 			{
-				using var scope = tokens.WithToken(ChatExecutionLevel.Message, cancellationToken, out var token);
+				using var scope = tokens.WithToken(ChatExecutionLevel.Message, cancellationToken, out token);
 				addonInvalidator.ReloadIfInvalid(AddonKind.All);
 
 				var modelName = !string.IsNullOrEmpty(agent.Info.CustomModel)
@@ -231,7 +310,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					await mcpManager.EnsureCurrentMCPConnectionsAsync(token);
 				}
 
-				var domainResponseMessage = new Domain.AssistantMessage
+				domainResponseMessage = new Domain.AssistantMessage
 				{
 					CreatedAt = DateTime.Now,
 					Status = AssistantMessageStatus.Pending,
@@ -256,6 +335,10 @@ namespace LLMDesktopAssistant.LLM.Services
 				{
 					storage.AppendMessage(domainResponseMessage);
 				}
+
+				branchedMessage = chat.Messages[^1];
+				LuaExecutionContext.SetMessage(branchedMessage);
+				await RunMessageStartHookAsync(branchedMessage, agentId, agentStageId, agent, cycle, modelName, token);
 
 				var timeRequested = DateTime.Now;
 				DateTime? timeFirstToken = null;
@@ -482,7 +565,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				}
 
 				// The tool batch is closed and the message is committed: this is the message barrier.
-				return (domainResponseMessage, followUps.HasEligible(FollowUpInjectionLevel.Message));
+				return (domainResponseMessage, branchedMessage, followUps.HasEligible(FollowUpInjectionLevel.Message));
 			}
 			catch (OperationCanceledException)
 			{
@@ -492,6 +575,11 @@ namespace LLMDesktopAssistant.LLM.Services
 			{
 				Log.Error(ex, "An error occurred while generating the response message using agent: {ErrorMessage}", ex.Message);
 				throw;
+			}
+			finally
+			{
+				if (domainResponseMessage is not null)
+					FireMessageStopHook(domainResponseMessage, branchedMessage, agentId, agentStageId, agent, cycle, token);
 			}
 		}
 
@@ -601,6 +689,213 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 
 			return Task.CompletedTask;
+		}
+
+		private async Task RunMessageStartHookAsync(BranchedMessage? branched, Guid agentId, Guid agentStageId,
+			ChatAgentDescriptor agent, int cycle, string model, CancellationToken cancellationToken)
+		{
+			var payload = new AssistantMessageStartHookPayload
+			{
+				ChatId = chat.Id,
+				MessageId = branched?.MessageId,
+				Index = branched?.MessageIndex + 1,
+				AgentId = agentId,
+				Agent = agent.Info.Name,
+				StageId = agentStageId,
+				Cycle = cycle,
+				Model = model
+			};
+
+			await hookDispatcher.ExecuteHooksAsync<ChatHookVerdict>(payload, ChatHookEvents.AssistantStart,
+				ChatHookEvents.ComposeAgentTarget(agentId, agent.Info.Name), HookExecutionFlow.Parallel,
+				cancellationToken: cancellationToken);
+		}
+
+		private void FireMessageStopHook(Domain.AssistantMessage message, BranchedMessage? branched, Guid agentId,
+			Guid agentStageId, ChatAgentDescriptor agent, int cycle, CancellationToken token)
+		{
+			var status = DescribeStopStatus(message.Status, token.IsCancellationRequested);
+
+			var payload = new AssistantMessageStopHookPayload
+			{
+				ChatId = chat.Id,
+				MessageId = branched?.MessageId,
+				Index = branched?.MessageIndex + 1,
+				AgentId = agentId,
+				Agent = agent.Info.Name,
+				StageId = agentStageId,
+				Cycle = cycle,
+				Status = KebabEnumNames<MessageStopStatus>.Serialize(status) ?? string.Empty,
+				Content = message.Content,
+				ToolCalls = message.ToolCalls.Count == 0 ? null : [.. message.ToolCalls.Select(DescribeToolCall)],
+				Usage = DescribeUsage(message),
+				Error = message.Error?.Value,
+				IsUserLike = message.IsUserLike
+			};
+
+			hookDispatcher.ExecuteHooksFnF(payload, ChatHookEvents.ComposeAssistantStop(status),
+				ChatHookEvents.ComposeAgentTarget(agentId, agent.Info.Name));
+		}
+
+		private static MessageStopStatus DescribeStopStatus(AssistantMessageStatus status, bool cancelled) => status switch
+		{
+			AssistantMessageStatus.Success => MessageStopStatus.Success,
+			AssistantMessageStatus.Error => MessageStopStatus.Error,
+			AssistantMessageStatus.Cancelled => MessageStopStatus.Cancelled,
+			_ => cancelled ? MessageStopStatus.Cancelled : MessageStopStatus.Error
+		};
+
+		private static AssistantMessageStopHookPayload.ToolCallInfo DescribeToolCall(Domain.ToolCall call) => new()
+		{
+			Name = call.ToolName,
+			Status = KebabEnumNames<ToolStatus>.Serialize(call.Status) ?? string.Empty
+		};
+
+		private static AssistantMessageStopHookPayload.UsageInfo? DescribeUsage(Domain.AssistantMessage message)
+		{
+			if (!message.AdditionalData.TryGet<TokenCostViewModel>(out var usage))
+				return null;
+
+			return new AssistantMessageStopHookPayload.UsageInfo
+			{
+				Model = usage.ModelName,
+				InputTokens = usage.InputTokens,
+				CacheCreateTokens = usage.CacheCreateTokens,
+				InputCacheHitTokens = usage.InputCacheHitTokens,
+				InputCacheMissTokens = usage.InputCacheMissTokens,
+				OutputTokens = usage.OutputTokens,
+				TimeToFirstToken = usage.TTFT,
+				GenerationTime = usage.GenerationTime
+			};
+		}
+
+		/// <summary>
+		/// Asks the hooks whether the turn should start and reports whether they let it.
+		/// </summary>
+		/// <param name="cancellationToken">The turn's token.</param>
+		private async Task<bool> RunTurnBeginHookAsync(CancellationToken cancellationToken)
+		{
+			var last = chat.Messages.LastOrDefault();
+			var payload = new TurnBeginHookPayload
+			{
+				ChatId = chat.Id,
+				LastMessage = last is null ? null : ChatHookMessageInfo.Create(last)
+			};
+
+			var result = await hookDispatcher.ExecuteHooksAsync<ChatHookVerdict>(payload, ChatHookEvents.TurnBegin,
+				null, HookExecutionFlow.Sequential, cancellationToken: cancellationToken);
+
+			// A hook that broke the chain itself - a blocking exit code - beats any verdict: there is none.
+			if (!string.IsNullOrEmpty(result.BlockingMessage))
+			{
+				Log.Warning("The turn was blocked with: {Reason}", result.BlockingMessage);
+				toastService.ShowError(result.BlockingMessage);
+				return false;
+			}
+
+			if (result.Value is not { } verdict)
+				return true;
+
+			if (verdict.Decision is not (ChatHookDecision.Disallow or ChatHookDecision.Error))
+				return true;
+
+			Log.Warning("The turn was refused by a hook: {Reason}", verdict.Reason ?? "no reason given");
+
+			var fallbackKey = verdict.Decision is ChatHookDecision.Error
+				? "chat.hook.turn.error"
+				: "chat.hook.turn.disallowed";
+			toastService.ShowError(string.IsNullOrWhiteSpace(verdict.Reason) ? Locale.Get(fallbackKey) : verdict.Reason);
+
+			return false;
+		}
+
+		/// <summary>
+		/// Announces that the turn ended, once, whatever the exit path was.
+		/// </summary>
+		/// <param name="agents">The agents the turn selected, in order.</param>
+		/// <param name="cutByFollowUp">Whether a pending follow-up ended the turn early.</param>
+		/// <param name="token">The turn's token.</param>
+		private void FireTurnStopHook(List<ChatHookAgentInfo> agents, bool cutByFollowUp, CancellationToken token)
+		{
+			var reason = token.IsCancellationRequested ? TurnStopReason.Cancelled
+				: cutByFollowUp ? TurnStopReason.Interrupted
+				: TurnStopReason.Complete;
+
+			var payload = new TurnStopHookPayload
+			{
+				ChatId = chat.Id,
+				Reason = KebabEnumNames<TurnStopReason>.Serialize(reason) ?? string.Empty,
+				Agents = [.. agents]
+			};
+
+			hookDispatcher.ExecuteHooksFnF(payload, ChatHookEvents.ComposeTurnStop(reason), null);
+		}
+
+		/// <summary>
+		/// Announces that an agent runs again without a fresh selection.
+		/// </summary>
+		/// <param name="continuedEntry">The history entry being continued, when the caller has it.</param>
+		/// <param name="agentId">The agent that continues.</param>
+		/// <param name="stageId">The stage the agent runs in.</param>
+		/// <param name="cycle">The cycle about to run, or <see langword="null"/> when it cannot be counted.</param>
+		/// <param name="reason">Why the agent continues.</param>
+		/// <param name="token">The run's token.</param>
+		private void FireAgentContinueHook(BranchedMessage? continuedEntry, Guid agentId, Guid stageId,
+			int? cycle, AgentContinueReason reason, CancellationToken token)
+		{
+			var agent = agentManager.TryGetAgentDescriptor(agentId)?.Info.Name ?? string.Empty;
+			var pendingToolCalls = continuedEntry is not null && continuedEntry.Message.ToolCalls.Count != 0
+				? continuedEntry.Message.ToolCalls.Select(call => call.ToolName).ToArray()
+				: null;
+
+			var payload = new AgentContinueHookPayload
+			{
+				ChatId = chat.Id,
+				AgentId = agentId,
+				Agent = agent,
+				StageId = stageId,
+				Cycle = cycle,
+				Reason = KebabEnumNames<AgentContinueReason>.Serialize(reason) ?? string.Empty,
+				PendingToolCalls = reason is AgentContinueReason.PendingToolCalls ? pendingToolCalls : null,
+				LastMessageId = continuedEntry is { MessageId: >= 0 } ? continuedEntry.MessageId : null
+			};
+
+			hookDispatcher.ExecuteHooksFnF(payload, ChatHookEvents.TurnAgentContinue,
+				ChatHookEvents.ComposeAgentTarget(agentId, agent));
+		}
+
+		/// <summary>
+		/// Announces that an agent's turn ended, once, whatever the exit path was.
+		/// </summary>
+		/// <param name="agentId">The agent whose turn ended.</param>
+		/// <param name="agent">The name of that agent.</param>
+		/// <param name="stageId">The stage the agent ran in.</param>
+		/// <param name="lastMessage">The last message the agent produced, if any.</param>
+		/// <param name="producedMessages">How many messages the run produced.</param>
+		/// <param name="messageIds">The database ids the run left behind.</param>
+		/// <param name="cutByFollowUp">Whether a follow-up ended the agent early.</param>
+		/// <param name="token">The run's token.</param>
+		private void FireAgentStopHook(Guid agentId, string agent, Guid stageId, Domain.AssistantMessage? lastMessage,
+			int producedMessages, List<int> messageIds, bool cutByFollowUp, CancellationToken token)
+		{
+			var status = DescribeStopStatus(lastMessage?.Status ?? AssistantMessageStatus.Pending,
+				token.IsCancellationRequested);
+			var reason = cutByFollowUp ? AgentStopReason.Interrupted : AgentStopReason.Complete;
+
+			var payload = new AgentStopHookPayload
+			{
+				ChatId = chat.Id,
+				AgentId = agentId,
+				Agent = agent,
+				StageId = stageId,
+				Status = KebabEnumNames<MessageStopStatus>.Serialize(status) ?? string.Empty,
+				Reason = KebabEnumNames<AgentStopReason>.Serialize(reason) ?? string.Empty,
+				Cycles = producedMessages,
+				MessageIds = messageIds.Count == 0 ? null : [.. messageIds]
+			};
+
+			hookDispatcher.ExecuteHooksFnF(payload, ChatHookEvents.ComposeTurnAgentStop(status, reason),
+				ChatHookEvents.ComposeAgentTarget(agentId, agent));
 		}
 
 		private void RecordFailedUsage(string modelName, DateTime timeRequested, string errorMessage)
