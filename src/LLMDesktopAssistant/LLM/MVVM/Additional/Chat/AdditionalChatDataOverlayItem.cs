@@ -76,10 +76,19 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets or sets the width of the window, as a fraction of the messages area; null lets the content decide.
 		/// </summary>
+		/// <remarks>
+		/// One field for two owners: the script seeds it, and the end of a resize seals the size the user dragged as
+		/// explicit. The "fit the content" button clears it back to null, which is why null cannot mean "not decided
+		/// yet" - a window that was never sized simply hugs its content.
+		/// </remarks>
 		public double? Width
 		{
 			get;
-			set => SetProperty(ref field, value);
+			set
+			{
+				if (SetProperty(ref field, value))
+					RaiseSizeChanged();
+			}
 		}
 
 		/// <summary>
@@ -88,8 +97,17 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		public double? Height
 		{
 			get;
-			set => SetProperty(ref field, value);
+			set
+			{
+				if (SetProperty(ref field, value))
+					RaiseSizeChanged();
+			}
 		}
+
+		/// <summary>
+		/// Gets a value indicating whether the window has a size of its own instead of hugging its content.
+		/// </summary>
+		public bool HasExplicitSize => Width is not null || Height is not null;
 
 		/// <summary>
 		/// Gets or sets the stacking order the user gave the window by using it; higher is closer to the front.
@@ -172,6 +190,16 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 			RaisePropertyChanged(nameof(IsWindowShown));
 			RaisePropertyChanged(nameof(IsInTray));
 			RaisePropertyChanged(nameof(IsContentShown));
+			RaisePropertyChanged(nameof(EffectiveWidth));
+			RaisePropertyChanged(nameof(EffectiveHeight));
+		}
+
+		/// <summary>
+		/// A size change has to reach the panel: the layout reads the effective fractions, not the stored ones.
+		/// </summary>
+		private void RaiseSizeChanged()
+		{
+			RaisePropertyChanged(nameof(HasExplicitSize));
 			RaisePropertyChanged(nameof(EffectiveWidth));
 			RaisePropertyChanged(nameof(EffectiveHeight));
 		}

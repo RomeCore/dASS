@@ -46,6 +46,7 @@ new_temporary: Новый временный чат
 no_topic: без темы
 open_in_new_tab: Открыть в новой вкладке
 overlay.close: Закрыть и удалить
+overlay.fit: По размеру содержимого
 overlay.hide: Убрать в трей
 overlay.restore: Показать снова
 overlay.toggle: Свернуть или развернуть

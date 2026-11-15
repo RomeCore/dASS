@@ -46,6 +46,7 @@ new_temporary: New temporary chat
 no_topic: no topic
 open_in_new_tab: Open in new tab
 overlay.close: Close and remove
+overlay.fit: Fit the content
 overlay.hide: Hide to the tray
 overlay.restore: Show again
 overlay.toggle: Collapse or expand

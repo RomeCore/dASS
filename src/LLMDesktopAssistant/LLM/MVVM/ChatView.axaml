@@ -144,13 +144,6 @@
 
 				</Button>
 
-				<!--
-					Overlay windows: chat additional data that asked for a floating surface. Below the buttons that
-					float over the same area, so a window never covers the way back down.
-				-->
-				<ContentControl ZIndex="5"
-										Content="{Binding ChatOverlay}"/>
-
 				<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->
 				<ContentControl HorizontalAlignment="Right"
 												VerticalAlignment="Bottom"
@@ -169,6 +162,13 @@
 				<ContentControl Content="{Binding ChatBottomPanel}"/>
 			</Border>
 		</Grid>
+		
+		<!--
+			Overlay windows: chat additional data that asked for a floating surface.
+		-->
+		<ContentControl Grid.ColumnSpan="3"
+										ZIndex="5"
+										Content="{Binding ChatOverlay}"/>
 
 	</Grid>
 

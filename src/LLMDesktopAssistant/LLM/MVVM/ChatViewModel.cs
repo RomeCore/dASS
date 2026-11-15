@@ -1,6 +1,5 @@
 using LLMDesktopAssistant.Agents.Tasks.MVVM;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.MVVM.Additional.Chat;
 using LLMDesktopAssistant.LLM.MVVM.Messages;
 using Material.Icons;
 

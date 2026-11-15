@@ -3,11 +3,13 @@
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Additional.Chat"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional.Chat"
 						 xmlns:layout="using:LLMDesktopAssistant.Controls.Layout"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
-						 x:Class="LLMDesktopAssistant.LLM.MVVM.Additional.Chat.ChatOverlayHostView"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatOverlayHostView"
 						 x:DataType="local:ChatOverlayHostViewModel">
 
 	<UserControl.Styles>
@@ -43,6 +45,15 @@
 			<Setter Property="Opacity" Value="1"/>
 		</Style>
 
+		<!-- The resize grip is quiet like the header buttons: it shows itself only under the pointer. -->
+		<Style Selector="ico|VisualIcon.overlayGrip">
+			<Setter Property="Opacity" Value="0.4"/>
+		</Style>
+
+		<Style Selector="ico|VisualIcon.overlayGrip:pointerover">
+			<Setter Property="Opacity" Value="1"/>
+		</Style>
+
 	</UserControl.Styles>
 
 	<Panel>
@@ -59,7 +70,7 @@
 			</ItemsControl.ItemsPanel>
 
 			<ItemsControl.ItemTemplate>
-				<DataTemplate x:DataType="local:AdditionalChatDataOverlayItem">
+				<DataTemplate x:DataType="add:AdditionalChatDataOverlayItem">
 
 					<!--
 						The fractions and the stacking order live here, on the template root: the panel reads them off this
@@ -79,7 +90,7 @@
 											Classes="overlayHeader"
 											PointerPressed="OnHeaderPointerPressed">
 
-								<Grid ColumnDefinitions="*,Auto,Auto,Auto">
+								<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
 
 									<TextBlock Grid.Column="0"
 														 Text="{Binding Title}"
@@ -102,13 +113,22 @@
 
 									<Button Grid.Column="2"
 													Classes="MiniIconButton overlayButton"
+													IsVisible="{Binding HasExplicitSize}"
+													ToolTip.Tip="{loc:Loc chat.overlay.fit}"
+													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).ResetSizeCommand}"
+													CommandParameter="{Binding}">
+										<ico:VisualIcon Kind="Compress"/>
+									</Button>
+
+									<Button Grid.Column="3"
+													Classes="MiniIconButton overlayButton"
 													ToolTip.Tip="{loc:Loc chat.overlay.hide}"
 													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).HideCommand}"
 													CommandParameter="{Binding}">
 										<ico:VisualIcon Kind="TrayArrowDown"/>
 									</Button>
 
-									<Button Grid.Column="3"
+									<Button Grid.Column="4"
 													Classes="MiniIconButton overlayButton"
 													IsVisible="{Binding CanClose}"
 													ToolTip.Tip="{loc:Loc chat.overlay.close}"
@@ -122,10 +142,29 @@
 							</Border>
 
 							<!-- The body stays in the tree while collapsed: a terminal or a live control comes back as it was. -->
-							<ContentControl Grid.Row="1"
-															Content="{Binding Content}"
+							<scroll:SmoothScrollViewer Grid.Row="1"
+																				 VerticalScrollBarVisibility="Auto"
+																				 HorizontalScrollBarVisibility="Auto"
+																				 Padding="4,4"
+																				 Step="65"
+																				 IsVisible="{Binding IsContentShown}">
+								<ContentControl Content="{Binding Content}"/>
+							</scroll:SmoothScrollViewer>
+
+							<!-- The size the user drags here is sealed as explicit, as if the script had asked for it. -->
+							<ico:VisualIcon Grid.Row="1"
+															Classes="overlayGrip"
+															Kind="ResizeBottomRight"
+															Width="16"
+															Height="16"
+															Margin="0,0,2,2"
+															Cursor="BottomRightCorner"
+															HorizontalAlignment="Right"
+															VerticalAlignment="Bottom"
+															Background="Transparent"
 															IsVisible="{Binding IsContentShown}"
-															Margin="2"/>
+															ZIndex="1"
+															PointerPressed="OnResizeGripPointerPressed"/>
 
 						</Grid>
 
@@ -178,7 +217,7 @@
 
 						<ItemsControl ItemsSource="{Binding Tray}">
 							<ItemsControl.ItemTemplate>
-								<DataTemplate x:DataType="local:AdditionalChatDataOverlayItem">
+								<DataTemplate x:DataType="add:AdditionalChatDataOverlayItem">
 
 									<Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
 

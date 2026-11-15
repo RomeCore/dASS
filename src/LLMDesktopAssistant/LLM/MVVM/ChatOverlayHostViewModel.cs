@@ -1,10 +1,12 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.LLM.MVVM.Additional.Chat;
 using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Attachments;
 
-namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
+namespace LLMDesktopAssistant.LLM.MVVM
 {
 	/// <summary>
 	/// The layer of overlay windows over a chat's message sequence, plus the tray those windows are restored from.
@@ -75,6 +77,11 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		public ICommand CloseCommand { get; }
 
 		/// <summary>
+		/// Gets the command that takes away the explicit size of a window, so its content decides the size again.
+		/// </summary>
+		public ICommand ResetSizeCommand { get; }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="ChatOverlayHostViewModel"/> class.
 		/// </summary>
 		/// <param name="host">The chat the windows are attached to, and disposed by.</param>
@@ -93,6 +100,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 			HideCommand = new RelayCommand<AdditionalChatDataOverlayItem>(Hide);
 			RestoreCommand = new RelayCommand<AdditionalChatDataOverlayItem>(Restore);
 			CloseCommand = new RelayCommand<AdditionalChatDataOverlayItem>(Close);
+			ResetSizeCommand = new RelayCommand<AdditionalChatDataOverlayItem>(ResetSize);
 
 			_source.CollectionChanged += OnSourceChanged;
 
@@ -164,6 +172,18 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 
 			item.State = AdditionalChatDataOverlayState.Normal;
 			BringToFront(item);
+		}
+
+		/// <summary>
+		/// Drops the size the user dragged or the script asked for, so the window hugs its payload again.
+		/// </summary>
+		private static void ResetSize(AdditionalChatDataOverlayItem? item)
+		{
+			if (item is null)
+				return;
+
+			item.Width = null;
+			item.Height = null;
 		}
 
 		/// <summary>
