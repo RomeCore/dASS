@@ -7,6 +7,7 @@ using Avalonia.Platform.Storage;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.Controls.Text;
+using LLMDesktopAssistant.Hooks.Chat;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
@@ -501,22 +502,23 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		/// <param name="generate">Whether to start generation after sending.</param>
 		/// <param name="cts">The cancellation token to monitor for cancellation requests.</param>
-		public Task SendCurrentUserInputAsync(bool generate, CancellationToken cts = default)
+		public async Task SendCurrentUserInputAsync(bool generate, CancellationToken cts = default)
 		{
 			var editingMessage = EditingMessage;
 			var userInput = GetCurrentUserInput();
 
 			if (userInput is null)
-				return Task.CompletedTask;
+				return;
 
-			// Pre-flight: an unknown command or an invalid argument list refuses the send before the draft is cleared,
-			// so the user's text survives a refusal.
+			// Pre-flight: an unknown command, an invalid argument list or a submit hook refuses the send before the draft
+			// is cleared, so the user's text survives a refusal.
 			var insertion = Chat.Services.GetRequiredService<IChatMessageInsertionService>();
-			var check = insertion.CanInsertUserInput(userInput);
+			var kind = editingMessage != null ? UserSubmitKind.Edit : UserSubmitKind.Direct;
+			var check = await insertion.CanInsertUserInputAsync(userInput, kind, generate, cts);
 			if (!check.Success)
 			{
 				Chat.Services.GetRequiredService<IToastService>().ShowError(check.Error!.Value);
-				return Task.CompletedTask;
+				return;
 			}
 
 			if (editingMessage != null)
@@ -533,8 +535,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			var chatOperator = Chat.Services.GetRequiredService<IChatOperationService>();
 			if (editingMessage != null)
-				return chatOperator.SendEditedUserInputAsync(editingMessage.MessageIndex, userInput, generate, cts);
-			return chatOperator.SendUserInputAsync(userInput, generate, cts);
+			{
+				await chatOperator.SendEditedUserInputAsync(editingMessage.MessageIndex, userInput, generate, cts);
+				return;
+			}
+
+			await chatOperator.SendUserInputAsync(userInput, generate, cts);
 		}
 
 		/// <summary>
@@ -547,9 +553,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			if (userInput is null)
 				return;
 
-			// Same pre-flight as a send: a refused command keeps the text where the user can see it.
+			// Same pre-flight as a send: a refused command or hook keeps the text where the user can see it.
 			var insertion = Chat.Services.GetRequiredService<IChatMessageInsertionService>();
-			var check = insertion.CanInsertUserInput(userInput);
+			var check = await insertion.CanInsertUserInputAsync(userInput, UserSubmitKind.Queue, generate);
 			if (!check.Success)
 			{
 				Chat.Services.GetRequiredService<IToastService>().ShowError(check.Error!.Value);

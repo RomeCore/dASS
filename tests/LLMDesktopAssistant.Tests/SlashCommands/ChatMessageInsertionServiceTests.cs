@@ -1,3 +1,6 @@
+using System.Text.Json.Nodes;
+using LLMDesktopAssistant.Hooks;
+using LLMDesktopAssistant.Hooks.Chat;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
@@ -5,6 +8,7 @@ using LLMDesktopAssistant.SlashCommands;
 using LLMDesktopAssistant.SlashCommands.Arguments;
 using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.SlashCommands.Resolution;
+using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.Tests.Fakes;
 using LLMDesktopAssistant.Tests.Storage;
 
@@ -49,15 +53,18 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			public ChatStorageTestContext Storage { get; } = new();
 			public FakeChatSettingsService Settings { get; } = new();
 			public FakeResolver Resolver { get; } = new();
+			public FakeHookDispatcher Hooks { get; } = new();
 			public ChatMessageInsertionService Service { get; }
 
 			public Harness()
 			{
 				Service = new ChatMessageInsertionService(
+					Storage.Chat,
 					Storage.Service,
 					Settings,
 					new ChatCommandInvocationService(Storage.Chat, Resolver, new ChatExecutionTokenService()),
-					new FakeUserManagementService());
+					new FakeUserManagementService(),
+					Hooks);
 			}
 
 			public UserMessage LastMessage => (UserMessage)Storage.Chat.Messages[^1].Message;
@@ -70,7 +77,8 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				int? editIndex = null)
 			{
 				var insertion = await Service.AppendUserInputAsync(input, editIndex);
-				return await Service.RunInsertedCommandAsync(insertion, generateIntent);
+				Assert.NotNull(insertion);
+				return await Service.RunInsertedCommandAsync(insertion!, generateIntent);
 			}
 
 			public void Dispose() => Storage.Dispose();
@@ -92,11 +100,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		};
 
 		[Fact]
-		public void CanInsertUserInput_APlainMessage_IsAccepted_AndHasNoSideEffect()
+		public async Task CanInsertUserInputAsync_APlainMessage_IsAccepted_AndHasNoSideEffect()
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("hello there"));
+			var check = await harness.Service.CanInsertUserInputAsync(Input("hello there"), UserSubmitKind.Direct, generate: true);
 
 			Assert.True(check.Success);
 			Assert.Null(check.Error);
@@ -104,11 +112,11 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AnUnknownCommand_IsRefused()
+		public async Task CanInsertUserInputAsync_AnUnknownCommand_IsRefused()
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("/nope"));
+			var check = await harness.Service.CanInsertUserInputAsync(Input("/nope"), UserSubmitKind.Direct, generate: true);
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.unknown", check.Error!.Key);
@@ -117,7 +125,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 		}
 
 		[Fact]
-		public void CanInsertUserInput_ACommandWithBadArguments_IsRefused()
+		public async Task CanInsertUserInputAsync_ACommandWithBadArguments_IsRefused()
 		{
 			using var harness = new Harness();
 			var schema = new SlashCommandArgumentSchema
@@ -126,42 +134,42 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
 
-			var check = harness.Service.CanInsertUserInput(Input("/grilling"));
+			var check = await harness.Service.CanInsertUserInputAsync(Input("/grilling"), UserSubmitKind.Direct, generate: true);
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.missing_argument", check.Error!.Key);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AValidCommand_IsAccepted()
+		public async Task CanInsertUserInputAsync_AValidCommand_IsAccepted()
 		{
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it")).Success);
+			Assert.True((await harness.Service.CanInsertUserInputAsync(Input("/grilling do it"), UserSubmitKind.Direct, generate: true)).Success);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_APlainEdit_IsAccepted()
+		public async Task CanInsertUserInputAsync_APlainEdit_IsAccepted()
 		{
 			using var harness = new Harness();
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("hello there")).Success);
+			Assert.True((await harness.Service.CanInsertUserInputAsync(Input("hello there"), UserSubmitKind.Direct, generate: true)).Success);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AnEditWithAnUnknownCommand_IsRefused()
+		public async Task CanInsertUserInputAsync_AnEditWithAnUnknownCommand_IsRefused()
 		{
 			using var harness = new Harness();
 
-			var check = harness.Service.CanInsertUserInput(Input("/nope"));
+			var check = await harness.Service.CanInsertUserInputAsync(Input("/nope"), UserSubmitKind.Direct, generate: true);
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.unknown", check.Error!.Key);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AnEditWithBadArguments_IsRefused()
+		public async Task CanInsertUserInputAsync_AnEditWithBadArguments_IsRefused()
 		{
 			using var harness = new Harness();
 			var schema = new SlashCommandArgumentSchema
@@ -170,37 +178,37 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 			};
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = schema }));
 
-			var check = harness.Service.CanInsertUserInput(Input("/grilling"));
+			var check = await harness.Service.CanInsertUserInputAsync(Input("/grilling"), UserSubmitKind.Direct, generate: true);
 
 			Assert.False(check.Success);
 			Assert.Equal("command.error.missing_argument", check.Error!.Key);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AValidEditCommand_IsAccepted()
+		public async Task CanInsertUserInputAsync_AValidEditCommand_IsAccepted()
 		{
 			using var harness = new Harness();
 			harness.Resolver.Add(Command("grilling", new RecordingExecutor() { ArgumentSchema = RestSchema() }));
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/grilling do it")).Success);
+			Assert.True((await harness.Service.CanInsertUserInputAsync(Input("/grilling do it"), UserSubmitKind.Direct, generate: true)).Success);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_AnEdit_WhenCommandsAreDisabled_IsAccepted()
+		public async Task CanInsertUserInputAsync_AnEdit_WhenCommandsAreDisabled_IsAccepted()
 		{
 			using var harness = new Harness();
 			harness.Settings.Settings.Commands.AddonsCategoryEnabled = false;
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/nope")).Success);
+			Assert.True((await harness.Service.CanInsertUserInputAsync(Input("/nope"), UserSubmitKind.Direct, generate: true)).Success);
 		}
 
 		[Fact]
-		public void CanInsertUserInput_WhenCommandsAreDisabled_IsAccepted()
+		public async Task CanInsertUserInputAsync_WhenCommandsAreDisabled_IsAccepted()
 		{
 			using var harness = new Harness();
 			harness.Settings.Settings.Commands.AddonsCategoryEnabled = false;
 
-			Assert.True(harness.Service.CanInsertUserInput(Input("/nope")).Success);
+			Assert.True((await harness.Service.CanInsertUserInputAsync(Input("/nope"), UserSubmitKind.Direct, generate: true)).Success);
 		}
 
 		[Fact]
@@ -401,6 +409,82 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 
 			var fingerprint = harness.LastMessage.AdditionalData.TryGet<SlashCommandFingerprint>();
 			Assert.Equal(ModelFacingMode.Neutral, fingerprint!.ModelFacingMode);
+		}
+
+		/// <summary>
+		/// Builds the answer a dispatcher gives: a verdict document exactly as a hook would return it.
+		/// </summary>
+		private static HookExecutionResult Verdict(string json) =>
+			new(JsonNode.Parse(json).ToConstNodeValue(), null);
+
+		[Fact]
+		public async Task CanInsertUserInputAsync_AHookRefusal_RefusesTheSendWithTheReason()
+		{
+			using var harness = new Harness();
+			harness.Hooks.Result = Verdict("""{ "decision": "disallow", "reason": "not now" }""");
+
+			var check = await harness.Service.CanInsertUserInputAsync(Input("hello"), UserSubmitKind.Direct,
+				generate: true);
+
+			Assert.False(check.Success);
+			Assert.Equal("not now", check.Error!.Value);
+			Assert.Empty(harness.Storage.Chat.Messages);
+			Assert.Equal("message.user.submit.direct", harness.Hooks.Calls[0].HookType);
+			Assert.Equal("user", harness.Hooks.Calls[0].HookTarget);
+		}
+
+		[Fact]
+		public async Task CanInsertUserInputAsync_AHookRefusalWithoutAReason_UsesTheDefaultText()
+		{
+			using var harness = new Harness();
+			harness.Hooks.Result = Verdict("""{ "decision": "error" }""");
+
+			var check = await harness.Service.CanInsertUserInputAsync(Input("hello"), UserSubmitKind.Queue,
+				generate: false);
+
+			Assert.False(check.Success);
+			Assert.Equal("chat.hook.submit.error", check.Error!.Key);
+			Assert.Equal("message.user.submit.queue", harness.Hooks.Calls[0].HookType);
+		}
+
+		[Fact]
+		public async Task CanInsertUserInputAsync_AHookAllow_AcceptsTheSend()
+		{
+			using var harness = new Harness();
+			harness.Hooks.Result = Verdict("""{ "decision": "allow" }""");
+
+			var check = await harness.Service.CanInsertUserInputAsync(Input("hello"), UserSubmitKind.Edit,
+				generate: true);
+
+			Assert.True(check.Success);
+			Assert.Equal("message.user.submit.edit", harness.Hooks.Calls[0].HookType);
+		}
+
+		[Fact]
+		public async Task Insert_AHookRefusal_WritesNothing_AndSkipsTheCommand()
+		{
+			using var harness = new Harness();
+			var executor = new RecordingExecutor();
+			harness.Resolver.Add(Command("grilling", executor));
+			harness.Hooks.Result = Verdict("""{ "decision": "disallow", "reason": "no" }""");
+
+			var insertion = await harness.Service.AppendUserInputAsync(Input("/grilling"));
+
+			Assert.Null(insertion);
+			Assert.Empty(harness.Storage.Chat.Messages);
+			Assert.Equal(0, executor.Calls);
+			Assert.Equal("message.user.insert.pre", harness.Hooks.Calls[0].HookType);
+		}
+
+		[Fact]
+		public async Task Insert_APlainMessage_FiresTheInsertHooksAroundTheWrite()
+		{
+			using var harness = new Harness();
+
+			await harness.InsertAsync(Input("hello"), generateIntent: false);
+
+			var events = harness.Hooks.Calls.Select(call => call.HookType).ToArray();
+			Assert.Equal(["message.user.insert.pre", "message.user.insert.post"], events);
 		}
 	}
 

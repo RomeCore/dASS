@@ -22,6 +22,10 @@ follow_up.level.hint: When the queued message is injected
 follow_up.level.immediate: Right away
 follow_up.level.message: After the message
 follow_up.open: Open the queue
+hook.submit.disallowed: The message was blocked by a hook.
+hook.submit.error: A hook failed while checking the message, so it was not sent.
+hook.turn.disallowed: The answer was blocked by a hook.
+hook.turn.error: A hook failed while checking the answer, so it was not started.
 input.attach_file.hint: Attach file...
 input.cancel_edit.hint: Cancel editing
 input.hint: Enter your message...

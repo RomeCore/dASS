@@ -36,6 +36,11 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 
 			var inserted = await insertion.AppendUserInputAsync(userInput, editIndex: null, token);
+
+			// A refused write leaves nothing to run and nothing to answer: the turn does not start.
+			if (inserted is null)
+				return;
+
 			var result = await insertion.RunInsertedCommandAsync(inserted, generate, token);
 			await RunTurnAsync(flushFirst: true, generate: result.Generate, token);
 		}
@@ -54,6 +59,11 @@ namespace LLMDesktopAssistant.LLM.Services
 			using var scope = tokens.WithToken(ChatExecutionLevel.Operation, cancellationToken, out var token);
 
 			var inserted = await insertion.AppendUserInputAsync(userInput, messageIndex, token);
+
+			// A refused edit keeps the history as it was: the tail is not truncated and no turn starts.
+			if (inserted is null)
+				return;
+
 			var result = await insertion.RunInsertedCommandAsync(inserted, generate, token);
 			await RunTurnAsync(flushFirst: true, generate: result.Generate, token);
 		}
@@ -233,7 +243,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					token.ThrowIfCancellationRequested();
 				}
 
-				UserInputInsertion appended;
+				UserInputInsertion? appended;
 				try
 				{
 					appended = await insertion.AppendUserInputAsync(entry.UserInput, editIndex: null, token);
@@ -243,6 +253,14 @@ namespace LLMDesktopAssistant.LLM.Services
 					// Nothing reached the history: the entry stays pending.
 					followUps.Abandon(entry);
 					throw;
+				}
+
+				if (appended is null)
+				{
+					// A hook refused the write. Dropping the entry is the only way out: keeping it would fire the same
+					// refusal on every drain, forever.
+					followUps.Remove(entry);
+					continue;
 				}
 
 				followUps.Complete(entry);

@@ -22,6 +22,10 @@ follow_up.level.hint: Когда вставлять сообщение из оч
 follow_up.level.immediate: Сразу
 follow_up.level.message: После ответа
 follow_up.open: Открыть очередь
+hook.submit.disallowed: Сообщение заблокировано хуком.
+hook.submit.error: Хук сломался при проверке сообщения, поэтому оно не отправлено.
+hook.turn.disallowed: Ответ заблокирован хуком.
+hook.turn.error: Хук сломался при проверке ответа, поэтому он не начат.
 input.attach_file.hint: Прикрепить файл...
 input.cancel_edit.hint: Отменить редактирование
 input.hint: Введите сообщение...

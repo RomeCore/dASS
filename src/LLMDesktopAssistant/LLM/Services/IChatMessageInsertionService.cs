@@ -1,3 +1,4 @@
+using LLMDesktopAssistant.Hooks.Chat;
 using LLMDesktopAssistant.LLM.Domain;
 
 namespace LLMDesktopAssistant.LLM.Services
@@ -10,18 +11,24 @@ namespace LLMDesktopAssistant.LLM.Services
 	/// its message reaching the history and its command running, so the queue never shows an already-inserted message.
 	/// </para>
 	/// <remarks>
-	/// <see cref="CanInsertUserInput"/> is a pure pre-flight the view model calls <em>before</em> it commits the
-	/// draft or enqueues it, so a refused command never loses the user's text. The append re-resolves, so a caller
-	/// that skips the pre-flight (or a race with addon reloading) still gets a defined result: the message is
-	/// inserted with the error attached and the command is not run.
+	/// <see cref="CanInsertUserInputAsync"/> is a pre-flight the view model calls <em>before</em> it commits the draft
+	/// or enqueues it, so a refused send never loses the user's text. It resolves the command and fires the
+	/// <c>message.user.submit.*</c> hooks, so it is neither pure nor cheap; the append re-resolves, so a caller that
+	/// skips the pre-flight (or a race with addon reloading) still gets a defined result: the message is inserted with
+	/// the error attached and the command is not run.
 	/// </remarks>
 	public interface IChatMessageInsertionService
 	{
 		/// <summary>
-		/// Checks whether <paramref name="input"/> can be inserted. Pure and side-effect free.
+		/// Checks whether <paramref name="input"/> can be submitted: resolves its command and asks the
+		/// <c>message.user.submit.{kind}</c> hooks. A refusal is returned as a blocked result with the reason.
 		/// </summary>
 		/// <param name="input">The user input to check.</param>
-		UserInputInsertionCheckResult CanInsertUserInput(UserInputState input);
+		/// <param name="kind">The user action behind the send, which selects the event variant.</param>
+		/// <param name="generate">Whether the send asks for an answer.</param>
+		/// <param name="ct">The cancellation token (the caller's execution token).</param>
+		Task<UserInputInsertionCheckResult> CanInsertUserInputAsync(UserInputState input, UserSubmitKind kind,
+			bool generate, CancellationToken ct = default);
 
 		/// <summary>
 		/// Appends <paramref name="input"/> (or replaces the message at <paramref name="editIndex"/>) and resolves its
@@ -30,7 +37,11 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <param name="input">The user input to insert.</param>
 		/// <param name="editIndex">The edited message index, or <see langword="null"/> for a new message.</param>
 		/// <param name="ct">The cancellation token (the caller's execution token).</param>
-		Task<UserInputInsertion> AppendUserInputAsync(UserInputState input, int? editIndex = null,
+		/// <returns>
+		/// The inserted message, or <see langword="null"/> when a <c>message.user.insert.pre</c> hook refused the
+		/// write. A refused insertion leaves no trace: no history entry, no command to run, no turn.
+		/// </returns>
+		Task<UserInputInsertion?> AppendUserInputAsync(UserInputState input, int? editIndex = null,
 			CancellationToken ct = default);
 
 		/// <summary>
@@ -41,7 +52,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		/// <param name="insertion">The handle returned by <see cref="AppendUserInputAsync"/>.</param>
 		/// <param name="generateIntent">The caller's generate intent; a command may only lower it.</param>
 		/// <param name="ct">The cancellation token (the caller's execution token).</param>
-		Task<UserInputInsertionResult> RunInsertedCommandAsync(UserInputInsertion insertion, bool generateIntent,
-			CancellationToken ct = default);
+		Task<UserInputInsertionResult> RunInsertedCommandAsync(UserInputInsertion insertion,
+			bool generateIntent, CancellationToken ct = default);
 	}
 }
