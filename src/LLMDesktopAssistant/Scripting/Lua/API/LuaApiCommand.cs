@@ -26,7 +26,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EXAMPLES:
 
 			  local msg = dass.command.context.get_message()
-			  if msg then msg:append_part("done", "Check", "#88ff88") end
+			  if msg then msg:append_part{ title = "done", icon = "Check", color = "#88ff88"} end
 			""";
 
 		private readonly LuaDataAttachmentDispatcher _dispatcher;

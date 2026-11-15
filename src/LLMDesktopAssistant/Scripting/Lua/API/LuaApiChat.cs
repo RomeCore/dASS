@@ -39,8 +39,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.chat.current_message() -> chat_message or nil
 			  Returns the message the running flow belongs to: the assistant message currently
 			  being generated. Outside such a window (no generation in progress) it returns
-			  nil. The handle is the same one get_messages() returns for that message, so it
-			  stays live and writable.
+			  nil.
 
 			--- dass.chat.append_part(spec) -> chat_part
 			  Appends one part - a compact chip with an optional payload - to the CHAT object
