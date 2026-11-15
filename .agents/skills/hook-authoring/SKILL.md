@@ -1,13 +1,13 @@
 ---
 name: hook-authoring
-description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .bat / .cmd file in a hooks/ addon folder - keeping its frontmatter (hook-type, hook-target, execution-flow, timeout) true to the event it targets and the verdict its body returns true to what the pipeline does with it. Use when creating a hook, when editing or debugging one, when a hook never fires, when a guard silently allows what it should block or approves what the user denied, or when the user asks how a hook addon is shaped.
+description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .bat / .cmd file in a hooks/ addon folder - keeping its frontmatter (hook-type, hook-target, execution-flow, timeout) true to the tool or chat event it targets and the verdict its body returns true to what the pipeline does with it. Use when creating a hook, when editing or debugging one, when a hook never fires, when a guard silently allows what it should block or approves what the user denied, or when the user asks how a hook addon is shaped.
 ---
 
 # Hook authoring (dASS)
 
-A hook is a single file in a `hooks/` folder. Its frontmatter says **which point of the tool pipeline it runs at**; its body returns a **verdict** the pipeline obeys. The body is not callable, not a tool, not a command.
+A hook is a single file in a `hooks/` folder. Its frontmatter says **which pipeline and which point of it** the hook runs at; its body returns a **verdict** the pipeline obeys. The body is not callable, not a tool, not a command.
 
-There are three points: `tool.start`, `tool.confirm` and `tool.result`. Their event names spell the invocation source, and two of them also spell the outcome or the pending decision.
+Two pipelines are hooked today. The **tool pipeline** has three points - `tool.start`, `tool.confirm` and `tool.result` - whose event names spell the invocation source, two of which also spell the outcome or the pending decision. The **chat pipeline** has the user-message points (`message.user.submit.*`, `message.user.insert.*`), the assistant-message points (`message.assistant.start`, `message.assistant.stop.*`) and the turn points (`chat.turn.*`).
 
 Two failure modes dominate, and neither raises:
 
@@ -76,7 +76,7 @@ timeout: 2000
 | Key | Default | Meaning |
 |---|---|---|
 | `hook-type` | **required** | anchored, case-insensitive glob over the event name |
-| `hook-target` | all tools | anchored, case-insensitive glob over `{origin}.{name}` |
+| `hook-target` | all targets | anchored, case-insensitive glob over `{origin}.{name}` for a tool, `{sender id}.{sender name}` for a user message, `{agent id}.{agent name}` for an agent event; the turn-level points have no target |
 | `execution-flow` | caller's default (sequential at all three tool points) | `sequential`, `parallel`, `fire-and-forget` |
 | `timeout` | awaited: 2000, capped at 30000; fire-and-forget: none unless declared | milliseconds an awaited hook gets before it is cancelled |
 | `json-output` | - | **required on every out-of-process engine**, refused on Lua |
@@ -129,6 +129,30 @@ So `tool.start.chat-run` + `native.fs-edit` is an agent running a native tool, `
 | `ask` | no objection | ask the user (or the tool's own approval surface) |
 | `disallow` | refusal, status `Rejected` | final refusal, status `Rejected` |
 | `error` | refusal, status `Error` | final refusal, status `Error` |
+
+## Chat events
+
+The user-message points run in the chat pipeline, around the message the user sends on its way into the history.
+
+| Type | When it runs | Verdict |
+|---|---|---|
+| `message.user.submit.{direct,queue,edit}` | in the send pre-flight, before the draft is committed and before anything is written; may refuse the send | `decision`, `reason` - [types/message.user.submit.md](types/message.user.submit.md) |
+| `message.user.insert.{pre,post}` | around the write of the message; `pre` may refuse it, `post` has already happened | `pre`: `decision`, `reason`; `post`: none - [types/message.user.insert.md](types/message.user.insert.md) |
+| `message.assistant.start` | the pending assistant message exists, the request is not assembled yet; parallel (waited for, result dropped) | none - [types/message.assistant.start.md](types/message.assistant.start.md) |
+| `message.assistant.stop.{success,error,cancelled}` | the message reached a terminal status | none - [types/message.assistant.stop.md](types/message.assistant.stop.md) |
+| `chat.turn.begin` | the multi-agent turn is about to start, before any agent is selected; may refuse the whole turn | `decision`, `reason` - [types/chat.turn.begin.md](types/chat.turn.begin.md) |
+| `chat.turn.agent.begin` | the orderer has to pick the next agent; may pick another one or end the turn | `decision`, `agent`, `reason` - [types/chat.turn.agent.begin.md](types/chat.turn.agent.begin.md) |
+| `chat.turn.agent.continue` | an agent runs again without a fresh selection: a resume or a tool cycle | none - [types/chat.turn.agent.continue.md](types/chat.turn.agent.continue.md) |
+| `chat.turn.agent.stop.{status}.{reason}` | one agent's turn is over; the last variant is `complete` or `interrupted` | none - [types/chat.turn.agent.stop.md](types/chat.turn.agent.stop.md) |
+| `chat.turn.stop.{reason}` | the multi-agent turn is over, on every exit path; `complete`, `interrupted` or `cancelled` | none - [types/chat.turn.stop.md](types/chat.turn.stop.md) |
+
+The `submit` variant names the action the user took, not the path the message then took: a `direct` send joins the follow-up queue when one is already pending, and stays `direct`. `edit` is a commit of an edited message.
+
+The target of every `message.user.*` event is `{sender id}.{sender name}` - `admin.Admin`, or the bare login when the name does not resolve - so `admin.*`, `*.Admin` and `admin.Admin` all match.
+
+A UI send fires `submit` and then `insert.pre`, and both can refuse it. Which one a guard belongs on is a decision, not a style: only `submit` refuses before the draft is cleared.
+
+The target of an assistant event is `{agent id}.{agent name}`. While an assistant message is being generated, `dass.chat.current_message()` returns that message as a `chat_message` handle - the same one `get_messages()` would - so a hook can read and write it directly instead of through a verdict.
 
 ## One example
 
@@ -205,6 +229,15 @@ A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook 
 - At `tool.confirm`, `allow` skips the user. Turning a pending `ask` into an approval is the point; lifting a pending `disallow` needs `override`, and it defaults to `policy`, which cannot pierce a memorized "no" or a tool's `AlwaysDisallow`.
 - The confirm hook runs for every decision, including the ones already approved or refused. Target one case with the `{pending}` suffix instead of branching in the body.
 - The payload's `tool` is bare. A guard that keys off the origin must use the `hook-target` glob or the `hook_target` global.
+- A `message.user.*` hook fires **twice** for a UI send - at `submit` and again at `insert.pre`. Subscribe a guard to one point, not to the family.
+- A refusal at `message.user.insert.pre` cannot keep the user's text: the draft is already committed. Only `message.user.submit.*` refuses before that point.
+- The `submit` payload carries the text as typed. A guard that keys on `/tool:...` sees the token, and the slash command has not run yet - it may rewrite the message afterwards.
+- `message.user.insert.post` has no verdict. Its return value is dropped, and the hook's own writes may race with the next message.
+- `chat.turn.agent.begin` does **not** fire every cycle: a forced agent and an agent continuing its own tool batch skip it. The continuation is reported by `chat.turn.agent.continue` instead.
+- A refusal at `chat.turn.agent.begin` ends the turn, and at the first cycle the user sees the generic "agent selection failed" warning. Refuse the turn at `chat.turn.begin` when the reason has to reach the user.
+- An agent name that does not resolve at `chat.turn.agent.begin` is a warning and "no opinion", not a refusal: the stages choose as if the hook had said nothing.
+- One turn call, one `chat.turn.stop`. A follow-up barrier ends one turn and starts the next, so two answers in a row produce two stop events.
+- `chat.turn.agent.stop` fires per agent run, not per message: a run with three tool batches is one agent stop and four message stops.
 
 ## Neighbours
 
