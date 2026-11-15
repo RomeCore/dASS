@@ -51,7 +51,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 				return new HookExecutionResult(null, null);
 			}
 
-			return new HookExecutionResult(scriptResult.First.ToConstNodeValue(tolerant: true), null);
+			return scriptResult.ToHookResult(hookType, hookTarget);
 		}
 	}
 }
