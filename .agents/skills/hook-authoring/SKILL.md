@@ -7,7 +7,7 @@ description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .b
 
 A hook is a single file in a `hooks/` folder. Its frontmatter says **which pipeline and which point of it** the hook runs at; its body returns a **verdict** the pipeline obeys. The body is not callable, not a tool, not a command.
 
-Two pipelines are hooked today. The **tool pipeline** has three points - `tool.start`, `tool.confirm` and `tool.result` - whose event names spell the invocation source, two of which also spell the outcome or the pending decision. The **chat pipeline** has the user-message points (`message.user.submit.*`, `message.user.insert.*`), the assistant-message points (`message.assistant.start`, `message.assistant.stop.*`) and the turn points (`chat.turn.*`).
+Two pipelines are hooked today. The **tool pipeline** has three points - `tool.start`, `tool.confirm` and `tool.result` - whose event names spell the invocation source, two of which also spell the outcome or the pending decision. The **chat pipeline** has the user-message points (`message.user.submit.*`, `message.user.insert.*`), the assistant-message points (`message.assistant.start`, `message.assistant.stop.*`), the turn points (`chat.turn.*`) and the two session points (`session.start`, `session.end`).
 
 Two failure modes dominate, and neither raises:
 
@@ -77,7 +77,7 @@ timeout: 2000
 |---|---|---|
 | `hook-type` | **required** | anchored, case-insensitive glob over the event name |
 | `hook-target` | all targets | anchored, case-insensitive glob over `{origin}.{name}` for a tool, `{sender id}.{sender name}` for a user message, `{agent id}.{agent name}` for an agent event; the turn-level points have no target |
-| `execution-flow` | caller's default (sequential at all three tool points) | `sequential`, `parallel`, `fire-and-forget` |
+| `execution-flow` | caller's default: sequential at the tool points, fire-and-forget at the session points | `sequential`, `parallel`, `fire-and-forget` |
 | `timeout` | awaited: 2000, capped at 30000; fire-and-forget: none unless declared | milliseconds an awaited hook gets before it is cancelled |
 | `json-output` | - | **required on every out-of-process engine**, refused on Lua |
 | `json-input` | `auto` | `true` hands the payload over as JSON text, `auto` as the native structure |
@@ -145,6 +145,8 @@ The user-message points run in the chat pipeline, around the message the user se
 | `chat.turn.agent.continue` | an agent runs again without a fresh selection: a resume or a tool cycle | none - [types/chat.turn.agent.continue.md](types/chat.turn.agent.continue.md) |
 | `chat.turn.agent.stop.{status}.{reason}` | one agent's turn is over; the last variant is `complete` or `interrupted` | none - [types/chat.turn.agent.stop.md](types/chat.turn.agent.stop.md) |
 | `chat.turn.stop.{reason}` | the multi-agent turn is over, on every exit path; `complete`, `interrupted` or `cancelled` | none - [types/chat.turn.stop.md](types/chat.turn.stop.md) |
+| `session.start` | a chat has just been opened: every chat service is constructed and the history is loaded | none - [types/session.start.md](types/session.start.md) |
+| `session.end` | the chat is closing - another chat, a closed tab or the application - and its services are still alive for one call | none - [types/session.end.md](types/session.end.md) |
 
 The `submit` variant names the action the user took, not the path the message then took: a `direct` send joins the follow-up queue when one is already pending, and stays `direct`. `edit` is a commit of an edited message.
 
@@ -153,6 +155,8 @@ The target of every `message.user.*` event is `{sender id}.{sender name}` - `adm
 A UI send fires `submit` and then `insert.pre`, and both can refuse it. Which one a guard belongs on is a decision, not a style: only `submit` refuses before the draft is cleared.
 
 The target of an assistant event is `{agent id}.{agent name}`. While an assistant message is being generated, `dass.chat.current_message()` returns that message as a `chat_message` handle - the same one `get_messages()` would - so a hook can read and write it directly instead of through a verdict.
+
+The two session points have no target and no verdict, and both force fire-and-forget: `execution-flow` is ignored there and nothing waits for the hook. `session.start` is one opening of a chat, not one run of the application - reopening the same chat fires it again with a new `session_id` and the same `chat_id`.
 
 ## One example
 
@@ -238,6 +242,8 @@ A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook 
 - An agent name that does not resolve at `chat.turn.agent.begin` is a warning and "no opinion", not a refusal: the stages choose as if the hook had said nothing.
 - One turn call, one `chat.turn.stop`. A follow-up barrier ends one turn and starts the next, so two answers in a row produce two stop events.
 - `chat.turn.agent.stop` fires per agent run, not per message: a run with three tool batches is one agent stop and four message stops.
+- `session.end` runs on the closing path: the chat scope is disposed right after the handler returns, so a hook that still has to resolve a chat service, start a turn or await anything may find the chat gone. Write with what is already in hand (`store.session`, files) and return fast. A crash or a process kill runs nothing.
+- A session point is not "once per application run": every opening fires `session.start`, temporary chats included, and a hook registered at run time from a script is already there when it fires.
 
 ## Neighbours
 
