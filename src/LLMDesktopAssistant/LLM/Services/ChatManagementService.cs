@@ -6,6 +6,7 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services.Storage;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services;
+using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Startup;
 using Serilog;
 
@@ -43,7 +44,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				.OfType<AdditionalMessagePart>()];
 		}
 
-		private IServiceScope OpenChatScope(ChatDatabase database, int chatId)
+		private IServiceScope OpenChatScope(ChatDatabase database, int chatId, bool isTemporary)
 		{
 			var sw = new Stopwatch();
 
@@ -57,6 +58,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			chatConfig.ChatId = chatId;
 			chatConfig.CreatedAt = existingChat?.CreatedAt ?? DateTime.Now;
 			chatConfig.Database = database;
+			chatConfig.IsTemporary = isTemporary;
 
 			// Ensure at least one default agent exists for this chat
 			var chat = scope.ServiceProvider.GetRequiredService<Chat>();
@@ -93,12 +95,26 @@ namespace LLMDesktopAssistant.LLM.Services
 
 			Log.Debug("Chat services activated in {ElapsedMilliseconds} ms", sw.ElapsedMilliseconds);
 
+			// Opening handlers run last: every chat service is constructed and the history is loaded, so a hook sees
+			// the chat exactly as the first turn will. Nothing waits for them.
+			foreach (var opening in scope.ServiceProvider.GetServices<IChatOpeningHandler>())
+			{
+				try
+				{
+					opening.OnChatOpened();
+				}
+				catch (Exception ex)
+				{
+					Log.Warning(ex, "Failed to run a chat opening handler: {Error}", ex.Message);
+				}
+			}
+
 			return scope;
 		}
 
 		public IServiceScope OpenChatScope(int chatId)
 		{
-			return OpenChatScope(database, chatId);
+			return OpenChatScope(database, chatId, isTemporary: false);
 		}
 
 		public IServiceScope OpenMemoryChat(string title)
@@ -117,7 +133,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			};
 
 			memoryDatabase.Chats.Insert(model);
-			return OpenChatScope(memoryDatabase, memoryChatId);
+			return OpenChatScope(memoryDatabase, memoryChatId, isTemporary: true);
 		}
 
 		public void ClearEmptyChats()

@@ -61,6 +61,16 @@ namespace LLMDesktopAssistant.Hooks.Chat
 		public const string TurnStop = "chat.turn.stop";
 
 		/// <summary>
+		/// The event fired when a chat has just been opened: its services are constructed and its history is loaded.
+		/// </summary>
+		public const string SessionStart = "session.start";
+
+		/// <summary>
+		/// The event fired when a chat is closing, while its services are still alive.
+		/// </summary>
+		public const string SessionEnd = "session.end";
+
+		/// <summary>
 		/// Composes the event fired when the user starts a send.
 		/// </summary>
 		/// <param name="kind">The user action.</param>

@@ -15,6 +15,11 @@ namespace LLMDesktopAssistant.LLM.Services
 		DateTime CreatedAt { get; set; }
 
 		/// <summary>
+		/// Whether the chat lives only in memory for this run and is never persisted.
+		/// </summary>
+		bool IsTemporary { get; set; }
+
+		/// <summary>
 		/// The database where the chat instance will be stored.
 		/// </summary>
 		/// <remarks>

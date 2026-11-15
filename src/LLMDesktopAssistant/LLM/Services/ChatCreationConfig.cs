@@ -29,6 +29,8 @@ namespace LLMDesktopAssistant.LLM.Services
 			}
 		}
 
+		public bool IsTemporary { get; set; }
+
 		private ChatDatabase? _database = null;
 		public ChatDatabase Database
 		{
