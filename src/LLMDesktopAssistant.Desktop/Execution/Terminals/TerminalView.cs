@@ -1951,8 +1951,20 @@ namespace LLMDesktopAssistant.Desktop.Execution.Terminals
 		{
 			UpdateTextMetrics();
 
-			return availableSize;
+			var terminal = _terminal;
+			double naturalWidth = terminal == null ? 0 : terminal.Cols * _charWidth;
+			double naturalHeight = terminal == null ? 0 : terminal.Rows * _charHeight;
+
+			// The terminal fills its slot, but an unbounded one - a ScrollViewer measures content with infinity -
+			// must be answered with the grid it holds, or layout throws "Invalid size returned for Measure".
+			return new Size(Fill(availableSize.Width, naturalWidth), Fill(availableSize.Height, naturalHeight));
 		}
+
+		/// <summary>
+		/// The size a slot gets: the offered size when it is known, the natural size when the slot is unbounded.
+		/// </summary>
+		private static double Fill(double available, double natural)
+			=> double.IsFinite(available) ? Math.Max(0, available) : Math.Max(0, natural);
 
 		protected override Size ArrangeOverride(Size finalSize)
 		{
