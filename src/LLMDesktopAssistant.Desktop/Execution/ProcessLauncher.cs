@@ -252,28 +252,42 @@ namespace LLMDesktopAssistant.Desktop.Execution
 				}
 				async void OnPtyExited(object? sender, PtyExitedEventArgs e)
 				{
-					// ProcessExited fires BEFORE the last bytes are read, so the exit is reported once the reader
-					// has been quiet for a moment. A fixed sleep here used to cost every wait() half a second.
-					const int quietMs = 150;
-					const int ceilingMs = 2000;
-
-					var started = Environment.TickCount64;
-					while (Environment.TickCount64 - Volatile.Read(ref lastOutputTicks) < quietMs
-						&& Environment.TickCount64 - started < ceilingMs)
+					try
 					{
-						await Task.Delay(25);
-					}
+						// ProcessExited fires BEFORE the last bytes are read, so the exit is reported once the reader
+						// has been quiet for a moment. A fixed sleep here used to cost every wait() half a second.
+						const int quietMs = 150;
+						const int ceilingMs = 2000;
 
-					// A kill requested while the process was dying is a cancellation, not whatever exit code the
-					// dying process emitted - otherwise the same kill reports "cancelled" or "failed" by race.
-					if (cts.IsCancellationRequested)
+						var started = Environment.TickCount64;
+						while (Environment.TickCount64 - Volatile.Read(ref lastOutputTicks) < quietMs
+							&& Environment.TickCount64 - started < ceilingMs)
+						{
+							await Task.Delay(25);
+						}
+
+						// A kill requested while the process was dying is a cancellation, not whatever exit code the
+						// dying process emitted - otherwise the same kill reports "cancelled" or "failed" by race.
+						if (cts.IsCancellationRequested)
+						{
+							try
+							{
+								tcs.TrySetCanceled(cts.Token);
+							}
+							catch (ObjectDisposedException)
+							{
+								tcs.TrySetCanceled();
+							}
+							descriptor.Status = ProcessStatus.Cancelled;
+							return;
+						}
+
+						Complete(e.ExitCode);
+					}
+					catch (Exception ex)
 					{
-						tcs.TrySetCanceled(cts.Token);
-						descriptor.Status = ProcessStatus.Cancelled;
-						return;
+						Log.Error(ex, "Failed to handle pty exit: {Error}", DebugHelper.IsDebug ? ex.ToString() : ex.Message);
 					}
-
-					Complete(e.ExitCode);
 				}
 
 				// Writes a chunk into the emulation and keeps the viewport on the end - but only when it was
