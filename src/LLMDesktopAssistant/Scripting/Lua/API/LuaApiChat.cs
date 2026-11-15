@@ -46,17 +46,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  itself, not to a message.
 
 			  Parameters:
-				- spec: table - the part, every field optional:
-					title: string - the chip label
-					icon: string - an icon name from icon.list()
-					color: string - a hex accent color, e.g. "#ff88cc"
-					content: string - text this part also contributes to the MODEL-FACING
-					  content of the host (the chat, the message or the tool result)
-					attachment: handle - a native attachment (e.g. an image from
-					  image.load()/image.create())
-					visible: boolean - show the chip (default true)
-					temporary: boolean - do not persist the part (default false)
-					replacement_key: string - update the part already carrying this key
+			    - spec: table - the part, every field optional:
+			      title: string - the chip label
+			      icon: string - an icon name from icon.list()
+			      color: string - a hex accent color, e.g. "#ff88cc"
+			      content: string - text this part also contributes to the MODEL-FACING
+			        content of the host (the chat, the message or the tool result)
+			      attachment: handle - a native attachment (e.g. an image from
+			        image.load()/image.create())
+			      visible: boolean - show the chip (default true)
+			      temporary: boolean - do not persist the part (default false)
+			      replacement_key: string - update the part already carrying this key
 
 			  'content' and 'attachment' are mutually exclusive: a part is either text or an
 			  attachment. A part with neither is a plain chip. The table describes the part
@@ -75,25 +75,25 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Parameters:
 			    - handle: uicontrol or terminal - the attachable handle
 			    - options: table (optional) - where the payload is shown and how it behaves:
-					surface: string - "rail" puts the payload on the input rail, "overlay" opens
-					  it in a floating window over the messages
-					horizontal: string - "left" or "right" (rail only, default "left")
-					vertical: string - "top" or "bottom" (rail only, default "bottom")
-					title: string - the title of the window (overlay only)
-					closeable: boolean - the user may close the window, which REMOVES it from the
-					  chat and disposes the payload: a live terminal goes away with its process
-					  (overlay only, default false)
-					left, top: number - the place of the window, as fractions 0..1 of the messages
-					  area (overlay only, default: a cascade, so two windows never land on each other)
-					width, height: number - the size of the window, as fractions 0..1 of the messages
-					  area (overlay only, default: as large as the payload needs)
-					visible: boolean - show or hide the payload (default true)
-					temporary: boolean - do not persist the payload (default false)
-					replacement_key: string - replace the item already carrying this key;
-					  re-appending the same handle under the same key changes nothing
-				  Without a surface the payload is plain additional chat data and lands in the side
-				  panel. An unknown key, an unknown value, a key of another surface or a placement
-				  without its surface is an error, not a silent fallback.
+			      surface: string - "rail" puts the payload on the input rail, "overlay" opens
+			        it in a floating window over the messages
+			      horizontal: string - "left" or "right" (rail only, default "left")
+			      vertical: string - "top" or "bottom" (rail only, default "bottom")
+			      title: string - the title of the window (overlay only)
+			      closeable: boolean - the user may close the window, which REMOVES it from the
+			        chat and disposes the payload: a live terminal goes away with its process
+			        (overlay only, default false)
+			      left, top: number - the place of the window, as fractions 0..1 of the messages
+			        area (overlay only, default: a cascade, so two windows never land on each other)
+			      width, height: number - the size of the window, as fractions 0..1 of the messages
+			        area (overlay only, default: as large as the payload needs)
+			      visible: boolean - show or hide the payload (default true)
+			      temporary: boolean - do not persist the payload (default false)
+			      replacement_key: string - replace the item already carrying this key;
+			        re-appending the same handle under the same key changes nothing
+			      Without a surface the payload is plain additional chat data and lands in the side
+			      panel. An unknown key, an unknown value, a key of another surface or a placement
+			      without its surface is an error, not a silent fallback.
 
 			  A window belongs to the user: it can be collapsed in place or hidden into the chat's
 			  tray, and both survive the next append under the same replacement_key, together with the
@@ -140,13 +140,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - usage: chat_message_usage or nil - usage statistics (see below)
 
 			  Methods:
-				- msg:append_part(spec) -> chat_part - the same spec table as
-				  dass.chat.append_part(); 'content' here reaches the model-facing content of
-				  THIS message
+			    - msg:append_part(spec) -> chat_part - the same spec table as
+			      dass.chat.append_part(); 'content' here reaches the model-facing content of
+			      THIS message
 			    - msg:append_data(handle, [options]) - append ONE attachable handle: a 'uicontrol'
 			      created by dass.ui.create_control(), or a live 'terminal' from
 			      process.run_terminal(). Options are the same as for dass.chat.append_data(),
-				  except 'surface': surfaces exist on the chat only
+			      except 'surface': surfaces exist on the chat only
 			    - msg:remove_data(handle) -> boolean - remove everything appended with this handle
 
 			  Parts created from Lua are never restored into the input draft when the message is
@@ -155,10 +155,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			PART HANDLE ('chat_part'):
 
 			  Methods:
-				- part:remove() -> boolean - detach the part from its host, disposing it (a part
-				  can own a native attachment). true when the part was still there; false when it
-				  was replaced by 'replacement_key', removed earlier, or its host is gone.
-				  Never raises.
+			    - part:remove() -> boolean - detach the part from its host, disposing it (a part
+			      can own a native attachment). true when the part was still there; false when it
+			      was replaced by 'replacement_key', removed earlier, or its host is gone.
+			      Never raises.
 			
 			MESSAGE USAGE HANDLE ('chat_message_usage'):
 			
@@ -197,9 +197,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  -- A chip that is also a text contribution, replaced in place while a job runs.
 			  local chip = msg:append_part{ title = "Step 1/3", icon = "Download",
-				  content = "Reading files...", replacement_key = "job" }
+			      content = "Reading files...", replacement_key = "job" }
 			  msg:append_part{ title = "Step 2/3", icon = "Download", content = "Writing...",
-				  replacement_key = "job" } -- the same chip, updated
+			      replacement_key = "job" } -- the same chip, updated
 			  chip:remove() -- nothing to remove any more: it was replaced
 
 			  -- An image as a chip.
