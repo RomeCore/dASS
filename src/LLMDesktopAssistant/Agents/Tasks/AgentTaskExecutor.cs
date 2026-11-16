@@ -463,14 +463,14 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					{
 						task.UsageStatistics = new AgentUsageStatistics
 						{
-							InputTokens = prevStats.InputTokens,
-							OutputTokens = prevStats.OutputTokens,
-							CacheCreateTokens = prevStats.CacheCreateTokens,
-							InputCacheHitTokens = prevStats.InputCacheHitTokens,
-							InputCacheMissTokens = prevStats.InputCacheMissTokens,
-							TimeToFirstToken = prevStats.TimeToFirstToken,
-							InferenceTime = prevStats.InferenceTime,
-							ExecutionTime = prevStats.ExecutionTime
+							InputTokens = prevStats.InputTokens + inputTokens,
+							OutputTokens = prevStats.OutputTokens + outputTokens,
+							CacheCreateTokens = prevStats.CacheCreateTokens + cacheCreateTokens,
+							InputCacheHitTokens = prevStats.InputCacheHitTokens + cacheHitTokens,
+							InputCacheMissTokens = prevStats.InputCacheMissTokens + cacheMissTokens,
+							TimeToFirstToken = prevStats.TimeToFirstToken + ttft.Value,
+							InferenceTime = prevStats.InferenceTime + inferenceTime,
+							ExecutionTime = prevStats.ExecutionTime + messageExecutionTimer.Elapsed
 						};
 					}
 					else
