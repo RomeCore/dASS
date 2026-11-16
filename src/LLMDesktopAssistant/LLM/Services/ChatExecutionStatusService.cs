@@ -53,7 +53,7 @@ namespace LLMDesktopAssistant.LLM.Services
 					return cancellationToken.IsCancellationRequested
 						? Task.FromCanceled(cancellationToken)
 						: Task.CompletedTask;
-				return (_executionCompletionSource ?? new()).Task.WaitAsync(cancellationToken);
+				return (_executionCompletionSource ??= new()).Task.WaitAsync(cancellationToken);
 			}
 		}
 	}
