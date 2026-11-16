@@ -49,6 +49,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  level names (the message's tool batch by default). options are the same as for send();
 			  options.generate asks for an answer to this entry.
 
+			-- async dass.chat.send_or_queue(options) -> nil
+			  Runs send() if no turn is running, or queue() if one is. This is the most convenient
+			  method to send a message, as it does the right thing depending on the context.
+			  This is also allowed from inside a running turn.
+
 			--- async dass.chat.continue_generation() -> nil
 			  Continues the conversation without new input: generates a response, then drains the queue.
 
@@ -64,11 +69,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Drains the pending follow-ups without stopping anything: inserts them in order, runs
 			  their commands, and generates once when `generate` is true and some entry asked for an
 			  answer. Default generate: false.
-
+			
+			--- dass.chat.is_generating() -> boolean
+			  Checks if the chat is currently generating a response.
+			
 			--- async dass.chat.wait_for_idle([timeout_ms]) -> boolean
-			  Waits until the chat is idle (nothing is executing). Returns true when it became idle,
+			  Waits until the chat is idle (nothing is generating/executing). Returns true when it became idle,
 			  false when timeout_ms elapsed first; without a timeout it waits indefinitely.
-
+			
 			  A generating chat is never idle, and a turn cannot end while the tool that holds it is
 			  still running, so this is useless from inside a turn - the call throws there.
 
@@ -142,6 +150,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  -- Say something and wait for the answer
 			  await dass.chat.send({ content = "Summarize the last answer", sender = "Master" })
 
+			  -- Or push the message without awaiting, safely
+			  task.without_cancellation(function() send_or_queue { content = "Don't forget to run the tests!",
+			      sender = "Notifier" } end)
+
 			  -- A message with a chip that needs no answer
 			  dass.chat.send({ content = "Noted", generate = false,
 			    parts = { { title = "noted", icon = "Pencil", color = "#88ff88" } } })
@@ -162,14 +174,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private readonly Chat _chat;
 		private readonly IChatOperationService _operations;
 		private readonly IChatExecutionStatusService _status;
+		private readonly IChatExecutionTokenService _executionTokens;
 		private readonly IUserManagementService _users;
 
 		public LuaApiChatOperation(Chat chat, IChatOperationService operations,
-			IChatExecutionStatusService status, IUserManagementService users)
+			IChatExecutionStatusService status, IChatExecutionTokenService executionTokens,
+			IUserManagementService users)
 		{
 			_chat = chat;
 			_operations = operations;
 			_status = status;
+			_executionTokens = executionTokens;
 			_users = users;
 		}
 
@@ -177,10 +192,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			ns["send"] = new LuaCallbackFunction(SendAsync);
 			ns["queue"] = new LuaCallbackFunction(QueueAsync);
+			ns["send_or_queue"] = new LuaCallbackFunction(SendOrQueueAsync);
 			ns["continue_generation"] = new LuaCallbackFunction(ContinueGenerationAsync);
 			ns["stop"] = new LuaCallbackFunction(StopAsync);
 			ns["stop_and_flush"] = new LuaCallbackFunction(StopAndFlushAsync);
 			ns["flush"] = new LuaCallbackFunction(FlushAsync);
+			ns["is_generating"] = new LuaCallbackFunction(IsGenerating);
 			ns["wait_for_idle"] = new LuaCallbackFunction(WaitForIdleAsync);
 			ns["regenerate"] = new LuaCallbackFunction(RegenerateAsync);
 			ns["resend"] = new LuaCallbackFunction(ResendAsync);
@@ -200,7 +217,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var generate = GetBoolean(options, "generate") ?? true;
 
 			await RunAsync(() => _operations.SendUserInputAsync(input, generate, ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> QueueAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -212,7 +229,22 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var generate = GetBoolean(options, "generate") ?? true;
 
 			await RunAsync(() => _operations.QueueUserInputAsync(input, generate, ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private async Task<LuaTuple> SendOrQueueAsync(LuaCallingContext ctx, LuaValue[] args)
+		{
+			const string call = "dass.chat.send_or_queue(options)";
+
+			var options = Options(args, 0, call);
+			var input = ReadInput(options, call);
+			var generate = GetBoolean(options, "generate") ?? true;
+
+			if (_executionTokens.ExecutionCancellationToken is not null)
+				await RunAsync(() => _operations.QueueUserInputAsync(input, generate, ctx.CancellationToken), call);
+			else
+				await RunAsync(() => _operations.SendUserInputAsync(input, generate, ctx.CancellationToken), call);
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> ContinueGenerationAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -221,7 +253,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EnsureOutsideTurn(call);
 
 			await RunAsync(() => _operations.ContinueGenerationAsync(ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> StopAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -229,7 +261,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			const string call = "dass.chat.stop()";
 
 			await RunAsync(() => _operations.StopGenerationAsync(ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> StopAndFlushAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -238,7 +270,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EnsureOutsideTurn(call);
 
 			await RunAsync(() => _operations.StopAndFlushAsync(ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> FlushAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -249,7 +281,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var generate = args.Length > 0 && args[0] is LuaBoolean value && value.Value;
 
 			await RunAsync(() => _operations.FlushFollowUpsAsync(generate, ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
+		}
+
+		private LuaTuple IsGenerating(LuaCallingContext ctx, LuaValue[] args)
+		{
+			return new LuaTuple(LuaBoolean.FromBoolean(_executionTokens.ExecutionCancellationToken is not null));
 		}
 
 		private async Task<LuaTuple> WaitForIdleAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -295,7 +332,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			var messageIndex = ResolveMessageIndex(args, 0, call, required: false);
 			await RunAsync(() => _operations.RegenerateMessageAsync(messageIndex, ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> ResendAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -305,7 +342,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			var messageIndex = ResolveMessageIndex(args, 0, call, required: false);
 			await RunAsync(() => _operations.ResendMessageAsync(messageIndex, ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private async Task<LuaTuple> EditAsync(LuaCallingContext ctx, LuaValue[] args)
@@ -320,7 +357,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			await RunAsync(() => _operations.SendEditedUserInputAsync(messageIndex, input, generate,
 				ctx.CancellationToken), call);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private LuaTuple SwitchBranch(LuaCallingContext ctx, LuaValue[] args)
@@ -340,7 +377,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 
 			_operations.SwitchBranch(messageIndex, (int)branch.Value - 1);
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		private LuaTuple Delete(LuaCallingContext ctx, LuaValue[] args)
@@ -350,7 +387,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			ctx.CancellationToken.ThrowIfCancellationRequested();
 
 			_operations.DeleteMessageWithDescendants(ResolveMessageIndex(args, 0, call, required: false));
-			return Nil();
+			return new LuaTuple(LuaNil.Instance);
 		}
 
 		/// <summary>
@@ -521,7 +558,5 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		private static bool? GetBoolean(LuaTable table, string key)
 			=> table.Get(key) is LuaBoolean value ? value.Value : null;
-
-		private static LuaTuple Nil() => new(LuaNil.Instance);
 	}
 }
