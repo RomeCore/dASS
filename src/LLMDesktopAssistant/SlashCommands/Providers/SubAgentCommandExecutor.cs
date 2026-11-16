@@ -58,6 +58,8 @@ namespace LLMDesktopAssistant.SlashCommands.Providers
 			var sourceParameters = new AgentTaskLaunchParameters
 			{
 				TaskName = subAgent.Name,
+				Source = AgentTaskLaunchSource.Manual,
+				SourceId = "command",
 				TriggeredChat = ctx.Chat,
 				TriggeredMessage = ctx.Message,
 				InitialMessages = []

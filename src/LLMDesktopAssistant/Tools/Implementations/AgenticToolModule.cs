@@ -247,6 +247,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				var agentTask = _agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 				{
 					TaskName = callTitle,
+					Source = AgentTaskLaunchSource.Tool,
+					SourceId = "chat-agent-call",
 					TriggeredChat = ctx.Chat,
 					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					Model = llm,
@@ -319,6 +321,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				parameters = _subAgentParamsResolver.Resolve(new AgentTaskLaunchParameters
 				{
 					TaskName = subAgent.Name,
+					Source = AgentTaskLaunchSource.Tool,
+					SourceId = "chat-agent-callsub",
 					TriggeredChat = ctx.Chat,
 					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					InitialMessages = [],

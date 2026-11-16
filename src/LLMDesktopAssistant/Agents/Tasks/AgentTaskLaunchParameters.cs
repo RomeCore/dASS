@@ -16,6 +16,16 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public required string? TaskName { get; init; }
 
 		/// <summary>
+		/// The source of the task, indicating how it was initiated.
+		/// </summary>
+		public required AgentTaskLaunchSource Source { get; init; }
+
+		/// <summary>
+		/// The identifier of the source, which can be used to track or hook the task.
+		/// </summary>
+		public required string SourceId { get; init; }
+
+		/// <summary>
 		/// Whether the task is hidden from the message that triggered it and from the chat's task list.
 		/// </summary>
 		/// <remarks>

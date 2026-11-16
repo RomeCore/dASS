@@ -34,6 +34,8 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 				return new AgentTaskLaunchParameters
 				{
 					TaskName = descriptor.Name,
+					Source = AgentTaskLaunchSource.Tool,
+					SourceId = "agent-callsub",
 					TriggeredChat = sourceParameters.TriggeredChat,
 					TriggeredMessage = sourceParameters.TriggeredMessage,
 
@@ -128,6 +130,8 @@ namespace LLMDesktopAssistant.LLM.Services.Agents
 			return new AgentTaskLaunchParameters
 			{
 				TaskName = descriptor.Name,
+				Source = AgentTaskLaunchSource.Tool,
+				SourceId = "task-agent-callsub",
 				TriggeredChat = sourceParameters.TriggeredChat,
 				TriggeredMessage = sourceParameters.TriggeredMessage,
 

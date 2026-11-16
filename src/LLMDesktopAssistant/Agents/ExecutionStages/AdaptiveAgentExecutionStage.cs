@@ -110,6 +110,8 @@ namespace LLMDesktopAssistant.Agents.ExecutionStages
 			var task = await agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 			{
 				TaskName = LocalizationManager.LocalizeStatic("agent.selection.task"),
+				Source = AgentTaskLaunchSource.Internal,
+				SourceId = "chat-agent-selection",
 				InitialMessages = [..messages],
 				Model = llm,
 			}, cancellationToken);

@@ -96,6 +96,8 @@ namespace LLMDesktopAssistant.Agents.Memory
 			var task = agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 			{
 				TaskName = LocalizationManager.LocalizeStatic("memory.recording.task"),
+				Source = AgentTaskLaunchSource.Internal,
+				SourceId = "memory-recording",
 				TriggeredChat = chat,
 				Model = model,
 				InitialMessages = [.. messages],

@@ -76,6 +76,8 @@ namespace LLMDesktopAssistant.LLM.Services
 				var namingTask = agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 				{
 					TaskName = LocalizationManager.LocalizeStatic("chat.naming.task"),
+					Source = AgentTaskLaunchSource.Internal,
+					SourceId = "chat-naming",
 					TriggeredChat = chat,
 					Model = namingLLM,
 					InitialMessages = [

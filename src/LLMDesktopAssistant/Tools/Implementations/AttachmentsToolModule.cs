@@ -322,6 +322,8 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				var agentTask = _agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 				{
 					TaskName = callTitle,
+					Source = AgentTaskLaunchSource.Tool,
+					SourceId = "chat-attach-describe_image",
 					TriggeredChat = ctx.Chat,
 					TriggeredMessage = (ctx as ChatToolExecutionContext)?.Message,
 					Model = llm,

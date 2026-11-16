@@ -721,6 +721,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				var agentTask = _agentTaskExecutor.Execute(new AgentTaskLaunchParameters
 				{
 					TaskName = taskTitle,
+					Source = AgentTaskLaunchSource.Script,
+					SourceId = "lua-api",
 					Hidden = hidden,
 					TriggeredChat = tec?.Chat,
 					TriggeredMessage = chatContext?.Message,
