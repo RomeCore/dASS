@@ -43,6 +43,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - use_pure_client: boolean (default: false) - If true, use http client without additional headers
 			      - headers: table (optional) - Custom headers as key-value pairs
 			      - content: string or table (optional) - Request body, if table it's serialized to JSON
+			        (empty tables are serialized as objects by default, use table.empty_array() for arrays)
 			      - content_type: string (default: "application/json") - Content-Type header
 			      - timeout: number (optional) - Request timeout in seconds (default: $TIMEOUT$)
 			      - stream: table (optional) - Decode the response as it arrives, see STREAMING
@@ -192,7 +193,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  local chunks = {}
 			  local r = await web.request("POST", "https://api.example.com/v1/chat", {
 			    headers = { ["Authorization"] = "Bearer token", ["Accept"] = "text/event-stream" },
-			    content = { model = "m", stream = true },
+			    content = { model = "m", stream = true, messages = table.empty_array(), options = {} },
 			    timeout = 0,
 			    stream = {
 			      mode = "sse",

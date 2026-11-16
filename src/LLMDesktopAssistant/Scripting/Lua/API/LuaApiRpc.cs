@@ -122,8 +122,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Both proxies take a method name the same three ways, and both drop the proxy from the
 			  arguments before the handler sees them:
 
-			  local r = await h.invoke:mymethod({ a = 1 })     -- asks, then waits for the answer
-			  local r = await h.invoke("some.method", { })     -- the same, for names that are not identifiers
+			  local r = await h.invoke:mymethod({ a = 1 })                      -- asks, then waits for the answer
+			  local r = await h.invoke("some.method", { })                      -- the same, for names that are not identifiers
+			  local r = await h.invoke:another({ users = table.empty_array() }) -- pass the empty array instead of object
 
 			  await h.notify:mymethod({ a = 1 })               -- sends, then waits only for the write
 			  await h.notify("some.method", { })
@@ -163,9 +164,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				end
 				hangUp()
 
-			  Script loading is synchronous, so `await rpc.connect(...)` at file scope is impossible.
+			  Script loading is synchronous, so `await rpc.connect(...)` at file scope (script addon in scripts/lua/) is impossible.
 			  Connect inside a function that is invoked from a tool or a command, or make the first use
 			  connect lazily and cache the handle in store.session.
+
+			  Note that empty tables are serialized as OBJECTS, not arrays. If you want an array, use
+			  table.empty_array() instead of {}.
 			
 			EXAMPLES:
 			
