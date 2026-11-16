@@ -165,7 +165,7 @@ A persisted store keeps a Lua **function** as bytecode: it comes back callable, 
 - **Editing a script while another script is running.** A reload takes a non-blocking lock and is skipped if the state is busy - hit `/addon-reload` again rather than assuming the edit applied.
 - **Expensive load-time work.** Body code runs per chat and per reload, including `process.exec`/`web.request` if you put them there.
 - **`print` at load.** No output surface; `dass.log` is the only visible channel.
-- **Long-bracket levels do not exist.** `[==[ ... ]==]` fails to parse - only the plain `[[ ... ]]` form is accepted, so inline text that itself contains `]]` has to be concatenated instead.
+- **A plain `[[ ... ]]` cannot hold `]]`.** It ends the string there and the remainder fails to parse; add a level (`[==[ ... ]==]`) rather than concatenating pieces - levels parse and run.
 - **`return` on the same line as a call.** `print(x) return end` is a parse error in this parser; give `return` its own line, or separate the statements with `;`.
 - **Claiming it works because the file exists.** The load error only shows in the log and on the card's diagnostic chip.
 

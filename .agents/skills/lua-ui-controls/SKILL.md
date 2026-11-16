@@ -213,5 +213,5 @@ The same marker is what `store.chat` and `store.file` keep, so a function parked
 - **A member set from inside `__changed`** re-enters the handler - guard it with a flag.
 - **`await` with no safety timeout** waits forever if the user never acts.
 - **`print` output is discarded when the script errors**, so a failing UI script cannot be traced with `print` - write the trace to a file with `fs.write` and read it back.
-- **Leveled long strings (`[==[ ... ]==]`) are not supported** by the AsyncLua parser - it fails at the opening `[==[`. Embed the AXAML in a plain `[[ ... ]]` string and keep `]]` out of the markup (concatenate pieces if the markup contains one).
+- **A plain `[[ ... ]]` cannot hold `]]`** - it ends the string there and the rest fails to parse. Add a level instead of concatenating pieces: `[==[ ... ]==]` parses and runs, levels included.
 - **A list member that is actually a dictionary** renders an empty `ItemsControl` with no error - confirm the member is an array (it has elements under `#`).
