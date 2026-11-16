@@ -10,6 +10,10 @@ name.addon-list_available: List available addons
 name.addon-search: Search addons
 name.agent-call: Call agent
 name.agent-callsub: Call sub-agent
+name.agent-task_list: List agent tasks
+name.agent-task_wait: Wait for agent task
+name.agent-task_continue: Continue agent task
+name.agent-task_cancel: Cancel agent task
 name.attach-read_image: Read image
 name.attach-describe_image: Describe image
 name.clipboard-copy: Copy to clipboard
@@ -84,8 +88,12 @@ name.web-status: Check web status
 description.addon-info: Shows the detailed information about one available addon, looked up by its exact name: kind, description, tags, source pack, path and kind-specific details such as the tool argument schema, the sub-agent model override, the Lua namespace and manuals, or the slash-command token, argument shape, aliases and command file path.
 description.addon-list_available: Lists the names of all addons available to you (skills, sub-agents, tools, prompt contexts, Lua scripts and slash commands), grouped by kind and with no additional details.
 description.addon-search: Searches the available addons (skills, sub-agents, tools, prompt contexts, Lua scripts and slash commands) by a free-form query and returns the best matches with usage hints. Slash commands and prompt contexts are a read-only catalogue: the user types the former and the latter are injected automatically, an agent can only describe them.
-description.agent-call: Runs another AI agent with a custom instruction, user message and a set of allowed tools, skills, sub-agents and memory blocks.
-description.agent-callsub: Runs a predefined sub-agent using its name and input.
+description.agent-call: Runs another AI agent with a custom instruction, user message and a set of allowed tools, skills, sub-agents and memory blocks. Image files can be attached to the user message.
+description.agent-callsub: Runs a predefined sub-agent using its name and input. Image files can be attached to the input.
+description.agent-task_list: Lists the agent tasks this chat launched in the background with agent-call or agent-callsub: id, status, elapsed time and last message.
+description.agent-task_wait: Waits for an agent task to finish and returns its last message and images. When the timeout is reached it reports the current status, so the call can be repeated.
+description.agent-task_continue: Sends a follow-up message to a running or a completed agent task, with optional image files, and optionally waits for the result.
+description.agent-task_cancel: Cancels an agent task together with all of its sub-tasks.
 description.attach-read_image: Reads image from file and puts its directly to the vision model that called this tool.
 description.attach-describe_image: Describes the content of an image using a separate vision-capable AI agent.
 description.clipboard-copy: Copies a piece of text to the system clipboard.
