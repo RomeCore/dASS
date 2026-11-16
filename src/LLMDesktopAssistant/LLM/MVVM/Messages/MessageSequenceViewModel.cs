@@ -115,17 +115,17 @@ namespace LLMDesktopAssistant.LLM.MVVM.Messages
 			var message = branchedMessage.Message;
 
 			if (message is UserMessage)
-			{
-				return new UserMessageViewModel(branchedMessage, ChatViewModel);
-			}
+				return new UserMessageViewModel(branchedMessage, ChatViewModel)
+				{
+					IsOtherBeingEdited = UserInputViewModel.EditingMessage != null
+				};
 			else if (message is AssistantMessage)
-			{
-				return new AssistantMessageViewModel(branchedMessage, ChatViewModel);
-			}
+				return new AssistantMessageViewModel(branchedMessage, ChatViewModel)
+				{
+					IsOtherBeingEdited = UserInputViewModel.EditingMessage != null
+				};
 			else
-			{
 				throw new InvalidOperationException("Unsupported message type.");
-			}
 		}
 
 		private void OnMessageViewModelRemoved(MessageViewModelBase viewModel)
