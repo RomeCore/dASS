@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Text;
-using System.Text.Json.Nodes;
 using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Data;
@@ -14,18 +13,18 @@ using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Dispatch;
 using LLMDesktopAssistant.Tools.Execution.Sinks;
 using LLMDesktopAssistant.Tools.Execution.Support;
-using IToolDescriptor = LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor;
-using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
-using ToolInvocationSource = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationSource;
-using ToolPolicyMask = LLMDesktopAssistant.Tools.ToolPolicyMask;
-using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Completions;
 using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Metadata;
+using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
+using IToolDescriptor = LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor;
+using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
+using ToolInvocationSource = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationSource;
+using ToolPolicyMask = LLMDesktopAssistant.Tools.ToolPolicyMask;
 using ToolStatus = LLMDesktopAssistant.LLM.Domain.ToolStatus;
 
 namespace LLMDesktopAssistant.Agents.Tasks
@@ -90,6 +89,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			var task = new AgentTask
 			{
 				Id = Guid.NewGuid(),
+				Executor = this,
 				Parent = parentTask,
 				LaunchParameters = parameters,
 				Completion = completionSource.Task,
@@ -218,11 +218,67 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			task.Messages.AddRange(parameters.InitialMessages);
 			task.InitialMessageCount = task.Messages.Count;
 			var nativeMessages = new List<IMessage>();
-			foreach (var message in task.Messages)
-				nativeMessages.AddRange(ConvertMessageFromAgent(message, ref additionalPrompt));
-			if (additionalPrompt != null)
-				nativeMessages.Insert(0, new SystemMessage(additionalPrompt));
 
+			int startIndex = 0;
+			if (task.Messages[0] is AgentSystemMessage systemMessage)
+			{
+				if (!string.IsNullOrEmpty(additionalPrompt))
+				{
+					if (string.IsNullOrEmpty(systemMessage.Content))
+						nativeMessages.Add(new SystemMessage(additionalPrompt));
+					else
+						nativeMessages.Add(new SystemMessage($"""
+							{systemMessage.Content}
+
+							{additionalPrompt}
+							"""));
+				}
+				else
+				{
+					nativeMessages.Add(new SystemMessage(systemMessage.Content ?? string.Empty));
+				}
+				startIndex = 1;
+			}
+			for (int i = startIndex; i < task.Messages.Count; i++)
+				nativeMessages.AddRange(ConvertMessageFromAgent(task.Messages[i]));
+
+			var executionInfo = new AgentTaskExecutionInfo
+			{
+				Model = model,
+				Tools = tools,
+				NativeMessages = nativeMessages
+			};
+			task.ExecutionInfo = executionInfo;
+
+			Launch(task, completionSource, executionInfo);
+
+			return task;
+		}
+
+		public void Continue(AgentTask task, IEnumerable<AgentChatMessage> messages, CancellationToken cancellationToken = default)
+		{
+			if (!task.Completed)
+				throw new InvalidOperationException("Cannot continue a task that has not completed. " +
+					"Use AgentTask.FollowUpMessages to add messages during working task.");
+
+			if (task.ExecutionInfo is not { } executionInfo)
+				throw new InvalidOperationException("Cannot continue a task that is likely was not executed using this executor.");
+
+			foreach (var message in messages)
+				task.FollowUpMessages.Enqueue(message);
+
+			var completionSource = new TaskCompletionSource<AgentTask>();
+			var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			task.Completed = false;
+			task.Completion = completionSource.Task;
+			task.CancellationTokenSource = cts;
+			task.Exception = null;
+
+			Launch(task, completionSource, executionInfo);
+		}
+
+		void Launch(AgentTask task, TaskCompletionSource<AgentTask> completionSource, AgentTaskExecutionInfo executionInfo)
+		{
 			Task.Run(async () =>
 			{
 				task.Status = AgentTaskStatus.Executing;
@@ -234,19 +290,19 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 				try
 				{
-					await ExecuteAsync(task, model, tools, nativeMessages);
+					await ExecuteAsync(task, executionInfo);
 					task.Status = AgentTaskStatus.Success;
 					completionSource.SetResult(task);
 				}
 				catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
 				{
 					task.Status = AgentTaskStatus.Cancelled;
-					completionSource.SetCanceled(cancellationToken);
+					completionSource.SetCanceled();
 				}
 				catch (OperationCanceledException)
 				{
 					task.Status = AgentTaskStatus.Cancelled;
-					completionSource.SetCanceled(cancellationToken);
+					completionSource.SetCanceled();
 				}
 				catch (Exception ex)
 				{
@@ -260,22 +316,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					_dispatcher.OnEndTask(task);
 				}
 			}, CancellationToken.None);
-
-			return task;
 		}
 
-		private async Task ExecuteAsync(AgentTask task, LLModel model,
-			ImmutableDictionary<string, IToolDescriptor> tools, List<IMessage> nativeMessages)
+		private async Task ExecuteAsync(AgentTask task, AgentTaskExecutionInfo info)
 		{
-			var cancellationToken = task.CancellationTokenSource.Token;
 			var semaphore = new SemaphoreSlim(task.LaunchParameters.MaxParallelToolCalls, task.LaunchParameters.MaxParallelToolCalls);
-
-			var executionTimer = new Stopwatch();
-			executionTimer.Start();
-
-			int totalInputTokens = 0, totalOutputTokens = 0;
-			int totalCacheCreateTokens = 0, totalCacheHitTokens = 0, totalCacheMissTokens = 0;
-			TimeSpan totalTtft = TimeSpan.Zero, totalInferenceTime = TimeSpan.Zero;
 
 			while (true)
 			{
@@ -285,14 +330,23 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 				try
 				{
+					var cancellationToken = task.CancellationTokenSource.Token;
 					cancellationToken.ThrowIfCancellationRequested();
+
+					while (task.FollowUpMessages.TryDequeue(out var followUpMessage))
+					{
+						var nativeFollowUp = ConvertMessageFromAgent(followUpMessage);
+						info.NativeMessages.AddRange(nativeFollowUp);
+						task.Messages.Add(followUpMessage);
+					}
 
 					TimeSpan? ttft = null;
 					TimeSpan inferenceTime = TimeSpan.Zero;
 
-					var response = await model.ChatStreamingAsync(nativeMessages, cancellationToken: cancellationToken);
+					var response = await info.Model.ChatStreamingAsync(info.NativeMessages,
+						cancellationToken: cancellationToken);
 					IAssistantMessage responseMessage = response.Message;
-					nativeMessages.Add(responseMessage);
+					info.NativeMessages.Add(responseMessage);
 
 					var agentMessage = new AgentAssistantMessage
 					{
@@ -311,7 +365,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						await semaphore.WaitAsync(cancellationToken);
 						try
 						{
-							return await ExecuteToolAsync(toolCall, agentMessage, task, tools, cancellationToken);
+							return await ExecuteToolAsync(toolCall, agentMessage, task, info.Tools, cancellationToken);
 						}
 						finally
 						{
@@ -369,8 +423,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					ttft ??= TimeSpan.Zero;
 					inferenceTime = inferenceTimer.Elapsed;
 					inferenceTimer.Restart();
-					totalTtft += ttft.Value;
-					totalInferenceTime += inferenceTime;
 
 					int inputTokens = 0, outputTokens = 0;
 					int cacheCreateTokens = 0, cacheHitTokens = 0, cacheMissTokens = 0;
@@ -395,12 +447,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						if (outputTokens < 0) outputTokens = 0;
 					}
 
-					totalInputTokens += inputTokens;
-					totalOutputTokens += outputTokens;
-					totalCacheCreateTokens += cacheCreateTokens;
-					totalCacheHitTokens += cacheHitTokens;
-					totalCacheMissTokens += cacheMissTokens;
-
 					agentMessage.UsageStatistics = new AgentUsageStatistics
 					{
 						InputTokens = inputTokens,
@@ -413,31 +459,38 @@ namespace LLMDesktopAssistant.Agents.Tasks
 						ExecutionTime = messageExecutionTimer.Elapsed
 					};
 
-					task.UsageStatistics = new AgentUsageStatistics
+					if (task.UsageStatistics is { } prevStats)
 					{
-						InputTokens = totalInputTokens,
-						OutputTokens = totalOutputTokens,
-						CacheCreateTokens = totalCacheCreateTokens,
-						InputCacheHitTokens = totalCacheHitTokens,
-						InputCacheMissTokens = totalCacheMissTokens,
-						TimeToFirstToken = totalTtft,
-						InferenceTime = totalInferenceTime,
-						ExecutionTime = executionTimer.Elapsed
-					};
+						task.UsageStatistics = new AgentUsageStatistics
+						{
+							InputTokens = prevStats.InputTokens,
+							OutputTokens = prevStats.OutputTokens,
+							CacheCreateTokens = prevStats.CacheCreateTokens,
+							InputCacheHitTokens = prevStats.InputCacheHitTokens,
+							InputCacheMissTokens = prevStats.InputCacheMissTokens,
+							TimeToFirstToken = prevStats.TimeToFirstToken,
+							InferenceTime = prevStats.InferenceTime,
+							ExecutionTime = prevStats.ExecutionTime
+						};
+					}
+					else
+					{
+						task.UsageStatistics = agentMessage.UsageStatistics;
+					}
 
-					_usageStatsCollector.RecordUsage(model.Descriptor.FullName,
+					_usageStatsCollector.RecordUsage(info.Model.Descriptor.FullName,
 						inputTokens, outputTokens,
 						cacheHitTokens, cacheMissTokens,
 						messageExecutionTimer.ElapsedMilliseconds,
 						success: true);
 
-					nativeMessages.AddRange(await Task.WhenAll(toolCallTasks));
+					info.NativeMessages.AddRange(await Task.WhenAll(toolCallTasks));
 
 					if (task.LaunchParameters.Behaviour
 						is AgentTaskExecutionBehaviour.ExecuteOnce or AgentTaskExecutionBehaviour.OnlyResponse)
 						break;
 
-					if (agentMessage.ToolCalls.Count == 0)
+					if (agentMessage.ToolCalls.Count == 0 && task.FollowUpMessages.IsEmpty)
 					{
 						if (task.LaunchParameters.FeedbackFunc is not null)
 						{
@@ -445,7 +498,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 							if (feedbackMessage != null)
 							{
 								task.Messages.Add(feedbackMessage);
-								nativeMessages.Add(new UserMessage(Senders.User, feedbackMessage.Content ?? string.Empty,
+								info.NativeMessages.Add(new UserMessage(Senders.User, feedbackMessage.Content ?? string.Empty,
 									ConvertAttachments(feedbackMessage.Attachments)));
 								task.FeedbackIterations++;
 								continue;
@@ -457,7 +510,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				}
 				catch (Exception ex)
 				{
-					_usageStatsCollector.RecordUsage(model.Descriptor.FullName,
+					_usageStatsCollector.RecordUsage(info.Model.Descriptor.FullName,
 						0, 0,
 						0, 0,
 						messageExecutionTimer.ElapsedMilliseconds,
@@ -471,8 +524,6 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					inferenceTimer.Stop();
 				}
 			}
-
-			executionTimer.Stop();
 		}
 
 		private async Task<IToolMessage> ExecuteToolAsync(IToolCall toolCall, AgentAssistantMessage message,
@@ -545,29 +596,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				ConvertAttachments(agentToolCall.Result.Attachments)), toolCall.Id, toolCall.ToolName);
 		}
 
-		private static IEnumerable<IMessage> ConvertMessageFromAgent(AgentChatMessage agentMessage, ref string? additionalSysPrompt)
+		private static IEnumerable<IMessage> ConvertMessageFromAgent(AgentChatMessage agentMessage)
 		{
 			switch (agentMessage)
 			{
 				case AgentSystemMessage systemMessage:
-					if (additionalSysPrompt != null)
-					{
-						var addPrompt = additionalSysPrompt;
-						additionalSysPrompt = null;
-						if (string.IsNullOrEmpty(systemMessage.Content))
-						{
-							return [new SystemMessage(addPrompt)];
-						}
-						else
-						{
-							return [new SystemMessage($"""
-								{systemMessage.Content}
-
-								{addPrompt}
-								""")];
-						}
-					}
-
 					return [new SystemMessage(systemMessage.Content ?? string.Empty)];
 
 				case AgentUserMessage userMessage:

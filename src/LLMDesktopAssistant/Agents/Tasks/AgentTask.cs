@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using LLMDesktopAssistant.Utils;
 
@@ -14,6 +15,11 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		public required Guid Id { get; init; }
 
 		/// <summary>
+		/// The executor responsible for running this agentic task.
+		/// </summary>
+		public required IAgentTaskExecutor Executor { get; init; }
+
+		/// <summary>
 		/// The parent of this agentic task, if any.
 		/// </summary>
 		public required AgentTask? Parent { get; init; }
@@ -26,77 +32,86 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <summary>
 		/// The completion token used to await the completion of this agentic task.
 		/// </summary>
-		public required Task<AgentTask> Completion { get; init; }
+		public required Task<AgentTask> Completion
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
 		public TaskAwaiter<AgentTask> GetAwaiter() => Completion.GetAwaiter();
 
 		/// <summary>
 		/// The cancellation token source used to cancel this agentic task.
 		/// </summary>
-		public required CancellationTokenSource CancellationTokenSource { get; init; }
+		public required CancellationTokenSource CancellationTokenSource
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
 
-		private readonly RangeObservableCollection<AgentTask> _subTasks = [];
+		internal AgentTaskExecutionInfo? ExecutionInfo { get; set; }
+
+		/// <summary>
+		/// The queue of follow-up messages for this agentic task.
+		/// If any message is put to this queue (ONLY while running a task), it will be dequeued
+		/// right after the next message or tool batch is completed.
+		/// </summary>
+		public ConcurrentQueue<AgentChatMessage> FollowUpMessages { get; } = [];
+
 		/// <summary>
 		/// A collection of sub-tasks associated with this agentic task.
 		/// </summary>
-		public RangeObservableCollection<AgentTask> SubTasks => _subTasks;
+		public RangeObservableCollection<AgentTask> SubTasks { get; } = [];
 
-		private readonly RangeObservableCollection<AgentChatMessage> _messages = [];
 		/// <summary>
 		/// A collection of chat messages associated with this agentic task.
 		/// </summary>
-		public RangeObservableCollection<AgentChatMessage> Messages => _messages;
+		public RangeObservableCollection<AgentChatMessage> Messages { get; } = [];
 
-		private int _initialMessageCount;
 		/// <summary>
 		/// How many leading <see cref="Messages"/> were supplied as the task's initial context.
 		/// </summary>
 		public int InitialMessageCount
 		{
-			get => _initialMessageCount;
-			internal set => SetProperty(ref _initialMessageCount, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private AgentAssistantMessage? _lastGeneratedMessage;
 		/// <summary>
 		/// The last generated message by the agent associated with this task.
 		/// </summary>
 		public AgentAssistantMessage? LastGeneratedMessage
 		{
-			get => _lastGeneratedMessage;
-			internal set => SetProperty(ref _lastGeneratedMessage, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private string? _lastGeneratedContent;
 		/// <summary>
 		/// The last generated message's content by the agent associated with this task.
 		/// </summary>
 		public string? LastGeneratedContent
 		{
-			get => _lastGeneratedContent;
-			internal set => SetProperty(ref _lastGeneratedContent, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private AgentTaskStatus _status = AgentTaskStatus.Pending;
 		/// <summary>
 		/// The current status of this agentic task.
 		/// </summary>
 		public AgentTaskStatus Status
 		{
-			get => _status;
-			internal set => SetProperty(ref _status, value);
-		}
+			get;
+			internal set => SetProperty(ref field, value);
+		} = AgentTaskStatus.Pending;
 
-		private bool _completed;
 		/// <summary>
 		/// Indicates whether this agentic task has completed.
 		/// </summary>
 		public bool Completed
 		{
-			get => _completed;
-			internal set => SetProperty(ref _completed, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private int _feedbackIterations;
 		/// <summary>
 		/// The number of feedback rounds completed by this task, i.e. how many times the task
 		/// continued execution after the model produced a response without tool calls
@@ -105,35 +120,48 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// </summary>
 		public int FeedbackIterations
 		{
-			get => _feedbackIterations;
-			internal set => SetProperty(ref _feedbackIterations, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private Exception? _exception;
 		/// <summary>
 		/// The exception that occurred during the execution of this agentic task.
 		/// </summary>
 		public Exception? Exception
 		{
-			get => _exception;
-			internal set => SetProperty(ref _exception, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private AgentUsageStatistics? _usageStatistics;
 		/// <summary>
 		/// The usage statistics for this agentic task.
 		/// This is summary for all processed message's usage.
 		/// </summary>
 		public AgentUsageStatistics? UsageStatistics
 		{
-			get => _usageStatistics;
-			set => SetProperty(ref _usageStatistics, value);
+			get;
+			internal set => SetProperty(ref field, value);
 		}
 
-		private readonly RangeObservableCollection<AgentToolCallConfirmationRequest> _toolCallConfirmationRequests = [];
 		/// <summary>
 		/// A collection of tool calls that require user confirmation before execution.
 		/// </summary>
-		public RangeObservableCollection<AgentToolCallConfirmationRequest> ToolCallConfirmationRequests => _toolCallConfirmationRequests;
+		public RangeObservableCollection<AgentToolCallConfirmationRequest> ToolCallConfirmationRequests { get; } = [];
+
+		/// <summary>
+		/// Continues the execution of this agentic task with the specified messages.
+		/// </summary>
+		/// <param name="messages">The messages to continue the execution with.</param>
+		public void Continue(IEnumerable<AgentChatMessage> messages, CancellationToken cancellationToken = default)
+		{
+			foreach (var message in messages)
+				FollowUpMessages.Enqueue(message);
+
+			if (Completed)
+				Executor.Continue(this, [], cancellationToken);
+			else if (cancellationToken.CanBeCanceled && !cancellationToken.IsCancellationRequested)
+				CancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
+					CancellationTokenSource.Token, cancellationToken);
+		}
 	}
 }
