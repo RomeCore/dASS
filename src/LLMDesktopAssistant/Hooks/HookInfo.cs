@@ -80,6 +80,22 @@ namespace LLMDesktopAssistant.Hooks
 				errors.Add("The timeout must be a positive number of milliseconds.");
 			if (Executor is null)
 				errors.Add("Executor is required.");
+			try
+			{
+				_ = HookTypePattern;
+			}
+			catch (Exception ex)
+			{
+				errors.Add($"HookType is invalid: {ex.Message}");
+			}
+			try
+			{
+				_ = HookTargetPattern;
+			}
+			catch (Exception ex)
+			{
+				errors.Add($"HookTarget is invalid: {ex.Message}");
+			}
 		}
 	}
 }
