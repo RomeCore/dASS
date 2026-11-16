@@ -93,6 +93,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    tool or memory block that appeared or disappeared is visible without a new chat.
 			  - This does not touch the state of the calling script: only the addon managers recollect their
 			    addons.
+			  - Use reloading only if your script uses just created addons (e.g. call a 'my-tool' tool after just created
+			    'my-tool.lua' file), if not, dass.addon.reload is REDUNDANT, because addons are ALWAYS reloaded after
+			    script execution (lua-execute, shell-* tools and scripted tools), so no reload is needed.
 
 			EXAMPLES:
 
