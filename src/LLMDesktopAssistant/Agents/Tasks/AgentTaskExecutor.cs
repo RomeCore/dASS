@@ -249,6 +249,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				NativeMessages = nativeMessages
 			};
 			task.ExecutionInfo = executionInfo;
+			task.StartedAt = DateTime.Now;
 
 			Launch(task, completionSource, executionInfo);
 
@@ -273,12 +274,15 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			task.Completion = completionSource.Task;
 			task.CancellationTokenSource = cts;
 			task.Exception = null;
+			task.ContinuedAt = DateTime.Now;
 
 			Launch(task, completionSource, executionInfo);
 		}
 
 		void Launch(AgentTask task, TaskCompletionSource<AgentTask> completionSource, AgentTaskExecutionInfo executionInfo)
 		{
+			task.CompletedAt = null;
+
 			Task.Run(async () =>
 			{
 				task.Status = AgentTaskStatus.Executing;
@@ -313,6 +317,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				finally
 				{
 					task.Completed = true;
+					task.CompletedAt = DateTime.Now;
 					_dispatcher.OnEndTask(task);
 				}
 			}, CancellationToken.None);

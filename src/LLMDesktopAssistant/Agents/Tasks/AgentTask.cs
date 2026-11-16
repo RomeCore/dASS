@@ -125,6 +125,33 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
+		/// The moment the current launch of this task started.
+		/// </summary>
+		public DateTime StartedAt
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
+		/// The moment the current launch finished, or <see langword="null"/> while the task is still running.
+		/// </summary>
+		public DateTime? CompletedAt
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
+		/// The moment a follow-up was last accepted by this task, or <see langword="null"/> when it never was.
+		/// </summary>
+		public DateTime? ContinuedAt
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// The exception that occurred during the execution of this agentic task.
 		/// </summary>
 		public Exception? Exception
@@ -154,6 +181,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		/// <param name="messages">The messages to continue the execution with.</param>
 		public void Continue(IEnumerable<AgentChatMessage> messages, CancellationToken cancellationToken = default)
 		{
+			ContinuedAt = DateTime.Now;
+
 			foreach (var message in messages)
 				FollowUpMessages.Enqueue(message);
 
