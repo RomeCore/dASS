@@ -23,6 +23,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Creates an empty array table. This table will be encoded as an array in JSON
 			  or other structured formats, instead of an objects.
 			  Returns: table
+
+			--- table.is_array(t)
+			  Checks if a table is an array (i.e., has sequential numeric indices starting from 1 without string keys).
+			  Also accepts empty tables serialized from JSON (see json.* and rpc.* namespaces) or created from table.empty_array().
+			  Returns: boolean
 			
 			--- table.contains(t, value)
 			  Checks if a value exists in the table (shallow comparison).
@@ -150,6 +155,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["empty_array"] = new LuaCallbackFunction(EmptyArray);
+			ns["is_array"] = new LuaCallbackFunction(IsArray);
 			ns["contains"] = new LuaCallbackFunction(Contains);
 			ns["find"] = new LuaCallbackFunction(Find);
 			ns["map"] = new LuaCallbackFunction(Map);
@@ -178,12 +184,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			return new LuaTuple(LuaExtensions.CreateArrayTable());
 		}
 
+		private static LuaTuple IsArray(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1)
+				throw new LuaRuntimeException("table.is_array(t): at least 1 argument expected.");
+			if (args[0] is not LuaTable t)
+				throw new LuaRuntimeException("table.is_array(t): first argument must be a table.");
+			return new LuaTuple(LuaBoolean.FromBoolean(LuaExtensions.IsArrayTable(t)));
+		}
+
 		private static LuaTuple Contains(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.contains(t, value): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.contains(): first argument must be a table.");
+				throw new LuaRuntimeException("table.contains(t, value): first argument must be a table.");
 			var value = args[1];
 
 			foreach (var kv in t.Entries)
@@ -199,7 +214,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.find(t, value): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.find(): first argument must be a table.");
+				throw new LuaRuntimeException("table.find(t, value): first argument must be a table.");
 			var value = args[1];
 
 			foreach (var kv in t.Entries)
@@ -215,9 +230,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.map(t, func): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.map(): first argument must be a table.");
+				throw new LuaRuntimeException("table.map(t, func): first argument must be a table.");
 			if (args[1] is not LuaFunction func)
-				throw new LuaRuntimeException("table.map(): second argument must be a function.");
+				throw new LuaRuntimeException("table.map(t, func): second argument must be a function.");
 
 			var result = new LuaTable();
 			foreach (var kv in t.Entries)
@@ -233,9 +248,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.filter(t, func): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.filter(): first argument must be a table.");
+				throw new LuaRuntimeException("table.filter(t, func): first argument must be a table.");
 			if (args[1] is not LuaFunction func)
-				throw new LuaRuntimeException("table.filter(): second argument must be a function.");
+				throw new LuaRuntimeException("table.filter(t, func): second argument must be a function.");
 
 			var isArray = IsArray(t);
 			var result = new LuaTable();
@@ -294,9 +309,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 3)
 				throw new LuaRuntimeException("table.reduce(t, func, initial): at least 3 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.reduce(): first argument must be a table.");
+				throw new LuaRuntimeException("table.reduce(t, func, initial): first argument must be a table.");
 			if (args[1] is not LuaFunction func)
-				throw new LuaRuntimeException("table.reduce(): second argument must be a function.");
+				throw new LuaRuntimeException("table.reduce(t, func, initial): second argument must be a function.");
 			var acc = args[2];
 
 			foreach (var kv in t.Entries)
@@ -312,9 +327,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.slice(t, start, [end]): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.slice(): first argument must be a table.");
+				throw new LuaRuntimeException("table.slice(t, start, [end]): first argument must be a table.");
 			if (args[1] is not LuaNumber startVal)
-				throw new LuaRuntimeException("table.slice(): start must be a number.");
+				throw new LuaRuntimeException("table.slice(t, start, [end]): start must be a number.");
 			int start = (int)startVal.Value;
 
 			int len = t.Length;
@@ -322,7 +337,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length > 2 && args[2] is not LuaNil)
 			{
 				if (args[2] is not LuaNumber endVal)
-					throw new LuaRuntimeException("table.slice(): end must be a number.");
+					throw new LuaRuntimeException("table.slice(t, start, [end]): end must be a number.");
 				end = (int)endVal.Value;
 			}
 
@@ -347,7 +362,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.keys(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.keys(): first argument must be a table.");
+				throw new LuaRuntimeException("table.keys(t): first argument must be a table.");
 
 			var result = new LuaTable();
 			int idx = 1;
@@ -364,7 +379,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.values(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.values(): first argument must be a table.");
+				throw new LuaRuntimeException("table.values(t): first argument must be a table.");
 
 			var result = new LuaTable();
 			int idx = 1;
@@ -381,7 +396,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.merge(t1, t2): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t1 || args[1] is not LuaTable t2)
-				throw new LuaRuntimeException("table.merge(): both arguments must be tables.");
+				throw new LuaRuntimeException("table.merge(t1, t2): both arguments must be tables.");
 
 			return new LuaTuple(t1.DeepMergeWith(t2));
 		}
@@ -391,7 +406,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.clone(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.clone(): first argument must be a table.");
+				throw new LuaRuntimeException("table.clone(t): first argument must be a table.");
 
 			return new LuaTuple(t.ShallowClone());
 		}
@@ -401,7 +416,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.deep_clone(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.deep_clone(): first argument must be a table.");
+				throw new LuaRuntimeException("table.deep_clone(t): first argument must be a table.");
 
 			return new LuaTuple(t.DeepClone());
 		}
@@ -411,7 +426,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.is_empty(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.is_empty(): first argument must be a table.");
+				throw new LuaRuntimeException("table.is_empty(t): first argument must be a table.");
 
 			foreach (var _ in t.Entries)
 				return new LuaTuple(LuaBoolean.False);
@@ -423,7 +438,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.size(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.size(): first argument must be a table.");
+				throw new LuaRuntimeException("table.size(t): first argument must be a table.");
 
 			int count = 0;
 			foreach (var _ in t.Entries)
@@ -436,7 +451,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.first(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.first(): first argument must be a table.");
+				throw new LuaRuntimeException("table.first(t): first argument must be a table.");
 			if (t.Length == 0)
 				return new LuaTuple(LuaNil.Instance);
 			return new LuaTuple(t.Get(1));
@@ -447,7 +462,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 1)
 				throw new LuaRuntimeException("table.last(t): at least 1 argument expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.last(): first argument must be a table.");
+				throw new LuaRuntimeException("table.last(t): first argument must be a table.");
 			int len = t.Length;
 			if (len == 0)
 				return new LuaTuple(LuaNil.Instance);
@@ -459,9 +474,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length < 2)
 				throw new LuaRuntimeException("table.each(t, func): at least 2 arguments expected.");
 			if (args[0] is not LuaTable t)
-				throw new LuaRuntimeException("table.each(): first argument must be a table.");
+				throw new LuaRuntimeException("table.each(t, func): first argument must be a table.");
 			if (args[1] is not LuaFunction func)
-				throw new LuaRuntimeException("table.each(): second argument must be a function.");
+				throw new LuaRuntimeException("table.each(t, func): second argument must be a function.");
 
 			foreach (var kv in t.Entries)
 				func.Invoke(ctx, kv.Value, kv.Key);
@@ -474,11 +489,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				throw new LuaRuntimeException("table.repeat(element, count): at least 2 arguments expected.");
 			
 			if (args[1] is not LuaNumber countVal)
-				throw new LuaRuntimeException("table.repeat(): count must be a number.");
+				throw new LuaRuntimeException("table.repeat(element, count): count must be a number.");
 			
 			int count = (int)countVal.Value;
 			if (count < 0)
-				throw new LuaRuntimeException("table.repeat(): count must be >= 0.");
+				throw new LuaRuntimeException("table.repeat(element, count): count must be >= 0.");
 
 			var element = args[0];
 			var result = new LuaTable();
