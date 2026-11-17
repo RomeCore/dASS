@@ -5,7 +5,7 @@ using LLMDesktopAssistant.Users;
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
 	/// <summary>
-	/// Lua API for the users of the current chat: <c>dass.users.*</c>.
+	/// Lua API for the users of the current chat: <c>dass.user.*</c>.
 	/// Read-only view over <see cref="IUserManagementService"/>.
 	/// </summary>
 	/// <remarks>
@@ -17,14 +17,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	[LuaApi(chatScoped: true)]
 	public class LuaApiUsers : LuaApiBase
 	{
-		public override string? Namespace => "dass.users";
+		public override string? Namespace => "dass.user";
 
 		public override string? Manuals => """
-			--- dass.users - the users of the current chat
+			--- dass.user - the users of the current chat
 
 			FUNCTIONS:
 
-			--- dass.users.list([scope]) -> table
+			--- dass.user.list([scope]) -> table
 			  Returns an array of user tables (see USER TABLE below).
 
 			  Parameters:
@@ -38,7 +38,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			        "online"          - "local-available" plus "remote-online": everyone who can
 			                            actually take part in this chat right now
 
-			--- dass.users.get(login) -> table or nil
+			--- dass.user.get(login) -> table or nil
 			  Finds one user by login, local or remote. Returns nil when there is no such login.
 
 			USER TABLE:
@@ -60,16 +60,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EXAMPLES:
 
 			  -- Everyone who is here right now
-			  for _, user in ipairs(dass.users.list("online")) do
+			  for _, user in ipairs(dass.user.list("online")) do
 			    print(user.login, user.name, user.is_local and "local" or "online")
 			  end
 
 			  -- Local users that may send, ignoring the WebUI
-			  for _, user in ipairs(dass.users.list("local-available")) do
+			  for _, user in ipairs(dass.user.list("local-available")) do
 			    print(user.login, user.agent_shown_name)
 			  end
 
-			  local user = dass.users.get("master")
+			  local user = dass.user.get("master")
 			  if user then print(user.description) end
 
 			NOTES:
@@ -109,7 +109,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					.Concat(_users.GetOnlineRemoteUsers())
 					.DistinctBy(user => user.Login),
 				_ => throw new LuaRuntimeException(
-					"dass.users.list([scope]): unknown scope '" + scope + "'. Expected one of: " +
+					"dass.user.list([scope]): unknown scope '" + scope + "'. Expected one of: " +
 					"all, local, remote, local-available, remote-online, online.")
 			};
 
@@ -129,7 +129,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private LuaTuple Get(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length == 0 || args[0] is not LuaString login)
-				throw new LuaRuntimeException("dass.users.get(login): a login string is expected.");
+				throw new LuaRuntimeException("dass.user.get(login): a login string is expected.");
 
 			var user = _users.FindByLogin(login.Value);
 			return new LuaTuple(user is null

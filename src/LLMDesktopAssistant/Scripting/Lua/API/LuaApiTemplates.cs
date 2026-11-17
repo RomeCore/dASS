@@ -14,17 +14,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	[LuaApi(chatScoped: true)]
 	public class LuaApiTemplates : LuaApiBase
 	{
-		public override string? Namespace => "dass.templates";
+		public override string? Namespace => "dass.template";
 
 		public override string? Manuals => """
-			--- dass.templates - template rendering and inspection API
+			--- dass.template - template rendering and inspection API
 
 			Provides access to the template library for rendering and listing templates.
 			Templates are identified by ID and can be filtered by metadata (language, model, etc.).
 
 			FUNCTIONS:
 			
-			--- dass.templates.render(filters, [context])
+			--- dass.template.render(filters, [context])
 			  Renders a template from the template library.
 			  Parameters:
 			    - filters: string or table - Specifies which template to render.
@@ -46,7 +46,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - table - for message templates:
 			      Returns an array of { role: string, content: string } tables.
 
-			--- dass.templates.list([filters])
+			--- dass.template.list([filters])
 			  Lists all templates registered in the template library with their metadata.
 			  Parameters:
 			    - filters: table (optional) - Filter criteria. Supports:
@@ -69,32 +69,32 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - ... plus any custom metadata keys flattened directly.
 			
 			NOTES:
-			  - In dass.templates.render(), templates are matched by intersecting all provided
+			  - In dass.template.render(), templates are matched by intersecting all provided
 			    metadata criteria. Each metadata filter narrows down the candidate set.
 			  - If multiple templates match all filters, the first one is returned.
 
 			EXAMPLES:
 
 			  -- Render by template ID (string filter)
-			  local prompt = dass.templates.render("system_prompt")
+			  local prompt = dass.template.render("system_prompt")
 			  print(prompt)
 
 			  -- Render with language filter
-			  local prompt = dass.templates.render({
+			  local prompt = dass.template.render({
 			    "system_prompt",
 			    lang = "ru_RU"
 			  })
 			  print(prompt)
 
 			  -- Render with context data
-			  local prompt = dass.templates.render("greeting", {
+			  local prompt = dass.template.render("greeting", {
 			    name = "Alice",
 			    age = 30,
 			    tags = {"admin", "user"}
 			  })
 
 			  -- Render a messages template (returns array of messages)
-			  local messages = dass.templates.render("chat_messages", {
+			  local messages = dass.template.render("chat_messages", {
 			    topic = "Hello World"
 			  })
 			  for _, msg in ipairs(messages) do
@@ -102,19 +102,19 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  end
 
 			  -- List all templates
-			  local all = dass.templates.list()
+			  local all = dass.template.list()
 			  for _, t in ipairs(all) do
 			    print(t.id, t.type, t.lang)
 			  end
 
 			  -- List templates by language
-			  local ru = dass.templates.list({ lang = "ru_RU" })
+			  local ru = dass.template.list({ lang = "ru_RU" })
 
 			  -- List text templates only
-			  local texts = dass.templates.list({ type = "text" })
+			  local texts = dass.template.list({ type = "text" })
 
 			  -- List by custom metadata
-			  local experimental = dass.templates.list({ my_custom_tag = "experimental" })
+			  local experimental = dass.template.list({ my_custom_tag = "experimental" })
 			""";
 
 		private readonly IChatTemplateImporter _chatTemplateImporter;
@@ -136,11 +136,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private LuaTuple Render(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1)
-				throw new LuaRuntimeException("dass.templates.render(filters, [context]): at least 1 argument expected.");
+				throw new LuaRuntimeException("dass.template.render(filters, [context]): at least 1 argument expected.");
 
 			var filters = args[0];
 			if (filters is not LuaString && filters is not LuaTable)
-				throw new LuaRuntimeException("dass.templates.render(): first argument must be a string or a table.");
+				throw new LuaRuntimeException("dass.template.render(): first argument must be a string or a table.");
 
 			TemplateDataAccessor context = TemplateNullAccessor.Instance;
 			if (args.Length > 1)
@@ -166,14 +166,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						if (kvp.Key is LuaNumber)
 						{
 							if (kvp.Value is not LuaString)
-								throw new LuaRuntimeException("dass.templates.render(): filter table values for number keys must be strings.");
+								throw new LuaRuntimeException("dass.template.render(): filter table values for number keys must be strings.");
 
 							id = ((LuaString)kvp.Value).Value;
 						}
 						else if (kvp.Key is LuaString keyStr)
 						{
 							if (kvp.Value is not LuaString valStr)
-								throw new LuaRuntimeException("dass.templates.render(): filter table values for string keys must be strings.");
+								throw new LuaRuntimeException("dass.template.render(): filter table values for string keys must be strings.");
 
 							var key = keyStr.Value.ToLowerInvariant();
 							var value = valStr.Value;
@@ -201,7 +201,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 						}
 						else
 						{
-							throw new LuaRuntimeException("dass.templates.render(): filter table keys must be numbers or strings.");
+							throw new LuaRuntimeException("dass.template.render(): filter table keys must be numbers or strings.");
 						}
 					}
 
@@ -229,7 +229,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					return new LuaTuple(messagesTable);
 				}
 
-				throw new LuaRuntimeException($"dass.templates.render(): not supported template type: {template?.GetType().FullName}.");
+				throw new LuaRuntimeException($"dass.template.render(): not supported template type: {template?.GetType().FullName}.");
 			}
 			catch (LuaRuntimeException)
 			{
@@ -237,7 +237,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			}
 			catch (Exception ex)
 			{
-				throw new LuaRuntimeException($"dass.templates.render(): {ex.Message}");
+				throw new LuaRuntimeException($"dass.template.render(): {ex.Message}");
 			}
 		}
 
@@ -256,13 +256,13 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					if (kvp.Key is LuaNumber)
 					{
 						if (kvp.Value is not LuaString)
-							throw new LuaRuntimeException("dass.templates.list(): filter table values for number keys must be strings.");
+							throw new LuaRuntimeException("dass.template.list(): filter table values for number keys must be strings.");
 						idFilter = ((LuaString)kvp.Value).Value;
 					}
 					else if (kvp.Key is LuaString keyStr)
 					{
 						if (kvp.Value is not LuaString valStr)
-							throw new LuaRuntimeException("dass.templates.list(): filter table values for string keys must be strings.");
+							throw new LuaRuntimeException("dass.template.list(): filter table values for string keys must be strings.");
 
 						var key = keyStr.Value.ToLowerInvariant();
 						var value = valStr.Value;
@@ -276,7 +276,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					}
 					else
 					{
-						throw new LuaRuntimeException("dass.templates.list(): filter table keys must be numbers or strings.");
+						throw new LuaRuntimeException("dass.template.list(): filter table keys must be numbers or strings.");
 					}
 				}
 			}

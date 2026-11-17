@@ -52,9 +52,9 @@ local function build_items(models)
 				contentType = "application/json"
 			})
 			if res.status_code == 200 then
-				dass.toasts.success("Unloaded " .. tostring(self.name))
+				dass.toast.success("Unloaded " .. tostring(self.name))
 			else
-				dass.toasts.error("Failed to unload " .. tostring(self.name),
+				dass.toast.error("Failed to unload " .. tostring(self.name),
 					string.format("%d %s", res.status_code, tostring(res.status_description)))
 			end
 			await refresh_fn()

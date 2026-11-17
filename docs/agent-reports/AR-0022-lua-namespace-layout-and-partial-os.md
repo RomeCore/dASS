@@ -6,6 +6,11 @@
 - **Surface:** API (`lua-execute` namespaces)
 - **First seen:** 2026-10-20
 
+<!-- Note (2026-11-17): the namespaces quoted below were renamed after this report was filed - `dass.agents`
+is now `dass.agent` (with `execute` -> `execute_task`), `dass.users` -> `dass.user`, `dass.models` ->
+`dass.model`, `dass.templates` -> `dass.template`, `dass.toasts` -> `dass.toast`. The report keeps the
+names as they were observed. -->
+
 ## What I expected
 
 `namespaces()` lists a flat set of names:

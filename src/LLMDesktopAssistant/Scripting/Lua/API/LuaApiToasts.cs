@@ -5,7 +5,7 @@ using LLMDesktopAssistant.Services.Instances;
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
 	/// <summary>
-	/// Lua API for showing toast notifications in the UI: <c>dass.toasts.*</c>.
+	/// Lua API for showing toast notifications in the UI: <c>dass.toast.*</c>.
 	/// Thin wrapper over <see cref="IToastService"/>.
 	/// </summary>
 	[LuaApi(chatScoped: false)]
@@ -13,16 +13,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	{
 		private readonly IToastService _toastService;
 
-		public override string? Namespace => "dass.toasts";
+		public override string? Namespace => "dass.toast";
 
 		public override string? Manuals => """
-			--- dass.toasts - toast notification API
+			--- dass.toast - toast notification API
 
 			Shows toast notifications (popup messages) in the application UI.
 
 			FUNCTIONS:
 
-			--- dass.toasts.info(title, [description], [durationSeconds])
+			--- dass.toast.info(title, [description], [durationSeconds])
 			  Shows an informational toast.
 			  Parameters:
 			    - title: string - toast title (supports Markdown)
@@ -30,21 +30,21 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - durationSeconds: number (optional, default 5) - auto-dismiss seconds
 			  Returns: nil
 
-			--- dass.toasts.warning(title, [description], [durationSeconds])
+			--- dass.toast.warning(title, [description], [durationSeconds])
 			  Shows a warning toast (default duration: 6 seconds).
 
-			--- dass.toasts.error(title, [description], [durationSeconds])
+			--- dass.toast.error(title, [description], [durationSeconds])
 			  Shows an error toast (default duration: 8 seconds).
 
-			--- dass.toasts.success(title, [description], [durationSeconds])
+			--- dass.toast.success(title, [description], [durationSeconds])
 			  Shows a success toast (default duration: 5 seconds).
 
 			EXAMPLES:
 
-			  dass.toasts.info("File saved!")
-			  dass.toasts.warning("Disk almost full", "Only 500 MB remaining", 10)
-			  dass.toasts.error("Connection lost", "Check your network settings")
-			  dass.toasts.success("**Build complete**", "All 42 tests passed")
+			  dass.toast.info("File saved!")
+			  dass.toast.warning("Disk almost full", "Only 500 MB remaining", 10)
+			  dass.toast.error("Connection lost", "Check your network settings")
+			  dass.toast.success("**Build complete**", "All 42 tests passed")
 			""";
 
 		public LuaApiToasts(IToastService toastService)
@@ -100,7 +100,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private static string GetString(LuaValue[] args, int index, string paramName)
 		{
 			if (args.Length <= index || args[index] is not LuaString str)
-				throw new LuaRuntimeException($"dass.toasts: argument #{index + 1} ({paramName}) must be a string.");
+				throw new LuaRuntimeException($"dass.toast: argument #{index + 1} ({paramName}) must be a string.");
 			return str.Value;
 		}
 

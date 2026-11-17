@@ -7,16 +7,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	[LuaApi(chatScoped: false)]
 	public class LuaApiModels : LuaApiBase
 	{
-		public override string? Namespace => "dass.models";
+		public override string? Namespace => "dass.model";
 
 		public override string? Manuals => """
-			--- dass.models - model listing API
+			--- dass.model - model listing API
 
 			Provides access to the list of available LLM models.
 
 			FUNCTIONS:
 
-			--- dass.models.list()
+			--- dass.model.list()
 			  Returns a table with detailed information about all available models.
 
 			  Returns: table - array of model info tables. Each entry contains:
@@ -25,7 +25,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - provider_name: string - provider name (e.g. "OpenAI")
 			    - full_name: string - full model identifier (e.g. "OpenAI$gpt-4o")
 			
-			--- dass.models.modifiers()
+			--- dass.model.modifiers()
 			  Returns a table with information about all available model modifiers.
 			
 			  Returns: table - array of modifier info tables. Each entry contains:
@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			EXAMPLES:
 
 			  -- List all models
-			  local models = dass.models.list()
+			  local models = dass.model.list()
 			  for _, m in ipairs(models) do
 			    print(m.full_name .. " (" .. m.provider_name .. ")")
 			  end
