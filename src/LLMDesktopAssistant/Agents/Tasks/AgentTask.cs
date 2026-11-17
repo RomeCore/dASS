@@ -77,6 +77,15 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
+		/// How many leading <see cref="Messages"/> were supplied when task is continued.
+		/// </summary>
+		public int ContinuedMessageCount
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// The last generated message by the agent associated with this task.
 		/// </summary>
 		public AgentAssistantMessage? LastGeneratedMessage

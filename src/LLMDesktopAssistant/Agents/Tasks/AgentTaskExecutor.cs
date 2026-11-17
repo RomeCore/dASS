@@ -291,6 +291,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			if (!isContinue)
 				task.StartedAt = DateTime.Now;
 			task.ContinuedAt = DateTime.Now;
+			task.ContinuedMessageCount = task.Messages.Count;
 
 			Task.Run(async () =>
 			{
@@ -307,6 +308,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					if (await GetBlockReasonAsync(task, isContinue, task.ContinuedAt) is { } blockReason)
 					{
 						task.BlockReason = blockReason;
+						task.Completed = true;
+						task.CompletedAt = DateTime.Now;
 						task.Status = AgentTaskStatus.Blocked;
 						task.Exception = new AgentTaskBlockedException(blockReason);
 						completionSource.SetException(task.Exception);
@@ -314,32 +317,37 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					}
 
 					await ExecuteAsync(task, executionInfo);
+
+					task.Completed = true;
+					task.CompletedAt = DateTime.Now;
 					task.Status = AgentTaskStatus.Success;
 					completionSource.SetResult(task);
 				}
 				catch (AggregateException aex) when (aex.InnerExceptions.Any(e => e is OperationCanceledException))
 				{
+					task.Completed = true;
+					task.CompletedAt = DateTime.Now;
 					task.Status = AgentTaskStatus.Cancelled;
 					completionSource.SetCanceled();
 				}
 				catch (OperationCanceledException)
 				{
+					task.Completed = true;
+					task.CompletedAt = DateTime.Now;
 					task.Status = AgentTaskStatus.Cancelled;
 					completionSource.SetCanceled();
 				}
 				catch (Exception ex)
 				{
+					task.Completed = true;
+					task.CompletedAt = DateTime.Now;
 					task.Status = AgentTaskStatus.Failed;
 					task.Exception = ex;
 					completionSource.SetException(ex);
 				}
 				finally
 				{
-					task.Completed = true;
-					task.CompletedAt = DateTime.Now;
 					_dispatcher.OnEndTask(task);
-
-					// Fired after the completion settles: a stop hook observes the outcome and never delays the caller.
 					FireStopHooks(task, isContinue, task.ContinuedAt);
 				}
 			}, CancellationToken.None);
@@ -478,6 +486,9 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 					var response = await info.Model.ChatStreamingAsync(info.NativeMessages,
 						cancellationToken: cancellationToken);
+
+					cancellationToken.ThrowIfCancellationRequested();
+
 					IAssistantMessage responseMessage = response.Message;
 					info.NativeMessages.Add(responseMessage);
 
@@ -644,6 +655,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 					if (agentMessage.ToolCalls.Count == 0 && task.FollowUpMessages.IsEmpty)
 					{
+						cancellationToken.ThrowIfCancellationRequested();
+
 						if (task.LaunchParameters.FeedbackFunc is not null)
 						{
 							var feedbackMessage = await task.LaunchParameters.FeedbackFunc.Invoke(task, cancellationToken);
