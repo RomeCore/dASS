@@ -1,7 +1,4 @@
-using AsyncLua;
 using AsyncLua.Values;
-using LLMDesktopAssistant.SlashCommands.Execution;
-using LLMDesktopAssistant.Tools.Execution.Domain;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -11,8 +8,8 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// Determines whether a Lua table should be serialized as a JSON array.
 		/// A table is considered an array if it has a contiguous sequence of
 		/// integer keys from 1 to <see cref="Table.Length"/> and no keys
-		/// outside that range. When table is empty, the metamethod <c>__json_array</c>
-		/// is required to be <see langword="true"/>.
+		/// outside that range. A truly empty table is an object unless its metatable sets
+		/// <c>__json_array</c> to <see langword="true"/>; a table with hash keys is an object regardless.
 		/// </summary>
 		public static bool IsArrayTable(this LuaTable table)
 		{
@@ -21,8 +18,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 
 			if (len == 0)
 			{
-				if (keys.Count == 0)
-					return true;
+				if (keys.Count != 0)
+					return false;
+
 				return (table.Metatable?.TryGetValue(new LuaString("__json_array"), out var value) ?? false)
 					&& value == LuaBoolean.True;
 			}
