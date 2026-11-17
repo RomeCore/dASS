@@ -64,6 +64,7 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				var task = new AgentTask
 				{
 					Id = Guid.NewGuid(),
+					Executor = this,
 					Parent = null,
 					LaunchParameters = parameters,
 					Completion = Task.FromResult<AgentTask>(null!),
@@ -71,6 +72,10 @@ namespace LLMDesktopAssistant.Tests.SlashCommands
 				};
 				task.LastGeneratedContent = ResultContent;
 				return task;
+			}
+
+			public void Continue(AgentTask task, IEnumerable<AgentChatMessage> messages, CancellationToken cancellationToken = default)
+			{
 			}
 		}
 
