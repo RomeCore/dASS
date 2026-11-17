@@ -7,6 +7,7 @@ using LLMDesktopAssistant.Tools.Execution.Domain;
 using LLMDesktopAssistant.Tools.Execution.Executors;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.Scripting;
+using RCLargeLanguageModels.Tools;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
@@ -25,7 +26,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			{
 				var result = LuaExecutionContext.ToolResult;
 				if (result is null)
-					LuaExecutionContext.SetTool(ctx, result = new LuaToolResult(ctx.Call));
+					LuaExecutionContext.ToolResult = new LuaToolResult(ctx.Call);
 
 				try
 				{

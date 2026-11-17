@@ -11,7 +11,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// the call does not expose - the progress range and the script's own completion verdict - are kept
 	/// here.
 	/// </summary>
-	internal sealed class LuaToolResult
+	public class LuaToolResult
 	{
 		private readonly IToolCall _call;
 		private double? _progress;

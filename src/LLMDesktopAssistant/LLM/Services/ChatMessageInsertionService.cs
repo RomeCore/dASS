@@ -183,7 +183,7 @@ namespace LLMDesktopAssistant.LLM.Services
 		private void FireInsertedHook(UserMessage message, BranchedMessage branched,
 			int? editIndex)
 		{
-			LuaExecutionContext.SetMessage(branched);
+			LuaExecutionContext.Message = branched;
 			var sender = users.FindByLogin(message.SenderLogin)?.Name;
 			var payload = UserMessageHookPayload.Create(chat.Id, message.SenderLogin, sender, message.Content,
 				message.AdditionalData, message.Visibility, message.VisibleTo, message.IsVisibleToWhiteList,

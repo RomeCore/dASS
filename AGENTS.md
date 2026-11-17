@@ -293,8 +293,11 @@ The contract is one line: stdout is the context text, empty/whitespace means "no
 engine never compares - the provider does, byte-exact. Text is wrapped as `<name>\n...\n</name>` (a
 digit-leading name gets an `_` prefix). `timeout:` defaults to 2000 ms with a 10 s ceiling; a timeout or
 an error is a log warning and an absent section, never a broken request. A **Lua** body runs in the
-chat's own state and reaches the chat Lua API - read it, never act on it (no UI host, and a turn-level
-call cancels the turn). Out-of-process scripts (`py`, `sh`, `ps1`, `bat`) have stdout only.
+chat's own state, and the scripting environment is identical everywhere: what differs is the ambient
+`LuaExecutionContext` (`Tool`, `ToolResult`, `Command`, `Message`, `Agent`) that the APIs read the
+"current" thing from, so a prompt-context script can act on the chat exactly like a tool can.
+Out-of-process scripts (`py`, `sh`, `ps1`, `bat`) have stdout only; one that needs the chat has to
+open an `rpc` server of its own.
 Discriminators are `script:<name>`, so a script can never
 shadow a native section. The parsed addon is cached app-wide, so providers must resolve chat services
 from `EffectiveChatContext.Services` instead of capturing them.

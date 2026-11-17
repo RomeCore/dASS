@@ -201,6 +201,8 @@ namespace LLMDesktopAssistant.LLM.Services
 				using var scope = tokens.WithToken(ChatExecutionLevel.Agent, cancellationToken, out token);
 				var agent = agentManager.GetAgentDescriptor(agentId);
 				agentName = agent.Info.Name;
+
+				LuaExecutionContext.Agent = agent;
 				toolMemorizer.PushTaskAsyncScope();
 
 				var responsesBuilder = ImmutableList.CreateBuilder<Domain.AssistantMessage>();
@@ -337,7 +339,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				}
 
 				branchedMessage = chat.Messages[^1];
-				LuaExecutionContext.SetMessage(branchedMessage);
+				LuaExecutionContext.Message = branchedMessage;
 				await RunMessageStartHookAsync(branchedMessage, agentId, agentStageId, agent, cycle, modelName, token);
 
 				var timeRequested = DateTime.Now;

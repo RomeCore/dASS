@@ -83,7 +83,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 					
 					# SEE MANUALS BEFORE USING THE API
 					Use `manuals(...)` function to get the documentation for a specific namespace:
-					`print(manuals(_G, dass.agents, dass.tool, dass.tool.result))` for example.
+					`print(manuals(_G, dass.agent, dass.notification, dass.tool, dass.tool.result))` for example.
 					To get list of all available namespaces, use `print(namespaces())`
 					""",
 				NameKey = Locale.GetKey("tool.name.lua-execute"),
@@ -120,7 +120,7 @@ namespace LLMDesktopAssistant.Tools.Implementations.Scripting
 			ctx.Call.SetStatus(MaterialIconKind.LanguageLua, null);
 			var result = LuaExecutionContext.ToolResult;
 			if (result is null)
-				LuaExecutionContext.SetTool(ctx, result = new LuaToolResult(ctx.Call));
+				LuaExecutionContext.ToolResult = result = new LuaToolResult(ctx.Call);
 
 			try
 			{

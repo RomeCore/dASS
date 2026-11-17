@@ -41,7 +41,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Dispatch
 				ArgumentStream = request.ArgumentStream
 			});
 
-			LuaExecutionContext.SetTool(ctx, new LuaToolResult(ctx.Call));
+			LuaExecutionContext.Tool = ctx;
+			LuaExecutionContext.ToolResult = new LuaToolResult(ctx.Call);
 
 			return request.Source switch
 			{

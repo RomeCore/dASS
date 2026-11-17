@@ -64,7 +64,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				Services = chat.Services
 			};
 
-			LuaExecutionContext.Set(command: context);
+			LuaExecutionContext.Command = context;
 
 			SlashCommandExecutionResult result;
 			try
