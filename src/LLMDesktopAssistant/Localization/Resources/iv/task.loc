@@ -23,9 +23,11 @@ detail.timeout: Timeout
 detail.tool_calls: Tool calls
 detail.tools_count: Available tools
 filter.only_running: Only running
+hook.blocked: Blocked by a task.start hook
 role.assistant: Assistant
 role.system: System
 role.user: User
+status.blocked: Blocked
 status.cancelled: Cancelled
 status.executing: Executing
 status.failed: Failed

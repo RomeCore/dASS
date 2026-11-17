@@ -23,9 +23,11 @@ detail.timeout: Таймаут
 detail.tool_calls: Вызовы инструментов
 detail.tools_count: Доступно инструментов
 filter.only_running: Только активные
+hook.blocked: Заблокировано хуком task.start
 role.assistant: Ассистент
 role.system: Система
 role.user: Пользователь
+status.blocked: Заблокировано
 status.cancelled: Отменено
 status.executing: Выполнение
 status.failed: Ошибка

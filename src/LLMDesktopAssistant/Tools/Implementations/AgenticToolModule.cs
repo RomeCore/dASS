@@ -640,6 +640,7 @@ namespace LLMDesktopAssistant.Tools.Implementations
 			{
 				AgentTaskStatus.Success => MaterialIconKind.Check,
 				AgentTaskStatus.Cancelled => MaterialIconKind.Cancel,
+				AgentTaskStatus.Blocked => MaterialIconKind.Block,
 				_ => MaterialIconKind.AlertCircle
 			});
 			ctx.Call.SetStatusTitle($"**{TableCell(DescribeTitle(task))}**");
@@ -774,6 +775,12 @@ namespace LLMDesktopAssistant.Tools.Implementations
 				sb.AppendLine();
 				sb.AppendLine();
 				sb.Append(task.LastGeneratedContent);
+			}
+			else if (task.BlockReason is { } blockReason)
+			{
+				sb.AppendLine();
+				sb.AppendLine();
+				sb.Append("Blocked: " + blockReason);
 			}
 			else if (task.Exception is { } exception)
 			{

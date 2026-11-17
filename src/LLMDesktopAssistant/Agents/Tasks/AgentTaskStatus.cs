@@ -10,6 +10,11 @@
 
 		Failed,
 
-		Cancelled
+		Cancelled,
+
+		/// <summary>
+		/// The launch was blocked before it ran a single request; <see cref="AgentTask.BlockReason"/> says why.
+		/// </summary>
+		Blocked
 	}
 }

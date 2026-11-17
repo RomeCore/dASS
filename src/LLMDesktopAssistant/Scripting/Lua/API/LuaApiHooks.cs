@@ -140,8 +140,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			CUSTOM EVENTS:
 
 			  The event vocabulary is open. `type` is any string, and a hook matches it with an anchored,
-			  case-insensitive `hook-type` glob - nothing restricts a script to the built-in `tool.*` and
-			  `message.*` names. A script and its hooks can agree on their own event name, e.g. "my_hook" or
+			  case-insensitive `hook-type` glob - nothing restricts a script to the built-in `tool.*`,
+			  `message.*`, `chat.*`, `session.*` and `task.*` names. A script and its hooks can agree on their own
+			  event name, e.g. "my_hook" or
 			  "myapp.before-save", and the payload, target and verdict rules are the same as above.
 			  Only the hooks of the chat's effective, enabled set run.
 

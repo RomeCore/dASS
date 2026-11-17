@@ -349,6 +349,9 @@ namespace LLMDesktopAssistant.Agents.Tasks.MVVM
 				AgentTaskStatus.Cancelled => (MaterialIconKind.Cancel,
 					LocalizationManager.LocalizeStatic("task.status.cancelled"),
 					new SolidColorBrush(Color.FromArgb(0x1A, 0xFF, 0x98, 0x00))),
+				AgentTaskStatus.Blocked => (MaterialIconKind.Block,
+					LocalizationManager.LocalizeStatic("task.status.blocked"),
+					new SolidColorBrush(Color.FromArgb(0x1A, 0x9E, 0x9E, 0x9E))),
 				_ => (MaterialIconKind.Help,
 					LocalizationManager.LocalizeStatic("task.status.unknown"), (IBrush?)null)
 			};

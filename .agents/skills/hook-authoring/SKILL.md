@@ -7,7 +7,7 @@ description: Write or amend a dASS hook addon - the .lua / .py / .sh / .ps1 / .b
 
 A hook is a single file in a `hooks/` folder. Its frontmatter says **which pipeline and which point of it** the hook runs at; its body returns a **verdict** the pipeline obeys. The body is not callable, not a tool, not a command.
 
-Two pipelines are hooked today. The **tool pipeline** has three points - `tool.start`, `tool.confirm` and `tool.result` - whose event names spell the invocation source, two of which also spell the outcome or the pending decision. The **chat pipeline** has the user-message points (`message.user.submit.*`, `message.user.insert.*`), the assistant-message points (`message.assistant.start`, `message.assistant.stop.*`), the turn points (`chat.turn.*`) and the two session points (`session.start`, `session.end`).
+Three pipelines are hooked today. The **tool pipeline** has three points - `tool.start`, `tool.confirm` and `tool.result` - whose event names spell the invocation source, two of which also spell the outcome or the pending decision. The **chat pipeline** has the user-message points (`message.user.submit.*`, `message.user.insert.*`), the assistant-message points (`message.assistant.start`, `message.assistant.stop.*`), the turn points (`chat.turn.*`) and the two session points (`session.start`, `session.end`). The **task pipeline** has two points - `task.start.{source}.{new,continue}` and `task.stop.{source}.{success,error,cancelled,blocked}` - around one launch of an agentic task, and only a task that was given a chat fires them at all.
 
 Two failure modes dominate, and neither raises:
 
@@ -76,8 +76,8 @@ timeout: 2000
 | Key | Default | Meaning |
 |---|---|---|
 | `hook-type` | **required** | anchored, case-insensitive glob over the event name |
-| `hook-target` | all targets | anchored, case-insensitive glob over `{origin}.{name}` for a tool, `{sender id}.{sender name}` for a user message, `{agent id}.{agent name}` for an agent event; the turn-level points have no target |
-| `execution-flow` | caller's default: sequential at the tool points, fire-and-forget at the session points | `sequential`, `parallel`, `fire-and-forget` |
+| `hook-target` | all targets | anchored, case-insensitive glob over `{origin}.{name}` for a tool, `{sender id}.{sender name}` for a user message, `{agent id}.{agent name}` for an agent event, `{source id}.{task name}` for a task event; the turn-level points have no target |
+| `execution-flow` | caller's default: sequential at the tool and task-start points, fire-and-forget at the session and task-stop points | `sequential`, `parallel`, `fire-and-forget` |
 | `timeout` | awaited: 2000, capped at 30000; fire-and-forget: none unless declared | milliseconds an awaited hook gets before it is cancelled |
 | `json-output` | - | **required on every out-of-process engine**, refused on Lua |
 | `json-input` | `auto` | `true` hands the payload over as JSON text, `auto` as the native structure |
@@ -157,6 +157,25 @@ A UI send fires `submit` and then `insert.pre`, and both can refuse it. Which on
 The target of an assistant event is `{agent id}.{agent name}`. While an assistant message is being generated, `dass.chat.current_message()` returns that message as a `chat_message` handle - the same one `get_messages()` would - so a hook can read and write it directly instead of through a verdict.
 
 The two session points have no target and no verdict, and both force fire-and-forget: `execution-flow` is ignored there and nothing waits for the hook. `session.start` is one opening of a chat, not one run of the application - reopening the same chat fires it again with a new `session_id` and the same `chat_id`.
+
+## Task events
+
+An agentic task is a background run of one agent: `agent-call`, `agent-callsub`, chat naming, summarization, memory recording and retrieval, a `/agent:<name>` command, a Lua `dass.agent.call`. The task pipeline hooks one **launch** of one task - an `Execute` or a `Continue` - and nothing else.
+
+| Type | When it runs | Verdict |
+|---|---|---|
+| `task.start.{source}.{new,continue}` | the task is `Executing` and its first request has not run yet; may block the launch | `decision`, `reason` - [types/task.start.md](types/task.start.md) |
+| `task.stop.{source}.{success,error,cancelled,blocked}` | the launch reached a terminal status, after the awaiting caller was already resumed | none - [types/task.stop.md](types/task.stop.md) |
+
+| Axis | Values | Meaning |
+|---|---|---|
+| `{source}` | `internal`, `tool`, `script`, `manual`, `unknown` | the launcher kind |
+| `{entry}` | `new`, `continue` | a fresh task or a relaunch of a finished one |
+| `{status}` | `success`, `error`, `cancelled`, `blocked` | the terminal status; `blocked` is a launch `task.start` refused |
+
+The target is `{source id}.{task name}`: `agent-callsub.web-searcher`, `chat-naming.unknown`. The source id is free-form and belongs to the launcher - `chat-agent-call`, `agent-callsub`, `lua-api`, `command`, `chat-naming` - so narrow a hook by the id and read the name in the body. A task with no name contributes `unknown`, never an empty segment.
+
+**Only a task with a chat fires these events.** The dispatcher is a chat service, so a task launched with no chat has no hook surface at all, and one whose chat was closed while it ran has none left at `stop`.
 
 ## One example
 
@@ -244,6 +263,14 @@ A Lua hook runs in the chat's Lua state, so the `dass.*` APIs are there. A hook 
 - `chat.turn.agent.stop` fires per agent run, not per message: a run with three tool batches is one agent stop and four message stops.
 - `session.end` runs on the closing path: the chat scope is disposed right after the handler returns, so a hook that still has to resolve a chat service, start a turn or await anything may find the chat gone. Write with what is already in hand (`store.session`, files) and return fast. A crash or a process kill runs nothing.
 - A session point is not "once per application run": every opening fires `session.start`, temporary chats included, and a hook registered at run time from a script is already there when it fires.
+- `task.stop.*.error` is `AgentTaskStatus.Failed`: the word does not follow the enum name, and `failed` matches nothing.
+- `task.start` is a gate as much as an event. Only a sequential hook's verdict is read, so `execution-flow: fire-and-forget` or `parallel` gives up the power to block; an out-of-process hook exiting with code 2 blocks regardless.
+- `task.start` fires per launch, not per task. `agent-call` followed by `agent-task_continue` on the finished task is two starts and two stops with the same `task_id`, the second suffixed `continue`.
+- A follow-up pushed into a **running** task is not a launch and fires nothing; the `continue` events belong to a relaunch of a finished one.
+- A blocked launch reports `status: blocked` and `block_reason`, not `error`. The caller that waited sees the reason as an exception, the one that did not wait reads it off the task.
+- Internal tasks fire too - `chat-naming`, `chat-summarization`, `memory-recording`, `memory-retrieval`, `chat-agent-selection` - so `task.start.internal.new` runs on the first message of every chat. Narrow it with `hook-target`.
+- `task.stop` is forced fire-and-forget: `execution-flow` is ignored, so stop hooks are not ordered among themselves and a verdict goes nowhere. An undeclared `timeout` is not bounded either.
+- `local payload = payload or {}` **empties the payload**: the Lua of this runtime reads the new local instead of the global, so the whole body sees an empty table and every field is `nil`, silently. Bind it under another name - `local p = payload or {}`.
 
 ## Neighbours
 

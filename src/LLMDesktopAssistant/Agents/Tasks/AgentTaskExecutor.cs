@@ -3,8 +3,12 @@ using System.Text;
 using LLMDesktopAssistant.Agents.Memory;
 using LLMDesktopAssistant.Agents.SubAgents;
 using LLMDesktopAssistant.Data;
+using LLMDesktopAssistant.Hooks;
+using LLMDesktopAssistant.Hooks.Chat;
+using LLMDesktopAssistant.Hooks.Tasks;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.LLM.Services.Agents;
+using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Providers;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools;
@@ -13,14 +17,15 @@ using LLMDesktopAssistant.Tools.Execution.Contexts;
 using LLMDesktopAssistant.Tools.Execution.Dispatch;
 using LLMDesktopAssistant.Tools.Execution.Sinks;
 using LLMDesktopAssistant.Tools.Execution.Support;
+using LLMDesktopAssistant.Utils;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels;
 using RCLargeLanguageModels.Completions;
 using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Messages.Attachments;
 using RCLargeLanguageModels.Metadata;
-using RCLargeLanguageModels.Tasks;
 using RCLargeLanguageModels.Tools;
+using Serilog;
 using IToolDescriptor = LLMDesktopAssistant.Tools.Execution.Domain.IToolDescriptor;
 using ToolInvocationRequest = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationRequest;
 using ToolInvocationSource = LLMDesktopAssistant.Tools.Execution.Domain.ToolInvocationSource;
@@ -249,9 +254,8 @@ namespace LLMDesktopAssistant.Agents.Tasks
 				NativeMessages = nativeMessages
 			};
 			task.ExecutionInfo = executionInfo;
-			task.StartedAt = DateTime.Now;
 
-			Launch(task, completionSource, executionInfo);
+			Launch(task, completionSource, executionInfo, isContinue: false);
 
 			return task;
 		}
@@ -274,18 +278,24 @@ namespace LLMDesktopAssistant.Agents.Tasks
 			task.Completion = completionSource.Task;
 			task.CancellationTokenSource = cts;
 			task.Exception = null;
-			task.ContinuedAt = DateTime.Now;
 
-			Launch(task, completionSource, executionInfo);
+			Launch(task, completionSource, executionInfo, isContinue: true);
 		}
 
-		void Launch(AgentTask task, TaskCompletionSource<AgentTask> completionSource, AgentTaskExecutionInfo executionInfo)
+		void Launch(AgentTask task, TaskCompletionSource<AgentTask> completionSource,
+			AgentTaskExecutionInfo executionInfo, bool isContinue)
 		{
 			task.CompletedAt = null;
+			task.BlockReason = null;
+
+			if (!isContinue)
+				task.StartedAt = DateTime.Now;
+			task.ContinuedAt = DateTime.Now;
 
 			Task.Run(async () =>
 			{
 				task.Status = AgentTaskStatus.Executing;
+				task.NewUsageStatistics = null;
 				_currentTask.Value = task;
 				_toolMemorizationService.PushTaskAsyncScope();
 				_dispatcher.OnBeginTask(task);
@@ -294,6 +304,15 @@ namespace LLMDesktopAssistant.Agents.Tasks
 
 				try
 				{
+					if (await GetBlockReasonAsync(task, isContinue, task.ContinuedAt) is { } blockReason)
+					{
+						task.BlockReason = blockReason;
+						task.Status = AgentTaskStatus.Blocked;
+						task.Exception = new AgentTaskBlockedException(blockReason);
+						completionSource.SetException(task.Exception);
+						return;
+					}
+
 					await ExecuteAsync(task, executionInfo);
 					task.Status = AgentTaskStatus.Success;
 					completionSource.SetResult(task);
@@ -319,8 +338,117 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					task.Completed = true;
 					task.CompletedAt = DateTime.Now;
 					_dispatcher.OnEndTask(task);
+
+					// Fired after the completion settles: a stop hook observes the outcome and never delays the caller.
+					FireStopHooks(task, isContinue, task.ContinuedAt);
 				}
 			}, CancellationToken.None);
+		}
+
+		/// <summary>
+		/// Gets the reason a <c>task.start</c> hook refused the launch, or <see langword="null"/> when it may run.
+		/// </summary>
+		/// <param name="task">The task being launched.</param>
+		/// <param name="isContinue">Whether this launch continues a finished task.</param>
+		/// <param name="launchStartedAt">The moment this launch started.</param>
+		private async Task<string?> GetBlockReasonAsync(AgentTask task, bool isContinue, DateTime launchStartedAt)
+		{
+			if (ResolveTaskHooks(task) is not { } hooks)
+				return null;
+
+			var result = await hooks.Dispatcher.ExecuteHooksAsync<TaskStartHookVerdict>(
+				BuildPayload(task, hooks, isContinue, launchStartedAt),
+				TaskHookEvents.ComposeStart(task.LaunchParameters.Source, isContinue),
+				DescribeTarget(task), HookExecutionFlow.Sequential,
+				cancellationToken: task.CancellationTokenSource.Token);
+
+			// A hook that broke the chain itself - a blocking second return in Lua - refuses the launch outright.
+			if (!string.IsNullOrEmpty(result.BlockingMessage))
+				return result.BlockingMessage;
+
+			if (result.Value is not { Decision: ChatHookDecision.Disallow or ChatHookDecision.Error } verdict)
+				return null;
+
+			return string.IsNullOrWhiteSpace(verdict.Reason)
+				? LocalizationManager.LocalizeStatic("task.hook.blocked")
+				: verdict.Reason;
+		}
+
+		/// <summary>
+		/// Fires <c>task.stop</c> for the launch that has just ended, in the current terminal status of the task.
+		/// </summary>
+		/// <param name="task">The task that ended.</param>
+		/// <param name="isContinue">Whether the launch that ended was a continuation.</param>
+		/// <param name="launchStartedAt">The moment the launch that ended started.</param>
+		private void FireStopHooks(AgentTask task, bool isContinue, DateTime launchStartedAt)
+		{
+			if (ResolveTaskHooks(task) is not { } hooks)
+				return;
+
+			hooks.Dispatcher.ExecuteHooksFnF(BuildPayload(task, hooks, isContinue, launchStartedAt),
+				TaskHookEvents.ComposeStop(task.LaunchParameters.Source, task.Status), DescribeTarget(task));
+		}
+
+		private sealed record TaskHookSurface(IHookDispatcher Dispatcher, int? ChatId);
+
+		private TaskHookSurface? ResolveTaskHooks(AgentTask task)
+		{
+			if (task.LaunchParameters.TriggeredChat is not { } chat)
+				return null;
+
+			try
+			{
+				if (chat.Services.GetService<IHookDispatcher>() is not { } dispatcher)
+					return null;
+
+				return new TaskHookSurface(dispatcher, chat.Services.GetService<IChatCreationConfig>()?.ChatId);
+			}
+			catch (ObjectDisposedException)
+			{
+				Log.Debug("The chat of task {TaskId} was closed; its hooks are skipped.", task.Id);
+				return null;
+			}
+		}
+
+		private static string DescribeTarget(AgentTask task) =>
+			TaskHookEvents.ComposeTarget(task.LaunchParameters.SourceId, task.LaunchParameters.TaskName);
+
+		private static TaskHookPayload BuildPayload(AgentTask task, TaskHookSurface hooks, bool isContinue,
+			DateTime launchStartedAt)
+		{
+			var parameters = task.LaunchParameters;
+			var isTerminal = task.Status is not (AgentTaskStatus.Pending or AgentTaskStatus.Executing);
+
+			return new TaskHookPayload
+			{
+				TaskId = task.Id,
+				ParentTaskId = task.Parent?.Id,
+				TaskName = parameters.TaskName,
+				Source = TaskHookEvents.DescribeSource(parameters.Source),
+				SourceId = parameters.SourceId,
+				ChatId = hooks.ChatId,
+				Hidden = parameters.Hidden,
+				TriggeredSender = parameters.TriggeredMessage?.Sender,
+				Model = task.ExecutionInfo?.Model.Descriptor.FullName ?? parameters.ModelName,
+				Behaviour = KebabEnumNames<AgentTaskExecutionBehaviour>.Serialize(parameters.Behaviour),
+				Launch = isContinue ? "continue" : "new",
+				Status = isTerminal ? TaskHookEvents.DescribeStatus(task.Status) : null,
+				BlockReason = task.BlockReason,
+				Error = task.Exception?.Message,
+				ErrorType = task.Exception?.GetType().Name,
+				MessageCount = task.Messages.Count,
+				InitialMessageCount = task.InitialMessageCount,
+				FeedbackIterations = task.FeedbackIterations,
+				SubTaskCount = task.SubTasks.Count,
+				LastGeneratedContent = task.LastGeneratedContent,
+				Usage = task.UsageStatistics,
+				NewUsage = task.NewUsageStatistics,
+				StartedAt = launchStartedAt,
+				CompletedAt = task.CompletedAt,
+				DurationMs = task.CompletedAt is { } completedAt
+					? (completedAt - launchStartedAt).TotalMilliseconds
+					: null
+			};
 		}
 
 		private async Task ExecuteAsync(AgentTask task, AgentTaskExecutionInfo info)
@@ -481,6 +609,25 @@ namespace LLMDesktopAssistant.Agents.Tasks
 					else
 					{
 						task.UsageStatistics = agentMessage.UsageStatistics;
+					}
+
+					if (task.NewUsageStatistics is { } prevNewStats)
+					{
+						task.NewUsageStatistics = new AgentUsageStatistics
+						{
+							InputTokens = prevNewStats.InputTokens + inputTokens,
+							OutputTokens = prevNewStats.OutputTokens + outputTokens,
+							CacheCreateTokens = prevNewStats.CacheCreateTokens + cacheCreateTokens,
+							InputCacheHitTokens = prevNewStats.InputCacheHitTokens + cacheHitTokens,
+							InputCacheMissTokens = prevNewStats.InputCacheMissTokens + cacheMissTokens,
+							TimeToFirstToken = prevNewStats.TimeToFirstToken + ttft.Value,
+							InferenceTime = prevNewStats.InferenceTime + inferenceTime,
+							ExecutionTime = prevNewStats.ExecutionTime + messageExecutionTimer.Elapsed
+						};
+					}
+					else
+					{
+						task.NewUsageStatistics = agentMessage.UsageStatistics;
 					}
 
 					_usageStatsCollector.RecordUsage(info.Model.Descriptor.FullName,

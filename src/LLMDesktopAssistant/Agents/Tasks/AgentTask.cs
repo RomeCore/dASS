@@ -125,7 +125,7 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
-		/// The moment the current launch of this task started.
+		/// The moment the initial launch of this task started (e.g. a task was created and launched for the first time).
 		/// </summary>
 		public DateTime StartedAt
 		{
@@ -143,9 +143,9 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
-		/// The moment a follow-up was last accepted by this task, or <see langword="null"/> when it never was.
+		/// The moment the current launch of this task started (e.g. this task was launched both at first time and subsequent times).
 		/// </summary>
-		public DateTime? ContinuedAt
+		public DateTime ContinuedAt
 		{
 			get;
 			internal set => SetProperty(ref field, value);
@@ -161,10 +161,35 @@ namespace LLMDesktopAssistant.Agents.Tasks
 		}
 
 		/// <summary>
+		/// Why the current launch was blocked before it ran, or <see langword="null"/> when it was not blocked.
+		/// </summary>
+		/// <remarks>
+		/// A block is not an error: this field is the outcome that matters, and <see cref="Exception"/> carries the same
+		/// reason only because a caller that waited receives it as a thrown exception. The field belongs to the status,
+		/// not to whoever produced it - a <c>task.start</c> hook is the only producer today. A later launch of the same
+		/// task clears it.
+		/// </remarks>
+		public string? BlockReason
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
 		/// The usage statistics for this agentic task.
-		/// This is summary for all processed message's usage.
+		/// This is sum for all processed messages usage.
 		/// </summary>
 		public AgentUsageStatistics? UsageStatistics
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		}
+
+		/// <summary>
+		/// The usage statistics for this agentic task, but only for last launch (continuing a task resets it).
+		/// This is sum for all processed messages usage.
+		/// </summary>
+		public AgentUsageStatistics? NewUsageStatistics
 		{
 			get;
 			internal set => SetProperty(ref field, value);
