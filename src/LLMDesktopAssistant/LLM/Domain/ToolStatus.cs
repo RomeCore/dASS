@@ -51,7 +51,7 @@ namespace LLMDesktopAssistant.LLM.Domain
 		Error,
 
 		/// <summary>
-		/// The call was refused before it ran - by a policy decision or by a hook - and the model received the
+		/// The call was refused before it ran - by a policy decision, user or by a hook - and the model received the
 		/// reason instead of a result. Unlike <see cref="Error"/> this is not a malfunction.
 		/// </summary>
 		Rejected,
