@@ -2,14 +2,13 @@ using System.Text;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Services.Tools;
 using LLMDesktopAssistant.Prompting;
 using LLMDesktopAssistant.Prompting.Context;
+using LLMDesktopAssistant.Prompting.Context.Notifications;
 using LLMDesktopAssistant.Prompting.Hooks;
 using LLMDesktopAssistant.Tools.Execution.Support;
 using RCLargeLanguageModels.Messages;
 using RCLargeLanguageModels.Tools;
-using Serilog;
 
 namespace LLMDesktopAssistant.LLM.Services.Prompting
 {
@@ -22,6 +21,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		IAgentEffectiveMessagesProvider effectiveMessagesProvider,
 		IEnumerable<IPromptBuildingHook> promptBuildingHooks,
 		IPromptAnchoredSectionProcessor promptAnchoredSectionProcessor,
+		IPromptNotificationProcessor promptNotificationProcessor,
 		IPromptSupersedeContextProcessor promptSupersedeContextProcessor,
 		IAddonSetCollector<PromptContextInfo> promptContextCollector,
 		IPromptDumpService promptDumpService,
@@ -29,6 +29,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 		) : IAgentPromptComposer
 	{
 		private const string summaryTag = "summary";
+		private const string notificationTag = "notification";
 		private const string systemReminderTag = "system-reminder";
 
 		/// <inheritdoc/>
@@ -48,6 +49,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 			var promptMode = agent.Context.PromptMode;
 			var anchor = await promptAnchoredSectionProcessor.ProcessAsync(agent, effectiveContext,
 				promptContextInfos, cancellationToken);
+			promptNotificationProcessor.Process(agent, effectiveContext);
 			await promptSupersedeContextProcessor.ProcessAsync(agent, effectiveContext,
 				promptContextInfos, cancellationToken);
 
@@ -154,10 +156,11 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						messages = editedMessages;
 				}
 
-				if (branchedMessage.Message is Domain.AssistantMessage assistantMessage && assistantMessage.SenderAgentId == agent.Id)
+				if (branchedMessage.Message is Domain.AssistantMessage assistantMessage
+					&& assistantMessage.SenderAgentId == agent.Id)
 				{
-					var systemReminderSb = new StringBuilder();
-					systemReminderSb.Append($"<{systemReminderTag}>").Append('\n');
+					var scmAppendixSb = new StringBuilder();
+					scmAppendixSb.Append($"<{systemReminderTag}>").Append('\n');
 					int dataCounter = 0;
 
 					// Process SCM announcements carried by hidden messages (rendered at this message).
@@ -165,17 +168,18 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					{
 						foreach (var snapshot in hiddenSnapshots)
 						{
-							systemReminderSb.Append(snapshot).Append('\n');
+							scmAppendixSb.Append(snapshot).Append('\n');
 							dataCounter++;
 						}
 					}
 
 					// Process SCM anchor deltas.
-					if (anchor is not null && branchedMessage.Message.AdditionalData.TryGet<PromptStateDeltaMessageData>() is { } deltas)
+					if (anchor is not null && branchedMessage.Message.AdditionalData
+						.TryGet<PromptStateDeltaMessageData>() is { } deltas)
 					{
 						if (deltas.AnchorId == anchor.Id && !string.IsNullOrWhiteSpace(deltas.Snapshot))
 						{
-							systemReminderSb.Append(deltas.Snapshot).Append('\n');
+							scmAppendixSb.Append(deltas.Snapshot).Append('\n');
 							dataCounter++;
 						}
 					}
@@ -191,7 +195,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						{
 							if (!string.IsNullOrWhiteSpace(stamp.Snapshot))
 							{
-								systemReminderSb.Append(stamp.Snapshot).Append('\n');
+								scmAppendixSb.Append(stamp.Snapshot).Append('\n');
 								dataCounter++;
 							}
 						}
@@ -203,7 +207,7 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 						{
 							if (!string.IsNullOrWhiteSpace(stamp.Snapshot))
 							{
-								systemReminderSb.Append(stamp.Snapshot).Append('\n');
+								scmAppendixSb.Append(stamp.Snapshot).Append('\n');
 								dataCounter++;
 							}
 						}
@@ -229,14 +233,30 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 								var liveContext = await PromptContextBudget.RunAsync(liveExecution, token => liveProvider.ProvideAsync(liveExecution, token), cancellationToken);
 								if (!string.IsNullOrWhiteSpace(liveContext))
 								{
-									systemReminderSb.Append(liveContext).Append('\n');
+									scmAppendixSb.Append(liveContext).Append('\n');
 									dataCounter++;
 								}
 							}
 						}
 					}
 
-					systemReminderSb.Append($"</{systemReminderTag}>");
+					if (dataCounter == 0)
+						scmAppendixSb.Clear();
+					else
+						scmAppendixSb.Append($"</{systemReminderTag}>");
+
+					// Process SCM notifications.
+					if (branchedMessage.Message.AdditionalData.TryGet<PromptNotificationMessageData>() is { } notifications
+						&& !string.IsNullOrWhiteSpace(notifications.Snapshot))
+					{
+						if (dataCounter > 0)
+							scmAppendixSb.Append('\n');
+
+						scmAppendixSb.Append($"<{notificationTag}>").Append('\n');
+						scmAppendixSb.Append(notifications.Snapshot).Append('\n');
+						scmAppendixSb.Append($"</{notificationTag}>");
+						dataCounter++;
+					}
 
 					if (dataCounter > 0)
 					{
@@ -248,14 +268,14 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 							var replacedToolResult = new RCLargeLanguageModels.Tools.ToolResult(lastToolResult.Status,
 								$"""
 								{lastToolResult.Content}
-								{systemReminderSb}
+								{scmAppendixSb}
 								""", lastToolResult.Attachments);
 							result[^1] = new RCLargeLanguageModels.Messages.ToolMessage(replacedToolResult,
 								lastToolMessage.ToolCallId, lastToolMessage.ToolName);
 						}
 						else
 						{
-							result.Add(new RCLargeLanguageModels.Messages.UserMessage(systemReminderSb.ToString()));
+							result.Add(new RCLargeLanguageModels.Messages.UserMessage(scmAppendixSb.ToString()));
 						}
 					}
 				}
@@ -387,11 +407,12 @@ namespace LLMDesktopAssistant.LLM.Services.Prompting
 					&& !string.IsNullOrWhiteSpace(deltas.Snapshot))
 					(snapshots ??= []).Add(deltas.Snapshot);
 
+				if (assistant.AdditionalData.TryGet<PromptNotificationMessageData>(out var notifications))
+					(snapshots ??= []).Add(notifications.Snapshot);
+
 				if (assistant.AdditionalData.TryGet<PromptSupersedeStampMessageData>(out var stamps))
-				{
 					foreach (var stamp in stamps.Stamps)
 						(snapshots ??= []).Add(stamp.Snapshot);
-				}
 
 				if (snapshots is null)
 					continue;

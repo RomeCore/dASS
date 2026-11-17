@@ -73,6 +73,7 @@ internal sealed class PromptComposerHarness
 		new AgentEffectiveMessagesProvider(Chat, _chatSettings, _visibility),
 		_hooks,
 		new PromptAnchoredSectionProcessor(Chat, _chatSettings, Chat.Services),
+		new FakeNotificationProcessor(),
 		new FakeSupersedeProcessor(),
 		new FakePromptContextCollector(_providers),
 		Dump, Chat.Services);
@@ -84,6 +85,13 @@ internal sealed class PromptComposerHarness
 			MessageAuthorIdentity identity = MessageAuthorIdentity.Default,
 			ContextCheckpointKind appliedCheckpoints = ContextCheckpointKind.None)
 			=> new($"QUOTE({message.Message.Content})", []);
+	}
+
+	private sealed class FakeNotificationProcessor : IPromptNotificationProcessor
+	{
+		public void Process(ChatAgentDescriptor agent, EffectiveChatContext effectiveContext)
+		{
+		}
 	}
 
 	private sealed class FakeSupersedeProcessor : IPromptSupersedeContextProcessor
