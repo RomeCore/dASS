@@ -93,7 +93,7 @@ public class LuaApiAsyncLuaManuals : LuaApiBase
 		  table.sort(numbers, greater)
 		  setmetatable(t, { __tostring = formatter })
 		  time.set_timeout(100, callback)
-		  tools = { { name = "calc", callback = handler } }   -- dass.agents callbacks
+		  tools = { { name = "calc", callback = handler } }   -- dass.agent.execute_task callbacks
 
 		Those helpers run the callbacks one at a time, so a loop stays sequential no matter
 		how the callback is declared.

@@ -9,7 +9,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 	public abstract class LuaApiBase : Disposable
 	{
 		/// <summary>
-		/// Gets the name of the Lua namespace for this API. Examples: "dass.agents", "fs", "image", etc.
+		/// Gets the name of the Lua namespace for this API. Examples: "dass.agent", "fs", "image", etc.
 		/// </summary>
 		public virtual string? Namespace => null;
 
