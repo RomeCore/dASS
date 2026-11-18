@@ -26,7 +26,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			{
 				var result = LuaExecutionContext.ToolResult;
 				if (result is null)
-					LuaExecutionContext.ToolResult = new LuaToolResult(ctx.Call);
+					LuaExecutionContext.ToolResult = result = new LuaToolResult(ctx.Call);
 
 				try
 				{
