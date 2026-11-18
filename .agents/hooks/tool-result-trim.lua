@@ -132,7 +132,7 @@ end
 
 -- One plain line instead of a wrapper: the result keeps looking like what the tool produced.
 local marker = string.format(
-	"[... tool-result-trim: %d of %d characters omitted - full text saved to %s, read it with fs-read or fs-grep if the middle matters ...]",
+	"[... tool-result-trim: %d of %d characters omitted - full text saved to %s, read it with fs-read_entry or fs-grep if the middle matters ...]",
 	omitted, #text, fs.replace_separators(path, "/"))
 
 local stub = head .. "\n\n" .. marker
