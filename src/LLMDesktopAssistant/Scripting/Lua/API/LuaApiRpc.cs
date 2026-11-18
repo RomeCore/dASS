@@ -313,10 +313,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		private async Task<LuaTuple> ConnectAsync(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 3)
-			{
 				throw new LuaRuntimeException(
 					"rpc.connect(transport, target, routing, [options]): at least 3 arguments expected.");
-			}
 
 			if (args[0] is not LuaString transportName)
 				throw new LuaRuntimeException("rpc.connect(): the first argument must be a string (transport name).");
