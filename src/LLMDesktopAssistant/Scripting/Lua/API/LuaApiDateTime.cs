@@ -18,6 +18,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			All functions work with datetime tables:
 			  { year, month, day, hour, min, sec, ms, is_dst, utc_offset (minutes), timestamp (unix epoch seconds) }
 
+			The offset is part of the value: the fields are the wall clock in that offset, and the
+			timestamp is the same instant for both. datetime.now() is UTC, datetime.now_local() is
+			local time; format, add and diff keep whichever one the table came with.
+
 			FUNCTIONS:
 
 			--- datetime.now()
@@ -37,7 +41,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns: table or nil on failure
 
 			--- datetime.format(dt, [format])
-			  Formats a datetime table into a string.
+			  Formats a datetime table into a string, using the table's own utc_offset -
+			  a table from now_local prints local time, one from now prints UTC.
 			  Parameters:
 			    - dt: table - datetime table
 			    - format: string (optional) - .NET date format string.
@@ -63,7 +68,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      - minutes: number (optional)
 			      - seconds: number (optional)
 			      - ms: number (optional, milliseconds)
-			  Returns: table - new datetime (original unchanged)
+			  Returns: table - new datetime (original unchanged, same utc_offset)
 
 			--- datetime.utc(dt)
 			  Converts a datetime table to UTC.
@@ -176,7 +181,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			try
 			{
-				return new LuaTuple(new LuaString(dt.Value.ToUniversalTime().ToString(format, CultureInfo.InvariantCulture)));
+				// The offset is part of the value: a table from now_local must not print as UTC.
+				return new LuaTuple(new LuaString(dt.Value.ToString(format, CultureInfo.InvariantCulture)));
 			}
 			catch (Exception ex)
 			{
@@ -194,7 +200,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (dt1 == null || dt2 == null)
 				throw new LuaRuntimeException("datetime.diff(): both arguments must be datetime tables.");
 
-			return new LuaTuple(new LuaNumber((dt1.Value - dt2.Value).TotalSeconds));
+			// Wall clocks differ per offset: subtract the instants, not the clock readings.
+			return new LuaTuple(new LuaNumber((dt1.Value.UtcDateTime - dt2.Value.UtcDateTime).TotalSeconds));
 		}
 
 		private static LuaTuple Add(LuaCallingContext ctx, LuaValue[] args)
@@ -217,15 +224,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var seconds = GetIntField(it, "seconds", 0);
 			var ms = GetIntField(it, "ms", 0);
 
-			var result = dt.ToUniversalTime();
-			if (years != 0 || months != 0)
-			{
-				// Add years/months via calendar (preserving time)
-				var utc = result.DateTime;
-				var newDt = utc.AddYears(years).AddMonths(months);
-				result = new DateTimeOffset(newDt, TimeSpan.Zero);
-			}
-			result = result.AddDays(days).AddHours(hours).AddMinutes(minutes).AddSeconds(seconds).AddMilliseconds(ms);
+			// DateTimeOffset arithmetic keeps the offset, so a local table stays local after the shift.
+			var result = dt.AddYears(years).AddMonths(months)
+				.AddDays(days).AddHours(hours).AddMinutes(minutes).AddSeconds(seconds).AddMilliseconds(ms);
 
 			return new LuaTuple(DateTimeToTable(result));
 		}
@@ -289,6 +290,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (t is null)
 				return null;
 
+			// A bare `{ timestamp = ... }` carries no wall clock, so it can only be read as UTC.
+			var hasClockFields = t.Get("year") is LuaNumber || t.Get("month") is LuaNumber || t.Get("day") is LuaNumber;
+			if (!hasClockFields && t.Get("timestamp") is LuaNumber stamp)
+				return DateTimeOffset.FromUnixTimeSeconds((long)stamp.Value);
+
 			var year = GetIntField(t, "year", 1);
 			var month = GetIntField(t, "month", 1);
 			var day = GetIntField(t, "day", 1);
@@ -296,13 +302,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			var min = GetIntField(t, "min", 0);
 			var sec = GetIntField(t, "sec", 0);
 			var ms = GetIntField(t, "ms", 0);
-
-			// If timestamp is present, prefer it
-			var tsField = t.Get("timestamp");
-			if (tsField is LuaNumber number)
-			{
-				return DateTimeOffset.FromUnixTimeSeconds((long)number.Value);
-			}
 
 			int offsetMinutes = GetIntField(t, "utc_offset", 0);
 			var offset = TimeSpan.FromMinutes(offsetMinutes);
