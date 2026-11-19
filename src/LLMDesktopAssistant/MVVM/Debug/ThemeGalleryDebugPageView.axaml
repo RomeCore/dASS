@@ -5,6 +5,7 @@
 						 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
 						 mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
 						 x:Class="LLMDesktopAssistant.MVVM.Debug.ThemeGalleryDebugPageView"
 						 x:DataType="local:ThemeGalleryDebugPageViewModel">
@@ -42,7 +43,6 @@
 
 				<WrapPanel ItemSpacing="8" LineSpacing="8">
 					<Button Content="Default" />
-					<Button Classes="outline" Content="Outline" />
 					<Button Classes="accent" Content="Accent" />
 					<Button Classes="ghost" Content="Ghost" />
 					<Button Classes="danger" Content="Danger" />
@@ -63,12 +63,24 @@
 					<Button Classes="icon" ToolTip.Tip="More">
 						<ico:VisualIcon Kind="DotsHorizontal" Width="16" Height="16" />
 					</Button>
-					<Button Classes="ghost" Content="Ghost with icon">
+					<Button Classes="ghost">
 						<StackPanel Orientation="Horizontal" Spacing="6">
 							<ico:VisualIcon Kind="Check" Width="14" Height="14" />
 							<TextBlock Text="Ghost with icon" />
 						</StackPanel>
 					</Button>
+				</WrapPanel>
+
+				<TextBlock Classes="hint" Text="RepeatButton (fires while held)" Margin="0,6,0,0" />
+				<WrapPanel ItemSpacing="8" LineSpacing="8">
+					<RepeatButton Content="Hold to repeat" />
+					<RepeatButton Classes="accent" Content="Accent" />
+					<RepeatButton Classes="ghost" Content="Ghost" />
+					<RepeatButton Classes="danger" Content="Danger" />
+					<RepeatButton Classes="icon" ToolTip.Tip="Icon">
+						<ico:VisualIcon Kind="Plus" Width="16" Height="16" />
+					</RepeatButton>
+					<RepeatButton Content="Disabled" IsEnabled="False" />
 				</WrapPanel>
 
 				<!-- Toggle buttons -->
@@ -78,8 +90,6 @@
 				<WrapPanel ItemSpacing="8" LineSpacing="8">
 					<ToggleButton Content="Off" />
 					<ToggleButton Content="On" IsChecked="True" />
-					<ToggleButton Classes="outline" Content="Outline off" />
-					<ToggleButton Classes="outline" Content="Outline on" IsChecked="True" />
 					<ToggleButton Classes="solid" Content="Solid off" />
 					<ToggleButton Classes="solid" Content="Solid on" IsChecked="True" />
 					<ToggleButton IsEnabled="False" Content="Disabled on" IsChecked="True" />
@@ -145,6 +155,107 @@
 					<ToggleSwitch OnContent="On" OffContent="Off" />
 					<ToggleSwitch IsChecked="True" IsEnabled="False" />
 				</StackPanel>
+
+				<!-- Inputs -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.inputs}" />
+
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="hint" Text="TextBox" />
+						<TextBox Text="dASS desktop assistant" />
+						<TextBox PlaceholderText="Add a short description..." />
+						<TextBox PasswordChar="&#x25CF;" Text="s3cret-token" />
+						<TextBox AcceptsReturn="True" TextWrapping="Wrap" Height="72"
+									 Text="A multiline field shares the same frame, radius and focus colour." />
+						<TextBox IsEnabled="False" Text="Not editable" />
+
+						<TextBlock Classes="hint" Text="TextBox.nochrome (host owns the frame)" Margin="0,6,0,0" />
+						<Border Background="{DynamicResource PanelBackground}"
+										BorderBrush="{DynamicResource BorderDefault}"
+										BorderThickness="1"
+										CornerRadius="{DynamicResource RadiusM}"
+										Padding="6,0">
+							<TextBox Classes="nochrome" PlaceholderText="Search..." />
+						</Border>
+					</StackPanel>
+
+					<StackPanel Grid.Column="1" Spacing="6">
+						<TextBlock Classes="hint" Text="ComboBox" />
+						<ComboBox SelectedIndex="1">
+							<ComboBoxItem Content="claude-sonnet-4.5" />
+							<ComboBoxItem Content="gpt-5.1" />
+							<ComboBoxItem Content="deepseek-v3.2" />
+						</ComboBox>
+						<ComboBox PlaceholderText="Pick a model">
+							<ComboBoxItem Content="claude-sonnet-4.5" />
+							<ComboBoxItem Content="gpt-5.1" />
+						</ComboBox>
+						<ComboBox IsEditable="True" Text="custom-model-id" PlaceholderText="Type or pick">
+							<ComboBoxItem Content="claude-sonnet-4.5" />
+							<ComboBoxItem Content="gpt-5.1" />
+						</ComboBox>
+						<ComboBox IsEnabled="False" SelectedIndex="0">
+							<ComboBoxItem Content="claude-sonnet-4.5" />
+						</ComboBox>
+
+						<TextBlock Classes="hint" Text="NumericUpDown" Margin="0,6,0,0" />
+						<NumericUpDown Minimum="0" Maximum="100" Value="42" Increment="1" />
+						<NumericUpDown Minimum="0" Maximum="1000" Value="128" ShowButtonSpinner="False" />
+						<NumericUpDown IsEnabled="False" Value="7" />
+
+						<TextBlock Classes="hint" Text="HighlightTextBox" Margin="0,6,0,0" />
+						<txt:HighlightTextBox Text="ls -la /home/user" />
+						<txt:HighlightTextBox PlaceholderText="Type a shell command..." />
+					</StackPanel>
+				</Grid>
+
+				<!-- Ranges -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.ranges}" />
+
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="hint" Text="Slider" />
+						<Slider Minimum="0" Maximum="100" Value="62" />
+						<Slider Minimum="0" Maximum="1" Value="0.25" />
+						<Slider IsEnabled="False" Value="40" />
+
+						<TextBlock Classes="hint" Text="ProgressBar" Margin="0,6,0,0" />
+						<ProgressBar Minimum="0" Maximum="100" Value="62" />
+						<ProgressBar Minimum="0" Maximum="100" Value="94" Foreground="{DynamicResource StatusSuccessBase}" />
+						<ProgressBar IsIndeterminate="True" />
+					</StackPanel>
+
+					<StackPanel Grid.Column="1" Spacing="6">
+						<TextBlock Classes="hint" Text="ScrollViewer + ScrollBar" />
+						<Border Height="150"
+										Background="{DynamicResource CardBackground}"
+										BorderBrush="{DynamicResource BorderSubtle}"
+										BorderThickness="1"
+										CornerRadius="{DynamicResource RadiusM}">
+							<ScrollViewer VerticalScrollBarVisibility="Auto">
+								<StackPanel Margin="10" Spacing="6">
+									<TextBlock Text="Line 01" />
+									<TextBlock Text="Line 02" />
+									<TextBlock Text="Line 03" />
+									<TextBlock Text="Line 04" />
+									<TextBlock Text="Line 05" />
+									<TextBlock Text="Line 06" />
+									<TextBlock Text="Line 07" />
+									<TextBlock Text="Line 08" />
+									<TextBlock Text="Line 09" />
+									<TextBlock Text="Line 10" />
+									<TextBlock Text="Line 11" />
+									<TextBlock Text="Line 12" />
+								</StackPanel>
+							</ScrollViewer>
+						</Border>
+
+						<TextBlock Classes="hint" Text="AutoCompleteBox" Margin="0,6,0,0" />
+						<AutoCompleteBox PlaceholderText="Type a model..." ItemsSource="{Binding AutocompleteItems}"/>
+					</StackPanel>
+				</Grid>
 
 				<!-- Roles -->
 

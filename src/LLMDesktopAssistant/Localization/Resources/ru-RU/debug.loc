@@ -42,6 +42,8 @@ theme_gallery.toggle_buttons: Кнопки-переключатели
 theme_gallery.checks: Флажки
 theme_gallery.radios: Радиокнопки
 theme_gallery.switches: Переключатели
+theme_gallery.inputs: Поля ввода
+theme_gallery.ranges: Диапазоны и прокрутка
 
 dynamic_viewmodel.title: Динамические VM
 dynamic_viewmodel.load: Загрузить AXAML

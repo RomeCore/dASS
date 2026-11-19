@@ -132,6 +132,11 @@ namespace LLMDesktopAssistant.MVVM.Debug
 		public RangeObservableCollection<ThemeRadiusSample> RadiusSamples { get; } = [];
 
 		/// <summary>
+		/// Gets the items for the autocomplete box.
+		/// </summary>
+		public ImmutableList<string> AutocompleteItems { get; } = ["claude-sonnet-4.5", "gpt-5.1", "deepseek-v3.2", "qwen-3.5-max"];
+
+		/// <summary>
 		/// Gets the one-line summary of the settings the page was built with.
 		/// </summary>
 		public string Summary { get; }
