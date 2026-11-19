@@ -24,3 +24,11 @@ web.install: Install
 
 appearance.title: Appearance
 appearance.show_splash: Show the startup splash screen
+appearance.theme: Theme
+appearance.colors: Palette
+appearance.primary: Primary
+appearance.accent: Accent
+appearance.typography: Type scale
+appearance.font_scale: Scale
+appearance.radius_base: Corner radius
+appearance.radius_base_hint: Base radius

@@ -1,23 +1,111 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.Settings.Application.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 x:Class="LLMDesktopAssistant.Settings.Application.MVVM.ApplicationAppearanceSettingsView"
-			 x:DataType="local:ApplicationAppearanceSettingsViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.Settings.Application.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 x:Class="LLMDesktopAssistant.Settings.Application.MVVM.ApplicationAppearanceSettingsView"
+						 x:DataType="local:ApplicationAppearanceSettingsViewModel">
 
-	<StackPanel Margin="10" Spacing="8">
+	<ScrollViewer VerticalScrollBarVisibility="Auto">
+		<StackPanel Margin="10" Spacing="10">
 
-		<TextBlock Text="{loc:Loc appsettings.appearance.title}"
-				   FontWeight="Bold"
-				   FontSize="{DynamicResource FontSizeL}" />
+			<TextBlock Text="{loc:Loc appsettings.appearance.title}"
+								 FontWeight="Bold"
+								 FontSize="{DynamicResource FontSizeL}" />
 
-		<CheckBox Content="{loc:Loc appsettings.appearance.show_splash}"
-				  IsChecked="{Binding ShowSplash}"
-				  HorizontalAlignment="Left" />
+			<CheckBox Content="{loc:Loc appsettings.appearance.show_splash}"
+								IsChecked="{Binding ShowSplash}"
+								HorizontalAlignment="Left" />
 
-	</StackPanel>
+			<!-- Theme variant -->
+
+			<TextBlock Text="{loc:Loc appsettings.appearance.theme}"
+								 FontWeight="SemiBold"
+								 Margin="0,8,0,0" />
+
+			<ComboBox ItemsSource="{Binding ThemeModes}"
+								SelectedItem="{Binding ThemeMode}"
+								Width="220"
+								HorizontalAlignment="Left" />
+
+			<!-- Palette seeds -->
+
+			<TextBlock Text="{loc:Loc appsettings.appearance.colors}"
+								 FontWeight="SemiBold"
+								 Margin="0,8,0,0" />
+
+			<Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="24">
+
+				<StackPanel Grid.Column="0" Spacing="4">
+					<TextBlock Text="{loc:Loc appsettings.appearance.primary}"
+										 FontSize="{DynamicResource FontSizeS}"
+										 Foreground="{DynamicResource TextSecondary}" />
+					<ColorPicker Color="{Binding Primary, Mode=TwoWay}" Width="180" />
+				</StackPanel>
+
+				<StackPanel Grid.Column="1" Spacing="4">
+					<TextBlock Text="{loc:Loc appsettings.appearance.accent}"
+										 FontSize="{DynamicResource FontSizeS}"
+										 Foreground="{DynamicResource TextSecondary}" />
+					<ColorPicker Color="{Binding Accent, Mode=TwoWay}" Width="180" />
+				</StackPanel>
+
+			</Grid>
+
+			<!-- Type scale -->
+
+			<TextBlock Text="{loc:Loc appsettings.appearance.typography}"
+								 FontWeight="SemiBold"
+								 Margin="0,8,0,0" />
+
+			<ComboBox ItemsSource="{Binding FontProfiles}"
+								SelectedItem="{Binding FontProfile}"
+								Width="220"
+								HorizontalAlignment="Left" />
+
+			<Grid ColumnDefinitions="140,220,Auto" ColumnSpacing="12">
+				<TextBlock Text="{loc:Loc appsettings.appearance.font_scale}"
+									 VerticalAlignment="Center"
+									 FontSize="{DynamicResource FontSizeS}"
+									 Foreground="{DynamicResource TextSecondary}" />
+				<Slider Grid.Column="1"
+								Minimum="0.8" Maximum="1.5"
+								TickFrequency="0.05"
+								IsSnapToTickEnabled="True"
+								Value="{Binding FontScale}" />
+				<TextBlock Grid.Column="2"
+									 Text="{Binding FontScale, StringFormat='{}{0:0.00}'}"
+									 VerticalAlignment="Center"
+									 FontFamily="Consolas"
+									 FontSize="{DynamicResource FontSizeS}" />
+			</Grid>
+
+			<!-- Corner radius -->
+
+			<TextBlock Text="{loc:Loc appsettings.appearance.radius_base}"
+								 FontWeight="SemiBold"
+								 Margin="0,8,0,0" />
+
+			<Grid ColumnDefinitions="140,220,Auto" ColumnSpacing="12">
+				<TextBlock Text="{loc:Loc appsettings.appearance.radius_base_hint}"
+									 VerticalAlignment="Center"
+									 FontSize="{DynamicResource FontSizeS}"
+									 Foreground="{DynamicResource TextSecondary}" />
+				<Slider Grid.Column="1"
+								Minimum="0" Maximum="24"
+								TickFrequency="1"
+								IsSnapToTickEnabled="True"
+								Value="{Binding RadiusBase}" />
+				<TextBlock Grid.Column="2"
+									 Text="{Binding RadiusBase, StringFormat='{}{0:0.#}'}"
+									 VerticalAlignment="Center"
+									 FontFamily="Consolas"
+									 FontSize="{DynamicResource FontSizeS}" />
+			</Grid>
+
+		</StackPanel>
+	</ScrollViewer>
 
 </UserControl>

@@ -2,20 +2,36 @@
 										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 										xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 										xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+										xmlns:theming="using:LLMDesktopAssistant.Styles.Theming"
 										mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 										x:Class="LLMDesktopAssistant.Styles.Resources">
-	
+
   <ResourceDictionary.MergedDictionaries>
+
 		<!-- Resources -->
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Common.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Colors.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/InputCompletion.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Markdown.axaml"/>
-		
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Metrics.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Motion.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Roles.axaml"/>
+
 		<!-- Controls -->
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Button.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleButton.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/CheckBox.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/RadioButton.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleSwitch.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ProgressRing.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/HighlightTextBox.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/SmoothScrollViewer.axaml"/>
+
+		<!-- Theming -->
+		<theming:PaletteProvider/>
+		<theming:TypographyProvider/>
+		<theming:RadiusProvider/>
+
   </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

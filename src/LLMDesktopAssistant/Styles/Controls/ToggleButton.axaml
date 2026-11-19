@@ -1,101 +1,152 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <ToggleButton Content="Unchecked" />
-        <ToggleButton Content="Checked" IsChecked="True" />
-        <ToggleButton Content="Disabled" IsEnabled="False" />
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The checked state is a tint, not a fill: a toggle that is on should read as selected, not as a
+		primary action. The `.solid` variant is the exception, for modes that must shout (recording).
+	-->
 
-  <!-- Base ToggleButton style -->
-  <Style Selector="ToggleButton">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16 8" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="RenderTransform" Value="none" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type ToggleButton}" TargetType="ToggleButton">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="14,7" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="FontWeight" Value="Medium" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="RenderTransform" Value="none" />
+		<Setter Property="Transitions">
+			<Transitions>
+				<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.09" Easing="CubicEaseOut" />
+			</Transitions>
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								RenderTransform="{TemplateBinding RenderTransform}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<Panel>
+						<Border Name="PART_Wash"
+										Background="{DynamicResource ControlBackgroundHover}"
+										CornerRadius="{TemplateBinding CornerRadius}"
+										Opacity="0"
+										IsHitTestVisible="False">
+							<Border.Transitions>
+								<Transitions>
+									<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+								</Transitions>
+							</Border.Transitions>
+						</Border>
+						<Border Name="PART_Focus"
+										BorderBrush="{DynamicResource FocusRing}"
+										BorderThickness="2"
+										CornerRadius="{TemplateBinding CornerRadius}"
+										Opacity="0"
+										IsHitTestVisible="False">
+							<Border.Transitions>
+								<Transitions>
+									<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+								</Transitions>
+							</Border.Transitions>
+						</Border>
+						<ContentPresenter Name="PART_Content"
+											Background="#00000000"
+											Content="{TemplateBinding Content}"
+											ContentTemplate="{TemplateBinding ContentTemplate}"
+											Margin="{TemplateBinding Padding}"
+											HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+											VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+											FontSize="{TemplateBinding FontSize}"
+											FontWeight="{TemplateBinding FontWeight}"
+											Foreground="{TemplateBinding Foreground}"
+											RecognizesAccessKey="True" />
+					</Panel>
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Hover (unchecked) -->
-  <Style Selector="ToggleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^:focus-visible /template/ Border#PART_Focus">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^:pressed">
+			<Setter Property="RenderTransform" Value="scale(0.97)" />
+		</Style>
+		<Style Selector="^:pointerover">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+		<Style Selector="^:checked">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.4" />
+		</Style>
 
-  <!-- Pressed (unchecked) -->
-  <Style Selector="ToggleButton:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#1A1A2E" />
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^.outline">
+			<Setter Property="BorderThickness" Value="1" />
+		</Style>
+		<Style Selector="^.outline:pointerover">
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
+		<Style Selector="^.outline:checked">
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}" />
+		</Style>
 
-  <!-- Disabled (unchecked) -->
-  <Style Selector="ToggleButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#1A1A22" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#666666" />
-  </Style>
+		<Style Selector="^.solid:checked">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBase}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextOnPrimary}" />
+		</Style>
+		<Style Selector="^.solid /template/ Border#PART_Wash">
+			<Setter Property="Background" Value="{DynamicResource PrimaryHover}" />
+		</Style>
 
-  <!-- Checked -->
-  <Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#6C5CE7" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^.icon">
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+		</Style>
+		<Style Selector="^.icon:checked">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+			<Setter Property="BorderBrush" Value="#00000000" />
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
+		</Style>
 
-  <!-- Checked + hover -->
-  <Style Selector="ToggleButton:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#7C6CF7" />
-    <Setter Property="BorderBrush" Value="#7C6CF7" />
-  </Style>
+		<Style Selector="^.segment">
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="28" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+		</Style>
+		<Style Selector="^.segment:checked">
+			<Setter Property="Background" Value="{DynamicResource CardBackground}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+		<Style Selector="^.segment:checked /template/ Border#PART_Root">
+			<Setter Property="BoxShadow" Value="0 1 3 0 #66000000" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Checked + pressed -->
-  <Style Selector="ToggleButton:checked:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#5C4CD7" />
-    <Setter Property="BorderBrush" Value="#5C4CD7" />
-  </Style>
-
-  <!-- Checked + disabled -->
-  <Style Selector="ToggleButton:checked:disabled /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="Foreground" Value="#999999" />
-  </Style>
-
-  <!-- Indeterminate -->
-  <Style Selector="ToggleButton:indeterminate /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#4A3CC7" />
-    <Setter Property="BorderBrush" Value="#4A3CC7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Indeterminate + hover -->
-  <Style Selector="ToggleButton:indeterminate:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#5A4CD7" />
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-  </Style>
-
-  <!-- Indeterminate + disabled -->
-  <Style Selector="ToggleButton:indeterminate:disabled /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#2A2A4E" />
-    <Setter Property="BorderBrush" Value="#2A2A4E" />
-    <Setter Property="Foreground" Value="#777777" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using LLMDesktopAssistant.Styles.Theming;
 using LLMDesktopAssistant.Utils;
 using Serilog;
 
@@ -19,6 +20,11 @@ namespace LLMDesktopAssistant.Settings.Application
 			WriteIndented = true,
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+			Converters =
+			{
+				new JsonStringEnumConverter(),
+				new ColorJsonConverter(),
+			},
 		};
 
 		private static ApplicationStartupSettings? _settings;

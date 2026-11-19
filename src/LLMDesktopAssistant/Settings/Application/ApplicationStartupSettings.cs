@@ -1,3 +1,5 @@
+using Avalonia.Media;
+using LLMDesktopAssistant.Styles.Theming;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Settings.Application
@@ -30,6 +32,61 @@ namespace LLMDesktopAssistant.Settings.Application
 			get => _language;
 			set => SetProperty(ref _language, value);
 		}
+
+		/// <summary>
+		/// Gets or sets the theme variant the application renders with.
+		/// </summary>
+		public ThemeMode ThemeMode
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = ThemeMode.Dark;
+
+		/// <summary>
+		/// Gets or sets the primary seed colour. One seed serves both variants: the ramp derives the
+		/// per-variant lightness steps from its hue and chroma.
+		/// </summary>
+		public Color Primary
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = Color.Parse("#FF8F7FFF");
+
+		/// <summary>
+		/// Gets or sets the accent seed colour, the second highlight family.
+		/// </summary>
+		public Color Accent
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = Color.Parse("#FFD4A017");
+
+		/// <summary>
+		/// Gets or sets the type scale profile.
+		/// </summary>
+		public FontProfile FontProfile
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = OperatingSystem.IsAndroid() ? FontProfile.Compact : FontProfile.Normal;
+
+		/// <summary>
+		/// Gets or sets the accessibility multiplier applied on top of the type scale.
+		/// </summary>
+		public double FontScale
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = 1;
+
+		/// <summary>
+		/// Gets or sets the base corner radius, which is the <c>M</c> size of the radius vocabulary.
+		/// </summary>
+		public double RadiusBase
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = 8;
 
 		private int? _windowX = null;
 		/// <summary>

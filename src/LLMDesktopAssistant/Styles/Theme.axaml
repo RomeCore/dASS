@@ -6,12 +6,8 @@
 				x:Class="LLMDesktopAssistant.Styles.Theme">
 	
 	<!-- Controls -->
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Button.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TextBox.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ComboBox.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/CheckBox.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/RadioButton.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleSwitch.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Slider.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ScrollBar.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ProgressBar.axaml" />
@@ -26,7 +22,6 @@
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToolTip.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Expander.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/NumericUpDown.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleButton.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/RepeatButton.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/HyperlinkButton.axaml" />
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/SplitButton.axaml" />

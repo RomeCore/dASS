@@ -1,165 +1,103 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <CheckBox>Unchecked</CheckBox>
-        <CheckBox IsChecked="True">Checked</CheckBox>
-        <CheckBox IsThreeState="True" IsChecked="{x:Null}">Indeterminate</CheckBox>
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The mark is a VisualIcon, not a hand-drawn path: a stroked path inside a Viewbox is clipped by
+		the box it is measured in, and clipping the glyph is exactly what makes a check look broken.
+	-->
 
-  <!-- Base CheckBox style -->
-  <Style Selector="CheckBox">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Padding" Value="8 0 0 0" />
-    <Setter Property="MinHeight" Value="32" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type CheckBox}" TargetType="CheckBox">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid ColumnDefinitions="Auto,*" Background="#00000000">
+					<Border Name="PART_Box"
+									Width="18"
+									Height="18"
+									VerticalAlignment="Center"
+									CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource PanelBackground}"
+									BorderBrush="{DynamicResource BorderStrong}"
+									BorderThickness="1">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+								<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+						<Panel>
+							<ico:VisualIcon Name="PART_Check"
+															Kind="Check"
+															Width="12"
+															Height="12"
+															HorizontalAlignment="Center"
+															VerticalAlignment="Center"
+															Foreground="{DynamicResource TextOnPrimary}"
+															Opacity="0"
+															RenderTransform="scale(0.5)">
+								<ico:VisualIcon.Transitions>
+									<Transitions>
+										<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+										<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" Easing="CubicEaseOut" />
+									</Transitions>
+								</ico:VisualIcon.Transitions>
+							</ico:VisualIcon>
+							<ico:VisualIcon Name="PART_Dash"
+															Kind="Minus"
+															Width="12"
+															Height="12"
+															HorizontalAlignment="Center"
+															VerticalAlignment="Center"
+															Foreground="{DynamicResource TextOnPrimary}"
+															Opacity="0"
+															RenderTransform="scale(0.5)">
+								<ico:VisualIcon.Transitions>
+									<Transitions>
+										<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+										<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.16" Easing="CubicEaseOut" />
+									</Transitions>
+								</ico:VisualIcon.Transitions>
+							</ico:VisualIcon>
+						</Panel>
+					</Border>
+					<ContentPresenter Name="PART_ContentPresenter"
+														Grid.Column="1"
+														Background="#00000000"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														Margin="8,0,0,0"
+														VerticalAlignment="Center"
+														RecognizesAccessKey="True" />
+				</Grid>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Checkbox square (NormalRectangle) - Normal unchecked -->
-  <Style Selector="CheckBox /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="2" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Height" Value="20" />
-    <Setter Property="Width" Value="20" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Box">
+			<Setter Property="BorderBrush" Value="{DynamicResource FocusRing}" />
+		</Style>
+		<Style Selector="^:checked /template/ Border#PART_Box">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBase}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+		<Style Selector="^:checked /template/ ico|VisualIcon#PART_Check">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="RenderTransform" Value="scale(1)" />
+		</Style>
+		<Style Selector="^:indeterminate /template/ Border#PART_Box">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}" />
+		</Style>
+		<Style Selector="^:indeterminate /template/ ico|VisualIcon#PART_Dash">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="RenderTransform" Value="scale(1)" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Check glyph - unchecked -->
-  <Style Selector="CheckBox /template/ Path#CheckGlyph">
-    <Setter Property="Fill" Value="#FFFFFF" />
-    <Setter Property="Opacity" Value="0" />
-    <Setter Property="Data" Value="M5.5 10.586 1.707 6.793A1 1 0 0 0 .293 8.207l4.5 4.5a1 1 0 0 0 1.414 0l11-11A1 1 0 0 0 15.793.293L5.5 10.586Z" />
-    <Setter Property="Width" Value="9" />
-    <Setter Property="Height" Value="9" />
-    <Setter Property="Stretch" Value="Uniform" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <!-- Checked state -->
-  <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#6C5CE7" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-  </Style>
-
-  <Style Selector="CheckBox:checked /template/ Path#CheckGlyph">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
-
-  <Style Selector="CheckBox:checked">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Indeterminate state -->
-  <Style Selector="CheckBox:indeterminate">
-    <Setter Property="Foreground" Value="#CCCCCC" />
-  </Style>
-
-  <Style Selector="CheckBox:indeterminate /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#4A3CC7" />
-    <Setter Property="BorderBrush" Value="#4A3CC7" />
-  </Style>
-
-  <Style Selector="CheckBox:indeterminate /template/ Path#CheckGlyph">
-    <Setter Property="Data" Value="M2 2h12v12H2z" />
-    <Setter Property="Width" Value="7" />
-    <Setter Property="Height" Value="7" />
-    <Setter Property="Opacity" Value="1" />
-    <Setter Property="Fill" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Indeterminate + hover -->
-  <Style Selector="CheckBox:indeterminate:pointerover /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#5A4CD7" />
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-  </Style>
-
-  <!-- Indeterminate + pressed -->
-  <Style Selector="CheckBox:indeterminate:pressed /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#3A2CB7" />
-    <Setter Property="BorderBrush" Value="#3A2CB7" />
-  </Style>
-
-  <!-- Indeterminate + disabled -->
-  <Style Selector="CheckBox:indeterminate:disabled /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#2A2A4E" />
-    <Setter Property="BorderBrush" Value="#2A2A4E" />
-  </Style>
-
-  <Style Selector="CheckBox:indeterminate:disabled /template/ Path#CheckGlyph">
-    <Setter Property="Fill" Value="#777777" />
-  </Style>
-
-  <!-- Hover (unchecked) -->
-  <Style Selector="CheckBox:pointerover /template/ Border#NormalRectangle">
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
-
-  <Style Selector="CheckBox:pointerover">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Hover (checked) -->
-  <Style Selector="CheckBox:checked:pointerover /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#7C6CF7" />
-    <Setter Property="BorderBrush" Value="#7C6CF7" />
-  </Style>
-
-  <!-- Pressed (unchecked) -->
-  <Style Selector="CheckBox:pressed /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#1A1A2E" />
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-  </Style>
-
-  <!-- Pressed (checked) -->
-  <Style Selector="CheckBox:checked:pressed /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#5C4CD7" />
-    <Setter Property="BorderBrush" Value="#5C4CD7" />
-  </Style>
-
-  <!-- Disabled (unchecked) -->
-  <Style Selector="CheckBox:disabled /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#1A1A22" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-  </Style>
-
-  <Style Selector="CheckBox:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-  <!-- Disabled (checked) -->
-  <Style Selector="CheckBox:checked:disabled /template/ Border#NormalRectangle">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-  </Style>
-
-  <Style Selector="CheckBox:checked:disabled /template/ Path#CheckGlyph">
-    <Setter Property="Fill" Value="#888888" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

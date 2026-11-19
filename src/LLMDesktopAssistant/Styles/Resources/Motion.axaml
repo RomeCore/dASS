@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:anim="using:Avalonia.Animation.Easings">
+
+	<!--
+		The motion vocabulary: the easings a template may use. Durations live next to the other static
+		measurements in Metrics.axaml.
+	-->
+
+	<anim:CubicEaseInOut x:Key="EasingStandard" />
+	<anim:CubicEaseOut x:Key="EasingOut" />
+
+</ResourceDictionary>

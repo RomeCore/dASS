@@ -1,181 +1,105 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <StackPanel Margin="20" Width="250" Spacing="24">
-      <StackPanel Spacing="12">
-        <ToggleSwitch/>
-        <ToggleSwitch IsChecked="True" />
-        <ToggleSwitch Content="Header" OffContent="Off" OnContent="On"/>
-      </StackPanel>
-    </StackPanel>
-  </Design.PreviewWith>
+	<!--
+		The knob glides because of KnobTransitions, a property of ToggleSwitch itself: the control moves
+		Canvas.Left and the theme supplies the transition. Without the setter the knob teleports, so the
+		theme is the only place this animation can live.
+	-->
 
-  <!-- Base ToggleSwitch style -->
-  <Style Selector="ToggleSwitch">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="KnobTransitions">
-      <Transitions>
-        <DoubleTransition Easing="CubicEaseOut" Property="Canvas.Left" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type ToggleSwitch}" TargetType="ToggleSwitch">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="KnobTransitions">
+			<Transitions>
+				<DoubleTransition Property="Canvas.Left" Duration="0:0:0.18" Easing="CubicEaseOut" />
+			</Transitions>
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid ColumnDefinitions="Auto,Auto" Background="#00000000">
+					<Border Name="PART_Track"
+									Width="40"
+									Height="22"
+									VerticalAlignment="Center"
+									CornerRadius="11"
+									Background="{DynamicResource PanelBackground}"
+									BorderBrush="{DynamicResource BorderStrong}"
+									BorderThickness="1">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut" />
+								<BrushTransition Property="BorderBrush" Duration="0:0:0.18" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+					</Border>
+					<Canvas Name="PART_SwitchKnob"
+									Width="18"
+									Height="18"
+									Margin="2,0,0,0"
+									HorizontalAlignment="Left"
+									VerticalAlignment="Center">
+						<Grid Name="PART_MovingKnobs" Width="18" Height="18">
+							<Ellipse Width="14"
+											 Height="14"
+											 HorizontalAlignment="Center"
+											 VerticalAlignment="Center"
+											 Fill="{DynamicResource TextSecondary}">
+								<Ellipse.Transitions>
+									<Transitions>
+										<BrushTransition Property="Fill" Duration="0:0:0.18" Easing="CubicEaseOut" />
+									</Transitions>
+								</Ellipse.Transitions>
+							</Ellipse>
+						</Grid>
+					</Canvas>
+					<ContentPresenter Name="PART_OnContentPresenter"
+														Grid.Column="1"
+														Background="#00000000"
+														Content="{TemplateBinding OnContent}"
+														ContentTemplate="{TemplateBinding OnContentTemplate}"
+														Margin="10,0,0,0"
+														VerticalAlignment="Center" />
+					<ContentPresenter Name="PART_OffContentPresenter"
+														Grid.Column="1"
+														Background="#00000000"
+														Content="{TemplateBinding OffContent}"
+														ContentTemplate="{TemplateBinding OffContentTemplate}"
+														Margin="10,0,0,0"
+														VerticalAlignment="Center" />
+				</Grid>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- OuterBorder (Off track) -->
-  <Style Selector="ToggleSwitch /template/ Border#OuterBorder">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="10" />
-    <Setter Property="Width" Value="40" />
-    <Setter Property="Height" Value="20" />
-    <Setter Property="Opacity" Value="1" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+		<Style Selector="^:checked /template/ Border#PART_Track">
+			<Setter Property="Background" Value="{DynamicResource PrimaryBase}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+		<Style Selector="^:checked /template/ Ellipse">
+			<Setter Property="Fill" Value="{DynamicResource TextOnPrimary}" />
+		</Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Track">
+			<Setter Property="BorderBrush" Value="{DynamicResource FocusRing}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
 
-  <!-- SwitchKnobBounds (On track) -->
-  <Style Selector="ToggleSwitch /template/ Border#SwitchKnobBounds">
-    <Setter Property="Background" Value="#6C5CE7" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="10" />
-    <Setter Property="Width" Value="40" />
-    <Setter Property="Height" Value="20" />
-    <Setter Property="Opacity" Value="0" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+		<!-- Both presenters live in the same cell; the state, not the section, decides which one shows. -->
+		<Style Selector="^:checked /template/ ContentPresenter#PART_OnContentPresenter">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^:checked /template/ ContentPresenter#PART_OffContentPresenter">
+			<Setter Property="Opacity" Value="0" />
+		</Style>
+		<Style Selector="^:unchecked /template/ ContentPresenter#PART_OnContentPresenter">
+			<Setter Property="Opacity" Value="0" />
+		</Style>
+		<Style Selector="^:unchecked /template/ ContentPresenter#PART_OffContentPresenter">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+	</ControlTheme>
 
-  <!-- SwitchKnobOff (knob when off) -->
-  <Style Selector="ToggleSwitch /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Fill" Value="#D0D0E0" />
-    <Setter Property="Width" Value="10" />
-    <Setter Property="Height" Value="10" />
-    <Setter Property="Opacity" Value="1" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Fill" Duration="0:0:0.2" />
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <!-- SwitchKnobOn (knob when on) -->
-  <Style Selector="ToggleSwitch /template/ Ellipse#SwitchKnobOn">
-    <Setter Property="Fill" Value="#FFFFFF" />
-    <Setter Property="Width" Value="10" />
-    <Setter Property="Height" Value="10" />
-    <Setter Property="Opacity" Value="0" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Fill" Duration="0:0:0.2" />
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <!-- Checked state -->
-  <Style Selector="ToggleSwitch:checked /template/ Border#OuterBorder">
-    <Setter Property="Opacity" Value="0" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Opacity" Value="0" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked /template/ Ellipse#SwitchKnobOn">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
-
-  <!-- Unchecked state -->
-  <Style Selector="ToggleSwitch:unchecked /template/ Border#OuterBorder">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:unchecked /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:unchecked /template/ Ellipse#SwitchKnobOn">
-    <Setter Property="Opacity" Value="0" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:unchecked /template/ Border#SwitchKnobBounds">
-    <Setter Property="Opacity" Value="0" />
-  </Style>
-
-  <!-- Hover (off) -->
-  <Style Selector="ToggleSwitch:pointerover /template/ Border#OuterBorder">
-    <Setter Property="Background" Value="#4A4A6E" />
-    <Setter Property="BorderBrush" Value="#4A4A6E" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:pointerover /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Fill" Value="#E0E0F0" />
-  </Style>
-
-  <!-- Hover (on) -->
-  <Style Selector="ToggleSwitch:checked:pointerover /template/ Border#SwitchKnobBounds">
-    <Setter Property="Background" Value="#7C6CF7" />
-    <Setter Property="BorderBrush" Value="#7C6CF7" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked:pointerover /template/ Ellipse#SwitchKnobOn">
-    <Setter Property="Fill" Value="#F0F0FF" />
-  </Style>
-
-  <!-- Pressed (off) -->
-  <Style Selector="ToggleSwitch:pressed /template/ Border#OuterBorder">
-    <Setter Property="Background" Value="#2A2A4E" />
-    <Setter Property="BorderBrush" Value="#2A2A4E" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:pressed /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Fill" Value="#B0B0C0" />
-  </Style>
-
-  <!-- Pressed (on) -->
-  <Style Selector="ToggleSwitch:checked:pressed /template/ Border#SwitchKnobBounds">
-    <Setter Property="Background" Value="#5C4CD7" />
-    <Setter Property="BorderBrush" Value="#5C4CD7" />
-  </Style>
-
-  <!-- Disabled -->
-  <Style Selector="ToggleSwitch:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:disabled /template/ Border#OuterBorder">
-    <Setter Property="Background" Value="#1A1A22" />
-    <Setter Property="BorderBrush" Value="#1A1A22" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:disabled /template/ Ellipse#SwitchKnobOff">
-    <Setter Property="Fill" Value="#3A3A4E" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked:disabled /template/ Border#SwitchKnobBounds">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-  </Style>
-
-  <Style Selector="ToggleSwitch:checked:disabled /template/ Ellipse#SwitchKnobOn">
-    <Setter Property="Fill" Value="#888888" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

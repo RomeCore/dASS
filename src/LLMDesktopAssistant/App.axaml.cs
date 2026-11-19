@@ -10,6 +10,7 @@ using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Services.Instances;
 using LLMDesktopAssistant.Settings.Application;
 using LLMDesktopAssistant.Startup;
+using LLMDesktopAssistant.Styles.Theming;
 using LLMDesktopAssistant.Startup.Stages;
 using Microsoft.Extensions.Logging;
 using Serilog;
@@ -61,6 +62,9 @@ namespace LLMDesktopAssistant
 			// Directories, the logger and the localization singleton are already configured by
 			// SharedInitialization; the reflection scan and the container are startup stages.
 			AvaloniaXamlLoader.Load(this);
+
+			// The variant comes from the startup settings, so it is applied before the splash is built.
+			ThemeManager.ApplyMode();
 		}
 
 		public static MainViewModel? MainViewModel { get; private set; }

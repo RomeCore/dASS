@@ -24,3 +24,11 @@ web.install: Установить
 
 appearance.title: Внешний вид
 appearance.show_splash: Показывать заставку при запуске
+appearance.theme: Тема
+appearance.colors: Палитра
+appearance.primary: Основной
+appearance.accent: Акцент
+appearance.typography: Шкала шрифтов
+appearance.font_scale: Множитель
+appearance.radius_base: Закругление
+appearance.radius_base_hint: Базовый радиус
