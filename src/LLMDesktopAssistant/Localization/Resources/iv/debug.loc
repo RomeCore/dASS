@@ -31,6 +31,18 @@ addon_cards.title: Addon cards
 addon_cards.reset_all: Reset all
 addon_cards.hint: Toggle the header controls, click the tags, expand the blocks and details to see the card react.
 
+theme_gallery.title: Theme gallery
+theme_gallery.rungs: Colour rungs
+theme_gallery.roles: Roles
+theme_gallery.typography: Type scale
+theme_gallery.radii: Corner radii
+theme_gallery.controls: Controls
+theme_gallery.buttons: Buttons
+theme_gallery.toggle_buttons: Toggle buttons
+theme_gallery.checks: Check boxes
+theme_gallery.radios: Radio buttons
+theme_gallery.switches: Switches
+
 dynamic_viewmodel.title: Dynamic view models
 dynamic_viewmodel.load: Load AXAML
 dynamic_viewmodel.reset: Reset sample

@@ -69,6 +69,11 @@ public class DebugPagesViewModel : ViewModelBase
 				() => new HighlightTextBoxDebugPageViewModel()));
 
 		DebugTree.Add(
+			new DebugLeafNode(LocalizationManager.LocalizeStatic("debug.theme_gallery.title"),
+				MaterialIconKind.Palette,
+				() => new ThemeGalleryDebugPageViewModel()));
+
+		DebugTree.Add(
 			new DebugLeafNode(LocalizationManager.LocalizeStatic("debug.dynamic_viewmodel.title"),
 				MaterialIconKind.FileCode,
 				() => new DynamicViewModelDebugPageViewModel()));

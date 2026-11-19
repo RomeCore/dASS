@@ -1,0 +1,278 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.MVVM.Debug"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
+						 x:Class="LLMDesktopAssistant.MVVM.Debug.ThemeGalleryDebugPageView"
+						 x:DataType="local:ThemeGalleryDebugPageViewModel">
+
+	<UserControl.Styles>
+		<Style Selector="TextBlock.section">
+			<Setter Property="FontSize" Value="{DynamicResource FontSizeL}" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+		</Style>
+		<Style Selector="TextBlock.hint">
+			<Setter Property="FontSize" Value="{DynamicResource FontSizeS}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextTertiary}" />
+		</Style>
+	</UserControl.Styles>
+
+	<DockPanel Margin="8">
+
+		<Border DockPanel.Dock="Top"
+						BorderBrush="{DynamicResource BorderDefault}"
+						BorderThickness="0,0,0,1"
+						Padding="0,0,0,6"
+						Margin="0,0,0,8">
+			<TextBlock Text="{Binding Summary}"
+								 FontSize="{DynamicResource FontSizeS}"
+								 Foreground="{DynamicResource TextTertiary}"
+								 TextWrapping="Wrap" />
+		</Border>
+
+		<ScrollViewer VerticalScrollBarVisibility="Auto">
+			<StackPanel Spacing="18">
+
+				<!-- Buttons -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.buttons}" />
+
+				<WrapPanel ItemSpacing="8" LineSpacing="8">
+					<Button Content="Default" />
+					<Button Classes="outline" Content="Outline" />
+					<Button Classes="accent" Content="Accent" />
+					<Button Classes="ghost" Content="Ghost" />
+					<Button Classes="danger" Content="Danger" />
+					<Button IsEnabled="False" Content="Disabled" />
+					<Button IsEnabled="False" Classes="accent" Content="Disabled accent" />
+				</WrapPanel>
+
+				<WrapPanel ItemSpacing="4" LineSpacing="8">
+					<Button Classes="icon" ToolTip.Tip="Add">
+						<ico:VisualIcon Kind="Plus" Width="16" Height="16" />
+					</Button>
+					<Button Classes="icon" ToolTip.Tip="Search">
+						<ico:VisualIcon Kind="Magnify" Width="16" Height="16" />
+					</Button>
+					<Button Classes="icon" ToolTip.Tip="Delete">
+						<ico:VisualIcon Kind="DeleteOutline" Width="16" Height="16" />
+					</Button>
+					<Button Classes="icon" ToolTip.Tip="More">
+						<ico:VisualIcon Kind="DotsHorizontal" Width="16" Height="16" />
+					</Button>
+					<Button Classes="ghost" Content="Ghost with icon">
+						<StackPanel Orientation="Horizontal" Spacing="6">
+							<ico:VisualIcon Kind="Check" Width="14" Height="14" />
+							<TextBlock Text="Ghost with icon" />
+						</StackPanel>
+					</Button>
+				</WrapPanel>
+
+				<!-- Toggle buttons -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.toggle_buttons}" />
+
+				<WrapPanel ItemSpacing="8" LineSpacing="8">
+					<ToggleButton Content="Off" />
+					<ToggleButton Content="On" IsChecked="True" />
+					<ToggleButton Classes="outline" Content="Outline off" />
+					<ToggleButton Classes="outline" Content="Outline on" IsChecked="True" />
+					<ToggleButton Classes="solid" Content="Solid off" />
+					<ToggleButton Classes="solid" Content="Solid on" IsChecked="True" />
+					<ToggleButton IsEnabled="False" Content="Disabled on" IsChecked="True" />
+				</WrapPanel>
+
+				<StackPanel Orientation="Horizontal" Spacing="12">
+					<Border Background="{DynamicResource PanelBackground}"
+									CornerRadius="{DynamicResource RadiusM}"
+									Padding="2"
+									HorizontalAlignment="Left">
+						<StackPanel Orientation="Horizontal" Spacing="2">
+							<ToggleButton Classes="segment" IsChecked="True" ToolTip.Tip="Bold">
+								<ico:VisualIcon Kind="FormatBold" Width="16" Height="16" />
+							</ToggleButton>
+							<ToggleButton Classes="segment" ToolTip.Tip="Italic">
+								<ico:VisualIcon Kind="FormatItalic" Width="16" Height="16" />
+							</ToggleButton>
+							<ToggleButton Classes="segment" ToolTip.Tip="Underline">
+								<ico:VisualIcon Kind="FormatUnderline" Width="16" Height="16" />
+							</ToggleButton>
+						</StackPanel>
+					</Border>
+
+					<StackPanel Orientation="Horizontal" Spacing="4">
+						<ToggleButton Classes="icon" IsChecked="True" ToolTip.Tip="Star">
+							<ico:VisualIcon Kind="Star" Width="16" Height="16" />
+						</ToggleButton>
+						<ToggleButton Classes="icon" ToolTip.Tip="Lock">
+							<ico:VisualIcon Kind="Lock" Width="16" Height="16" />
+						</ToggleButton>
+						<ToggleButton Classes="icon" ToolTip.Tip="Eye">
+							<ico:VisualIcon Kind="Eye" Width="16" Height="16" />
+						</ToggleButton>
+					</StackPanel>
+				</StackPanel>
+
+				<!-- Checks and radios -->
+
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.checks}" />
+						<CheckBox Content="Checked" IsChecked="True" />
+						<CheckBox Content="Unchecked" />
+						<CheckBox Content="Indeterminate" IsChecked="{x:Null}" />
+						<CheckBox Content="Disabled checked" IsChecked="True" IsEnabled="False" />
+						<CheckBox Content="Disabled" IsEnabled="False" />
+					</StackPanel>
+
+					<StackPanel Grid.Column="1" Spacing="6">
+						<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.radios}" />
+						<RadioButton GroupName="gallery-density" Content="Checked" IsChecked="True" />
+						<RadioButton GroupName="gallery-density" Content="Unchecked" />
+						<RadioButton GroupName="gallery-density" Content="Disabled" IsEnabled="False" />
+					</StackPanel>
+				</Grid>
+
+				<!-- Switches -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.switches}" />
+
+				<StackPanel Orientation="Horizontal" Spacing="16">
+					<ToggleSwitch IsChecked="True" OnContent="On" OffContent="Off" />
+					<ToggleSwitch OnContent="On" OffContent="Off" />
+					<ToggleSwitch IsChecked="True" IsEnabled="False" />
+				</StackPanel>
+
+				<!-- Roles -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.roles}" />
+
+				<WrapPanel ItemSpacing="8" LineSpacing="8">
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource WindowBackground}" ToolTip.Tip="WindowBackground" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource PanelBackground}" ToolTip.Tip="PanelBackground" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource CardBackground}" ToolTip.Tip="CardBackground" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource ControlBackgroundPressed}" ToolTip.Tip="ControlBackgroundPressed" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource BorderDefault}" ToolTip.Tip="BorderDefault" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource PrimaryBase}" ToolTip.Tip="PrimaryBase" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource PrimarySubtle}" ToolTip.Tip="PrimarySubtle" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource AccentBase}" ToolTip.Tip="AccentBase" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource StatusSuccessBase}" ToolTip.Tip="StatusSuccessBase" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource StatusWarningBase}" ToolTip.Tip="StatusWarningBase" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource StatusErrorBase}" ToolTip.Tip="StatusErrorBase" />
+					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
+									Background="{DynamicResource StatusDangerBase}" ToolTip.Tip="StatusDangerBase" />
+				</WrapPanel>
+
+				<!-- Rungs -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.rungs}" />
+
+				<StackPanel Spacing="4">
+					<TextBlock Classes="hint" Text="Light" />
+					<ItemsControl ItemsSource="{Binding LightRungs}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel ItemSpacing="4" LineSpacing="4" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="local:ThemeSwatch">
+								<Border Width="26" Height="26"
+												CornerRadius="{DynamicResource RadiusS}"
+												Background="{Binding Brush}"
+												ToolTip.Tip="{Binding Name}" />
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<StackPanel Spacing="4">
+					<TextBlock Classes="hint" Text="Dark" />
+					<ItemsControl ItemsSource="{Binding DarkRungs}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel ItemSpacing="4" LineSpacing="4" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="local:ThemeSwatch">
+								<Border Width="26" Height="26"
+												CornerRadius="{DynamicResource RadiusS}"
+												Background="{Binding Brush}"
+												ToolTip.Tip="{Binding Name}" />
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</StackPanel>
+
+				<!-- Type scale -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.typography}" />
+
+				<ItemsControl ItemsSource="{Binding TypeSamples}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="local:ThemeTypeSample">
+							<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12" Margin="0,2">
+								<TextBlock Grid.Column="0"
+													 Width="40"
+													 Text="{Binding Name}"
+													 Classes="hint"
+													 VerticalAlignment="Center" />
+								<TextBlock Grid.Column="1"
+													 Text="{Binding Sample}"
+													 FontSize="{Binding Size}"
+													 LineHeight="{Binding LineHeight}" />
+								<TextBlock Grid.Column="2"
+													 Text="{Binding Details}"
+													 Classes="hint"
+													 VerticalAlignment="Center" />
+							</Grid>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+
+				<!-- Radii -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.radii}" />
+
+				<ItemsControl ItemsSource="{Binding RadiusSamples}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel ItemSpacing="12" LineSpacing="12" />
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="local:ThemeRadiusSample">
+							<StackPanel Spacing="4">
+								<Border Width="64" Height="40"
+												Background="{DynamicResource CardBackground}"
+												BorderBrush="{DynamicResource BorderDefault}"
+												BorderThickness="1"
+												CornerRadius="{Binding Radius}" />
+								<TextBlock Text="{Binding Name}" Classes="hint" />
+								<TextBlock Text="{Binding Details}" Classes="hint" />
+							</StackPanel>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+
+			</StackPanel>
+		</ScrollViewer>
+
+	</DockPanel>
+
+</UserControl>

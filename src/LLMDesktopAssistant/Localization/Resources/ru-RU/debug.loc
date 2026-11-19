@@ -31,6 +31,18 @@ addon_cards.title: Карточки аддонов
 addon_cards.reset_all: Сбросить всё
 addon_cards.hint: Переключай контролы в шапке, кликай по тегам, разворачивай блоки и детали - карточка живая.
 
+theme_gallery.title: Галерея темы
+theme_gallery.rungs: Ступени
+theme_gallery.roles: Роли
+theme_gallery.typography: Шкала шрифтов
+theme_gallery.radii: Закругления
+theme_gallery.controls: Контролы
+theme_gallery.buttons: Кнопки
+theme_gallery.toggle_buttons: Кнопки-переключатели
+theme_gallery.checks: Флажки
+theme_gallery.radios: Радиокнопки
+theme_gallery.switches: Переключатели
+
 dynamic_viewmodel.title: Динамические VM
 dynamic_viewmodel.load: Загрузить AXAML
 dynamic_viewmodel.reset: Сбросить пример
