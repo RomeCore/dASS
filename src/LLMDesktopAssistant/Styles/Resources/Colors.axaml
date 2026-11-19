@@ -56,6 +56,16 @@
 	<SolidColorBrush x:Key="TerminalBarForeground" Color="#FFB8B8C0" />
 	<SolidColorBrush x:Key="TerminalBarBorderBrush" Color="#FF3A3A42" />
 	<SolidColorBrush x:Key="TerminalCardBorderBrush" Color="#FF3A3A42" />
+	
+	<!-- Slash-command highlight palette (see SlashCommandHighlightPalette). Overridable per theme. -->
+	<SolidColorBrush x:Key="SlashCommandKnownBrush" Color="#FF6BC1"/>
+	<SolidColorBrush x:Key="SlashCommandUnknownBrush" Color="#F44747"/>
+	<SolidColorBrush x:Key="SlashCommandAmbiguousBrush" Color="#FFA500"/>
+	<SolidColorBrush x:Key="SlashCommandArgumentBrush" Color="#8C8C8C"/>
+	<SolidColorBrush x:Key="SlashCommandArgumentKeyBrush" Color="#2ECC71"/>
+	<SolidColorBrush x:Key="SlashCommandArgumentEqualsBrush" Color="#1E8E5A"/>
+	<SolidColorBrush x:Key="SlashCommandQuoteBrush" Color="#B9B9CC"/>
+	<SolidColorBrush x:Key="SlashCommandArgumentBackgroundBrush" Color="#268C8C8C"/>
 
 	<!-- Error / danger -->
 	<Color x:Key="ErrorColor">#FF4444</Color>

@@ -1,9 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-					xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-					xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
-					xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
-					xmlns:conv="using:Avalonia.Data.Converters">
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+										xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
+										xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
+										xmlns:conv="using:Avalonia.Data.Converters">
 
 	<!--
 		Theme for HighlightTextBox: a copy of the Fluent TextBox template structure
@@ -12,16 +12,6 @@
 		(:disabled/:pointerover/:focus/:error) mirror the Fluent styles and target
 		Border#PART_BorderElement.
 	-->
-
-	<!-- Slash-command highlight palette (see SlashCommandHighlightPalette). Overridable per theme. -->
-	<SolidColorBrush x:Key="SlashCommandKnownBrush" Color="#FF6BC1"/>
-	<SolidColorBrush x:Key="SlashCommandUnknownBrush" Color="#F44747"/>
-	<SolidColorBrush x:Key="SlashCommandAmbiguousBrush" Color="#FFA500"/>
-	<SolidColorBrush x:Key="SlashCommandArgumentBrush" Color="#8C8C8C"/>
-	<SolidColorBrush x:Key="SlashCommandArgumentKeyBrush" Color="#2ECC71"/>
-	<SolidColorBrush x:Key="SlashCommandArgumentEqualsBrush" Color="#1E8E5A"/>
-	<SolidColorBrush x:Key="SlashCommandQuoteBrush" Color="#B9B9CC"/>
-	<SolidColorBrush x:Key="SlashCommandArgumentBackgroundBrush" Color="#268C8C8C"/>
 
 	<!-- The gap between the floating placeholder caption and the field (Fluent's TextBoxTopHeaderMargin). -->
 	<Thickness x:Key="HighlightTextBoxFloatingPlaceholderMargin">0,0,0,4</Thickness>
