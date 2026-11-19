@@ -10,7 +10,7 @@
 	<ControlTheme x:Key="{x:Type Button}" TargetType="Button">
 		<Setter Property="Background" Value="#00000000" />
 		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
-		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
 		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
 		<Setter Property="Padding" Value="14,7" />
@@ -83,6 +83,9 @@
 		<Style Selector="^:pointerover /template/ Border#PART_Wash">
 			<Setter Property="Opacity" Value="1" />
 		</Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
 		<Style Selector="^:pressed /template/ Border#PART_Wash">
 			<Setter Property="Opacity" Value="1" />
 			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
@@ -110,13 +113,6 @@
 		</Style>
 		<Style Selector="^.accent:pressed /template/ Border#PART_Wash">
 			<Setter Property="Background" Value="{DynamicResource PrimaryPressed}" />
-		</Style>
-
-		<Style Selector="^.outline">
-			<Setter Property="BorderThickness" Value="1" />
-		</Style>
-		<Style Selector="^.outline:pointerover">
-			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
 		</Style>
 
 		<Style Selector="^.ghost">
