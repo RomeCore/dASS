@@ -1,37 +1,21 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-					xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-	<ResourceDictionary.ThemeDictionaries>
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+										xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+										mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+										x:Class="LLMDesktopAssistant.Styles.Resources">
+	
+  <ResourceDictionary.MergedDictionaries>
+		<!-- Resources -->
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Common.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Colors.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/InputCompletion.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources/Markdown.axaml"/>
 		
-		<ResourceDictionary x:Key="Light">
-
-			<Brush x:Key="DefaultForeground">Black</Brush>
-			<Brush x:Key="TopBarBackground">#FFE5E5E5</Brush>
-			<Brush x:Key="MessageBackground">#FFDEDEDE</Brush>
-
-			<!-- Card chrome: the shared frame of every card-like view (dialogs, forms, tool attachments). -->
-			<Brush x:Key="CardBackground">#FFF7F7F9</Brush>
-			<Brush x:Key="CardBackgroundBrush">#FFF7F7F9</Brush>
-			<Brush x:Key="CardBorderBrush">#FFD5D5DE</Brush>
-
-		</ResourceDictionary>
-		
-		<ResourceDictionary x:Key="Dark">
-
-			<Brush x:Key="DefaultForeground">White</Brush>
-			<Brush x:Key="TopBarBackground">#FF2F2F30</Brush>
-			<Brush x:Key="MessageBackground">#FF414141</Brush>
-
-			<!-- Card chrome: the shared frame of every card-like view (dialogs, forms, tool attachments). -->
-			<Brush x:Key="CardBackground">#FF2B2B2F</Brush>
-			<Brush x:Key="CardBackgroundBrush">#FF2B2B2F</Brush>
-			<Brush x:Key="CardBorderBrush">#FF3C3C44</Brush>
-
-		</ResourceDictionary>
-		
-	</ResourceDictionary.ThemeDictionaries>
-
-	<x:Double x:Key="TaskDialogMaxHeight">1080</x:Double>
-	<x:Double x:Key="TaskDialogMaxWidth">1920</x:Double>
+		<!-- Controls -->
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ProgressRing.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/HighlightTextBox.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/SmoothScrollViewer.axaml"/>
+  </ResourceDictionary.MergedDictionaries>
 
 </ResourceDictionary>

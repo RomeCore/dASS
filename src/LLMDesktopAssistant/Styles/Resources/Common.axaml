@@ -1,0 +1,7 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<x:Double x:Key="TaskDialogMaxHeight">1080</x:Double>
+	<x:Double x:Key="TaskDialogMaxWidth">1920</x:Double>
+
+</ResourceDictionary>

@@ -2,7 +2,6 @@
 				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 				xmlns:md="using:LiveMarkdown.Avalonia"
 				xmlns:loc="using:LLMDesktopAssistant.Localization"
-				
 				xmlns:ctrls="using:LLMDesktopAssistant.Markdown.Controls"
 				xmlns:nodes="using:LLMDesktopAssistant.Markdown.UINodes"
 				xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">

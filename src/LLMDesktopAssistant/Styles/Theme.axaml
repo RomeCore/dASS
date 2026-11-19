@@ -1,0 +1,45 @@
+<Styles xmlns="https://github.com/avaloniaui"
+				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+				xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+				mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+				x:Class="LLMDesktopAssistant.Styles.Theme">
+	
+	<!-- Controls -->
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Button.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TextBox.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ComboBox.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/CheckBox.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/RadioButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleSwitch.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Slider.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ScrollBar.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ProgressBar.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TabControl.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TabItem.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ListBox.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ListBoxItem.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TreeView.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TreeViewItem.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Menu.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/MenuItem.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToolTip.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Expander.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/NumericUpDown.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToggleButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/RepeatButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/HyperlinkButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/SplitButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/DropDownButton.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/GroupBox.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/DialogHost.axaml" />
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Separator.axaml" />
+	
+	<!-- Custom -->
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/ButtonsIcons.axaml"/>
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Chat.axaml"/>
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Chips.axaml"/>
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/ParameterElements.axaml"/>
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Markdown.axaml"/>
+
+</Styles>

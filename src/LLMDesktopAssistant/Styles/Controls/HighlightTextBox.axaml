@@ -42,11 +42,6 @@
 		<Setter Property="Padding" Value="{DynamicResource TextControlThemePadding}"/>
 		<Setter Property="FocusAdorner" Value="{x:Null}"/>
 		<Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True"/>
-
-		<!--
-			The IBeam belongs to the field, not to its presenter: Cursor inherits, so this single setter covers the
-			padding strips and the floating caption as well. The presenter-only setter left them with the arrow.
-		-->
 		<Setter Property="Cursor" Value="IBeam"/>
 
 		<Setter Property="Template">

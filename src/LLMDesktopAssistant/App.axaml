@@ -1,42 +1,32 @@
 <Application xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 x:Class="LLMDesktopAssistant.App"
-			 xmlns:mvvm="using:LLMDesktopAssistant.MVVM"
-			 xmlns:dialogHostAvalonia="clr-namespace:DialogHostAvalonia;assembly=DialogHost.Avalonia"
-			 xmlns:icons="using:LLMDesktopAssistant.Controls.Icons"
-			 RequestedThemeVariant="Dark">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 x:Class="LLMDesktopAssistant.App"
+						 xmlns:mvvm="using:LLMDesktopAssistant.MVVM"
+						 xmlns:dialogHostAvalonia="using:DialogHostAvalonia"
+						 xmlns:styles="using:LLMDesktopAssistant.Styles"
+						 xmlns:icons="using:LLMDesktopAssistant.Controls.Icons"
+						 RequestedThemeVariant="Dark">
 	
 	<Application.Resources>
 		<ResourceDictionary>
 			
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
-				
-				<ResourceInclude Source="avares://LLMDesktopAssistant/Controls/ProgressRing.axaml"/>
-				<ResourceInclude Source="avares://LLMDesktopAssistant/Controls/Scrolling/SmoothScrollViewerTheme.axaml"/>
-
-				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/MarkdownResources.axaml"/>
-				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources.axaml"/>
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Converters.axaml"/>
+				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 
 		</ResourceDictionary>
 	</Application.Resources>
 	
 	<Application.Styles>
-		<FluentTheme />
 
-		<icons:VisualIconStyles />
-		<dialogHostAvalonia:DialogHostStyles />
-
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Theme/Theme.axaml"/>
 		<StyleInclude Source="avares://LiveMarkdown.Avalonia/Styles.axaml"/>
 		<StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/CommonStyles.axaml"/>
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/ButtonsIcons.axaml"/>
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Chips.axaml"/>
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/ParameterElements.axaml"/>
-		<StyleInclude Source="avares://LLMDesktopAssistant/Styles/MarkdownStyles.axaml"/>
+		<dialogHostAvalonia:DialogHostStyles />
+
+		<FluentTheme />
+		<styles:Theme />
 
 	</Application.Styles>
 
