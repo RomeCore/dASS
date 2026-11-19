@@ -13,7 +13,7 @@
 			<ResourceDictionary.MergedDictionaries>
 				<ResourceInclude Source="avares://LiveMarkdown.Avalonia/Defaults.axaml"/>
 				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Converters.axaml"/>
-				<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Resources.axaml"/>
+				<styles:Resources />
 			</ResourceDictionary.MergedDictionaries>
 
 		</ResourceDictionary>
