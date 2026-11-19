@@ -8,6 +8,8 @@ using LLMDesktopAssistant.Controls.Text;
 using LLMDesktopAssistant.InputCompletion;
 using LLMDesktopAssistant.LLM.MVVM;
 using LLMDesktopAssistant.SlashCommands;
+using LLMDesktopAssistant.SlashCommands.Arguments;
+using LLMDesktopAssistant.SlashCommands.Execution;
 using LLMDesktopAssistant.SlashCommands.Input;
 using LLMDesktopAssistant.Utils;
 
@@ -29,6 +31,18 @@ public sealed record HighlightSpanInfo(int Start, int End, string Kind)
 [ViewModelFor(typeof(HighlightTextBoxDebugPageView))]
 public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 {
+	private class DummyExecutor : ISlashCommandExecutor
+	{
+		public SlashCommandArgumentSchema? ArgumentSchema => null;
+
+		public Task<SlashCommandExecutionResult> ExecuteAsync(SlashCommandExecutionContext ctx, CancellationToken ct)
+		{
+			return Task.FromResult(new SlashCommandExecutionResult(false, null));
+		}
+
+		public static DummyExecutor Executor { get; } = new DummyExecutor();
+	}
+
 	public const string DefaultSample = """
 		/skill:grilling focus on concurrency
 		this second line is plain text, not a command
@@ -37,10 +51,10 @@ public class HighlightTextBoxDebugPageViewModel : ViewModelBase
 	// A couple of commands, including a shadowed name, so every palette state is reachable from the sample.
 	private static readonly SlashCommandInfo[] SampleCommands =
 	[
-		new() { Name = "grilling", Namespaces = ["skill", "matt-pocock"] },
-		new() { Name = "grilling", Namespaces = ["agent"] },
-		new() { Name = "web-searcher", Namespaces = ["agent"] },
-		new() { Name = "code-review", Namespaces = ["skill"] }
+		new() { Name = "grilling", Namespaces = ["skill", "matt-pocock"], Executor = DummyExecutor.Executor },
+		new() { Name = "grilling", Namespaces = ["agent"], Executor = DummyExecutor.Executor },
+		new() { Name = "web-searcher", Namespaces = ["agent"], Executor = DummyExecutor.Executor },
+		new() { Name = "code-review", Namespaces = ["skill"], Executor = DummyExecutor.Executor }
 	];
 
 	/// <summary>The command set the real source expects, over the sample commands.</summary>
