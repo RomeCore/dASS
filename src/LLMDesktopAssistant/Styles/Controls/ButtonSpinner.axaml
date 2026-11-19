@@ -1,0 +1,106 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
+
+	<!--
+		The spinner buttons are their own theme: the default RepeatButton template has no content
+		presenter, so a RepeatButton that should show a chevron renders nothing at all.
+	-->
+
+	<ControlTheme x:Key="SpinnerButton" TargetType="RepeatButton">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="CornerRadius" Value="0" />
+		<Setter Property="HorizontalAlignment" Value="Center" />
+		<Setter Property="RenderTransform" Value="none" />
+		<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+		<Setter Property="Width" Value="18" />
+		<Setter Property="Height" Value="13" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								CornerRadius="{DynamicResource RadiusS}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<ContentPresenter Content="{TemplateBinding Content}"
+														HorizontalAlignment="Center"
+														VerticalAlignment="Center"
+														Foreground="{TemplateBinding Foreground}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+	</ControlTheme>
+
+	<ControlTheme x:Key="{x:Type ButtonSpinner}" TargetType="ButtonSpinner">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="VerticalContentAlignment" Value="Stretch" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<DataValidationErrors>
+					<Border Name="PART_Root"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									CornerRadius="{TemplateBinding CornerRadius}">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+								<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+						<DockPanel>
+							<StackPanel Name="PART_SpinnerPanel"
+													DockPanel.Dock="Right"
+													Orientation="Vertical"
+													VerticalAlignment="Center"
+													Margin="0,0,4,0"
+													IsVisible="{TemplateBinding ShowButtonSpinner}">
+								<RepeatButton Name="PART_IncreaseButton"
+															Theme="{StaticResource SpinnerButton}">
+									<ico:VisualIcon Kind="ChevronUp" Width="10" Height="10" />
+								</RepeatButton>
+								<RepeatButton Name="PART_DecreaseButton"
+															Theme="{StaticResource SpinnerButton}">
+									<ico:VisualIcon Kind="ChevronDown" Width="10" Height="10" />
+								</RepeatButton>
+							</StackPanel>
+							<ContentPresenter Name="PART_ContentPresenter"
+																Content="{TemplateBinding Content}"
+																ContentTemplate="{TemplateBinding ContentTemplate}"
+																Padding="{TemplateBinding Padding}"
+																HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+																VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+						</DockPanel>
+					</Border>
+				</DataValidationErrors>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
+
+</ResourceDictionary>

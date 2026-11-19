@@ -1,108 +1,85 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Margin="20" Width="400">
-      <StackPanel Spacing="10">
-        <Slider Value="50" />
-        <Slider Value="50" TickPlacement="TopLeft" TickFrequency="10"/>
-        <Slider IsEnabled="False" Value="50" />
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
-  
-  <!-- Base Slider style -->
-  <Style Selector="Slider">
-    <!-- Background = empty track, Foreground = filled track (passed to buttons via TemplateBinding) -->
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#6C5CE7" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
-  
-  <!-- Container background -->
-  <Style Selector="Slider /template/ Grid#SliderContainer">
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
-  
-  <!-- Thumb (draggable circle) -->
-  <Style Selector="Slider /template/ Thumb">
-    <Setter Property="Background" Value="#D0D0E0" />
-    <Setter Property="Width" Value="20" />
-    <Setter Property="Height" Value="20" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<!--
+		The track is drawn by the Track's own buttons, the way the reference sliders do it: the decrease
+		button is the filled half, the increase button the empty half, and the split is exactly where the
+		thumb sits. That removes the separate background border, and with it any chance of the fill and
+		the handle disagreeing.
+	-->
 
-  <!-- Thumb corner radius (inside FluentSliderThumbTheme template) -->
-  <Style Selector="Slider /template/ Thumb /template/ Border">
-    <Setter Property="CornerRadius" Value="10" />
-  </Style>
-  
-  <!-- PointerOver -->
-  <Style Selector="Slider:pointerover /template/ Thumb">
-    <Setter Property="Background" Value="#E0E0F0" />
-  </Style>
+	<ControlTheme x:Key="SliderTrackButton" TargetType="RepeatButton">
+		<Setter Property="Background" Value="#00000000" />
+		<!-- The legacy RepeatButton styles still apply app-wide; a track button must own its geometry. -->
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="CornerRadius" Value="0" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Stretch" />
+		<Setter Property="RenderTransform" Value="none" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid>
+					<Border Background="#00000000" Margin="0,-12" />
+					<Border Background="{TemplateBinding Background}"
+									Height="4"
+									CornerRadius="{DynamicResource RadiusPill}"
+									VerticalAlignment="Center" />
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-  <Style Selector="Slider:pointerover /template/ RepeatButton#PART_DecreaseButton">
-    <Setter Property="Background" Value="#7C6CF7" />
-  </Style>
+	<ControlTheme x:Key="{x:Type Slider}" TargetType="Slider">
+		<Setter Property="MinHeight" Value="32" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid Height="32" Background="#00000000">
+					<!--
+						The Track takes the full height: its buttons are sized from `trackLength - thumbLength`, so a
+						4px track would leave nothing for them (the thumb alone is 16px) and the track would vanish.
+						The 4px bar is drawn inside each button, centred.
+					-->
+					<Track Name="PART_Track"
+								 Minimum="{TemplateBinding Minimum}"
+								 Maximum="{TemplateBinding Maximum}"
+								 Value="{TemplateBinding Value}"
+								 Orientation="{TemplateBinding Orientation}">
+						<Track.DecreaseButton>
+							<RepeatButton Name="PART_DecreaseButton"
+														Theme="{StaticResource SliderTrackButton}"
+														Background="{DynamicResource PrimaryBase}" />
+						</Track.DecreaseButton>
+						<Track.IncreaseButton>
+							<RepeatButton Name="PART_IncreaseButton"
+														Theme="{StaticResource SliderTrackButton}"
+														Background="{DynamicResource ControlBackgroundPressed}" />
+						</Track.IncreaseButton>
+						<Thumb Width="16"
+									 Height="16"
+									 VerticalAlignment="Center"
+									 Background="{DynamicResource CardBackground}"
+									 BorderBrush="{DynamicResource PrimaryBase}"
+									 BorderThickness="2"
+									 CornerRadius="8"
+									 RenderTransform="scale(1)" />
+					</Track>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
 
-  <Style Selector="Slider:pointerover /template/ RepeatButton#PART_IncreaseButton">
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
+		<Style Selector="^:pointerover /template/ Thumb">
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryHover}" />
+		</Style>
+		<Style Selector="^:pressed /template/ Thumb">
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryPressed}" />
+			<Setter Property="RenderTransform" Value="scale(0.9)" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Pressed -->
-  <Style Selector="Slider:pressed /template/ Thumb">
-    <Setter Property="Background" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="Slider:pressed /template/ RepeatButton#PART_DecreaseButton">
-    <Setter Property="Background" Value="#5C4CD7" />
-  </Style>
-
-  <Style Selector="Slider:pressed /template/ RepeatButton#PART_IncreaseButton">
-    <Setter Property="Background" Value="#2A2A4E" />
-  </Style>
-  
-  <!-- Disabled -->
-  <Style Selector="Slider:disabled /template/ Thumb">
-    <Setter Property="Background" Value="#555555" />
-  </Style>
-
-  <Style Selector="Slider:disabled /template/ RepeatButton#PART_DecreaseButton">
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
-
-  <Style Selector="Slider:disabled /template/ RepeatButton#PART_IncreaseButton">
-    <Setter Property="Background" Value="#1A1A22" />
-  </Style>
-
-  <Style Selector="Slider:disabled">
-    <Setter Property="Foreground" Value="#3A3A5E" />
-    <Setter Property="Background" Value="#1A1A22" />
-  </Style>
-  
-  <!-- Error -->
-  <Style Selector="Slider:error">
-    <Setter Property="Foreground" Value="#FF4444" />
-  </Style>
-
-  <Style Selector="Slider:error /template/ Thumb">
-    <Setter Property="Background" Value="#FF4444" />
-  </Style>
-  
-  <!-- TickBar -->
-  <Style Selector="Slider /template/ TickBar">
-    <Setter Property="Fill" Value="#3A3A5E" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

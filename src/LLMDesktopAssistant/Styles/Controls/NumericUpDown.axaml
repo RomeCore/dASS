@@ -1,96 +1,51 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <NumericUpDown Minimum="0" Maximum="10" Increment="0.5" PlaceholderText="Enter text" />
-        <NumericUpDown Minimum="0" Maximum="10" ButtonSpinnerLocation="Left" />
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The spinner owns the frame, the field inside carries none: the text box is a nochrome TextBox
+		whose padding is forwarded from the NumericUpDown.
+	-->
 
-  <!-- Base NumericUpDown style -->
-  <Style Selector="NumericUpDown">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="12 8" />
-    <Setter Property="PlaceholderForeground" Value="#666688" />
-    <Setter Property="MinHeight" Value="32" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type NumericUpDown}" TargetType="NumericUpDown">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="10,6,4,6" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<DataValidationErrors>
+					<ButtonSpinner Name="PART_Spinner"
+												 Background="{TemplateBinding Background}"
+												 BorderBrush="{TemplateBinding BorderBrush}"
+												 BorderThickness="{TemplateBinding BorderThickness}"
+												 CornerRadius="{TemplateBinding CornerRadius}"
+												 Padding="0"
+												 IsTabStop="False"
+												 HorizontalContentAlignment="Stretch"
+												 VerticalContentAlignment="Stretch"
+												 ShowButtonSpinner="{TemplateBinding ShowButtonSpinner}"
+												 ButtonSpinnerLocation="{TemplateBinding ButtonSpinnerLocation}"
+												 AllowSpin="{TemplateBinding AllowSpin}">
+						<TextBox Name="PART_TextBox"
+										 Classes="nochrome"
+										 Padding="{TemplateBinding Padding}"
+										 Foreground="{TemplateBinding Foreground}"
+										 FontSize="{TemplateBinding FontSize}"
+										 Text="{TemplateBinding Text, Mode=TwoWay}"
+										 TextAlignment="{TemplateBinding TextAlignment}"
+										 AcceptsReturn="False"
+										 TextWrapping="NoWrap"
+										 VerticalContentAlignment="Center" />
+					</ButtonSpinner>
+				</DataValidationErrors>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-  <!-- ButtonSpinner background/border -->
-  <Style Selector="NumericUpDown /template/ ButtonSpinner#PART_Spinner">
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <!-- Spinner up/down buttons -->
-  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#888888" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="0" />
-    <Setter Property="Padding" Value="4" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pointerover">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:pressed">
-    <Setter Property="Background" Value="#6C5CE7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="NumericUpDown /template/ ButtonSpinner /template/ RepeatButton:disabled">
-    <Setter Property="Background" Value="#1A1A22" />
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-  <!-- Hover -->
-  <Style Selector="NumericUpDown:pointerover /template/ ButtonSpinner#PART_Spinner">
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-  </Style>
-
-  <!-- Focus -->
-  <Style Selector="NumericUpDown:focus /template/ ButtonSpinner#PART_Spinner">
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="BorderThickness" Value="2" />
-  </Style>
-
-  <!-- Disabled -->
-  <Style Selector="NumericUpDown:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-  </Style>
-
-  <Style Selector="NumericUpDown:disabled /template/ ButtonSpinner#PART_Spinner">
-    <Setter Property="Background" Value="#0A0A18" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

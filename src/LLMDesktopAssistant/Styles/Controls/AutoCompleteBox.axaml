@@ -1,0 +1,115 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		The box is a real TextBox - it keeps the field's frame and caret - plus a popup that holds a
+		ListBox. The ListBox is themed here by key so its rows look like the ComboBox's, without
+		touching the global ListBox theme.
+	-->
+
+	<ControlTheme x:Key="AutoCompleteListItem" TargetType="ListBoxItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="8,6" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								CornerRadius="{DynamicResource RadiusS}"
+								Padding="{TemplateBinding Padding}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<ContentPresenter Name="PART_ContentPresenter"
+														Background="#00000000"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														VerticalAlignment="Center"
+														Foreground="{TemplateBinding Foreground}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+		</Style>
+		<Style Selector="^:selected">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+	</ControlTheme>
+
+	<ControlTheme x:Key="AutoCompleteListBox" TargetType="ListBox">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}">
+					<ItemsPresenter Name="PART_ItemsPresenter" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+	<ControlTheme x:Key="{x:Type AutoCompleteBox}" TargetType="AutoCompleteBox">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="10,6" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="MaxDropDownHeight" Value="280" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid Name="PART_LayoutRoot">
+					<TextBox Name="PART_TextBox"
+									 PlaceholderText="{TemplateBinding PlaceholderText}"
+									 Width="{TemplateBinding Width}"
+									 Foreground="{TemplateBinding Foreground}"
+									 Background="{TemplateBinding Background}"
+									 BorderBrush="{TemplateBinding BorderBrush}"
+									 BorderThickness="{TemplateBinding BorderThickness}"
+									 CornerRadius="{TemplateBinding CornerRadius}"
+									 CaretIndex="{TemplateBinding CaretIndex, Mode=TwoWay}"
+									 ClearSelectionOnLostFocus="{TemplateBinding ClearSelectionOnLostFocus}"
+									 Padding="{TemplateBinding Padding}"
+									 MaxLength="{TemplateBinding MaxLength}"
+									 InnerLeftContent="{TemplateBinding InnerLeftContent}"
+									 InnerRightContent="{TemplateBinding InnerRightContent}" />
+
+					<Popup Name="PART_Popup"
+								 IsLightDismissEnabled="True"
+								 MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+								 MaxHeight="{TemplateBinding MaxDropDownHeight}"
+								 PlacementTarget="{TemplateBinding}"
+								 WindowManagerAddShadowHint="False">
+						<Border Name="PART_SuggestionsContainer"
+										Background="{DynamicResource PopupBackground}"
+										BorderBrush="{DynamicResource BorderDefault}"
+										BorderThickness="1"
+										CornerRadius="{DynamicResource RadiusM}"
+										Padding="4"
+										Margin="0,4,0,0"
+										BoxShadow="0 10 28 -6 #66000000">
+							<!-- The ListBox scrolls itself; wrapping it in another scroller breaks ScrollIntoView. -->
+							<ListBox Name="PART_SelectingItemsControl"
+											 Theme="{StaticResource AutoCompleteListBox}"
+											 ItemContainerTheme="{StaticResource AutoCompleteListItem}"
+											 BorderThickness="0"
+											 Background="#00000000"
+											 ItemTemplate="{TemplateBinding ItemTemplate}" />
+						</Border>
+					</Popup>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

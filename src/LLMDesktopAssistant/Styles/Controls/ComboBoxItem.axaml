@@ -1,0 +1,52 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		A dropdown item is a row, not a button: the selected row is a tint, and the popup supplies the
+		surface. The content presenter background stays transparent so no host style can paint a second
+		rectangle around the text.
+	-->
+
+	<ControlTheme x:Key="{x:Type ComboBoxItem}" TargetType="ComboBoxItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="8,6" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								CornerRadius="{DynamicResource RadiusS}"
+								Padding="{TemplateBinding Padding}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<ContentPresenter Name="PART_ContentPresenter"
+														Background="#00000000"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														VerticalAlignment="Center"
+														Foreground="{TemplateBinding Foreground}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+		</Style>
+		<Style Selector="^:selected">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
+
+</ResourceDictionary>

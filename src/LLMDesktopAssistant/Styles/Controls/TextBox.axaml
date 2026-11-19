@@ -1,80 +1,128 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <TextBox>Left</TextBox>
-        <TextBox TextAlignment="Center">Center</TextBox>
-        <TextBox PlaceholderText="Placeholder"/>
-        <TextBox PlaceholderText="Floating Placeholder" UseFloatingPlaceholder="True"/>
-        <TextBox PasswordChar="*" Classes="revealPasswordButton">Password</TextBox>
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		An inset field: the surface sits below the card, the frame is a hairline that only changes colour.
+		Focus recolours that same 1px frame; changing its thickness would move the text by a pixel, which
+		is the classic "the text jumps when I click" bug.
+	-->
 
-  <!-- Base TextBox style -->
-  <Style Selector=":is(TextBox)">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="CaretBrush" Value="#6C5CE7" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="SelectionBrush" Value="#6C5CE7" />
-    <Setter Property="PlaceholderForeground" Value="#666688" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="12 8" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-    
-    <!-- PointerOver (hover) -->
-    <Style Selector="^:pointerover /template/ Border#PART_BorderElement">
-      <Setter Property="Background" Value="#1A1A30" />
-      <Setter Property="BorderBrush" Value="#5A4CD7" />
-    </Style>
+	<ControlTheme x:Key="{x:Type TextBox}" TargetType="TextBox">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="10,6" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="SelectionBrush" Value="{DynamicResource SelectionBackground}" />
+		<Setter Property="SelectionForegroundBrush" Value="{DynamicResource SelectionForeground}" />
+		<Setter Property="Cursor" Value="IBeam" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<DataValidationErrors>
+					<Border Name="PART_BorderElement"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									CornerRadius="{TemplateBinding CornerRadius}">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+								<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+						<Grid ColumnDefinitions="Auto,*,Auto">
+							<ContentPresenter Grid.Column="0"
+														VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+														Content="{TemplateBinding InnerLeftContent}" />
+							<DockPanel Grid.Column="1" Name="PART_InnerDockPanel" Margin="{TemplateBinding Padding}">
+								<TextBlock Name="PART_FloatingPlaceholder"
+												 DockPanel.Dock="Top"
+												 Margin="0,0,0,2"
+												 FontSize="{DynamicResource FontSizeS}"
+												 Foreground="{DynamicResource TextTertiary}"
+												 IsVisible="False"
+												 Text="{TemplateBinding PlaceholderText}" />
+								<scroll:SmoothScrollViewer Name="PART_ScrollViewer"
+																					 HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+																					 VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}">
+									<Panel>
+										<TextBlock Name="PART_Placeholder"
+															 Text="{TemplateBinding PlaceholderText}"
+															 Foreground="{DynamicResource TextTertiary}"
+															 IsVisible="{TemplateBinding Text, Converter={x:Static StringConverters.IsNullOrEmpty}}" />
+										<TextPresenter Name="PART_TextPresenter"
+																	 Text="{TemplateBinding Text, Mode=TwoWay}"
+																	 CaretIndex="{TemplateBinding CaretIndex}"
+																	 SelectionStart="{TemplateBinding SelectionStart}"
+																	 SelectionEnd="{TemplateBinding SelectionEnd}"
+																	 TextAlignment="{TemplateBinding TextAlignment}"
+																	 TextWrapping="{TemplateBinding TextWrapping}"
+																	 LineHeight="{TemplateBinding LineHeight}"
+																	 LetterSpacing="{TemplateBinding LetterSpacing}"
+																	 PasswordChar="{TemplateBinding PasswordChar}"
+																	 RevealPassword="{TemplateBinding RevealPassword}"
+																	 SelectionBrush="{TemplateBinding SelectionBrush}"
+																	 SelectionForegroundBrush="{TemplateBinding SelectionForegroundBrush}"
+																	 CaretBrush="{TemplateBinding CaretBrush}" />
+									</Panel>
+								</scroll:SmoothScrollViewer>
+							</DockPanel>
+						<ContentPresenter Grid.Column="2"
+													VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+													Content="{TemplateBinding InnerRightContent}" />
+					</Grid>
+				</Border>
+				</DataValidationErrors>
+			</ControlTemplate>
+		</Setter>
 
-    <Style Selector="^:pointerover">
-      <Setter Property="BorderBrush" Value="#5A4CD7" />
-    </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
+		<Style Selector="^:focus /template/ Border#PART_BorderElement">
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="{DynamicResource FocusRing}" />
+		</Style>
+		<Style Selector="^:error /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBase}" />
+		</Style>
 
-    <!-- Focused -->
-    <Style Selector="^:focus /template/ Border#PART_BorderElement">
-      <Setter Property="Background" Value="#0E0E20" />
-      <Setter Property="BorderBrush" Value="#6C5CE7" />
-      <Setter Property="BorderThickness" Value="2" />
-    </Style>
+		<!-- A floating placeholder is a caption inside the field: hidden until the field has content. -->
+		<Style Selector="^ /template/ TextBlock#PART_FloatingPlaceholder">
+			<Setter Property="Cursor" Value="IBeam" />
+		</Style>
+		<Style Selector="^[UseFloatingPlaceholder=true]:not(:empty) /template/ TextBlock#PART_FloatingPlaceholder">
+			<Setter Property="IsVisible" Value="True" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
 
-    <Style Selector="^:focus">
-      <Setter Property="BorderBrush" Value="#6C5CE7" />
-      <Setter Property="BorderThickness" Value="2" />
-      <Setter Property="Padding" Value="11 7" />
-    </Style>
+		<!-- A field that carries no chrome of its own: the host (ComboBox, NumericUpDown, an inline editor) owns the frame. -->
+		<Style Selector="^.nochrome">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="^.nochrome /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderBrush" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="^.nochrome:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#00000000" />
+		</Style>
+		<Style Selector="^.nochrome:focus /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="^.nochrome /template/ TextBlock#PART_FloatingPlaceholder">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+	</ControlTheme>
 
-    <!-- Disabled -->
-    <Style Selector="^:disabled /template/ Border#PART_BorderElement">
-      <Setter Property="Background" Value="#0A0A18" />
-      <Setter Property="BorderBrush" Value="#2A2A3E" />
-    </Style>
-
-    <Style Selector="^:disabled">
-      <Setter Property="Foreground" Value="#555555" />
-      <Setter Property="BorderBrush" Value="#2A2A3E" />
-    </Style>
-
-    <!-- Error state -->
-    <Style Selector="^:error /template/ Border#PART_BorderElement">
-      <Setter Property="BorderBrush" Value="#FF4444" />
-    </Style>
-
-    <Style Selector="^:error">
-      <Setter Property="BorderBrush" Value="#FF4444" />
-    </Style>
-  </Style>
-
-
-</Styles>
+</ResourceDictionary>

@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		The shared drag handle: it draws only what its owner sets, so Slider and ScrollBar can give it
+		their own size, shape and colours without a second control.
+	-->
+
+	<ControlTheme x:Key="{x:Type Thumb}" TargetType="Thumb">
+		<Setter Property="Background" Value="{DynamicResource BorderStrong}" />
+		<Setter Property="BorderBrush" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>
