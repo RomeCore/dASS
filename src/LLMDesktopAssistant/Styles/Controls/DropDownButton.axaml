@@ -1,75 +1,97 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <DropDownButton Content="Click Me!" />
-        <DropDownButton Content="Disabled" IsEnabled="False" />
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		A button that opens something: the same surface as Button, plus a chevron that turns brighter
+		on hover. The wash layer is the hover/pressed feedback, as everywhere else.
+	-->
 
-  <!-- Base DropDownButton style -->
-  <Style Selector="DropDownButton">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16 8" />
-    <Setter Property="MinHeight" Value="32" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type DropDownButton}" TargetType="DropDownButton">
+		<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="14,7" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="FontWeight" Value="Medium" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								ClipToBounds="True">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<Panel>
+						<Border Name="PART_Wash"
+										Background="{DynamicResource ControlBackgroundHover}"
+										Opacity="0"
+										IsHitTestVisible="False">
+							<Border.Transitions>
+								<Transitions>
+									<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+								</Transitions>
+							</Border.Transitions>
+						</Border>
+						<Grid ColumnDefinitions="*,Auto">
+							<ContentPresenter Name="PART_Content"
+																Background="#00000000"
+																Content="{TemplateBinding Content}"
+																ContentTemplate="{TemplateBinding ContentTemplate}"
+																Margin="{TemplateBinding Padding}"
+																HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+																VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+																Foreground="{TemplateBinding Foreground}"
+																RecognizesAccessKey="True" />
+							<ico:VisualIcon Grid.Column="1"
+															Kind="ChevronDown"
+															Width="12"
+															Height="12"
+															Margin="8,0,2,0"
+															VerticalAlignment="Center"
+															Foreground="{DynamicResource TextSecondary}">
+								<ico:VisualIcon.Transitions>
+									<Transitions>
+										<BrushTransition Property="Foreground" Duration="0:0:0.12" Easing="CubicEaseOut" />
+									</Transitions>
+								</ico:VisualIcon.Transitions>
+							</ico:VisualIcon>
+						</Grid>
+					</Panel>
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Hover -->
-  <Style Selector="DropDownButton:pointerover /template/ Border#RootBorder">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-  </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^:pointerover /template/ ico|VisualIcon">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+		<Style Selector="^:pressed">
+			<Setter Property="RenderTransform" Value="scale(0.98)" />
+			<Setter Property="RenderTransformOrigin" Value="50%,50%" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.4" />
+		</Style>
+	</ControlTheme>
 
-  <Style Selector="DropDownButton:pointerover /template/ PathIcon#DropDownGlyph">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="DropDownButton:pointerover">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Pressed -->
-  <Style Selector="DropDownButton:pressed /template/ Border#RootBorder">
-    <Setter Property="Background" Value="#1A1A2E" />
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-  </Style>
-
-  <Style Selector="DropDownButton:pressed /template/ PathIcon#DropDownGlyph">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="DropDownButton:pressed">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Disabled -->
-  <Style Selector="DropDownButton:disabled /template/ Border#RootBorder">
-    <Setter Property="Background" Value="#1A1A22" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-  </Style>
-
-  <Style Selector="DropDownButton:disabled /template/ PathIcon#DropDownGlyph">
-    <Setter Property="Foreground" Value="#3A3A4E" />
-  </Style>
-
-  <Style Selector="DropDownButton:disabled">
-    <Setter Property="Foreground" Value="#666666" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

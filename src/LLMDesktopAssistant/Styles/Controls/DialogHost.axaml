@@ -1,58 +1,27 @@
-<Styles xmlns="https://github.com/avaloniaui"
-				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-				xmlns:dialogHostAvalonia="using:DialogHostAvalonia">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:dh="using:DialogHostAvalonia">
 
-	<Design.PreviewWith>
-		<dialogHostAvalonia:DialogHost Height="300" Width="400"
-																	 Background="#2A2A3E">
-			<dialogHostAvalonia:DialogHost.DialogContent>
-				<Border Padding="24">
-					<StackPanel Spacing="16">
-						<TextBlock Text="Dialog Title"
-											 FontSize="20" FontWeight="Bold"
-											 Foreground="#EAEAEA" />
-						<TextBlock Text="Dialog content goes here..."
-											 Foreground="#AAAAAA" />
-						<Button Content="OK" Classes="accent"
-										HorizontalAlignment="Right" />
-					</StackPanel>
-				</Border>
-			</dialogHostAvalonia:DialogHost.DialogContent>
-		</dialogHostAvalonia:DialogHost>
-	</Design.PreviewWith>
+	<!--
+		The dialog host and its per-dialog overlay host, ported from the package theme onto our tokens.
 
-	<Styles.Resources>
-		<ResourceDictionary>
-			<SolidColorBrush x:Key="DialogHostOverlayBackgroundMixinBrush"
-											 Color="#80000000" />
+		The popup host template is deliberately not the package one: the overlay is a 1M x 1M scrim
+		inside the animated host, so every dialog covers the whole screen - including the dialogs under
+		it - and a later dialog cannot be clicked through the one above. Sizing it to the window would
+		open a gap while the host scales during its opening animation.
+	-->
 
-			<SolidColorBrush x:Key="DialogHostBackgroundMixinBrush"
-											 Color="#161628" />
-		</ResourceDictionary>
-	</Styles.Resources>
-
-	<Style Selector="dialogHostAvalonia|DialogHost">
-
-		<Setter Property="Background"
-						Value="{DynamicResource DialogHostBackgroundMixinBrush}" />
-		<Setter Property="OverlayBackground"
-						Value="{DynamicResource DialogHostOverlayBackgroundMixinBrush}" />
-
-		<Setter Property="dialogHostAvalonia:DialogHostStyle.CornerRadius"
-						Value="10" />
-
-		<Setter Property="dialogHostAvalonia:DialogHostStyle.BorderBrush"
-						Value="#3A3A5E" />
-		<Setter Property="dialogHostAvalonia:DialogHostStyle.BorderThickness"
-						Value="1" />
-
-		<Setter Property="dialogHostAvalonia:DialogHostStyle.BoxShadow"
-						Value="0 8 24 #4c000000" />
-
-		<Setter Property="dialogHostAvalonia:DialogHostStyle.ClipToBounds"
-						Value="True" />
-
+	<ControlTheme x:Key="{x:Type dh:DialogHost}" TargetType="dh:DialogHost">
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Stretch" />
 		<Setter Property="DialogMargin" Value="8" />
+		<Setter Property="OverlayBackground" Value="{DynamicResource Scrim}" />
+		<Setter Property="Background" Value="{DynamicResource CardBackground}" />
+		<Setter Property="dh:DialogHostStyle.ClipToBounds" Value="True" />
+		<Setter Property="dh:DialogHostStyle.CornerRadius" Value="{DynamicResource RadiusL}" />
+		<Setter Property="dh:DialogHostStyle.BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="dh:DialogHostStyle.BorderThickness" Value="1" />
+		<Setter Property="dh:DialogHostStyle.BoxShadow" Value="0 10 28 -6 #66000000" />
 
 		<Setter Property="Template">
 			<ControlTemplate>
@@ -63,15 +32,15 @@
 														HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
 														VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
 														Tag="{TemplateBinding BlurBackgroundRadius}" />
+					<!--
+						Invisible on purpose: the visible scrim belongs to the per-dialog popup host, so a
+						stack of dialogs does not paint it twice. This rectangle only catches click-away,
+						and it exists only while a dialog is open - otherwise it would eat every click in
+						the application.
+					-->
 					<Rectangle Name="PART_ContentCover"
 										 Fill="Transparent"
-										 Focusable="False">
-						<Rectangle.Styles>
-							<Style Selector="Rectangle#PART_ContentCover[Opacity=0]">
-								<Setter Property="IsVisible" Value="False" />
-							</Style>
-						</Rectangle.Styles>
-					</Rectangle>
+										 Focusable="False" />
 				</Panel>
 			</ControlTemplate>
 		</Setter>
@@ -80,23 +49,25 @@
 			<ControlTemplate>
 				<Panel>
 					<!-- Надеюсь, что ни у кого не найдется монитор с разрешением больше 1000000 на 1000000 -->
-					<Rectangle Fill="{DynamicResource DialogHostOverlayBackgroundMixinBrush}"
+					<Rectangle Name="PART_Dialog_Scrim"
+										 Fill="{DynamicResource Scrim}"
 										 Focusable="False"
 										 HorizontalAlignment="Center"
 										 VerticalAlignment="Center"
-										 Width="1000000" Height="1000000"/>
+										 Width="1000000"
+										 Height="1000000" />
 
 					<Border Name="PART_Dialog_ContentBackground"
 									HorizontalAlignment="Center"
 									VerticalAlignment="Center">
 						<Border.Styles>
 							<Style Selector="Border#PART_Dialog_ContentBackground">
-									<Setter Property="BorderBrush" Value="{Binding (dialogHostAvalonia:DialogHostStyle.BorderBrush), RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
-									<Setter Property="BorderThickness" Value="{Binding (dialogHostAvalonia:DialogHostStyle.BorderThickness), RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
-									<Setter Property="CornerRadius" Value="{Binding (dialogHostAvalonia:DialogHostStyle.CornerRadius), RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
-									<Setter Property="BoxShadow" Value="{Binding (dialogHostAvalonia:DialogHostStyle.BoxShadow), RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
-									<Setter Property="ClipToBounds" Value="{Binding (dialogHostAvalonia:DialogHostStyle.ClipToBounds), RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
-									<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=dialogHostAvalonia:DialogHost}}" />
+								<Setter Property="BorderBrush" Value="{Binding (dh:DialogHostStyle.BorderBrush), RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
+								<Setter Property="BorderThickness" Value="{Binding (dh:DialogHostStyle.BorderThickness), RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
+								<Setter Property="CornerRadius" Value="{Binding (dh:DialogHostStyle.CornerRadius), RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
+								<Setter Property="BoxShadow" Value="{Binding (dh:DialogHostStyle.BoxShadow), RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
+								<Setter Property="ClipToBounds" Value="{Binding (dh:DialogHostStyle.ClipToBounds), RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
+								<Setter Property="Background" Value="{Binding Background, RelativeSource={RelativeSource AncestorType=dh:DialogHost}}" />
 							</Style>
 						</Border.Styles>
 						<ContentPresenter Name="PART_ContentPresenter"
@@ -108,11 +79,75 @@
 			</ControlTemplate>
 		</Setter>
 
-	</Style>
+		<Style Selector="^[IsOpen=True] /template/ Rectangle#PART_ContentCover">
+			<Setter Property="IsVisible" Value="True" />
+			<Setter Property="IsHitTestVisible" Value="True" />
+		</Style>
+		<Style Selector="^[IsOpen=False] /template/ Rectangle#PART_ContentCover">
+			<Setter Property="IsVisible" Value="False" />
+			<Setter Property="IsHitTestVisible" Value="False" />
+		</Style>
+	</ControlTheme>
 
-	<Style Selector="dialogHostAvalonia|DialogOverlayPopupHost">
-		<Setter Property="Background"
-						Value="{DynamicResource DialogHostBackgroundMixinBrush}" />
-	</Style>
+	<!--
+		One overlay host per open dialog. The whole host scales and fades - frame, content and scrim
+		together - which is the package's original feel; IsActuallyOpen is what actually removes the
+		host from the tree, and only the last keyframe of the closing animation touches it.
+	-->
 
-</Styles>
+	<ControlTheme x:Key="{x:Type dh:DialogOverlayPopupHost}" TargetType="dh:DialogOverlayPopupHost">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="KeyboardNavigation.TabNavigation" Value="Cycle" />
+		<Setter Property="Focusable" Value="True" />
+		<Setter Property="IsTabStop" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<ContentPresenter Name="PART_ContentPresenter"
+													Background="{TemplateBinding Background}"
+													ContentTemplate="{TemplateBinding ContentTemplate}"
+													Content="{TemplateBinding Content}"
+													Padding="{TemplateBinding Padding}" />
+			</ControlTemplate>
+		</Setter>
+
+		<Style Selector="^[IsOpen=True][DisableOpeningAnimation=False]">
+			<Style.Animations>
+				<Animation Duration="0:0:0.3" Easing="SineEaseInOut" FillMode="Both">
+					<KeyFrame Cue="0%">
+						<Setter Property="ScaleTransform.ScaleX" Value="0.8" />
+						<Setter Property="ScaleTransform.ScaleY" Value="0.8" />
+						<Setter Property="Opacity" Value="0" />
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="ScaleTransform.ScaleX" Value="1" />
+						<Setter Property="ScaleTransform.ScaleY" Value="1" />
+						<Setter Property="Opacity" Value="1" />
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
+		</Style>
+
+		<Style Selector="^[IsOpen=False][DisableOpeningAnimation=False]">
+			<Style.Animations>
+				<Animation Duration="0:0:0.2" Easing="SineEaseInOut" FillMode="Both">
+					<KeyFrame Cue="0%">
+						<Setter Property="ScaleTransform.ScaleX" Value="1" />
+						<Setter Property="ScaleTransform.ScaleY" Value="1" />
+						<Setter Property="Opacity" Value="1" />
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="ScaleTransform.ScaleX" Value="0.5" />
+						<Setter Property="ScaleTransform.ScaleY" Value="0.5" />
+						<Setter Property="Opacity" Value="0" />
+						<Setter Property="IsActuallyOpen" Value="False" />
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
+		</Style>
+
+		<Style Selector="^[IsOpen=False][DisableOpeningAnimation=True]">
+			<Setter Property="IsActuallyOpen" Value="False" />
+		</Style>
+	</ControlTheme>
+
+</ResourceDictionary>

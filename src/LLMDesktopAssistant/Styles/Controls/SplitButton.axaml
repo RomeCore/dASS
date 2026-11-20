@@ -1,119 +1,141 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="60">
-      <StackPanel Spacing="20">
-        <SplitButton Content="SplitButton" />
-        <SplitButton IsEnabled="False">Disabled</SplitButton>
-        <ToggleSplitButton Content="ToggleSplitButton" />
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		Two halves, one frame: the outer Border paints the surface and the hairline, each half is a
+		borderless Button with its own translucent wash, and the separator is a 1px line. Avoiding per
+		side corner and thickness converters keeps the theme free of Fluent helpers.
+	-->
 
-  <!-- Base SplitButton style -->
-  <Style Selector="SplitButton">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16 8" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="SplitButtonPart" TargetType="Button">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="14,7" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="VerticalAlignment" Value="Stretch" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								CornerRadius="{TemplateBinding CornerRadius}">
+					<Panel>
+						<Border Name="PART_Wash"
+										Background="{DynamicResource ControlBackgroundHover}"
+										CornerRadius="{TemplateBinding CornerRadius}"
+										Opacity="0"
+										IsHitTestVisible="False">
+							<Border.Transitions>
+								<Transitions>
+									<DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="CubicEaseOut" />
+								</Transitions>
+							</Border.Transitions>
+						</Border>
+						<ContentPresenter Name="PART_Content"
+															Background="#00000000"
+															Content="{TemplateBinding Content}"
+															Margin="{TemplateBinding Padding}"
+															ContentTemplate="{TemplateBinding ContentTemplate}"
+															HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+															Foreground="{TemplateBinding Foreground}" />
+					</Panel>
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Primary button -->
-  <Style Selector="SplitButton /template/ Button#PART_PrimaryButton">
-    <Setter Property="CornerRadius" Value="8 0 0 8" />
-  </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^[Tag=checked] /template/ Border#PART_Wash">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Secondary button (dropdown) -->
-  <Style Selector="SplitButton /template/ Button#PART_SecondaryButton">
-    <Setter Property="CornerRadius" Value="0 8 8 0" />
-  </Style>
+	<ControlTheme x:Key="{x:Type SplitButton}" TargetType="SplitButton">
+		<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="14,7" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="HorizontalAlignment" Value="Left" />
+		<Setter Property="VerticalAlignment" Value="Center" />
+		<Setter Property="HorizontalContentAlignment" Value="Center" />
+		<Setter Property="VerticalContentAlignment" Value="Center" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid ColumnDefinitions="*,Auto,Auto">
+					<Border Name="PART_Root"
+									Grid.ColumnSpan="3"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									CornerRadius="{TemplateBinding CornerRadius}">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.14" Easing="CubicEaseOut" />
+								<BrushTransition Property="BorderBrush" Duration="0:0:0.14" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+					</Border>
 
-  <!-- Separator -->
-  <Style Selector="SplitButton /template/ Border#SeparatorBorder">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="Width" Value="1" />
-  </Style>
+					<Button Name="PART_PrimaryButton"
+									Grid.Column="0"
+									Theme="{StaticResource SplitButtonPart}"
+									CornerRadius="{DynamicResource RadiusLeftM}"
+									Padding="{TemplateBinding Padding}"
+									Foreground="{TemplateBinding Foreground}"
+									Content="{TemplateBinding Content}"
+									ContentTemplate="{TemplateBinding ContentTemplate}"
+									Command="{TemplateBinding Command}"
+									CommandParameter="{TemplateBinding CommandParameter}"
+									HorizontalAlignment="Stretch"
+									VerticalAlignment="Stretch" />
 
-  <!-- Hover -->
-  <Style Selector="SplitButton:pointerover">
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+					<Border Name="SeparatorBorder"
+									Grid.Column="1"
+									Width="1"
+									Margin="0,7"
+									Background="{DynamicResource BorderSubtle}" />
 
-  <Style Selector="SplitButton:pointerover /template/ Border#SeparatorBorder">
-    <Setter Property="Background" Value="#6C5CE7" />
-  </Style>
+					<Button Name="PART_SecondaryButton"
+									Grid.Column="2"
+									Theme="{StaticResource SplitButtonPart}"
+									CornerRadius="{DynamicResource RadiusRightM}"
+									Padding="10,0"
+									Foreground="{DynamicResource TextSecondary}"
+									HorizontalAlignment="Stretch"
+									VerticalAlignment="Stretch">
+						<ico:VisualIcon Kind="ChevronDown" Width="12" Height="12" />
+					</Button>
+				</Grid>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Pressed -->
-  <Style Selector="SplitButton:pressed">
-    <Setter Property="BorderBrush" Value="#5A4CD7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
+		<Style Selector="^:checked /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}" />
+		</Style>
+		<Style Selector="^:checked /template/ Button">
+			<Setter Property="Tag" Value="checked" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.4" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Disabled -->
-  <Style Selector="SplitButton:disabled">
-    <Setter Property="Foreground" Value="#666666" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-  </Style>
-
-  <Style Selector="SplitButton:disabled /template/ Border#SeparatorBorder">
-    <Setter Property="Background" Value="#2A2A3E" />
-  </Style>
-
-  <!-- ToggleSplitButton -->
-  <Style Selector="ToggleSplitButton">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16 8" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
-
-  <!-- ToggleSplitButton checked -->
-  <Style Selector="ToggleSplitButton:checked /template/ Button#PART_PrimaryButton /template/ ContentPresenter">
-    <Setter Property="Background" Value="#6C5CE7" />
-    <Setter Property="BorderBrush" Value="#6C5CE7" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <Style Selector="ToggleSplitButton:checked">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- DropDown glyph -->
-  <Style Selector="SplitButton /template/ PathIcon">
-    <Setter Property="Foreground" Value="#888888" />
-  </Style>
-
-  <Style Selector="SplitButton:pointerover /template/ PathIcon">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Flyout open state -->
-  <Style Selector="SplitButton:flyout-open /template/ Button">
-    <Setter Property="Tag" Value="flyout-open" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

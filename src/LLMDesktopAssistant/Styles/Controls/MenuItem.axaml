@@ -1,103 +1,224 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:conv="using:Avalonia.Controls.Converters"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="10">
-        <MenuItem Header="_Standard" />
-        <MenuItem Header="Selected" IsSelected="True" />
-        <MenuItem Header="Disabled" IsEnabled="False" />
-        <MenuItem Header="Submenu">
-          <MenuItem Header="Child 1" />
-          <MenuItem Header="Child 2" />
-        </MenuItem>
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		One menu row, used both inside popups and, through MenuTopLevelItem, on the menu bar. The row
+		paints itself; every presenter inside stays transparent so Fluent's app-level rules cannot
+		draw a second rectangle around the text while it is still loaded.
+	-->
 
-  <!-- Base MenuItem style (for sub-items) -->
-  <Style Selector="MenuItem">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Padding" Value="12 8" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<conv:PlatformKeyGestureConverter x:Key="KeyGestureConverter" />
 
-  <!-- Layout root -->
-  <Style Selector="MenuItem /template/ Border#PART_LayoutRoot">
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="MenuItemIconHost" TargetType="ContentControl">
+		<Setter Property="Width" Value="16" />
+		<Setter Property="Height" Value="16" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Viewbox StretchDirection="DownOnly"
+								 HorizontalAlignment="Center"
+								 VerticalAlignment="Center">
+					<ContentPresenter Name="PART_Content" Content="{TemplateBinding Content}" />
+				</Viewbox>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-  <!-- Chevron -->
-  <Style Selector="MenuItem /template/ Path#PART_ChevronPath">
-    <Setter Property="Fill" Value="#888888" />
-  </Style>
+	<ControlTheme x:Key="{x:Type MenuItem}" TargetType="MenuItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="10,6" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Panel>
+					<Border Name="PART_Root"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									CornerRadius="{TemplateBinding CornerRadius}"
+									Padding="{TemplateBinding Padding}">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+						<Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+							<ContentControl Name="PART_ToggleIconPresenter"
+															Grid.Column="0"
+															Theme="{StaticResource MenuItemIconHost}"
+															IsVisible="False"
+															Margin="0,0,10,0" />
+							<ContentControl Name="PART_IconPresenter"
+															Grid.Column="1"
+															Theme="{StaticResource MenuItemIconHost}"
+															IsVisible="False"
+															Content="{TemplateBinding Icon}"
+															Margin="0,0,10,0" />
+							<ContentPresenter Name="PART_HeaderPresenter"
+																Grid.Column="2"
+																Background="#00000000"
+																Content="{TemplateBinding Header}"
+																ContentTemplate="{TemplateBinding HeaderTemplate}"
+																VerticalAlignment="Center"
+																HorizontalAlignment="Stretch"
+																Foreground="{TemplateBinding Foreground}"
+																RecognizesAccessKey="True" />
+							<TextBlock Name="PART_InputGestureText"
+												 Grid.Column="3"
+												 Text="{TemplateBinding InputGesture, Converter={StaticResource KeyGestureConverter}}"
+												 Margin="24,0,0,0"
+												 HorizontalAlignment="Right"
+												 VerticalAlignment="Center"
+												 FontSize="{DynamicResource FontSizeXs}"
+												 Foreground="{DynamicResource TextTertiary}" />
+							<ico:VisualIcon Name="PART_Chevron"
+															Grid.Column="4"
+															Kind="ChevronRight"
+															Width="12"
+															Height="12"
+															Margin="8,0,0,0"
+															VerticalAlignment="Center"
+															Foreground="{DynamicResource TextTertiary}" />
+						</Grid>
+					</Border>
+					<Popup Name="PART_Popup"
+								 WindowManagerAddShadowHint="False"
+								 Placement="RightEdgeAlignedTop"
+								 HorizontalOffset="0"
+								 IsLightDismissEnabled="False"
+								 IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}">
+						<Border Background="{DynamicResource PopupBackground}"
+										BorderBrush="{DynamicResource BorderDefault}"
+										BorderThickness="1"
+										CornerRadius="{DynamicResource RadiusM}"
+										Padding="4"
+										BoxShadow="0 10 28 -6 #66000000">
+							<ScrollViewer>
+								<ItemsPresenter Name="PART_ItemsPresenter"
+																ItemsPanel="{TemplateBinding ItemsPanel}" />
+							</ScrollViewer>
+						</Border>
+					</Popup>
+				</Panel>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Input gesture text -->
-  <Style Selector="MenuItem /template/ TextBlock#PART_InputGestureText">
-    <Setter Property="Foreground" Value="#666666" />
-  </Style>
+		<Style Selector="^:icon /template/ ContentControl#PART_IconPresenter">
+			<Setter Property="IsVisible" Value="True" />
+		</Style>
 
-  <!-- Hover -->
-  <Style Selector="MenuItem:pointerover /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="#2A2A3E" />
-  </Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
 
-  <Style Selector="MenuItem:pointerover">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^:empty /template/ ico|VisualIcon#PART_Chevron">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
 
-  <Style Selector="MenuItem:pointerover /template/ Path#PART_ChevronPath">
-    <Setter Property="Fill" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^:separator">
+			<Setter Property="IsHitTestVisible" Value="False" />
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Separator Margin="4,4" />
+				</ControlTemplate>
+			</Setter>
+		</Style>
 
-  <!-- Pressed -->
-  <Style Selector="MenuItem:pressed /template/ Border#PART_LayoutRoot:pointerover">
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
+		<!-- A checked menu item shows a glyph in the leading column, not a check box. -->
+		<Style Selector="^:checked:toggle /template/ ContentControl#PART_ToggleIconPresenter">
+			<Setter Property="IsVisible" Value="True" />
+			<Setter Property="Content">
+				<Template>
+					<ico:VisualIcon Kind="Check"
+													Width="14"
+													Height="14"
+													Foreground="{Binding $parent[MenuItem].Foreground}" />
+				</Template>
+			</Setter>
+		</Style>
+		<Style Selector="^:checked:radio /template/ ContentControl#PART_ToggleIconPresenter">
+			<Setter Property="IsVisible" Value="True" />
+			<Setter Property="Content">
+				<Template>
+					<Ellipse Width="8"
+									 Height="8"
+									 Fill="{Binding $parent[MenuItem].Foreground}" />
+				</Template>
+			</Setter>
+		</Style>
+	</ControlTheme>
 
-  <!-- Selected (highlighted, like hover for top-level) -->
-  <Style Selector="MenuItem:selected /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="#3A3A7E" />
-  </Style>
+	<!--
+		The menu bar row: same skin, but the popup opens below and is as wide as its header.
+	-->
 
-  <Style Selector="MenuItem:selected">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+	<ControlTheme x:Key="MenuTopLevelItem" TargetType="MenuItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="10,5" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeM}" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<Panel>
+						<ContentPresenter Name="PART_HeaderPresenter"
+															Background="#00000000"
+															Content="{TemplateBinding Header}"
+															ContentTemplate="{TemplateBinding HeaderTemplate}"
+															VerticalAlignment="Center"
+															HorizontalAlignment="Stretch"
+															Foreground="{TemplateBinding Foreground}"
+															RecognizesAccessKey="True" />
+						<Popup Name="PART_Popup"
+									 WindowManagerAddShadowHint="False"
+									 MinWidth="{Binding Bounds.Width, RelativeSource={RelativeSource TemplatedParent}}"
+									 IsLightDismissEnabled="True"
+									 IsOpen="{TemplateBinding IsSubMenuOpen, Mode=TwoWay}"
+									 Placement="BottomEdgeAlignedLeft"
+									 OverlayInputPassThroughElement="{Binding $parent[Menu]}">
+							<Border Background="{DynamicResource PopupBackground}"
+											BorderBrush="{DynamicResource BorderDefault}"
+											BorderThickness="1"
+											CornerRadius="{DynamicResource RadiusM}"
+											Padding="4"
+											BoxShadow="0 10 28 -6 #66000000">
+								<ScrollViewer>
+									<ItemsPresenter Name="PART_ItemsPresenter"
+																	ItemsPanel="{TemplateBinding ItemsPanel}" />
+								</ScrollViewer>
+							</Border>
+						</Popup>
+					</Panel>
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Disabled -->
-  <Style Selector="MenuItem:disabled /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
 
-  <Style Selector="MenuItem:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-  <Style Selector="MenuItem:disabled /template/ Path#PART_ChevronPath">
-    <Setter Property="Fill" Value="#3A3A4E" />
-  </Style>
-
-  <!-- Popup (submenu background) -->
-  <Style Selector="MenuItem /template/ Popup#PART_Popup /template/ Border">
-    <Setter Property="Background" Value="#1A1A2E" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="BoxShadow" Value="0 4 20 0 #00000066" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

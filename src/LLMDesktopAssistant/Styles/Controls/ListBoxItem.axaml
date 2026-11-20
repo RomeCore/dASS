@@ -1,63 +1,58 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Padding="0">
-      <ListBox>
-        <ListBoxItem IsEnabled="False">Disabled</ListBoxItem>
-        <ListBoxItem>Normal</ListBoxItem>
-        <ListBoxItem>Selected</ListBoxItem>
-      </ListBox>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The row paints itself; the content presenter stays transparent. That separation matters while
+		Fluent is still loaded: its app-level styles paint a ContentPresenter inside ListBoxItem, which
+		is what used to draw a second, differently coloured rectangle around the text.
+	-->
 
-  <!-- Base ListBoxItem style -->
-  <Style Selector="ListBoxItem">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Padding" Value="12 9 12 12" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type ListBoxItem}" TargetType="ListBoxItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="10,7" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}">
+					<Border.Transitions>
+						<Transitions>
+							<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+						</Transitions>
+					</Border.Transitions>
+					<ContentPresenter Name="PART_Content"
+														Background="#00000000"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+														VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+														Foreground="{TemplateBinding Foreground}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Hover -->
-  <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
+		<Style Selector="^:pointerover /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource SelectionBackground}" />
+		</Style>
+		<Style Selector="^:selected">
+			<Setter Property="Foreground" Value="{DynamicResource SelectionForeground}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Pressed -->
-  <Style Selector="ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#3A3A5E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Selected -->
-  <Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#3A3A7E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Selected + hover -->
-  <Style Selector="ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#4A4A8E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Selected + pressed -->
-  <Style Selector="ListBoxItem:selected:pressed /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#5A5A9E" />
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Disabled -->
-  <Style Selector="ListBoxItem:disabled /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

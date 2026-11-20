@@ -1,35 +1,48 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20">
-        <ToolTip Opacity="1">Text Content</ToolTip>
-        <ToolTip Opacity="1">Very long text content that wraps.</ToolTip>
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		A tooltip is a floating card: popup surface, hairline, small type. It fades in on :open -
+		the opacity transition lives on the control, not on the popup.
+	-->
 
-  <!-- Base ToolTip style -->
-  <Style Selector="ToolTip">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Background" Value="#1A1A2E" />
-    <Setter Property="BorderBrush" Value="#3A3A5E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="Padding" Value="8 4" />
-    <Setter Property="MaxWidth" Value="320" />
-    <Setter Property="Opacity" Value="0" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <DoubleTransition Property="Opacity" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="{x:Type ToolTip}" TargetType="ToolTip">
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Background" Value="{DynamicResource PopupBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeS}" />
+		<Setter Property="Padding" Value="8,6" />
+		<Setter Property="MaxWidth" Value="320" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Opacity" Value="0" />
+		<Setter Property="Transitions">
+			<Transitions>
+				<DoubleTransition Property="Opacity" Duration="0:0:0.14" Easing="CubicEaseOut" />
+			</Transitions>
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}"
+								BoxShadow="0 8 24 -6 #66000000">
+					<ContentPresenter Name="PART_Content"
+														MaxWidth="{TemplateBinding MaxWidth}"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														TextBlock.TextWrapping="Wrap"
+														TextBlock.LetterSpacing="{TemplateBinding LetterSpacing}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Open state -->
-  <Style Selector="ToolTip:open">
-    <Setter Property="Opacity" Value="1" />
-  </Style>
+		<Style Selector="^:open">
+			<Setter Property="Opacity" Value="1" />
+		</Style>
+	</ControlTheme>
 
-</Styles>
+</ResourceDictionary>

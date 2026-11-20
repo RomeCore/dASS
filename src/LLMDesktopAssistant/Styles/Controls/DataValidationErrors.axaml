@@ -1,0 +1,48 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		The error line under a field. The control owns the logic; the theme only decides where the
+		messages go (below the content) and what they look like (small, error-tinted, wrapping).
+	-->
+
+	<ControlTheme x:Key="{x:Type DataValidationErrors}" TargetType="DataValidationErrors">
+		<Setter Property="Template">
+			<ControlTemplate>
+				<DockPanel LastChildFill="True">
+					<ContentControl Name="PART_Errors"
+													Margin="0,4,0,0"
+													DockPanel.Dock="Bottom"
+													Content="{Binding (DataValidationErrors.Errors)}"
+													ContentTemplate="{TemplateBinding ErrorTemplate}"
+													DataContext="{TemplateBinding Owner}"
+													IsVisible="{Binding (DataValidationErrors.HasErrors)}" />
+					<ContentPresenter Name="PART_ContentPresenter"
+														Padding="{TemplateBinding Padding}"
+														Background="{TemplateBinding Background}"
+														BorderBrush="{TemplateBinding BorderBrush}"
+														BorderThickness="{TemplateBinding BorderThickness}"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														CornerRadius="{TemplateBinding CornerRadius}" />
+				</DockPanel>
+			</ControlTemplate>
+		</Setter>
+
+		<Setter Property="ErrorTemplate">
+			<DataTemplate>
+				<ItemsControl x:DataType="DataValidationErrors"
+											ItemsSource="{Binding}"
+											Foreground="{DynamicResource StatusErrorBase}"
+											FontSize="{DynamicResource FontSizeXs}">
+					<ItemsControl.Styles>
+						<Style Selector="TextBlock">
+							<Setter Property="TextWrapping" Value="Wrap" />
+						</Style>
+					</ItemsControl.Styles>
+				</ItemsControl>
+			</DataTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

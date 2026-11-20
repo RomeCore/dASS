@@ -55,7 +55,7 @@
 						<Track.IncreaseButton>
 							<RepeatButton Name="PART_IncreaseButton"
 														Theme="{StaticResource SliderTrackButton}"
-														Background="{DynamicResource ControlBackgroundPressed}" />
+														Background="{DynamicResource ControlTrack}" />
 						</Track.IncreaseButton>
 						<Thumb Width="16"
 									 Height="16"

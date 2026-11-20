@@ -1,120 +1,89 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <StackPanel Spacing="20" Width="350">
-        <Expander ExpandDirection="Down" Header="Expand Down">
-          <TextBlock Text="Expanded content" Foreground="#EAEAEA" />
-        </Expander>
-        <Expander ExpandDirection="Up" Header="Expand Up">
-          <TextBlock Text="Expanded content" Foreground="#EAEAEA" />
-        </Expander>
-        <Expander ExpandDirection="Down" Header="Disabled" IsEnabled="False">
-          <TextBlock Text="Expanded content" Foreground="#EAEAEA" />
-        </Expander>
-      </StackPanel>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		Only the downward direction is implemented: the app never asks for another one, and a real
+		sideways expander needs different geometry, not a different chevron. The header is a keyed
+		ToggleButton so the app-wide one (32px, wash, border) does not leak into it.
+	-->
 
-  <!-- Base Expander style -->
-  <Style Selector="Expander">
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="16" />
-    <Setter Property="MinHeight" Value="48" />
-    <Setter Property="HorizontalAlignment" Value="Left" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-  </Style>
+	<ControlTheme x:Key="ExpanderHeaderButton" TargetType="ToggleButton">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Padding" Value="0,5" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								CornerRadius="{DynamicResource RadiusS}"
+								Padding="{TemplateBinding Padding}">
+					<Grid ColumnDefinitions="Auto,*">
+						<ico:VisualIcon Kind="ChevronRight"
+														Width="14"
+														Height="14"
+														VerticalAlignment="Center"
+														Foreground="{DynamicResource TextTertiary}"
+														RenderTransform="rotate(0deg)">
+							<ico:VisualIcon.Transitions>
+								<Transitions>
+									<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+								</Transitions>
+							</ico:VisualIcon.Transitions>
+						</ico:VisualIcon>
+						<ContentPresenter Grid.Column="1"
+															Background="#00000000"
+															Margin="6,0,0,0"
+															Content="{TemplateBinding Content}"
+															ContentTemplate="{TemplateBinding ContentTemplate}"
+															HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalAlignment="Center"
+															Foreground="{DynamicResource TextSecondary}"
+															RecognizesAccessKey="True" />
+					</Grid>
+				</Border>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- ToggleButton (header) -->
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Padding" Value="16 0 0 0" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-    <Setter Property="VerticalContentAlignment" Value="Center" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="FontWeight" Value="SemiBold" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.2" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.2" />
-      </Transitions>
-    </Setter>
-  </Style>
+		<Style Selector="^:checked /template/ ico|VisualIcon">
+			<Setter Property="RenderTransform" Value="rotate(90deg)" />
+		</Style>
+		<Style Selector="^:pointerover /template/ ContentPresenter">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Collapsed: header gets full Expander corner radius -->
-  <Style Selector="Expander:not(:expanded) /template/ ToggleButton#ExpanderHeader">
-    <Setter Property="CornerRadius" Value="{Binding $parent[Expander].CornerRadius}" />
-  </Style>
+	<ControlTheme x:Key="{x:Type Expander}" TargetType="Expander">
+		<Setter Property="Padding" Value="0,2,0,8" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<StackPanel MinWidth="{TemplateBinding MinWidth}"
+										MaxWidth="{TemplateBinding MaxWidth}">
+					<ToggleButton Name="PART_ToggleButton"
+												Theme="{StaticResource ExpanderHeaderButton}"
+												IsEnabled="{TemplateBinding IsEnabled}"
+												IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}"
+												Content="{TemplateBinding Header}"
+												ContentTemplate="{TemplateBinding HeaderTemplate}" />
+					<ContentPresenter Name="PART_ContentPresenter"
+														Background="#00000000"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														Margin="{TemplateBinding Padding}"
+														IsVisible="{TemplateBinding IsExpanded}"
+														HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+														VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+														Foreground="{TemplateBinding Foreground}" />
+				</StackPanel>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-  <!-- Expanded down: header top corners rounded -->
-  <Style Selector="Expander:expanded:down /template/ ToggleButton#ExpanderHeader">
-    <Setter Property="CornerRadius" Value="8 8 0 0" />
-  </Style>
-
-  <!-- Expanded up: header bottom corners rounded -->
-  <Style Selector="Expander:expanded:up /template/ ToggleButton#ExpanderHeader">
-    <Setter Property="CornerRadius" Value="0 0 8 8" />
-  </Style>
-
-  <!-- Chevron border -->
-  <Style Selector="Expander /template/ Border#ExpandCollapseChevronBorder">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Width" Value="32" />
-    <Setter Property="Height" Value="32" />
-    <Setter Property="Margin" Value="20 0 8 0" />
-  </Style>
-
-  <!-- Chevron path -->
-  <Style Selector="Expander /template/ Path#ExpandCollapseChevron">
-    <Setter Property="Stroke" Value="#888888" />
-    <Setter Property="StrokeThickness" Value="1.5" />
-    <Setter Property="Stretch" Value="None" />
-    <Setter Property="HorizontalAlignment" Value="Center" />
-    <Setter Property="VerticalAlignment" Value="Center" />
-    <Setter Property="RenderTransformOrigin" Value="50% 50%" />
-  </Style>
-
-  <!-- Header hover -->
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pointerover">
-    <Setter Property="Background" Value="#2A2A3E" />
-  </Style>
-
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pointerover /template/ Path#ExpandCollapseChevron">
-    <Setter Property="Stroke" Value="#EAEAEA" />
-  </Style>
-
-  <!-- Header pressed -->
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:pressed">
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
-
-  <!-- Header disabled -->
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
-
-  <Style Selector="Expander /template/ ToggleButton#ExpanderHeader:disabled /template/ Path#ExpandCollapseChevron">
-    <Setter Property="Stroke" Value="#3A3A4E" />
-  </Style>
-
-  <!-- Content area -->
-  <Style Selector="Expander /template/ Border#ExpanderContent">
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="1 0 1 1" />
-    <Setter Property="CornerRadius" Value="0 0 8 8" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

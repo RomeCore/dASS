@@ -6,22 +6,6 @@
 				x:Class="LLMDesktopAssistant.Styles.Theme">
 	
 	<!-- Controls -->
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TabControl.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TabItem.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ListBox.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ListBoxItem.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TreeView.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TreeViewItem.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Menu.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/MenuItem.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ToolTip.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Expander.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/HyperlinkButton.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/SplitButton.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/DropDownButton.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/GroupBox.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/DialogHost.axaml" />
-	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Controls/Separator.axaml" />
 	
 	<!-- Custom -->
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/ButtonsIcons.axaml"/>

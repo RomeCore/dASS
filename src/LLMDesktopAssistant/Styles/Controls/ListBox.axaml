@@ -1,23 +1,46 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <ListBox>
-        <ListBoxItem>Item 1</ListBoxItem>
-        <ListBoxItem>Item 2</ListBoxItem>
-        <ListBoxItem>Item 3</ListBoxItem>
-      </ListBox>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		A list is content, not chrome: the container stays transparent and the surface belongs to
+		whatever hosts it. The scroll contract is the stock one - the ListBox owns its ScrollViewer,
+		so nothing may wrap it in another.
+	-->
 
-  <!-- Base ListBox style -->
-  <Style Selector="ListBox">
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-  </Style>
+	<ControlTheme x:Key="{x:Type ListBox}" TargetType="ListBox">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+		<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+		<Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Name="PART_Root"
+								Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								ClipToBounds="{TemplateBinding ClipToBounds}">
+					<scroll:SmoothScrollViewer Name="PART_ScrollViewer"
+																		 HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+																		 VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+																		 IsScrollChainingEnabled="{TemplateBinding (ScrollViewer.IsScrollChainingEnabled)}"
+																		 IsDeferredScrollingEnabled="{TemplateBinding (ScrollViewer.IsDeferredScrollingEnabled)}"
+																		 AllowAutoHide="{TemplateBinding (ScrollViewer.AllowAutoHide)}"
+																		 BringIntoViewOnFocusChange="{TemplateBinding (ScrollViewer.BringIntoViewOnFocusChange)}"
+																		 Step="{TemplateBinding (scroll:SmoothScrollViewer.Step)}"
+																		 Duration="{TemplateBinding (scroll:SmoothScrollViewer.Duration)}"
+																		 MaxSpeed="{TemplateBinding (scroll:SmoothScrollViewer.MaxSpeed)}"
+																		 FollowEnd="{TemplateBinding (scroll:SmoothScrollViewer.FollowEnd)}">
+						<ItemsPresenter Name="PART_ItemsPresenter"
+														ItemsPanel="{TemplateBinding ItemsPanel}"
+														Margin="{TemplateBinding Padding}" />
+					</scroll:SmoothScrollViewer>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-</Styles>
+</ResourceDictionary>

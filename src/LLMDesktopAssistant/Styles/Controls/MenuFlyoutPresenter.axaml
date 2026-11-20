@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling">
+
+	<!--
+		The surface a MenuFlyout opens into; the items themselves are MenuItem themes.
+	-->
+
+	<ControlTheme x:Key="{x:Type MenuFlyoutPresenter}" TargetType="MenuFlyoutPresenter">
+		<Setter Property="Background" Value="{DynamicResource PopupBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="4" />
+		<Setter Property="MaxWidth" Value="360" />
+		<Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+		<Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}"
+								MaxWidth="{TemplateBinding MaxWidth}"
+								BoxShadow="0 10 28 -6 #66000000">
+					<scroll:SmoothScrollViewer HorizontalScrollBarVisibility="{TemplateBinding (ScrollViewer.HorizontalScrollBarVisibility)}"
+																		 VerticalScrollBarVisibility="{TemplateBinding (ScrollViewer.VerticalScrollBarVisibility)}"
+																		 Step="{TemplateBinding (scroll:SmoothScrollViewer.Step)}"
+																		 Duration="{TemplateBinding (scroll:SmoothScrollViewer.Duration)}">
+						<ItemsPresenter Name="PART_ItemsPresenter"
+														ItemsPanel="{TemplateBinding ItemsPanel}"
+														KeyboardNavigation.TabNavigation="Continue" />
+					</scroll:SmoothScrollViewer>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

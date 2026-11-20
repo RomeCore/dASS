@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+	<!--
+		Nothing but the dragged surface: the splitter itself is invisible, the host sizes it, and the
+		cursor is set by the control from ResizeDirection. No minimum thickness - the app asks for 1-4px.
+	-->
+
+	<ControlTheme x:Key="{x:Type GridSplitter}" TargetType="GridSplitter">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="MinWidth" Value="1" />
+		<Setter Property="MinHeight" Value="1" />
+		<Setter Property="Focusable" Value="True" />
+		<Setter Property="PreviewContent">
+			<Template>
+				<Rectangle Fill="{DynamicResource FocusRing}" Opacity="0.6" />
+			</Template>
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}" />
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

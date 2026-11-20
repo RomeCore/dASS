@@ -1,20 +1,26 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <StackPanel Width="200">
-      <TextBlock Text="Above" Foreground="#EAEAEA" />
-      <Separator />
-      <TextBlock Text="Below" Foreground="#EAEAEA" />
-    </StackPanel>
-  </Design.PreviewWith>
+	<!--
+		A hairline, not a groove: the separator carries no padding of its own, because every caller
+		already decides the space around it with Margin.
+	-->
 
-  <!-- Base Separator style -->
-  <Style Selector="Separator">
-    <Setter Property="Background" Value="#2A2A3E" />
-    <Setter Property="Height" Value="1" />
-    <Setter Property="Margin" Value="0 8" />
-    <Setter Property="HorizontalAlignment" Value="Stretch" />
-  </Style>
+	<ControlTheme x:Key="{x:Type Separator}" TargetType="Separator">
+		<Setter Property="Background" Value="{DynamicResource BorderSubtle}" />
+		<Setter Property="Height" Value="1" />
+		<Setter Property="Margin" Value="2,4" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								Height="{TemplateBinding Height}"
+								HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+								VerticalAlignment="{TemplateBinding VerticalAlignment}"
+								CornerRadius="{TemplateBinding CornerRadius}" />
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-</Styles>
+</ResourceDictionary>

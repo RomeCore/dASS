@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
 	<!--
 		The base action. No surface until it is hovered: the hover layer is a separate border whose
@@ -8,7 +9,7 @@
 	-->
 
 	<ControlTheme x:Key="{x:Type Button}" TargetType="Button">
-		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
 		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
@@ -65,16 +66,16 @@
 							</Border.Transitions>
 						</Border>
 						<ContentPresenter Name="PART_Content"
-											Background="#00000000"
-											Content="{TemplateBinding Content}"
-											ContentTemplate="{TemplateBinding ContentTemplate}"
-											Margin="{TemplateBinding Padding}"
-											HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-											VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-											FontSize="{TemplateBinding FontSize}"
-											FontWeight="{TemplateBinding FontWeight}"
-											Foreground="{TemplateBinding Foreground}"
-											RecognizesAccessKey="True" />
+															Background="#00000000"
+															Content="{TemplateBinding Content}"
+															ContentTemplate="{TemplateBinding ContentTemplate}"
+															Margin="{TemplateBinding Padding}"
+															HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+															FontSize="{TemplateBinding FontSize}"
+															FontWeight="{TemplateBinding FontWeight}"
+															Foreground="{TemplateBinding Foreground}"
+															RecognizesAccessKey="True" />
 					</Panel>
 				</Border>
 			</ControlTemplate>
@@ -100,6 +101,19 @@
 			<Setter Property="Opacity" Value="0.4" />
 		</Style>
 
+		<Style Selector="^.icon">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Width" Value="32" />
+			<Setter Property="Height" Value="32" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+		</Style>
+		<Style Selector="^.icon:pointerover">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+
 		<Style Selector="^.accent">
 			<Setter Property="Background" Value="{DynamicResource PrimaryBase}" />
 			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
@@ -116,6 +130,7 @@
 		</Style>
 
 		<Style Selector="^.ghost">
+			<Setter Property="Background" Value="#00000000" />
 			<Setter Property="BorderThickness" Value="0" />
 			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
 		</Style>
@@ -130,18 +145,6 @@
 		</Style>
 		<Style Selector="^.danger /template/ Border#PART_Wash">
 			<Setter Property="Background" Value="{DynamicResource StatusDangerBorder}" />
-		</Style>
-
-		<Style Selector="^.icon">
-			<Setter Property="BorderThickness" Value="0" />
-			<Setter Property="Padding" Value="0" />
-			<Setter Property="Width" Value="32" />
-			<Setter Property="Height" Value="32" />
-			<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
-			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
-		</Style>
-		<Style Selector="^.icon:pointerover">
-			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
 		</Style>
 	</ControlTheme>
 

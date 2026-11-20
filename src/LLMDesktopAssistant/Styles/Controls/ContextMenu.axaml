@@ -1,0 +1,40 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling">
+
+	<!--
+		A context menu is a floating surface, like a tooltip but bigger: popup background, hairline,
+		radius, and its own scroller so long menus do not overflow the screen.
+	-->
+
+	<ControlTheme x:Key="{x:Type ContextMenu}" TargetType="ContextMenu">
+		<Setter Property="Background" Value="{DynamicResource PopupBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="1" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Padding" Value="4" />
+		<Setter Property="MaxWidth" Value="360" />
+		<Setter Property="Focusable" Value="True" />
+		<Setter Property="HorizontalAlignment" Value="Stretch" />
+		<Setter Property="WindowManagerAddShadowHint" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}"
+								MaxWidth="{TemplateBinding MaxWidth}"
+								HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+								BoxShadow="0 10 28 -6 #66000000">
+					<scroll:SmoothScrollViewer>
+						<ItemsPresenter Name="PART_ItemsPresenter"
+														ItemsPanel="{TemplateBinding ItemsPanel}"
+														KeyboardNavigation.TabNavigation="Continue" />
+					</scroll:SmoothScrollViewer>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

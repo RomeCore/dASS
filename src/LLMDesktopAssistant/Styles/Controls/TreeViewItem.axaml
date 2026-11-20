@@ -1,115 +1,131 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:conv="using:Avalonia.Controls.Converters"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
 
-  <Design.PreviewWith>
-    <Border Padding="20" MinWidth="300">
-      <TreeView>
-        <TreeViewItem Header="Level 1" IsExpanded="True">
-          <TreeViewItem Header="Level 2.1" IsSelected="True" IsExpanded="True">
-            <TreeViewItem Header="Level 3.1" />
-            <TreeViewItem Header="Level 3.2" IsSelected="True" />
-          </TreeViewItem>
-          <TreeViewItem Header="Level 2.2" IsEnabled="False" />
-        </TreeViewItem>
-      </TreeView>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The chevron is its own keyed theme: the app-wide ToggleButton carries padding, a 32px box and a
+		hover wash, none of which belongs inside a 18px indent slot. A rotated ChevronRight animates the
+		expansion instead of swapping two glyphs.
+	-->
 
-  <!-- Base TreeViewItem style -->
-  <Style Selector="TreeViewItem">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Foreground" Value="#EAEAEA" />
-    <Setter Property="BorderBrush" Value="Transparent" />
-    <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="MinHeight" Value="32" />
-    <Setter Property="Padding" Value="0" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-        <BrushTransition Property="Foreground" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<ControlTheme x:Key="TreeViewChevron" TargetType="ToggleButton">
+		<Setter Property="Width" Value="18" />
+		<Setter Property="Height" Value="18" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="#00000000">
+					<ico:VisualIcon Kind="ChevronRight"
+													Width="12"
+													Height="12"
+													HorizontalAlignment="Center"
+													VerticalAlignment="Center"
+													Foreground="{DynamicResource TextTertiary}"
+													RenderTransform="rotate(0deg)">
+						<ico:VisualIcon.Transitions>
+							<Transitions>
+								<TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut" />
+							</Transitions>
+						</ico:VisualIcon.Transitions>
+					</ico:VisualIcon>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<Style Selector="^:checked /template/ ico|VisualIcon">
+			<Setter Property="RenderTransform" Value="rotate(90deg)" />
+		</Style>
+		<Style Selector="^:pointerover /template/ ico|VisualIcon">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+	</ControlTheme>
 
-  <!-- Layout root -->
-  <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot">
-    <Setter Property="CornerRadius" Value="4" />
-    <Setter Property="Transitions">
-      <Transitions>
-        <BrushTransition Property="Background" Duration="0:0:0.15" />
-        <BrushTransition Property="BorderBrush" Duration="0:0:0.15" />
-      </Transitions>
-    </Setter>
-  </Style>
+	<!--
+		The row paints the surface, the header presenter stays transparent. Indentation comes from the
+		control's Level through the stock converter - the theme must not compute it.
+	-->
 
-  <!-- Chevron (expand/collapse) -->
-  <Style Selector="TreeViewItem /template/ ToggleButton#PART_ExpandCollapseChevron /template/ Path#ChevronPath">
-    <Setter Property="Fill" Value="#888888" />
-  </Style>
+	<ControlTheme x:Key="{x:Type TreeViewItem}" TargetType="TreeViewItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<StackPanel>
+					<Border Name="PART_Root"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}"
+									CornerRadius="{TemplateBinding CornerRadius}"
+									MinHeight="26"
+									TemplatedControl.IsTemplateFocusTarget="True">
+						<Border.Transitions>
+							<Transitions>
+								<BrushTransition Property="Background" Duration="0:0:0.12" Easing="CubicEaseOut" />
+							</Transitions>
+						</Border.Transitions>
+						<Grid Name="PART_Header" ColumnDefinitions="Auto,*">
+							<Grid.Margin>
+								<MultiBinding Converter="{x:Static conv:TreeViewItemIndentConverter.Instance}">
+									<Binding Path="Level" RelativeSource="{RelativeSource TemplatedParent}" />
+									<DynamicResource ResourceKey="SpacingXl" />
+								</MultiBinding>
+							</Grid.Margin>
+							<Panel Name="PART_ExpandCollapseChevronContainer"
+										 Width="18"
+										 Margin="0,0,4,0">
+								<ToggleButton Name="PART_ExpandCollapseChevron"
+															Theme="{StaticResource TreeViewChevron}"
+															Focusable="False"
+															IsChecked="{TemplateBinding IsExpanded, Mode=TwoWay}" />
+							</Panel>
+							<ContentPresenter Name="PART_HeaderPresenter"
+																Grid.Column="1"
+																Focusable="False"
+																Background="#00000000"
+																Content="{TemplateBinding Header}"
+																ContentTemplate="{TemplateBinding HeaderTemplate}"
+																VerticalAlignment="Center"
+																Margin="{TemplateBinding Padding}"
+																Foreground="{TemplateBinding Foreground}" />
+						</Grid>
+					</Border>
+					<ItemsPresenter Name="PART_ItemsPresenter"
+													IsVisible="{TemplateBinding IsExpanded}"
+													ItemsPanel="{TemplateBinding ItemsPanel}" />
+				</StackPanel>
+			</ControlTemplate>
+		</Setter>
 
-  <Style Selector="TreeViewItem:pointerover /template/ ToggleButton#PART_ExpandCollapseChevron /template/ Path#ChevronPath">
-    <Setter Property="Fill" Value="#EAEAEA" />
-  </Style>
+		<!-- The border, not the item, tracks the pointer: the child rows sit inside the item's bounds. -->
+		<Style Selector="^ /template/ Border#PART_Root:pointerover">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^:pressed /template/ Border#PART_Root:pointerover">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^:selected /template/ Border#PART_Root">
+			<Setter Property="Background" Value="{DynamicResource SelectionBackground}" />
+		</Style>
+		<Style Selector="^:selected">
+			<Setter Property="Foreground" Value="{DynamicResource SelectionForeground}" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
 
-  <!-- Hover -->
-  <Style Selector="TreeViewItem /template/ Border#PART_LayoutRoot:pointerover">
-    <Setter Property="Background" Value="#2A2A3E" />
-  </Style>
+		<Style Selector="^:empty /template/ ToggleButton#PART_ExpandCollapseChevron">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="^:empty /template/ Panel#PART_ExpandCollapseChevronContainer">
+			<Setter Property="Width" Value="18" />
+		</Style>
+	</ControlTheme>
 
-  <Style Selector="TreeViewItem:pointerover">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Pressed -->
-  <Style Selector="TreeViewItem:pressed /template/ Border#PART_LayoutRoot:pointerover">
-    <Setter Property="Background" Value="#3A3A5E" />
-  </Style>
-
-  <Style Selector="TreeViewItem:pressed">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Selected -->
-  <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="#3A3A7E" />
-  </Style>
-
-  <Style Selector="TreeViewItem:selected">
-    <Setter Property="Foreground" Value="#FFFFFF" />
-  </Style>
-
-  <!-- Selected + hover -->
-  <Style Selector="TreeViewItem:selected /template/ Border#PART_LayoutRoot:pointerover">
-    <Setter Property="Background" Value="#4A4A8E" />
-  </Style>
-
-  <!-- Selected + pressed -->
-  <Style Selector="TreeViewItem:pressed:selected /template/ Border#PART_LayoutRoot:pointerover">
-    <Setter Property="Background" Value="#5A5A9E" />
-  </Style>
-
-  <!-- Disabled -->
-  <Style Selector="TreeViewItem:disabled /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="Transparent" />
-  </Style>
-
-  <Style Selector="TreeViewItem:disabled">
-    <Setter Property="Foreground" Value="#555555" />
-  </Style>
-
-  <!-- Disabled + selected -->
-  <Style Selector="TreeViewItem:disabled:selected /template/ Border#PART_LayoutRoot">
-    <Setter Property="Background" Value="#2A2A4E" />
-  </Style>
-
-  <Style Selector="TreeViewItem:disabled:selected">
-    <Setter Property="Foreground" Value="#777777" />
-  </Style>
-
-  <!-- Empty items hide chevron -->
-  <Style Selector="TreeViewItem:empty /template/ ToggleButton#PART_ExpandCollapseChevron">
-    <Setter Property="IsVisible" Value="False" />
-  </Style>
-
-</Styles>
+</ResourceDictionary>

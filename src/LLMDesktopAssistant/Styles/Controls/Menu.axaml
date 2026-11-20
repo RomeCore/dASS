@@ -1,20 +1,36 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <Border Padding="20">
-      <Menu>
-        <MenuItem Header="_File" />
-        <MenuItem Header="_Edit" />
-        <MenuItem Header="_Help" />
-      </Menu>
-    </Border>
-  </Design.PreviewWith>
+	<!--
+		The bar itself draws nothing; its rows (MenuTopLevelItem) carry the hover surface. The item
+		container theme is set here so every Menu gets the bar skin without the app restyling it.
+	-->
 
-  <!-- Base Menu style -->
-  <Style Selector="Menu">
-    <Setter Property="Background" Value="Transparent" />
-    <Setter Property="Height" Value="32" />
-  </Style>
+	<ControlTheme x:Key="{x:Type Menu}" TargetType="Menu">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="ItemContainerTheme" Value="{DynamicResource MenuTopLevelItem}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								Padding="{TemplateBinding Padding}"
+								HorizontalAlignment="Stretch">
+					<ItemsPresenter Name="PART_ItemsPresenter"
+													VerticalAlignment="Stretch"
+													KeyboardNavigation.TabNavigation="Continue">
+						<ItemsPresenter.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Horizontal" Spacing="2" />
+							</ItemsPanelTemplate>
+						</ItemsPresenter.ItemsPanel>
+					</ItemsPresenter>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
 
-</Styles>
+</ResourceDictionary>

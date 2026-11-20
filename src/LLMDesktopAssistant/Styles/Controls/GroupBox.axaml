@@ -1,24 +1,45 @@
-<Styles xmlns="https://github.com/avaloniaui"
-         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <Design.PreviewWith>
-    <GroupBox Padding="10" Margin="10">
-      <TextBlock Text="Hello World" Foreground="#EAEAEA" />
-    </GroupBox>
-  </Design.PreviewWith>
+	<!--
+		A caption above a framed panel. The stock look cuts a gap in the border for the header, which
+		needs an opacity mask and a converter; a header row above the frame says the same thing and
+		survives a theme change.
+	-->
 
-  <!-- Base GroupBox style -->
-  <Style Selector="GroupBox">
-    <Setter Property="Background" Value="#141428" />
-    <Setter Property="BorderBrush" Value="#2A2A3E" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="CornerRadius" Value="8" />
-    <Setter Property="Padding" Value="12" />
-  </Style>
+	<ControlTheme x:Key="{x:Type GroupBox}" TargetType="GroupBox">
+		<Setter Property="Padding" Value="12" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<StackPanel>
+					<ContentPresenter Name="PART_HeaderPresenter"
+														Background="#00000000"
+														Margin="2,0,0,6"
+														Content="{TemplateBinding Header}"
+														ContentTemplate="{TemplateBinding HeaderTemplate}"
+														HorizontalAlignment="Left"
+														FontSize="{DynamicResource FontSizeS}" />
+					<Border Background="{DynamicResource CardBackground}"
+									BorderBrush="{DynamicResource BorderSubtle}"
+									BorderThickness="1"
+									CornerRadius="{DynamicResource RadiusM}"
+									Padding="{TemplateBinding Padding}">
+						<ContentPresenter Name="PART_ContentPresenter"
+															Background="#00000000"
+															Content="{TemplateBinding Content}"
+															ContentTemplate="{TemplateBinding ContentTemplate}"
+															HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+					</Border>
+				</StackPanel>
+			</ControlTemplate>
+		</Setter>
 
-  <!-- Header -->
-  <Style Selector="GroupBox /template/ ContentPresenter#PART_HeaderPresenter">
-    <Setter Property="Foreground" Value="#888888" />
-  </Style>
+		<Style Selector="^ /template/ ContentPresenter#PART_HeaderPresenter">
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+			<Setter Property="FontWeight" Value="SemiBold" />
+			<Setter Property="RecognizesAccessKey" Value="True" />
+		</Style>
+	</ControlTheme>
 
-</Styles>
+</ResourceDictionary>
