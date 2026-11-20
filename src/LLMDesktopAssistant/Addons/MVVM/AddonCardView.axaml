@@ -103,15 +103,21 @@
 												IsVisible="{Binding Content, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
 				<ico:VisualIcon Kind="{Binding Icon}"
-												  IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
-												  Width="12" Height="12"
-												  VerticalAlignment="Center"
-												  Foreground="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"/>
+												IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
+												Width="12" Height="12"
+												VerticalAlignment="Center">
+					<ico:VisualIcon.Foreground>
+						<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
+							<Binding Path="Brush" Converter="{StaticResource ColorToBrushConverter}"/>
+							<DynamicResource ResourceKey="PrimaryBorder"/>
+						</MultiBinding>
+					</ico:VisualIcon.Foreground>
+				</ico:VisualIcon>
 
 				<TextBlock Classes="cardChipText"
-									   Text="{loc:Loc {Binding Label}}"
-									   IsVisible="{Binding Label, Converter={StaticResource NotnullToBooleanConverter}}"
-									   VerticalAlignment="Center"/>
+									 Text="{loc:Loc {Binding Label}}"
+									 IsVisible="{Binding Label, Converter={StaticResource NotnullToBooleanConverter}}"
+									 VerticalAlignment="Center"/>
 			</StackPanel>
 		</DataTemplate>
 
@@ -194,8 +200,13 @@
 							Opacity="{Binding Opacity}"
 							Command="{Binding Command}"
 							CommandParameter="{Binding CommandParameter}"
-							BorderBrush="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
+				<Button.BorderBrush>
+					<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
+						<Binding Path="Brush" Converter="{StaticResource ColorToBrushConverter}"/>
+						<DynamicResource ResourceKey="PrimaryBorder"/>
+					</MultiBinding>
+				</Button.BorderBrush>
 				<ContentControl Content="{Binding}" ContentTemplate="{StaticResource AddonCardChipBodyTemplate}"/>
 			</Button>
 		</DataTemplate>
@@ -205,8 +216,13 @@
 			<Border Classes="cardChip"
 							Classes.noBorder="{Binding !HasBorder}"
 							Opacity="{Binding Opacity}"
-							BorderBrush="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
+				<Border.BorderBrush>
+					<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
+						<Binding Path="Brush" Converter="{StaticResource ColorToBrushConverter}"/>
+						<DynamicResource ResourceKey="PrimaryBorder"/>
+					</MultiBinding>
+				</Border.BorderBrush>
 				<ContentControl Content="{Binding}" ContentTemplate="{StaticResource AddonCardChipBodyTemplate}"/>
 			</Border>
 		</DataTemplate>
