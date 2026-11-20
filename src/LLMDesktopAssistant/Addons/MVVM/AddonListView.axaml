@@ -1,16 +1,16 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
-			 xmlns:group="using:LLMDesktopAssistant.Addons.MVVM.Grouping"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
-			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 x:Class="LLMDesktopAssistant.Addons.MVVM.AddonListView"
-			 x:DataType="cards:AddonListViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+						 xmlns:group="using:LLMDesktopAssistant.Addons.MVVM.Grouping"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.Addons.MVVM.AddonListView"
+						 x:DataType="cards:AddonListViewModel">
 
 	<StackPanel Spacing="8">
 
@@ -19,18 +19,18 @@
 
 			<!-- Grouping mode selector (shown only when the list provides more than one mode) -->
 			<ComboBox Grid.Column="0"
-					  IsVisible="{Binding HasGroupingModes}"
-					  ItemsSource="{Binding GroupingModes}"
-					  SelectedItem="{Binding SelectedGroupingMode}"
-					  VerticalAlignment="Center"
-					  MinWidth="150">
+								IsVisible="{Binding HasGroupingModes}"
+								ItemsSource="{Binding GroupingModes}"
+								SelectedItem="{Binding SelectedGroupingMode}"
+								VerticalAlignment="Center"
+								MinWidth="150">
 				<ComboBox.ItemTemplate>
 					<DataTemplate x:DataType="group:GroupingMode">
 						<StackPanel Orientation="Horizontal" Spacing="6">
 							<ico:VisualIcon Kind="{Binding Icon}"
-											  IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
-											  Width="14" Height="14"
-											  VerticalAlignment="Center"/>
+															IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
+															Width="14" Height="14"
+															VerticalAlignment="Center"/>
 							<TextBlock Text="{loc:Loc {Binding Title}}" VerticalAlignment="Center"/>
 						</StackPanel>
 					</DataTemplate>
@@ -38,9 +38,9 @@
 			</ComboBox>
 
 			<TextBox Grid.Column="1"
-					 Text="{Binding SearchText, Mode=TwoWay}"
-					 PlaceholderText="{loc:Loc {Binding SearchPlaceholderKey}}"
-					 VerticalAlignment="Center">
+							 Text="{Binding SearchText, Mode=TwoWay}"
+							 PlaceholderText="{loc:Loc {Binding SearchPlaceholderKey}}"
+							 VerticalAlignment="Center">
 				<TextBox.InnerLeftContent>
 					<ico:VisualIcon Kind="TextBoxSearch" Width="16" Height="16" Margin="6,0" VerticalAlignment="Center" Opacity="0.5"/>
 				</TextBox.InnerLeftContent>
@@ -48,24 +48,24 @@
 		</Grid>
 
 		<Border BorderBrush="{DynamicResource PrimaryBorder}"
-				BorderThickness="1"
-				CornerRadius="4">
+						BorderThickness="1"
+						CornerRadius="4">
 			<Panel>
 				
 				<!-- Empty state -->
 				<TextBlock Text="{loc:Loc {Binding EmptyTextKey}}"
-						   Opacity="0.5"
-						   TextWrapping="Wrap"
-						   IsVisible="{Binding !HasVisibleItems}"
-							 Margin="10"/>
+									 Opacity="0.5"
+									 TextWrapping="Wrap"
+									 IsVisible="{Binding !HasVisibleItems}"
+									 Margin="10"/>
 
 				<scroll:SmoothScrollViewer MaxHeight="600"
-											VerticalScrollBarVisibility="Auto"
-											HorizontalScrollBarVisibility="Disabled">
+																	 VerticalScrollBarVisibility="Auto"
+																	 HorizontalScrollBarVisibility="Disabled">
 					<ItemsControl ItemsSource="{Binding Items}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
-								<StackPanel Orientation="Vertical"/>
+								<VirtualizingStackPanel Orientation="Vertical"/>
 							</ItemsPanelTemplate>
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
