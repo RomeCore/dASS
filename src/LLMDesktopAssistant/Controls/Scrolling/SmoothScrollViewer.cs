@@ -41,24 +41,24 @@ namespace LLMDesktopAssistant.Controls.Scrolling
 		/// <summary>
 		/// The size of one wheel notch, in pixels. Defaults to the value stock Avalonia scrolling uses.
 		/// </summary>
-		public static readonly StyledProperty<double> StepProperty =
-			AvaloniaProperty.Register<SmoothScrollViewer, double>(nameof(Step), 50d);
+		public static readonly AttachedProperty<double> StepProperty =
+			AvaloniaProperty.RegisterAttached<SmoothScrollViewer, Control, double>(nameof(Step), 50d);
 
 		/// <summary>Approximate time for the content to settle on the target.</summary>
-		public static readonly StyledProperty<TimeSpan> DurationProperty =
-			AvaloniaProperty.Register<SmoothScrollViewer, TimeSpan>(nameof(Duration), TimeSpan.FromMilliseconds(180));
+		public static readonly AttachedProperty<TimeSpan> DurationProperty =
+			AvaloniaProperty.RegisterAttached<SmoothScrollViewer, Control, TimeSpan>(nameof(Duration), TimeSpan.FromMilliseconds(180));
 
 		/// <summary>Upper bound of the scroll speed, in pixels per second. Zero or less means unlimited.</summary>
-		public static readonly StyledProperty<double> MaxSpeedProperty =
-			AvaloniaProperty.Register<SmoothScrollViewer, double>(nameof(MaxSpeed), 10000d);
+		public static readonly AttachedProperty<double> MaxSpeedProperty =
+			AvaloniaProperty.RegisterAttached<SmoothScrollViewer, Control, double>(nameof(MaxSpeed), 10000d);
 
 		/// <summary>
 		/// When enabled, the viewer sticks to the end of its content: as the content grows the target is
 		/// continuously pulled to the bottom, so streaming output is followed instead of jumping.
 		/// The follow is dropped as soon as the user scrolls away from the end.
 		/// </summary>
-		public static readonly StyledProperty<bool> FollowEndProperty =
-			AvaloniaProperty.Register<SmoothScrollViewer, bool>(nameof(FollowEnd));
+		public static readonly AttachedProperty<bool> FollowEndProperty =
+			AvaloniaProperty.RegisterAttached<SmoothScrollViewer, Control, bool>(nameof(FollowEnd));
 
 		/// <summary>Whether the end of the content is currently being followed (see <see cref="FollowEnd"/>).</summary>
 		private static readonly DirectProperty<SmoothScrollViewer, bool> IsFollowingEndProperty =
@@ -104,6 +104,46 @@ namespace LLMDesktopAssistant.Controls.Scrolling
 			// Touch/pen dragging: the presenter scrolls the offset itself and marks the event as handled.
 			AddHandler(ScrollGestureEvent, OnScrollGesture, RoutingStrategies.Bubble, handledEventsToo: true);
 			AddHandler(ScrollGestureEndedEvent, OnScrollGestureEnded, RoutingStrategies.Bubble, handledEventsToo: true);
+		}
+
+		public static double GetStep(Control element)
+		{
+			return element.GetValue(StepProperty);
+		}
+
+		public static void SetStep(Control element, double value)
+		{
+			element.SetValue(StepProperty, value);
+		}
+
+		public static TimeSpan GetDuration(Control element)
+		{
+			return element.GetValue(DurationProperty);
+		}
+
+		public static void SetDuration(Control element, TimeSpan value)
+		{
+			element.SetValue(DurationProperty, value);
+		}
+
+		public static double GetMaxSpeed(Control element)
+		{
+			return element.GetValue(MaxSpeedProperty);
+		}
+
+		public static void SetMaxSpeed(Control element, double value)
+		{
+			element.SetValue(MaxSpeedProperty, value);
+		}
+
+		public static bool GetFollowEnd(Control element)
+		{
+			return element.GetValue(FollowEndProperty);
+		}
+
+		public static void SetFollowEnd(Control element, bool value)
+		{
+			element.SetValue(FollowEndProperty, value);
 		}
 
 		public double Step

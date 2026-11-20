@@ -107,7 +107,9 @@
 											Margin="0,4,0,0">
 								<scroll:SmoothScrollViewer HorizontalScrollBarVisibility="Disabled"
 																					 VerticalScrollBarVisibility="Auto"
-																					 IsScrollChainingEnabled="False">
+																					 IsScrollChainingEnabled="False"
+																					 Step="{TemplateBinding (scroll:SmoothScrollViewer.Step)}"
+																					 Duration="{TemplateBinding (scroll:SmoothScrollViewer.Duration)}">
 									<ItemsPresenter Name="PART_ItemsPresenter" ItemsPanel="{TemplateBinding ItemsPanel}" />
 								</scroll:SmoothScrollViewer>
 							</Border>
