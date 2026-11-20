@@ -376,7 +376,7 @@ strings from `LocalizationManager.LocalizeStatic`.
 Handoff documents live in `.llmassist/handoffs/`, one file per completed phase, named
 `<YYYY-MM-DD>-<effort-slug>-<phase>.md` (e.g. `.llmassist/handoffs/2026-10-17-tool-execution-v2-p3.md`).
 The `/handoff` skill writes there - not to the OS temp directory. Older one-off handoffs may sit
-directly under `.llmassist/`; find the latest with `fs-glob '.llmassist/**/*handoff*'`.
+directly under `.llmassist/`; find the latest with `fs-glob '.llmassist/handoffs/*.md'`.
 
 When continuing a multi-session effort, read the latest handoff first: it points to the spec, plan,
 tickets and commits instead of repeating them.
