@@ -99,7 +99,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				var today = DateTime.Today;
 
-				if (LastModifiedAt.Date == today)
+				if (LastModifiedAt.Date >= today.AddDays(-1))
 					return LastModifiedAt.ToString("HH:mm");
 
 				return LastModifiedAt.Year == today.Year
