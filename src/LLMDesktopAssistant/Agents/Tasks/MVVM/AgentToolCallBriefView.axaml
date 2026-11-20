@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -69,7 +69,7 @@
 				</ItemsControl>
 
 				<!-- Cancel this call alone; shown while it runs or waits for the user. -->
-				<Button Classes="MiniIconButton"
+				<Button Classes="icon mini"
 								Command="{Binding CancelCommand}"
 								IsVisible="{Binding CanCancel}"
 								VerticalAlignment="Center"
@@ -83,7 +83,7 @@
 			<DockPanel HorizontalSpacing="2"
 								 IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
 			
-				<Button Classes="MiniIconButton"
+				<Button Classes="icon mini"
 								DockPanel.Dock="Left">
 
 					<ico:VisualIcon Kind="CodeBraces"/>
@@ -110,7 +110,7 @@
 			<DockPanel HorizontalSpacing="2"
 								 IsVisible="{Binding HasResult}">
 			
-				<Button Classes="MiniIconButton"
+				<Button Classes="icon mini"
 								DockPanel.Dock="Left">
 
 					<ico:VisualIcon Kind="CommentTextOutline"/>

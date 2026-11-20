@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -117,7 +117,7 @@
 
 		<!-- Toggle button of a collapsible block, rendered in the card action row. -->
 		<DataTemplate x:Key="AddonCardCollapsibleToggleTemplate" x:DataType="cards:IAddonCardBlock">
-			<ToggleButton Classes="SmallIconButton"
+			<ToggleButton Classes="icon small"
 										IsChecked="{Binding IsExpanded, Mode=TwoWay}"
 										ToolTip.Tip="{loc:Loc {Binding ToggleToolTip}}"
 										IsVisible="{Binding ToggleIcon, Converter={StaticResource NotnullToBooleanConverter}}">
@@ -244,7 +244,7 @@
 
 		<!-- Action button. IsEnabled is driven by Command.CanExecute. -->
 		<DataTemplate x:DataType="cards:IAddonCardAction">
-			<Button Classes="SmallIconButton"
+			<Button Classes="icon small"
 							Command="{Binding Command}"
 							CommandParameter="{Binding CommandParameter}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
@@ -331,7 +331,7 @@
 				<Button Grid.Column="4"
 								Command="{Binding ResetCommand}"
 								HorizontalAlignment="Center"
-								Classes="IconButton"
+								Classes="icon"
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc common.reset}"
 								IsEnabled="{Binding HasChanges}">
@@ -409,7 +409,7 @@
 					</ItemsControl>
 
 					<!-- Details toggle (shown only when there are detail blocks). -->
-					<ToggleButton Classes="SmallIconButton"
+					<ToggleButton Classes="icon small"
 												IsVisible="{Binding HasDetails}"
 												IsChecked="{Binding IsDetailsVisible, Mode=TwoWay}"
 												ToolTip.Tip="{loc:Loc card.details}">

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -132,14 +132,14 @@
 												Spacing="2"
 												IsVisible="{Binding CanCollapse}">
 
-							<Button Classes="IconButton"
+							<Button Classes="icon"
 											Command="{Binding ToggleCollapsedCommand}"
 											IsVisible="{Binding IsCollapsed}"
 											ToolTip.Tip="{loc:Loc message.terminal.tooltip.expand}">
 								<ico:VisualIcon Kind="ChevronDown" />
 							</Button>
 
-							<Button Classes="IconButton"
+							<Button Classes="icon"
 											Command="{Binding ToggleCollapsedCommand}"
 											IsVisible="{Binding !IsCollapsed}"
 											ToolTip.Tip="{loc:Loc message.terminal.tooltip.collapse}">

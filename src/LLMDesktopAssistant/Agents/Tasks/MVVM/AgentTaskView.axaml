@@ -86,7 +86,7 @@
 					<DockPanel HorizontalSpacing="2"
 										 IsVisible="{Binding LastContent, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
 		
-						<Button Classes="MiniIconButton"
+						<Button Classes="icon mini"
 										DockPanel.Dock="Left">
 
 							<ico:VisualIcon Kind="Info"/>
@@ -123,7 +123,7 @@
 										 Opacity="0.55"
 										 VerticalAlignment="Center"/>
 
-					<Button Classes="SmallIconButton"
+					<Button Classes="icon small"
 									Command="{Binding CancelCommand}"
 									IsVisible="{Binding IsRunning}"
 									ToolTip.Tip="{loc:Loc task.cancel}">
@@ -132,7 +132,7 @@
 
 					<ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}"
 												IsVisible="{Binding SubTaskViewModels.Any}"
-												Classes="SmallIconButton"
+												Classes="icon small"
 												ToolTip.Tip="{loc:Loc task.toggle_subtasks}">
 						<ico:VisualIcon Kind="ChevronDown" Width="14" Height="14"/>
 					</ToggleButton>

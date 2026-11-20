@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -69,27 +69,27 @@
 								Spacing="4">
 
 			<Button Command="{Binding RegenerateCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc message.regenerate}">
 				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 
 			<Button Command="{Binding ResendCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							IsVisible="{Binding ContainsToolCalls}"
 							ToolTip.Tip="{loc:Loc message.resend}">
 				<ico:VisualIcon Kind="ArrowUDownLeft"/>
 			</Button>
 
 			<Button Command="{Binding ResendCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							IsVisible="{Binding ContainsToolCalls, Converter={StaticResource InverseBooleanConverter}}"
 							ToolTip.Tip="{loc:Loc message.resend}">
 				<ico:VisualIcon Kind="ChevronDoubleDown"/>
 			</Button>
 
 			<Button Command="{Binding DeleteCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc message.delete}">
 
 				<ico:VisualIcon Kind="Delete"/>
@@ -100,7 +100,7 @@
 									Spacing="0">
 
 				<Button Command="{Binding SwitchBranchCommand}"
-								Classes="IconButton"
+								Classes="icon"
 								CommandParameter="{Binding PreviousBranchIndex}"
 								CornerRadius="8,0,0,8"
 								ToolTip.Tip="{loc:Loc message.previous_branch}">
@@ -112,7 +112,7 @@
 									SelectedItem="{Binding SelectedBranchIndex}"/>
 
 				<Button Command="{Binding SwitchBranchCommand}"
-								Classes="IconButton"
+								Classes="icon"
 								CommandParameter="{Binding NextBranchIndex}"
 								CornerRadius="0,8,8,0"
 								ToolTip.Tip="{loc:Loc message.next_branch}">
@@ -121,7 +121,7 @@
 
 			</StackPanel>
 
-			<ToggleButton Classes="IconButton"
+			<ToggleButton Classes="icon"
 							IsChecked="{Binding Message.IsDisabledForAgents, Mode=TwoWay}"
 							ToolTip.Tip="{loc:Loc message.disable_for_agents}">
 				<Panel>
@@ -130,7 +130,7 @@
 				</Panel>
 			</ToggleButton>
 
-			<ToggleButton Classes="IconButton"
+			<ToggleButton Classes="icon"
 							IsChecked="{Binding RenderMarkdown, Mode=TwoWay}"
 							ToolTip.Tip="{loc:Loc message.render_markdown}">
 				<ico:VisualIcon Kind="LanguageMarkdown"/>
@@ -151,7 +151,7 @@
 															IsVisible="{Binding ViewModel, Converter={StaticResource NotnullToBooleanConverter}}"/>
 
 							<Button Command="{Binding Command}"
-											Classes="IconButton"
+											Classes="icon"
 											IsVisible="{Binding ViewModel, Converter={StaticResource NotnullToBooleanConverterInverted}}"
 											ToolTip.Tip="{loc:Loc {Binding Tooltip}}">
 								<ico:VisualIcon Kind="{Binding Icon}"/>

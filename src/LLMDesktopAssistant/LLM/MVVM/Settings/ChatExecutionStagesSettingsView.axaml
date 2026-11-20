@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -17,7 +17,7 @@
 				BorderThickness="0,0,0,1"
 				Padding="8,6">
 			<StackPanel Orientation="Horizontal" Spacing="4">
-				<Button Command="{Binding AddStageCommand}" Classes="IconButton"
+				<Button Command="{Binding AddStageCommand}" Classes="icon"
 						ToolTip.Tip="{loc:Loc settings.stage.add}">
 					<ico:VisualIcon Kind="Plus"/>
 				</Button>
@@ -62,7 +62,7 @@
 									<!-- Move up -->
 									<Button Grid.Column="3"
 													Command="{Binding MoveUpCommand}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.move_up}">
 										<ico:VisualIcon Kind="ChevronUp"/>
@@ -71,7 +71,7 @@
 									<!-- Move down -->
 									<Button Grid.Column="4"
 													Command="{Binding MoveDownCommand}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.move_down}">
 										<ico:VisualIcon Kind="ChevronDown"/>
@@ -80,7 +80,7 @@
 									<!-- Clone -->
 									<Button Grid.Column="5"
 													Command="{Binding CloneCommand}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.clone}">
 										<ico:VisualIcon Kind="ContentCopy"/>
@@ -89,7 +89,7 @@
 									<!-- Delete -->
 									<Button Grid.Column="6"
 													Command="{Binding DeleteCommand}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0"
 													ToolTip.Tip="{loc:Loc settings.stage.remove}">
 										<ico:VisualIcon Kind="Delete"/>

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -18,11 +18,11 @@
 						BorderThickness="0,0,0,1"
 						Padding="8,6">
 			<StackPanel Orientation="Horizontal" Spacing="4">
-				<Button Command="{Binding AddAgentCommand}" Classes="IconButton"
+				<Button Command="{Binding AddAgentCommand}" Classes="icon"
 						ToolTip.Tip="{loc:Loc settings.agent.add}">
 					<ico:VisualIcon Kind="Plus"/>
 				</Button>
-				<Button Command="{Binding RemoveAgentCommand}" Classes="IconButton"
+				<Button Command="{Binding RemoveAgentCommand}" Classes="icon"
 						ToolTip.Tip="{loc:Loc settings.agent.remove}">
 					<ico:VisualIcon Kind="Close"/>
 				</Button>
@@ -57,7 +57,7 @@
 									Command="{Binding #AgentsView.DataContext.PromoteToGlobalCommand}"
 									CommandParameter="{Binding}"
 									IsVisible="{Binding IsGlobal, Converter={StaticResource InverseBooleanConverter}}"
-									Classes="IconButton"
+									Classes="icon"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.agent.promote_global}">
 								<ico:VisualIcon Kind="CloudUpload"/>
@@ -68,7 +68,7 @@
 									Command="{Binding #AgentsView.DataContext.CopyToLocalCommand}"
 									CommandParameter="{Binding}"
 									IsVisible="{Binding IsGlobal}"
-									Classes="IconButton"
+									Classes="icon"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.agent.copy_to_local}">
 								<ico:VisualIcon Kind="CloudDownload"/>

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -149,7 +149,7 @@
 
 			<Button Grid.Column="1"
 					Command="{Binding CreateSubAgentCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					Margin="0,0,4,0"
 					ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
 				<ico:VisualIcon Kind="FilePlusOutline"/>
@@ -157,7 +157,7 @@
 
 			<Button Grid.Column="2"
 					Command="{Binding List.RefreshCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
 				<ico:VisualIcon Kind="Refresh"/>
 			</Button>

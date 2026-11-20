@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -41,14 +41,14 @@
 
 			<Button Grid.Column="2"
 							Command="{Binding AddWorkingDirectoryCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc env.add_working_directory}">
 				<ico:VisualIcon Kind="Plus"/>
 			</Button>
 
 			<Button Grid.Column="3"
 							Command="{Binding AddWorkingDirectoryByDialogCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							Margin="4,0,0,0"
 							ToolTip.Tip="{loc:Loc env.select_working_directory}">
 				<ico:VisualIcon Kind="FolderOpen"/>
@@ -108,7 +108,7 @@
 									Margin="6,0,2,0"
 									Command="{Binding #VMRoot.DataContext.OpenDirectoryCommand}"
 									CommandParameter="{x:Static util:Directories.DefaultWorkingDirectory}"
-									Classes="IconButton"
+									Classes="icon"
 									ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 						<ico:VisualIcon Kind="OpenInNew"/>
 					</Button>
@@ -160,7 +160,7 @@
 								<Button Grid.Column="4"
 												Command="{Binding #VMRoot.DataContext.MoveWorkingDirectoryUpCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.move_up}">
 									<ico:VisualIcon Kind="ChevronUp"/>
@@ -170,7 +170,7 @@
 								<Button Grid.Column="5"
 												Command="{Binding #VMRoot.DataContext.MoveWorkingDirectoryDownCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.move_down}">
 									<ico:VisualIcon Kind="ChevronDown"/>
@@ -180,7 +180,7 @@
 								<Button Grid.Column="6"
 												Command="{Binding #VMRoot.DataContext.RemoveWorkingDirectoryCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.remove}">
 									<ico:VisualIcon Kind="Delete"/>
@@ -199,7 +199,7 @@
 												Margin="6,0,0,0"
 												Command="{Binding #VMRoot.DataContext.BrowseWorkingDirectoryPathCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												ToolTip.Tip="{loc:Loc env.browse}">
 									<ico:VisualIcon Kind="FolderOpen"/>
 								</Button>
@@ -207,7 +207,7 @@
 								<Button Grid.Column="2"
 												Command="{Binding #VMRoot.DataContext.OpenDirectoryCommand}"
 												CommandParameter="{Binding Path}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 									<ico:VisualIcon Kind="OpenInNew"/>
@@ -252,7 +252,7 @@
 
 			<Button Grid.Column="2"
 							Command="{Binding AddDirectoryAccessRuleCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc env.add_access_rule}">
 				<ico:VisualIcon Kind="Plus"/>
 			</Button>
@@ -284,7 +284,7 @@
 								<Button Grid.Column="2"
 												Command="{Binding #VMRoot.DataContext.MoveDirectoryAccessRuleUpCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.move_up}">
 									<ico:VisualIcon Kind="ChevronUp"/>
@@ -294,7 +294,7 @@
 								<Button Grid.Column="3"
 												Command="{Binding #VMRoot.DataContext.MoveDirectoryAccessRuleDownCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.move_down}">
 									<ico:VisualIcon Kind="ChevronDown"/>
@@ -304,7 +304,7 @@
 								<Button Grid.Column="4"
 												Command="{Binding #VMRoot.DataContext.RemoveDirectoryAccessRuleCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												Margin="2,0"
 												ToolTip.Tip="{loc:Loc env.remove}">
 									<ico:VisualIcon Kind="Delete"/>
@@ -323,7 +323,7 @@
 												Margin="6,0,0,0"
 												Command="{Binding #VMRoot.DataContext.BrowseDirectoryAccessRulePathCommand}"
 												CommandParameter="{Binding}"
-												Classes="IconButton"
+												Classes="icon"
 												VerticalAlignment="Center"
 												ToolTip.Tip="{loc:Loc env.browse}">
 									<ico:VisualIcon Kind="FolderOpen"/>
@@ -333,7 +333,7 @@
 												Margin="6,0,0,0"
 												Command="{Binding #VMRoot.DataContext.OpenDirectoryCommand}"
 												CommandParameter="{Binding Path}"
-												Classes="IconButton"
+												Classes="icon"
 												VerticalAlignment="Center"
 												ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 									<ico:VisualIcon Kind="OpenInNew"/>

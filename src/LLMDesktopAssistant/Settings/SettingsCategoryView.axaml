@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -26,7 +26,7 @@
 								 HorizontalAlignment="Left"/>
 
 			<Button DockPanel.Dock="Right"
-							Classes="IconButton"
+							Classes="icon"
 							IsVisible="{Binding OpenedInDialog}"
 							VerticalAlignment="Center"
 							HorizontalAlignment="Right"
@@ -72,7 +72,7 @@
 
 				<Button Grid.Column="1"
 						Command="{Binding CreateNewIdCommand}"
-						Classes="IconButton">
+						Classes="icon">
 
 					<ico:VisualIcon Kind="Plus"/>
 
@@ -80,7 +80,7 @@
 
 				<Button Grid.Column="2"
 						Command="{Binding RenameIdCommand}"
-						Classes="IconButton">
+						Classes="icon">
 
 					<ico:VisualIcon Kind="Edit"/>
 
@@ -88,7 +88,7 @@
 
 				<Button Grid.Column="3"
 						Command="{Binding RemoveIdCommand}"
-						Classes="IconButton">
+						Classes="icon">
 
 					<ico:VisualIcon Kind="Remove"/>
 
@@ -107,7 +107,7 @@
 
 				<Button Grid.Column="1"
 						Command="{Binding ConfirmEditIdCommand}"
-						Classes="IconButton">
+						Classes="icon">
 
 					<ico:VisualIcon Kind="Check"/>
 
@@ -115,7 +115,7 @@
 
 				<Button Grid.Column="2"
 						Command="{Binding CancelEditIdCommand}"
-						Classes="IconButton">
+						Classes="icon">
 
 					<ico:VisualIcon Kind="Cancel"/>
 

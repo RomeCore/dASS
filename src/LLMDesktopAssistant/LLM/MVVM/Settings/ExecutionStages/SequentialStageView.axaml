@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -32,7 +32,7 @@
 							<!-- Move up -->
 							<Button Grid.Column="2"
 									Command="{Binding MoveUpCommand}"
-									Classes="IconButton"
+									Classes="icon"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.stage.move_agent_up}">
 								<ico:VisualIcon Kind="ChevronUp"/>
@@ -41,7 +41,7 @@
 							<!-- Move down -->
 							<Button Grid.Column="3"
 									Command="{Binding MoveDownCommand}"
-									Classes="IconButton"
+									Classes="icon"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.stage.move_agent_down}">
 								<ico:VisualIcon Kind="ChevronDown"/>
@@ -50,7 +50,7 @@
 							<!-- Remove -->
 							<Button Grid.Column="4"
 									Command="{Binding RemoveCommand}"
-									Classes="IconButton"
+									Classes="icon"
 									Margin="2,0"
 									ToolTip.Tip="{loc:Loc settings.stage.remove_agent}">
 								<ico:VisualIcon Kind="Close"/>

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -24,7 +24,7 @@
 								 VerticalAlignment="Center"/>
 			
 			<Button DockPanel.Dock="Right"
-							Classes="IconButton"
+							Classes="icon"
 							IsVisible="{Binding OpenedInDialog}"
 							VerticalAlignment="Center"
 							HorizontalAlignment="Right"
@@ -75,13 +75,13 @@
 
 					<StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Spacing="4">
 
-						<Button Classes="IconButton"
+						<Button Classes="icon"
 								Command="{Binding CopyUrlCommand}"
 								ToolTip.Tip="{loc:Loc webui.host.copy_url}">
 							<ico:VisualIcon Kind="ContentCopy"/>
 						</Button>
 
-						<Button Classes="IconButton"
+						<Button Classes="icon"
 								Command="{Binding OpenInBrowserCommand}"
 								ToolTip.Tip="{loc:Loc webui.host.open_browser}">
 							<ico:VisualIcon Kind="OpenInNew"/>

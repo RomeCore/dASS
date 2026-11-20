@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -152,7 +152,7 @@
 		</ComboBox>
 
 		<!-- Send without generation: while a run is going this queues with no answer requested -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding UserInput.SendMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}"
 						ToolTip.VerticalOffset="-2"
@@ -162,7 +162,7 @@
 		</Button>
 
 		<!-- Send with generation -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding UserInput.SendGenerateMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}"
 						ToolTip.VerticalOffset="-2"
@@ -172,7 +172,7 @@
 		</Button>
 
 		<!-- Stop: a hard stop, it never injects the queue -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding UserInput.CancelGenerationCommand}"
 						IsVisible="{Binding UserInput.IsGenerating}"
 						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}"

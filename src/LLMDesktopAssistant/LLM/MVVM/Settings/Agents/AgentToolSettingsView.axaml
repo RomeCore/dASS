@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -218,21 +218,21 @@
 				</ComboBox>
 
 				<Button Command="{Binding CreateNewIdCommand}"
-								Classes="IconButton"
+								Classes="icon"
 								ToolTip.Tip="{loc:Loc toolset.create}">
 
 					<ico:VisualIcon Kind="Plus"/>
 				</Button>
 
 				<Button Command="{Binding RenameIdCommand}"
-								Classes="IconButton"
+								Classes="icon"
 								ToolTip.Tip="{loc:Loc toolset.rename}">
 
 					<ico:VisualIcon Kind="Edit"/>
 				</Button>
 
 				<Button Command="{Binding RemoveIdCommand}"
-								Classes="IconButton"
+								Classes="icon"
 								ToolTip.Tip="{loc:Loc toolset.remove}">
 
 					<ico:VisualIcon Kind="Remove"/>
@@ -249,13 +249,13 @@
 								 Text="{Binding NewId}"/>
 
 				<Button Command="{Binding ConfirmEditIdCommand}"
-								Classes="IconButton">
+								Classes="icon">
 
 					<ico:VisualIcon Kind="Check"/>
 				</Button>
 
 				<Button Command="{Binding CancelEditIdCommand}"
-								Classes="IconButton">
+								Classes="icon">
 
 					<ico:VisualIcon Kind="Cancel"/>
 				</Button>

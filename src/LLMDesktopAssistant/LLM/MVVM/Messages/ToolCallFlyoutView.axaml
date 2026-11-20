@@ -55,7 +55,7 @@
 
 					<!-- Copy Arguments button -->
 					<Button Grid.Column="2"
-									Classes="IconButton"
+									Classes="icon"
 									Command="{Binding CopyArgumentsCommand}"
 									IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
 									ToolTip.Tip="{loc:Loc tool.copy_arguments}"
@@ -67,7 +67,7 @@
 
 					<!-- Copy Result button -->
 					<Button Grid.Column="3"
-									Classes="IconButton"
+									Classes="icon"
 									Command="{Binding CopyResultCommand}"
 									IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
 									ToolTip.Tip="{loc:Loc tool.copy_result}"

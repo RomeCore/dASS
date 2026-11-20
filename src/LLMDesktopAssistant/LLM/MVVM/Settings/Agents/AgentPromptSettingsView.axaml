@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -193,7 +193,7 @@
 					</ComboBox>
 
 					<Button Grid.Column="1"
-							Classes="IconButton"
+							Classes="icon"
 							Command="{Binding SystemPromptSection.ClearCommand}"
 							ToolTip.Tip="{loc:Loc prompt.system_prompt.clear}"
 							Margin="4,0,0,0"
@@ -354,7 +354,7 @@
 					</ComboBox>
 
 					<Button Grid.Column="1"
-							Classes="IconButton"
+							Classes="icon"
 							Command="{Binding PersonaSection.ClearCommand}"
 							ToolTip.Tip="{loc:Loc prompt.persona.clear}"
 							Margin="4,0,0,0"
@@ -444,7 +444,7 @@
 					</ComboBox>
 
 					<Button Grid.Column="1"
-							Classes="IconButton"
+							Classes="icon"
 							Command="{Binding SpecializationSection.ClearCommand}"
 							ToolTip.Tip="{loc:Loc prompt.specialization.clear}"
 							Margin="4,0,0,0"

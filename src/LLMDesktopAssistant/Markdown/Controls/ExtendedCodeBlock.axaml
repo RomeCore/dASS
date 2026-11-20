@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
@@ -37,7 +37,7 @@
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
-								<Button Classes="IconButton" Focusable="False"
+								<Button Classes="icon" Focusable="False"
 												Command="{Binding Command}"
 												IsVisible="{Binding IsVisible}"
 												ToolTip.Tip="{loc:Loc {Binding Title}}">
@@ -47,14 +47,14 @@
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
 					
-					<ToggleButton Classes="IconButton" Focusable="False"
+					<ToggleButton Classes="icon" Focusable="False"
 												IsChecked="{Binding IsSplit, Mode=TwoWay}"
 												IsVisible="{Binding CanSplit}"
 												ToolTip.Tip="{loc:Loc common.split}">
 						<ico:VisualIcon Kind="ViewSplitVertical"/>
 					</ToggleButton>
 
-					<ToggleButton Classes="IconButton" Focusable="False"
+					<ToggleButton Classes="icon" Focusable="False"
 												IsChecked="{Binding #ControlRoot.IsCodeWrapped, Mode=TwoWay}"
 												ToolTip.Tip="{loc:Loc common.wrap}">
 						<ico:VisualIcon Kind="Wrap"/>

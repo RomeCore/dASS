@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -29,7 +29,7 @@
 
 			<Button Grid.Column="1"
 					Command="{Binding CloseCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					ToolTip.Tip="{loc:Loc common.close}">
 				<ico:VisualIcon Kind="Close"/>
 			</Button>
@@ -125,13 +125,13 @@
 														 Text="{Binding NewId}"/>
 
 												<Button Command="{Binding ConfirmRenameCommand}"
-														Classes="IconButton"
+														Classes="icon"
 														ToolTip.Tip="{loc:Loc settings.memory.rename.confirm.tooltip}">
 													<ico:VisualIcon Kind="Check"/>
 												</Button>
 
 												<Button Command="{Binding CancelRenameCommand}"
-														Classes="IconButton"
+														Classes="icon"
 														ToolTip.Tip="{loc:Loc common.cancel}">
 													<ico:VisualIcon Kind="Cancel"/>
 												</Button>

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -55,7 +55,7 @@
 				<Button x:Name="AgentTasksButton"
 								IsHitTestVisible="{Binding HasRunningTasks}"
 								Opacity="{Binding HasRunningTasks, Converter={StaticResource BooleanToOpacityConverter}}"
-								Classes="BigIconButton"
+								Classes="icon large"
 								HorizontalAlignment="Right"
 								VerticalAlignment="Top"
 								Margin="32,16"
@@ -128,7 +128,7 @@
 				</scroll:SmoothScrollViewer>
 
 				<Button x:Name="ScrollToBottomButton"
-								Classes="BigIconButton"
+								Classes="icon large"
 								Click="ScrollToBottomButton_Click"
 								HorizontalAlignment="Right"
 								VerticalAlignment="Bottom"

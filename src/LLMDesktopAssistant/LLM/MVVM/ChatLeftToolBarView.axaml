@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -28,7 +28,7 @@
 				</ComboBox.ItemTemplate>
 			</ComboBox>
 
-			<Button Classes="IconButton"
+			<Button Classes="icon"
 							Command="{Binding OpenSettingsCommand}"
 							ToolTip.Tip="{loc:Loc common.settings}"
 							ToolTip.VerticalOffset="-2"
@@ -43,7 +43,7 @@
 		<ctrl:ModelSelectorControl SelectedModel="{Binding ChatModel, Mode=TwoWay}"/>
 
 		<!-- Memorized tool decisions -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding OpenConsentMemorizationCommand}"
 						ToolTip.Tip="{loc:Loc tool.call.remember.manager.hint}"
 						ToolTip.VerticalOffset="-2"
@@ -52,7 +52,7 @@
 		</Button>
 
 		<!-- Attach -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding OpenAttachmentsManagerCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}"
 						ToolTip.VerticalOffset="-2"
@@ -62,7 +62,7 @@
 		</Button>
 
 		<!-- Blazor Web UI Host -->
-		<Button Classes="IconButton"
+		<Button Classes="icon"
 						Command="{Binding OpenBlazorWebUICommand}"
 						ToolTip.Tip="{loc:Loc webui.host.title}"
 						ToolTip.VerticalOffset="-2"

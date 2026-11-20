@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -94,13 +94,13 @@
 								 VerticalAlignment="Center"/>
 				
 					<Button Command="{Binding SelectAllCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc model.selector.select_all}">
 						<ico:VisualIcon Kind="SelectAll" Width="14" Height="14"/>
 					</Button>
 
 					<Button Command="{Binding DeselectAllCommand}"
-							Classes="IconButton"
+							Classes="icon"
 							ToolTip.Tip="{loc:Loc model.selector.deselect_all}">
 						<ico:VisualIcon Kind="SelectOff" Width="14" Height="14"/>
 					</Button>
@@ -315,7 +315,7 @@
 														 IsVisible="{Binding DisplayName, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"/>
 
 											<Button Grid.Column="1"
-													Classes="IconButton"
+													Classes="icon"
 													Command="{Binding #VMRoot.DataContext.RemoveCustomModelCommand}"
 													CommandParameter="{Binding}"
 													ToolTip.Tip="{loc:Loc settings.provider.custom.remove.tooltip}"

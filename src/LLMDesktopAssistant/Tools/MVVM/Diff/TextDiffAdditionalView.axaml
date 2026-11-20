@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -210,7 +210,7 @@
 
 					<!-- Enable All -->
 					<Button Command="{Binding EnableAllCommand}"
-									Classes="IconButton"
+									Classes="icon"
 									IsVisible="{Binding IsPending}"
 									ToolTip.Tip="{loc:Loc 'tool.status.fs-diff.enable_all'}">
 						<material:VisualIcon Kind="CheckboxMarked"/>
@@ -218,7 +218,7 @@
 
 					<!-- Disable All -->
 					<Button Command="{Binding DisableAllCommand}"
-									Classes="IconButton"
+									Classes="icon"
 									IsVisible="{Binding IsPending}"
 									ToolTip.Tip="{loc:Loc 'tool.status.fs-diff.disable_all'}">
 						<material:VisualIcon Kind="CheckboxBlankOutline"/>

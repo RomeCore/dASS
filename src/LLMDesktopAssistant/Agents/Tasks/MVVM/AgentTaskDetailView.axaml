@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -78,7 +78,7 @@
 			<Button Grid.Column="2"
 											Command="{Binding CancelCommand}"
 											IsVisible="{Binding TaskViewModel.IsRunning}"
-											Classes="SmallIconButton"
+											Classes="icon small"
 											Margin="0,0,8,0"
 											ToolTip.Tip="{loc:Loc task.cancel}">
 				<ico:VisualIcon Kind="Stop" Width="20" Height="20"/>
@@ -87,7 +87,7 @@
 			<!-- Close button -->
 			<Button Grid.Column="3"
 							Command="{Binding CloseCommand}"
-							Classes="SmallIconButton"
+							Classes="icon small"
 							ToolTip.Tip="{loc:Loc common.close}">
 				<ico:VisualIcon Kind="Close" Width="20" Height="20"/>
 			</Button>

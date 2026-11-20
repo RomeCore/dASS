@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -48,8 +48,8 @@
 					<Panel IsVisible="{Binding StatusIcon, Converter={StaticResource NotnullToBooleanConverter}}">
 
 						<ico:VisualIcon Kind="{Binding StatusIcon}"
-															Classes="MidIcon"
-															HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+																			Width="28" Height="28"
+																			HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
 
 						<Border Width="16" Height="16" CornerRadius="6"
 										HorizontalAlignment="Right"
@@ -210,7 +210,7 @@
 																	 ResolveConsentCommand="{Binding ConsentCommand}"/>
 
 				<!-- Cancel this call alone; shown while it runs or waits for the user. -->
-				<Button Classes="IconButton"
+				<Button Classes="icon"
 								Command="{Binding CancelCommand}"
 								IsVisible="{Binding CanCancel}"
 								ToolTip.Tip="{loc:Loc tool.call.action.cancel}">
@@ -218,7 +218,7 @@
 				</Button>
 
 				<!-- Re-run the finished call in place. -->
-				<Button Classes="IconButton"
+				<Button Classes="icon"
 								Command="{Binding RestartCommand}"
 								IsVisible="{Binding CanRestart}"
 								ToolTip.Tip="{loc:Loc tool.call.action.restart}">
@@ -226,7 +226,7 @@
 				</Button>
 
 				<!-- Release the call from the synchronization queue: it runs at once without claiming keys. -->
-				<Button Classes="IconButton"
+				<Button Classes="icon"
 								Command="{Binding SkipSynchronizationWaitCommand}"
 								IsVisible="{Binding CanSkipSynchronizationWait}"
 								ToolTip.Tip="{loc:Loc tool.call.action.skip_sync_wait}">

@@ -8,12 +8,17 @@
 		</Border>
 	</Design.PreviewWith>
 
+	<!--
+		The size ladder of an icon button. The base frame (`.icon`) lives in each control's ControlTheme;
+		this file only adds the three size modifiers on top of it, because a nested child selector
+		(`^ > VisualIcon`) cannot be expressed inside a ControlTheme.
+	-->
 	<Style Selector="Button.icon, ToggleButton.icon, RepeatButton.icon">
 		<Style Selector="^ > ico|VisualIcon">
 			<Setter Property="Width" Value="24" />
 			<Setter Property="Height" Value="24" />
 		</Style>
-		
+
 		<Style Selector="^.small">
 			<Setter Property="Width" Value="24" />
 			<Setter Property="Height" Value="24" />
@@ -22,7 +27,7 @@
 				<Setter Property="Height" Value="16" />
 			</Style>
 		</Style>
-		
+
 		<Style Selector="^.mini">
 			<Setter Property="Width" Value="18" />
 			<Setter Property="Height" Value="18" />
@@ -31,7 +36,7 @@
 				<Setter Property="Height" Value="14" />
 			</Style>
 		</Style>
-		
+
 		<Style Selector="^.large">
 			<Setter Property="Width" Value="40" />
 			<Setter Property="Height" Value="40" />
@@ -41,154 +46,5 @@
 			</Style>
 		</Style>
 	</Style>
-	
-
-	
-	<Style Selector="Button.IconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="32"/>
-		<Setter Property="Height" Value="32"/>
-	</Style>
-	
-	<Style Selector="Button.IconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.IconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="32"/>
-		<Setter Property="Height" Value="32"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.IconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-
-
-	
-	<Style Selector="Button.MidIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="28"/>
-		<Setter Property="Height" Value="28"/>
-	</Style>
-	
-	<Style Selector="Button.MidIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="22"/>
-		<Setter Property="Height" Value="22"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.MidIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="28"/>
-		<Setter Property="Height" Value="28"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.MidIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="22"/>
-		<Setter Property="Height" Value="22"/>
-	</Style>
-
-	
-	
-	<Style Selector="Button.MiniIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="18"/>
-		<Setter Property="Height" Value="18"/>
-	</Style>
-	
-	<Style Selector="Button.MiniIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="16"/>
-		<Setter Property="Height" Value="16"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.MiniIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="18"/>
-		<Setter Property="Height" Value="18"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.MiniIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="16"/>
-		<Setter Property="Height" Value="16"/>
-	</Style>
-	
-
-	
-	<Style Selector="Button.SmallIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-	
-	<Style Selector="Button.SmallIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="16"/>
-		<Setter Property="Height" Value="16"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.SmallIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.SmallIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-	
-
-
-	<Style Selector="Button.BigIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="40"/>
-		<Setter Property="Height" Value="40"/>
-	</Style>
-	
-	<Style Selector="Button.BigIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="32"/>
-		<Setter Property="Height" Value="32"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.BigIconButton">
-		<Setter Property="Padding" Value="0"/>
-		<Setter Property="Width" Value="40"/>
-		<Setter Property="Height" Value="40"/>
-	</Style>
-	
-	<Style Selector="ToggleButton.BigIconButton > ico|VisualIcon">
-		<Setter Property="Width" Value="32"/>
-		<Setter Property="Height" Value="32"/>
-	</Style>
-
-
-	
-	<Style Selector="ico|VisualIcon.Icon">
-		<Setter Property="Width" Value="32"/>
-		<Setter Property="Height" Value="32"/>
-	</Style>
-	
-	<Style Selector="ico|VisualIcon.MidIcon">
-		<Setter Property="Width" Value="28"/>
-		<Setter Property="Height" Value="28"/>
-	</Style>
-	
-	<Style Selector="ico|VisualIcon.MiniIcon">
-		<Setter Property="Width" Value="16"/>
-		<Setter Property="Height" Value="16"/>
-	</Style>
-	
-	<Style Selector="ico|VisualIcon.SmallIcon">
-		<Setter Property="Width" Value="24"/>
-		<Setter Property="Height" Value="24"/>
-	</Style>
-	
-	<Style Selector="ico|VisualIcon.BigIcon">
-		<Setter Property="Width" Value="40"/>
-		<Setter Property="Height" Value="40"/>
-	</Style>
-
-
 
 </Styles>

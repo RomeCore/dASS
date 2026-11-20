@@ -1,4 +1,4 @@
-<UserControl x:Class="LLMDesktopAssistant.Tools.Consents.ToolConsentPanel"
+﻿<UserControl x:Class="LLMDesktopAssistant.Tools.Consents.ToolConsentPanel"
 			 xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,13 +13,13 @@
 	<WrapPanel Orientation="Horizontal" ItemSpacing="4">
 		
 		<Button Click="ApproveButton_Click"
-						Classes="IconButton"
+						Classes="icon"
 						ToolTip.Tip="{loc:Loc tool.call.action.approve}">
 			<ico:VisualIcon Kind="Check" Foreground="Green"/>
 		</Button>
 
 		<Button Click="RejectButton_Click"
-						Classes="IconButton"
+						Classes="icon"
 						ToolTip.Tip="{loc:Loc tool.call.action.reject}">
 			<ico:VisualIcon Kind="Close" Foreground="Red"/>
 		</Button>

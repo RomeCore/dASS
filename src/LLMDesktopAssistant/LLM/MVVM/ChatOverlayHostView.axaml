@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -101,7 +101,7 @@
 														 Margin="2,0,8,0"/>
 
 									<Button Grid.Column="1"
-													Classes="MiniIconButton overlayButton"
+													Classes="icon mini overlayButton"
 													ToolTip.Tip="{loc:Loc chat.overlay.toggle}"
 													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).ToggleCommand}"
 													CommandParameter="{Binding}">
@@ -112,7 +112,7 @@
 									</Button>
 
 									<Button Grid.Column="2"
-													Classes="MiniIconButton overlayButton"
+													Classes="icon mini overlayButton"
 													IsVisible="{Binding HasExplicitSize}"
 													ToolTip.Tip="{loc:Loc chat.overlay.fit}"
 													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).ResetSizeCommand}"
@@ -121,7 +121,7 @@
 									</Button>
 
 									<Button Grid.Column="3"
-													Classes="MiniIconButton overlayButton"
+													Classes="icon mini overlayButton"
 													ToolTip.Tip="{loc:Loc chat.overlay.hide}"
 													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).HideCommand}"
 													CommandParameter="{Binding}">
@@ -129,7 +129,7 @@
 									</Button>
 
 									<Button Grid.Column="4"
-													Classes="MiniIconButton overlayButton"
+													Classes="icon mini overlayButton"
 													IsVisible="{Binding CanClose}"
 													ToolTip.Tip="{loc:Loc chat.overlay.close}"
 													Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"
@@ -176,7 +176,7 @@
 		</ItemsControl>
 
 		<!-- Tray: the windows the user put away, back on a click. The agent task button sits at the other side. -->
-		<Button Classes="BigIconButton"
+		<Button Classes="icon large"
 						IsVisible="{Binding HasTrayItems}"
 						ClipToBounds="False"
 						HorizontalAlignment="Left"
@@ -237,7 +237,7 @@
 															 Margin="2,0,8,0"/>
 
 										<Button Grid.Column="1"
-														Classes="MiniIconButton overlayButton"
+														Classes="icon mini overlayButton"
 														ToolTip.Tip="{loc:Loc chat.overlay.restore}"
 														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).RestoreCommand}"
 														CommandParameter="{Binding}">
@@ -245,7 +245,7 @@
 										</Button>
 
 										<Button Grid.Column="2"
-														Classes="MiniIconButton overlayButton"
+														Classes="icon mini overlayButton"
 														IsVisible="{Binding CanClose}"
 														ToolTip.Tip="{loc:Loc chat.overlay.close}"
 														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"

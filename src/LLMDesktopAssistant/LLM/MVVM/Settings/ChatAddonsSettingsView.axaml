@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -62,7 +62,7 @@
 
 			<Button Grid.Column="1"
 					Command="{Binding AddGlobalSearchFolderCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					VerticalAlignment="Center"
 					ToolTip.Tip="{loc:Loc common.add}">
 				<ico:VisualIcon Kind="Plus"/>
@@ -86,7 +86,7 @@
 						<Button Grid.Column="1"
 								Command="{Binding #VMRoot.DataContext.RemoveGlobalSearchFolderCommand}"
 								CommandParameter="{Binding}"
-								Classes="IconButton"
+								Classes="icon"
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc common.remove}">
 							<ico:VisualIcon Kind="Close"/>
@@ -181,7 +181,7 @@
 		<Grid ColumnDefinitions="*,Auto,Auto">
 			<Button Grid.Column="1"
 					Command="{Binding AddPackPathCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					ToolTip.Tip="{loc:Loc common.add}">
 				<ico:VisualIcon Kind="Plus"/>
 			</Button>
@@ -189,7 +189,7 @@
 			<Button Grid.Column="2"
 					Command="{Binding BrowsePackPathCommand}"
 					CommandParameter="{x:Null}"
-					Classes="IconButton"
+					Classes="icon"
 					Margin="4,0,0,0"
 					ToolTip.Tip="{loc:Loc addon.settings.select_pack_folder}">
 				<ico:VisualIcon Kind="FolderOpen"/>
@@ -208,7 +208,7 @@
 						<Button Grid.Column="1"
 								Command="{Binding #VMRoot.DataContext.BrowsePackPathCommand}"
 								CommandParameter="{Binding}"
-								Classes="IconButton"
+								Classes="icon"
 								Margin="4,0,0,0"
 								ToolTip.Tip="{loc:Loc env.browse}">
 							<ico:VisualIcon Kind="FolderOpen"/>
@@ -217,7 +217,7 @@
 						<Button Grid.Column="2"
 								Command="{Binding #VMRoot.DataContext.OpenPathCommand}"
 								CommandParameter="{Binding}"
-								Classes="IconButton"
+								Classes="icon"
 								Margin="2,0"
 								ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 							<ico:VisualIcon Kind="OpenInNew"/>
@@ -226,7 +226,7 @@
 						<Button Grid.Column="3"
 								Command="{Binding #VMRoot.DataContext.RemovePackPathCommand}"
 								CommandParameter="{Binding}"
-								Classes="IconButton"
+								Classes="icon"
 								Margin="2,0,0,0">
 							<ico:VisualIcon Kind="Close"/>
 						</Button>
@@ -312,7 +312,7 @@
 
 								<Button Grid.Column="1"
 										Command="{Binding AddDirectoryCommand}"
-										Classes="IconButton"
+										Classes="icon"
 										VerticalAlignment="Top"
 										ToolTip.Tip="{loc:Loc common.add}">
 									<ico:VisualIcon Kind="Plus"/>
@@ -321,7 +321,7 @@
 								<Button Grid.Column="2"
 										Command="{Binding BrowseDirectoryCommand}"
 										CommandParameter="{x:Null}"
-										Classes="IconButton"
+										Classes="icon"
 										VerticalAlignment="Top"
 										Margin="4,0,0,0"
 										ToolTip.Tip="{loc:Loc addon.settings.select_directory}">
@@ -341,7 +341,7 @@
 											<Button Grid.Column="1"
 													Command="{Binding #VMItem.DataContext.BrowseDirectoryCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="4,0,0,0"
 													ToolTip.Tip="{loc:Loc env.browse}">
 												<ico:VisualIcon Kind="FolderOpen"/>
@@ -350,7 +350,7 @@
 											<Button Grid.Column="2"
 													Command="{Binding #VMRoot.DataContext.OpenPathCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 												<ico:VisualIcon Kind="OpenInNew"/>
@@ -359,7 +359,7 @@
 											<Button Grid.Column="3"
 													Command="{Binding #VMItem.DataContext.RemoveDirectoryCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc common.remove}">
 												<ico:VisualIcon Kind="Close"/>
@@ -383,7 +383,7 @@
 
 								<Button Grid.Column="1"
 										Command="{Binding AddFileCommand}"
-										Classes="IconButton"
+										Classes="icon"
 										VerticalAlignment="Top"
 										ToolTip.Tip="{loc:Loc common.add}">
 									<ico:VisualIcon Kind="Plus"/>
@@ -392,7 +392,7 @@
 								<Button Grid.Column="2"
 										Command="{Binding BrowseFileCommand}"
 										CommandParameter="{x:Null}"
-										Classes="IconButton"
+										Classes="icon"
 										VerticalAlignment="Top"
 										Margin="4,0,0,0"
 										ToolTip.Tip="{loc:Loc addon.settings.select_file}">
@@ -412,7 +412,7 @@
 											<Button Grid.Column="1"
 													Command="{Binding #VMItem.DataContext.BrowseFileCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="4,0,0,0"
 													ToolTip.Tip="{loc:Loc env.browse}">
 												<ico:VisualIcon Kind="FolderOpen"/>
@@ -421,7 +421,7 @@
 											<Button Grid.Column="2"
 													Command="{Binding #VMRoot.DataContext.OpenPathCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 												<ico:VisualIcon Kind="OpenInNew"/>
@@ -430,7 +430,7 @@
 											<Button Grid.Column="3"
 													Command="{Binding #VMItem.DataContext.RemoveFileCommand}"
 													CommandParameter="{Binding}"
-													Classes="IconButton"
+													Classes="icon"
 													Margin="2,0,0,0"
 													ToolTip.Tip="{loc:Loc common.remove}">
 												<ico:VisualIcon Kind="Close"/>
@@ -490,7 +490,7 @@
 		<Grid ColumnDefinitions="*,Auto">
 			<Button Grid.Column="1"
 					Command="{Binding RefreshPacksCommand}"
-					Classes="IconButton"
+					Classes="icon"
 					ToolTip.Tip="{loc:Loc addon.settings.packs.refresh}">
 				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
@@ -545,7 +545,7 @@
 									<Button Grid.Column="0"
 											Command="{Binding #VMRoot.DataContext.OpenPathCommand}"
 											CommandParameter="{Binding Path}"
-											Classes="MiniIconButton"
+											Classes="icon mini"
 											VerticalAlignment="Center"
 											ToolTip.Tip="{loc:Loc env.open_in_explorer}">
 										<ico:VisualIcon Kind="OpenInNew"/>
