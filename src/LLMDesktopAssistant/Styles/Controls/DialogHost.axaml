@@ -16,7 +16,7 @@
 		<Setter Property="VerticalAlignment" Value="Stretch" />
 		<Setter Property="DialogMargin" Value="8" />
 		<Setter Property="OverlayBackground" Value="{DynamicResource Scrim}" />
-		<Setter Property="Background" Value="{DynamicResource CardBackground}" />
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}" />
 		<Setter Property="dh:DialogHostStyle.ClipToBounds" Value="True" />
 		<Setter Property="dh:DialogHostStyle.CornerRadius" Value="{DynamicResource RadiusL}" />
 		<Setter Property="dh:DialogHostStyle.BorderBrush" Value="{DynamicResource BorderDefault}" />
