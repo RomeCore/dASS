@@ -65,7 +65,7 @@ namespace LLMDesktopAssistant.ApiKeys
 		private async void Add()
 		{
 			var vm = new AddApiKeyDialogViewModel();
-			var result = await DialogHostAvalonia.DialogHost.Show(vm);
+			var result = await DialogManager.ShowDialogAsync(vm);
 
 			if (result is true)
 				ReloadKeys();
@@ -94,7 +94,7 @@ namespace LLMDesktopAssistant.ApiKeys
 				Scheme = SelectedKey.StorageScheme
 			};
 
-			var result = await DialogHostAvalonia.DialogHost.Show(editVm);
+			var result = await DialogManager.ShowDialogAsync(editVm);
 
 			if (result is true)
 				ReloadKeys();
