@@ -108,7 +108,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		public string LastModifiedDetailedLabel => LastModifiedAt.ToString("U");
+		public string LastModifiedDetailedLabel => LastModifiedAt.ToString("F");
 
 		public bool IsOpened
 		{
