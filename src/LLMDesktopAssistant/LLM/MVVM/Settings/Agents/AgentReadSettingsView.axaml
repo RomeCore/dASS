@@ -254,10 +254,7 @@
 		</StackPanel>
 
 		<!-- ===================== Big split between the halves ===================== -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.25"
-				   Margin="0,8,0,4"/>
+		<Separator Margin="2,8,2,4"/>
 
 		<!-- ===================== What others read from me ===================== -->
 		<StackPanel Orientation="Vertical" Spacing="6">

@@ -118,10 +118,7 @@
 
 									<Panel>
 								
-										<Border BorderThickness="0,0,0,1"
-														BorderBrush="{DynamicResource DefaultForeground}"
-														Opacity="0.3"
-														Padding="4"/>
+										<Separator Classes="flush" VerticalAlignment="Bottom"/>
 									
 										<Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
 													ColumnSpacing="6">
@@ -287,10 +284,7 @@
 								<DataTemplate x:DataType="local:ModelDescriptor">
 									<Panel>
 
-										<Border BorderThickness="0,0,0,1"
-												BorderBrush="{DynamicResource DefaultForeground}"
-												Opacity="0.3"
-												Padding="4"/>
+										<Separator Classes="flush" VerticalAlignment="Bottom"/>
 
 										<Grid ColumnDefinitions="*,Auto"
 													ColumnSpacing="6">

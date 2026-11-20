@@ -81,11 +81,7 @@
 
 			</Border>
 
-			<!-- Separator -->
-			<Rectangle Grid.Row="1" Grid.RowSpan="2"
-									Fill="{DynamicResource PrimaryAccentBrush}"
-									Height="1"
-									VerticalAlignment="Top"/>
+			<Separator Classes="flush" Grid.Row="1" Grid.RowSpan="2" VerticalAlignment="Top"/>
 
 			<scroll:SmoothScrollViewer Grid.Row="1"
 										VerticalScrollBarVisibility="Auto"

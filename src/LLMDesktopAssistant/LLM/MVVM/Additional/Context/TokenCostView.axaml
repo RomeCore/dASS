@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -59,7 +59,7 @@
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
 
-				<Rectangle Height="1" Fill="{DynamicResource DefaultForeground}" Opacity="0.1" IsVisible="{Binding HasTokenCounts}"/>
+				<Separator Classes="flush" IsVisible="{Binding HasTokenCounts}"/>
 
 				<StackPanel Spacing="4" IsVisible="{Binding HasTokenCounts}">
 					<Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding HasInputTokens}">
@@ -74,7 +74,7 @@
 					</Grid>
 				</StackPanel>
 
-				<Rectangle Height="1" Fill="{DynamicResource DefaultForeground}" Opacity="0.1" IsVisible="{Binding HasCacheBlock}"/>
+				<Separator Classes="flush" IsVisible="{Binding HasCacheBlock}"/>
 
 				<StackPanel Spacing="4" IsVisible="{Binding HasCacheBlock}">
 					<Grid ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding HasCacheHit}">
@@ -141,7 +141,7 @@
 					</StackPanel>
 				</StackPanel>
 
-				<Rectangle Height="1" Fill="{DynamicResource DefaultForeground}" Opacity="0.1"/>
+				<Separator Classes="flush"/>
 
 				<StackPanel Spacing="4">
 					<Grid ColumnDefinitions="Auto,*">

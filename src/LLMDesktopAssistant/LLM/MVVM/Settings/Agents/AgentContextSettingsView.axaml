@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -28,11 +28,7 @@
 						IsEnabled="{Binding IsStaticMode}"
 						HorizontalAlignment="Left"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
+		<Separator Classes="section"/>
 
 		<!-- ===================== Prompt mode ===================== -->
 		<TextBlock Text="{loc:Loc settings.agent.prompt_mode}"
@@ -54,11 +50,7 @@
 			</ComboBox.Items>
 		</ComboBox>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
+		<Separator Classes="section"/>
 
 		<!-- ===================== Max visible rounds ===================== -->
 		<Grid ColumnDefinitions="*,Auto"
@@ -99,11 +91,7 @@
 							 Margin="24,0,0,4"
 							 TextWrapping="Wrap"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
+		<Separator Classes="section"/>
 
 		<!-- ===================== Checkpoint kinds ===================== -->
 		<Grid ColumnDefinitions="*,Auto">
@@ -150,11 +138,7 @@
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"
-							 Margin="0,10"/>
+		<Separator Classes="section"/>
 
 		<!-- ===================== Prompt contexts ===================== -->
 		<TextBlock Text="{loc:Loc settings.agent.prompt_contexts}"

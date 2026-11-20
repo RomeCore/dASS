@@ -220,10 +220,7 @@
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>
 		
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"/>
+		<Separator Classes="flush"/>
 
 		<!-- ============================================================ -->
 		<!-- DIRECTORY ACCESS RULES -->
@@ -404,10 +401,7 @@
 				<DataTemplate>
 					<StackPanel Orientation="Vertical" Spacing="8">
 
-						<!-- Separator -->
-						<Rectangle Height="1"
-											 Fill="{DynamicResource DefaultForeground}"
-											 Opacity="0.2"/>
+						<Separator Classes="flush"/>
 
 						<ContentControl Content="{Binding Content}"/>
 

@@ -49,10 +49,7 @@
 		</Grid>
 
 		<!-- Divider -->
-		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
-				BorderThickness="0,0,0,1"
-				Opacity="0.3"
-				Margin="0,0,0,6"/>
+		<Separator Margin="2,0,2,6"/>
 
 		<!-- Agent list -->
 		<ItemsControl ItemsSource="{Binding Agents}">

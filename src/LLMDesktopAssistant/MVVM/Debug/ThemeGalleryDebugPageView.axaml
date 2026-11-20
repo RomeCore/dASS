@@ -403,6 +403,27 @@
 				
 				<Separator />
 
+				<!-- Separators -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.separators}" />
+
+				<StackPanel>
+					<TextBlock Classes="hint" Text="default - Margin 2,4" />
+					<Separator />
+					<TextBlock Classes="hint" Text=".section - Margin 2,10" Margin="0,6,0,0" />
+					<Separator Classes="section" />
+					<TextBlock Classes="hint" Text=".flush - Margin 0" Margin="0,6,0,0" />
+					<Separator Classes="flush" />
+					<TextBlock Classes="hint" Text=".vertical - inside a horizontal panel" Margin="0,6,0,0" />
+					<StackPanel Orientation="Horizontal" Spacing="8" Height="20">
+						<TextBlock Text="left" VerticalAlignment="Center" />
+						<Separator Classes="vertical" />
+						<TextBlock Text="right" VerticalAlignment="Center" />
+					</StackPanel>
+				</StackPanel>
+
+				<Separator />
+
 				<Expander Header="Expander - collapsible section">
 					<TextBlock Classes="hint"
 										 Text="The header is a keyed ToggleButton: the chevron rotates, the app-wide toggle theme does not leak in." />

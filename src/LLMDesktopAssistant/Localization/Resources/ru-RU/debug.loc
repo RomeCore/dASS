@@ -44,6 +44,7 @@ theme_gallery.radios: Радиокнопки
 theme_gallery.switches: Переключатели
 theme_gallery.collections: Коллекции и навигация
 theme_gallery.surfaces: Поверхности и оверлеи
+theme_gallery.separators: Разделители
 theme_gallery.inputs: Поля ввода
 theme_gallery.ranges: Диапазоны и прокрутка
 

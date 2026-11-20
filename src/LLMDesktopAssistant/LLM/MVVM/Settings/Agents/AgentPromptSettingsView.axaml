@@ -49,11 +49,7 @@
 				 MaxHeight="450"
 				 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   IsVisible="{Binding IsPreviewVisible}"/>
+		<Separator Classes="flush" IsVisible="{Binding IsPreviewVisible}"/>
 
 		<!-- ============================================================ -->
 		<!-- PROMPT LIBRARY SEARCH / PICKER                               -->
@@ -127,11 +123,7 @@
 
 		</StackPanel>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   Margin="0,2"/>
+		<Separator/>
 
 		<!-- ============================================================ -->
 		<!-- SYSTEM PROMPT SECTION                                        -->
@@ -213,11 +205,7 @@
 
 		</StackPanel>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   Margin="0,4"/>
+		<Separator/>
 
 		<!-- ============================================================ -->
 		<!-- COMPONENTS SECTION                                           -->
@@ -280,11 +268,7 @@
 
 		</StackPanel>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   Margin="0,4"/>
+		<Separator/>
 
 		<!-- ============================================================ -->
 		<!-- PERSONA SECTION                                              -->
@@ -374,11 +358,7 @@
 
 		</StackPanel>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"
-				   Margin="0,4"/>
+		<Separator/>
 
 		<!-- ============================================================ -->
 		<!-- SPECIALIZATION SECTION                                       -->

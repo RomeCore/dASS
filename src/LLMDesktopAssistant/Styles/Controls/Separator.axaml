@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:sys="using:System">
 
 	<!--
 		A hairline, not a groove: the separator carries no padding of its own, because every caller
@@ -15,12 +16,34 @@
 		<Setter Property="Template">
 			<ControlTemplate>
 				<Border Background="{TemplateBinding Background}"
+								Width="{TemplateBinding Width}"
 								Height="{TemplateBinding Height}"
 								HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
 								VerticalAlignment="{TemplateBinding VerticalAlignment}"
 								CornerRadius="{TemplateBinding CornerRadius}" />
 			</ControlTemplate>
 		</Setter>
+
+		<!-- A section break: the surface spacing is too tight for a bare hairline. -->
+		<Style Selector="^.section">
+			<Setter Property="Margin" Value="2,10" />
+		</Style>
+
+		<!-- No spacing of its own: the parent already spaces its children. -->
+		<Style Selector="^.flush">
+			<Setter Property="Margin" Value="0" />
+		</Style>
+
+		<!--
+			The one case the template needs a width for: a Separator is horizontal by default, and a
+			vertical one only exists as a class.
+		-->
+		<Style Selector="^.vertical">
+			<Setter Property="Width" Value="1" />
+			<Setter Property="Height" Value="{x:Static sys:Double.NaN}" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="VerticalAlignment" Value="Stretch" />
+		</Style>
 	</ControlTheme>
 
 </ResourceDictionary>

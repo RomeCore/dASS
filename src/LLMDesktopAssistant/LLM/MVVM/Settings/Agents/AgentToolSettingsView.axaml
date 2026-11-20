@@ -54,10 +54,7 @@
 		<CheckBox IsChecked="{Binding ToolSettings.AddonsCategoryEnabled}"
 							Content="{loc:Loc settings.tools.enable}"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"/>
+		<Separator Classes="flush"/>
 
 		<!-- ============================================================ -->
 		<!-- BEHAVIOUR POLICY -->
@@ -147,10 +144,7 @@
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-							 Fill="{DynamicResource DefaultForeground}"
-							 Opacity="0.2"/>
+		<Separator Classes="flush"/>
 
 		<!-- ============================================================ -->
 		<!-- TOOLSET -->

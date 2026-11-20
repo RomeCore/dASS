@@ -30,9 +30,7 @@
 
 				<DataTemplate DataType="local:ComboBoxHeaderItem">
 					<StackPanel Opacity="0.6">
-						<Rectangle Height="1" MinWidth="100"
-											 Fill="Gray" HorizontalAlignment="Stretch"
-											 Margin="2,3,2,3"/>
+						<Separator Margin="2,3,2,3" MinWidth="100"/>
 						<TextBlock Text="{Binding Title}"/>
 					</StackPanel>
 				</DataTemplate>

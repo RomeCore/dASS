@@ -135,9 +135,7 @@
 			</ItemsControl.ItemTemplate>
 		</ItemsControl>
 
-		<Rectangle Height="1"
-				   Fill="{DynamicResource DefaultForeground}"
-				   Opacity="0.2"/>
+		<Separator Classes="flush"/>
 		
 		<!-- Available sub-agents header -->
 		<Grid ColumnDefinitions="*,Auto,Auto">

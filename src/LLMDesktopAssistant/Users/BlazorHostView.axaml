@@ -55,8 +55,7 @@
 
 			</Border>
 
-			<!-- Separator -->
-			<Rectangle Height="1" Fill="{DynamicResource DefaultForeground}" Opacity="0.2"/>
+			<Separator Classes="flush"/>
 
 			<!-- Settings -->
 			<TextBlock Text="{loc:Loc webui.host.settings}"

@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -27,11 +27,7 @@
 					PlaceholderText="{loc:Loc agent.info.name.placeholder}"/>
 
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-					  Fill="{DynamicResource DefaultForeground}"
-					  Opacity="0.2"
-					  Margin="0,5"/>
+		<Separator/>
 
 		<!-- ===================== Description ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.description}"
@@ -49,11 +45,7 @@
 					AcceptsReturn="True"
 					PlaceholderText="{loc:Loc agent.info.description.placeholder}"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-					  Fill="{DynamicResource DefaultForeground}"
-					  Opacity="0.2"
-					  Margin="0,5"/>
+		<Separator/>
 
 		<!-- ===================== Identify as user ===================== -->
 		<CheckBox IsChecked="{Binding AgentInfo.IdentifyAsUser, Mode=TwoWay}"
@@ -63,11 +55,7 @@
 					  Opacity="0.6"
 					  TextWrapping="Wrap"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-					  Fill="{DynamicResource DefaultForeground}"
-					  Opacity="0.2"
-					  Margin="0,5"/>
+		<Separator/>
 
 		<!-- ===================== Custom Model ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.custom_model}"
@@ -81,11 +69,7 @@
 
 		<ctrl:ModelSelectorControl SelectedModel="{Binding AgentInfo.CustomModel, Mode=TwoWay}"/>
 
-		<!-- Separator -->
-		<Rectangle Height="1"
-					  Fill="{DynamicResource DefaultForeground}"
-					  Opacity="0.2"
-					  Margin="0,5"/>
+		<Separator/>
 
 		<!-- ===================== Profile Image ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.profile_image}"
