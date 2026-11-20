@@ -105,6 +105,7 @@
 
 	<Expander Theme="{StaticResource ReasoningExpanderTheme}"
 						HorizontalAlignment="Stretch" VerticalAlignment="Top"
+						Margin="0,8"
 						IsVisible="{Binding IsVisible}"
 						IsExpanded="{Binding !Completed, Mode=OneWay}">
 
@@ -164,7 +165,7 @@
 													CodeBlockActionProviders="{Binding Owner.CodeBlockActionProviders}"
 													Owner="{Binding Owner.AssistantMessage}"
 													Opacity="0.6"
-													Margin="0,0,0,8"/>
+													Margin="0,6,0,8"/>
 
 	</Expander>
 
