@@ -127,7 +127,6 @@
 
 				<Button Content="{Binding CancelText}"
 						Command="{Binding CancelCommand}"
-						Classes="secondary"
 						MinWidth="80"/>
 
 				<Button Content="{Binding SubmitText}"

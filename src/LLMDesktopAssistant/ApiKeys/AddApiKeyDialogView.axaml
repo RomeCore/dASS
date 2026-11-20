@@ -62,8 +62,7 @@
 		<!-- Buttons -->
 		<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
 			<Button Content="{loc:Loc common.cancel}"
-					Command="{Binding CancelCommand}"
-					Classes="secondary"/>
+					Command="{Binding CancelCommand}"/>
 			<Button Content="{Binding ConfirmButtonText}"
 					Command="{Binding AddCommand}"
 					Classes="accent"/>

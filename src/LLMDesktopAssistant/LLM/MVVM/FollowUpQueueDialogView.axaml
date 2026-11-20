@@ -73,7 +73,6 @@
 
 			<Button Content="{loc:Loc chat.follow_up.close}"
 					Command="{Binding CloseCommand}"
-					Classes="secondary"
 					HorizontalAlignment="Right"
 					MinWidth="80"/>
 
