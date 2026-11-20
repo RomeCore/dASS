@@ -6,6 +6,7 @@
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 xmlns:txt="using:LLMDesktopAssistant.Controls.Text"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 						 mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="750"
 						 x:Class="LLMDesktopAssistant.MVVM.Debug.ThemeGalleryDebugPageView"
 						 x:DataType="local:ThemeGalleryDebugPageViewModel">
@@ -34,9 +35,10 @@
 								 TextWrapping="Wrap" />
 		</Border>
 
-		<ScrollViewer VerticalScrollBarVisibility="Auto">
+		<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
+															 BringIntoViewOnFocusChange="False">
 			<StackPanel Spacing="18">
-
+				
 				<!-- Buttons -->
 
 				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.buttons}" />
@@ -51,23 +53,68 @@
 				</WrapPanel>
 
 				<WrapPanel ItemSpacing="4" LineSpacing="8">
-					<Button Classes="icon" ToolTip.Tip="Add">
-						<ico:VisualIcon Kind="Plus" Width="16" Height="16" />
+					<Button Classes="icon accent" ToolTip.Tip="Add">
+						<ico:VisualIcon Kind="Plus" />
 					</Button>
 					<Button Classes="icon" ToolTip.Tip="Search">
-						<ico:VisualIcon Kind="Magnify" Width="16" Height="16" />
+						<ico:VisualIcon Kind="Magnify" />
 					</Button>
 					<Button Classes="icon" ToolTip.Tip="Delete">
-						<ico:VisualIcon Kind="DeleteOutline" Width="16" Height="16" />
+						<ico:VisualIcon Kind="DeleteOutline" />
 					</Button>
 					<Button Classes="icon" ToolTip.Tip="More">
-						<ico:VisualIcon Kind="DotsHorizontal" Width="16" Height="16" />
+						<ico:VisualIcon Kind="DotsHorizontal" />
 					</Button>
 					<Button Classes="ghost">
 						<StackPanel Orientation="Horizontal" Spacing="6">
-							<ico:VisualIcon Kind="Check" Width="14" Height="14" />
+							<ico:VisualIcon Kind="Check" />
 							<TextBlock Text="Ghost with icon" />
 						</StackPanel>
+					</Button>
+				</WrapPanel>
+				
+				<WrapPanel ItemSpacing="4" LineSpacing="8">
+					<Button Classes="icon small accent" ToolTip.Tip="Add">
+						<ico:VisualIcon Kind="Plus" />
+					</Button>
+					<Button Classes="icon small" ToolTip.Tip="Search">
+						<ico:VisualIcon Kind="Magnify" />
+					</Button>
+					<Button Classes="icon small" ToolTip.Tip="Delete">
+						<ico:VisualIcon Kind="DeleteOutline" />
+					</Button>
+					<Button Classes="icon small" ToolTip.Tip="More">
+						<ico:VisualIcon Kind="DotsHorizontal" />
+					</Button>
+				</WrapPanel>
+				
+				<WrapPanel ItemSpacing="4" LineSpacing="8">
+					<Button Classes="icon mini accent" ToolTip.Tip="Add">
+						<ico:VisualIcon Kind="Plus" />
+					</Button>
+					<Button Classes="icon mini" ToolTip.Tip="Search">
+						<ico:VisualIcon Kind="Magnify" />
+					</Button>
+					<Button Classes="icon mini" ToolTip.Tip="Delete">
+						<ico:VisualIcon Kind="DeleteOutline" />
+					</Button>
+					<Button Classes="icon mini" ToolTip.Tip="More">
+						<ico:VisualIcon Kind="DotsHorizontal" />
+					</Button>
+				</WrapPanel>
+				
+				<WrapPanel ItemSpacing="4" LineSpacing="8">
+					<Button Classes="icon large accent" ToolTip.Tip="Add">
+						<ico:VisualIcon Kind="Plus" />
+					</Button>
+					<Button Classes="icon large" ToolTip.Tip="Search">
+						<ico:VisualIcon Kind="Magnify" />
+					</Button>
+					<Button Classes="icon large" ToolTip.Tip="Delete">
+						<ico:VisualIcon Kind="DeleteOutline" />
+					</Button>
+					<Button Classes="icon large" ToolTip.Tip="More">
+						<ico:VisualIcon Kind="DotsHorizontal" />
 					</Button>
 				</WrapPanel>
 
@@ -78,10 +125,12 @@
 					<RepeatButton Classes="ghost" Content="Ghost" />
 					<RepeatButton Classes="danger" Content="Danger" />
 					<RepeatButton Classes="icon" ToolTip.Tip="Icon">
-						<ico:VisualIcon Kind="Plus" Width="16" Height="16" />
+						<ico:VisualIcon Kind="Plus" />
 					</RepeatButton>
 					<RepeatButton Content="Disabled" IsEnabled="False" />
 				</WrapPanel>
+				
+				<Separator />
 
 				<!-- Toggle buttons -->
 
@@ -102,29 +151,31 @@
 									HorizontalAlignment="Left">
 						<StackPanel Orientation="Horizontal" Spacing="2">
 							<ToggleButton Classes="segment" IsChecked="True" ToolTip.Tip="Bold">
-								<ico:VisualIcon Kind="FormatBold" Width="16" Height="16" />
+								<ico:VisualIcon Kind="FormatBold" />
 							</ToggleButton>
 							<ToggleButton Classes="segment" ToolTip.Tip="Italic">
-								<ico:VisualIcon Kind="FormatItalic" Width="16" Height="16" />
+								<ico:VisualIcon Kind="FormatItalic" />
 							</ToggleButton>
 							<ToggleButton Classes="segment" ToolTip.Tip="Underline">
-								<ico:VisualIcon Kind="FormatUnderline" Width="16" Height="16" />
+								<ico:VisualIcon Kind="FormatUnderline" />
 							</ToggleButton>
 						</StackPanel>
 					</Border>
 
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<ToggleButton Classes="icon" IsChecked="True" ToolTip.Tip="Star">
-							<ico:VisualIcon Kind="Star" Width="16" Height="16" />
+							<ico:VisualIcon Kind="Star" />
 						</ToggleButton>
 						<ToggleButton Classes="icon" ToolTip.Tip="Lock">
-							<ico:VisualIcon Kind="Lock" Width="16" Height="16" />
+							<ico:VisualIcon Kind="Lock" />
 						</ToggleButton>
 						<ToggleButton Classes="icon" ToolTip.Tip="Eye">
-							<ico:VisualIcon Kind="Eye" Width="16" Height="16" />
+							<ico:VisualIcon Kind="Eye" />
 						</ToggleButton>
 					</StackPanel>
 				</StackPanel>
+				
+				<Separator />
 
 				<!-- Checks and radios -->
 
@@ -145,16 +196,20 @@
 						<RadioButton GroupName="gallery-density" Content="Disabled" IsEnabled="False" />
 					</StackPanel>
 				</Grid>
+				
+				<Separator />
 
 				<!-- Switches -->
 
 				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.switches}" />
 
 				<StackPanel Orientation="Horizontal" Spacing="16">
-					<ToggleSwitch IsChecked="True" OnContent="On" OffContent="Off" />
-					<ToggleSwitch OnContent="On" OffContent="Off" />
+					<ToggleSwitch IsChecked="True" />
+					<ToggleSwitch />
 					<ToggleSwitch IsChecked="True" IsEnabled="False" />
 				</StackPanel>
+				
+				<Separator />
 
 				<!-- Inputs -->
 
@@ -167,7 +222,7 @@
 						<TextBox PlaceholderText="Add a short description..." />
 						<TextBox PasswordChar="&#x25CF;" Text="s3cret-token" />
 						<TextBox AcceptsReturn="True" TextWrapping="Wrap" Height="72"
-									 Text="A multiline field shares the same frame, radius and focus colour." />
+										 Text="A multiline field shares the same frame, radius and focus colour." />
 						<TextBox IsEnabled="False" Text="Not editable" />
 
 						<TextBlock Classes="hint" Text="TextBox.nochrome (host owns the frame)" Margin="0,6,0,0" />
@@ -182,14 +237,16 @@
 
 					<StackPanel Grid.Column="1" Spacing="6">
 						<TextBlock Classes="hint" Text="ComboBox" />
-						<ComboBox SelectedIndex="1">
+						<ComboBox SelectedIndex="2">
 							<ComboBoxItem Content="claude-sonnet-4.5" />
 							<ComboBoxItem Content="gpt-5.1" />
 							<ComboBoxItem Content="deepseek-v3.2" />
 						</ComboBox>
 						<ComboBox PlaceholderText="Pick a model">
 							<ComboBoxItem Content="claude-sonnet-4.5" />
+							<ComboBoxItem Content="claude-sonnet-5.5" />
 							<ComboBoxItem Content="gpt-5.1" />
+							<ComboBoxItem Content="gpt-6-sol" />
 						</ComboBox>
 						<ComboBox IsEditable="True" Text="custom-model-id" PlaceholderText="Type or pick">
 							<ComboBoxItem Content="claude-sonnet-4.5" />
@@ -209,6 +266,8 @@
 						<txt:HighlightTextBox PlaceholderText="Type a shell command..." />
 					</StackPanel>
 				</Grid>
+				
+				<Separator />
 
 				<!-- Ranges -->
 
@@ -234,7 +293,7 @@
 										BorderBrush="{DynamicResource BorderSubtle}"
 										BorderThickness="1"
 										CornerRadius="{DynamicResource RadiusM}">
-							<ScrollViewer VerticalScrollBarVisibility="Auto">
+							<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto">
 								<StackPanel Margin="10" Spacing="6">
 									<TextBlock Text="Line 01" />
 									<TextBlock Text="Line 02" />
@@ -248,14 +307,207 @@
 									<TextBlock Text="Line 10" />
 									<TextBlock Text="Line 11" />
 									<TextBlock Text="Line 12" />
+									<TextBlock Text="Again!" />
+									<TextBlock Text="Line 01" />
+									<TextBlock Text="Line 02" />
+									<TextBlock Text="Line 03" />
+									<TextBlock Text="Line 04" />
+									<TextBlock Text="Line 05" />
+									<TextBlock Text="Line 06" />
+									<TextBlock Text="Line 07" />
+									<TextBlock Text="Line 08" />
+									<TextBlock Text="Line 09" />
+									<TextBlock Text="Line 10" />
+									<TextBlock Text="Line 11" />
+									<TextBlock Text="Line 12" />
 								</StackPanel>
-							</ScrollViewer>
+							</scroll:SmoothScrollViewer>
 						</Border>
 
 						<TextBlock Classes="hint" Text="AutoCompleteBox" Margin="0,6,0,0" />
 						<AutoCompleteBox PlaceholderText="Type a model..." ItemsSource="{Binding AutocompleteItems}"/>
 					</StackPanel>
 				</Grid>
+				
+				<Separator />
+
+				<!-- Collections -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.collections}" />
+
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+					<StackPanel Spacing="6">
+						<TextBlock Classes="hint" Text="ListBox" />
+						<Border Background="{DynamicResource PanelBackground}"
+										CornerRadius="{DynamicResource RadiusM}"
+										Padding="4">
+							<ListBox SelectedIndex="1">
+								<ListBoxItem Content="claude-sonnet-4.5" />
+								<ListBoxItem Content="gpt-5.1" />
+								<ListBoxItem Content="deepseek-v3.2" />
+								<ListBoxItem Content="Disabled" IsEnabled="False" />
+							</ListBox>
+						</Border>
+					</StackPanel>
+
+					<StackPanel Grid.Column="1" Spacing="6">
+						<TextBlock Classes="hint" Text="TreeView" />
+						<Border Background="{DynamicResource PanelBackground}"
+										CornerRadius="{DynamicResource RadiusM}"
+										Padding="4">
+							<TreeView>
+								<TreeViewItem Header="Agents" IsExpanded="True">
+									<TreeViewItem Header="Chat agents" IsSelected="True" />
+									<TreeViewItem Header="Sub-agents">
+										<TreeViewItem Header="web-searcher" />
+									</TreeViewItem>
+								</TreeViewItem>
+								<TreeViewItem Header="Tools" />
+								<TreeViewItem Header="Disabled" IsEnabled="False" />
+							</TreeView>
+						</Border>
+					</StackPanel>
+				</Grid>
+				
+				<Separator />
+
+				<TabControl SelectedIndex="0" Margin="0,4,0,0">
+					<TabItem Header="General">
+						<TextBlock Text="The selected tab is a card on the trough; the pipe variant is not used."
+										 Classes="hint" />
+					</TabItem>
+					<TabItem Header="Advanced">
+						<TextBlock Text="Tabs wrap when the strip runs out of width." Classes="hint" />
+					</TabItem>
+					<TabItem Header="Disabled" IsEnabled="False">
+						<TextBlock Text="Disabled tab." Classes="hint" />
+					</TabItem>
+				</TabControl>
+				
+				<Separator />
+
+				<!-- Surfaces -->
+
+				<TextBlock Classes="section" Text="{loc:Loc debug.theme_gallery.surfaces}" />
+
+				<Grid ColumnDefinitions="*,8,*" Height="72">
+					<Border Background="{DynamicResource PanelBackground}"
+									CornerRadius="{DynamicResource RadiusM}" />
+					<GridSplitter Grid.Column="1"
+										Background="{DynamicResource BorderSubtle}"
+										ResizeDirection="Columns" />
+					<Border Grid.Column="2"
+									Background="{DynamicResource PanelBackground}"
+									CornerRadius="{DynamicResource RadiusM}" />
+				</Grid>
+				
+				<Separator />
+
+				<Expander Header="Expander - collapsible section">
+					<TextBlock Classes="hint"
+										 Text="The header is a keyed ToggleButton: the chevron rotates, the app-wide toggle theme does not leak in." />
+				</Expander>
+
+				<Separator />
+
+				<WrapPanel ItemSpacing="8" LineSpacing="8">
+					<Button Content="Hover for a tooltip"
+									ToolTip.Tip="A popup card with a hairline and a shadow." />
+					<Button Classes="ghost"
+									Content="Ghost with tooltip"
+									ToolTip.Tip="Same surface, no frame." />
+				</WrapPanel>
+				
+				<Separator />
+
+				<!-- Menus -->
+
+				<Menu HorizontalAlignment="Left">
+					<MenuItem Header="File">
+						<MenuItem Header="New" InputGesture="Ctrl+N" />
+						<MenuItem Header="Open..." InputGesture="Ctrl+O" />
+						<MenuItem Header="Recent">
+							<MenuItem Header="chat-theme-rework.md" />
+							<MenuItem Header="handoff.md" />
+						</MenuItem>
+						<Separator />
+						<MenuItem Header="Exit" InputGesture="Alt+F4" />
+					</MenuItem>
+					<MenuItem Header="View">
+						<MenuItem Header="Compact" ToggleType="Radio" IsChecked="True" />
+						<MenuItem Header="Comfortable" ToggleType="Radio" />
+						<Separator />
+						<MenuItem Header="Show sidebar" ToggleType="CheckBox" IsChecked="True" />
+						<MenuItem Header="Disabled" IsEnabled="False" />
+					</MenuItem>
+					<MenuItem Header="Help">
+						<MenuItem Header="Documentation" />
+					</MenuItem>
+				</Menu>
+
+				<Grid ColumnDefinitions="*,*" ColumnSpacing="24">
+					<Border Background="{DynamicResource PanelBackground}"
+									CornerRadius="{DynamicResource RadiusM}"
+									Padding="12">
+						<Border.ContextMenu>
+							<ContextMenu>
+								<MenuItem Header="Copy" InputGesture="Ctrl+C" />
+								<MenuItem Header="Duplicate" InputGesture="Ctrl+D" />
+								<Separator />
+								<MenuItem Header="Delete" InputGesture="Delete" />
+							</ContextMenu>
+						</Border.ContextMenu>
+						<TextBlock Classes="hint" Text="Right-click for a ContextMenu" />
+					</Border>
+
+					<Button Grid.Column="1"
+									HorizontalAlignment="Left"
+									VerticalAlignment="Center"
+									Content="MenuFlyout">
+						<Button.Flyout>
+							<MenuFlyout>
+								<MenuItem Header="First" />
+								<MenuItem Header="Second" InputGesture="Ctrl+2" />
+								<MenuItem Header="Nested">
+									<MenuItem Header="Leaf" />
+								</MenuItem>
+							</MenuFlyout>
+						</Button.Flyout>
+					</Button>
+				</Grid>
+				
+				<Separator />
+
+				<WrapPanel ItemSpacing="12" LineSpacing="8">
+					<HyperlinkButton Content="HyperlinkButton" />
+
+					<DropDownButton Content="DropDownButton">
+						<DropDownButton.Flyout>
+							<MenuFlyout>
+								<MenuItem Header="First action" />
+								<MenuItem Header="Second action" />
+							</MenuFlyout>
+						</DropDownButton.Flyout>
+					</DropDownButton>
+
+					<SplitButton Content="SplitButton">
+						<SplitButton.Flyout>
+							<MenuFlyout>
+								<MenuItem Header="Run with defaults" />
+								<MenuItem Header="Run with options..." />
+							</MenuFlyout>
+						</SplitButton.Flyout>
+					</SplitButton>
+				</WrapPanel>
+				
+				<Separator />
+
+				<GroupBox Header="GroupBox">
+					<TextBlock Classes="hint"
+									 Text="A caption above a framed panel; no opacity mask and no gap-cutting converter." />
+				</GroupBox>
+				
+				<Separator />
 
 				<!-- Roles -->
 
@@ -287,6 +539,8 @@
 					<Border Width="80" Height="40" CornerRadius="{DynamicResource RadiusS}"
 									Background="{DynamicResource StatusDangerBase}" ToolTip.Tip="StatusDangerBase" />
 				</WrapPanel>
+				
+				<Separator />
 
 				<!-- Rungs -->
 
@@ -329,6 +583,8 @@
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
 				</StackPanel>
+				
+				<Separator />
 
 				<!-- Type scale -->
 
@@ -355,6 +611,8 @@
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>
+				
+				<Separator />
 
 				<!-- Radii -->
 
@@ -382,7 +640,7 @@
 				</ItemsControl>
 
 			</StackPanel>
-		</ScrollViewer>
+		</scroll:SmoothScrollViewer>
 
 	</DockPanel>
 

@@ -42,6 +42,8 @@ theme_gallery.toggle_buttons: Toggle buttons
 theme_gallery.checks: Check boxes
 theme_gallery.radios: Radio buttons
 theme_gallery.switches: Switches
+theme_gallery.collections: Collections and navigation
+theme_gallery.surfaces: Surfaces and overlays
 theme_gallery.inputs: Inputs
 theme_gallery.ranges: Ranges and scrolling
 
