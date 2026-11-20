@@ -8,7 +8,7 @@
 			 x:DataType="local:AddLogDialogViewModel">
 
 	<Border Background="{DynamicResource CardBackground}"
-			BorderBrush="{DynamicResource CardBorderBrush}"
+			BorderBrush="{DynamicResource BorderDefault}"
 			BorderThickness="1"
 			CornerRadius="8"
 			Padding="16"
@@ -51,7 +51,7 @@
 			</Grid>
 
 			<!-- Real-time window -->
-			<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+			<Border BorderBrush="{DynamicResource PrimaryBorder}"
 					BorderThickness="1"
 					CornerRadius="4"
 					Padding="8">
@@ -81,7 +81,7 @@
 			</Border>
 
 			<!-- Alternative timeline window -->
-			<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+			<Border BorderBrush="{DynamicResource PrimaryBorder}"
 					BorderThickness="1"
 					CornerRadius="4"
 					Padding="8">

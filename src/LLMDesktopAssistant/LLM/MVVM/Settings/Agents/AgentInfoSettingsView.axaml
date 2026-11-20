@@ -82,7 +82,7 @@
 					  TextWrapping="Wrap"/>
 
 		<!-- Image preview -->
-		<Border BorderBrush="{DynamicResource DefaultForeground}"
+		<Border BorderBrush="{DynamicResource BorderDefault}"
 				BorderThickness="1"
 				CornerRadius="8"
 				Padding="4"

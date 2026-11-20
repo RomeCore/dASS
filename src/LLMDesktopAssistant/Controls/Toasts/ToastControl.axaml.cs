@@ -197,33 +197,33 @@ public partial class ToastControl : UserControl
 			case ToastType.Info:
 				icon.Kind = MaterialIconKind.InformationOutline;
 				if (iconBorder != null)
-					iconBorder.Background = this.TryFindResource("PrimaryAccentBrush", out var accentBrush)
+					iconBorder.Background = this.TryFindResource("PrimaryBase", out var accentBrush)
 						? accentBrush as IBrush
-						: new SolidColorBrush(Color.Parse("#6C5CE7"));
+						: Brushes.Transparent;
 				break;
 
 			case ToastType.Warning:
 				icon.Kind = MaterialIconKind.AlertOutline;
 				if (iconBorder != null)
-					iconBorder.Background = this.TryFindResource("WarningBrush", out var warningBrush)
+					iconBorder.Background = this.TryFindResource("StatusWarningBase", out var warningBrush)
 						? warningBrush as IBrush
-						: new SolidColorBrush(Color.Parse("#D4A017"));
+						: Brushes.Transparent;
 				break;
 
 			case ToastType.Error:
 				icon.Kind = MaterialIconKind.AlertCircleOutline;
 				if (iconBorder != null)
-					iconBorder.Background = this.TryFindResource("ErrorBrush", out var errorBrush)
+					iconBorder.Background = this.TryFindResource("StatusErrorBase", out var errorBrush)
 						? errorBrush as IBrush
-						: new SolidColorBrush(Color.Parse("#FF4444"));
+						: Brushes.Transparent;
 				break;
 
 			case ToastType.Success:
 				icon.Kind = MaterialIconKind.CheckCircleOutline;
 				if (iconBorder != null)
-					iconBorder.Background = this.TryFindResource("SuccessBrush", out var successBrush)
+					iconBorder.Background = this.TryFindResource("StatusSuccessBase", out var successBrush)
 						? successBrush as IBrush
-						: new SolidColorBrush(Color.Parse("#2ECC71"));
+						: Brushes.Transparent;
 				break;
 		}
 	}

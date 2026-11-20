@@ -28,7 +28,7 @@
 
 		<!-- Keyboard focus inside the terminal, and only there: the card accepts typing. -->
 		<Style Selector="Border.terminalCard.focused">
-			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryAccentBrush}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
 			<Setter Property="BoxShadow" Value="0 0 6 0 #806C5CE7" />
 		</Style>
 
@@ -59,15 +59,15 @@
 		</Style>
 
 		<Style Selector="Ellipse.statusDot.running">
-			<Setter Property="Fill" Value="{DynamicResource SuccessBrush}" />
+			<Setter Property="Fill" Value="{DynamicResource StatusSuccessBase}" />
 		</Style>
 
 		<Style Selector="Ellipse.statusDot.left">
-			<Setter Property="Fill" Value="{DynamicResource WarningBrush}" />
+			<Setter Property="Fill" Value="{DynamicResource StatusWarningBase}" />
 		</Style>
 
 		<Style Selector="Ellipse.statusDot.failed">
-			<Setter Property="Fill" Value="{DynamicResource ErrorBrush}" />
+			<Setter Property="Fill" Value="{DynamicResource StatusErrorBase}" />
 		</Style>
 
 		<Style Selector="Button.terminalAction">

@@ -20,7 +20,7 @@
 			<StackPanel Orientation="Horizontal" Spacing="8">
 				<ico:VisualIcon Kind="Database" Width="20" Height="20"
 								  VerticalAlignment="Center"
-								  Foreground="{DynamicResource PrimaryAccentBrush}"/>
+								  Foreground="{DynamicResource PrimaryBase}"/>
 				<TextBlock Text="{loc:Loc settings.memory.block.editor.title}"
 						   FontSize="{DynamicResource FontSizeL}"
 						   FontWeight="Bold"
@@ -81,7 +81,7 @@
 											HorizontalAlignment="Stretch">
 
 									<!-- Block ID + management -->
-									<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+									<Border BorderBrush="{DynamicResource PrimaryBorder}"
 											BorderThickness="1"
 											CornerRadius="4"
 											Padding="8">
@@ -109,10 +109,10 @@
 														Content="{loc:Loc settings.memory.duplicate.action}"/>
 												<Button Command="{Binding ClearCommand}"
 														Content="{loc:Loc settings.memory.clear.action}"
-														Foreground="{DynamicResource DangerBrush}"/>
+														Foreground="{DynamicResource StatusDangerBase}"/>
 												<Button Command="{Binding DeleteCommand}"
 														Content="{loc:Loc settings.memory.delete.action}"
-														Foreground="{DynamicResource DangerBrush}"/>
+														Foreground="{DynamicResource StatusDangerBase}"/>
 											</WrapPanel>
 
 											<!-- Rename editor -->

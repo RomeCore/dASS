@@ -40,7 +40,7 @@
 		<StackPanel Grid.Row="1" Orientation="Vertical" Spacing="12">
 
 			<!-- Status indicator -->
-			<Border Background="{DynamicResource PrimaryAccentBrush}"
+			<Border Background="{DynamicResource PrimaryBase}"
 					CornerRadius="8" Padding="12">
 
 				<Panel>

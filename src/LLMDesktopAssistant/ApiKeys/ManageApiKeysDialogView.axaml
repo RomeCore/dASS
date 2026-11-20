@@ -15,7 +15,7 @@
 		<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
 			<ico:VisualIcon Kind="KeyVariant" Width="20" Height="20" 
 							  VerticalAlignment="Center"
-							  Foreground="{DynamicResource PrimaryAccentBrush}"/>
+							  Foreground="{DynamicResource PrimaryBase}"/>
 			<TextBlock Text="{loc:Loc settings.api.manage.title}"
 					   FontSize="{DynamicResource FontSizeL}"
 					   FontWeight="Bold"

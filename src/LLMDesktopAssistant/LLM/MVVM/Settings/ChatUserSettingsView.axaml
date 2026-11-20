@@ -45,7 +45,7 @@
 		<ItemsControl ItemsSource="{Binding Users}">
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="users:UserInformation">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 							BorderThickness="1"
 							CornerRadius="4"
 							Padding="8"
@@ -57,7 +57,7 @@
 							<!-- Row 0: Avatar icon | Name + Login | Edit | Delete -->
 							<ico:VisualIcon Grid.Row="0" Grid.Column="0"
 											  Kind="AccountCircle"
-											  Foreground="{DynamicResource PrimaryAccentBrush}"
+											  Foreground="{DynamicResource PrimaryBase}"
 											  Width="22" Height="22"
 											  VerticalAlignment="Center"/>
 

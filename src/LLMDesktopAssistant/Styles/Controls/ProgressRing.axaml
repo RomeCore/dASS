@@ -12,7 +12,7 @@
 		<Setter Property="Width" Value="{DynamicResource ProgressRingSize}" />
 		<Setter Property="Height" Value="{DynamicResource ProgressRingSize}" />
 		<Setter Property="StrokeThickness" Value="{DynamicResource ProgressRingThickness}" />
-		<Setter Property="Foreground" Value="{DynamicResource PrimaryAccentBrush}" />
+		<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
 		<Setter Property="Background" Value="Transparent" />
 
 		<Setter Property="Template">

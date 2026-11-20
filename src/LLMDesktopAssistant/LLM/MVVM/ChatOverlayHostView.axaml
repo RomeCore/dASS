@@ -15,8 +15,8 @@
 	<UserControl.Styles>
 
 		<Style Selector="Border.overlayWindow">
-			<Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource CardBorderBrush}"/>
+			<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
 			<Setter Property="BorderThickness" Value="1"/>
 			<Setter Property="CornerRadius" Value="8"/>
 			<Setter Property="ClipToBounds" Value="True"/>
@@ -25,7 +25,7 @@
 
 		<!-- The whole header is the drag handle, so it looks like one. -->
 		<Style Selector="Border.overlayHeader">
-			<Setter Property="Background" Value="{DynamicResource MessageBackground}"/>
+			<Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
 			<Setter Property="CornerRadius" Value="8,8,0,0"/>
 			<Setter Property="Padding" Value="8,2"/>
 			<Setter Property="Cursor" Value="SizeAll"/>

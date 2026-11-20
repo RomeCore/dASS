@@ -1,53 +1,10 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	
-	<ResourceDictionary.ThemeDictionaries>
-		
-		<ResourceDictionary x:Key="Light">
 
-			<Brush x:Key="DefaultForeground">Black</Brush>
-			<Brush x:Key="TopBarBackground">#FFE5E5E5</Brush>
-			<Brush x:Key="MessageBackground">#FFDEDEDE</Brush>
-
-			<Brush x:Key="CardBackground">#FFF7F7F9</Brush>
-			<Brush x:Key="CardBackgroundBrush">#FFF7F7F9</Brush>
-			<Brush x:Key="CardBorderBrush">#FFD5D5DE</Brush>
-
-		</ResourceDictionary>
-		
-		<ResourceDictionary x:Key="Dark">
-
-			<Brush x:Key="DefaultForeground">White</Brush>
-			<Brush x:Key="TopBarBackground">#FF2F2F30</Brush>
-			<Brush x:Key="MessageBackground">#FF414141</Brush>
-
-			<Brush x:Key="CardBackground">#FF2B2B2F</Brush>
-			<Brush x:Key="CardBackgroundBrush">#FF2B2B2F</Brush>
-			<Brush x:Key="CardBorderBrush">#FF3C3C44</Brush>
-
-		</ResourceDictionary>
-		
-	</ResourceDictionary.ThemeDictionaries>
-
-	<!-- Primary accent (replaces SystemAccentColor) -->
-	<Color x:Key="PrimaryAccent">#6C5CE7</Color>
-	<SolidColorBrush x:Key="PrimaryAccentBrush"
-									 Color="{StaticResource PrimaryAccent}" />
-
-	<!-- Secondary / hover accent -->
-	<Color x:Key="SecondaryAccent">#7C6CF7</Color>
-	<SolidColorBrush x:Key="SecondaryAccentBrush"
-									 Color="{StaticResource SecondaryAccent}" />
-	
-	<!-- Success -->
-	<Color x:Key="SuccessColor">#2ECC71</Color>
-	<SolidColorBrush x:Key="SuccessBrush"
-									 Color="{StaticResource SuccessColor}" />
-
-	<!-- Warning -->
-	<Color x:Key="WarningColor">#D4A017</Color>
-	<SolidColorBrush x:Key="WarningBrush"
-									 Color="{StaticResource WarningColor}" />
+	<!--
+		The colours that are deliberately outside the palette. Everything that has a semantic name in
+		Roles.axaml lives there; this file is only for surfaces whose look must not follow the theme.
+	-->
 
 	<!-- Terminal card: a terminal is dark in every app theme, so its palette is fixed rather than themed. -->
 	<SolidColorBrush x:Key="TerminalBackground" Color="#FF1E1E1E" />
@@ -56,7 +13,7 @@
 	<SolidColorBrush x:Key="TerminalBarForeground" Color="#FFB8B8C0" />
 	<SolidColorBrush x:Key="TerminalBarBorderBrush" Color="#FF3A3A42" />
 	<SolidColorBrush x:Key="TerminalCardBorderBrush" Color="#FF3A3A42" />
-	
+
 	<!-- Slash-command highlight palette (see SlashCommandHighlightPalette). Overridable per theme. -->
 	<SolidColorBrush x:Key="SlashCommandKnownBrush" Color="#FF6BC1"/>
 	<SolidColorBrush x:Key="SlashCommandUnknownBrush" Color="#F44747"/>
@@ -66,13 +23,5 @@
 	<SolidColorBrush x:Key="SlashCommandArgumentEqualsBrush" Color="#1E8E5A"/>
 	<SolidColorBrush x:Key="SlashCommandQuoteBrush" Color="#B9B9CC"/>
 	<SolidColorBrush x:Key="SlashCommandArgumentBackgroundBrush" Color="#268C8C8C"/>
-
-	<!-- Error / danger -->
-	<Color x:Key="ErrorColor">#FF4444</Color>
-	<SolidColorBrush x:Key="ErrorBrush"
-									 Color="{StaticResource ErrorColor}" />
-	<Color x:Key="DangerColor">#FF4444</Color>
-	<SolidColorBrush x:Key="DangerBrush"
-									 Color="{StaticResource DangerColor}" />
 
 </ResourceDictionary>

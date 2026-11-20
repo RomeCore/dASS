@@ -52,7 +52,7 @@
 		<!-- ============================================================ -->
 		<!-- ACTIVE CONNECTIONS MANAGER -->
 		<!-- ============================================================ -->
-		<Border BorderBrush="{DynamicResource PrimaryAccentBrush}"
+		<Border BorderBrush="{DynamicResource PrimaryBase}"
 				BorderThickness="1"
 				CornerRadius="4"
 				Padding="8">
@@ -120,7 +120,7 @@
 		<!-- ============================================================ -->
 		<!-- CUSTOM CONNECTION -->
 		<!-- ============================================================ -->
-		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+		<Border BorderBrush="{DynamicResource PrimaryBorder}"
 				BorderThickness="1"
 				CornerRadius="4"
 				Padding="8">
@@ -196,7 +196,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="local:DatabaseConnectionItemViewModel">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 							BorderThickness="1"
 							CornerRadius="4"
 							Padding="8">

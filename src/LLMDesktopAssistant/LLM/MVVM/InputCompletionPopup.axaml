@@ -19,7 +19,7 @@
 
 		<!-- The argument the caret currently sits in. -->
 		<Style Selector="TextBlock.current">
-			<Setter Property="Foreground" Value="{DynamicResource PrimaryAccentBrush}"/>
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}"/>
 			<Setter Property="FontWeight" Value="SemiBold"/>
 		</Style>
 	</UserControl.Styles>

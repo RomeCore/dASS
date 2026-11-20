@@ -44,7 +44,7 @@
 						   FontWeight="Bold"
 						   FontSize="14"/>
 
-				<Border BorderBrush="{DynamicResource CardBorderBrush}"
+				<Border BorderBrush="{DynamicResource BorderDefault}"
 						BorderThickness="1"
 						CornerRadius="6"
 						Padding="10">
@@ -55,7 +55,7 @@
 				<TextBlock Text="{loc:Loc debug.parameterization.value.label}"
 						   FontWeight="Bold"
 						   FontSize="14"/>
-				<Border BorderBrush="{DynamicResource CardBorderBrush}"
+				<Border BorderBrush="{DynamicResource BorderDefault}"
 						BorderThickness="1"
 						CornerRadius="6"
 						Padding="10">
@@ -84,7 +84,7 @@
 				<TextBlock Text="{loc:Loc debug.parameterization.log.label}"
 						   FontWeight="Bold"
 						   FontSize="14"/>
-				<Border BorderBrush="{DynamicResource CardBorderBrush}"
+				<Border BorderBrush="{DynamicResource BorderDefault}"
 						BorderThickness="1"
 						CornerRadius="6"
 						Padding="10">

@@ -89,7 +89,7 @@
 
 			</Grid>
 			
-			<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+			<Border BorderBrush="{DynamicResource PrimaryBorder}"
 					BorderThickness="1"
 					CornerRadius="4">
 				<ScrollViewer MaxHeight="500"

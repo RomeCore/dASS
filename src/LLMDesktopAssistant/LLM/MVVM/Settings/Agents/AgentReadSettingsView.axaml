@@ -34,8 +34,7 @@
 		</Style>
 
 		<Style Selector="ToggleButton.FacetToggle:checked /template/ ContentPresenter#PART_ContentPresenter">
-			<!-- #596C5CE7 = PrimaryAccent (#6C5CE7) at ~35% alpha -->
-			<Setter Property="Background" Value="#596C5CE7"/>
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}"/>
 			<Setter Property="BorderBrush" Value="Transparent"/>
 		</Style>
 
@@ -78,7 +77,7 @@
 			<Setter Property="Padding" Value="0"/>
 			<Setter Property="BorderThickness" Value="0"/>
 			<Setter Property="CornerRadius" Value="1"/>
-			<Setter Property="Background" Value="{DynamicResource PrimaryAccentBrush}"/>
+			<Setter Property="Background" Value="{DynamicResource PrimaryBase}"/>
 			<Setter Property="VerticalAlignment" Value="Center"/>
 			<Setter Property="Margin" Value="1,0"/>
 		</Style>
@@ -94,11 +93,9 @@
 		<!-- A single facet cell: [override strip][toggle]. -->
 		<DataTemplate x:Key="FacetCellTemplate" x:DataType="local:AgentVisibilityCellViewModel">
 			<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-				<Border Width="1" Height="16" Margin="2,0"
+				<Separator Classes="vertical" Height="16" Margin="2,0"
 						VerticalAlignment="Center"
-						IsVisible="{Binding IsGroupStart}"
-						Background="{DynamicResource DefaultForeground}"
-						Opacity="0.25"/>
+						IsVisible="{Binding IsGroupStart}"/>
 				<Button Classes="OverrideStrip"
 						IsVisible="{Binding CanOverride}"
 						IsEnabled="{Binding IsOverridden}"
@@ -127,10 +124,8 @@
 		<!-- The identity cell: [override strip][cyclic button]. -->
 		<DataTemplate x:Key="IdentityCellTemplate" x:DataType="local:AgentIdentityCellViewModel">
 			<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-				<Border Width="1" Height="16" Margin="2,0"
-						VerticalAlignment="Center"
-						Background="{DynamicResource DefaultForeground}"
-						Opacity="0.25"/>
+				<Separator Classes="vertical" Height="16" Margin="2,0"
+						VerticalAlignment="Center"/>
 				<Button Classes="OverrideStrip"
 						IsVisible="{Binding CanOverride}"
 						IsEnabled="{Binding IsOverridden}"
@@ -164,7 +159,7 @@
 							   TextTrimming="CharacterEllipsis"
 							   MaxWidth="110"/>
 					<Border IsVisible="{Binding ShowGlobalBadge}"
-							Background="{DynamicResource PrimaryAccentBrush}"
+							Background="{DynamicResource PrimaryBase}"
 							Opacity="0.4"
 							CornerRadius="4"
 							Padding="4,1"

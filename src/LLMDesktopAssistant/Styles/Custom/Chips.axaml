@@ -8,13 +8,13 @@
 		the view beats any style - and a surface that wants a lighter chip has to win over this one.
 	-->
 	<Style Selector="Border.messagePartChip" x:DataType="add:AdditionalMessagePart">
-		<Setter Property="Background" Value="{DynamicResource MessageBackground}" />
+		<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="BorderBrush">
 			<Setter.Value>
 				<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
 					<Binding Path="ChipColor" Converter="{StaticResource ColorToBrushConverter}"/>
-					<DynamicResource ResourceKey="DefaultForeground"/>
+					<DynamicResource ResourceKey="BorderDefault"/>
 				</MultiBinding>
 			</Setter.Value>
 		</Setter>
@@ -27,7 +27,7 @@
 			<Setter.Value>
 				<MultiBinding Converter="{StaticResource FallbackMultiConverter}">
 					<Binding Path="ChipColor" Converter="{StaticResource ColorToBrushConverter}"/>
-					<DynamicResource ResourceKey="DefaultForeground"/>
+					<DynamicResource ResourceKey="TextSecondary"/>
 				</MultiBinding>
 			</Setter.Value>
 		</Setter>

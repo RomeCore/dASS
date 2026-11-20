@@ -16,7 +16,7 @@
 	<UserControl.Styles>
 
 		<Style Selector="Border.addonCard">
-			<Setter Property="BorderBrush" Value="{DynamicResource SecondaryAccentBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
 			<Setter Property="BorderThickness" Value="0,1"/>
 			<Setter Property="CornerRadius" Value="4"/>
 			<Setter Property="Padding" Value="4"/>
@@ -63,7 +63,7 @@
 
 		<!-- A card that holds child cards: the border is emphasized. -->
 		<Style Selector="Border.addonCard.group">
-			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryAccentBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}"/>
 		</Style>
 
 		<!-- The borderless chevron that toggles the children of a group card. -->
@@ -106,7 +106,7 @@
 												  IsVisible="{Binding Icon, Converter={StaticResource NotnullToBooleanConverter}}"
 												  Width="12" Height="12"
 												  VerticalAlignment="Center"
-												  Foreground="{Binding Brush, TargetNullValue={StaticResource SecondaryAccentBrush}}"/>
+												  Foreground="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"/>
 
 				<TextBlock Classes="cardChipText"
 									   Text="{loc:Loc {Binding Label}}"
@@ -170,8 +170,8 @@
 		<DataTemplate x:DataType="cards:IAddonCardHeaderChange">
 			<Grid ColumnDefinitions="3,Auto" ColumnSpacing="2" VerticalAlignment="Center">
 				<Button Grid.Column="0"
-									 BorderBrush="{DynamicResource PrimaryAccentBrush}"
-									 Background="{DynamicResource PrimaryAccentBrush}"
+									 BorderBrush="{DynamicResource PrimaryBase}"
+									 Background="{DynamicResource PrimaryBase}"
 									 CornerRadius="1"
 									 Command="{Binding ResetCommand}"
 									 IsEnabled="{Binding IsChanged}"/>
@@ -194,7 +194,7 @@
 							Opacity="{Binding Opacity}"
 							Command="{Binding Command}"
 							CommandParameter="{Binding CommandParameter}"
-							BorderBrush="{Binding Brush, TargetNullValue={StaticResource SecondaryAccentBrush}}"
+							BorderBrush="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
 				<ContentControl Content="{Binding}" ContentTemplate="{StaticResource AddonCardChipBodyTemplate}"/>
 			</Button>
@@ -205,7 +205,7 @@
 			<Border Classes="cardChip"
 							Classes.noBorder="{Binding !HasBorder}"
 							Opacity="{Binding Opacity}"
-							BorderBrush="{Binding Brush, TargetNullValue={StaticResource SecondaryAccentBrush}}"
+							BorderBrush="{Binding Brush, TargetNullValue={StaticResource PrimaryBorder}}"
 							ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
 				<ContentControl Content="{Binding}" ContentTemplate="{StaticResource AddonCardChipBodyTemplate}"/>
 			</Border>
@@ -223,8 +223,8 @@
 			<Grid ColumnDefinitions="3,Auto" ColumnSpacing="6"
 						IsVisible="{Binding IsExpanded}">
 				<Button Grid.Column="0"
-								BorderBrush="{DynamicResource PrimaryAccentBrush}"
-								Background="{DynamicResource PrimaryAccentBrush}"
+								BorderBrush="{DynamicResource PrimaryBase}"
+								Background="{DynamicResource PrimaryBase}"
 								CornerRadius="1"
 								VerticalAlignment="Stretch"
 								Margin="0,2"
@@ -295,7 +295,7 @@
 				<!-- Name + optional subtitle -->
 				<StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
 					<ico:VisualIcon Kind="{Binding Icon}"
-													  Foreground="{DynamicResource PrimaryAccentBrush}"
+													  Foreground="{DynamicResource PrimaryBase}"
 													  Width="20" Height="20"
 													  VerticalAlignment="Center"/>
 					<TextBlock Text="{loc:Loc {Binding NamePrefix}}"
@@ -440,7 +440,7 @@
 							Margin="28,4,0,0"
 							Padding="0,2,0,2"
 							BorderThickness="2,0,0,0"
-							BorderBrush="{DynamicResource SecondaryAccentBrush}">
+							BorderBrush="{DynamicResource PrimaryBorder}">
 				<ItemsControl ItemsSource="{Binding Children}">
 					<ItemsControl.ItemsPanel>
 						<ItemsPanelTemplate>

@@ -18,7 +18,7 @@
 			<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,10">
 				<ico:VisualIcon Kind="Settings" Width="20" Height="20"
 									VerticalAlignment="Center"
-									Foreground="{DynamicResource PrimaryAccentBrush}"/>
+									Foreground="{DynamicResource PrimaryBase}"/>
 				<TextBlock Text="{loc:Loc settings.provider.add.title}"
 							 FontSize="{DynamicResource FontSizeL}"
 							 FontWeight="Bold"
@@ -106,7 +106,7 @@
 					</Button>
 				</StackPanel>
 
-				<Border BorderBrush="{DynamicResource DefaultForeground}"
+				<Border BorderBrush="{DynamicResource BorderDefault}"
 								BorderThickness="1"
 								CornerRadius="4"
 								MaxHeight="300">
@@ -272,7 +272,7 @@
 							 IsVisible="{Binding CustomModelError, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
 
 				<!-- Custom model list -->
-				<Border BorderBrush="{DynamicResource DefaultForeground}"
+				<Border BorderBrush="{DynamicResource BorderDefault}"
 							 BorderThickness="1"
 							 CornerRadius="4"
 							 MaxHeight="200"

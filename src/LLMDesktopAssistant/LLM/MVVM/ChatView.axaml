@@ -43,7 +43,7 @@
 		<GridSplitter Grid.Column="1"
 									Width="2" MinWidth="1"
 									ResizeDirection="Columns"
-									Background="{DynamicResource PrimaryAccentBrush}"
+									Background="{DynamicResource PrimaryBase}"
 									IsVisible="{Binding ChatSidePanel.HasItems}"/>
 
 		<Grid Grid.Column="2" RowDefinitions="*,Auto">
@@ -156,7 +156,7 @@
 			<!-- Input Area -->
 			<Border Grid.Row="1"
 							Padding="16,8"
-							BorderBrush="{DynamicResource PrimaryAccentBrush}"
+							BorderBrush="{DynamicResource PrimaryBase}"
 							BorderThickness="0,1,0,0">
 
 				<ContentControl Content="{Binding ChatBottomPanel}"/>

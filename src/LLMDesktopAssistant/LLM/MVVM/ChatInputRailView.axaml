@@ -12,11 +12,8 @@
 		<!-- A rail item has no chrome of its own: the payload is the whole visual. -->
 		<DataTemplate x:Key="RailItemTemplate" x:DataType="chat:AdditionalChatDataInputRailItem">
 			<StackPanel Orientation="Horizontal" Spacing="6">
-				<Border Classes="rail-separator"
-								Width="1"
-								Opacity="0.35"
-								VerticalAlignment="Stretch"
-								Background="{DynamicResource PrimaryAccentBrush}"/>
+				<Separator Classes="vertical flush rail"
+													Background="{DynamicResource PrimaryBorder}"/>
 				<ContentControl Content="{Binding Content}"/>
 			</StackPanel>
 		</DataTemplate>
@@ -24,7 +21,7 @@
 
 	<UserControl.Styles>
 		<!-- The first element of a group has no separator in front of it. -->
-		<Style Selector="ItemsControl.rail ContentPresenter:nth-child(1) Border.rail-separator">
+		<Style Selector="ItemsControl.rail ContentPresenter:nth-child(1) Separator.rail">
 			<Setter Property="IsVisible" Value="False"/>
 		</Style>
 	</UserControl.Styles>

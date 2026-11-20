@@ -56,7 +56,7 @@
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="local:RoundRobinStageAgentViewModel">
 					<Border Padding="4,2" Margin="0,1"
-							BorderBrush="{DynamicResource SecondaryAccentBrush}"
+							BorderBrush="{DynamicResource PrimaryBorder}"
 							BorderThickness="0,0,0,0.5">
 						<Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
 							<!-- Enabled checkbox -->

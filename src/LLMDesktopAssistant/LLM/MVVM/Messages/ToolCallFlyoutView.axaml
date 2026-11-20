@@ -100,7 +100,7 @@
 											IsVisible="{Binding Arguments, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
 
 						<Border DockPanel.Dock="Top"
-										BorderBrush="{DynamicResource DefaultForeground}"
+										BorderBrush="{DynamicResource BorderSubtle}"
 										BorderThickness="0,0,0,1"
 										Padding="8,6">
 							<TextBlock Text="{loc:Loc tool.arguments}"
@@ -120,7 +120,7 @@
 											IsVisible="{Binding Result, Converter={StaticResource StringNonEmptyToBooleanConverter}}">
 
 						<Border DockPanel.Dock="Top"
-										BorderBrush="{DynamicResource DefaultForeground}"
+										BorderBrush="{DynamicResource BorderSubtle}"
 										BorderThickness="0,0,0,1"
 										Padding="8,6">
 							<TextBlock Text="{loc:Loc tool.result}"

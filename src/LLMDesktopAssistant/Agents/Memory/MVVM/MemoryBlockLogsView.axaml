@@ -45,7 +45,7 @@
 			<StackPanel Spacing="4"
 						IsVisible="{Binding IsTimeSearch}">
 
-				<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+				<Border BorderBrush="{DynamicResource PrimaryBorder}"
 						BorderThickness="1"
 						CornerRadius="4"
 						Padding="6">
@@ -113,7 +113,7 @@
 			<Button Grid.Column="2"
 					Command="{Binding ClearLogsCommand}"
 					Content="{loc:Loc settings.memory.logs.clear.action}"
-					Foreground="{DynamicResource DangerBrush}"
+					Foreground="{DynamicResource StatusDangerBase}"
 					VerticalAlignment="Center"/>
 
 		</Grid>
@@ -130,7 +130,7 @@
 
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="local:MemoryLogItemViewModel">
-							<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+							<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="0,0,0,1"
 									Padding="4,4">
 

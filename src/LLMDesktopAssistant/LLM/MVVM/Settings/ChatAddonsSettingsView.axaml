@@ -32,7 +32,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="x:String">
-					<Border Background="{DynamicResource SecondaryAccentBrush}"
+					<Border Background="{DynamicResource PrimaryBorder}"
 							CornerRadius="4"
 							Padding="8,3"
 							Margin="0,2,4,2">
@@ -265,7 +265,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:AddonSourceItemViewModel">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8"
@@ -506,7 +506,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:AddonPackItemViewModel">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 							BorderThickness="1"
 							CornerRadius="4"
 							Padding="8,6">
@@ -552,7 +552,7 @@
 												   Opacity="0.6"
 												   FontSize="11"/>
 								<TextBlock Text="{loc:Loc addon.settings.pack.manifest_invalid}"
-										   Foreground="{DynamicResource DangerBrush}"
+										   Foreground="{DynamicResource StatusDangerBase}"
 										   FontSize="11"
 										   HorizontalAlignment="Right"
 										   IsVisible="{Binding IsManifestInvalid}"/>

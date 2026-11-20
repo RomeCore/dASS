@@ -31,7 +31,7 @@
 							   Text="{loc:Loc debug.llt_editor.errors.label}"/>
 					<TextBlock Grid.Row="1" Grid.Column="1"
 							   Text="{Binding ErrorCount}"
-							   Foreground="{DynamicResource ErrorBrush}"/>
+							   Foreground="{DynamicResource StatusErrorBase}"/>
 
 					<TextBlock Grid.Row="2" Grid.Column="0"
 							   Text="{loc:Loc debug.llt_editor.parse_time.label}"/>
@@ -56,7 +56,7 @@
 					<DataTemplate>
 						<TextBlock Text="{Binding Display}"
 								   TextWrapping="Wrap"
-								   Foreground="{DynamicResource ErrorBrush}"/>
+								   Foreground="{DynamicResource StatusErrorBase}"/>
 					</DataTemplate>
 				</ListBox.ItemTemplate>
 

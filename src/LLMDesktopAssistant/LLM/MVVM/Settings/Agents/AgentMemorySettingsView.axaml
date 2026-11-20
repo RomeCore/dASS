@@ -94,7 +94,7 @@
 
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:MemoryBlockAttachmentItemViewModel">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8"
@@ -166,7 +166,7 @@
 							<!-- Row 2: Invalid settings warning -->
 							<TextBlock Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4"
 												 Text="{Binding InvalidSettingsMessage}"
-												 Foreground="{DynamicResource WarningBrush}"
+												 Foreground="{DynamicResource StatusWarningBase}"
 												 FontSize="12"
 												 TextWrapping="Wrap"
 												 Margin="0,2,0,0"

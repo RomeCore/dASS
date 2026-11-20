@@ -26,7 +26,7 @@
 						Margin="0,4,0,8"/>
 
 		<!-- Native tools venv path -->
-		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+		<Border BorderBrush="{DynamicResource PrimaryBorder}"
 						BorderThickness="1"
 						CornerRadius="4"
 						Padding="8"
@@ -62,7 +62,7 @@
 		</Border>
 
 		<!-- Scriptable addons venv path -->
-		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+		<Border BorderBrush="{DynamicResource PrimaryBorder}"
 						BorderThickness="1"
 						CornerRadius="4"
 						Padding="8"

@@ -21,7 +21,7 @@
 									 VerticalAlignment="Center"
 									 Margin="6,0,8,0"
 									 FontSize="{DynamicResource FontSizeS}"
-									 Foreground="{DynamicResource DefaultForeground}"
+									 Foreground="{DynamicResource TextSecondary}"
 									 Text="{Binding #ControlRoot.Language}"/>
 
 				<StackPanel DockPanel.Dock="Right"

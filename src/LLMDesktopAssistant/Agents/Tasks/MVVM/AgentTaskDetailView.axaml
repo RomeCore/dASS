@@ -26,7 +26,7 @@
 			<Setter Property="FontSize" Value="12"/>
 		</Style>
 		<Style Selector="Border.ToolCallCard">
-			<Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+			<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
 			<Setter Property="CornerRadius" Value="4"/>
 			<Setter Property="Padding" Value="10,8"/>
 			<Setter Property="Margin" Value="0,3"/>
@@ -58,7 +58,7 @@
 													 IsIndeterminate="True"
 													 Width="36" Height="36"
 													 StrokeThickness="4"
-													 Foreground="{DynamicResource PrimaryAccentBrush}"/>
+													 Foreground="{DynamicResource PrimaryBase}"/>
 				<ico:VisualIcon Kind="{Binding TaskViewModel.StatusIcon}"
 													Width="36" Height="36"
 													IsVisible="{Binding !TaskViewModel.IsRunning}"/>

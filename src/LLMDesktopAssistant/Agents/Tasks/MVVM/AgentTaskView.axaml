@@ -42,7 +42,7 @@
 														 IsIndeterminate="True"
 														 Width="20" Height="20"
 														 StrokeThickness="3"
-														 Foreground="{DynamicResource PrimaryAccentBrush}"/>
+														 Foreground="{DynamicResource PrimaryBase}"/>
 
 					<ico:VisualIcon Kind="{Binding StatusIcon}"
 														Width="20" Height="20"

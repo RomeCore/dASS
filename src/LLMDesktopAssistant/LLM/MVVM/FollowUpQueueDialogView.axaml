@@ -10,7 +10,7 @@
 			 x:DataType="mvvm:FollowUpQueueDialogViewModel">
 
 	<Border Background="{DynamicResource CardBackground}"
-			BorderBrush="{DynamicResource CardBorderBrush}"
+			BorderBrush="{DynamicResource BorderDefault}"
 			BorderThickness="1"
 			CornerRadius="8"
 			Padding="16"
@@ -35,7 +35,7 @@
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="mvvm:FollowUpQueueItemViewModel">
 
-							<Border BorderBrush="{DynamicResource CardBorderBrush}"
+							<Border BorderBrush="{DynamicResource BorderDefault}"
 									BorderThickness="0,0,0,1"
 									Padding="0,8">
 

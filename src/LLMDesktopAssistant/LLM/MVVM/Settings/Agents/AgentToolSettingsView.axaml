@@ -95,7 +95,7 @@
 
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:ToolBehaviourCategoryViewModel">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8">

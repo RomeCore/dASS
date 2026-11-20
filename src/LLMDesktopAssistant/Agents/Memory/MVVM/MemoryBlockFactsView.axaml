@@ -46,7 +46,7 @@
 			<Button Grid.Column="2"
 					Command="{Binding ClearFactsCommand}"
 					Content="{loc:Loc settings.memory.facts.clear.action}"
-					Foreground="{DynamicResource DangerBrush}"
+					Foreground="{DynamicResource StatusDangerBase}"
 					VerticalAlignment="Center"/>
 
 		</Grid>
@@ -63,7 +63,7 @@
 
 					<ItemsControl.ItemTemplate>
 						<DataTemplate x:DataType="local:MemoryFactItemViewModel">
-							<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+							<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="0,0,0,1"
 									Padding="4,4">
 

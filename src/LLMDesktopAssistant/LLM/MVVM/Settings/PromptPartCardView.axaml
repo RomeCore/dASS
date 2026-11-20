@@ -16,7 +16,7 @@
 			<Setter Property="CornerRadius" Value="8"/>
 			<Setter Property="Padding" Value="6,2"/>
 			<Setter Property="Margin" Value="0,0,4,2"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource SecondaryAccentBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
 			<Setter Property="BorderThickness" Value="1"/>
 			<Setter Property="VerticalAlignment" Value="Center"/>
 		</Style>
@@ -49,7 +49,7 @@
 			<Setter Property="Padding" Value="6,2"/>
 			<Setter Property="Margin" Value="0,0,4,2"/>
 			<Setter Property="Background" Value="Transparent"/>
-			<Setter Property="BorderBrush" Value="{DynamicResource SecondaryAccentBrush}"/>
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
 			<Setter Property="BorderThickness" Value="1"/>
 			<Setter Property="FontSize" Value="11"/>
 			<Setter Property="VerticalAlignment" Value="Center"/>
@@ -61,7 +61,7 @@
 
 	</UserControl.Styles>
 
-	<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+	<Border BorderBrush="{DynamicResource PrimaryBorder}"
 					BorderThickness="1"
 					CornerRadius="4"
 					Padding="8">
@@ -276,7 +276,7 @@
 									   FontWeight="SemiBold"
 									   Opacity="0.8"
 									   FontSize="12"/>
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8">

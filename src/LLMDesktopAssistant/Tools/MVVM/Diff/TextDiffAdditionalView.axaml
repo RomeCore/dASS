@@ -14,7 +14,7 @@
 			 x:DataType="local:TextDiffAdditionalViewModel"
 			 x:Name="DiffRoot">
 
-	<Border BorderBrush="{DynamicResource CardBorderBrush}"
+	<Border BorderBrush="{DynamicResource BorderDefault}"
 					BorderThickness="1"
 					CornerRadius="6"
 					Margin="4"
@@ -180,7 +180,7 @@
 																		   Text="{Binding Content}"
 																		   FontFamily="Cascadia Code,Consolas,monospace"
 																		   FontSize="12"
-																		   Foreground="{DynamicResource DefaultForeground}"
+																		   Foreground="{DynamicResource TextPrimary}"
 																		   TextWrapping="NoWrap"
 																		   VerticalAlignment="Center"/>
 													</Grid>

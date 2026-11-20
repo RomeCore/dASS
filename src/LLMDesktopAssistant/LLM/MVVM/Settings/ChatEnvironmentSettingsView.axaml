@@ -60,7 +60,7 @@
 							 TextWrapping="Wrap"
 							 Margin="0,0,0,8"/>
 
-		<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+		<Border BorderBrush="{DynamicResource PrimaryBorder}"
 						BorderThickness="1"
 						CornerRadius="4"
 						Padding="8">
@@ -125,7 +125,7 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="local:WorkingDirectorySetting">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8">
@@ -263,7 +263,7 @@
 		<ItemsControl ItemsSource="{Binding EffectiveDirectoryAccessRules}">
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="local:DirectoryAccessSetting">
-					<Border BorderBrush="{DynamicResource SecondaryAccentBrush}"
+					<Border BorderBrush="{DynamicResource PrimaryBorder}"
 									BorderThickness="1"
 									CornerRadius="4"
 									Padding="8"
@@ -352,7 +352,7 @@
 													 IsVisible="{Binding IsAccessDenied}"
 													 FontStyle="Italic"
 													 Opacity="0.6"
-													 Foreground="{DynamicResource ErrorBrush}"
+													 Foreground="{DynamicResource StatusErrorBase}"
 													 VerticalAlignment="Center"
 													 ClipToBounds="False"/>
 							</StackPanel>
@@ -426,13 +426,13 @@
 							<TextBlock Text="{Binding CheckResultText}"
 												 TextWrapping="Wrap"
 												 VerticalAlignment="Center"
-												 Foreground="{DynamicResource SuccessBrush}"
+												 Foreground="{DynamicResource StatusSuccessBase}"
 												 IsVisible="{Binding IsCheckSuccessful}"/>
 
 							<TextBlock Text="{Binding CheckResultText}"
 												 TextWrapping="Wrap"
 												 VerticalAlignment="Center"
-												 Foreground="{DynamicResource ErrorBrush}"
+												 Foreground="{DynamicResource StatusErrorBase}"
 												 IsVisible="{Binding IsCheckFailed}"/>
 						</StackPanel>
 

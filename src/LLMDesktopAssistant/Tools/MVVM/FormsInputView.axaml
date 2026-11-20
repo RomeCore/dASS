@@ -10,7 +10,7 @@
 			 x:DataType="local:FormsInputViewModel">
 
 	<Border Background="{DynamicResource CardBackground}"
-			BorderBrush="{DynamicResource CardBorderBrush}"
+			BorderBrush="{DynamicResource BorderDefault}"
 			HorizontalAlignment="Left"
 			BorderThickness="1"
 			CornerRadius="8"
@@ -85,7 +85,7 @@
 						IsVisible="{Binding IsResultSet}">
 				<ico:VisualIcon Kind="CheckCircle"
 								  Width="20" Height="20"
-								  Foreground="{DynamicResource SuccessColor}"/>
+								  Foreground="{DynamicResource StatusSuccessBase}"/>
 				<TextBlock Text="{loc:Loc forms.input.submitted}" FontSize="13" Opacity="0.7"/>
 			</StackPanel>
 

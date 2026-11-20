@@ -33,7 +33,7 @@
 								CornerRadius="8"
 								BoxShadow="0 2 12 #1c000000"
 								HorizontalAlignment="{Binding #PART_ToastList.HorizontalAlignment}"
-								Background="{DynamicResource MessageBackground}">
+								Background="{DynamicResource ControlBackground}">
 
 					<Grid ColumnDefinitions="48,*,Auto"
 								RowDefinitions="Auto,Auto"
@@ -47,7 +47,7 @@
 										HorizontalAlignment="Stretch"
 										VerticalAlignment="Stretch"
 										CornerRadius="8,0,0,8"
-										Background="{DynamicResource PrimaryAccentBrush}">
+										Background="{DynamicResource PrimaryBase}">
 
 							<ico:VisualIcon Name="PART_ToastIcon"
 																Width="24"
