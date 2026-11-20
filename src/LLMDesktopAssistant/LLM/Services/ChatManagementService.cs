@@ -24,6 +24,9 @@ namespace LLMDesktopAssistant.LLM.Services
 				Id = model.Id,
 				Title = model.Title,
 				Topic = model.Topic,
+				SubTopic = model.SubTopic,
+				Favorite = model.Favorite,
+				HasUserInputDraft = model.UserInputState?.IsEmpty == false,
 				CreatedAt = model.CreatedAt,
 				LastModifiedAt = model.LastModifiedAt,
 				Parts = GetChatParts(model.Id)
@@ -138,7 +141,10 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		public void ClearEmptyChats()
 		{
-			database.Chats.DeleteMany(c => c.LeafNodeId == -1 && c.RootNodeId == -1);
+			var potential = database.Chats.Find(c => c.LeafNodeId == -1 && c.RootNodeId == -1).ToList();
+			foreach (var chat in potential)
+				if (chat.UserInputState is null || chat.UserInputState.IsEmpty)
+					database.Chats.Delete(chat.Id);
 		}
 
 		public ChatInfo CreateChat(string title)
@@ -155,6 +161,20 @@ namespace LLMDesktopAssistant.LLM.Services
 			database.Chats.Insert(model);
 
 			return CreateChatInfo(model);
+		}
+
+		/// <inheritdoc />
+		public void UpdateChat(int chatId, string? title, string? topic, string? subTopic, bool? favorite)
+		{
+			var model = database.Chats.FindById(chatId);
+			if (model is null)
+				return;
+
+			model.Title = title ?? model.Title;
+			model.Topic = topic ?? model.Topic;
+			model.SubTopic = subTopic ?? model.SubTopic;
+			model.Favorite = favorite ?? model.Favorite;
+			database.Chats.Update(model);
 		}
 
 		public void DeleteChat(int chatId)

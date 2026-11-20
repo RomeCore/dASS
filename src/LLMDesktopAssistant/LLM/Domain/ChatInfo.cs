@@ -3,38 +3,53 @@ using LLMDesktopAssistant.LLM.MVVM.Additional;
 namespace LLMDesktopAssistant.LLM.Domain
 {
 	/// <summary>
-	/// Represents information about a chat session. Used for display purposes or when saving/loading chat sessions.
+	/// Represents a shallow information about a chat session.
 	/// </summary>
 	public class ChatInfo
 	{
 		/// <summary>
-		/// Gets or sets the unique identifier for the chat session. Used mostly for database purposes.
+		/// Unique identifier for the chat session in the database.
 		/// </summary>
 		public required int Id { get; init; }
 
 		/// <summary>
-		/// Gets the title associated with the current instance.
+		/// Title associated with the current instance.
 		/// </summary>
 		public required string Title { get; init; }
 
 		/// <summary>
-		/// Gets or sets the topic/category of the chat session.
+		/// Topic/category of the chat session.
 		/// Human-readable category like "coding", "roleplay", "dnd", etc.
 		/// </summary>
-		public string Topic { get; init; } = string.Empty;
+		public required string Topic { get; init; }
 
 		/// <summary>
-		/// Gets the creation timestamp for this instance. Used to track when the chat session was first created.
+		/// Sub-topic of the chat session: the narrower label that sits inside <see cref="Topic"/>.
+		/// </summary>
+		public required string SubTopic { get; init; }
+
+		/// <summary>
+		/// A value indicating whether this chat session is marked as a favorite. Used for easy access and organization.
+		/// </summary>
+		public required bool Favorite { get; init; }
+
+		/// <summary>
+		/// Whether this chat session has an unsaved draft of user input.
+		/// </summary>
+		public required bool HasUserInputDraft { get; init; }
+
+		/// <summary>
+		/// Creation timestamp for this instance. Used to track when the chat session was first created.
 		/// </summary>
 		public required DateTime CreatedAt { get; init; }
 
 		/// <summary>
-		/// Gets the last modified timestamp for this instance. Used to track when the chat session was last updated.
+		/// Last modified timestamp for this instance. Used to track when the chat session was last updated.
 		/// </summary>
 		public required DateTime LastModifiedAt { get; init; }
 
 		/// <summary>
-		/// Gets the parts attached to the chat itself, in their stored order - the chips the chat list renders under
+		/// Parts attached to the chat itself, in their stored order - the chips the chat list renders under
 		/// the title and the topic.
 		/// </summary>
 		public IReadOnlyList<AdditionalMessagePart> Parts { get; init; } = [];

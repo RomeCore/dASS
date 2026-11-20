@@ -26,7 +26,15 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public Guid SessionId { get; } = Guid.NewGuid();
 
-		private string _topic = string.Empty;
+		/// <summary>
+		/// Gets or sets the title of the chat session.
+		/// </summary>
+		public string Title
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = string.Empty;
+
 		/// <summary>
 		/// Gets or sets the topic/category of the chat session.
 		/// This is a human-readable category like "coding", "roleplay", "dnd", etc.
@@ -34,19 +42,28 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public string Topic
 		{
-			get => _topic;
-			set => SetProperty(ref _topic, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = string.Empty;
 
-		private string _title = string.Empty;
 		/// <summary>
-		/// Gets or sets the title of the chat session.
+		/// Gets or sets the sub-topic of the chat session: a narrower label that lives inside the topic
+		/// ("programming" -> "hooks, dASS") and colours the second half of the chat's topic marker.
 		/// </summary>
-		public string Title
+		public string SubTopic
 		{
-			get => _title;
-			set => SetProperty(ref _title, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = string.Empty;
+
+		/// <summary>
+		/// Gets or sets the value indicating whether the chat session is marked as a favorite.
+		/// </summary>
+		public bool Favorite
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
 
 		/// <summary>
 		/// The collection of messages in the chat session.
@@ -54,16 +71,15 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// </summary>
 		public RangeObservableCollection<BranchedMessage> Messages { get; } = [];
 
-		private UserInputState _userInputState = new();
 		/// <summary>
 		/// Gets or sets the persisted input state of the chat (draft text and parts).
 		/// Managed by <see cref="IChatStorageService"/>.
 		/// </summary>
 		public UserInputState UserInputState
 		{
-			get => _userInputState;
-			set => SetProperty(ref _userInputState, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = new();
 
 		/// <summary>
 		/// Gets the collection of agent tasks associated with this chat session.

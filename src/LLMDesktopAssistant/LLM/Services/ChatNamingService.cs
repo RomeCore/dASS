@@ -96,6 +96,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 				string? title = null;
 				string? topic = null;
+				string? subTopic = null;
 
 				try
 				{
@@ -107,6 +108,9 @@ namespace LLMDesktopAssistant.LLM.Services
 
 					if (root.TryGetProperty("topic", out var topicEl) && topicEl.ValueKind == System.Text.Json.JsonValueKind.String)
 						topic = topicEl.GetString();
+
+					if (root.TryGetProperty("subtopic", out var subTopicEl) && subTopicEl.ValueKind == System.Text.Json.JsonValueKind.String)
+						subTopic = subTopicEl.GetString();
 				}
 				catch (System.Text.Json.JsonException)
 				{
@@ -121,6 +125,11 @@ namespace LLMDesktopAssistant.LLM.Services
 				if (!string.IsNullOrWhiteSpace(topic))
 				{
 					chat.Topic = topic.Trim();
+				}
+
+				if (!string.IsNullOrWhiteSpace(subTopic))
+				{
+					chat.SubTopic = subTopic.Trim();
 				}
 
 				return true;

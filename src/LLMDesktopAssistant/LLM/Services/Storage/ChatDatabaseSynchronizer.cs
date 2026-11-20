@@ -50,6 +50,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					Id = target.Id,
 					Title = target.Title,
 					Topic = target.Topic,
+					SubTopic = target.SubTopic,
+					Favorite = target.Favorite,
 					RootNodeId = -1,
 					LeafNodeId = -1,
 					SettingsProfile = chatSettings.Settings.Id,
@@ -64,6 +66,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				// Load stored values into the domain.
 				target.Title = model.Title;
 				target.Topic = model.Topic;
+				target.SubTopic = model.SubTopic;
+				target.Favorite = model.Favorite;
 				chatSettings.LoadFromProfile(model.SettingsProfile);
 			}
 
@@ -110,6 +114,8 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 		{
 			Model.Title = Target.Title;
 			Model.Topic = Target.Topic;
+			Model.SubTopic = Target.SubTopic;
+			Model.Favorite = Target.Favorite;
 			Model.SettingsProfile = _chatSettings.Settings.Id;
 
 			_database.Chats.Update(Model);

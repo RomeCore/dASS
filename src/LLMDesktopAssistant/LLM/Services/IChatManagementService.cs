@@ -51,6 +51,15 @@ namespace LLMDesktopAssistant.LLM.Services
 		ChatInfo CreateChat(string title);
 
 		/// <summary>
+		/// Writes the chat's metadata into storage without opening the chat's services.
+		/// </summary>
+		void UpdateChat(int chatId,
+			string? title = null,
+			string? topic = null,
+			string? subTopic = null,
+			bool? favorite = null);
+
+		/// <summary>
 		/// Deletes a chat with the specified ID. If no chat exists with the given ID, this method does nothing.
 		/// </summary>
 		/// <param name="chatId">The ID of the chat to delete.</param>
