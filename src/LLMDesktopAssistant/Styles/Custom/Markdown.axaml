@@ -20,6 +20,17 @@
 		
 	</Style>
 	
+	<!--
+		Inline code is a text run, not a control: the library colours it from a static Color resource, so a
+		style here is the only way to keep the pill on the palette and following the seeds.
+	-->
+	<Style Selector="md|CodeInline">
+		<Setter Property="Background" Value="{DynamicResource ControlTrack}"/>
+		<Setter Property="Foreground" Value="{DynamicResource AccentBase}"/>
+		<Setter Property="CornerRadius" Value="4"/>
+		<Setter Property="Padding" Value="2,0"/>
+	</Style>
+
 	<Style Selector="ctrls|ExtendedCodeBlock">
 		<Setter Property="FontFamily" Value="Consolas, 'Courier New', monospace"/>
 	</Style>
@@ -124,86 +135,86 @@
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockNote">
-		<Setter Property="Background" Value="{DynamicResource AlertNoteBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertNoteBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusInfoSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusInfoBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockNote ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertNoteColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusInfoBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockNote TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertNoteColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusInfoBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.note}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockTip">
-		<Setter Property="Background" Value="{DynamicResource AlertTipBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertTipBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusSuccessSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusSuccessBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockTip ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertTipColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusSuccessBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockTip TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertTipColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusSuccessBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.tip}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockImportant">
-		<Setter Property="Background" Value="{DynamicResource AlertImportantBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertImportantBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource PrimarySubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockImportant ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertImportantColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockImportant TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertImportantColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.important}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockWarning">
-		<Setter Property="Background" Value="{DynamicResource AlertWarningBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertWarningBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusWarningSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusWarningBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockWarning ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertWarningColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusWarningBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockWarning TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertWarningColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusWarningBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.warning}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockCaution">
-		<Setter Property="Background" Value="{DynamicResource AlertCautionBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertCautionBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusDangerSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusDangerBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockCaution ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertCautionColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusDangerBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockCaution TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertCautionColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusDangerBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.caution}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockSuccess">
-		<Setter Property="Background" Value="{DynamicResource AlertSuccessBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertSuccessBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusSuccessSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusSuccessBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockSuccess ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertSuccessColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusSuccessBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockSuccess TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertSuccessColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusSuccessBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.success}"/>
 	</Style>
 
 	<Style Selector="Border.AlertBlock.AlertBlockError">
-		<Setter Property="Background" Value="{DynamicResource AlertErrorBackgroundBrush}"/>
-		<Setter Property="BorderBrush" Value="{DynamicResource AlertErrorBorderBrush}"/>
+		<Setter Property="Background" Value="{DynamicResource StatusErrorSubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource StatusErrorBorder}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockError ico|VisualIcon">
-		<Setter Property="Foreground" Value="{DynamicResource AlertErrorColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusErrorBase}"/>
 	</Style>
 	<Style Selector="Border.AlertBlock.AlertBlockError TextBlock.AlertBlockTitle">
-		<Setter Property="Foreground" Value="{DynamicResource AlertErrorColor}"/>
+		<Setter Property="Foreground" Value="{DynamicResource StatusErrorBase}"/>
 		<Setter Property="Text" Value="{loc:Loc alert.title.error}"/>
 	</Style>
 
