@@ -144,7 +144,7 @@ namespace LLMDesktopAssistant.MVVM
 			Help = new HelpViewModel(ServiceRegistry.Provider.GetRequiredService<HelpDocumentStore>());
 			BottomSidebarItems.Add(new MainViewModelSidebarItemViewModel
 			{
-				Icon = MaterialIconKind.BookOpen,
+				Icon = MaterialIconKind.Help,
 				Title = Locale.GetKey("tab.title.help"),
 				Content = Help
 			});

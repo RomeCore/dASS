@@ -1,114 +1,169 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:local="using:LLMDesktopAssistant.MVVM"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-			 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:toasts="using:LLMDesktopAssistant.Controls.Toasts"
-			 xmlns:dialogHost="using:DialogHostAvalonia"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 x:Class="LLMDesktopAssistant.MVVM.MainView"
-			 x:DataType="local:MainViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.MVVM"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 xmlns:beh="using:LLMDesktopAssistant.Controls.Behaviours"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:toasts="using:LLMDesktopAssistant.Controls.Toasts"
+						 xmlns:dialogHost="using:DialogHostAvalonia"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 x:Class="LLMDesktopAssistant.MVVM.MainView"
+						 x:DataType="local:MainViewModel">
+
+	<UserControl.Styles>
+
+		<!--
+			The rail is a fixed 56px strip: 8px inset, a 40px row, 8px inset. The row is square, so the
+			icon stays centred without any per-state padding, and the selection pill reads as one shape.
+		-->
+		<Style Selector="ListBox.rail">
+			<Setter Property="Padding" Value="8,0" />
+		</Style>
+
+		<Style Selector="ListBox.rail ListBoxItem">
+			<Setter Property="Width" Value="40" />
+			<Setter Property="Height" Value="40" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Margin" Value="0,2" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+
+		<Style Selector="ListBox.rail ListBoxItem ico|VisualIcon">
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+		</Style>
+
+		<Style Selector="ListBox.rail ListBoxItem:pointerover ico|VisualIcon">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+		</Style>
+
+		<Style Selector="ListBox.rail ListBoxItem:selected ico|VisualIcon">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+		
+		<Style Selector="ContentControl.page.active">
+			<Style.Animations>
+				<Animation Duration="0:0:0.48"
+									 Easing="CubicEaseOut"
+									 FillMode="Forward">
+					<KeyFrame Cue="0%">
+						<Setter Property="Opacity" Value="0" />
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="Opacity" Value="1" />
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
+		</Style>
+
+	</UserControl.Styles>
 
 	<Panel>
 
 		<dialogHost:DialogHost IsMultipleDialogsEnabled="True">
 
-			<SplitView x:Name="MainSplitView"
-								 DisplayMode="CompactInline"
-								 CompactPaneLength="48"
-								 OpenPaneLength="380">
-				
-				<SplitView.Pane>
+			<Grid ColumnDefinitions="Auto,*">
+
+				<!-- Navigation rail -->
+				<Border Width="56"
+								Background="{DynamicResource PanelBackground}"
+								BorderBrush="{DynamicResource BorderSubtle}"
+								BorderThickness="0,0,1,0">
 
 					<DockPanel LastChildFill="False">
 
-						<DockPanel.DataTemplates>
+						<ListBox DockPanel.Dock="Top"
+										 Margin="0,10,0,0"
+										 Classes="rail"
+										 ItemsSource="{Binding TopSidebarItems}"
+										 SelectedItem="{Binding SelectedTopSidebarItem}" />
 
-							<DataTemplate x:DataType="local:MainViewModelSidebarItemViewModel">
+						<!-- The bottom group is separated from navigation and pinned down. -->
+						<Border DockPanel.Dock="Bottom"
+										BorderBrush="{DynamicResource BorderSubtle}"
+										BorderThickness="0,1,0,0"
+										Padding="0,6">
 
-								<StackPanel Orientation="Horizontal">
-									
-									<ico:VisualIcon Kind="{Binding Icon}"
-																		Width="24" Height="24"/>
+							<ListBox Classes="rail"
+											 ItemsSource="{Binding BottomSidebarItems}"
+											 SelectedItem="{Binding SelectedBottomSidebarItem}" />
 
-									<TextBlock Text="{loc:Loc {Binding Title}}"
-															IsVisible="{Binding #MainSplitView.IsPaneOpen}"
-															FontSize="16" Margin="2"/>
-
-								</StackPanel>
-
-							</DataTemplate>
-
-						</DockPanel.DataTemplates>
-
-						<ToggleButton Classes="BigIconButton"
-													IsChecked="{Binding #MainSplitView.IsPaneOpen, Mode=TwoWay}"
-													DockPanel.Dock="Top"
-													Margin="4">
-							<ico:VisualIcon Kind="Menu"/>
-						</ToggleButton>
-						
-						<ListBox ItemsSource="{Binding TopSidebarItems}"
-										 SelectedItem="{Binding SelectedTopSidebarItem}"
-										 DockPanel.Dock="Top">
-
-						</ListBox>
-						
-						<ListBox ItemsSource="{Binding BottomSidebarItems}"
-										 SelectedItem="{Binding SelectedBottomSidebarItem}"
-										 DockPanel.Dock="Bottom">
-
-						</ListBox>
+						</Border>
 
 					</DockPanel>
 
-				</SplitView.Pane>
-				
-				<Panel>
-				
+				</Border>
+
+				<!-- Content: all pages stay in the tree, one is visible at a time. -->
+				<Panel Grid.Column="1"
+							 Background="{DynamicResource WindowBackground}">
+
 					<ItemsControl ItemsSource="{Binding TopSidebarItems}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
-								<Panel/>
+								<Panel />
 							</ItemsPanelTemplate>
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
-							<DataTemplate>
+							<DataTemplate x:DataType="local:MainViewModelSidebarItemViewModel">
 								<ContentControl Content="{Binding Content}"
-																IsVisible="{Binding IsSelected}"/>
+																IsVisible="{Binding IsSelected}"
+																Classes="page"
+																Classes.active="{Binding IsSelected}" />
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
-					
+
 					<ItemsControl ItemsSource="{Binding BottomSidebarItems}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
-								<Panel/>
+								<Panel />
 							</ItemsPanelTemplate>
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
-							<DataTemplate>
+							<DataTemplate x:DataType="local:MainViewModelSidebarItemViewModel">
 								<ContentControl Content="{Binding Content}"
-																IsVisible="{Binding IsSelected}"/>
+																IsVisible="{Binding IsSelected}"
+																Classes="page"
+																Classes.active="{Binding IsSelected}" />
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
 
 				</Panel>
 
-			</SplitView>
+			</Grid>
 
 		</dialogHost:DialogHost>
 
 		<toasts:ToastControl x:Name="ToastControl"
 												 Direction="FromBottomToTop"
-												 Placement="BottomRight"/>
+												 Placement="BottomRight" />
 
 	</Panel>
-	
+
+	<UserControl.DataTemplates>
+
+		<!-- One row per rail entry: an icon, with the title carried by the tooltip. -->
+		<DataTemplate x:DataType="local:MainViewModelSidebarItemViewModel">
+
+			<Grid ToolTip.Tip="{loc:Loc {Binding Title}}"
+						ToolTip.Placement="Right"
+						ToolTip.HorizontalOffset="10">
+
+				<ico:VisualIcon Kind="{Binding Icon}"
+												Width="20" Height="20"
+												HorizontalAlignment="Center"
+												VerticalAlignment="Center" />
+
+			</Grid>
+
+		</DataTemplate>
+
+	</UserControl.DataTemplates>
 
 </UserControl>
