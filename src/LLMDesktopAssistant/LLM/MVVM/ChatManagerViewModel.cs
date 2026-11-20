@@ -1,11 +1,13 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Controls.Dialogs;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Services.Instances;
+using LLMDesktopAssistant.Utils;
 using Material.Icons;
 using Serilog;
 
@@ -16,308 +18,237 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public required int Id { get; init; }
 		public bool IsTemporary => TemporaryScope != null;
 		public IServiceScope? TemporaryScope { get; init; }
-		public required ICommand OpenInNewTabCommand { get; init; }
 		public required ICommand DeleteCommand { get; init; }
 
 		/// <summary>
-		/// Gets the command the entry itself runs: it opens this chat in the current tab.
+		/// Gets the command that opens the edit dialog for a chat that is not open in any place.
 		/// </summary>
-		public required ICommand OpenCommand { get; init; }
+		public required ICommand RenameCommand { get; init; }
 
 		/// <summary>
 		/// Gets the chips rendered under the title and the topic of this chat in the list.
 		/// </summary>
 		public required AdditionalMessagePartsViewModel Parts { get; init; }
 
-		private string? _title = string.Empty;
 		public string? Title
 		{
-			get => _title;
-			set => SetProperty(ref _title, value);
-		}
+			get;
+			set => SetProperty(ref field, value);
+		} = string.Empty;
 
-		private string? _topic = string.Empty;
 		public string? Topic
 		{
-			get => _topic;
+			get;
 			set
 			{
-				if (SetProperty(ref _topic, value))
+				if (SetProperty(ref field, value))
+				{
+					RaisePropertyChanged(nameof(CombinedTopic));
 					RaisePropertyChanged(nameof(TopicColorHex));
+					if (string.IsNullOrWhiteSpace(SubTopic))
+						RaisePropertyChanged(nameof(SubTopicColorHex));
+				}
 			}
-		}
+		} = string.Empty;
+		public string TopicColorHex => ChatTopicHashColor.GetHex(Topic);
 
-		private DateTime _lastModifiedAt = DateTime.Now;
+		public string? SubTopic
+		{
+			get;
+			set
+			{
+				if (SetProperty(ref field, value))
+				{
+					RaisePropertyChanged(nameof(CombinedTopic));
+					RaisePropertyChanged(nameof(SubTopicColorHex));
+				}
+			}
+		} = string.Empty;
+		public string SubTopicColorHex => string.IsNullOrWhiteSpace(SubTopic) ? TopicColorHex : ChatTopicHashColor.GetHex(SubTopic);
+
+		public string? CombinedTopic => string.IsNullOrWhiteSpace(SubTopic) ? Topic : $"{Topic} · {SubTopic}";
+
+		public bool Favorite
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
+		public bool HasUserInputDraft
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
 		public DateTime LastModifiedAt
 		{
-			get => _lastModifiedAt;
-			set => SetProperty(ref _lastModifiedAt, value);
-		}
-
-		private bool _isSelected = false;
-		public bool IsSelected
-		{
-			get => _isSelected;
+			get;
 			set
 			{
-				if (SetProperty(ref _isSelected, value))
+				if (SetProperty(ref field, value))
 				{
-					RaisePropertyChanged(nameof(CanAct));
-					RaisePropertyChanged(nameof(ContentOpacity));
+					RaisePropertyChanged(nameof(LastModifiedLabel));
+					RaisePropertyChanged(nameof(LastModifiedDetailedLabel));
 				}
 			}
-		}
+		} = DateTime.Now;
 
-		/// <summary>
-		/// Gets a value indicating whether this entry's actions (open in a new tab, delete) are available:
-		/// the chat it stands for is already open in this tab, and the row says so by being locked.
-		/// </summary>
-		public bool CanAct => !IsSelected && !IsTemporary;
-
-		/// <summary>
-		/// Gets the opacity of the entry's content: an opened chat dims, so the lock reads at a glance.
-		/// </summary>
-		public double ContentOpacity => IsSelected ? 0.5 : 1.0;
-
-
-
-		public string TopicColorHex => GenerateColorHexFromHash(Topic);
-
-		private static string GenerateColorHexFromHash(string? topic)
+		public string LastModifiedLabel
 		{
-			if (string.IsNullOrEmpty(topic))
-				return "#808080";
-
-			var hash = GetDeterministicHashCode(topic);
-
-			const double min = 0.35;
-			const double range = 0.65;
-
-			double rh = (hash * 397 % 255) / 255.0;
-			byte r2 = (byte)(min * 255 + rh * range * 255);
-			double rg = (hash * 137 * 397 % 255) / 255.0;
-			byte g2 = (byte)(min * 255 + rg * range * 255);
-			double rb = (hash * 37 * 397 % 255) / 255.0;
-			byte b2 = (byte)(min * 255 + rb * range * 255);
-
-			return $"#{r2:X2}{g2:X2}{b2:X2}";
-		}
-
-		private static int GetDeterministicHashCode(string str)
-		{
-			unchecked
+			get
 			{
-				int hash1 = (5381 << 16) + 5381;
-				int hash2 = hash1;
+				var today = DateTime.Today;
 
-				for (int i = 0; i < str.Length; i += 2)
-				{
-					hash1 = ((hash1 << 5) + hash1) ^ str[i];
-					if (i + 1 < str.Length)
-						hash2 = ((hash2 << 5) + hash2) ^ str[i + 1];
-				}
+				if (LastModifiedAt.Date == today)
+					return LastModifiedAt.ToString("HH:mm");
 
-				return hash1 + hash2 * 1566083941;
+				return LastModifiedAt.Year == today.Year
+					? LastModifiedAt.ToString("d MMM")
+					: LastModifiedAt.ToString("d MMM yyyy");
 			}
 		}
+
+		public string LastModifiedDetailedLabel => LastModifiedAt.ToString("U");
+
+		public bool IsOpened
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
 	}
 
 	public class OpenedChatViewModel : NotifyPropertyChanged
 	{
-		public required IChatManagementService ChatManager { get; init; }
+		private readonly IChatManagementService _manager;
+		private readonly AvailableChatViewModel _available;
+		private readonly IServiceScope _scope;
+		private readonly IExecutionInfoStatusService? _statusService;
+		private UserInputState? _subscribedUserInput;
 
-		private bool _isSelected = false;
+		public AvailableChatViewModel Available => _available;
+
+		public ChatViewModel CurrentChat { get; init; }
+
 		public bool IsSelected
 		{
-			get => _isSelected;
+			get;
 			set
 			{
-				SetProperty(ref _isSelected, value);
+				SetProperty(ref field, value);
 			}
-		}
+		} = false;
 
-		private IServiceScope? _currentChatScope;
-		private ChatViewModel? _currentChat;
-		public ChatViewModel? CurrentChat
-		{
-			get => _currentChat;
-			private set => SetProperty(ref _currentChat, value);
-		}
-
-		private IExecutionInfoStatusService? _executionStatusService;
-
-		private AvailableChatViewModel? _selectedAvailable;
-		public AvailableChatViewModel? SelectedAvailable
-		{
-			get => _selectedAvailable;
-			set
-			{
-				if (_selectedAvailable != value)
-				{
-					if (value != null && value.IsSelected)
-						return; // Avoid setting the same chat twice if it's already selected
-
-					if (_selectedAvailable != null)
-						UnlockAvailableChat(_selectedAvailable, _currentChat!.Chat);
-
-					if (SetProperty(ref _selectedAvailable, value) && value != null)
-						OpenConversation(_selectedAvailable!);
-				}
-			}
-		}
-
-		public bool IsEditing => IsEditingTitle || IsEditingTopic;
-
-		private bool _isEditingTitle = false;
-		public bool IsEditingTitle
-		{
-			get => _isEditingTitle;
-			set
-			{
-				if (SetProperty(ref _isEditingTitle, value))
-					RaisePropertyChanged(nameof(IsEditing));
-			}
-		}
-
-		private string _editTitleText = string.Empty;
-		public string EditTitleText
-		{
-			get => _editTitleText;
-			set => SetProperty(ref _editTitleText, value);
-		}
-
-		private bool _isEditingTopic = false;
-		public bool IsEditingTopic
-		{
-			get => _isEditingTopic;
-			set
-			{
-				if (SetProperty(ref _isEditingTopic, value))
-					RaisePropertyChanged(nameof(IsEditing));
-			}
-		}
-
-		private string _editTopicText = string.Empty;
-		public string EditTopicText
-		{
-			get => _editTopicText;
-			set => SetProperty(ref _editTopicText, value);
-		}
-
-		public ICommand StartEditTitleCommand { get; }
-		public ICommand CommitEditTitleCommand { get; }
-		public ICommand CancelEditTitleCommand { get; }
-
-		public ICommand StartEditTopicCommand { get; }
-		public ICommand CommitEditTopicCommand { get; }
-		public ICommand CancelEditTopicCommand { get; }
-
+		public ICommand RenameCommand { get; }
 		public ICommand RenameWithAICommand { get; }
-		public required ICommand CloseChatCommand { get; init; }
+		public required ICommand CloseCommand { get; init; }
 
-		public OpenedChatViewModel()
+		public OpenedChatViewModel(IChatManagementService manager, AvailableChatViewModel available)
 		{
-			StartEditTitleCommand = new RelayCommand(() =>
+			_manager = manager;
+			_available = available;
+			_scope = available.TemporaryScope ?? _manager.OpenChatScope(_available.Id);
+
+			var chatServices = _scope.ServiceProvider;
+			var chat = chatServices.GetRequiredService<Chat>();
+			CurrentChat = new ChatViewModel(chat);
+			_statusService = chatServices.GetService<IExecutionInfoStatusService>();
+			_statusService?.PropertyChanged += OnExecutionStatusServicePropertyChanged;
+
+			_available.Parts.SetSource(chat.AdditionalData);
+			_available.IsOpened = true;
+			_subscribedUserInput = chat.UserInputState;
+			_subscribedUserInput.DeepChanged += OnUserInputStateChanged;
+			chat.PropertyChanged += OnChatPropertyChanged;
+
+			RenameCommand = new AsyncRelayCommand(async () =>
 			{
-				if (CurrentChat?.Chat != null)
+				var chat = CurrentChat.Chat;
+				if (chat is null)
+					return;
+
+				var dialog = new EditChatDialogViewModel
 				{
-					EditTitleText = CurrentChat.Chat.Title;
-					IsEditingTitle = true;
-				}
-			});
+					ChatTitle = chat.Title,
+					ChatTopic = chat.Topic,
+					ChatSubTopic = chat.SubTopic
+				};
 
-			CommitEditTitleCommand = new RelayCommand(() =>
-			{
-				if (CurrentChat?.Chat != null && !string.IsNullOrWhiteSpace(EditTitleText))
-					CurrentChat.Chat.Title = EditTitleText.Trim();
-				IsEditingTitle = false;
-			});
+				if (await DialogManager.ShowDialogAsync(dialog) is not ChatEditResult result)
+					return;
 
-			CancelEditTitleCommand = new RelayCommand(() =>
-			{
-				IsEditingTitle = false;
-			});
-
-			StartEditTopicCommand = new RelayCommand(() =>
-			{
-				if (CurrentChat?.Chat != null)
-				{
-					EditTopicText = CurrentChat.Chat.Topic;
-					IsEditingTopic = true;
-				}
-			});
-
-			CommitEditTopicCommand = new RelayCommand(() =>
-			{
-				if (CurrentChat?.Chat != null)
-					CurrentChat.Chat.Topic = EditTopicText.Trim();
-				IsEditingTopic = false;
-			});
-
-			CancelEditTopicCommand = new RelayCommand(() =>
-			{
-				IsEditingTopic = false;
+				chat.Title = result.Title;
+				chat.Topic = result.Topic;
+				chat.SubTopic = result.SubTopic;
 			});
 
 			RenameWithAICommand = new AsyncRelayCommand(async () =>
 			{
-				if (CurrentChat?.Chat != null)
+				try
 				{
-					try
+					if (CurrentChat.Chat.Messages.Count == 0)
 					{
-						if (CurrentChat.Chat.Messages.Count == 0)
-						{
-							var toastService = CurrentChat.Chat.Services.GetService<IToastService>();
-							if (toastService != null)
-								toastService.ShowWarning(LocalizationManager.LocalizeStatic("chat.manager.no_messages_to_rename.title"),
-									LocalizationManager.LocalizeStatic("chat.manager.no_messages_to_rename.description"));
-							return;
-						}
+						var toastService = CurrentChat.Chat.Services.GetService<IToastService>();
+						toastService?.ShowWarning(Locale.Get("chat.manager.no_messages_to_rename.title"),
+							Locale.Get("chat.manager.no_messages_to_rename.description"));
+						return;
+					}
 
-						var namingService = CurrentChat.Chat.Services.GetService<IChatNamingService>();
-						if (namingService != null)
-							await namingService.NameChatAsync();
-					}
-					catch (Exception ex)
-					{
-						Log.Error(ex, "Failed to rename chat with AI: {Error}", ex.Message);
-					}
+					var namingService = CurrentChat.Chat.Services.GetService<IChatNamingService>();
+					if (namingService != null)
+						await namingService.NameChatAsync();
+				}
+				catch (Exception ex)
+				{
+					Log.Error(ex, "Failed to rename chat with AI: {Error}", ex.Message);
 				}
 			});
 		}
 
-		private void UnlockAvailableChat(AvailableChatViewModel available, Chat chat)
+		protected override void Dispose(bool disposing)
 		{
-			available.Parts.SetSource(available.IsTemporary ? [] : [..ChatManager.GetChatParts(available.Id)]);
-			available.IsSelected = false;
-			chat.PropertyChanged -= OnChatPropertyChanged;
+			base.Dispose(disposing);
 
-			if (_executionStatusService != null)
+			if (disposing)
 			{
-				_executionStatusService.PropertyChanged -= OnExecutionStatusServicePropertyChanged;
-				_executionStatusService = null;
+				_subscribedUserInput?.DeepChanged -= OnUserInputStateChanged;
+				CurrentChat.Chat.PropertyChanged -= OnChatPropertyChanged;
+				_statusService?.PropertyChanged -= OnExecutionStatusServicePropertyChanged;
+
+				_available.Parts.SetSource(_available.IsTemporary ? [] : [.. _manager.GetChatParts(_available.Id)]);
+				_available.IsOpened = false;
+
+				foreach (var chatClose in _scope.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
+					try
+					{
+						chatClose.OnChatClosing();
+					}
+					catch { }
+				CurrentChat.Dispose();
+				_scope.Dispose();
 			}
-		}
-
-		private void LockAvailableChat(AvailableChatViewModel available, Chat chat)
-		{
-			available.Parts.SetSource(chat.AdditionalData);
-			available.IsSelected = true;
-			chat.PropertyChanged += OnChatPropertyChanged;
-
-			_executionStatusService = chat.Services.GetRequiredService<IExecutionInfoStatusService>();
-			_executionStatusService.PropertyChanged += OnExecutionStatusServicePropertyChanged;
-
-			RaisePropertyChanged(nameof(StatusIcon));
-			RaisePropertyChanged(nameof(HasStatus));
-			RaisePropertyChanged(nameof(StatusColorHex));
 		}
 
 		private void OnChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			var chat = (Chat)sender!;
-			_selectedAvailable!.Title = chat.Title;
-			_selectedAvailable!.Topic = chat.Topic;
+			_available.Title = chat.Title;
+			_available.Topic = chat.Topic;
+			_available.SubTopic = chat.SubTopic;
+			_available.Favorite = chat.Favorite;
+			_available.HasUserInputDraft = chat.UserInputState?.IsEmpty == false;
+
+			if (e.PropertyName is nameof(chat.UserInputState))
+			{
+				_subscribedUserInput?.DeepChanged -= OnUserInputStateChanged;
+				_subscribedUserInput = chat.UserInputState;
+				_subscribedUserInput!.DeepChanged += OnUserInputStateChanged;
+			}
+		}
+
+		private void OnUserInputStateChanged(object? sender, EventArgs e)
+		{
+			var userInput = (UserInputState)sender!;
+			_available.HasUserInputDraft = userInput.IsEmpty == false;
 		}
 
 		private void OnExecutionStatusServicePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -333,7 +264,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>
 		/// The status icon to display on the chat tab based on the current chat status.
 		/// </summary>
-		public VisualIconKind StatusIcon => _executionStatusService?.Status switch
+		public VisualIconKind StatusIcon => _statusService?.Status switch
 		{
 			ChatStatus.Executing => MaterialIconKind.TimerSand,
 			ChatStatus.Confirming => MaterialIconKind.QuestionMarkCircle,
@@ -343,70 +274,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// <summary>
 		/// Whether the chat tab should display a status icon.
 		/// </summary>
-		public bool HasStatus => _executionStatusService?.Status != ChatStatus.Idle;
+		public bool HasStatus => _statusService?.Status != ChatStatus.Idle;
 
 		/// <summary>
 		/// The background color hex of the chat tab based on the current chat status.
 		/// </summary>
-		public string StatusColorHex => _executionStatusService?.Status switch
+		public string StatusColorHex => _statusService?.Status switch
 		{
 			ChatStatus.Executing => "#3342A5F5",
 			ChatStatus.Confirming => "#33FFC107",
 			_ => "#00000000"
 		};
-
-		private void OpenConversation(AvailableChatViewModel available)
-		{
-			CloseCurrentChat();
-
-			_currentChatScope = available.TemporaryScope ?? ChatManager.OpenChatScope(available.Id);
-			var chatServices = _currentChatScope.ServiceProvider;
-			var chat = chatServices.GetRequiredService<Chat>();
-			CurrentChat = new ChatViewModel(chat);
-			LockAvailableChat(_selectedAvailable!, chat);
-		}
-
-		/// <summary>
-		/// Closes the conversation that is open in this tab: notifies the chat's closing handlers,
-		/// then disposes its view model and its service scope.
-		/// </summary>
-		/// <remarks>
-		/// Switching the conversation and disposing the tab both come through here, so
-		/// <see cref="IChatClosingHandler.OnChatClosing"/> means one thing and always runs while the
-		/// chat services are still alive.
-		/// </remarks>
-		private void CloseCurrentChat()
-		{
-			try
-			{
-				foreach (var chatClose in _currentChatScope?.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
-					try
-					{
-						chatClose.OnChatClosing();
-					}
-					catch { }
-				CurrentChat?.Dispose();
-				_currentChatScope?.Dispose();
-				_currentChatScope = null;
-			}
-			catch (Exception ex)
-			{
-				Log.Debug(ex, "Failed to close the current chat: {Error}", ex.Message);
-			}
-		}
-
-		protected override void Dispose(bool disposing)
-		{
-			base.Dispose(disposing);
-
-			if (disposing)
-			{
-				_selectedAvailable?.IsSelected = false;
-				SelectedAvailable = null;
-
-				CloseCurrentChat();
-			}
-		}
 
 		// -TO-DO-: Удалить это говно внизу когда автор LiveMarkdown.Avalonia соизволит рассмотреть мой Pull Request
 		// Утечки памяти вызваны Link.TagToLinkMap, который нихуя не чистится, я его там заменил на ConcurrentDict<WeakReference>
@@ -415,26 +293,147 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		// который добавляет возможность удалять built-in ноды, а утечки сам автор починил, приколист ебаный)
 	}
 
+	public class ChatListEntryCommand
+	{
+		public required VisualIconKind Icon { get; init; }
+		public required LocaleKeyBase ToolTip { get; init; }
+		public required ICommand Command { get; init; }
+	}
+
+	public class ChatListBaseEntry : NotifyPropertyChanged
+	{
+		public virtual AvailableChatViewModel? Available => null;
+		public virtual OpenedChatViewModel? Opened => null;
+		public virtual ImmutableList<ChatListEntryCommand> Commands { get; } = [];
+		public virtual bool CanBeSelected => true;
+	}
+
+	public class ChatListCaptionEntry : ChatListBaseEntry
+	{
+		public override bool CanBeSelected => false;
+		public required LocaleKeyBase Caption { get; init; }
+	}
+
+	public class ChatListAvailableEntry : ChatListBaseEntry
+	{
+		public override AvailableChatViewModel Available => Chat;
+		public required AvailableChatViewModel Chat { get; init; }
+
+		public override ImmutableList<ChatListEntryCommand> Commands => field ??= [
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.Pencil,
+				Command = Chat.RenameCommand,
+				ToolTip = Locale.GetKey("common.rename")
+			},
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.Delete,
+				Command = Chat.DeleteCommand,
+				ToolTip = Locale.GetKey("common.delete")
+			}
+		];
+	}
+
+	public class ChatListOpenedEntry : ChatListBaseEntry
+	{
+		public override AvailableChatViewModel Available => Chat.Available;
+		public override OpenedChatViewModel? Opened => Chat;
+		public required OpenedChatViewModel Chat { get; init; }
+
+		public override ImmutableList<ChatListEntryCommand> Commands => field ??= [
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.Pencil,
+				Command = Chat.RenameCommand,
+				ToolTip = Locale.GetKey("common.rename")
+			},
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.AutoFix,
+				Command = Chat.RenameWithAICommand,
+				ToolTip = Locale.GetKey("chat.rename_with_ai")
+			},
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.Close,
+				Command = Chat.CloseCommand,
+				ToolTip = Locale.GetKey("common.close")
+			}
+		];
+	}
+
 	[ViewModelFor(typeof(ChatManagerView))]
 	public class ChatManagerViewModel : ViewModelBase
 	{
 		public IChatManagementService ChatManager { get; }
 
-		public ObservableCollection<AvailableChatViewModel> AvailableChats { get; } = [];
+		private readonly ConditionalWeakTable<AvailableChatViewModel, ChatListBaseEntry> _availableEntries = [];
+		private static ChatListBaseEntry AvailableFactory(AvailableChatViewModel chat) => new ChatListAvailableEntry { Chat = chat };
+		private readonly ConditionalWeakTable<OpenedChatViewModel, ChatListBaseEntry> _openedEntries = [];
+		private static ChatListBaseEntry OpenedFactory(OpenedChatViewModel chat) => new ChatListOpenedEntry { Chat = chat };
 
-		public ObservableCollection<OpenedChatViewModel> OpenedChats { get; } = [];
+		public RangeObservableCollection<AvailableChatViewModel> AvailableChats { get; } = [];
+		public RangeObservableCollection<OpenedChatViewModel> OpenedChats { get; } = [];
+		public RangeObservableCollection<ChatListBaseEntry> ChatListEntries { get; } = [];
 
-		private OpenedChatViewModel? _selectedChat;
-		public OpenedChatViewModel? SelectedChat
+		/// <summary>
+		/// Gets or sets the chat list filter, matched against the title, the topic and the sub-topic.
+		/// </summary>
+		public string SearchText
 		{
-			get => _selectedChat;
+			get;
 			set
 			{
-				var prevChat = _selectedChat;
-				if (SetProperty(ref _selectedChat, value))
+				if (SetProperty(ref field, value))
+					RebuildChatList();
+			}
+		} = string.Empty;
+
+		/// <summary>
+		/// Gets or sets the flag indicating whether only favorite chats should be shown in the chat list.
+		/// </summary>
+		public bool FilterFavoritesOnly
+		{
+			get;
+			set
+			{
+				if (SetProperty(ref field, value))
+					RebuildChatList();
+			}
+		} = false;
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the chat list column is shown.
+		/// </summary>
+		public bool IsChatListVisible
+		{
+			get;
+			set
+			{
+				SetProperty(ref field, value);
+			}
+		} = false;
+
+		/// <summary>
+		/// Gets the command that collapses or expands the chat list.
+		/// </summary>
+		public ICommand ToggleChatListCommand { get; }
+
+		public ChatListBaseEntry? SelectedChat
+		{
+			get;
+			set
+			{
+				var prevChat = field;
+				if (SetProperty(ref field, value))
 				{
-					prevChat?.IsSelected = false;
-					_selectedChat?.IsSelected = true;
+					if (prevChat is ChatListOpenedEntry opPrev)
+						opPrev.Chat.IsSelected = false;
+					if (field is ChatListOpenedEntry opNew)
+						opNew.Chat.IsSelected = true;
+					if (field is ChatListAvailableEntry avNew)
+						SelectChat(avNew.Chat);
 				}
 			}
 		}
@@ -448,6 +447,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			ChatManager = chatManager;
 			CreateChatCommand = new RelayCommand(CreateChat);
 			CreateTemporaryChatCommand = new RelayCommand(CreateTemporaryChat);
+			ToggleChatListCommand = new RelayCommand(() => IsChatListVisible = !IsChatListVisible);
 
 			ChatManager.ClearEmptyChats();
 			LoadChats();
@@ -460,6 +460,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			if (disposing)
 			{
+				ChatListEntries.Clear();
 				AvailableChats.Clear();
 				foreach (var chat in OpenedChats)
 				{
@@ -475,21 +476,50 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		private AvailableChatViewModel CreateAvailableChatViewModel(ChatInfo info)
 		{
 			AvailableChatViewModel newAvailableChatViewModel = null!;
-			var openInNewTabCommand = new RelayCommand(() =>
+
+			var renameCommand = new AsyncRelayCommand(async () =>
 			{
-				OpenChat(newAvailableChatViewModel);
+				var dialog = new EditChatDialogViewModel
+				{
+					ChatTitle = newAvailableChatViewModel.Title,
+					ChatTopic = newAvailableChatViewModel.Topic,
+					ChatSubTopic = newAvailableChatViewModel.SubTopic
+				};
+
+				if (await DialogManager.ShowDialogAsync(dialog) is not ChatEditResult result)
+					return;
+
+				ChatManager.UpdateChat(newAvailableChatViewModel.Id, result.Title, result.Topic, result.SubTopic);
+
+				newAvailableChatViewModel.Title = result.Title;
+				newAvailableChatViewModel.Topic = result.Topic;
+				newAvailableChatViewModel.SubTopic = result.SubTopic;
 			});
-			var openCommand = new RelayCommand(() => SelectChat(newAvailableChatViewModel));
-			var deleteCommand = new RelayCommand(() =>
+
+			var deleteCommand = new AsyncRelayCommand(async () =>
 			{
-				var openedChats = OpenedChats.Where(o => o.SelectedAvailable?.Id == info.Id).ToList();
+				var confirm = new ConfirmDialogViewModel
+				{
+					Title = LocalizationManager.LocalizeStatic("chat.delete.title"),
+					Description = LocalizationManager.LocalizeStatic("chat.delete.description"),
+					ConfirmText = LocalizationManager.LocalizeStatic("common.delete"),
+					CancelText = LocalizationManager.LocalizeStatic("common.cancel"),
+					IsDanger = true
+				};
+
+				if (await DialogManager.ShowDialogAsync(confirm) is not true)
+					return;
+
+				var openedChats = OpenedChats.Where(o => o.Available.Id == info.Id).ToList();
 				foreach (var openedChat in openedChats)
 				{
 					OpenedChats.Remove(openedChat);
 					openedChat.Dispose();
 				}
 				ChatManager.DeleteChat(info.Id);
+				newAvailableChatViewModel.PropertyChanged -= OnAvailableChatPropertyChanged;
 				AvailableChats.Remove(newAvailableChatViewModel);
+				RebuildChatList();
 
 				if (OpenedChats.Count == 0)
 					CreateChat();
@@ -498,14 +528,19 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			newAvailableChatViewModel = new AvailableChatViewModel
 			{
 				Id = info.Id,
-				OpenInNewTabCommand = openInNewTabCommand,
 				DeleteCommand = deleteCommand,
-				OpenCommand = openCommand,
+				RenameCommand = renameCommand,
 				Title = info.Title,
 				Topic = info.Topic,
+				SubTopic = info.SubTopic,
+				Favorite = info.Favorite,
+				HasUserInputDraft = info.HasUserInputDraft,
 				LastModifiedAt = info.LastModifiedAt,
 				Parts = new AdditionalMessagePartsViewModel([.. info.Parts])
 			};
+
+			newAvailableChatViewModel.PropertyChanged += OnAvailableChatPropertyChanged;
+
 			return newAvailableChatViewModel;
 		}
 
@@ -514,37 +549,142 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			AvailableChats.Clear();
 			foreach (var chat in ChatManager.GetChats().OrderByDescending(c => c.LastModifiedAt))
 				AvailableChats.Add(CreateAvailableChatViewModel(chat));
+
+			RebuildChatList();
+		}
+
+		private IEnumerable<AvailableChatViewModel> FilterChats(IEnumerable<AvailableChatViewModel> chats)
+		{
+			if (FilterFavoritesOnly)
+				chats = chats.Where(chat => chat.Favorite);
+
+			if (!string.IsNullOrEmpty(SearchText))
+				chats = chats.Where(chat => Matches(chat, SearchText));
+
+			return chats;
+		}
+
+		private static string ClassifyDate(DateTime chatDate, DateTime today)
+		{
+			if (chatDate == today)
+				return "chat.list.today";
+			if (chatDate == today.AddDays(-1))
+				return "chat.list.yesterday";
+			if (chatDate >= today.AddDays(-7))
+				return "chat.list.last_7_days";
+			if (chatDate >= today.AddDays(-30))
+				return "chat.list.last_30_days";
+			if (chatDate >= today.AddDays(-365))
+				return "chat.list.last_year";
+			return "chat.list.earlier";
+		}
+
+		private void RebuildChatList()
+		{
+			var prevSelected = SelectedChat;
+			bool prevFound = false;
+
+			var newEntries = new List<ChatListBaseEntry>();
+			var chats = FilterChats(AvailableChats
+				.Where(chat => !chat.IsOpened && !chat.IsTemporary))
+				.OrderByDescending(chat => chat.LastModifiedAt)
+				.ToList();
+
+			var today = DateTime.Today;
+			string? currentGroup = null;
+
+			if (OpenedChats.Count > 0)
+			{
+				newEntries.Add(new ChatListCaptionEntry { Caption = Locale.GetKey("chat.list.open") });
+
+				foreach (var chat in OpenedChats)
+				{
+					var entry = _openedEntries.GetOrAdd(chat, OpenedFactory);
+					if (entry == prevSelected)
+						prevFound = true;
+					newEntries.Add(entry);
+				}
+			}
+
+			foreach (var chat in chats)
+			{
+				var group = ClassifyDate(chat.LastModifiedAt.Date, today);
+
+				if (group != currentGroup)
+				{
+					currentGroup = group;
+					newEntries.Add(new ChatListCaptionEntry { Caption = Locale.GetKey(group) });
+				}
+
+				var entry = _availableEntries.GetOrAdd(chat, AvailableFactory);
+				if (entry == prevSelected)
+					prevFound = true;
+				newEntries.Add(entry);
+			}
+
+			ChatListEntries.Reset(newEntries);
+			if (prevFound)
+				SelectedChat = prevSelected;
+		}
+
+		private static bool Matches(AvailableChatViewModel chat, string search)
+			=> (chat.Title?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+			|| (chat.Topic?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+			|| (chat.SubTopic?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+
+		private void OnAvailableChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			var chat = (AvailableChatViewModel)sender!;
+			if (e.PropertyName is nameof(AvailableChatViewModel.LastModifiedAt))
+			{
+				RebuildChatList();
+			}
+			if (e.PropertyName is nameof(AvailableChatViewModel.Favorite))
+			{
+				ChatManager.UpdateChat(chat.Id, favorite: chat.Favorite);
+			}
 		}
 
 		/// <summary>
-		/// Opens a chat from the list in the current tab - the list's replacement for the ListBox selection.
+		/// Opens a chat from the list: an already opened one is focused, a closed one opens in a new
+		/// place instead of replacing the conversation that is on screen.
 		/// </summary>
 		private void SelectChat(AvailableChatViewModel chat)
 		{
-			if (SelectedChat is { } selected)
-				selected.SelectedAvailable = chat;
-			else
-				OpenChat(chat);
+			var opened = OpenedChats.FirstOrDefault(o => o.Available == chat);
+			if (opened is not null && _openedEntries.TryGetValue(opened, out var openedVm))
+			{
+				SelectedChat = openedVm;
+				IsChatListVisible = false;
+				return;
+			}
+
+			OpenChat(chat);
 		}
 
 		private void OpenChat(AvailableChatViewModel chat)
 		{
 			OpenedChatViewModel newOpenedChat = null!;
-			newOpenedChat = new OpenedChatViewModel
+			newOpenedChat = new OpenedChatViewModel(ChatManager, chat)
 			{
-				ChatManager = ChatManager,
-				SelectedAvailable = chat,
-				CloseChatCommand = new RelayCommand(() =>
+				CloseCommand = new RelayCommand(() =>
 				{
 					OpenedChats.Remove(newOpenedChat);
 					newOpenedChat.Dispose();
 
 					if (OpenedChats.Count == 0)
 						CreateChat();
+					else
+					{
+						RebuildChatList();
+						if (SelectedChat is ChatListOpenedEntry selectedOpenedChat && selectedOpenedChat.Chat == newOpenedChat)
+							SelectedChat = _openedEntries.GetOrAdd(OpenedChats[0], OpenedFactory);
+					}
 				})
 			};
 			OpenedChats.Add(newOpenedChat);
-			SelectedChat = newOpenedChat;
+			RebuildChatList();
+			SelectedChat = _openedEntries.GetOrAdd(newOpenedChat, OpenedFactory);
 		}
 
 		private void CreateChat()
@@ -553,6 +693,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			var newAvailableChat = CreateAvailableChatViewModel(newChat);
 			AvailableChats.Insert(0, newAvailableChat);
 			OpenChat(newAvailableChat);
+			IsChatListVisible = false;
 		}
 
 		private void CreateTemporaryChat()
@@ -563,9 +704,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				Id = chat.Id,
 				TemporaryScope = chatScope,
-				OpenInNewTabCommand = new RelayCommand(() => { }, () => false),
 				DeleteCommand = new RelayCommand(() => { }, () => false),
-				OpenCommand = new RelayCommand(() => { }, () => false),
+				RenameCommand = new RelayCommand(() => { }, () => false),
 				Title = chat.Title,
 				Topic = chat.Topic,
 				LastModifiedAt = DateTime.Now,
@@ -573,6 +713,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			};
 			AvailableChats.Insert(0, newAvailableChat);
 			OpenChat(newAvailableChat);
+			IsChatListVisible = false;
 		}
 	}
 }

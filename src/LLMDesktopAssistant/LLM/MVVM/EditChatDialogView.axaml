@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="300"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.EditChatDialogView"
+						 x:DataType="local:EditChatDialogViewModel"
+						 MinWidth="380"
+						 MaxWidth="560"
+						 Padding="16">
+
+	<StackPanel Spacing="12">
+
+		<TextBlock Text="{loc:Loc chat.edit.header}"
+							 FontSize="{DynamicResource FontSizeL}"
+							 FontWeight="SemiBold"
+							 Foreground="{DynamicResource TextPrimary}" />
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="{loc:Loc chat.edit.title}"
+								 FontSize="{DynamicResource FontSizeXs}"
+								 Foreground="{DynamicResource TextSecondary}" />
+			<TextBox Text="{Binding ChatTitle, Mode=TwoWay}" />
+		</StackPanel>
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="{loc:Loc chat.edit.topic}"
+								 FontSize="{DynamicResource FontSizeXs}"
+								 Foreground="{DynamicResource TextSecondary}" />
+			<TextBox Text="{Binding ChatTopic, Mode=TwoWay}" Foreground="{Binding ChatTopicColor}" />
+		</StackPanel>
+
+		<StackPanel Spacing="4">
+			<TextBlock Text="{loc:Loc chat.edit.subtopic}"
+								 FontSize="{DynamicResource FontSizeXs}"
+								 Foreground="{DynamicResource TextSecondary}" />
+			<TextBox Text="{Binding ChatSubTopic, Mode=TwoWay}" Foreground="{Binding ChatSubTopicColor}" />
+		</StackPanel>
+
+		<StackPanel Orientation="Horizontal"
+								HorizontalAlignment="Right"
+								Spacing="8"
+								Margin="0,4,0,0">
+
+			<Button Content="{loc:Loc common.cancel}"
+							Command="{Binding CancelCommand}"
+							MinWidth="88" />
+
+			<Button Content="{loc:Loc common.save}"
+							Command="{Binding SubmitCommand}"
+							MinWidth="88" />
+
+		</StackPanel>
+
+	</StackPanel>
+
+</UserControl>

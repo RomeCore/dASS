@@ -41,7 +41,26 @@ input.hint.stop_flush: Enter to stop and send the queue · Ctrl+Enter stops only
 input.send_button.hint: Send message · Ctrl+Enter
 input.send_generate_button.hint: Send and generate · Enter
 input.stop_button.hint: Stop generation · Ctrl+Enter
+delete.description: The chat and all its messages will be deleted permanently.
+delete.title: Delete chat?
+edit.header: Edit chat
+edit.subtopic: Sub-topic
+edit.title: Title
+edit.topic: Topic
 list.title: Chats
+list.favorite: Favorite chat
+list.has_user_input_draft: Has input draft
+list.collapse: Collapse the chat list
+list.expand: Expand the chat list
+list.open: Open
+list.search: Search chats
+list.filter_favorites: Only show favorites
+list.today: Today
+list.yesterday: Yesterday
+list.last_7_days: Last 7 days
+list.last_30_days: Last 30 days
+list.last_year: Last year
+list.earlier: Earlier
 manager.no_messages_to_rename.description: Chat has no messages
 manager.no_messages_to_rename.title: Cannot rename chat
 naming.task: Chat naming

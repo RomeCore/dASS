@@ -1,12 +1,13 @@
 <Styles xmlns="https://github.com/avaloniaui"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-		xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
+				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+				xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional">
 
 	<!--
 		A message part chip. The look lives here rather than in AdditionalMessagePartView because a local value in
 		the view beats any style - and a surface that wants a lighter chip has to win over this one.
 	-->
-	<Style Selector="Border.messagePartChip" x:CompileBindings="False">
+	<Style Selector="Border.messagePartChip" x:DataType="add:AdditionalMessagePart">
 		<Setter Property="Background" Value="{DynamicResource MessageBackground}" />
 		<Setter Property="BorderThickness" Value="1" />
 		<Setter Property="BorderBrush">
@@ -21,7 +22,7 @@
 		<Setter Property="Padding" Value="6,3" />
 	</Style>
 
-	<Style Selector="Border.messagePartChip ico|VisualIcon" x:CompileBindings="False">
+	<Style Selector="Border.messagePartChip ico|VisualIcon" x:DataType="add:AdditionalMessagePart">
 		<Setter Property="Foreground">
 			<Setter.Value>
 				<MultiBinding Converter="{StaticResource FallbackMultiConverter}">

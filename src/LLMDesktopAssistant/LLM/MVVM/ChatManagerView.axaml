@@ -1,419 +1,354 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatManagerView"
-			 x:DataType="local:ChatManagerViewModel"
-			 x:Name="VMRoot">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:add="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatManagerView"
+						 x:DataType="local:ChatManagerViewModel">
 
 	<UserControl.Styles>
-		<!-- Chat tabs fill the whole ListBoxItem area (the base theme adds a large padding) -->
-		<Style Selector="ListBox.ChatTabsListBox > ListBoxItem">
-			<Setter Property="Padding" Value="0"/>
+
+		<!-- An open chat is a list row too, so the selection pill is the one the theme already draws. -->
+		<Style Selector="ListBox.chats ListBoxItem">
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="Margin" Value="0,0,0,2" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
 		</Style>
+
+		<Style Selector="TextBlock.listCaption">
+			<Setter Property="FontSize" Value="{DynamicResource FontSizeXs}" />
+			<Setter Property="Margin" Value="4,8,0,4" />
+		</Style>
+
+		<!-- A switch reveals the conversation that just became active; nothing is rebuilt. -->
+		<Style Selector="ContentControl.chatPage.active">
+			<Style.Animations>
+				<Animation Duration="0:0:0.48"
+									 Easing="CubicEaseOut"
+									 FillMode="Forward">
+					<KeyFrame Cue="0%">
+						<Setter Property="Opacity" Value="0" />
+					</KeyFrame>
+					<KeyFrame Cue="100%">
+						<Setter Property="Opacity" Value="1" />
+					</KeyFrame>
+				</Animation>
+			</Style.Animations>
+		</Style>
+
+		<!-- One line of chips: a wrapped second line would change the height of the entry. -->
+		<Style Selector="ContentControl.chatListChips ItemsControl">
+			<Setter Property="ItemsPanel">
+				<Setter.Value>
+					<ItemsPanelTemplate>
+						<StackPanel Orientation="Horizontal" />
+					</ItemsPanelTemplate>
+				</Setter.Value>
+			</Setter>
+		</Style>
+
 	</UserControl.Styles>
 
+	<!--
+		The list is an overlay sidebar: it slides over the conversation instead of taking a column from
+		it, and a click outside closes it.
+	-->
 	<SplitView x:Name="ChatSplitView"
-						 PanePlacement="Right"
-						 CompactPaneLength="0"
-						 OpenPaneLength="470">
-	
+						 DisplayMode="Overlay"
+						 PanePlacement="Left"
+						 OpenPaneLength="320"
+						 IsPaneOpen="{Binding IsChatListVisible, Mode=TwoWay}">
+
 		<SplitView.Pane>
-			
-			<DockPanel>
 
-				<StackPanel Orientation="Horizontal"
-										Margin="8"
-										DockPanel.Dock="Top">
+			<Border Background="{DynamicResource PanelBackground}"
+							BorderBrush="{DynamicResource BorderSubtle}"
+							BorderThickness="0,0,1,0">
 
-					<TextBlock Text="{loc:Loc chat.list.title}"
-										 Foreground="{DynamicResource DefaultForeground}"
-										 FontSize="18"
-										 VerticalAlignment="Center"
-										 Margin="8"/>
+				<DockPanel LastChildFill="True">
 
-				</StackPanel>
+					<Grid DockPanel.Dock="Top"
+								Margin="12,10,8,4"
+								ColumnDefinitions="*,Auto">
 
-				<!-- Sidebar: list of all available chats (no edit controls) -->
-				<scroll:SmoothScrollViewer Margin="8"
-																	 VerticalScrollBarVisibility="Auto">
+						<TextBlock Text="{loc:Loc chat.list.title}"
+											 FontSize="{DynamicResource FontSizeM}"
+											 FontWeight="SemiBold"
+											 Foreground="{DynamicResource TextPrimary}"
+											 VerticalAlignment="Center" />
 
-					<scroll:SmoothScrollViewer.Styles>
+						<StackPanel Grid.Column="1"
+												Orientation="Horizontal"
+												Spacing="4">
 
-						<!-- A chat entry is a surface, not a themed button: only the hover and press tints show. -->
-						<Style Selector="Button.ChatListRow">
-							<Setter Property="Background" Value="Transparent"/>
-							<Setter Property="BorderThickness" Value="0"/>
-							<Setter Property="Padding" Value="0"/>
-							<Setter Property="HorizontalAlignment" Value="Stretch"/>
-							<Setter Property="VerticalAlignment" Value="Stretch"/>
-							<Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-						</Style>
-						<Style Selector="Button.ChatListRow:pointerover">
-							<Setter Property="Background" Value="#16FFFFFF"/>
-						</Style>
-						<Style Selector="Button.ChatListRow:pressed">
-							<Setter Property="Background" Value="#26FFFFFF"/>
-						</Style>
+							<Button Classes="icon"
+											Command="{Binding CreateTemporaryChatCommand}"
+											ToolTip.Tip="{loc:Loc chat.new_temporary}">
+								<ico:VisualIcon Kind="MessageFlash" />
+							</Button>
 
-						<!--
-							The chips of a chat entry are lighter than a message's, which sit in a pill of their own. The
-							override lives inside this list on purpose: a scope on the view would reach the chat as well.
-						-->
-						<Style Selector="Border.messagePartChip" x:CompileBindings="False">
-							<Setter Property="Background" Value="#00000000"/>
-							<Setter Property="CornerRadius" Value="6"/>
-							<Setter Property="Padding" Value="4,0"/>
-							<Setter Property="BorderBrush" Value="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}, ConverterParameter=0.35}"/>
-						</Style>
-						<Style Selector="Border.messagePartChip TextBlock">
-							<Setter Property="FontSize" Value="10"/>
-							<Setter Property="Opacity" Value="0.85"/>
-						</Style>
-						<Style Selector="Border.messagePartChip ico|VisualIcon">
-							<Setter Property="Width" Value="11"/>
-							<Setter Property="Height" Value="11"/>
-						</Style>
+							<Button Classes="icon"
+											Command="{Binding CreateChatCommand}"
+											ToolTip.Tip="{loc:Loc chat.new}">
+								<ico:VisualIcon Kind="MessagePlus" />
+							</Button>
 
-						<!-- One line of chips: a wrapped second line would change the height of the entry. -->
-						<Style Selector="ContentControl.ChatListChips ItemsControl">
-							<Setter Property="ItemsPanel">
-								<Setter.Value>
-									<ItemsPanelTemplate>
-										<StackPanel Orientation="Horizontal"/>
-									</ItemsPanelTemplate>
-								</Setter.Value>
-							</Setter>
-						</Style>
+							<Button Classes="icon"
+											Command="{Binding ToggleChatListCommand}"
+											ToolTip.Tip="{loc:Loc chat.list.collapse}">
+								<ico:VisualIcon Kind="ChevronLeft" />
+							</Button>
 
-					</scroll:SmoothScrollViewer.Styles>
+						</StackPanel>
 
-					<ItemsControl ItemsSource="{Binding AvailableChats}">
+					</Grid>
 
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<VirtualizingStackPanel/>
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
+					<Grid DockPanel.Dock="Top"
+								Margin="8,0,8,6"
+								ColumnSpacing="4"
+								ColumnDefinitions="*,Auto">
+						
+						<TextBox Text="{Binding SearchText, Mode=TwoWay}"
+										 PlaceholderText="{loc:Loc chat.list.search}"
+										 FontSize="{DynamicResource FontSizeS}">
+							<TextBox.InnerLeftContent>
+								<ico:VisualIcon Kind="Search" Width="16" Height="16" Margin="6,0,2,0" />
+							</TextBox.InnerLeftContent>
+						</TextBox>
 
-						<ItemsControl.ItemTemplate>
-							<DataTemplate>
+						<ToggleButton Grid.Column="1"
+													Classes="icon"
+													IsChecked="{Binding FilterFavoritesOnly}"
+													ToolTip.Tip="{loc:Loc chat.list.filter_favorites}">
+							<ico:VisualIcon Kind="Star" Width="16" Height="16" />
+						</ToggleButton>
 
-								<Panel IsVisible="{Binding !IsTemporary}"
-											 Height="62"
-											 Margin="0,0,0,2">
+					</Grid>
 
-									<!-- The row itself. Disabled while the chat is already open in a tab, and the only thing that opens it. -->
-									<Button Classes="ChatListRow"
-													Command="{Binding OpenCommand}"
-													IsEnabled="{Binding !IsSelected}">
-										<Button.Template>
-											<ControlTemplate>
-												<Border Background="{TemplateBinding Background}"
-																CornerRadius="6">
-													<ContentPresenter Content="{TemplateBinding Content}"/>
-												</Border>
-											</ControlTemplate>
-										</Button.Template>
-									</Button>
+					<ListBox Classes="chats"
+									 ItemsSource="{Binding ChatListEntries}"
+									 SelectedItem="{Binding SelectedChat}">
+						
+						<ListBox.ItemContainerTheme>
+							<ControlTheme TargetType="ListBoxItem"
+														BasedOn="{StaticResource {x:Type ListBoxItem}}"
+														x:DataType="local:ChatListBaseEntry">
+								<Setter Property="IsEnabled" Value="{Binding CanBeSelected}" />
+							</ControlTheme>
+						</ListBox.ItemContainerTheme>
 
-									<!-- Chrome above the button: never hit-testable, so the click falls through to it. -->
-									<Grid Margin="8,6"
-												ColumnDefinitions="Auto,*"
-												Opacity="{Binding ContentOpacity}"
-												IsHitTestVisible="False">
+						<ListBox.Styles>
+							
+							<!--
+								The chips of a chat entry are lighter than a message's, which sit in a pill of their own. The
+								override lives inside this list on purpose: a scope on the view would reach the chat as well.
+							-->
+							<Style Selector="Border.messagePartChip" x:DataType="add:AdditionalMessagePart">
+								<Setter Property="Background" Value="#00000000" />
+								<Setter Property="CornerRadius" Value="6" />
+								<Setter Property="Padding" Value="4,0" />
+								<Setter Property="BorderBrush" Value="{Binding ChipColor, Converter={StaticResource ColorToBrushConverter}, ConverterParameter=0.35}" />
+							</Style>
 
-										<Border Width="8" Height="8"
-														CornerRadius="4"
-														Background="{Binding TopicColorHex}"
-														VerticalAlignment="Top"
-														Margin="0,5,6,0"/>
+							<Style Selector="Border.messagePartChip TextBlock">
+								<Setter Property="FontSize" Value="10" />
+								<Setter Property="Opacity" Value="0.85" />
+							</Style>
+
+							<Style Selector="Border.messagePartChip ico|VisualIcon">
+								<Setter Property="Width" Value="11" />
+								<Setter Property="Height" Value="11" />
+							</Style>
+
+						</ListBox.Styles>
+
+						<ListBox.DataTemplates>
+
+							<DataTemplate x:DataType="local:ChatListCaptionEntry">
+								<TextBlock Classes="listCaption"
+													 Text="{loc:Loc {Binding Caption}}"/>
+							</DataTemplate>
+
+							<DataTemplate x:DataType="local:ChatListBaseEntry">
 								
-										<StackPanel Grid.Column="1" Spacing="1">
+								<Grid Margin="8,6,14,6"
+											ColumnDefinitions="Auto,*,Auto"
+											RowDefinitions="Auto,Auto,Auto">
 
-											<TextBlock Text="{Binding Title}"
-																 FontSize="14"
+									<Panel Grid.Column="0"
+												 Grid.RowSpan="3"
+												 Width="10" Height="10"
+												 Margin="0,4,6,0"
+												 VerticalAlignment="Top">
+
+										<ico:VisualIcon Kind="{Binding Opened.StatusIcon}"
+																		IsVisible="{Binding Opened.HasStatus}"/>
+										
+										<Grid ColumnDefinitions="*,*"
+													IsVisible="{Binding !Opened.HasStatus}">
+
+											<Border Grid.Column="0"
+															CornerRadius="5,0,0,5"
+															Background="{Binding Available.TopicColorHex}" />
+
+											<Border Grid.Column="1"
+															CornerRadius="0,5,5,0"
+															Background="{Binding Available.SubTopicColorHex}" />
+
+										</Grid>
+
+									</Panel>
+
+									<TextBlock Grid.Column="1"
+														 Grid.Row="0"
+														 Text="{Binding Available.Title}"
+														 FontSize="{DynamicResource FontSizeM}"
+														 Foreground="{DynamicResource TextPrimary}"
+														 TextWrapping="NoWrap"
+														 TextTrimming="CharacterEllipsis"
+														 ToolTip.Tip="{Binding Available.Title}"/>
+
+									<Grid Grid.Column="1"
+												Grid.ColumnSpan="2"
+												Grid.Row="1"
+												ColumnDefinitions="*,Auto,Auto">
+										
+										<Grid ColumnDefinitions="Auto,Auto,*"
+													IsVisible="{Binding Available.Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
+													Background="Transparent"
+													ToolTip.Tip="{Binding Available.CombinedTopic}">
+
+											<TextBlock Text="{Binding Available.Topic}"
+																 FontSize="{DynamicResource FontSizeXs}"
+																 Foreground="{Binding Available.TopicColorHex}" />
+
+											<TextBlock Grid.Column="1"
+																 Text="·"
+																 Margin="4,0"
+																 FontSize="{DynamicResource FontSizeXs}"
+																 Foreground="{DynamicResource TextTertiary}"
+																 IsVisible="{Binding Available.SubTopic, Converter={StaticResource StringNonEmptyToBooleanConverter}}" />
+
+											<TextBlock Grid.Column="2"
+																 Text="{Binding Available.SubTopic}"
+																 FontSize="{DynamicResource FontSizeXs}"
+																 Foreground="{Binding Available.SubTopicColorHex}"
 																 TextWrapping="NoWrap"
-																 TextTrimming="CharacterEllipsis"/>
+																 TextTrimming="CharacterEllipsis" />
 
-											<TextBlock Text="{Binding Topic}"
-																 IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-																 Foreground="{Binding TopicColorHex}"
-																 FontSize="11"
-																 Opacity="0.8"
-																 TextWrapping="NoWrap"
-																 TextTrimming="CharacterEllipsis"/>
+										</Grid>
 
-											<TextBlock Text="{loc:Loc chat.no_topic}"
-																 IsVisible="{Binding Topic, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"
-																 Foreground="{Binding TopicColorHex}"
-																 FontSize="11"
-																 Opacity="0.8"
-																 TextWrapping="NoWrap"
-																 TextTrimming="CharacterEllipsis"/>
-
-										</StackPanel>
+										<TextBlock Text="{loc:Loc chat.no_topic}"
+															 IsVisible="{Binding Available.Topic, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"
+															 FontSize="{DynamicResource FontSizeXs}"
+															 Foreground="{DynamicResource TextTertiary}"
+															 TextWrapping="NoWrap"
+															 TextTrimming="CharacterEllipsis" />
+										
+										<ico:VisualIcon Grid.Column="1"
+																		Kind="MessageProcessing"
+																		IsVisible="{Binding Available.HasUserInputDraft}"
+																		Width="10" Height="10" Margin="0,0,4,0"
+																		ToolTip.Tip="{loc:Loc chat.list.has_user_input_draft}" />
+										
+										<TextBlock Grid.Column="2"
+															 Text="{Binding Available.LastModifiedLabel}"
+															 ToolTip.Tip="{Binding Available.LastModifiedDetailedLabel}"
+															 FontSize="{DynamicResource FontSizeXs}"
+															 Foreground="{DynamicResource TextTertiary}" />
 
 									</Grid>
 
-									<!-- The chat's own parts: real chips, hit-testable, above the row button -->
-									<ContentControl Classes="ChatListChips"
-															Content="{Binding Parts}"
-															Opacity="{Binding ContentOpacity}"
-															HorizontalAlignment="Left"
-															VerticalAlignment="Bottom"
-															Margin="22,0,8,5"
-															ClipToBounds="True"/>
+									<ContentControl Grid.Column="1"
+																	Grid.Row="2"
+																	Classes="chatListChips"
+																	Content="{Binding Available.Parts}"
+																	Margin="0,2,0,0"
+																	HorizontalAlignment="Left"
+																	ClipToBounds="True" />
 
-									<Label Content="{Binding LastModifiedAt}"
-												 HorizontalAlignment="Right"
-												 VerticalAlignment="Bottom"
-												 Margin="0,0,8,4"
-												 Opacity="0.5"
-												 FontSize="11"/>
+									<StackPanel Grid.Column="2"
+															Orientation="Horizontal"
+															Spacing="2"
+															HorizontalAlignment="Right"
+															VerticalAlignment="Top">
+										
+										<ItemsControl ItemsSource="{Binding Commands}">
+											<ItemsControl.ItemsPanel>
+												<ItemsPanelTemplate>
+													<StackPanel Orientation="Horizontal"
+																			Spacing="2"/>
+												</ItemsPanelTemplate>
+											</ItemsControl.ItemsPanel>
+											<ItemsControl.ItemTemplate>
+												<DataTemplate>
+													<Button Classes="icon mini"
+																	Command="{Binding Command}"
+																	ToolTip.Tip="{loc:Loc {Binding ToolTip}}">
+														<ico:VisualIcon Kind="{Binding Icon}" />
+													</Button>
+												</DataTemplate>
+											</ItemsControl.ItemTemplate>
+										</ItemsControl>
 
-									<StackPanel Orientation="Horizontal"
-													HorizontalAlignment="Right"
-													VerticalAlignment="Top"
-													Margin="0,4,4,0"
-													Spacing="4">
-
-										<Button Command="{Binding OpenInNewTabCommand}"
-														IsEnabled="{Binding CanAct}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.open_in_new_tab}">
-											<ico:VisualIcon Kind="TabPlus"/>
-										</Button>
-
-										<Button Command="{Binding DeleteCommand}"
-														IsEnabled="{Binding CanAct}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc common.delete}">
-											<ico:VisualIcon Kind="Delete"/>
-										</Button>
+										<ToggleButton Classes="icon mini"
+																	IsChecked="{Binding Available.Favorite}"
+																	ToolTip.Tip="{loc:Loc chat.list.favorite}">
+											<ico:VisualIcon Kind="Star" />
+										</ToggleButton>
 
 									</StackPanel>
 
-								</Panel>
+								</Grid>
 
 							</DataTemplate>
-						</ItemsControl.ItemTemplate>
+							
+						</ListBox.DataTemplates>
+					</ListBox>
 
-					</ItemsControl>
+				</DockPanel>
 
-				</scroll:SmoothScrollViewer>
-
-			</DockPanel>
+			</Border>
 
 		</SplitView.Pane>
 
-		<Grid>
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-				<RowDefinition/>
-			</Grid.RowDefinitions>
+		<!-- ===================== the conversation ===================== -->
+		<Panel>
 
-			<!-- TOP BAR with tabs & buttons -->
-			<DockPanel Background="{DynamicResource TopBarBackground}">
-
-				<StackPanel DockPanel.Dock="Right"
-										HorizontalAlignment="Right"
-										Orientation="Horizontal"
-										Margin="10" Spacing="5">
-					
-					<Button Command="{Binding CreateChatCommand}"
-									Classes="IconButton"
-									ToolTip.Tip="{loc:Loc chat.new}">
-						<ico:VisualIcon Kind="MessagePlus"/>
-					</Button>
-					
-					<Button Command="{Binding CreateTemporaryChatCommand}"
-									Classes="IconButton"
-									ToolTip.Tip="{loc:Loc chat.new_temporary}">
-						<ico:VisualIcon Kind="MessageFlash"/>
-					</Button>
-					
-					<ToggleButton IsChecked="{Binding #ChatSplitView.IsPaneOpen}"
-											  Classes="IconButton">
-						<ico:VisualIcon Kind="Forum"/>
-					</ToggleButton>
-
-				</StackPanel>
-
-				<!-- Opened chats tabs with inline rename & AI rename -->
-				<ListBox ItemsSource="{Binding OpenedChats}"
-								 SelectedItem="{Binding SelectedChat}"
-								 Classes="ChatTabsListBox"
-								 DockPanel.Dock="Left">
-					
-					<ListBox.ItemsPanel>
-						<ItemsPanelTemplate>
-							<WrapPanel Orientation="Horizontal"/>
-						</ItemsPanelTemplate>
-					</ListBox.ItemsPanel>
-
-					<ListBox.ItemTemplate>
-						<DataTemplate x:DataType="local:OpenedChatViewModel">
-							
-							<Border CornerRadius="6"
-											Padding="10"
-											Background="{Binding StatusColorHex}">
-								
-								<Border.Transitions>
-									<Transitions>
-										<BrushTransition Property="Background" Duration="0:0:0.4"/>
-									</Transitions>
-								</Border.Transitions>
-							
-								<StackPanel Orientation="Horizontal"
-														VerticalAlignment="Center"
-														Spacing="4">
-									
-									<!-- Display mode -->
-									<StackPanel Orientation="Horizontal" Spacing="4"
-															IsVisible="{Binding !IsEditing}">
-										
-										<StackPanel Orientation="Vertical"
-																VerticalAlignment="Center">
-											
-											<StackPanel Orientation="Horizontal"
-																	Spacing="4">
-												
-												<ico:VisualIcon Kind="{Binding StatusIcon}"
-																					Width="14" Height="14"
-																					VerticalAlignment="Center"
-																					IsVisible="{Binding HasStatus}"/>
-												
-												<TextBlock Text="{Binding SelectedAvailable.Title}"
-																	 FontSize="14"
-																	 PointerPressed="TabTitleTextBlock_PointerPressed"
-																	 IsHitTestVisible="{Binding $parent[ListBoxItem].IsSelected}"
-																	 Cursor="Hand"/>
-												
-											</StackPanel>
-											
-											<StackPanel Orientation="Horizontal" Spacing="4">
-												
-												<TextBlock Text="{Binding SelectedAvailable.Topic}"
-																	 IsVisible="{Binding SelectedAvailable.Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
-																	 Foreground="{Binding SelectedAvailable.TopicColorHex}"
-																	 FontSize="11"
-																	 PointerPressed="TabTopicTextBlock_PointerPressed"
-																	 IsHitTestVisible="{Binding $parent[ListBoxItem].IsSelected}"
-																	 Cursor="Hand"/>
-											
-												<TextBlock Text="{loc:Loc chat.no_topic}"
-																	 IsVisible="{Binding SelectedAvailable.Topic, Converter={StaticResource StringNonEmptyToBooleanConverterInverted}}"
-																	 Foreground="{Binding SelectedAvailable.TopicColorHex}"
-																	 FontSize="11"
-																	 PointerPressed="TabTopicTextBlock_PointerPressed"
-																	 IsHitTestVisible="{Binding $parent[ListBoxItem].IsSelected}"
-																	 Cursor="Hand"/>
-											
-												<TextBlock Text="{loc:Loc chat.temporary}"
-																	 IsVisible="{Binding SelectedAvailable.IsTemporary}"
-																	 FontStyle="Italic"
-																	 Foreground="#AA888888"
-																	 FontSize="11"/>
-											
-											</StackPanel>
-
-										</StackPanel>
-
-										<Button Command="{Binding RenameWithAICommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.rename_with_ai}">
-											<ico:VisualIcon Kind="AutoFix"/>
-										</Button>
-										
-										<Button Command="{Binding CloseChatCommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc common.close}">
-											<ico:VisualIcon Kind="Close"/>
-										</Button>
-
-									</StackPanel>
-									
-									<!-- Title edit mode -->
-									<StackPanel Orientation="Horizontal" Spacing="4"
-															IsVisible="{Binding IsEditingTitle}">
-										
-										<TextBox Text="{Binding EditTitleText, Mode=TwoWay}"
-														 FontSize="14"
-														 MinWidth="80"
-														 MaxWidth="200"
-														 AcceptsReturn="False"
-														 KeyDown="TabTitleTextBox_KeyDown"/>
-										
-										<Button Command="{Binding CommitEditTitleCommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.rename.save}">
-											<ico:VisualIcon Kind="Check"/>
-										</Button>
-										
-										<Button Command="{Binding CancelEditTitleCommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.rename.cancel}">
-											<ico:VisualIcon Kind="Close"/>
-										</Button>
-									</StackPanel>
-									
-									<!-- Topic editing mode -->
-									<StackPanel Orientation="Horizontal" Spacing="4"
-															IsVisible="{Binding IsEditingTopic}">
-										
-										<TextBox Text="{Binding EditTopicText, Mode=TwoWay}"
-														 FontSize="14"
-														 MinWidth="80"
-														 MaxWidth="200"
-														 AcceptsReturn="False"
-														 KeyDown="TabTopicTextBox_KeyDown"/>
-										
-										<Button Command="{Binding CommitEditTopicCommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.rename.save}">
-											<ico:VisualIcon Kind="Check"/>
-										</Button>
-										
-										<Button Command="{Binding CancelEditTopicCommand}"
-														Classes="SmallIconButton"
-														ToolTip.Tip="{loc:Loc chat.rename.cancel}">
-											<ico:VisualIcon Kind="Close"/>
-										</Button>
-									</StackPanel>
-
-								</StackPanel>
-								
-							</Border>
-							
-						</DataTemplate>
-					</ListBox.ItemTemplate>
-
-				</ListBox>
-				
-			</DockPanel>
-
-			<!-- CHAT -->
-			<ItemsControl Grid.Row="1"
-										ItemsSource="{Binding OpenedChats}">
+			<ItemsControl ItemsSource="{Binding OpenedChats}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
-						<Panel/>
+						<Panel />
 					</ItemsPanelTemplate>
 				</ItemsControl.ItemsPanel>
 				<ItemsControl.ItemTemplate>
-					<DataTemplate>
+					<DataTemplate x:DataType="local:OpenedChatViewModel">
 						<ContentControl Content="{Binding CurrentChat}"
-														IsVisible="{Binding IsSelected}"/>
+														IsVisible="{Binding IsSelected}"
+														Classes="chatPage"
+														Classes.active="{Binding IsSelected}" />
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
-		</Grid>
+
+			<!-- The list is closed: one control brings it back, over the conversation. -->
+			<Button Classes="icon"
+							IsVisible="{Binding !IsChatListVisible}"
+							Command="{Binding ToggleChatListCommand}"
+							HorizontalAlignment="Left"
+							VerticalAlignment="Top"
+							Margin="8"
+							ToolTip.Tip="{loc:Loc chat.list.expand}">
+				<ico:VisualIcon Kind="ChevronRight" />
+			</Button>
+
+		</Panel>
 
 	</SplitView>
 

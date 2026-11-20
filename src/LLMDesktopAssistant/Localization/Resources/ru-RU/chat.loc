@@ -41,7 +41,26 @@ input.hint.stop_flush: Enter - остановить и отправить оче
 input.send_button.hint: Отправить сообщение · Ctrl+Enter
 input.send_generate_button.hint: Отправить и запустить генерацию · Enter
 input.stop_button.hint: Остановить генерацию · Ctrl+Enter
+delete.description: Чат и все его сообщения будут удалены безвозвратно.
+delete.title: Удалить чат?
+edit.header: Изменить чат
+edit.subtopic: Подтема
+edit.title: Название
+edit.topic: Тема
 list.title: Чаты
+list.favorite: Занести в избранное
+list.has_user_input_draft: Содержит черновик ввода
+list.collapse: Свернуть список чатов
+list.expand: Развернуть список чатов
+list.open: Открытые
+list.search: Поиск по чатам
+list.filter_favorites: Только избранные
+list.today: Сегодня
+list.yesterday: Вчера
+list.last_7_days: За последние 7 дней
+list.last_30_days: За последние 30 дней
+list.last_year: За последний год
+list.earlier: Ранее
 manager.no_messages_to_rename.description: В чате отсутствуют сообщения
 manager.no_messages_to_rename.title: Невозможно переименовать чат
 naming.task: Именование чата
