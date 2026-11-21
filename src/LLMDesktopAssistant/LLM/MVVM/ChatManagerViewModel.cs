@@ -635,6 +635,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				newEntries.Add(entry);
 			}
 
+			SelectedChat = null;
 			ChatListEntries.Reset(newEntries);
 			if (prevFound)
 				SelectedChat = prevSelected;
