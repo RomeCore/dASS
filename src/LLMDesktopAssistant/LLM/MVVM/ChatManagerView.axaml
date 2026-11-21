@@ -53,6 +53,25 @@
 			</Setter>
 		</Style>
 
+		<Style Selector="SplitView.chatListSplit">
+			<Style Selector="^ /template/ Rectangle#LightDismissLayer">
+				<Setter Property="Transitions">
+					<Transitions>
+						<DoubleTransition Property="Opacity"
+															Easing="{StaticResource EasingStandard}"
+															Duration="{StaticResource DurationFast}"/>
+					</Transitions>
+				</Setter>
+			</Style>
+			<Style Selector="^ /template/ Rectangle#LightDismissLayer">
+				<Setter Property="Fill" Value="{DynamicResource Scrim}"/>
+				<Setter Property="Opacity" Value="0"/>
+			</Style>
+			<Style Selector="^:open /template/ Rectangle#LightDismissLayer">
+				<Setter Property="Opacity" Value="1"/>
+			</Style>
+		</Style>
+
 	</UserControl.Styles>
 
 	<!--
@@ -60,9 +79,10 @@
 		it, and a click outside closes it.
 	-->
 	<SplitView x:Name="ChatSplitView"
+						 Classes="chatListSplit"
 						 DisplayMode="Overlay"
 						 PanePlacement="Left"
-						 OpenPaneLength="320"
+						 OpenPaneLength="480"
 						 IsPaneOpen="{Binding IsChatListVisible, Mode=TwoWay}">
 
 		<SplitView.Pane>
@@ -258,17 +278,20 @@
 											<ico:VisualIcon Kind="MessageProcessing"
 																			IsVisible="{Binding Available.HasUserInputDraft}"
 																			Width="10" Height="10"
-																			ToolTip.Tip="{loc:Loc chat.list.has_user_input_draft}" />
+																			ToolTip.Tip="{loc:Loc chat.list.has_user_input_draft}"
+																			Background="Transparent" />
 										
 											<TextBlock ToolTip.Tip="{loc:Loc chat.list.message_count}"
 																 FontSize="{DynamicResource FontSizeXs}"
 																 Foreground="{DynamicResource TextTertiary}"
-																 Text="{Binding Available.AllMessageCountFormatted}"/>
+																 Text="{Binding Available.AllMessageCountFormatted}"
+																 Background="Transparent" />
 
 											<TextBlock Text="{Binding Available.LastModifiedLabel}"
 																 ToolTip.Tip="{Binding Available.LastModifiedDetailedLabel}"
 																 FontSize="{DynamicResource FontSizeXs}"
-																 Foreground="{DynamicResource TextTertiary}" />
+																 Foreground="{DynamicResource TextTertiary}"
+																 Background="Transparent" />
 
 										</StackPanel>
 

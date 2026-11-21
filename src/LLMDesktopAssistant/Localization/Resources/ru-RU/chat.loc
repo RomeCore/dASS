@@ -54,7 +54,7 @@ list.message_count: Общее количество сообщений
 list.collapse: Свернуть список чатов
 list.expand: Развернуть список чатов
 list.open: Открытые
-list.search: Поиск по чатам
+list.search: Поиск по названиям/темам
 list.filter_favorites: Только избранные
 list.today: Сегодня
 list.yesterday: Вчера

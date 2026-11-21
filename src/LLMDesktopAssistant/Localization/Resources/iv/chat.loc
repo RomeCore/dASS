@@ -54,7 +54,7 @@ list.message_count: Overall message count
 list.collapse: Collapse the chat list
 list.expand: Expand the chat list
 list.open: Open
-list.search: Search chats
+list.search: Search by name/topic
 list.filter_favorites: Only show favorites
 list.today: Today
 list.yesterday: Yesterday
