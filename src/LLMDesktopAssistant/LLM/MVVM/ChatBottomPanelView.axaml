@@ -13,7 +13,7 @@
 	-->
 	<Border Classes="composerCard">
 
-		<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+		<Grid RowDefinitions="Auto,Auto,Auto,Auto">
 
 			<!-- Rail (above the input): chat additional data that asked for the top strip. -->
 			<ContentControl Grid.Row="0"
@@ -21,24 +21,17 @@
 											IsVisible="{Binding TopRail.HasItems}"
 											Margin="0,0,0,4"/>
 
-			<!-- Pending follow-ups and the message being edited: about the input, so inside its card. -->
-			<ContentControl Grid.Row="1"
-											Content="{Binding UserInput.Chips}"
-											IsVisible="{Binding UserInput.Chips.IsVisible}"
-											HorizontalAlignment="Left"
-											Margin="0,0,0,4"/>
-
 			<!-- User input -->
-			<ContentControl Grid.Row="2" Content="{Binding UserInput}"/>
+			<ContentControl Grid.Row="1" Content="{Binding UserInput}"/>
 
 			<!-- Rail (below the input): chat additional data that asked for the bottom strip. -->
-			<ContentControl Grid.Row="3"
+			<ContentControl Grid.Row="2"
 											Content="{Binding BottomRail}"
 											IsVisible="{Binding BottomRail.HasItems}"
 											Margin="0,4,0,0"/>
 
 			<!-- Toolbars -->
-			<Grid Grid.Row="4"
+			<Grid Grid.Row="3"
 						Margin="0,4,0,0"
 						ColumnDefinitions="Auto,*,Auto">
 

@@ -344,6 +344,16 @@
 						</StackPanel>
 					</scroll:SmoothScrollViewer>
 
+					<!--
+						The chips of the input state: queued follow-ups and the message being edited. They sit over
+						the end of the conversation, clear of the scroll-to-bottom pill.
+					-->
+					<ContentControl HorizontalAlignment="Right"
+													VerticalAlignment="Bottom"
+													Margin="0,0,76,16"
+													ZIndex="20"
+													Content="{Binding ChatBottomPanel.UserInput.Chips}"/>
+
 					<Button x:Name="ScrollToBottomButton"
 									Classes="icon floatingAction"
 									Click="ScrollToBottomButton_Click"
