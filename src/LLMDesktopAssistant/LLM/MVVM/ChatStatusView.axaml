@@ -1,21 +1,21 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="32"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatStatusView"
-			 x:DataType="local:ChatStatusViewModel"
-			 Height="32">
-	
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="32"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatStatusView"
+						 x:DataType="local:ChatStatusViewModel"
+						 Height="32">
+
 	<StackPanel Classes="StatusRoot"
 							IsVisible="{Binding IsActive}"
 							Orientation="Horizontal"
 							Margin="40,6">
 
 		<StackPanel.Styles>
-			
+
 			<Style Selector="StackPanel.StatusRoot">
 				<Style.Animations>
 					<Animation Duration="0:0:1"
@@ -37,20 +37,20 @@
 		<ico:VisualIcon Kind="{Binding IconKind}"
 											Width="16" Height="16"
 											Margin="2"
-											Foreground="White"
+											Foreground="{DynamicResource TextSecondary}"
 											HorizontalAlignment="Center"
 											VerticalAlignment="Center" />
 
-		<TextBlock Grid.Column="1"
-							 Text="{Binding StatusText}"
+		<TextBlock Text="{Binding StatusText}"
 							 VerticalAlignment="Center"
-							 FontSize="14"
+							 FontSize="{DynamicResource FontSizeM}"
+							 Foreground="{DynamicResource TextSecondary}"
 							 Margin="4,0,0,0" />
 
-		<TextBlock Grid.Column="2"
-							 Text="{Binding AnimatedDots}"
+		<TextBlock Text="{Binding AnimatedDots}"
 							 VerticalAlignment="Center"
-							 FontSize="14" />
+							 FontSize="{DynamicResource FontSizeM}"
+							 Foreground="{DynamicResource TextSecondary}" />
 
 	</StackPanel>
 

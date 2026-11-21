@@ -153,7 +153,8 @@
 
 					<ListBox Classes="chats"
 									 ItemsSource="{Binding ChatListEntries}"
-									 SelectedItem="{Binding SelectedChat}">
+									 SelectedItem="{Binding SelectedChat}"
+									 Padding="6,0">
 						
 						<ListBox.ItemContainerTheme>
 							<ControlTheme TargetType="ListBoxItem"
@@ -369,16 +370,10 @@
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
 
-			<!-- The list is closed: one control brings it back, over the conversation. -->
-			<Button Classes="icon"
-							IsVisible="{Binding !IsChatListVisible}"
-							Command="{Binding ToggleChatListCommand}"
-							HorizontalAlignment="Left"
-							VerticalAlignment="Top"
-							Margin="8"
-							ToolTip.Tip="{loc:Loc chat.list.expand}">
-				<ico:VisualIcon Kind="ChevronRight" />
-			</Button>
+            <!--
+                The list is closed: the page header brings it back. The chat owns the button, because it owns the
+                header the button sits in.
+            -->
 
 		</Panel>
 

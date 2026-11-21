@@ -5,170 +5,401 @@
 						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 						 xmlns:local="clr-namespace:LLMDesktopAssistant.LLM.MVVM"
 						 xmlns:additional="using:LLMDesktopAssistant.LLM.MVVM.Additional"
+						 xmlns:chat="using:LLMDesktopAssistant.LLM.MVVM.Additional.Chat"
 						 xmlns:loc="clr-namespace:LLMDesktopAssistant.Localization"
 						 xmlns:scroll="using:LLMDesktopAssistant.Controls.Scrolling"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
 						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatView"
 						 x:DataType="local:ChatViewModel">
 
-	<Grid>
+	<Grid RowDefinitions="Auto,Auto,*">
 
-		<Grid.ColumnDefinitions>
-			<!-- Two-way: the splitter writes the chosen width back to the panel. -->
-			<ColumnDefinition Width="{Binding ChatSidePanel.PanelWidth, Mode=TwoWay}"/>
-			<ColumnDefinition Width="{Binding ChatSidePanel.SplitterWidth}"/>
-			<ColumnDefinition Width="*"/>
-		</Grid.ColumnDefinitions>
+		<!--
+			The header: what belongs to the page as a whole. Identity on the left, the window-level indicators
+			on the right; the composer below owns everything that belongs to one message.
+		-->
+		<Border Grid.Row="0" Classes="chatHeader">
 
-		<!-- Side panel: the fallback surface for the chat's own additional data. -->
-		<Border Grid.Column="0"
-						IsVisible="{Binding ChatSidePanel.HasItems}">
+			<Grid ColumnDefinitions="Auto,*,Auto" Margin="8,0,10,0">
 
-			<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
-																 Padding="12,12"
-																 Step="65">
-				<ItemsControl ItemsSource="{Binding ChatSidePanel.Items}">
-					<ItemsControl.ItemTemplate>
-						<DataTemplate x:DataType="additional:AdditionalChatData">
-							<ContentControl Content="{Binding}"
-															IsVisible="{Binding IsVisible}"
-															Margin="0,0,0,12"/>
-						</DataTemplate>
-					</ItemsControl.ItemTemplate>
-				</ItemsControl>
-			</scroll:SmoothScrollViewer>
+				<Button Classes="icon"
+								VerticalAlignment="Center"
+								IsVisible="{Binding ToggleChatListCommand, Converter={StaticResource NotnullToBooleanConverter}}"
+								Command="{Binding ToggleChatListCommand}"
+								ToolTip.Tip="{loc:Loc chat.list.expand}">
+					<ico:VisualIcon Kind="ChevronRight"/>
+				</Button>
+
+				<StackPanel Grid.Column="1"
+										Margin="4,0,8,0"
+										VerticalAlignment="Center"
+										Spacing="0">
+
+					<TextBlock Text="{Binding Title}"
+										 IsVisible="{Binding HasTitle}"
+										 FontSize="{DynamicResource FontSizeM}"
+										 FontWeight="SemiBold"
+										 Foreground="{DynamicResource TextPrimary}"
+										 TextTrimming="CharacterEllipsis"/>
+
+					<TextBlock Text="{loc:Loc chat.header.untitled}"
+										 IsVisible="{Binding !HasTitle}"
+										 FontSize="{DynamicResource FontSizeM}"
+										 FontWeight="SemiBold"
+										 Foreground="{DynamicResource TextTertiary}"
+										 TextTrimming="CharacterEllipsis"/>
+
+					<Grid ColumnDefinitions="Auto,Auto,*"
+								IsVisible="{Binding HasTopic}"
+								Margin="0,1,0,0">
+
+						<TextBlock Text="{Binding Chat.Topic}"
+											 FontSize="{DynamicResource FontSizeXs}"
+											 Foreground="{Binding TopicColor}"
+											 TextTrimming="CharacterEllipsis"/>
+
+						<TextBlock Grid.Column="1"
+											 Text="·"
+											 Margin="4,0"
+											 FontSize="{DynamicResource FontSizeXs}"
+											 Foreground="{DynamicResource TextTertiary}"
+											 IsVisible="{Binding HasSubTopic}"/>
+
+						<TextBlock Grid.Column="2"
+											 Text="{Binding Chat.SubTopic}"
+											 FontSize="{DynamicResource FontSizeXs}"
+											 Foreground="{Binding SubTopicColor}"
+											 TextTrimming="CharacterEllipsis"/>
+
+					</Grid>
+
+				</StackPanel>
+
+				<StackPanel Grid.Column="2"
+										Orientation="Horizontal"
+										Spacing="2"
+										VerticalAlignment="Center">
+
+					<!--
+						Overlay windows the user put away. The badge is a sibling of the button, not its content: a
+						glyph inside a 32px box has no room for a count on top of it.
+					-->
+					<Panel IsVisible="{Binding ChatOverlay.HasTrayItems}">
+
+						<Button Classes="icon"
+										ToolTip.Tip="{loc:Loc chat.overlay.tray}">
+							<ico:VisualIcon Kind="TrayArrowDown"/>
+
+						<Button.Flyout>
+							<Flyout Placement="BottomEdgeAlignedRight">
+
+								<StackPanel DataContext="{Binding ChatOverlay}"
+														Spacing="4"
+														MinWidth="220">
+
+									<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+										<ico:VisualIcon Kind="TrayArrowDown" Width="18" Height="18" VerticalAlignment="Center"/>
+										<TextBlock Text="{loc:Loc chat.overlay.tray}"
+															 FontSize="{DynamicResource FontSizeM}"
+															 FontWeight="SemiBold"
+															 VerticalAlignment="Center"/>
+									</StackPanel>
+
+									<ItemsControl ItemsSource="{Binding Tray}">
+										<ItemsControl.ItemTemplate>
+											<DataTemplate x:DataType="chat:AdditionalChatDataOverlayItem">
+
+												<Grid ColumnDefinitions="*,Auto,Auto"
+															Margin="0,1">
+													
+													<StackPanel Grid.Column="0"
+																			Orientation="Horizontal"
+																			Margin="2,0,8,0"
+																			Spacing="6">
+														
+														<ico:VisualIcon Kind="{Binding Icon}"
+																						IsVisible="{Binding HasIcon}"
+																						Width="14" Height="14"
+																						VerticalAlignment="Center"
+																						Foreground="{DynamicResource TextSecondary}"/>
+
+														<TextBlock Text="{Binding Title}"
+																			 IsVisible="{Binding HasTitle}"
+																			 FontSize="{DynamicResource FontSizeS}"
+																			 VerticalAlignment="Center"
+																			 TextTrimming="CharacterEllipsis"/>
+														
+														<TextBlock Text="{loc:Loc chat.overlay.untitled}"
+																			 IsVisible="{Binding !HasTitle}"
+																			 Foreground="{DynamicResource TextTertiary}"
+																			 VerticalAlignment="Center"
+																			 TextTrimming="CharacterEllipsis"/>
+
+													</StackPanel>
+
+													<Button Grid.Column="1"
+																	Classes="icon mini"
+																	ToolTip.Tip="{loc:Loc chat.overlay.restore}"
+																	Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).RestoreCommand}"
+																	CommandParameter="{Binding}">
+														<ico:VisualIcon Kind="ArrowUp"/>
+													</Button>
+
+													<Button Grid.Column="2"
+																	Classes="icon mini"
+																	IsVisible="{Binding CanClose}"
+																	ToolTip.Tip="{loc:Loc chat.overlay.close}"
+																	Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"
+																	CommandParameter="{Binding}">
+														<ico:VisualIcon Kind="Close"/>
+													</Button>
+
+												</Grid>
+
+											</DataTemplate>
+										</ItemsControl.ItemTemplate>
+									</ItemsControl>
+
+								</StackPanel>
+
+							</Flyout>
+						</Button.Flyout>
+
+						</Button>
+
+						<Border Classes="countBadge">
+							<TextBlock Text="{Binding ChatOverlay.TrayCount}"/>
+						</Border>
+
+					</Panel>
+
+					<!-- Agent tasks: the count is the point, the list is the flyout. -->
+					<Panel IsVisible="{Binding HasRunningTasks}">
+
+						<Button Classes="icon"
+										ToolTip.Tip="{loc:Loc task.title}">
+							<ico:VisualIcon Kind="{Binding AgentTaskIcon}"/>
+
+						<Button.Flyout>
+							<Flyout Placement="BottomEdgeAlignedRight">
+
+								<StackPanel Spacing="4" Orientation="Vertical">
+
+									<StackPanel Orientation="Horizontal"
+															Spacing="8"
+															Margin="0,0,0,8">
+										<ico:VisualIcon Kind="TimerSandComplete"
+																		Width="18" Height="18"
+																		VerticalAlignment="Center"/>
+										<TextBlock Text="{loc:Loc task.title}"
+															 FontSize="{DynamicResource FontSizeM}"
+															 FontWeight="SemiBold"
+															 VerticalAlignment="Center"/>
+									</StackPanel>
+
+									<ScrollViewer MaxHeight="450">
+										<ContentControl Content="{Binding AgentTaskList}"/>
+									</ScrollViewer>
+
+								</StackPanel>
+
+							</Flyout>
+						</Button.Flyout>
+
+						</Button>
+
+						<Border Classes="countBadge">
+							<TextBlock Text="{Binding RunningTaskCount}"/>
+						</Border>
+
+					</Panel>
+
+				</StackPanel>
+
+			</Grid>
 
 		</Border>
 
-		<GridSplitter Grid.Column="1"
-									Width="2" MinWidth="1"
-									ResizeDirection="Columns"
-									Background="{DynamicResource PrimaryBase}"
-									IsVisible="{Binding ChatSidePanel.HasItems}"/>
+		<!--
+			The tab strip: the chat's additional data that asked for a tab. Drawn only while there is at least
+			one, so a chat without them keeps the header as the last horizontal line.
+		-->
+		<Border Grid.Row="1"
+						Classes="chatTabStrip"
+						IsVisible="{Binding ChatTabs.HasTabs}">
 
-		<Grid Grid.Column="2" RowDefinitions="*,Auto">
+			<ScrollViewer HorizontalScrollBarVisibility="Auto"
+										VerticalScrollBarVisibility="Disabled">
 
-			<!-- Messages Area -->
-			<Panel Grid.Row="0">
+				<ItemsControl ItemsSource="{Binding ChatTabs.Tabs}">
+					<ItemsControl.ItemsPanel>
+						<ItemsPanelTemplate>
+							<StackPanel Orientation="Horizontal"/>
+						</ItemsPanelTemplate>
+					</ItemsControl.ItemsPanel>
 
-				<!-- Agent Tasks button (top-right) -->
-				<Button x:Name="AgentTasksButton"
-								IsHitTestVisible="{Binding HasRunningTasks}"
-								Opacity="{Binding HasRunningTasks, Converter={StaticResource BooleanToOpacityConverter}}"
-								Classes="icon large"
-								HorizontalAlignment="Right"
-								VerticalAlignment="Top"
-								Margin="32,16"
-								ClipToBounds="False"
-								ZIndex="10">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate x:DataType="chat:AdditionalChatDataTabItem">
 
-					<Button.Transitions>
-						<Transitions>
-							<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
-						</Transitions>
-					</Button.Transitions>
+							<Border Classes="chatTab"
+											Classes.active="{Binding IsSelected}">
 
-					<Panel>
-						<ico:VisualIcon Kind="{Binding AgentTaskIcon}"
-														Width="32" Height="32"/>
+								<StackPanel Orientation="Horizontal" Spacing="0">
 
-						<!-- Running task count badge -->
-						<Border Background="#F44336"
-										CornerRadius="9"
-										HorizontalAlignment="Right"
-										VerticalAlignment="Top"
-										Padding="5,1"
-										Margin="0,-6,-6,0"
-										ZIndex="1">
-							<TextBlock Text="{Binding RunningTaskCount}"
-											   FontSize="10"
-											   Foreground="White"
-											   FontWeight="Bold"/>
-						</Border>
-					</Panel>
+									<Button Classes="tabLabel"
+													Command="{Binding $parent[ItemsControl].((local:ChatViewModel)DataContext).ChatTabs.SelectCommand}"
+													CommandParameter="{Binding}">
 
-					<!-- Agent Tasks Popup -->
-					<Button.Flyout>
-						<Flyout Placement="BottomEdgeAlignedRight"
-										HorizontalOffset="-16"
-										VerticalOffset="4">
+										<StackPanel Orientation="Horizontal" Spacing="6">
+											<ico:VisualIcon Kind="{Binding Icon}"
+																			IsVisible="{Binding HasIcon}"
+																			Width="14" Height="14"/>
+											<TextBlock Text="{Binding Title}"
+																 IsVisible="{Binding HasTitle}"
+																 VerticalAlignment="Center"/>
+										</StackPanel>
 
-							<StackPanel Spacing="4" Orientation="Vertical">
-								<StackPanel Orientation="Horizontal"
-														Spacing="8"
-														Margin="0,0,0,8">
-									<ico:VisualIcon Kind="TimerSandComplete"
-																	Width="18" Height="18"
-																	VerticalAlignment="Center"/>
-									<TextBlock Text="{loc:Loc task.title}"
-														   FontSize="15" FontWeight="Bold"
-														   VerticalAlignment="Center"/>
+									</Button>
+
+									<Button Classes="icon mini"
+													IsVisible="{Binding CanClose}"
+													Margin="0,0,4,0"
+													ToolTip.Tip="{loc:Loc chat.tab.close}"
+													Command="{Binding $parent[ItemsControl].((local:ChatViewModel)DataContext).ChatTabs.CloseCommand}"
+													CommandParameter="{Binding}">
+										<ico:VisualIcon Kind="Close"/>
+									</Button>
+
 								</StackPanel>
-								<ScrollViewer MaxHeight="450">
-									<ContentControl Content="{Binding AgentTaskList}"/>
-								</ScrollViewer>
-							</StackPanel>
 
-						</Flyout>
-					</Button.Flyout>
-				</Button>
+							</Border>
 
-				<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
-																	 ScrollChanged="MessagesScrollViewer_ScrollChanged"
-																	 VerticalScrollBarVisibility="Visible"
-																	 AllowAutoHide="False"
-																	 BringIntoViewOnFocusChange="False"
-																	 FollowEnd="True"
-																	 Step="75">
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
 
-					<StackPanel>
-						<ContentControl Content="{Binding MessageSequence}"/>
-						<ContentControl Content="{Binding ChatStatus}"/>
-					</StackPanel>
+			</ScrollViewer>
+
+		</Border>
+
+		<!-- ===================== the conversation ===================== -->
+		<Grid Grid.Row="2">
+
+			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="*"/>
+				<ColumnDefinition Width="{Binding ChatSidePanel.SplitterWidth}"/>
+				<ColumnDefinition Width="{Binding ChatSidePanel.PanelWidth, Mode=TwoWay}"/>
+			</Grid.ColumnDefinitions>
+
+			<!-- Side panel: the fallback surface for the chat's own additional data, on the free side. -->
+			<Border Grid.Column="2"
+							Classes="chatSidePanel"
+							IsVisible="{Binding ChatSidePanel.HasItems}">
+
+				<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
+																	 Padding="16"
+																	 Step="65">
+					<ItemsControl ItemsSource="{Binding ChatSidePanel.Items}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="additional:AdditionalChatData">
+								<ContentControl Content="{Binding}"
+																IsVisible="{Binding IsVisible}"
+																Margin="0,0,0,12"/>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
 				</scroll:SmoothScrollViewer>
 
-				<Button x:Name="ScrollToBottomButton"
-								Classes="icon large"
-								Click="ScrollToBottomButton_Click"
-								HorizontalAlignment="Right"
-								VerticalAlignment="Bottom"
-								Margin="32,16">
-
-					<Button.Transitions>
-						<Transitions>
-							<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
-						</Transitions>
-					</Button.Transitions>
-
-					<ico:VisualIcon Kind="ArrowDown"/>
-
-				</Button>
-
-				<!-- Input chips: an overlay above the divider, kept clear of the scroll-to-bottom button. -->
-				<ContentControl HorizontalAlignment="Right"
-												VerticalAlignment="Bottom"
-												Margin="16,0,96,0"
-												ZIndex="20"
-												Content="{Binding ChatBottomPanel.UserInput.Chips}"/>
-
-			</Panel>
-
-			<!-- Input Area -->
-			<Border Grid.Row="1"
-							Padding="16,8"
-							BorderBrush="{DynamicResource PrimaryBase}"
-							BorderThickness="0,1,0,0">
-
-				<ContentControl Content="{Binding ChatBottomPanel}"/>
 			</Border>
+
+			<!-- The hairline is one pixel, the grab area of the splitter on top of it is wider. -->
+			<Border Grid.Column="1"
+							Width="1"
+							Background="{DynamicResource BorderDefault}"
+							HorizontalAlignment="Center"
+							IsVisible="{Binding ChatSidePanel.HasItems}"/>
+
+			<GridSplitter Grid.Column="1"
+										Width="5" MinWidth="5"
+										ResizeDirection="Columns"
+										Background="Transparent"
+										IsVisible="{Binding ChatSidePanel.HasItems}"/>
+
+			<Grid Grid.Column="0" RowDefinitions="*,Auto">
+
+				<!-- Messages Area -->
+				<Panel Grid.Row="0">
+
+					<scroll:SmoothScrollViewer x:Name="MessagesScrollViewer"
+																		 ScrollChanged="MessagesScrollViewer_ScrollChanged"
+																		 VerticalScrollBarVisibility="Visible"
+																		 AllowAutoHide="False"
+																		 BringIntoViewOnFocusChange="False"
+																		 FollowEnd="True"
+																		 Step="75">
+
+						<StackPanel>
+							<ContentControl Content="{Binding MessageSequence}"/>
+							<ContentControl Content="{Binding ChatStatus}"/>
+						</StackPanel>
+					</scroll:SmoothScrollViewer>
+
+					<Button x:Name="ScrollToBottomButton"
+									Classes="icon floatingAction"
+									Click="ScrollToBottomButton_Click"
+									HorizontalAlignment="Right"
+									VerticalAlignment="Bottom"
+									Margin="0,0,20,16"
+									Opacity="0">
+
+						<Button.Transitions>
+							<Transitions>
+								<DoubleTransition Property="Opacity" Duration="0:0:0.3" Easing="SineEaseInOut"/>
+							</Transitions>
+						</Button.Transitions>
+
+						<ico:VisualIcon Kind="ArrowDown"/>
+
+					</Button>
+
+				</Panel>
+
+				<!--
+					The composer: the card itself lives in ChatBottomPanelView, so the rails, the input and the
+					toolbar share one surface. Nothing is drawn between it and the conversation.
+				-->
+				<ContentControl Grid.Row="1"
+												Margin="16,4,16,16"
+												Content="{Binding ChatBottomPanel}"/>
+
+			</Grid>
+
+			<!--
+				Overlay windows: chat additional data that asked for a floating surface. The tray they are restored
+				from lives in the header, the windows themselves stay over the conversation.
+			-->
+			<ContentControl Grid.ColumnSpan="3"
+											ZIndex="5"
+											Content="{Binding ChatOverlay}"/>
+
 		</Grid>
-		
+
 		<!--
-			Overlay windows: chat additional data that asked for a floating surface.
+			The open tab: a payload over the conversation, under the header. It covers the composer too, so a tab
+			reads as a page of the chat rather than as a panel next to it.
 		-->
-		<ContentControl Grid.ColumnSpan="3"
-										ZIndex="5"
-										Content="{Binding ChatOverlay}"/>
+		<Border Grid.Row="2"
+						ZIndex="10"
+						Background="{DynamicResource WindowBackground}"
+						IsVisible="{Binding ChatTabs.IsContentShown}">
+
+			<scroll:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
+																 Padding="16"
+																 Step="65">
+				<ContentControl Content="{Binding ChatTabs.SelectedContent}"/>
+			</scroll:SmoothScrollViewer>
+
+		</Border>
 
 	</Grid>
 

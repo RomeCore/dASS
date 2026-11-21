@@ -22,6 +22,7 @@ follow_up.level.hint: Когда вставлять сообщение из оч
 follow_up.level.immediate: Сразу
 follow_up.level.message: После ответа
 follow_up.open: Открыть очередь
+header.untitled: Без названия
 hook.submit.disallowed: Сообщение заблокировано хуком.
 hook.submit.error: Хук сломался при проверке сообщения, поэтому оно не отправлено.
 hook.turn.disallowed: Ответ заблокирован хуком.
@@ -84,6 +85,7 @@ status.selecting_agent: Подбираем агента
 status.waiting_for_first_response: Ждём первый токен
 status.waiting_for_mcp_connections: Подключаем MCP
 summarization.task: Суммаризация чата
+tab.close: Закрыть вкладку
 temporary: временный
 toast.agent_selection_failed.description: Не удалось выбрать агента для генерации ответа.
 toast.agent_selection_failed.title: Не удалось выбрать агента

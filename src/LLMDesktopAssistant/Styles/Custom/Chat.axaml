@@ -1,5 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
-		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+				xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+				xmlns:txt="using:LLMDesktopAssistant.Controls.Text">
 
 	<Design.PreviewWith>
 		<Border Padding="20">
@@ -18,6 +20,158 @@
 		<Setter Property="MaxWidth" Value="500"/>
 		<Setter Property="HorizontalAlignment" Value="Right"/>
 		<Setter Property="VerticalAlignment" Value="Top"/>
+	</Style>
+
+	<!--
+		The chat's own chrome. The header carries what belongs to the whole page - identity, the list, the
+		indicators - while the composer below carries what belongs to one message.
+	-->
+	<Style Selector="Border.chatHeader">
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="0,0,0,1"/>
+		<Setter Property="Height" Value="52"/>
+	</Style>
+
+	<!-- A count on an action of the header: a badge, not a second icon. -->
+	<Style Selector="Border.countBadge">
+		<Setter Property="Background" Value="{DynamicResource PrimaryBase}"/>
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
+		<Setter Property="MinWidth" Value="14"/>
+		<Setter Property="MinHeight" Value="14"/>
+		<Setter Property="Padding" Value="3,0"/>
+		<Setter Property="HorizontalAlignment" Value="Right"/>
+		<Setter Property="VerticalAlignment" Value="Top"/>
+		<Setter Property="Margin" Value="0,-4,-7,0"/>
+		<Setter Property="IsHitTestVisible" Value="False"/>
+		<Style Selector="^ TextBlock">
+			<Setter Property="FontSize" Value="{DynamicResource FontSizeXs}"/>
+			<Setter Property="FontWeight" Value="Bold"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextOnPrimary}"/>
+			<Setter Property="HorizontalAlignment" Value="Center"/>
+		</Style>
+	</Style>
+
+	<!--
+		The tab strip. A tab is an underline, not a card: the header above it is already a surface, and a second
+		frame there would read as a toolbar of buttons rather than as pages of this chat.
+	-->
+	<Style Selector="Border.chatTabStrip">
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="0,0,0,1"/>
+		<Setter Property="Height" Value="36"/>
+	</Style>
+
+	<Style Selector="Border.chatTab">
+		<!-- Black, not Transparent: a BrushTransition out of #00FFFFFF flashes white halfway through. -->
+		<Setter Property="Background" Value="#00000000"/>
+		<Setter Property="BorderBrush" Value="#00000000"/>
+		<Setter Property="BorderThickness" Value="0,0,0,2"/>
+		<Setter Property="CornerRadius" Value="0"/>
+		<Style Selector="^ Button.tabLabel">
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+		</Style>
+		<Style Selector="^ Button.tabLabel:pointerover">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+		</Style>
+		<Style Selector="^:pointerover">
+			<Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+		</Style>
+	</Style>
+
+	<Style Selector="Border.chatTab.active">
+		<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}"/>
+		<Style Selector="^ Button.tabLabel">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}"/>
+			<Setter Property="FontWeight" Value="Medium"/>
+		</Style>
+	</Style>
+
+	<Style Selector="Button.tabLabel">
+		<Setter Property="Background" Value="#00000000"/>
+		<Setter Property="BorderThickness" Value="0"/>
+		<Setter Property="CornerRadius" Value="0"/>
+		<Setter Property="Padding" Value="12,0"/>
+		<Setter Property="Height" Value="34"/>
+		<Setter Property="FontSize" Value="{DynamicResource FontSizeS}"/>
+		<Setter Property="FontWeight" Value="Regular"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+	</Style>
+
+	<!--
+		The composer: one card holding the rails, the input and the toolbar. The input itself carries no frame
+		(HighlightTextBox.nochrome), so this surface is the only thing that draws one.
+	-->
+	<Style Selector="Border.composerCard">
+		<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusL}"/>
+		<Setter Property="Padding" Value="10,8"/>
+		<Setter Property="BoxShadow" Value="0 10 28 -10 #40000000"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="BorderBrush" Duration="0:0:0.36" Easing="CubicEaseOut" />
+			</Transitions>
+		</Setter>
+		<Style Selector="^:focus-within">
+			<Setter Property="BorderBrush" Value="{DynamicResource FocusRing}"/>
+		</Style>
+	</Style>
+
+	<Style Selector="Button.floatingAction">
+		<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
+		<Setter Property="Padding" Value="0"/>
+		<Setter Property="Width" Value="44"/>
+		<Setter Property="Height" Value="44"/>
+		<Setter Property="HorizontalContentAlignment" Value="Center"/>
+		<Setter Property="VerticalContentAlignment" Value="Center"/>
+	</Style>
+
+	<Style Selector="Button.floatingAction ico|VisualIcon">
+		<Setter Property="Width" Value="20"/>
+		<Setter Property="Height" Value="20"/>
+	</Style>
+
+	<!-- A chip of the input state (a queued message, a message being edited): a pill, never a half-frame. -->
+	<Style Selector="Border.inputChip">
+		<Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="1"/>
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
+		<Setter Property="Padding" Value="2,0"/>
+		<Style Selector="^ Button.chipLabel">
+			<Setter Property="Background" Value="#00000000"/>
+			<Setter Property="BorderThickness" Value="0"/>
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}"/>
+			<Setter Property="Padding" Value="8,2"/>
+			<Setter Property="FontSize" Value="{DynamicResource FontSizeXs}"/>
+			<Setter Property="FontWeight" Value="Regular"/>
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}"/>
+		</Style>
+		<Style Selector="^ Button.chipLabel:pointerover">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
+		</Style>
+	</Style>
+
+	<Style Selector="Border.inputChip.accent">
+		<Setter Property="Background" Value="{DynamicResource PrimarySubtle}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBorder}"/>
+		<Style Selector="^ Button.chipLabel">
+			<Setter Property="Foreground" Value="{DynamicResource PrimaryBase}"/>
+		</Style>
+	</Style>
+
+	<!-- The fallback side panel of the chat: a surface with a hairline, never a coloured divider. -->
+	<Style Selector="Border.chatSidePanel">
+		<Setter Property="Background" Value="{DynamicResource PanelBackground}"/>
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderSubtle}"/>
+		<Setter Property="BorderThickness" Value="1,0,0,0"/>
 	</Style>
 
 </Styles>

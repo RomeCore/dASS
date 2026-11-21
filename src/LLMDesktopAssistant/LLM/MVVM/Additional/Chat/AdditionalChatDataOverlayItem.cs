@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LLMDesktopAssistant.Controls.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 {
@@ -32,6 +33,24 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// Gets a value indicating whether the item has a title worth drawing.
 		/// </summary>
 		public bool HasTitle => !string.IsNullOrWhiteSpace(Title);
+
+		/// <summary>
+		/// Gets or sets the icon drawn before the title in the window header and in the tray row.
+		/// </summary>
+		public VisualIconKind? Icon
+		{
+			get;
+			set
+			{
+				if (SetProperty(ref field, value))
+					RaisePropertyChanged(nameof(HasIcon));
+			}
+		} = VisualIconKind.None;
+
+		/// <summary>
+		/// Gets a value indicating whether the window has an icon of its own.
+		/// </summary>
+		public bool HasIcon => Icon?.IsNone != true;
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the user may destroy the window, together with its payload.
@@ -165,6 +184,9 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 
 			if (string.IsNullOrWhiteSpace(Title))
 				Title = overlay.Title;
+
+			if (Icon is null || Icon.Value.IsNone)
+				Icon = overlay.Icon;
 
 			State = overlay.State;
 			Left = overlay.Left;

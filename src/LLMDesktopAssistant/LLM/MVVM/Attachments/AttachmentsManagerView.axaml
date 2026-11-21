@@ -20,12 +20,13 @@
 		<DockPanel Grid.Row="0"
 							 Margin="0,0,0,10">
 
-			<ico:VisualIcon Kind="Paperclip" FontSize="28"/>
+			<ico:VisualIcon Kind="Paperclip" Width="24" Height="24"
+											Foreground="{DynamicResource TextSecondary}"/>
 
 			<TextBlock Text="{loc:Loc attachment.manager.title}"
 								 Margin="8,0,0,0"
-								 FontWeight="Bold"
-								 FontSize="20"
+								 FontWeight="SemiBold"
+								 FontSize="{DynamicResource FontSizeXl}"
 								 VerticalAlignment="Center"/>
 			
 			<Button DockPanel.Dock="Right"
@@ -84,12 +85,17 @@
 			<ItemsControl.ItemTemplate>
 				<DataTemplate>
 
-					<Border Margin="5" Padding="10">
+					<Border Margin="0,0,0,8"
+									Padding="12,10"
+									Background="{DynamicResource CardBackground}"
+									BorderBrush="{DynamicResource BorderSubtle}"
+									BorderThickness="1"
+									CornerRadius="{DynamicResource RadiusM}">
 
 						<StackPanel>
 
 							<TextBlock Text="{Binding Title}"
-												 FontWeight="Bold"
+												 FontWeight="SemiBold"
 												 TextTrimming="CharacterEllipsis"/>
 
 							<CheckBox IsChecked="{Binding CopyToWorkingDirectory}"
@@ -117,18 +123,18 @@
 		<Border x:Name="DropOverlay"
 						Grid.Row="1"
 						Grid.RowSpan="2"
-						Background="#2000BCD4"
-						BorderBrush="#6000BCD4"
-						BorderThickness="3"
-						CornerRadius="8"
+						Background="{DynamicResource PrimarySubtle}"
+						BorderBrush="{DynamicResource PrimaryBorder}"
+						BorderThickness="2"
+						CornerRadius="{DynamicResource RadiusM}"
 						IsVisible="False"
 						IsHitTestVisible="False">
-			
+
 			<TextBlock Text="{loc:Loc attachment.drop_files_here}"
 								 HorizontalAlignment="Center"
 								 VerticalAlignment="Center"
-								 FontSize="18"
-								 Foreground="#FF00BCD4"/>
+								 FontSize="{DynamicResource FontSizeL}"
+								 Foreground="{DynamicResource PrimaryBase}"/>
 		</Border>
 
 	</Grid>

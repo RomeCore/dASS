@@ -92,13 +92,24 @@
 
 								<Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
 
-									<TextBlock Grid.Column="0"
-														 Text="{Binding Title}"
-														 IsVisible="{Binding HasTitle}"
-														 FontSize="12"
-														 VerticalAlignment="Center"
-														 TextTrimming="CharacterEllipsis"
-														 Margin="2,0,8,0"/>
+									<StackPanel Grid.Column="0"
+															Orientation="Horizontal"
+															Margin="2,0,8,0"
+															Spacing="6">
+										
+										<ico:VisualIcon Kind="{Binding Icon}"
+																		IsVisible="{Binding HasIcon}"
+																		Width="14" Height="14"
+																		VerticalAlignment="Center"
+																		Foreground="{DynamicResource TextSecondary}"/>
+
+										<TextBlock Text="{Binding Title}"
+															 IsVisible="{Binding HasTitle}"
+															 FontSize="{DynamicResource FontSizeS}"
+															 VerticalAlignment="Center"
+															 TextTrimming="CharacterEllipsis"/>
+
+									</StackPanel>
 
 									<Button Grid.Column="1"
 													Classes="icon mini overlayButton"
@@ -174,98 +185,6 @@
 			</ItemsControl.ItemTemplate>
 
 		</ItemsControl>
-
-		<!-- Tray: the windows the user put away, back on a click. The agent task button sits at the other side. -->
-		<Button Classes="icon large"
-						IsVisible="{Binding HasTrayItems}"
-						ClipToBounds="False"
-						HorizontalAlignment="Left"
-						VerticalAlignment="Top"
-						Margin="16,16"
-						ZIndex="1000"
-						ToolTip.Tip="{loc:Loc chat.overlay.tray}">
-
-			<Panel>
-				<ico:VisualIcon Kind="TrayArrowDown" Width="26" Height="26"/>
-
-				<Border Background="#F44336"
-								CornerRadius="9"
-								HorizontalAlignment="Right"
-								VerticalAlignment="Top"
-								Padding="5,1"
-								Margin="0,-6,-6,0"
-								ZIndex="1">
-					<TextBlock Text="{Binding TrayCount}"
-										 FontSize="10"
-										 Foreground="White"
-										 FontWeight="Bold"/>
-				</Border>
-			</Panel>
-
-			<Button.Flyout>
-				<Flyout Placement="BottomEdgeAlignedLeft">
-
-					<StackPanel Spacing="4" MinWidth="220">
-
-						<StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-							<ico:VisualIcon Kind="TrayArrowDown" Width="18" Height="18" VerticalAlignment="Center"/>
-							<TextBlock Text="{loc:Loc chat.overlay.tray}"
-												 FontSize="15"
-												 FontWeight="Bold"
-												 VerticalAlignment="Center"/>
-						</StackPanel>
-
-						<ItemsControl ItemsSource="{Binding Tray}">
-							<ItemsControl.ItemTemplate>
-								<DataTemplate x:DataType="add:AdditionalChatDataOverlayItem">
-
-									<Grid ColumnDefinitions="*,Auto,Auto" Margin="0,1">
-
-										<TextBlock Grid.Column="0"
-															 Text="{Binding Title}"
-															 IsVisible="{Binding HasTitle}"
-															 VerticalAlignment="Center"
-															 TextTrimming="CharacterEllipsis"
-															 Margin="2,0,8,0"/>
-
-										<TextBlock Grid.Column="0"
-															 Text="{loc:Loc chat.overlay.untitled}"
-															 IsVisible="{Binding !HasTitle}"
-															 Opacity="0.6"
-															 VerticalAlignment="Center"
-															 TextTrimming="CharacterEllipsis"
-															 Margin="2,0,8,0"/>
-
-										<Button Grid.Column="1"
-														Classes="icon mini overlayButton"
-														ToolTip.Tip="{loc:Loc chat.overlay.restore}"
-														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).RestoreCommand}"
-														CommandParameter="{Binding}">
-											<ico:VisualIcon Kind="ArrowUp"/>
-										</Button>
-
-										<Button Grid.Column="2"
-														Classes="icon mini overlayButton"
-														IsVisible="{Binding CanClose}"
-														ToolTip.Tip="{loc:Loc chat.overlay.close}"
-														Command="{Binding $parent[ItemsControl].((local:ChatOverlayHostViewModel)DataContext).CloseCommand}"
-														CommandParameter="{Binding}">
-											<ico:VisualIcon Kind="Close"/>
-										</Button>
-
-									</Grid>
-
-								</DataTemplate>
-							</ItemsControl.ItemTemplate>
-						</ItemsControl>
-
-					</StackPanel>
-
-				</Flyout>
-			</Button.Flyout>
-
-		</Button>
-
 	</Panel>
 
 </UserControl>

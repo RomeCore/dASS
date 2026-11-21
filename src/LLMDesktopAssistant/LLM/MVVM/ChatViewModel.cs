@@ -1,3 +1,5 @@
+using System.ComponentModel;
+using System.Windows.Input;
 using LLMDesktopAssistant.Agents.Tasks.MVVM;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Messages;
@@ -37,6 +39,50 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// Gets the overlay layer over the message sequence, with the tray its windows are restored from.
 		/// </summary>
 		public ChatOverlayHostViewModel ChatOverlay { get; }
+
+		/// <summary>
+		/// Gets the tab strip of the header and the payload of the open tab.
+		/// </summary>
+		public ChatTabHostViewModel ChatTabs { get; }
+
+		/// <summary>
+		/// Gets or sets the command that shows or hides the chat list this chat belongs to.
+		/// </summary>
+		/// <remarks>
+		/// The list belongs to the manager that hosts the chat pages, not to the chat, so the command arrives from
+		/// there; a chat shown without a list leaves it <see langword="null"/> and the header hides the button.
+		/// </remarks>
+		public ICommand? ToggleChatListCommand { get; set; }
+
+		/// <summary>
+		/// Gets the title the header shows.
+		/// </summary>
+		public string Title => Chat.Title;
+
+		/// <summary>
+		/// Gets a value indicating whether the chat has a title of its own.
+		/// </summary>
+		public bool HasTitle => !string.IsNullOrWhiteSpace(Chat.Title);
+
+		/// <summary>
+		/// Gets a value indicating whether the chat has a topic to show under the title.
+		/// </summary>
+		public bool HasTopic => !string.IsNullOrWhiteSpace(Chat.Topic);
+
+		/// <summary>
+		/// Gets a value indicating whether the chat has a sub-topic to show next to the topic.
+		/// </summary>
+		public bool HasSubTopic => !string.IsNullOrWhiteSpace(Chat.SubTopic);
+
+		/// <summary>
+		/// Gets the color the topic is drawn with, derived from its own hash.
+		/// </summary>
+		public string TopicColor => ChatTopicHashColor.GetHex(Chat.Topic);
+
+		/// <summary>
+		/// Gets the color the sub-topic is drawn with, derived from its own hash.
+		/// </summary>
+		public string SubTopicColor => ChatTopicHashColor.GetHex(Chat.SubTopic);
 
 		private AgentTaskListViewModel? _agentTaskList;
 		/// <summary>
@@ -86,6 +132,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			Chat = chat;
 			ChatSidePanel = new ChatSidePanelViewModel(chat.AdditionalData);
 			ChatOverlay = new ChatOverlayHostViewModel(chat, chat.AdditionalData);
+			ChatTabs = new ChatTabHostViewModel(chat, chat.AdditionalData);
+			chat.PropertyChanged += OnChatPropertyChanged;
 			ChatBottomPanel = new ChatBottomPanelViewModel(this);
 			ChatStatus = new ChatStatusViewModel(chat);
 			MessageSequence = new MessageSequenceViewModel(this, ChatBottomPanel.UserInput);
@@ -117,6 +165,25 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
+		/// <summary>
+		/// The header reads the chat's own identity, so its changes are re-raised as this view model's.
+		/// </summary>
+		private void OnChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is not (null or nameof(Chat.Title) or nameof(Chat.Topic) or nameof(Chat.SubTopic)))
+				return;
+
+			InvokeUI(() =>
+			{
+				RaisePropertyChanged(nameof(Title));
+				RaisePropertyChanged(nameof(HasTitle));
+				RaisePropertyChanged(nameof(HasTopic));
+				RaisePropertyChanged(nameof(HasSubTopic));
+				RaisePropertyChanged(nameof(TopicColor));
+				RaisePropertyChanged(nameof(SubTopicColor));
+			});
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -126,9 +193,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				if (AgentTaskList != null)
 					AgentTaskList.PropertyChanged -= OnAgentTaskListPropertyChanged;
 
+				Chat.PropertyChanged -= OnChatPropertyChanged;
 				MessageSequence.Dispose();
 				ChatSidePanel.Dispose();
 				ChatOverlay.Dispose();
+				ChatTabs.Dispose();
 				ChatBottomPanel.Dispose();
 				ChatStatus.Dispose();
 				AgentTaskList?.Dispose();

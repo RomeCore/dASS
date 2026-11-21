@@ -24,7 +24,7 @@
 		<Setter Property="Template">
 			<ControlTemplate>
 				<DataValidationErrors>
-					<Grid ColumnDefinitions="*,30">
+					<Grid ColumnDefinitions="*,Auto">
 						<Border Name="Background"
 										Grid.ColumnSpan="2"
 										Background="{TemplateBinding Background}"
@@ -74,11 +74,12 @@
 										 IsVisible="{TemplateBinding IsEditable}" />
 
 						<ico:VisualIcon Name="DropDownGlyph"
-														Grid.Column="1"
-														Kind="ChevronDown"
-														Width="14"
-														Height="14"
-														HorizontalAlignment="Left"
+													Grid.Column="1"
+													Kind="ChevronDown"
+													Width="14"
+													Height="14"
+													Margin="8,0,6,0"
+													HorizontalAlignment="Center"
 														VerticalAlignment="Center"
 														IsHitTestVisible="False"
 														Foreground="{DynamicResource TextTertiary}"
@@ -133,6 +134,60 @@
 		</Style>
 		<Style Selector="^:disabled">
 			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+
+		<!--
+			A field whose frame is drawn by its host: the segmented model selector puts two of these inside one
+			Border, so the seams are hairlines of the host rather than two overlapping borders.
+		-->
+		<Style Selector="^.flat">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+			<Setter Property="Padding" Value="10,0" />
+			<Setter Property="MinHeight" Value="0" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+		</Style>
+		<Style Selector="^.flat /template/ Border#Background">
+			<Setter Property="Background" Value="#00000000" />
+		</Style>
+		<Style Selector="^.flat:pointerover /template/ Border#Background">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^.flat:pressed /template/ Border#Background">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+
+		<!--
+			The same field read as an action: no frame, no chevron, the size of an icon button. The choice is
+			stated by the icon it shows, so the list is the only place the words appear.
+		-->
+		<Style Selector="^.icon">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusS}" />
+			<Setter Property="Padding" Value="0" />
+			<Setter Property="MinHeight" Value="0" />
+			<Setter Property="Width" Value="{DynamicResource ControlHeightM}" />
+			<Setter Property="Height" Value="{DynamicResource ControlHeightM}" />
+			<Setter Property="HorizontalContentAlignment" Value="Center" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
+		</Style>
+		<Style Selector="^.icon /template/ Border#Background">
+			<Setter Property="Background" Value="#00000000" />
+		</Style>
+		<Style Selector="^.icon /template/ ico|VisualIcon#DropDownGlyph">
+			<Setter Property="IsVisible" Value="False" />
+		</Style>
+		<Style Selector="^.icon:pointerover /template/ Border#Background">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundHover}" />
+		</Style>
+		<Style Selector="^.icon:pressed /template/ Border#Background">
+			<Setter Property="Background" Value="{DynamicResource ControlBackgroundPressed}" />
+		</Style>
+		<Style Selector="^.icon:pointerover">
+			<Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
 		</Style>
 	</ControlTheme>
 

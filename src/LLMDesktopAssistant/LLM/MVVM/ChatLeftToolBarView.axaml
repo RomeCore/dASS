@@ -1,46 +1,74 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-			 xmlns:sett="using:LLMDesktopAssistant.Settings"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatLeftToolBarView"
-			 x:DataType="local:ChatLeftToolBarViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 xmlns:sett="using:LLMDesktopAssistant.Settings"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatLeftToolBarView"
+						 x:DataType="local:ChatLeftToolBarViewModel">
 
+	<!--
+		Three groups, two hairlines: the profile and the model are fields that carry a value, the icons are
+		actions. A separator says which is which, so the row is not one long ribbon of mixed controls.
+	-->
 	<StackPanel Orientation="Horizontal"
 							HorizontalAlignment="Left"
-							Spacing="5">
+							VerticalAlignment="Center"
+							Spacing="4">
 
-		<!-- Settings -->
-		<StackPanel Orientation="Horizontal" Spacing="0">
+		<!-- Settings profile: the same field language as the model selector, with its action inside the frame. -->
+		<Border Background="{DynamicResource ControlBackground}"
+						BorderBrush="{DynamicResource BorderDefault}"
+						BorderThickness="1"
+						CornerRadius="{DynamicResource RadiusM}"
+						Height="32"
+						VerticalAlignment="Center">
+			<StackPanel Orientation="Horizontal" Spacing="0">
 
-			<ComboBox SelectedItem="{Binding SelectedSettingsId}"
-								ItemsSource="{Binding SettingsIds}"
-								CornerRadius="8,0,0,8">
-				<ComboBox.ItemTemplate>
-					<DataTemplate x:DataType="sett:SettingsIdItemViewModel">
-						<TextBlock Text="{Binding DisplayId}"/>
-					</DataTemplate>
-				</ComboBox.ItemTemplate>
-			</ComboBox>
+				<ComboBox Classes="flat"
+									SelectedItem="{Binding SelectedSettingsId}"
+									ItemsSource="{Binding SettingsIds}"
+									MinWidth="90"
+									MaxWidth="150">
+					<ComboBox.ItemTemplate>
+						<DataTemplate x:DataType="sett:SettingsIdItemViewModel">
+							<TextBlock Text="{Binding DisplayId}" TextTrimming="CharacterEllipsis"/>
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
 
-			<Button Classes="icon"
-							Command="{Binding OpenSettingsCommand}"
-							ToolTip.Tip="{loc:Loc common.settings}"
-							ToolTip.VerticalOffset="-2"
-							ToolTip.Placement="Top"
-							CornerRadius="0,8,8,0">
-				<ico:VisualIcon Kind="Cog"/>
-			</Button>
+				<Border Width="1"
+								Background="{DynamicResource BorderSubtle}"
+								Margin="0,7"/>
 
-		</StackPanel>
+				<Button Classes="icon small"
+								Background="Transparent"
+								CornerRadius="{DynamicResource RadiusM}"
+								Margin="2,0"
+								Command="{Binding OpenSettingsCommand}"
+								ToolTip.Tip="{loc:Loc common.settings}"
+								ToolTip.VerticalOffset="-2"
+								ToolTip.Placement="Top">
+					<ico:VisualIcon Kind="Cog"/>
+				</Button>
+
+			</StackPanel>
+		</Border>
+
+		<Separator Classes="vertical flush"
+							 Background="{DynamicResource BorderSubtle}"
+							 Margin="2,6"/>
 
 		<!-- Model selector -->
 		<ctrl:ModelSelectorControl SelectedModel="{Binding ChatModel, Mode=TwoWay}"/>
+
+		<Separator Classes="vertical flush"
+							 Background="{DynamicResource BorderSubtle}"
+							 Margin="2,6"/>
 
 		<!-- Memorized tool decisions -->
 		<Button Classes="icon"
@@ -57,7 +85,6 @@
 						ToolTip.Tip="{loc:Loc chat.input.attach_file.hint}"
 						ToolTip.VerticalOffset="-2"
 						ToolTip.Placement="Top">
-
 			<ico:VisualIcon Kind="Paperclip"/>
 		</Button>
 
@@ -67,7 +94,6 @@
 						ToolTip.Tip="{loc:Loc webui.host.title}"
 						ToolTip.VerticalOffset="-2"
 						ToolTip.Placement="Top">
-
 			<ico:VisualIcon Kind="Web"/>
 		</Button>
 

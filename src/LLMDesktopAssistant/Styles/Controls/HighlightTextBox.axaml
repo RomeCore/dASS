@@ -72,8 +72,8 @@
 							</scroll:SmoothScrollViewer>
 						</DockPanel>
 					<ContentPresenter Grid.Column="2"
-											 VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-											 Content="{TemplateBinding InnerRightContent}" />
+														VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+														Content="{TemplateBinding InnerRightContent}" />
 				</Grid>
 				</Border>
 			</ControlTemplate>
@@ -99,6 +99,24 @@
 		</Style>
 		<Style Selector="^:disabled">
 			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+
+		<!-- A field that carries no chrome of its own: the host (ComboBox, NumericUpDown, an inline editor) owns the frame. -->
+		<Style Selector="^.nochrome">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="^.nochrome /template/ Border#PART_BorderElement">
+			<Setter Property="Background" Value="#00000000" />
+			<Setter Property="BorderBrush" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
+		</Style>
+		<Style Selector="^.nochrome:pointerover /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#00000000" />
+		</Style>
+		<Style Selector="^.nochrome:focus /template/ Border#PART_BorderElement">
+			<Setter Property="BorderBrush" Value="#00000000" />
+			<Setter Property="BorderThickness" Value="0" />
 		</Style>
 	</ControlTheme>
 

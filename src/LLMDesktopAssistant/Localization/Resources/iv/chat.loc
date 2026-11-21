@@ -22,6 +22,7 @@ follow_up.level.hint: When the queued message is injected
 follow_up.level.immediate: Right away
 follow_up.level.message: After the message
 follow_up.open: Open the queue
+header.untitled: Untitled chat
 hook.submit.disallowed: The message was blocked by a hook.
 hook.submit.error: A hook failed while checking the message, so it was not sent.
 hook.turn.disallowed: The answer was blocked by a hook.
@@ -84,6 +85,7 @@ status.selecting_agent: Selecting agent
 status.waiting_for_first_response: Waiting for first token
 status.waiting_for_mcp_connections: Connecting to MCP
 summarization.task: Chat summarization
+tab.close: Close the tab
 temporary: temporary
 toast.agent_selection_failed.description: Failed to select an agent for response generation.
 toast.agent_selection_failed.title: Agent selection failed

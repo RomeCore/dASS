@@ -8,97 +8,130 @@
 						 mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="40"
 						 x:Class="LLMDesktopAssistant.Controls.ModelSelectorControl">
 
-	<StackPanel Orientation="Horizontal" Spacing="0"
-							x:Name="SelectorRoot">
+	<Border Background="{DynamicResource ControlBackground}"
+					BorderBrush="{DynamicResource BorderDefault}"
+					BorderThickness="1"
+					CornerRadius="{DynamicResource RadiusM}"
+					Height="32"
+					VerticalAlignment="Center"
+					HorizontalAlignment="Left">
 
-		<ComboBox x:Name="ModelSelector"
-							MinWidth="150"
-							VerticalAlignment="Stretch"
-							CornerRadius="8,0,0,8">
+		<StackPanel Orientation="Horizontal" Spacing="0">
 
-			<ComboBox.DataTemplates>
+			<ComboBox x:Name="ModelSelector"
+								Classes="flat"
+								MinWidth="110"
+								MaxWidth="220"
+								VerticalAlignment="Stretch">
 
-				<DataTemplate DataType="local:ModelItemWrapper">
-					<Panel>
-						<TextBlock Text="{loc:Loc {Binding DisplayText}}"
-											 IsVisible="{Binding !IsInvalid}"/>
-						<TextBlock Text="{loc:Loc {Binding DisplayText}}"
-											 Foreground="OrangeRed"
-											 IsVisible="{Binding IsInvalid}"/>
-					</Panel>
-				</DataTemplate>
+				<ComboBox.DataTemplates>
 
-				<DataTemplate DataType="local:ComboBoxHeaderItem">
-					<StackPanel Opacity="0.6">
-						<Separator Margin="2,3,2,3" MinWidth="100"/>
-						<TextBlock Text="{Binding Title}"/>
-					</StackPanel>
-				</DataTemplate>
-
-				<DataTemplate DataType="local:ComboBoxEmptyItem">
-					<TextBlock Foreground="Gray"
-										 Text="{Binding Title}"/>
-				</DataTemplate>
-
-			</ComboBox.DataTemplates>
-
-		</ComboBox>
-
-		<ComboBox x:Name="ModifierSelector"
-							MinWidth="100"
-							VerticalAlignment="Stretch"
-							CornerRadius="0">
-
-			<ComboBox.ItemTemplate>
-
-				<DataTemplate DataType="local:ModifierSelectorItem">
-					<StackPanel Orientation="Horizontal" Spacing="8">
-						<Panel IsVisible="{Binding !IsHintVisible}">
+					<DataTemplate DataType="local:ModelItemWrapper">
+						<Panel>
 							<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+												 TextTrimming="CharacterEllipsis"
 												 IsVisible="{Binding !IsInvalid}"/>
-							<TextBlock Text="{loc:Loc {Binding DisplayText}}"
-												 Foreground="OrangeRed"
-												 IsVisible="{Binding IsInvalid}"/>
+							<StackPanel Orientation="Horizontal" Spacing="4"
+													IsVisible="{Binding IsInvalid}">
+								<ico:VisualIcon Kind="AlertCircleOutline" Width="14" Height="14"
+																Foreground="{DynamicResource StatusErrorBase}"/>
+								<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+													 Foreground="{DynamicResource StatusErrorBase}"
+													 TextTrimming="CharacterEllipsis"/>
+							</StackPanel>
 						</Panel>
-						<TextBlock Text="{Binding Hint}"
-											 IsVisible="{Binding IsHintVisible}"/>
-					</StackPanel>
-				</DataTemplate>
+					</DataTemplate>
 
-			</ComboBox.ItemTemplate>
+					<DataTemplate DataType="local:ComboBoxHeaderItem">
+						<StackPanel Opacity="0.6">
+							<Separator Margin="2,3,2,3" MinWidth="100"/>
+							<TextBlock Text="{Binding Title}"/>
+						</StackPanel>
+					</DataTemplate>
 
-			<ComboBox.Styles>
-				<Style Selector="ComboBoxItem">
-					<Setter Property="ContentTemplate">
-						<Setter.Value>
-							<DataTemplate DataType="local:ModifierSelectorItem">
-								<StackPanel Orientation="Horizontal" Spacing="8">
-									<TextBlock Text="{loc:Loc {Binding DisplayText}}"
-														 IsVisible="{Binding !IsInvalid}"/>
-									<TextBlock Text="{loc:Loc {Binding DisplayText}}"
-														 Foreground="OrangeRed"
-														 IsVisible="{Binding IsInvalid}"/>
-									<TextBlock Text="{Binding Hint}"
-														 IsVisible="{Binding IsHintVisible}"
-														 Opacity="0.6"/>
-								</StackPanel>
-							</DataTemplate>
-						</Setter.Value>
-					</Setter>
-				</Style>
-			</ComboBox.Styles>
+					<DataTemplate DataType="local:ComboBoxEmptyItem">
+						<TextBlock Foreground="{DynamicResource TextTertiary}"
+											 Text="{Binding Title}"/>
+					</DataTemplate>
 
-		</ComboBox>
+				</ComboBox.DataTemplates>
 
-		<Button x:Name="SettingsButton"
-						Classes="icon"
-						VerticalAlignment="Center"
-						Click="SettingsButton_Click"
-						ToolTip.Tip="{loc:Loc model.selector.manage.tooltip}"
-						CornerRadius="0,8,8,0">
-			<ico:VisualIcon Kind="RobotExcited"/>
-		</Button>
+			</ComboBox>
 
-	</StackPanel>
+			<Border Width="1"
+							Background="{DynamicResource BorderSubtle}"
+							Margin="0,7"
+							IsVisible="{Binding #ModifierSelector.IsVisible}"/>
+
+			<ComboBox x:Name="ModifierSelector"
+								Classes="flat"
+								MinWidth="110"
+								MaxWidth="200"
+								VerticalAlignment="Stretch">
+
+				<ComboBox.ItemTemplate>
+
+					<DataTemplate DataType="local:ModifierSelectorItem">
+						<StackPanel Orientation="Horizontal" Spacing="8">
+							<Panel IsVisible="{Binding !IsHintVisible}">
+								<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+													 TextTrimming="CharacterEllipsis"
+													 IsVisible="{Binding !IsInvalid}"/>
+								<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+													 Foreground="{DynamicResource StatusErrorBase}"
+													 TextTrimming="CharacterEllipsis"
+													 IsVisible="{Binding IsInvalid}"/>
+							</Panel>
+							<TextBlock Text="{Binding Hint}"
+												 Foreground="{DynamicResource TextTertiary}"
+												 TextTrimming="CharacterEllipsis"
+												 IsVisible="{Binding IsHintVisible}"/>
+						</StackPanel>
+					</DataTemplate>
+
+				</ComboBox.ItemTemplate>
+
+				<ComboBox.Styles>
+					<Style Selector="ComboBoxItem">
+						<Setter Property="ContentTemplate">
+							<Setter.Value>
+								<DataTemplate DataType="local:ModifierSelectorItem">
+									<StackPanel Orientation="Horizontal" Spacing="8">
+										<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+															 IsVisible="{Binding !IsInvalid}"/>
+										<TextBlock Text="{loc:Loc {Binding DisplayText}}"
+															 Foreground="{DynamicResource StatusErrorBase}"
+															 IsVisible="{Binding IsInvalid}"/>
+										<TextBlock Text="{Binding Hint}"
+															 Foreground="{DynamicResource TextTertiary}"
+															 Opacity="0.8"
+															 IsVisible="{Binding IsHintVisible}"/>
+									</StackPanel>
+								</DataTemplate>
+							</Setter.Value>
+						</Setter>
+					</Style>
+				</ComboBox.Styles>
+
+			</ComboBox>
+
+			<Border Width="1"
+							Background="{DynamicResource BorderSubtle}"
+							Margin="0,7"/>
+
+			<Button x:Name="SettingsButton"
+							Classes="icon small"
+							Background="Transparent"
+							CornerRadius="{DynamicResource RadiusM}"
+							Margin="2,0"
+							VerticalAlignment="Center"
+							Click="SettingsButton_Click"
+							ToolTip.Tip="{loc:Loc model.selector.manage.tooltip}">
+				<ico:VisualIcon Kind="RobotExcited"/>
+			</Button>
+
+		</StackPanel>
+
+	</Border>
 
 </UserControl>

@@ -72,11 +72,11 @@
 									</Panel>
 								</scroll:SmoothScrollViewer>
 							</DockPanel>
-						<ContentPresenter Grid.Column="2"
-													VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-													Content="{TemplateBinding InnerRightContent}" />
-					</Grid>
-				</Border>
+							<ContentPresenter Grid.Column="2"
+														VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+														Content="{TemplateBinding InnerRightContent}" />
+						</Grid>
+					</Border>
 				</DataValidationErrors>
 			</ControlTemplate>
 		</Setter>
@@ -119,9 +119,6 @@
 		<Style Selector="^.nochrome:focus /template/ Border#PART_BorderElement">
 			<Setter Property="BorderBrush" Value="#00000000" />
 			<Setter Property="BorderThickness" Value="0" />
-		</Style>
-		<Style Selector="^.nochrome /template/ TextBlock#PART_FloatingPlaceholder">
-			<Setter Property="IsVisible" Value="False" />
 		</Style>
 	</ControlTheme>
 

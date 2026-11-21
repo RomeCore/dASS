@@ -1,23 +1,28 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatRightToolBarView"
-			 x:DataType="local:ChatRightToolBarViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="120"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatRightToolBarView"
+						 x:DataType="local:ChatRightToolBarViewModel">
 
+	<!--
+		The right side of the toolbar answers "as whom, to whom, when": the fields are read as actions
+		(ComboBox.icon), because the icon is what the choice looks like once it is made, and the list carries
+		the words.
+	-->
 	<StackPanel Orientation="Horizontal"
 							HorizontalAlignment="Right"
-							Spacing="6">
+							VerticalAlignment="Center"
+							Spacing="2">
 
 		<!-- Active user selector: an avatar (or a fallback icon) collapsed, the name in the list -->
-		<ComboBox ItemsSource="{Binding Users}"
+		<ComboBox Classes="icon"
+							ItemsSource="{Binding Users}"
 							SelectedItem="{Binding SelectedUser, Mode=TwoWay}"
-							MinWidth="56"
-							VerticalAlignment="Center"
 							IsVisible="{Binding HasMultipleUsers}"
 							ToolTip.Tip="{loc:Loc chat.user.active.hint}"
 							ToolTip.VerticalOffset="-2"
@@ -27,15 +32,14 @@
 				<DataTemplate x:DataType="local:UserToolbarItemModel">
 					<Panel>
 						<ico:VisualIcon Kind="AccountCircle"
-														Width="14" Height="14"
+														Width="16" Height="16"
 														VerticalAlignment="Center"
-														Opacity="0.7"
 														IsVisible="{Binding !HasAvatar}"/>
-						<Border CornerRadius="8"
+						<Border CornerRadius="{DynamicResource RadiusS}"
 										ClipToBounds="True"
 										IsVisible="{Binding HasAvatar}">
 							<Image Source="{Binding Avatar}"
-										 Width="16" Height="16"
+										 Width="18" Height="18"
 										 Stretch="UniformToFill"/>
 						</Border>
 					</Panel>
@@ -51,9 +55,8 @@
 									<ico:VisualIcon Kind="AccountCircle"
 																	Width="14" Height="14"
 																	VerticalAlignment="Center"
-																	Opacity="0.7"
 																	IsVisible="{Binding !HasAvatar}"/>
-									<Border CornerRadius="8"
+									<Border CornerRadius="{DynamicResource RadiusS}"
 													ClipToBounds="True"
 													IsVisible="{Binding HasAvatar}">
 										<Image Source="{Binding Avatar}"
@@ -74,10 +77,9 @@
 		</ComboBox>
 
 		<!-- Visibility selector: the icon collapsed, icon and text in the list -->
-		<ComboBox ItemsSource="{Binding Visibilities}"
+		<ComboBox Classes="icon"
+							ItemsSource="{Binding Visibilities}"
 							SelectedItem="{Binding SelectedVisibility}"
-							MinWidth="56"
-							VerticalAlignment="Center"
 							ToolTip.Tip="{loc:Loc chat.visibility.hint}"
 							ToolTip.VerticalOffset="-2"
 							ToolTip.Placement="Top">
@@ -85,9 +87,8 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate x:DataType="local:UserMessageVisibilityItemModel">
 					<ico:VisualIcon Kind="{Binding Icon}"
-													Width="14" Height="14"
-													VerticalAlignment="Center"
-													Opacity="0.7"/>
+													Width="16" Height="16"
+													VerticalAlignment="Center"/>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
 
@@ -99,8 +100,7 @@
 								<StackPanel Orientation="Horizontal" Spacing="6">
 									<ico:VisualIcon Kind="{Binding Icon}"
 																	Width="14" Height="14"
-																	VerticalAlignment="Center"
-																	Opacity="0.7"/>
+																	VerticalAlignment="Center"/>
 									<TextBlock Text="{loc:Loc {Binding Title}}"
 														 VerticalAlignment="Center"/>
 								</StackPanel>
@@ -113,10 +113,9 @@
 		</ComboBox>
 
 		<!-- Follow-up level: the icon collapsed, icon and text in the list -->
-		<ComboBox ItemsSource="{Binding Levels}"
+		<ComboBox Classes="icon"
+							ItemsSource="{Binding Levels}"
 							SelectedItem="{Binding SelectedLevel, Mode=TwoWay}"
-							MinWidth="56"
-							VerticalAlignment="Center"
 							ToolTip.Tip="{loc:Loc chat.follow_up.level.hint}"
 							ToolTip.VerticalOffset="-2"
 							ToolTip.Placement="Top">
@@ -124,9 +123,8 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate x:DataType="local:UserInputLevelItemModel">
 					<ico:VisualIcon Kind="{Binding Icon}"
-													Width="14" Height="14"
-													VerticalAlignment="Center"
-													Opacity="0.7"/>
+													Width="16" Height="16"
+													VerticalAlignment="Center"/>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
 
@@ -138,8 +136,7 @@
 								<StackPanel Orientation="Horizontal" Spacing="6">
 									<ico:VisualIcon Kind="{Binding Icon}"
 																	Width="14" Height="14"
-																	VerticalAlignment="Center"
-																	Opacity="0.7"/>
+																	VerticalAlignment="Center"/>
 									<TextBlock Text="{loc:Loc {Binding Title}}"
 														 VerticalAlignment="Center"/>
 								</StackPanel>
@@ -151,34 +148,35 @@
 
 		</ComboBox>
 
+		<Separator Classes="vertical flush"
+							 Background="{DynamicResource BorderSubtle}"
+							 Margin="4,6"/>
+
 		<!-- Send without generation: while a run is going this queues with no answer requested -->
 		<Button Classes="icon"
 						Command="{Binding UserInput.SendMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_button.hint}"
 						ToolTip.VerticalOffset="-2"
 						ToolTip.Placement="Top">
-
 			<ico:VisualIcon Kind="SendClock"/>
 		</Button>
 
 		<!-- Send with generation -->
-		<Button Classes="icon"
+		<Button Classes="icon accent"
 						Command="{Binding UserInput.SendGenerateMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}"
 						ToolTip.VerticalOffset="-2"
 						ToolTip.Placement="Top">
-
 			<ico:VisualIcon Kind="Send"/>
 		</Button>
 
 		<!-- Stop: a hard stop, it never injects the queue -->
-		<Button Classes="icon"
+		<Button Classes="icon danger"
 						Command="{Binding UserInput.CancelGenerationCommand}"
 						IsVisible="{Binding UserInput.IsGenerating}"
 						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}"
 						ToolTip.VerticalOffset="-2"
 						ToolTip.Placement="Top">
-
 			<ico:VisualIcon Kind="Stop"/>
 		</Button>
 

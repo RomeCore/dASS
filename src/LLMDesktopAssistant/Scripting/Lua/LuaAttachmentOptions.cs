@@ -1,5 +1,6 @@
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Controls.Icons;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
@@ -65,5 +66,24 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				LuaBoolean value => value.Value,
 				_ => throw new LuaRuntimeException($"{call}: '{key}' must be a boolean.")
 			};
+
+		/// <summary>
+		/// Resolves an icon name against the icon catalogue, dropping a name the catalogue cannot render.
+		/// </summary>
+		protected static VisualIconKind? ReadIcon(string? icon)
+		{
+			if (string.IsNullOrWhiteSpace(icon))
+				return null;
+
+			try
+			{
+				var kind = VisualIconKind.Parse(icon);
+				return VisualIconDataHandler.Resolve(kind).IsOk ? kind : null;
+			}
+			catch
+			{
+				return null;
+			}
+		}
 	}
 }

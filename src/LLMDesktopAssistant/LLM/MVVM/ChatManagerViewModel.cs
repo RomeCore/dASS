@@ -579,7 +579,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 				var openedChats = OpenedChats.Where(o => o.Available.Id == info.Id).ToList();
 				foreach (var openedChat in openedChats)
-					CloseOpened(openedChat, false);
+					CloseOpened(openedChat);
 				ChatManager.DeleteChat(info.Id);
 				newAvailableChatViewModel.PropertyChanged -= OnAvailableChatPropertyChanged;
 				AvailableChats.Remove(newAvailableChatViewModel);
@@ -587,9 +587,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				availableEntry?.Dispose();
 				newAvailableChatViewModel.Dispose();
 				RebuildChatList();
-
-				if (OpenedChats.Count == 0)
-					CreateChat();
 			});
 
 			newAvailableChatViewModel = new AvailableChatViewModel
@@ -612,7 +609,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			return newAvailableChatViewModel;
 		}
 
-		private void CloseOpened(OpenedChatViewModel chat, bool updateList)
+		private void CloseOpened(OpenedChatViewModel chat)
 		{
 			int closedIndex = OpenedChats.IndexOf(chat);
 			bool selectedWasClosed = SelectedChat is ChatListOpenedEntry selectedOpenedChat && selectedOpenedChat.Chat == chat;
@@ -621,9 +618,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_openedEntries.Remove(chat, out var openedEntry);
 			openedEntry?.Dispose();
 			chat.Dispose();
-
-			if (!updateList)
-				return;
 
 			if (OpenedChats.Count == 0)
 			{
@@ -742,10 +736,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		/// <summary>
-		/// Opens a chat from the list: an already opened one is focused, a closed one opens in a new
-		/// place instead of replacing the conversation that is on screen.
-		/// </summary>
 		private void SelectChat(AvailableChatViewModel chat)
 		{
 			var opened = OpenedChats.FirstOrDefault(o => o.Available == chat);
@@ -766,9 +756,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				CloseCommand = new RelayCommand(() =>
 				{
-					CloseOpened(newOpenedChat, true);
+					CloseOpened(newOpenedChat);
 				})
 			};
+
+			newOpenedChat.CurrentChat.ToggleChatListCommand = ToggleChatListCommand;
 			OpenedChats.Add(newOpenedChat);
 			RebuildChatList();
 			SelectedChat = _openedEntries.GetOrAdd(newOpenedChat, OpenedFactory);

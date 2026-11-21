@@ -7,34 +7,48 @@
 						 x:Class="LLMDesktopAssistant.LLM.MVVM.ChatBottomPanelView"
 						 x:DataType="local:ChatBottomPanelViewModel">
 
-	<Grid RowDefinitions="Auto,Auto,Auto,Auto"
-				Background="Transparent">
+	<!--
+		One card for the whole composer: the rails, the chips of the input state, the field and the toolbar share
+		this surface, so the input needs no frame of its own and the toolbars stop floating on the window.
+	-->
+	<Border Classes="composerCard">
 
-		<!-- Rail (above the input): chat additional data that asked for the top strip. -->
-		<ContentControl Grid.Row="0"
-										Content="{Binding TopRail}"
-										IsVisible="{Binding TopRail.HasItems}"
-										Margin="0,0,0,6"/>
+		<Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto">
 
-		<!-- User input -->
-		<ContentControl Grid.Row="1" Content="{Binding UserInput}"/>
+			<!-- Rail (above the input): chat additional data that asked for the top strip. -->
+			<ContentControl Grid.Row="0"
+											Content="{Binding TopRail}"
+											IsVisible="{Binding TopRail.HasItems}"
+											Margin="0,0,0,4"/>
 
-		<!-- Rail (below the input): chat additional data that asked for the bottom strip. -->
-		<ContentControl Grid.Row="2"
-										Content="{Binding BottomRail}"
-										IsVisible="{Binding BottomRail.HasItems}"
-										Margin="0,6,0,0"/>
+			<!-- Pending follow-ups and the message being edited: about the input, so inside its card. -->
+			<ContentControl Grid.Row="1"
+											Content="{Binding UserInput.Chips}"
+											IsVisible="{Binding UserInput.Chips.IsVisible}"
+											HorizontalAlignment="Left"
+											Margin="0,0,0,4"/>
 
-		<!-- Toolbars -->
-		<Grid Grid.Row="3"
-					Margin="0,6,0,0"
-					ColumnDefinitions="Auto,*,Auto">
+			<!-- User input -->
+			<ContentControl Grid.Row="2" Content="{Binding UserInput}"/>
 
-			<ContentControl Grid.Column="0" Content="{Binding LeftToolBar}"/>
-			<ContentControl Grid.Column="2" Content="{Binding RightToolBar}"/>
+			<!-- Rail (below the input): chat additional data that asked for the bottom strip. -->
+			<ContentControl Grid.Row="3"
+											Content="{Binding BottomRail}"
+											IsVisible="{Binding BottomRail.HasItems}"
+											Margin="0,4,0,0"/>
+
+			<!-- Toolbars -->
+			<Grid Grid.Row="4"
+						Margin="0,4,0,0"
+						ColumnDefinitions="Auto,*,Auto">
+
+				<ContentControl Grid.Column="0" Content="{Binding LeftToolBar}"/>
+				<ContentControl Grid.Column="2" Content="{Binding RightToolBar}"/>
+
+			</Grid>
 
 		</Grid>
 
-	</Grid>
+	</Border>
 
 </UserControl>

@@ -9,12 +9,13 @@
 						 x:DataType="local:ChatInputRailViewModel">
 
 	<UserControl.Resources>
-		<!-- A rail item has no chrome of its own: the payload is the whole visual. -->
+		<!-- A rail item has no chrome of its own: the payload is the whole visual, the hairline is the seam. -->
 		<DataTemplate x:Key="RailItemTemplate" x:DataType="chat:AdditionalChatDataInputRailItem">
-			<StackPanel Orientation="Horizontal" Spacing="6">
+			<StackPanel Orientation="Horizontal" Spacing="8">
 				<Separator Classes="vertical flush rail"
-													Background="{DynamicResource PrimaryBorder}"/>
-				<ContentControl Content="{Binding Content}"/>
+													Background="{DynamicResource BorderSubtle}"
+													Margin="0,3"/>
+				<ContentControl Content="{Binding Content}" VerticalAlignment="Center"/>
 			</StackPanel>
 		</DataTemplate>
 	</UserControl.Resources>
@@ -40,7 +41,7 @@
 										ItemTemplate="{StaticResource RailItemTemplate}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="6"/>
+						<StackPanel Orientation="Horizontal" Spacing="8"/>
 					</ItemsPanelTemplate>
 				</ItemsControl.ItemsPanel>
 			</ItemsControl>
@@ -52,7 +53,7 @@
 										ItemTemplate="{StaticResource RailItemTemplate}">
 				<ItemsControl.ItemsPanel>
 					<ItemsPanelTemplate>
-						<StackPanel Orientation="Horizontal" Spacing="6"/>
+						<StackPanel Orientation="Horizontal" Spacing="8"/>
 					</ItemsPanelTemplate>
 				</ItemsControl.ItemsPanel>
 			</ItemsControl>

@@ -26,10 +26,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		public const string OverlaySurface = "overlay";
 
+		/// <summary>
+		/// The surface that puts the payload into a tab of the chat header, shown under it.
+		/// </summary>
+		public const string TabSurface = "tab";
+
 		private static readonly string[] _allowedKeys =
 		[
 			"visible", "temporary", "replacement_key", "surface", "horizontal", "vertical",
-			"title", "closeable", "left", "top", "width", "height",
+			"title", "closeable", "icon", "left", "top", "width", "height",
 		];
 
 		/// <summary>
@@ -63,9 +68,14 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		private ChatInputRailVerticalPlacement Vertical { get; init; } = ChatInputRailVerticalPlacement.Bottom;
 
 		/// <summary>
-		/// Gets the title of the overlay window, or <see langword="null"/> when it was not given.
+		/// Gets the title of the overlay window or of the tab, or <see langword="null"/> when it was not given.
 		/// </summary>
 		private string? Title { get; init; }
+
+		/// <summary>
+		/// Gets the icon of the tab or of the window header, or <see langword="null"/> when it was not given.
+		/// </summary>
+		private string? Icon { get; init; }
 
 		/// <summary>
 		/// Gets the value of <c>closeable</c>, or <see langword="null"/> when it was not given.
@@ -112,15 +122,18 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			var surface = ReadString(table, "surface", call);
 			bool isRail = string.Equals(surface, RailSurface, StringComparison.Ordinal);
 			bool isOverlay = string.Equals(surface, OverlaySurface, StringComparison.Ordinal);
+			bool isTab = string.Equals(surface, TabSurface, StringComparison.Ordinal);
 
-			if (surface is not null && !isRail && !isOverlay)
+			if (surface is not null && !isRail && !isOverlay && !isTab)
 				throw new LuaRuntimeException(
-					$"{call}: options.surface '{surface}' is unknown. Supported: \"{RailSurface}\", \"{OverlaySurface}\".");
+					$"{call}: options.surface '{surface}' is unknown. " +
+					$"Supported: \"{RailSurface}\", \"{OverlaySurface}\", \"{TabSurface}\".");
 
 			var horizontal = table.Get("horizontal");
 			var vertical = table.Get("vertical");
 			var title = ReadString(table, "title", call);
 			var closeable = ReadBool(table, "closeable", call);
+			var icon = ReadString(table, "icon", call);
 			var left = ReadFraction(table, "left", call);
 			var top = ReadFraction(table, "top", call);
 			var width = ReadFraction(table, "width", call);
@@ -130,13 +143,18 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				throw new LuaRuntimeException(
 					$"{call}: options.horizontal and options.vertical require options.surface = \"{RailSurface}\".");
 
+			// A title and a close button belong to every framed surface, not only to the floating window.
+			if ((title is not null || closeable is not null) && !isOverlay && !isTab)
+				throw new LuaRuntimeException(
+					$"{call}: options.title and options.closeable require " +
+					$"options.surface = \"{OverlaySurface}\" or \"{TabSurface}\".");
+
+			if (icon is not null && !isTab && !isOverlay)
+				throw new LuaRuntimeException(
+					$"{call}: options.icon requires " +
+					$"options.surface = \"{OverlaySurface}\" or \"{TabSurface}\".");
+
 			List<string> overlayOnly = [];
-
-			if (title is not null)
-				overlayOnly.Add("title");
-
-			if (closeable is not null)
-				overlayOnly.Add("closeable");
 
 			if (left is not null)
 				overlayOnly.Add("left");
@@ -167,6 +185,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 					? ChatInputRailVerticalPlacement.Bottom
 					: ReadVertical(vertical, call),
 				Title = title,
+				Icon = icon,
 				Closeable = closeable,
 				Left = left,
 				Top = top,
@@ -211,11 +230,23 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				{
 					Content = payload,
 					Title = Title,
+					Icon = ReadIcon(Icon) ?? VisualIconKind.None,
 					CanClose = Closeable ?? false,
 					Left = Left,
 					Top = Top,
 					Width = Width,
 					Height = Height,
+					// A temporary payload inside a persisted envelope is a row pointing at an object the database never saw.
+					IsTemporary = payload.IsTemporary
+				};
+
+			if (string.Equals(Surface, TabSurface, StringComparison.Ordinal))
+				return new AdditionalChatDataTabItem
+				{
+					Content = payload,
+					Title = Title,
+					Icon = ReadIcon(Icon) ?? VisualIconKind.None,
+					CanClose = Closeable ?? false,
 					// A temporary payload inside a persisted envelope is a row pointing at an object the database never saw.
 					IsTemporary = payload.IsTemporary
 				};

@@ -76,13 +76,16 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - handle: uicontrol or terminal - the attachable handle
 			    - options: table (optional) - where the payload is shown and how it behaves:
 			      surface: string - "rail" puts the payload on the input rail, "overlay" opens
-			        it in a floating window over the messages
-			      horizontal: string - "left" or "right" (rail only, default "left")
-			      vertical: string - "top" or "bottom" (rail only, default "bottom")
-			      title: string - the title of the window (overlay only)
-			      closeable: boolean - the user may close the window, which REMOVES it from the
-			        chat and disposes the payload: a live terminal goes away with its process
-			        (overlay only, default false)
+					it in a floating window over the messages, "tab" adds a tab to the chat
+					header and shows the payload under it, over the conversation
+				  horizontal: string - "left" or "right" (rail only, default "left")
+				  vertical: string - "top" or "bottom" (rail only, default "bottom")
+				  title: string - the title of the window, or of the tab (overlay, tab)
+				  icon: string - the icon of the tab, or of the window header and its tray row, a
+					material icon name like "Console" (overlay, tab)
+				  closeable: boolean - the user may close the window or the tab, which REMOVES it
+					from the chat and disposes the payload: a live terminal goes away with its
+					process (overlay, tab; default false)
 			      left, top: number - the place of the window, as fractions 0..1 of the messages
 			        area (overlay only, default: a cascade, so two windows never land on each other)
 			      width, height: number - the size of the window, as fractions 0..1 of the messages
@@ -100,6 +103,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  place it was dragged to. I.e. updating a window never brings it back or moves it.
 			  visible = false is something else: it removes the window entirely, the tray row with it,
 			  until it is set back to true.
+
+			  A tab is the user's too: opening one is a click, clicking the open tab again returns to
+			  the conversation, and a replacement under the same key never closes it. Only one tab is
+			  open at a time; opening another closes the previous one. visible = false takes the tab
+			  off the strip and returns to the conversation, and true puts it back.
 
 			  Returns: nil
 
