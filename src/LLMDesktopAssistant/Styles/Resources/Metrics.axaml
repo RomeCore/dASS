@@ -20,6 +20,7 @@
 	<Thickness x:Key="PaddingM">12,6</Thickness>
 	<Thickness x:Key="PaddingL">16,8</Thickness>
 	<Thickness x:Key="PaddingXl">24,12</Thickness>
+	<Thickness x:Key="PaddingAllM">12</Thickness>
 
 	<Thickness x:Key="BorderThickness">1</Thickness>
 	<Thickness x:Key="BorderThicknessThick">2</Thickness>

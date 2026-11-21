@@ -25,6 +25,7 @@
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/TextBox.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ComboBox.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ComboBoxItem.axaml"/>
+		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ColorPicker.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/NumericUpDown.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/ButtonSpinner.axaml"/>
 		<ResourceInclude Source="avares://LLMDesktopAssistant/Styles/Controls/AutoCompleteBox.axaml"/>

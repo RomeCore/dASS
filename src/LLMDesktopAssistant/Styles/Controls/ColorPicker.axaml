@@ -1,0 +1,394 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+										xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+										xmlns:controls="using:Avalonia.Controls"
+										xmlns:primitives="using:Avalonia.Controls.Primitives"
+										xmlns:converters="using:Avalonia.Controls.Converters"
+										xmlns:ico="using:LLMDesktopAssistant.Controls.Icons">
+
+	<!--
+		The picker is a field plus a popup with the same three ways into a colour the stock Fluent one offers
+		- a spectrum, a palette grid and per-component sliders - rebuilt on the role table. Only the shapes
+		are borrowed: the Fluent presenter, tab strip, spin boxes and palette row are replaced by the dASS
+		segmented tabs, fields and sliders, because that chrome is what made the stock popup read as a
+		foreign window inside a dark chat.
+	-->
+
+	<converters:ToBrushConverter x:Key="ColorPickerToBrush" />
+	<converters:EnumToBoolConverter x:Key="ColorPickerEnumToBool" />
+
+	<!-- The tile behind anything translucent; an alpha channel cannot be shown honestly without it. -->
+	<VisualBrush x:Key="ColorPickerChecker"
+							 TileMode="Tile"
+							 Stretch="Uniform"
+							 DestinationRect="0,0,8,8">
+		<VisualBrush.Visual>
+			<Image Width="8" Height="8">
+				<Image.Source>
+					<DrawingImage>
+						<DrawingImage.Drawing>
+							<DrawingGroup>
+								<GeometryDrawing Geometry="M0,0 L2,0 2,2, 0,2Z" Brush="Transparent" />
+								<GeometryDrawing Geometry="M0,1 L2,1 2,2, 1,2 1,0 0,0Z" Brush="#19808080" />
+							</DrawingGroup>
+						</DrawingImage.Drawing>
+					</DrawingImage>
+				</Image.Source>
+			</Image>
+		</VisualBrush.Visual>
+	</VisualBrush>
+
+	<!--
+		The popup surface. A Flyout of its own gets a presenter theme of its own: a role surface, a hairline
+		and a radius instead of the Fluent acrylic panel.
+	-->
+	<ControlTheme x:Key="ColorPickerFlyoutPresenter" TargetType="FlyoutPresenter">
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="VerticalContentAlignment" Value="Stretch" />
+		<Setter Property="Background" Value="{DynamicResource PopupBackground}" />
+		<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
+		<Setter Property="BorderThickness" Value="{DynamicResource BorderThickness}" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusL}" />
+		<Setter Property="Padding" Value="{DynamicResource PaddingAllM}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="{TemplateBinding Background}"
+								BorderBrush="{TemplateBinding BorderBrush}"
+								BorderThickness="{TemplateBinding BorderThickness}"
+								CornerRadius="{TemplateBinding CornerRadius}"
+								BoxShadow="0 8 24 0 #40000000">
+					<ContentPresenter Name="PART_ContentPresenter"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														Margin="{TemplateBinding Padding}"
+														HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+														VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+				</Border>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+	<!--
+		The palette grid: a list of swatches, so the list keeps the scrolling and the single selection while
+		the item stays a bare square. The `0` padding and the transparent surfaces are the whole difference
+		from the ordinary ListBox.
+	-->
+	<ControlTheme x:Key="ColorPickerPaletteList" TargetType="ListBox">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="ItemsPanel">
+			<ItemsPanelTemplate>
+				<UniformGrid Columns="{Binding $parent[ColorPicker].PaletteColumnCount}" />
+			</ItemsPanelTemplate>
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate>
+				<ScrollViewer HorizontalScrollBarVisibility="Disabled"
+											VerticalScrollBarVisibility="Auto">
+					<ItemsPresenter Name="PART_ItemsPresenter"
+													ItemsPanel="{TemplateBinding ItemsPanel}"
+													Margin="{TemplateBinding Padding}" />
+				</ScrollViewer>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+	<ControlTheme x:Key="ColorPickerPaletteItem" TargetType="ListBoxItem">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<Setter Property="VerticalContentAlignment" Value="Stretch" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Grid>
+					<ContentPresenter Name="PART_Content"
+														Content="{TemplateBinding Content}"
+														ContentTemplate="{TemplateBinding ContentTemplate}"
+														HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+														VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+					<!-- A ring around the square, never a wash over it: a wash would lie about the colour. -->
+					<Border Name="PART_Ring"
+									Margin="-1"
+									CornerRadius="{DynamicResource RadiusS}"
+									BorderThickness="2"
+									IsHitTestVisible="False"
+									IsVisible="False" />
+				</Grid>
+			</ControlTemplate>
+		</Setter>
+
+		<Style Selector="^:pointerover /template/ Border#PART_Ring">
+			<Setter Property="IsVisible" Value="True" />
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderStrong}" />
+		</Style>
+		<Style Selector="^:selected /template/ Border#PART_Ring">
+			<Setter Property="IsVisible" Value="True" />
+			<Setter Property="BorderBrush" Value="{DynamicResource PrimaryBase}" />
+		</Style>
+	</ControlTheme>
+
+	<!-- The Track of a gradient bar is hit area only: the gradient itself is the bar. -->
+	<ControlTheme x:Key="ColorSliderTrackButton" TargetType="RepeatButton">
+		<Setter Property="Background" Value="#00000000" />
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="BorderThickness" Value="0" />
+		<Setter Property="CornerRadius" Value="0" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent" />
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+	<!--
+		The gradient bar: the Fluent theme draws a 20px pill with a 3px-ringed thumb, which reads as another
+		control family next to the sliders of this application. Same geometry as Slider, plus the
+		checkerboard and a white handle that stays visible on any colour.
+	-->
+	<ControlTheme x:Key="{x:Type ColorSlider}" TargetType="ColorSlider">
+		<Setter Property="Height" Value="16" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusPill}" />
+		<Setter Property="Cursor" Value="Hand" />
+		<Setter Property="FocusAdorner" Value="{x:Null}" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Panel Background="Transparent">
+					<Border Background="{StaticResource ColorPickerChecker}"
+									CornerRadius="{TemplateBinding CornerRadius}" />
+					<Border Background="{TemplateBinding Background}"
+									CornerRadius="{TemplateBinding CornerRadius}" />
+					<Track Name="PART_Track"
+								 Minimum="{TemplateBinding Minimum}"
+								 Maximum="{TemplateBinding Maximum}"
+								 Value="{TemplateBinding Value}"
+								 Orientation="{TemplateBinding Orientation}">
+						<Track.DecreaseButton>
+							<RepeatButton Name="PART_DecreaseButton" Theme="{StaticResource ColorSliderTrackButton}" />
+						</Track.DecreaseButton>
+						<Track.IncreaseButton>
+							<RepeatButton Name="PART_IncreaseButton" Theme="{StaticResource ColorSliderTrackButton}" />
+						</Track.IncreaseButton>
+						<Thumb Width="16"
+									 Height="16"
+									 Cursor="Hand"
+									 Background="#FFFFFFFF"
+									 BorderBrush="#66000000"
+									 BorderThickness="1"
+									 CornerRadius="8" />
+					</Track>
+				</Panel>
+			</ControlTemplate>
+		</Setter>
+
+		<Style Selector="^:pointerover /template/ Thumb">
+			<Setter Property="RenderTransform" Value="scale(1.1)" />
+		</Style>
+		<Style Selector="^:disabled">
+			<Setter Property="Opacity" Value="0.45" />
+		</Style>
+	</ControlTheme>
+
+	<!--
+		The field: a swatch in a DropDownButton, so hover, focus and pressed come from the button family
+		rather than from a second set of states. The hex input is the one part the control's code-behind
+		finds by name, and it keeps working because it is called PART_HexTextBox here too - it sits outside
+		the tabs on purpose, because an unselected TabItem has no content and the part would not exist yet.
+	-->
+	<ControlTheme x:Key="{x:Type ColorPicker}" TargetType="ColorPicker">
+		<Setter Property="Height" Value="{DynamicResource ControlHeightM}" />
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}" />
+		<Setter Property="Palette">
+			<controls:FluentColorPalette />
+		</Setter>
+		<Setter Property="Template">
+			<ControlTemplate TargetType="ColorPicker">
+				<DropDownButton CornerRadius="{TemplateBinding CornerRadius}"
+												Height="{TemplateBinding Height}"
+												HorizontalAlignment="Stretch"
+												Padding="3"
+												HorizontalContentAlignment="Stretch"
+												VerticalContentAlignment="Stretch">
+					<DropDownButton.Content>
+						<Panel>
+							<Border Background="{StaticResource ColorPickerChecker}"
+											CornerRadius="{DynamicResource RadiusS}" />
+							<Border Background="{Binding Color, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerToBrush}}"
+											CornerRadius="{DynamicResource RadiusS}" />
+						</Panel>
+					</DropDownButton.Content>
+					<DropDownButton.Flyout>
+						<Flyout Placement="BottomEdgeAlignedLeft"
+										FlyoutPresenterTheme="{StaticResource ColorPickerFlyoutPresenter}">
+							<StackPanel Width="220" Spacing="{DynamicResource SpacingM}">
+
+								<TabControl>
+
+									<!-- Spectrum -->
+									<TabItem>
+										<TabItem.Header>
+											<ico:VisualIcon Kind="InvertColors" Width="18" Height="18" />
+										</TabItem.Header>
+										<StackPanel Spacing="{DynamicResource SpacingM}">
+											<primitives:ColorSpectrum Shape="Box"
+																								Height="220"
+																								Components="{TemplateBinding ColorSpectrumComponents}"
+																								HsvColor="{TemplateBinding HsvColor, Mode=TwoWay}" />
+											<primitives:ColorSlider ColorModel="Hsva"
+																							ColorComponent="Alpha"
+																							HsvColor="{TemplateBinding HsvColor, Mode=TwoWay}"
+																							IsEnabled="{TemplateBinding IsAlphaEnabled}"
+																							IsVisible="{TemplateBinding IsAlphaVisible}" />
+										</StackPanel>
+									</TabItem>
+
+									<!-- Palette -->
+									<TabItem>
+										<TabItem.Header>
+											<ico:VisualIcon Kind="Palette" Width="18" Height="18" />
+										</TabItem.Header>
+										<ListBox Theme="{StaticResource ColorPickerPaletteList}"
+														 ItemContainerTheme="{StaticResource ColorPickerPaletteItem}"
+														 ItemsSource="{TemplateBinding PaletteColors}"
+														 SelectedItem="{Binding Color, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+														 Height="220">
+											<ListBox.ItemTemplate>
+												<DataTemplate DataType="{x:Type Color}">
+													<Border Width="20"
+																	Height="20"
+																	Margin="1"
+																	CornerRadius="{DynamicResource RadiusS}"
+																	BorderBrush="#40000000"
+																	BorderThickness="1">
+														<Border.Background>
+															<SolidColorBrush Color="{Binding}" />
+														</Border.Background>
+													</Border>
+												</DataTemplate>
+											</ListBox.ItemTemplate>
+										</ListBox>
+									</TabItem>
+
+									<!-- Components -->
+									<TabItem>
+										<TabItem.Header>
+											<ico:VisualIcon Kind="Tune" Width="18" Height="18" />
+										</TabItem.Header>
+										<StackPanel Spacing="{DynamicResource SpacingM}">
+
+											<!-- RGB and HSV are universal abbreviations, so they stay untranslated. -->
+											<StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingXl}">
+												<RadioButton Content="RGB"
+																		 GroupName="ColorPickerModel"
+																		 IsChecked="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Rgba}, Mode=TwoWay}" />
+												<RadioButton Content="HSV"
+																		 GroupName="ColorPickerModel"
+																		 IsChecked="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Hsva}, Mode=TwoWay}" />
+											</StackPanel>
+
+											<!-- Component 1: R / H -->
+											<Grid ColumnDefinitions="14,58,*" ColumnSpacing="{DynamicResource SpacingM}">
+												<Panel VerticalAlignment="Center">
+													<TextBlock Text="R"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Rgba}}" />
+													<TextBlock Text="H"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Hsva}}" />
+												</Panel>
+												<NumericUpDown Grid.Column="1"
+																			 FormatString="0"
+																			 ShowButtonSpinner="False"
+																			 Minimum="{Binding Minimum, ElementName=Component1Slider}"
+																			 Maximum="{Binding Maximum, ElementName=Component1Slider}"
+																			 Value="{Binding Value, ElementName=Component1Slider}" />
+												<primitives:ColorSlider x:Name="Component1Slider"
+																								Grid.Column="2"
+																								ColorComponent="Component1"
+																								ColorModel="{TemplateBinding ColorModel}"
+																								HsvColor="{TemplateBinding HsvColor, Mode=TwoWay}"
+																								IsRoundingEnabled="True"
+																								IsSnapToTickEnabled="True"
+																								TickFrequency="1" />
+											</Grid>
+
+											<!-- Component 2: G / S -->
+											<Grid ColumnDefinitions="14,58,*" ColumnSpacing="{DynamicResource SpacingM}">
+												<Panel VerticalAlignment="Center">
+													<TextBlock Text="G"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Rgba}}" />
+													<TextBlock Text="S"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Hsva}}" />
+												</Panel>
+												<NumericUpDown Grid.Column="1"
+																			 FormatString="0"
+																			 ShowButtonSpinner="False"
+																			 Minimum="{Binding Minimum, ElementName=Component2Slider}"
+																			 Maximum="{Binding Maximum, ElementName=Component2Slider}"
+																			 Value="{Binding Value, ElementName=Component2Slider}" />
+												<primitives:ColorSlider x:Name="Component2Slider"
+																								Grid.Column="2"
+																								ColorComponent="Component2"
+																								ColorModel="{TemplateBinding ColorModel}"
+																								HsvColor="{TemplateBinding HsvColor, Mode=TwoWay}"
+																								IsRoundingEnabled="True"
+																								IsSnapToTickEnabled="True"
+																								TickFrequency="1" />
+											</Grid>
+
+											<!-- Component 3: B / V -->
+											<Grid ColumnDefinitions="14,58,*" ColumnSpacing="{DynamicResource SpacingM}">
+												<Panel VerticalAlignment="Center">
+													<TextBlock Text="B"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Rgba}}" />
+													<TextBlock Text="V"
+																		 IsVisible="{Binding ColorModel, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerEnumToBool}, ConverterParameter={x:Static controls:ColorModel.Hsva}}" />
+												</Panel>
+												<NumericUpDown Grid.Column="1"
+																			 FormatString="0"
+																			 ShowButtonSpinner="False"
+																			 Minimum="{Binding Minimum, ElementName=Component3Slider}"
+																			 Maximum="{Binding Maximum, ElementName=Component3Slider}"
+																			 Value="{Binding Value, ElementName=Component3Slider}" />
+												<primitives:ColorSlider x:Name="Component3Slider"
+																								Grid.Column="2"
+																								ColorComponent="Component3"
+																								ColorModel="{TemplateBinding ColorModel}"
+																								HsvColor="{TemplateBinding HsvColor, Mode=TwoWay}"
+																								IsRoundingEnabled="True"
+																								IsSnapToTickEnabled="True"
+																								TickFrequency="1" />
+											</Grid>
+
+										</StackPanel>
+									</TabItem>
+
+								</TabControl>
+
+								<!-- The colour itself and its hex form stay reachable from every tab. -->
+								<Grid ColumnDefinitions="Auto,*" ColumnSpacing="{DynamicResource SpacingM}">
+									<Border Width="{DynamicResource ControlHeightM}"
+													Height="{DynamicResource ControlHeightM}"
+													CornerRadius="{DynamicResource RadiusS}"
+													BorderBrush="{DynamicResource BorderDefault}"
+													BorderThickness="{DynamicResource BorderThickness}"
+													ClipToBounds="True">
+										<Panel>
+											<Border Background="{StaticResource ColorPickerChecker}" />
+											<Border Background="{Binding Color, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ColorPickerToBrush}}" />
+										</Panel>
+									</Border>
+									<TextBox x:Name="PART_HexTextBox"
+													 Grid.Column="1"
+													 Height="{DynamicResource ControlHeightM}"
+													 MaxLength="9" />
+								</Grid>
+
+							</StackPanel>
+						</Flyout>
+					</DropDownButton.Flyout>
+				</DropDownButton>
+			</ControlTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>
