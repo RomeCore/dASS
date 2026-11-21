@@ -68,6 +68,7 @@ naming.task: Именование чата
 new: Новый чат
 new_temporary: Новый временный чат
 no_topic: без темы
+no_sub_topic: без подтемы
 open_in_new_tab: Открыть в новой вкладке
 overlay.close: Закрыть и удалить
 overlay.fit: По размеру содержимого

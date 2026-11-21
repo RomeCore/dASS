@@ -68,6 +68,7 @@ naming.task: Chat naming
 new: New chat
 new_temporary: New temporary chat
 no_topic: no topic
+no_sub_topic: no sub-topic
 open_in_new_tab: Open in new tab
 overlay.close: Close and remove
 overlay.fit: Fit the content

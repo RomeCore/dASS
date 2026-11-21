@@ -29,14 +29,18 @@
 			<TextBlock Text="{loc:Loc chat.edit.topic}"
 								 FontSize="{DynamicResource FontSizeXs}"
 								 Foreground="{DynamicResource TextSecondary}" />
-			<TextBox Text="{Binding ChatTopic, Mode=TwoWay}" Foreground="{Binding ChatTopicColor}" />
+			<TextBox Text="{Binding ChatTopic, Mode=TwoWay}"
+							 Foreground="{Binding ChatTopicColor}"
+							 PlaceholderText="{loc:Loc chat.no_topic}" />
 		</StackPanel>
 
 		<StackPanel Spacing="4">
 			<TextBlock Text="{loc:Loc chat.edit.subtopic}"
 								 FontSize="{DynamicResource FontSizeXs}"
 								 Foreground="{DynamicResource TextSecondary}" />
-			<TextBox Text="{Binding ChatSubTopic, Mode=TwoWay}" Foreground="{Binding ChatSubTopicColor}" />
+			<TextBox Text="{Binding ChatSubTopic, Mode=TwoWay}"
+							 Foreground="{Binding ChatSubTopicColor}"
+							 PlaceholderText="{loc:Loc chat.no_sub_topic}" />
 		</StackPanel>
 
 		<StackPanel Orientation="Horizontal"
