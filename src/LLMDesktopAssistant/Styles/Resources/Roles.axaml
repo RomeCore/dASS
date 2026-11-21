@@ -33,19 +33,12 @@
 			<SolidColorBrush x:Key="BorderStrong" Color="{DynamicResource Neutral400}" />
 
 			<!-- Control surfaces -->
-			<!--
-				A control's resting fill sits one rung above the card, so a filled button is visible on
-				one; the hover and pressed steps continue that ladder. ControlTrack is the opposite
-				direction - a recessed groove for progress and slider tracks.
-			-->
 			<SolidColorBrush x:Key="ControlBackground" Color="{DynamicResource Neutral100}" />
 			<SolidColorBrush x:Key="ControlBackgroundHover" Color="{DynamicResource Neutral200}" />
 			<SolidColorBrush x:Key="ControlBackgroundPressed" Color="{DynamicResource Neutral300}" />
 			<SolidColorBrush x:Key="ControlBackgroundDisabled" Color="{DynamicResource Neutral100}" />
 			<SolidColorBrush x:Key="ControlTrack" Color="{DynamicResource Neutral100}" />
-
-			<!-- Selection and focus -->
-			<SolidColorBrush x:Key="SelectionBackground" Color="{DynamicResource Primary100}" />
+			<SolidColorBrush x:Key="SelectionBackground" Color="{DynamicResource Primary600}" Opacity="0.3" />
 			<SolidColorBrush x:Key="SelectionForeground" Color="{DynamicResource Neutral1000}" />
 			<SolidColorBrush x:Key="FocusRing" Color="{DynamicResource Primary500}" />
 
@@ -121,8 +114,8 @@
 			<SolidColorBrush x:Key="ControlBackgroundDisabled" Color="{DynamicResource Neutral950}" />
 			<SolidColorBrush x:Key="ControlTrack" Color="{DynamicResource Neutral950}" />
 
-			<!-- Selection and focus -->
-			<SolidColorBrush x:Key="SelectionBackground" Color="{DynamicResource Primary900}" />
+			<!-- Selection and focus: same translucent wash as the light variant. -->
+			<SolidColorBrush x:Key="SelectionBackground" Color="{DynamicResource Primary500}" Opacity="0.45" />
 			<SolidColorBrush x:Key="SelectionForeground" Color="{DynamicResource Neutral100}" />
 			<SolidColorBrush x:Key="FocusRing" Color="{DynamicResource Primary400}" />
 

@@ -20,6 +20,12 @@
 		
 	</Style>
 	
+	<!-- The library paints its own text selection in a fixed blue; the chat selection is a role like any other. -->
+	<Style Selector="md|MarkdownTextBlock">
+		<Setter Property="SelectionBrush" Value="{DynamicResource SelectionBackground}"/>
+		<Setter Property="SelectionForegroundBrush" Value="{DynamicResource SelectionForeground}"/>
+	</Style>
+
 	<!--
 		Inline code is a text run, not a control: the library colours it from a static Color resource, so a
 		style here is the only way to keep the pill on the palette and following the seeds.
