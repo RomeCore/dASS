@@ -20,6 +20,11 @@ namespace LLMDesktopAssistant.Styles.Theming
 			("Xs", -2), ("S", -1), ("M", 0), ("L", 1), ("Xl", 2), ("2Xl", 3), ("3Xl", 4),
 		];
 
+		/// <summary>
+		/// Gets the resource-key suffix of every step in the scale, smallest first.
+		/// </summary>
+		public static IReadOnlyList<string> StepNames { get; } = [.. steps.Select(static step => step.Name)];
+
 		private readonly Dictionary<string, object> _resources = [];
 
 		/// <summary>
@@ -52,7 +57,7 @@ namespace LLMDesktopAssistant.Styles.Theming
 
 			foreach (var (name, step) in steps)
 			{
-				var size = Round(baseSize * Math.Pow(ratio, step) * scale);
+				var size = RoundHalfPixel(baseSize * Math.Pow(ratio, step) * scale);
 				_resources["FontSize" + name] = size;
 				_resources["LineHeight" + name] = Math.Round(size * lineHeightFactor);
 			}
@@ -70,7 +75,10 @@ namespace LLMDesktopAssistant.Styles.Theming
 			_ => (14, 1.20),
 		};
 
-		private static double Round(double value)
+		/// <summary>
+		/// Rounds to half a pixel, the granularity the scale is defined on.
+		/// </summary>
+		internal static double RoundHalfPixel(double value)
 			=> Math.Round(value * 2, MidpointRounding.AwayFromZero) / 2;
 	}
 }

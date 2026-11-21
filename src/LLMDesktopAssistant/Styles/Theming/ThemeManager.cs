@@ -17,6 +17,8 @@ namespace LLMDesktopAssistant.Styles.Theming
 	/// </remarks>
 	public static class ThemeManager
 	{
+		private static readonly List<WeakReference<MarkdownTypographyProvider>> _markdownTypography = [];
+
 		private static PaletteProvider? _palette;
 		private static TypographyProvider? _typography;
 		private static RadiusProvider? _radius;
@@ -74,6 +76,7 @@ namespace LLMDesktopAssistant.Styles.Theming
 			{
 				ApplicationStartupSettingsAccessor.Current.FontProfile = profile;
 				_typography?.Recompute();
+				RecomputeMarkdownTypography();
 			});
 
 		/// <summary>
@@ -85,6 +88,18 @@ namespace LLMDesktopAssistant.Styles.Theming
 			{
 				ApplicationStartupSettingsAccessor.Current.FontScale = Math.Clamp(scale, 0.8, 1.5);
 				_typography?.Recompute();
+				RecomputeMarkdownTypography();
+			});
+
+		/// <summary>
+		/// Applies a multiplier on top of the interface scale to Markdown content only.
+		/// </summary>
+		/// <param name="scale">The multiplier, where one means "the same size as the interface".</param>
+		public static void SetMarkdownFontScale(double scale)
+			=> UIDispatcher.Invoke(() =>
+			{
+				ApplicationStartupSettingsAccessor.Current.MarkdownFontScale = Math.Clamp(scale, 0.8, 2);
+				RecomputeMarkdownTypography();
 			});
 
 		/// <summary>
@@ -107,6 +122,33 @@ namespace LLMDesktopAssistant.Styles.Theming
 		/// Registers the typography provider the XAML loader created.
 		/// </summary>
 		internal static void AttachTypography(TypographyProvider provider) => _typography = provider;
+
+		/// <summary>
+		/// Registers a Markdown scale provider created for one Markdown surface.
+		/// </summary>
+		/// <remarks>
+		/// Markdown surfaces come and go with the messages, so they are tracked weakly: a closed chat must not
+		/// keep its provider alive, and a live one must still follow the settings.
+		/// </remarks>
+		internal static void AttachMarkdownTypography(MarkdownTypographyProvider provider)
+		{
+			_markdownTypography.RemoveAll(static reference => !reference.TryGetTarget(out _));
+			_markdownTypography.Add(new WeakReference<MarkdownTypographyProvider>(provider));
+		}
+
+		/// <summary>
+		/// Recomputes every live Markdown provider, dropping the dead ones on the way.
+		/// </summary>
+		private static void RecomputeMarkdownTypography()
+		{
+			_markdownTypography.RemoveAll(static reference => !reference.TryGetTarget(out _));
+
+			foreach (var reference in _markdownTypography)
+			{
+				if (reference.TryGetTarget(out var provider))
+					provider.Recompute();
+			}
+		}
 
 		/// <summary>
 		/// Registers the radius provider the XAML loader created.

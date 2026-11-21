@@ -30,5 +30,6 @@ appearance.primary: Основной
 appearance.accent: Акцент
 appearance.typography: Шкала шрифтов
 appearance.font_scale: Множитель
+appearance.markdown_scale: Масштаб Markdown
 appearance.radius_base: Закругление
 appearance.radius_base_hint: Базовый радиус

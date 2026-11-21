@@ -82,6 +82,23 @@
 									 FontSize="{DynamicResource FontSizeS}" />
 			</Grid>
 
+			<Grid ColumnDefinitions="140,220,Auto" ColumnSpacing="12">
+				<TextBlock Text="{loc:Loc appsettings.appearance.markdown_scale}"
+									 VerticalAlignment="Center"
+									 FontSize="{DynamicResource FontSizeS}"
+									 Foreground="{DynamicResource TextSecondary}" />
+				<Slider Grid.Column="1"
+								Minimum="0.8" Maximum="2"
+								TickFrequency="0.05"
+								IsSnapToTickEnabled="True"
+								Value="{Binding MarkdownFontScale}" />
+				<TextBlock Grid.Column="2"
+									 Text="{Binding MarkdownFontScale, StringFormat='{}{0:0.00}'}"
+									 VerticalAlignment="Center"
+									 FontFamily="Consolas"
+									 FontSize="{DynamicResource FontSizeS}" />
+			</Grid>
+
 			<!-- Corner radius -->
 
 			<TextBlock Text="{loc:Loc appsettings.appearance.radius_base}"

@@ -123,6 +123,22 @@ namespace LLMDesktopAssistant.Settings.Application.MVVM
 		}
 
 		/// <summary>
+		/// Gets or sets the extra multiplier applied to Markdown text on top of <see cref="FontScale"/>.
+		/// </summary>
+		public double MarkdownFontScale
+		{
+			get => ApplicationStartupSettingsAccessor.Current.MarkdownFontScale;
+			set
+			{
+				if (Math.Abs(ApplicationStartupSettingsAccessor.Current.MarkdownFontScale - value) < 0.001)
+					return;
+
+				ThemeManager.SetMarkdownFontScale(value);
+				RaisePropertyChanged(nameof(MarkdownFontScale));
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the base corner radius, which is the <c>M</c> size of the radius vocabulary.
 		/// </summary>
 		public double RadiusBase

@@ -30,5 +30,6 @@ appearance.primary: Primary
 appearance.accent: Accent
 appearance.typography: Type scale
 appearance.font_scale: Scale
+appearance.markdown_scale: Markdown scale
 appearance.radius_base: Corner radius
 appearance.radius_base_hint: Base radius

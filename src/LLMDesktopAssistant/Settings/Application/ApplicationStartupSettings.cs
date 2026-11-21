@@ -80,6 +80,19 @@ namespace LLMDesktopAssistant.Settings.Application
 		} = 1;
 
 		/// <summary>
+		/// Gets or sets the multiplier applied to Markdown text on top of <see cref="FontScale"/>.
+		/// </summary>
+		/// <remarks>
+		/// It is an extra factor, not a replacement: Markdown stays at the interface size while it is one and
+		/// follows every other typography change regardless of its value.
+		/// </remarks>
+		public double MarkdownFontScale
+		{
+			get => field;
+			set => SetProperty(ref field, value);
+		} = 1.15;
+
+		/// <summary>
 		/// Gets or sets the base corner radius, which is the <c>M</c> size of the radius vocabulary.
 		/// </summary>
 		public double RadiusBase
