@@ -217,7 +217,7 @@
 									<Grid Grid.Column="1"
 												Grid.ColumnSpan="2"
 												Grid.Row="1"
-												ColumnDefinitions="*,Auto,Auto">
+												ColumnDefinitions="*,Auto">
 										
 										<Grid ColumnDefinitions="Auto,Auto,*"
 													IsVisible="{Binding Available.Topic, Converter={StaticResource StringNonEmptyToBooleanConverter}}"
@@ -251,17 +251,26 @@
 															 TextWrapping="NoWrap"
 															 TextTrimming="CharacterEllipsis" />
 										
-										<ico:VisualIcon Grid.Column="1"
-																		Kind="MessageProcessing"
-																		IsVisible="{Binding Available.HasUserInputDraft}"
-																		Width="10" Height="10" Margin="0,0,4,0"
-																		ToolTip.Tip="{loc:Loc chat.list.has_user_input_draft}" />
+										<StackPanel Grid.Column="1"
+																Spacing="4"
+																Orientation="Horizontal">
+											
+											<ico:VisualIcon Kind="MessageProcessing"
+																			IsVisible="{Binding Available.HasUserInputDraft}"
+																			Width="10" Height="10"
+																			ToolTip.Tip="{loc:Loc chat.list.has_user_input_draft}" />
 										
-										<TextBlock Grid.Column="2"
-															 Text="{Binding Available.LastModifiedLabel}"
-															 ToolTip.Tip="{Binding Available.LastModifiedDetailedLabel}"
-															 FontSize="{DynamicResource FontSizeXs}"
-															 Foreground="{DynamicResource TextTertiary}" />
+											<TextBlock ToolTip.Tip="{loc:Loc chat.list.message_count}"
+																 FontSize="{DynamicResource FontSizeXs}"
+																 Foreground="{DynamicResource TextTertiary}"
+																 Text="{Binding Available.AllMessageCountFormatted}"/>
+
+											<TextBlock Text="{Binding Available.LastModifiedLabel}"
+																 ToolTip.Tip="{Binding Available.LastModifiedDetailedLabel}"
+																 FontSize="{DynamicResource FontSizeXs}"
+																 Foreground="{DynamicResource TextTertiary}" />
+
+										</StackPanel>
 
 									</Grid>
 

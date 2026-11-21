@@ -82,6 +82,16 @@ namespace LLMDesktopAssistant.LLM.Domain
 		} = new();
 
 		/// <summary>
+		/// The overall message count associated with chat, including hidden branches's messages.
+		/// Just for informational purposes.
+		/// </summary>
+		public int AllMessageCount
+		{
+			get;
+			internal set => SetProperty(ref field, value);
+		} = 0;
+
+		/// <summary>
 		/// Gets the collection of agent tasks associated with this chat session.
 		/// </summary>
 		public RangeObservableCollection<AgentTask> AgentTasks { get; } = [];

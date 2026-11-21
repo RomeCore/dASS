@@ -27,6 +27,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				SubTopic = model.SubTopic,
 				Favorite = model.Favorite,
 				HasUserInputDraft = model.UserInputState?.IsEmpty == false,
+				AllMessageCount = database.MessageNodes.Count(m => m.ChatId == model.Id),
 				CreatedAt = model.CreatedAt,
 				LastModifiedAt = model.LastModifiedAt,
 				Parts = GetChatParts(model.Id)
@@ -35,7 +36,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		public IEnumerable<ChatInfo> GetChats()
 		{
-			return database.Chats.FindAll().Select(model => CreateChatInfo(model)).ToList();
+			return database.Chats.FindAll().Select(CreateChatInfo).ToList();
 		}
 
 		public IReadOnlyList<AdditionalMessagePart> GetChatParts(int chatId)

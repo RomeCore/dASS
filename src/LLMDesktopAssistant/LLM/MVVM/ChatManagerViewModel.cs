@@ -80,6 +80,17 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			set => SetProperty(ref field, value);
 		} = false;
 
+		public int AllMessageCount
+		{
+			get;
+			set
+			{
+				if (SetProperty(ref field, value))
+					RaisePropertyChanged(nameof(AllMessageCountFormatted));
+			}
+		} = 0;
+		public string AllMessageCountFormatted => $"#{AllMessageCount}";
+
 		public DateTime LastModifiedAt
 		{
 			get;
@@ -236,6 +247,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_available.SubTopic = chat.SubTopic;
 			_available.Favorite = chat.Favorite;
 			_available.HasUserInputDraft = chat.UserInputState?.IsEmpty == false;
+			_available.AllMessageCount = chat.AllMessageCount;
 
 			if (e.PropertyName is nameof(chat.UserInputState))
 			{
@@ -535,6 +547,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				SubTopic = info.SubTopic,
 				Favorite = info.Favorite,
 				HasUserInputDraft = info.HasUserInputDraft,
+				AllMessageCount = info.AllMessageCount,
 				LastModifiedAt = info.LastModifiedAt,
 				Parts = new AdditionalMessagePartsViewModel([.. info.Parts])
 			};

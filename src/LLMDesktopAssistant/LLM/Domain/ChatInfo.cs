@@ -39,6 +39,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		public required bool HasUserInputDraft { get; init; }
 
 		/// <summary>
+		/// Total number of messages contained in this chat session.
+		/// </summary>
+		public required int AllMessageCount { get; init; }
+
+		/// <summary>
 		/// Creation timestamp for this instance. Used to track when the chat session was first created.
 		/// </summary>
 		public required DateTime CreatedAt { get; init; }

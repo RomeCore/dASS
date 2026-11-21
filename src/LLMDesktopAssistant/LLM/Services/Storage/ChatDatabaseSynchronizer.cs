@@ -68,6 +68,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				target.Topic = model.Topic;
 				target.SubTopic = model.SubTopic;
 				target.Favorite = model.Favorite;
+				target.AllMessageCount = database.MessageNodes.Count(m => m.ChatId == target.Id);
 				chatSettings.LoadFromProfile(model.SettingsProfile);
 			}
 

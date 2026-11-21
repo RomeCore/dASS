@@ -14,6 +14,11 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		public int Id { get; set; }
 
 		/// <summary>
+		/// The chat ID associated with the message node.
+		/// </summary>
+		public int ChatId { get; set; }
+
+		/// <summary>
 		/// The value indicates whether the current message node is a root node.
 		/// </summary>
 		public bool IsRootNode { get; set; }

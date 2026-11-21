@@ -116,10 +116,12 @@ namespace LLMDesktopAssistant.LLM.Services
 						// Add root node
 						int nodeId = database.MessageNodes.Insert(nodeModel = new MessageNodeModel
 						{
+							ChatId = chatId,
 							IsRootNode = true,
 							ParentId = chatId,
 							MessageId = messageId
 						});
+						chat.AllMessageCount++;
 						chatModel.RootNodeId = nodeId;
 						chatModel.LeafNodeId = nodeId;
 						chatModel.LastModifiedAt = DateTime.Now;
@@ -129,10 +131,12 @@ namespace LLMDesktopAssistant.LLM.Services
 						var leafNode = database.MessageNodes.FindById(chatModel.LeafNodeId);
 						int nodeId = database.MessageNodes.Insert(nodeModel = new MessageNodeModel
 						{
+							ChatId = chatId,
 							IsRootNode = false,
 							ParentId = leafNode.Id,
 							MessageId = messageId
 						});
+						chat.AllMessageCount++;
 
 						leafNode.SelectedNodeId = nodeId;
 						chatModel.LeafNodeId = nodeId;
@@ -318,12 +322,13 @@ namespace LLMDesktopAssistant.LLM.Services
 
 					newNode = new MessageNodeModel
 					{
+						ChatId = chatId,
 						IsRootNode = currentNode.IsRootNode,
 						ParentId = currentNode.ParentId,
 						MessageId = messageId
 					};
-
 					int newNodeId = database.MessageNodes.Insert(newNode);
+					chat.AllMessageCount++;
 
 					if (currentNode.IsRootNode)
 					{
@@ -414,6 +419,7 @@ namespace LLMDesktopAssistant.LLM.Services
 							MessageDatabaseSynchronizer.DeleteFromDatabase(database, messageModel.Id);
 
 						database.MessageNodes.Delete(node.Id);
+						chat.AllMessageCount--;
 					}
 
 					// Select another sibling

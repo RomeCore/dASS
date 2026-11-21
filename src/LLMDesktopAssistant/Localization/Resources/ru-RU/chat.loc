@@ -50,6 +50,7 @@ edit.topic: Тема
 list.title: Чаты
 list.favorite: Занести в избранное
 list.has_user_input_draft: Содержит черновик ввода
+list.message_count: Общее количество сообщений
 list.collapse: Свернуть список чатов
 list.expand: Развернуть список чатов
 list.open: Открытые

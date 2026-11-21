@@ -50,6 +50,7 @@ edit.topic: Topic
 list.title: Chats
 list.favorite: Favorite chat
 list.has_user_input_draft: Has input draft
+list.message_count: Overall message count
 list.collapse: Collapse the chat list
 list.expand: Expand the chat list
 list.open: Open
