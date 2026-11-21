@@ -11,8 +11,8 @@
 
 	<UserControl.Styles>
 		<Style Selector="Border.selectionToolbar">
-			<Setter Property="Background" Value="{DynamicResource InputCompletionPopupBackgroundBrush}" />
-			<Setter Property="BorderBrush" Value="{DynamicResource InputCompletionPopupBorderBrush}" />
+			<Setter Property="Background" Value="{DynamicResource PopupBackground}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}" />
 			<Setter Property="BorderThickness" Value="1" />
 			<Setter Property="CornerRadius" Value="8" />
 			<Setter Property="Padding" Value="3" />
@@ -26,7 +26,7 @@
 			<Setter Property="Focusable" Value="False" />
 		</Style>
 		<Style Selector="Button.selectionToolbarItem:pointerover /template/ ContentPresenter">
-			<Setter Property="Background" Value="{DynamicResource InputCompletionPopupSelectedBrush}" />
+			<Setter Property="Background" Value="{DynamicResource PrimarySubtle}" />
 		</Style>
 	</UserControl.Styles>
 

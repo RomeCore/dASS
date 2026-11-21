@@ -26,14 +26,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	/// </remarks>
 	public sealed class InputCompletionTransformProvider : IHighlightTransformProvider
 	{
-		/// <summary>
-		/// The ghost's colour when the theme provides none.
-		/// </summary>
-		private static readonly IBrush DefaultGhost = new SolidColorBrush(Color.Parse("#8C8C8C"));
-
 		private readonly IInputCompletionService _completion;
 		private readonly IReadOnlyList<IInputCompletionSource> _renderers;
-		private readonly IBrush _ghost;
 
 		public InputCompletionTransformProvider(IInputCompletionService completion,
 			IEnumerable<IInputCompletionSource> renderers)
@@ -42,7 +36,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			_completion = completion ?? throw new ArgumentNullException(nameof(completion));
 			_renderers = [.. renderers];
-			_ghost = ResolveGhost();
 
 			// A new completion - or a closed one - changes what the preview shows, so the layout has to be redone.
 			_completion.ResultChanged += (_, _) => NotifyLayoutChanged();
@@ -107,21 +100,25 @@ namespace LLMDesktopAssistant.LLM.MVVM
 						spans[i] = span with { Length = caret - Math.Min(span.Start, caret) };
 				}
 
-				spans.Add(new TextHighlightSpan(caret, ghost.Length, _ghost));
+				spans.Add(new TextHighlightSpan(caret, ghost.Length, ResolveGhost()));
 				spans.Sort((a, b) => a.Start.CompareTo(b.Start));
 			}
 
 			return new HighlightTransformResult(rendered, spans.Count > 0 ? spans : null);
 		}
 
+		/// <summary>
+		/// Resolves the ghost's brush from the role table on every rebuild, so the preview follows a theme or seed
+		/// change instead of freezing the colour it saw at construction time.
+		/// </summary>
 		private static IBrush ResolveGhost()
 		{
 			if (Application.Current is not { } app)
-				return DefaultGhost;
+				return Brushes.Gray;
 
-			return app.TryFindResource("InputCompletionGhostBrush", out var value) && value is IBrush brush
+			return app.TryFindResource("TextTertiary", out var value) && value is IBrush brush
 				? brush
-				: DefaultGhost;
+				: Brushes.Gray;
 		}
 	}
 }

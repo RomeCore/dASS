@@ -14,7 +14,7 @@
 	<UserControl.Styles>
 		<!-- The picker is a plain stack, so the selected row carries its own flag. -->
 		<Style Selector="Border.selected">
-			<Setter Property="Background" Value="{DynamicResource InputCompletionPopupSelectedBrush}"/>
+			<Setter Property="Background" Value="{DynamicResource SelectionBackground}"/>
 		</Style>
 
 		<!-- The argument the caret currently sits in. -->
@@ -26,12 +26,12 @@
 	
 	<!-- Бля, почему нейронка просто переводит мои запросы и пихает их в комментарии? Ладно, пусть остается, не буду вырезать -->
 	<!--
-		The popup's chrome: a very dark, slightly purple surface with a lighter frame and a soft shadow, so it reads as
-		something floating above the input rather than as another panel. The colours are theme resources (see
-		Styles/Theme/InputCompletionTheme.axaml) and the placement above the input is the view's job (UserInputView).
+		The popup's chrome: a floating surface with a frame and a soft shadow, so it reads as something above the
+		input rather than as another panel. The colours are roles (PopupBackground, BorderDefault,
+		SelectionBackground) and the placement above the input is the view's job (UserInputView).
 	-->
-	<Border Background="{DynamicResource InputCompletionPopupBackgroundBrush}"
-			BorderBrush="{DynamicResource InputCompletionPopupBorderBrush}"
+	<Border Background="{DynamicResource PopupBackground}"
+			BorderBrush="{DynamicResource BorderDefault}"
 			BorderThickness="1"
 			CornerRadius="10"
 			BoxShadow="0 8 24 #4c000000"
@@ -141,10 +141,7 @@
 					   Margin="8,6"/>
 
 			<!-- The keys the popup owns. -->
-			<Border Height="1"
-					Background="{DynamicResource InputCompletionPopupBorderBrush}"
-					Opacity="0.6"
-					Margin="4,4,4,0"/>
+			<Separator Margin="4,4,4,0"/>
 			<TextBlock Text="{loc:Loc command.completion.hint}"
 					   FontSize="11" Opacity="0.55"
 					   Margin="8,4,8,2"/>
