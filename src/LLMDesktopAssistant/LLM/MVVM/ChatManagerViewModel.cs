@@ -407,6 +407,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				Icon = MaterialIconKind.Close,
 				Command = Chat?.CloseCommand,
 				ToolTip = Locale.GetKey("common.close")
+			},
+			new ChatListEntryCommand
+			{
+				Icon = MaterialIconKind.Delete,
+				Command = Available?.DeleteCommand,
+				ToolTip = Locale.GetKey("common.delete")
 			}
 		];
 
