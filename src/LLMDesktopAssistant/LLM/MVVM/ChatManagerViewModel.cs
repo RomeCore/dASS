@@ -126,6 +126,16 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			get;
 			set => SetProperty(ref field, value);
 		} = false;
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				Parts.Dispose();
+			}
+		}
 	}
 
 	public class OpenedChatViewModel : NotifyPropertyChanged
@@ -309,14 +319,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	{
 		public required VisualIconKind Icon { get; init; }
 		public required LocaleKeyBase ToolTip { get; init; }
-		public required ICommand Command { get; init; }
+		public required ICommand? Command { get; init; }
 	}
 
 	public class ChatListBaseEntry : NotifyPropertyChanged
 	{
 		public virtual AvailableChatViewModel? Available => null;
 		public virtual OpenedChatViewModel? Opened => null;
-		public virtual ImmutableList<ChatListEntryCommand> Commands { get; } = [];
+		public virtual IReadOnlyList<ChatListEntryCommand> Commands { get; } = [];
 		public virtual bool CanBeSelected => true;
 	}
 
@@ -328,51 +338,89 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 	public class ChatListAvailableEntry : ChatListBaseEntry
 	{
-		public override AvailableChatViewModel Available => Chat;
-		public required AvailableChatViewModel Chat { get; init; }
+		public override AvailableChatViewModel? Available => _chat;
 
-		public override ImmutableList<ChatListEntryCommand> Commands => field ??= [
+		private AvailableChatViewModel? _chat;
+		public required AvailableChatViewModel? Chat
+		{
+			get => _chat;
+			init => _chat = value;
+		}
+
+		private ImmutableList<ChatListEntryCommand>? _commands;
+		public override ImmutableList<ChatListEntryCommand> Commands => _commands ??= [
 			new ChatListEntryCommand
 			{
 				Icon = MaterialIconKind.Pencil,
-				Command = Chat.RenameCommand,
+				Command = Chat?.RenameCommand,
 				ToolTip = Locale.GetKey("common.rename")
 			},
 			new ChatListEntryCommand
 			{
 				Icon = MaterialIconKind.Delete,
-				Command = Chat.DeleteCommand,
+				Command = Chat?.DeleteCommand,
 				ToolTip = Locale.GetKey("common.delete")
 			}
 		];
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				_chat?.Dispose();
+				_chat = null;
+				_commands = [];
+			}	
+		}
 	}
 
 	public class ChatListOpenedEntry : ChatListBaseEntry
 	{
-		public override AvailableChatViewModel Available => Chat.Available;
-		public override OpenedChatViewModel? Opened => Chat;
-		public required OpenedChatViewModel Chat { get; init; }
+		public override AvailableChatViewModel? Available => _chat?.Available;
+		public override OpenedChatViewModel? Opened => _chat;
 
-		public override ImmutableList<ChatListEntryCommand> Commands => field ??= [
+		private OpenedChatViewModel? _chat;
+		public required OpenedChatViewModel? Chat
+		{
+			get => _chat;
+			init => _chat = value;
+		}
+
+		private ImmutableList<ChatListEntryCommand>? _commands;
+		public override ImmutableList<ChatListEntryCommand> Commands => _commands ??= [
 			new ChatListEntryCommand
 			{
 				Icon = MaterialIconKind.Pencil,
-				Command = Chat.RenameCommand,
+				Command = Chat?.RenameCommand,
 				ToolTip = Locale.GetKey("common.rename")
 			},
 			new ChatListEntryCommand
 			{
 				Icon = MaterialIconKind.AutoFix,
-				Command = Chat.RenameWithAICommand,
+				Command = Chat?.RenameWithAICommand,
 				ToolTip = Locale.GetKey("chat.rename_with_ai")
 			},
 			new ChatListEntryCommand
 			{
 				Icon = MaterialIconKind.Close,
-				Command = Chat.CloseCommand,
+				Command = Chat?.CloseCommand,
 				ToolTip = Locale.GetKey("common.close")
 			}
 		];
+
+		protected override void Dispose(bool disposing)
+		{
+			base.Dispose(disposing);
+
+			if (disposing)
+			{
+				_chat?.Dispose();
+				_chat = null;
+				_commands = [];
+			}
+		}
 	}
 
 	[ViewModelFor(typeof(ChatManagerView))]
@@ -441,11 +489,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				if (SetProperty(ref field, value))
 				{
 					if (prevChat is ChatListOpenedEntry opPrev)
-						opPrev.Chat.IsSelected = false;
+						opPrev.Chat?.IsSelected = false;
 					if (field is ChatListOpenedEntry opNew)
-						opNew.Chat.IsSelected = true;
-					if (field is ChatListAvailableEntry avNew)
-						SelectChat(avNew.Chat);
+						opNew.Chat?.IsSelected = true;
+					if (field is ChatListAvailableEntry avNew && avNew.Chat is { } chat)
+						SelectChat(chat);
 				}
 			}
 		}
@@ -472,6 +520,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			if (disposing)
 			{
+				SelectedChat = null;
 				ChatListEntries.Clear();
 				AvailableChats.Clear();
 				foreach (var chat in OpenedChats)
@@ -524,13 +573,13 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 				var openedChats = OpenedChats.Where(o => o.Available.Id == info.Id).ToList();
 				foreach (var openedChat in openedChats)
-				{
-					OpenedChats.Remove(openedChat);
-					openedChat.Dispose();
-				}
+					CloseOpened(openedChat, false);
 				ChatManager.DeleteChat(info.Id);
 				newAvailableChatViewModel.PropertyChanged -= OnAvailableChatPropertyChanged;
 				AvailableChats.Remove(newAvailableChatViewModel);
+				_availableEntries.Remove(newAvailableChatViewModel, out var availableEntry);
+				availableEntry?.Dispose();
+				newAvailableChatViewModel.Dispose();
 				RebuildChatList();
 
 				if (OpenedChats.Count == 0)
@@ -555,6 +604,34 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			newAvailableChatViewModel.PropertyChanged += OnAvailableChatPropertyChanged;
 
 			return newAvailableChatViewModel;
+		}
+
+		private void CloseOpened(OpenedChatViewModel chat, bool updateList)
+		{
+			int closedIndex = OpenedChats.IndexOf(chat);
+			bool selectedWasClosed = SelectedChat is ChatListOpenedEntry selectedOpenedChat && selectedOpenedChat.Chat == chat;
+			if (closedIndex >= 0)
+				OpenedChats.RemoveAt(closedIndex);
+			_openedEntries.Remove(chat, out var openedEntry);
+			openedEntry?.Dispose();
+			chat.Dispose();
+
+			if (!updateList)
+				return;
+
+			if (OpenedChats.Count == 0)
+			{
+				CreateChat();
+			}
+			else
+			{
+				RebuildChatList();
+				if (selectedWasClosed)
+				{
+					int clampedIndex = Math.Min(closedIndex, OpenedChats.Count - 1);
+					SelectedChat = _openedEntries.GetOrAdd(OpenedChats[clampedIndex], OpenedFactory);
+				}
+			}
 		}
 
 		private void LoadChats()
@@ -683,17 +760,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				CloseCommand = new RelayCommand(() =>
 				{
-					OpenedChats.Remove(newOpenedChat);
-					newOpenedChat.Dispose();
-
-					if (OpenedChats.Count == 0)
-						CreateChat();
-					else
-					{
-						RebuildChatList();
-						if (SelectedChat is ChatListOpenedEntry selectedOpenedChat && selectedOpenedChat.Chat == newOpenedChat)
-							SelectedChat = _openedEntries.GetOrAdd(OpenedChats[0], OpenedFactory);
-					}
+					CloseOpened(newOpenedChat, true);
 				})
 			};
 			OpenedChats.Add(newOpenedChat);
