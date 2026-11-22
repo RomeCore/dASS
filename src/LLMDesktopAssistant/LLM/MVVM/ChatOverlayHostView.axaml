@@ -18,7 +18,7 @@
 			<Setter Property="Background" Value="{DynamicResource CardBackground}"/>
 			<Setter Property="BorderBrush" Value="{DynamicResource BorderDefault}"/>
 			<Setter Property="BorderThickness" Value="1"/>
-			<Setter Property="CornerRadius" Value="8"/>
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}"/>
 			<Setter Property="ClipToBounds" Value="True"/>
 			<Setter Property="BoxShadow" Value="0 4 20 0 #33000000"/>
 		</Style>
@@ -26,7 +26,7 @@
 		<!-- The whole header is the drag handle, so it looks like one. -->
 		<Style Selector="Border.overlayHeader">
 			<Setter Property="Background" Value="{DynamicResource ControlBackground}"/>
-			<Setter Property="CornerRadius" Value="8,8,0,0"/>
+			<Setter Property="CornerRadius" Value="{DynamicResource RadiusTopM}"/>
 			<Setter Property="Padding" Value="8,2"/>
 			<Setter Property="Cursor" Value="SizeAll"/>
 		</Style>

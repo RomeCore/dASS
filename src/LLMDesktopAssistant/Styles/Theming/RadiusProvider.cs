@@ -65,11 +65,8 @@ namespace LLMDesktopAssistant.Styles.Theming
 				_resources["RadiusRight" + name] = new CornerRadius(0, radius, radius, 0);
 				_resources["RadiusBottom" + name] = new CornerRadius(0, 0, radius, radius);
 				_resources["RadiusLeft" + name] = new CornerRadius(radius, 0, 0, radius);
-			}
-
-			// The inner radius keeps a nested surface concentric with the one that holds it.
-			foreach (var (name, factor) in sizes)
 				_resources["RadiusInner" + name] = new CornerRadius(Math.Max(0, baseRadius * factor - innerPadding));
+			}
 
 			RaiseResourcesChanged();
 		}
