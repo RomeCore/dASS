@@ -6,7 +6,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 {
 	/// <summary>
 	/// Lua API for creating dynamic UI controls: <c>dass.ui.*</c>.
-	/// A created control is a pure descriptor (<c>uicontrol</c> UserData) that can be appended to
+	/// A created control is a pure descriptor (a <c>uicontrol</c> handle) that can be appended to
 	/// a running tool's result via <c>dass.tool.result.append_data()</c>.
 	/// </summary>
 	[LuaApi(chatScoped: false)]
@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- dass.ui - dynamic UI creation API
 
 			Creates dynamic Avalonia UI controls from AXAML markup bound to a Lua table (a dynamic
-			view model). The created control is a UserData descriptor; it renders only after it is
+			view model). The created control is a uicontrol handle; it renders only after it is
 			appended to a running tool's result with dass.tool.result.append_data() or else.
 
 			FUNCTIONS:
@@ -40,7 +40,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			          bound with {Binding}.
 			        * nil - an empty view model (useful for purely static markup).
 
-			  Returns: uicontrol (UserData) - pass it to dass.tool.result.append_data().
+			  Returns: uicontrol handle - pass it to dass.tool.result.append_data().
 
 			METHODS (on the returned uicontrol):
 

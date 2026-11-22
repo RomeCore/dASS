@@ -42,8 +42,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  nil.
 
 			--- dass.chat.append_part(spec) -> chat_part
-			  Appends one part - a compact chip with an optional payload - to the CHAT object
-			  itself, not to a message.
+			  Appends one part - a compact chip with an optional payload - to the chat itself,
+			  not to a message.
 
 			  Parameters:
 			    - spec: table - the part, every field optional:

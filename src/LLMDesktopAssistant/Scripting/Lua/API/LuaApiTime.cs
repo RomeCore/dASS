@@ -70,8 +70,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns: duration_ms (number), ... (function return values)
 
 			--- time.stopwatch()
-			  Creates a new stopwatch object for measuring elapsed time.
-			  Returns: stopwatch userdata with :elapsed(), :elapsed_ns(),
+			  Creates a stopwatch handle for measuring elapsed time.
+			  Returns: stopwatch handle with :elapsed(), :elapsed_ns(),
 			            :reset(), and :to_string() methods.
 
 			--- async time.with_timeout(func, timeout_ms)
@@ -88,7 +88,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- time.set_timeout(ms, callback)
 			  Schedules a callback to run once after the specified delay.
 			  The callback runs asynchronously.
-			  Returns: timer userdata with :cancel() and :is_pending() methods.
+			  Returns: timer handle with :cancel() and :is_pending() methods.
 			  Example:
 			    local t = time.set_timeout(1000, function()
 			      print("Hello 1 second later!")
@@ -98,7 +98,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- time.set_interval(ms, callback)
 			  Schedules a callback to run repeatedly every `ms` milliseconds.
 			  Each invocation runs asynchronously.
-			  Returns: timer userdata with :cancel() and :is_pending() methods.
+			  Returns: timer handle with :cancel() and :is_pending() methods.
 			  Example:
 			    local t = time.set_interval(500, function()
 			      print("tick")

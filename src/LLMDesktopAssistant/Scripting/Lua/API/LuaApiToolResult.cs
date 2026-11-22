@@ -30,7 +30,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns: boolean - true if dass.tool.result functions can be used
 			
 			--- dass.tool.result.get()
-			  Returns the current reactive result object (table), or nil if not in a tool context.
+			  Returns the current reactive result table, or nil if not in a tool context.
 			  The returned table has fields (read-only):
 			    - content: string - current accumulated output
 			    - is_completed: boolean - whether execution has finished
