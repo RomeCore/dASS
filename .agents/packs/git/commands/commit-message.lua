@@ -135,6 +135,7 @@ Without the `auto` argument, stop at step 5 - the message is the whole product. 
 - Stage exactly the paths the diff listed, tracked and untracked alike (`git add -A` when the diff *is* the whole worktree); leave everything else in the worktree untouched.
 - Commit the subject with `git commit -m`, adding the body as further `-m` paragraphs when step 4 produced one.
 - A splittable diff becomes one commit per proposed split, in the listed order - never one squashed commit.
+- DO NOT commit using lots of `-m -m -m ...`: use one, BIG multiline message (with body) string instead of making a lot of paragraph breaks.
 - Never push. Report the created commit hash(es).
 
 *Done when:* `git log` shows the new commit(s) with the exact recommended subjects.
