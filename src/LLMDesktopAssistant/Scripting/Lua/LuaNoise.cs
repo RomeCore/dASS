@@ -8,15 +8,30 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// <summary>
 	/// A procedural noise generator exposed to Lua as user data: <c>noise:generate(...)</c> samples it and <c>noise:render{...}</c> rasterizes it.
 	/// </summary>
-	public sealed class LuaNoise(NoiseBase noise, string type)
+	public sealed class LuaNoise(NoiseBase noise)
 	{
 		private const int DefaultRenderSide = 256;
 		private const int MaxRenderSide = 4096;
 
+		private static string GetNoiseTypeString(NoiseBase noise)
+		{
+			return noise switch
+			{
+				ValueNoise => "value",
+				SimplexNoise => "simplex",
+				VoronoiNoise => "voronoi",
+				CheckerboardNoise => "checkerboard",
+				WhiteNoise => "white",
+				SineNoise => "sine",
+				GaborNoise => "gabor",
+				_ => "unknown"
+			};
+		}
+
 		/// <summary>
 		/// Gets the factory family this object was created from: <c>simplex</c>, <c>voronoi</c> and so on.
 		/// </summary>
-		public string Type => type;
+		public string Type { get; } = GetNoiseTypeString(noise);
 
 		/// <summary>
 		/// Gets the wrapped generator, so the API factories can configure parameters that are specific to one family.
@@ -94,6 +109,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			get => noise.MaxDistortionRecursionDepth;
 			set => noise.MaxDistortionRecursionDepth = value;
+		}
+
+		/// <summary>
+		/// Gets or sets the maximum recursion depth of domain warping.
+		/// </summary>
+		public LuaNoise? DistortionNoise
+		{
+			get => noise.DistortionNoise is { } distNoise ? new LuaNoise(distNoise) : null;
+			set => noise.DistortionNoise = value?.Source;
 		}
 
 		/// <summary>

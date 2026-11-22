@@ -165,7 +165,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		/// Creates a simplex generator.
 		/// </summary>
 		private LuaTuple Simplex(LuaCallingContext ctx, LuaValue[] args)
-			=> Wrap(new SimplexNoise(), "simplex", args);
+			=> Wrap(new SimplexNoise(), args);
 
 		/// <summary>
 		/// Creates a Voronoi generator, applying its metric, feature and density.
@@ -181,26 +181,26 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					noise.PointsPerCell = Math.Max(1, (int)points.Value);
 			}
 
-			return Wrap(noise, "voronoi", args);
+			return Wrap(noise, args);
 		}
 
 		/// <summary>
 		/// Creates a value noise generator.
 		/// </summary>
 		private LuaTuple Value(LuaCallingContext ctx, LuaValue[] args)
-			=> Wrap(new ValueNoise(), "value", args);
+			=> Wrap(new ValueNoise(), args);
 
 		/// <summary>
 		/// Creates a white noise generator.
 		/// </summary>
 		private LuaTuple White(LuaCallingContext ctx, LuaValue[] args)
-			=> Wrap(new WhiteNoise(), "white", args);
+			=> Wrap(new WhiteNoise(), args);
 
 		/// <summary>
 		/// Creates a sine noise generator.
 		/// </summary>
 		private LuaTuple Sine(LuaCallingContext ctx, LuaValue[] args)
-			=> Wrap(new SineNoise(), "sine", args);
+			=> Wrap(new SineNoise(), args);
 
 		/// <summary>
 		/// Creates a checkerboard generator, applying its randomization factor.
@@ -211,7 +211,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (ReadParameters(args) is { } parameters && parameters.Get("randomization") is LuaNumber randomization)
 				noise.Randomization = Math.Clamp(randomization.Value, 0.0, 1.0);
 
-			return Wrap(noise, "checkerboard", args);
+			return Wrap(noise, args);
 		}
 
 		/// <summary>
@@ -232,7 +232,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					noise.RandomizeRotation = randomizeRotation.Value;
 			}
 
-			return Wrap(noise, "gabor", args);
+			return Wrap(noise, args);
 		}
 
 		/// <summary>
@@ -262,12 +262,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		/// <summary>
 		/// Applies the parameters shared by every generator and wraps the result as user data.
 		/// </summary>
-		private LuaTuple Wrap(NoiseBase noise, string type, LuaValue[] args)
+		private LuaTuple Wrap(NoiseBase noise, LuaValue[] args)
 		{
 			if (ReadParameters(args) is { } parameters)
 				ApplyCommon(noise, parameters);
 
-			return new LuaTuple(LuaValueConverter.ToLuaValue(new LuaNoise(noise, type)));
+			return new LuaTuple(LuaValueConverter.ToLuaValue(new LuaNoise(noise)));
 		}
 
 		/// <summary>
