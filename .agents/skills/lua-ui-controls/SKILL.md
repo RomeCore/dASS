@@ -55,10 +55,28 @@ The table **is** the view model. Its shape decides the bindings:
 | string key → table (array) | `{Binding key}` as `ItemsControl.ItemsSource` (see *Lists and `ItemsControl`*) |
 | string key → function | `{Binding key}` as a command |
 
+An `image.*` handle is a value like any other: a member holding one binds to `Image.Source`, and a
+table of images binds as an `ItemsControl.ItemsSource` with `{Binding}` inside the item template.
+Images are stored with the view model, so a restored widget shows them again.
+
+```xml
+<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+  <Image Source="{Binding avatar}" Width="64"/>
+  <ItemsControl ItemsSource="{Binding gallery}">
+    <ItemsControl.ItemTemplate>
+      <DataTemplate><Image Source="{Binding}" Width="32"/></DataTemplate>
+    </ItemsControl.ItemTemplate>
+  </ItemsControl>
+</StackPanel>
+```
+
 The view model injects two helpers into the table:
 
 - `vm:set(name, value)` - write the member *and* raise the change;
 - `vm:notify(name)` - raise the change after writing the table directly.
+
+A table used as an array gets neither: there is nothing to address by name, so replace the whole
+member (`vm:set("items", newArray)`) instead.
 
 Two channels carry state, and they are not interchangeable:
 
@@ -209,6 +227,8 @@ The same marker is what `store.chat` and `store.file` keep, so a function parked
 - **`append_data` from a script that is not a running tool** is a silent no-op.
 - **`append_data(a, b)` with two handles** raises `options must be a table` - the multi-handle form is gone, one handle per call.
 - **A member written with plain `vm.key = ...`** stays frozen until `vm:notify(key)` runs.
+- **`set` / `notify` on an array table** - no helpers were injected into it; notify the member that
+  holds the list.
 - **`set_result` called twice** raises - resolve the handle behind an idempotent guard.
 - **A member set from inside `__changed`** re-enters the handler - guard it with a flag.
 - **`await` with no safety timeout** waits forever if the user never acts.

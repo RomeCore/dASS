@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using AsyncLua;
 using AsyncLua.Values;
 using CommunityToolkit.Mvvm.Input;
+using LLMDesktopAssistant.Scripting.Lua;
 using RCParsing.Utils;
 using Serilog;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -125,9 +126,10 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			{
 				null or LuaNil => null,
 				LuaTable table => new LuaValueDynamicViewModel(table, Context),
-				LuaFunction funtion => _commandCache.GetValue(funtion, CreateCommand),
+				LuaFunction function => _commandCache.GetValue(function, CreateCommand),
+				LuaUserData { Target: LuaImage image } => LuaImageBitmap.FromImage(image),
 				LuaValue value => value.ToClrObject<object>(),
-				_ => raw,
+				_ => raw
 			};
 		}
 
@@ -186,6 +188,12 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 
 		private void InjectHelpers()
 		{
+			// A non-empty array table must stay one: adding the helper keys flips `is_array` to false, so a
+			// snapshot would save the list as a dictionary with "1", "2" keys - and a bound ItemsControl
+			// would come back empty after a reload, silently. Array members need no helper anyway.
+			if (Data.Length > 0 && Data.IsArrayTable())
+				return;
+
 			Data.Set(SetKey, new LuaCallbackFunction((_, args) =>
 			{
 				if (args.Length >= 3)

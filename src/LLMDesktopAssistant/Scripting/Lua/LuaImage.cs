@@ -19,12 +19,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// </summary>
 	public sealed class LuaImage : IDisposable, ILuaNativeAttachable
 	{
-		/// <inheritdoc/>
-		public IAttachment GetNativeAttachment() => new SerializableImageAttachment(Format, ToBase64());
-
 		private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
 
-		private readonly IWorkingDirectoryAccessService _fileAccess;
+		// Null for an image restored from a persisted snapshot: there is no working directory to resolve
+		// paths against, so only Save is unavailable.
+		private readonly IWorkingDirectoryAccessService? _fileAccess;
 		private Image _image;
 		private bool _disposed;
 
@@ -48,14 +47,22 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		public Image Image => EnsureNotDisposed();
 
-		internal LuaImage(IWorkingDirectoryAccessService fileAccess, Image image, string? format = null)
+		/// <summary>
+		/// Gets a number that changes whenever the pixels change, so consumers can cache derived data
+		/// (an encoded snapshot, a bitmap) and drop it on the next read after a mutation.
+		/// </summary>
+		[LuaHidden]
+		public int Revision { get; private set; }
+
+		/// <inheritdoc/>
+		public IAttachment GetNativeAttachment() => new SerializableImageAttachment(Format, ToBase64());
+
+		internal LuaImage(IWorkingDirectoryAccessService? fileAccess, Image image, string? format = null)
 		{
-			_fileAccess = fileAccess ?? throw new ArgumentNullException(nameof(fileAccess));
+			_fileAccess = fileAccess;
 			_image = image ?? throw new ArgumentNullException(nameof(image));
 			Format = format ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png";
 		}
-
-		#region Static factory methods
 
 		/// <summary>
 		/// Loads an image from a file path.
@@ -119,6 +126,15 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		}
 
 		/// <summary>
+		/// Restores an image from encoded bytes without binding it to a working directory (a persisted value).
+		/// </summary>
+		internal static LuaImage FromSnapshot(byte[] bytes, string? format)
+		{
+			var image = Image.Load(bytes);
+			return new LuaImage(null, image, format ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png");
+		}
+
+		/// <summary>
 		/// Creates a LuaImage from raw byte data.
 		/// </summary>
 		public static LuaImage FromBytes(IWorkingDirectoryAccessService fileAccess, byte[] bytes, string? format = null)
@@ -157,16 +173,13 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			return result;
 		}
 
-		#endregion
-
-		#region Instance methods (exposed to Lua)
-
 		/// <summary>
 		/// Saves the image to a file.
 		/// </summary>
 		public void Save(string path, LuaTable? optionsTable = null)
 		{
-			var fullPath = _fileAccess.AccessPath(path, DirectoryAccessMode.Write);
+			var fullPath = _fileAccess?.AccessPath(path, DirectoryAccessMode.Write)
+				?? throw new InvalidOperationException("This image was restored from a saved value and is not bound to a working directory; encode it with image:base64() and write it with the fs API instead.");
 
 			var opts = optionsTable != null ? OptionsFromTable(optionsTable) : new ImageSaveOptions();
 			EnsureNotDisposed();
@@ -179,14 +192,18 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <summary>
 		/// Converts the image to a base64-encoded string.
 		/// </summary>
-		public string ToBase64(string? format = null)
+		public string ToBase64(string? format = null) => Convert.ToBase64String(ToBytes(format));
+
+		/// <summary>
+		/// Encodes the image into bytes in the given format (the original one when omitted).
+		/// </summary>
+		public byte[] ToBytes(string? format = null)
 		{
 			EnsureNotDisposed();
-			var targetFormat = format ?? Format;
-			var encoder = GetEncoderForFormat(targetFormat, new ImageSaveOptions());
+			var encoder = GetEncoderForFormat(format ?? Format, new ImageSaveOptions());
 			using var memStream = new MemoryStream();
 			_image.Save(memStream, encoder);
-			return Convert.ToBase64String(memStream.ToArray());
+			return memStream.ToArray();
 		}
 
 		/// <summary>
@@ -219,6 +236,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			};
 
 			_image.Mutate(ctx => ctx.Resize(resizeOptions));
+			Revision++;
 		}
 
 		/// <summary>
@@ -228,6 +246,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			EnsureNotDisposed();
 			_image.Mutate(ctx => ctx.Crop(new Rectangle(x, y, width, height)));
+			Revision++;
 		}
 
 		/// <summary>
@@ -237,6 +256,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			EnsureNotDisposed();
 			_image.Mutate(ctx => ctx.Rotate(degrees));
+			Revision++;
 		}
 
 		/// <summary>
@@ -253,6 +273,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				_ => throw new ArgumentException($"Invalid flip direction: '{direction}'. Use 'horizontal', 'vertical', or 'both'.")
 			};
 			_image.Mutate(ctx => ctx.Flip(flipMode));
+			Revision++;
 		}
 
 		/// <summary>
@@ -289,10 +310,6 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				_image = null!;
 			}
 		}
-
-		#endregion
-
-		#region Private helpers
 
 		private Image EnsureNotDisposed()
 		{
@@ -398,7 +415,5 @@ namespace LLMDesktopAssistant.Scripting.Lua
 				_ => throw new ArgumentException($"Unsupported format: '{format}'. Supported: png, jpg, webp, gif, bmp.")
 			};
 		}
-
-		#endregion
 	}
 }

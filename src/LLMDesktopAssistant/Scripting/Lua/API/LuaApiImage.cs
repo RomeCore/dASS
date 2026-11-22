@@ -141,6 +141,30 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  local info = image.info("large.png")
 		  print(info.width, info.height, info.format)
 
+		DYNAMIC UI:
+
+		  An Image is a value like any other in a dynamic view model: bind it to Image.Source.
+		  An array of images binds as an ItemsControl list, one Image per item.
+
+		  local vm = {
+			  avatar = image.load("avatar.png"),
+			  gallery = { image.load("a.png"), image.load("b.png") }
+		  }
+		  dass.tool.result.append_data(dass.ui.create_control([==[
+			<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+			  <Image Source="{Binding avatar}" Width="64"/>
+			  <ItemsControl ItemsSource="{Binding gallery}">
+				<ItemsControl.ItemTemplate>
+				  <DataTemplate><Image Source="{Binding}" Width="32"/></DataTemplate>
+				</ItemsControl.ItemTemplate>
+			  </ItemsControl>
+			</StackPanel>
+		  ]==], vm))
+
+		  Images are stored with the view model, so a restored widget shows them again after a
+		  chat reload. A restored image keeps every manipulation method, but img:save() is not
+		  available on it - encode it with img:to_base64() and write it through the fs API.
+
 		NOTES:
 		  - Image objects must be disposed manually with :dispose() or will be
 		    disposed automatically by Lua garbage collector.

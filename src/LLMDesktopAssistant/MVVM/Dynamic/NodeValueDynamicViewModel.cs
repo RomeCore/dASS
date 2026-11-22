@@ -2,6 +2,8 @@ using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
+using LLMDesktopAssistant.Scripting.Lua;
+using LLMDesktopAssistant.Scripting.Lua.Converters;
 using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.StructuredValues.Reactive;
@@ -129,6 +131,7 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			{
 				null or INodeNullValue => null,
 				INodeDictionaryValue or INodeArrayValue => new NodeValueDynamicViewModel((INodeValue)raw!),
+				INodeStringValue text when LuaImageNodeConverter.IsImageMarker(text.Value) => LuaImageBitmap.FromMarker(text.Value),
 				INodeValue value => value.TakeValueSnapshot(),
 				_ => null
 			};

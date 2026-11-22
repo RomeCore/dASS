@@ -35,6 +35,9 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			          bindable members, function values become commands, nested tables become nested
 			          view models. The injected helpers `data:set(name, value)` and `data:notify(name)`
 			          and the optional `__changed(self, name, old, new)` callback drive reactivity.
+			          An image handle (image.load / image.create) is a value like any other: bind it to
+			          Image.Source. A table of images binds as an ItemsControl list, one image per item
+			          bound with {Binding}.
 			        * nil - an empty view model (useful for purely static markup).
 
 			  Returns: uicontrol (UserData) - pass it to dass.tool.result.append_data().
@@ -51,6 +54,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			NOTES:
 			  - The handle is reusable: the same uicontrol may be appended multiple times.
 			  - The AXAML source is mutable (ui:set_xaml); the view model is fixed at creation.
+			  - Images survive a chat reload together with the view model: an image member is shown
+				again after the widget is restored.
+			  - `set` and `notify` are injected only when `dass.ui.create_control` is called: don't be
+			    dumb and call vm:set("mykey", 10) before control creation.
+			  - `set` and `notify` are not injected into a table that is an array. To change a list,
+				replace the whole member: vm:set("gallery", newArray).
 			  - Commands survive a chat reload: a Lua function is stored as bytecode together with the
 				view model data and revived when the widget is restored. What does NOT survive: upvalues
 				and the environment. A captured local comes back as nil, while globals (dass.*, your own
