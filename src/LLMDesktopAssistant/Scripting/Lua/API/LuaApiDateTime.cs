@@ -16,7 +16,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- datetime - date and time API
 
 			All functions work with datetime tables:
-			  { year, month, day, hour, min, sec, ms, is_dst, utc_offset (minutes), timestamp (unix epoch seconds) }
+			  { year (number), is_leap_year (bool), month (1..12), day (1..31), day_of_week (1..7), day_of_year (1..366),
+			    hour, min, sec, ms, is_dst, utc_offset (minutes), timestamp (unix epoch seconds) }
 
 			The offset is part of the value: the fields are the wall clock in that offset, and the
 			timestamp is the same instant for both. datetime.now() is UTC, datetime.now_local() is
@@ -271,8 +272,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		{
 			var t = new LuaTable();
 			t["year"] = new LuaNumber(dt.Year);
+			t["is_leap_year"] = LuaBoolean.FromBoolean(DateTime.IsLeapYear(dt.Year));
 			t["month"] = new LuaNumber(dt.Month);
 			t["day"] = new LuaNumber(dt.Day);
+			t["day_of_week"] = new LuaNumber((int)dt.DayOfWeek + 1); // 1=Sunday, 7=Saturday
+			t["day_of_year"] = new LuaNumber(dt.DayOfYear);
 			t["hour"] = new LuaNumber(dt.Hour);
 			t["min"] = new LuaNumber(dt.Minute);
 			t["sec"] = new LuaNumber(dt.Second);
