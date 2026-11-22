@@ -163,7 +163,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			if (luaService is null)
 				return null;
 
-			if (node.ToLuaValue(functions: true) is not LuaTable table)
+			if (node.ToLuaValue() is not LuaTable table)
 				return null;
 
 			var context = luaService.GetState().CreateContext();
@@ -174,7 +174,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 		{
 			return viewModel switch
 			{
-				LuaValueDynamicViewModel lua => lua.Data.ToReactiveNodeValue(tolerant: true, functions: true).ToBsonValue(),
+				LuaValueDynamicViewModel lua => lua.Data.ToReactiveNodeValue(tolerant: true).ToBsonValue(),
 				NodeValueDynamicViewModel node => node.Root.ToBsonValue(),
 				DictionaryDynamicViewModel dictionary => BuildBsonFromDictionary(dictionary.GetSnapshot()),
 				_ => BsonValue.Null,

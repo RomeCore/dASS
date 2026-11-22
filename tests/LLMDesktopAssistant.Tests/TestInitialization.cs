@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Settings.Application;
 using LLMDesktopAssistant.Utils;
 

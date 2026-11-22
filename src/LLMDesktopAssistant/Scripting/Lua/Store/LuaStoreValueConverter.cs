@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Scripting.Lua.Converters;
 using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Const;
 using LLMDesktopAssistant.StructuredValues.Converters;
@@ -24,6 +25,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// The maximum nesting depth a value may have on its way into a store.
 		/// </summary>
 		public const int MaxDepth = 200;
+
+		/// <summary>
+		/// The converters to use for converting between Lua values and structured values.
+		/// </summary>
+		public static ImmutableArray<LuaValueNodeConverter> Converters { get; } = LuaValueNodeConverterRegistry.Converters;
 
 		/// <summary>
 		/// Creates a deep copy of the given value, stopping at <see cref="MaxDepth"/> levels.
@@ -51,6 +57,14 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		{
 			ThrowIfTooDeep(depth, path);
 
+			foreach (var converter in Converters)
+				if (converter.TryConvertFromLua(value, isConst: true) is { } nodeValue)
+				{
+					if (nodeValue is ConstNodeValue result)
+						return result;
+					return nodeValue.ToConstNodeValue();
+				}
+
 			switch (value)
 			{
 				case LuaNil:
@@ -61,8 +75,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 					return new ConstNodeNumberValue { Value = number.Value };
 				case LuaString text:
 					return new ConstNodeStringValue { Value = text.Value };
-				case LuaNativeFunction function:
-					return new ConstNodeStringValue { Value = LuaStructuredConverter.DumpFunction(function) };
 				case LuaTable table:
 					return ToSnapshotTable(table, depth, path, dropped);
 				default:
@@ -108,7 +120,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Store
 		/// </remarks>
 		public static LuaTable Restore(INodeValue? snapshot)
 		{
-			return snapshot?.ToLuaValue(functions: true) as LuaTable ?? new LuaTable();
+			return snapshot?.ToLuaValue(converters: Converters) as LuaTable ?? new LuaTable();
 		}
 
 		private static LuaValue CloneCore(LuaValue value, int depth, string path)

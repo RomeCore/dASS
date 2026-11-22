@@ -1,5 +1,6 @@
 using AsyncLua;
 using AsyncLua.Values;
+using LLMDesktopAssistant.Scripting.Lua.Converters;
 using LLMDesktopAssistant.Scripting.Lua.Store;
 using LLMDesktopAssistant.StructuredValues.Const;
 using LLMDesktopAssistant.StructuredValues.Converters;
@@ -15,14 +16,14 @@ public class LuaFunctionSerializationTests
 		(LuaTable)state.Execute(code).First;
 
 	[Fact]
-	public void Functions_AreDropped_ByDefault()
+	public void Functions_AreDropped_WithoutConverters()
 	{
 		var state = NewState();
 		var table = ExecuteReturningTable(state, """
 			return { counter = 0, bump = function(self) self.counter = self.counter + 1 end }
 			""");
 
-		var node = table.ToConstNodeValue(tolerant: true)!;
+		var node = table.ToConstNodeValue(tolerant: true, converters: [])!;
 		var dictionary = Assert.IsType<ConstNodeDictionaryValue>(node);
 
 		Assert.True(dictionary.Items.ContainsKey("counter"));
@@ -32,6 +33,7 @@ public class LuaFunctionSerializationTests
 	[Fact]
 	public void Function_SurvivesRoundTrip_AndStillReceivesSelf()
 	{
+		var conv = new LuaFunctionNodeConverter();
 		var state = NewState();
 		var table = ExecuteReturningTable(state, """
 			return {
@@ -43,8 +45,8 @@ public class LuaFunctionSerializationTests
 			}
 			""");
 
-		var node = table.ToReactiveNodeValue(tolerant: true, functions: true)!;
-		var revived = Assert.IsType<LuaTable>(node.ToLuaValue(functions: true));
+		var node = table.ToReactiveNodeValue(tolerant: true, converters: [conv])!;
+		var revived = Assert.IsType<LuaTable>(node.ToLuaValue(converters: [conv]));
 		var bump = Assert.IsType<LuaNativeFunction>(revived.Get("bump"));
 
 		var context = state.CreateContext();
@@ -55,14 +57,15 @@ public class LuaFunctionSerializationTests
 	[Fact]
 	public void CapturedLocal_ComesBackAsNil()
 	{
+		var conv = new LuaFunctionNodeConverter();
 		var state = NewState();
 		var table = ExecuteReturningTable(state, """
 			local captured = 41
 			return { get = function() return captured end }
 			""");
 
-		var node = table.ToConstNodeValue(functions: true)!;
-		var revived = Assert.IsType<LuaTable>(node.ToLuaValue(functions: true));
+		var node = table.ToConstNodeValue(converters: [conv])!;
+		var revived = Assert.IsType<LuaTable>(node.ToLuaValue(converters: [conv]));
 		var get = Assert.IsType<LuaNativeFunction>(revived.Get("get"));
 
 		// The upvalue slot exists but holds nothing: reading it does not throw, it yields nil.
@@ -72,16 +75,17 @@ public class LuaFunctionSerializationTests
 	[Fact]
 	public void MarkerString_NeedsTheExplicitFlagToBeRevived()
 	{
+		var conv = new LuaFunctionNodeConverter();
 		var state = NewState();
 		var table = ExecuteReturningTable(state, "return { f = function() return 1 end }");
 
-		var node = table.ToConstNodeValue(functions: true)!;
+		var node = table.ToConstNodeValue(converters: [conv])!;
 		var dumped = Assert.IsType<ConstNodeStringValue>(
 			Assert.IsType<ConstNodeDictionaryValue>(node).Items["f"]);
 
-		Assert.StartsWith(LuaStructuredConverter.FunctionMarker, dumped.Value!);
-		Assert.IsType<LuaString>(dumped.ToLuaValue());
-		Assert.IsType<LuaNativeFunction>(dumped.ToLuaValue(functions: true));
+		Assert.StartsWith(LuaFunctionNodeConverter.FunctionMarker, dumped.Value!);
+		Assert.IsType<LuaString>(dumped.ToLuaValue(converters: []));
+		Assert.IsType<LuaNativeFunction>(dumped.ToLuaValue(converters: [conv]));
 	}
 
 	[Fact]
@@ -124,11 +128,12 @@ public class LuaFunctionSerializationTests
 	[Fact]
 	public void UnreadablePayload_StaysAString()
 	{
-		var text = LuaStructuredConverter.FunctionMarker + "not a dump";
+		var conv = new LuaFunctionNodeConverter();
+		var text = LuaFunctionNodeConverter.FunctionMarker + "not a dump";
 		var node = new ConstNodeStringValue { Value = text };
 
 		// Nothing is lost: the caller keeps the marker, so the next save writes it back verbatim.
-		var value = Assert.IsType<LuaString>(node.ToLuaValue(functions: true));
+		var value = Assert.IsType<LuaString>(node.ToLuaValue(converters: [conv]));
 		Assert.Equal(text, value.Value);
 	}
 }
