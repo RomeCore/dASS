@@ -1,29 +1,21 @@
 using AsyncLua.Values;
-using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.LLM.Settings;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.Formats.Webp;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
 using LLMDesktopAssistant.Utils.Attachments;
 using RCLargeLanguageModels.Messages.Attachments;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace LLMDesktopAssistant.Scripting.Lua
 {
 	/// <summary>
-	/// Represents an image object exposed to Lua as UserData.
+	/// Represents an image handle exposed to Lua as userdata.
 	/// Wraps SixLabors.ImageSharp.Image with disposal support.
 	/// </summary>
-	public sealed class LuaImage : IDisposable, ILuaNativeAttachable
+	/// <remarks>
+	/// Pixels are always <see cref="Rgba32"/>: loading, creating and restoring normalize the image once in the
+	/// constructor, so drawing and encoding never branch on the pixel format.
+	/// </remarks>
+	public sealed partial class LuaImage : IDisposable, ILuaNativeAttachable
 	{
-		private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(30) };
-
-		// Null for an image restored from a persisted snapshot: there is no working directory to resolve
-		// paths against, so only Save is unavailable.
-		private readonly IWorkingDirectoryAccessService? _fileAccess;
 		private Image _image;
 		private bool _disposed;
 
@@ -48,254 +40,60 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public Image Image => EnsureNotDisposed();
 
 		/// <summary>
+		/// Gets whether the image has been disposed.
+		/// </summary>
+		public bool Disposed => _disposed;
+
+		/// <summary>
 		/// Gets a number that changes whenever the pixels change, so consumers can cache derived data
 		/// (an encoded snapshot, a bitmap) and drop it on the next read after a mutation.
 		/// </summary>
 		[LuaHidden]
 		public int Revision { get; private set; }
 
+		/// <summary>
+		/// Gets the RGBA32 view every pixel operation works on.
+		/// </summary>
+		private Image<Rgba32> Pixels => EnsureNotDisposed() as Image<Rgba32>
+			?? throw new InvalidOperationException("LuaImage lost its RGBA32 pixel buffer.");
+
 		/// <inheritdoc/>
 		public IAttachment GetNativeAttachment() => new SerializableImageAttachment(Format, ToBase64());
 
-		internal LuaImage(IWorkingDirectoryAccessService? fileAccess, Image image, string? format = null)
+		/// <summary>
+		/// Wraps the image into the <c>image</c> userdata the Lua side sees.
+		/// </summary>
+		public static LuaUserData Wrap(LuaImage image)
 		{
-			_fileAccess = fileAccess;
-			_image = image ?? throw new ArgumentNullException(nameof(image));
+			return new LuaUserData(image, "image")
+			{
+				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaImage))
+			};
+		}
+
+		/// <summary>
+		/// Wraps an already loaded image, normalizing its pixels to <see cref="Rgba32"/>.
+		/// </summary>
+		/// <remarks>
+		/// The image holds no working directory: a path is resolved from the ambient context by the call that needs
+		/// one, so any image can be saved from any script.
+		/// </remarks>
+		public LuaImage(Image image, string? format = null)
+		{
+			ArgumentNullException.ThrowIfNull(image);
+
 			Format = format ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png";
-		}
 
-		/// <summary>
-		/// Loads an image from a file path.
-		/// </summary>
-		public static LuaImage Load(IWorkingDirectoryAccessService fileAccess, string path)
-		{
-			var fullPath = fileAccess.AccessPath(path, DirectoryAccessMode.Read);
-			var image = Image.Load(fullPath);
-			var format = Path.GetExtension(fullPath)?.TrimStart('.').ToLowerInvariant();
-			return new LuaImage(fileAccess, image, format);
-		}
-
-		/// <summary>
-		/// Loads an image from base64-encoded string. Format is auto-detected from header bytes.
-		/// </summary>
-		public static LuaImage LoadBase64(IWorkingDirectoryAccessService fileAccess, string base64)
-		{
-			var bytes = Convert.FromBase64String(base64);
-			var format = DetectFormatFromBytes(bytes);
-			var image = Image.Load(bytes);
-			return new LuaImage(fileAccess, image, format);
-		}
-
-		/// <summary>
-		/// Loads an image from a URL.
-		/// </summary>
-		public static LuaImage LoadUrl(IWorkingDirectoryAccessService fileAccess, string url)
-		{
-			var task = Task.Run(async () =>
+			// Normalize here rather than per operation: every drawing path needs the same pixel layout.
+			if (image is Image<Rgba32> rgba)
 			{
-				var response = await _httpClient.GetAsync(url);
-				response.EnsureSuccessStatusCode();
-				var stream = await response.Content.ReadAsStreamAsync();
-				var image = Image.Load(stream);
-
-				var contentType = response.Content.Headers.ContentType?.MediaType;
-				var format = contentType switch
-				{
-					"image/png" => "png",
-					"image/jpeg" or "image/jpg" => "jpg",
-					"image/webp" => "webp",
-					"image/gif" => "gif",
-					"image/bmp" => "bmp",
-					_ => DetectFormatFromUrl(url) ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png"
-				};
-
-				return new LuaImage(fileAccess, image, format);
-			});
-
-			return task.GetAwaiter().GetResult();
-		}
-
-		/// <summary>
-		/// Creates a new image with the specified dimensions and optional background color.
-		/// </summary>
-		public static LuaImage Create(IWorkingDirectoryAccessService fileAccess, int width, int height, string? color = null)
-		{
-			Rgba32 bgColor = color != null ? ParseColor(color) : new Rgba32(0, 0, 0, 0);
-			var image = new Image<Rgba32>(width, height, bgColor);
-			return new LuaImage(fileAccess, image, "png");
-		}
-
-		/// <summary>
-		/// Restores an image from encoded bytes without binding it to a working directory (a persisted value).
-		/// </summary>
-		internal static LuaImage FromSnapshot(byte[] bytes, string? format)
-		{
-			var image = Image.Load(bytes);
-			return new LuaImage(null, image, format ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png");
-		}
-
-		/// <summary>
-		/// Creates a LuaImage from raw byte data.
-		/// </summary>
-		public static LuaImage FromBytes(IWorkingDirectoryAccessService fileAccess, byte[] bytes, string? format = null)
-		{
-			var image = Image.Load(bytes);
-			return new LuaImage(fileAccess, image, format ?? DetectFormat(image.Metadata.DecodedImageFormat) ?? "png");
-		}
-
-		/// <summary>
-		/// Gets image info (width, height, format) without loading the full image into memory.
-		/// </summary>
-		public static LuaTable GetInfo(string path)
-		{
-			using var stream = File.OpenRead(path);
-			var info = Image.Identify(stream);
-			var format = DetectFormat(info.Metadata.DecodedImageFormat)
-				?? Path.GetExtension(path)?.TrimStart('.').ToLowerInvariant()
-				?? "unknown";
-
-			var result = new LuaTable();
-			result["width"] = new LuaNumber(info.Width);
-			result["height"] = new LuaNumber(info.Height);
-			result["format"] = new LuaString(format);
-			return result;
-		}
-
-		/// <summary>
-		/// Returns a table of supported image formats.
-		/// </summary>
-		public static LuaTable GetFormats()
-		{
-			var result = new LuaTable();
-			var formats = new[] { "png", "jpg", "jpeg", "bmp", "gif", "webp" };
-			for (int i = 0; i < formats.Length; i++)
-				result.Set(i + 1, new LuaString(formats[i]));
-			return result;
-		}
-
-		/// <summary>
-		/// Saves the image to a file.
-		/// </summary>
-		public void Save(string path, LuaTable? optionsTable = null)
-		{
-			var fullPath = _fileAccess?.AccessPath(path, DirectoryAccessMode.Write)
-				?? throw new InvalidOperationException("This image was restored from a saved value and is not bound to a working directory; encode it with image:base64() and write it with the fs API instead.");
-
-			var opts = optionsTable != null ? OptionsFromTable(optionsTable) : new ImageSaveOptions();
-			EnsureNotDisposed();
-
-			var encoder = GetEncoder(fullPath, opts);
-			using var stream = File.Create(fullPath);
-			_image.Save(stream, encoder);
-		}
-
-		/// <summary>
-		/// Converts the image to a base64-encoded string.
-		/// </summary>
-		public string ToBase64(string? format = null) => Convert.ToBase64String(ToBytes(format));
-
-		/// <summary>
-		/// Encodes the image into bytes in the given format (the original one when omitted).
-		/// </summary>
-		public byte[] ToBytes(string? format = null)
-		{
-			EnsureNotDisposed();
-			var encoder = GetEncoderForFormat(format ?? Format, new ImageSaveOptions());
-			using var memStream = new MemoryStream();
-			_image.Save(memStream, encoder);
-			return memStream.ToArray();
-		}
-
-		/// <summary>
-		/// Resizes the image.
-		/// </summary>
-		public void Resize(int width, int height, LuaTable? optionsTable = null)
-		{
-			EnsureNotDisposed();
-
-			var mode = ResizeMode.Stretch;
-			if (optionsTable != null)
-			{
-				var modeStr = optionsTable.Get("mode") is LuaString modeStrVal ? modeStrVal.Value : null;
-				mode = modeStr?.ToLowerInvariant() switch
-				{
-					"stretch" => ResizeMode.Stretch,
-					"contain" => ResizeMode.BoxPad,
-					"cover" => ResizeMode.Crop,
-					"pad" => ResizeMode.BoxPad,
-					"crop" => ResizeMode.Crop,
-					_ => ResizeMode.Stretch
-				};
+				_image = rgba;
 			}
-
-			var resizeOptions = new ResizeOptions
+			else
 			{
-				Size = new Size(width, height),
-				Mode = mode,
-				Sampler = KnownResamplers.Lanczos3
-			};
-
-			_image.Mutate(ctx => ctx.Resize(resizeOptions));
-			Revision++;
-		}
-
-		/// <summary>
-		/// Crops the image to the specified rectangle.
-		/// </summary>
-		public void Crop(int x, int y, int width, int height)
-		{
-			EnsureNotDisposed();
-			_image.Mutate(ctx => ctx.Crop(new Rectangle(x, y, width, height)));
-			Revision++;
-		}
-
-		/// <summary>
-		/// Rotates the image by the specified number of degrees.
-		/// </summary>
-		public void Rotate(float degrees)
-		{
-			EnsureNotDisposed();
-			_image.Mutate(ctx => ctx.Rotate(degrees));
-			Revision++;
-		}
-
-		/// <summary>
-		/// Flips the image.
-		/// </summary>
-		public void Flip(string direction)
-		{
-			EnsureNotDisposed();
-			var flipMode = direction?.ToLowerInvariant() switch
-			{
-				"horizontal" or "h" => FlipMode.Horizontal,
-				"vertical" or "v" => FlipMode.Vertical,
-				"both" or "hv" => FlipMode.Horizontal | FlipMode.Vertical,
-				_ => throw new ArgumentException($"Invalid flip direction: '{direction}'. Use 'horizontal', 'vertical', or 'both'.")
-			};
-			_image.Mutate(ctx => ctx.Flip(flipMode));
-			Revision++;
-		}
-
-		/// <summary>
-		/// Creates a deep copy of the image.
-		/// </summary>
-		public LuaImage Clone()
-		{
-			EnsureNotDisposed();
-			return new LuaImage(_fileAccess, _image.Clone(ctx => { }), Format);
-		}
-
-		/// <summary>
-		/// Gets image information as a Lua table.
-		/// </summary>
-		public LuaTable GetInfoTable()
-		{
-			EnsureNotDisposed();
-			var result = new LuaTable();
-			result["width"] = new LuaNumber(Width);
-			result["height"] = new LuaNumber(Height);
-			result["format"] = new LuaString(Format);
-			return result;
+				_image = image.CloneAs<Rgba32>();
+				image.Dispose();
+			}
 		}
 
 		/// <summary>
@@ -311,109 +109,14 @@ namespace LLMDesktopAssistant.Scripting.Lua
 			}
 		}
 
+		/// <summary>
+		/// Returns the image, rejecting every operation after <see cref="Dispose"/>.
+		/// </summary>
 		private Image EnsureNotDisposed()
 		{
 			if (_disposed || _image == null)
 				throw new ObjectDisposedException(nameof(LuaImage), "Image has been disposed.");
 			return _image;
-		}
-
-		private static string? DetectFormat(IImageFormat? format)
-		{
-			if (format == null) return null;
-			var name = format.Name.ToLowerInvariant();
-			return name switch
-			{
-				"png" => "png",
-				"jpeg" => "jpg",
-				"webp" => "webp",
-				"gif" => "gif",
-				"bmp" => "bmp",
-				_ => name
-			};
-		}
-
-		private static string? DetectFormatFromUrl(string url)
-		{
-			var ext = Path.GetExtension(url)?.TrimStart('.').ToLowerInvariant();
-			return ext switch
-			{
-				"png" => "png",
-				"jpg" or "jpeg" => "jpg",
-				"webp" => "webp",
-				"gif" => "gif",
-				"bmp" => "bmp",
-				_ => null
-			};
-		}
-
-		private static string? DetectFormatFromBytes(byte[] bytes)
-		{
-			if (bytes.Length < 4) return null;
-
-			if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
-				return "png";
-
-			if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
-				return "jpg";
-
-			if (bytes.Length > 12 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
-				&& bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
-				return "webp";
-
-			if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38)
-				return "gif";
-
-			if (bytes[0] == 0x42 && bytes[1] == 0x4D)
-				return "bmp";
-
-			return null;
-		}
-
-		private static Rgba32 ParseColor(string color)
-		{
-			if (color.StartsWith("#"))
-				return Rgba32.ParseHex(color);
-			if (color.StartsWith("0x"))
-				return Rgba32.ParseHex(color[2..]);
-
-			if (Rgba32.TryParseHex(color, out var parsed))
-				return parsed;
-
-			return new Rgba32(0, 0, 0, 0);
-		}
-
-		private class ImageSaveOptions
-		{
-			public int? Quality { get; set; }
-		}
-
-		private static ImageSaveOptions OptionsFromTable(LuaTable table)
-		{
-			var opts = new ImageSaveOptions();
-			var quality = table.Get("quality");
-			if (quality is LuaNumber q)
-				opts.Quality = (int)q.Value;
-			return opts;
-		}
-
-		private static IImageEncoder GetEncoder(string path, ImageSaveOptions opts)
-		{
-			var ext = Path.GetExtension(path)?.TrimStart('.').ToLowerInvariant() ?? "png";
-			return GetEncoderForFormat(ext, opts);
-		}
-
-		private static IImageEncoder GetEncoderForFormat(string format, ImageSaveOptions opts)
-		{
-			return format switch
-			{
-				"png" => new PngEncoder(),
-				"jpg" or "jpeg" => new JpegEncoder { Quality = opts.Quality ?? 85 },
-				"webp" => new WebpEncoder { Quality = opts.Quality ?? 85 },
-				"gif" => new SixLabors.ImageSharp.Formats.Gif.GifEncoder(),
-				"bmp" => new SixLabors.ImageSharp.Formats.Bmp.BmpEncoder(),
-				_ => throw new ArgumentException($"Unsupported format: '{format}'. Supported: png, jpg, webp, gif, bmp.")
-			};
 		}
 	}
 }

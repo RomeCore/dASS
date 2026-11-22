@@ -27,13 +27,18 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// </summary>
 		public IReadOnlyList<string?> Namespaces { get; }
 
-		public LuaService(IAddonSetCollector<LuaScriptInfo> scriptSetCollector)
+		public LuaService(IAddonSetCollector<LuaScriptInfo> scriptSetCollector, IServiceProvider services)
 		{
 			_scriptSetCollector = scriptSetCollector;
 			_scripts = scriptSetCollector.GetAddonsForChat();
 			_scripts.Addons.CollectionChanged += ScriptsCollectionChanged;
 
 			_lua = new LuaState().LoadDefaultLibraries();
+			_lua.AmbientContext = new LuaAmbientContext
+			{
+				Lua = this,
+				Services = services
+			};
 			_namespaces = [ null ];
 			_cleanups = [];
 

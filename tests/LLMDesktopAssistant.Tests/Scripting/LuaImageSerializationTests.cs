@@ -1,7 +1,5 @@
 using AsyncLua;
 using AsyncLua.Values;
-using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.LLM.Settings;
 using LLMDesktopAssistant.Scripting.Lua;
 using LLMDesktopAssistant.Scripting.Lua.Converters;
 using LLMDesktopAssistant.MVVM.Dynamic;
@@ -14,7 +12,7 @@ namespace LLMDesktopAssistant.Tests.Scripting;
 
 public class LuaImageSerializationTests
 {
-	private static LuaImage NewImage() => LuaImage.Create(new TempWorkingDirectory(), 4, 3, "#ff0000");
+	private static LuaImage NewImage() => LuaImage.Create(4, 3, "#ff0000");
 
 	private static LuaTable TableWithImage(out LuaImage image)
 	{
@@ -121,14 +119,4 @@ public class LuaImageSerializationTests
 		Assert.Equal(text, value.Value);
 	}
 
-	private sealed class TempWorkingDirectory : IWorkingDirectoryAccessService
-	{
-		public string CheckedAccessPath(string path, DirectoryAccessMode mode, out bool isAccessed)
-		{
-			isAccessed = false;
-			return Path.GetFullPath(path);
-		}
-
-		public string GetWorkingDirectory() => Path.GetTempPath();
-	}
 }

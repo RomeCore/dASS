@@ -1,3 +1,4 @@
+using AsyncLua;
 using AsyncLua.Values;
 
 namespace LLMDesktopAssistant.Scripting.Lua
@@ -57,6 +58,11 @@ namespace LLMDesktopAssistant.Scripting.Lua
 					["__json_array"] = LuaBoolean.True
 				}
 			};
+		}
+
+		public static LuaAmbientContext GetAmbient(this LuaCallingContext context)
+		{
+			return context.Ambient as LuaAmbientContext ?? throw new InvalidOperationException("Ambient context is not of type LuaAmbientContext.");
 		}
 	}
 }
