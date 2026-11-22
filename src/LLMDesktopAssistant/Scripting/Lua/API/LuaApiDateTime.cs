@@ -16,7 +16,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			--- datetime - date and time API
 
 			All functions work with datetime tables:
-			  { year (number), is_leap_year (bool), month (1..12), day (1..31), day_of_week (1..7), day_of_year (1..366),
+			  { year (number), is_leap_year (bool), month (1..12), day (1..31), day_of_week (1..7, from monday to sunday), day_of_year (1..366),
 			    hour, min, sec, ms, is_dst, utc_offset (minutes), timestamp (unix epoch seconds) }
 
 			The offset is part of the value: the fields are the wall clock in that offset, and the
@@ -275,7 +275,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			t["is_leap_year"] = LuaBoolean.FromBoolean(DateTime.IsLeapYear(dt.Year));
 			t["month"] = new LuaNumber(dt.Month);
 			t["day"] = new LuaNumber(dt.Day);
-			t["day_of_week"] = new LuaNumber((int)dt.DayOfWeek + 1); // 1=Sunday, 7=Saturday
+			t["day_of_week"] = new LuaNumber(dt.DayOfWeek switch
+			{
+				DayOfWeek.Monday => 1,
+				DayOfWeek.Tuesday => 2,
+				DayOfWeek.Wednesday => 3,
+				DayOfWeek.Thursday => 4,
+				DayOfWeek.Friday => 5,
+				DayOfWeek.Saturday => 6,
+				DayOfWeek.Sunday => 7,
+				_ => 0
+			});
 			t["day_of_year"] = new LuaNumber(dt.DayOfYear);
 			t["hour"] = new LuaNumber(dt.Hour);
 			t["min"] = new LuaNumber(dt.Minute);
@@ -284,8 +294,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			t["is_dst"] = LuaBoolean.FromBoolean(dt.DateTime.IsDaylightSavingTime());
 			t["utc_offset"] = new LuaNumber((int)dt.Offset.TotalMinutes);
 			t["timestamp"] = new LuaNumber(dt.ToUnixTimeSeconds());
-			t["day_of_week"] = new LuaNumber((int)dt.DayOfWeek); // 0=Sunday, 6=Saturday
-			t["day_of_year"] = new LuaNumber(dt.DayOfYear);
 			return t;
 		}
 
