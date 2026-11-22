@@ -1,10 +1,8 @@
 using System.Collections.Specialized;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
-using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.Services.Storage
 {
