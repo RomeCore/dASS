@@ -65,12 +65,12 @@
 					<ItemsControl ItemsSource="{Binding Items}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
-								<VirtualizingStackPanel Orientation="Vertical"/>
+								<VirtualizingStackPanel Orientation="Vertical" CacheLength="1.5"/>
 							</ItemsPanelTemplate>
 						</ItemsControl.ItemsPanel>
 						<ItemsControl.ItemTemplate>
 							<DataTemplate>
-								<ContentControl Content="{Binding}" IsVisible="{Binding IsVisible}"/>
+								<ContentControl Content="{Binding}" IsVisible="{Binding IsVisible}" Margin="2,2,8,2"/>
 							</DataTemplate>
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
