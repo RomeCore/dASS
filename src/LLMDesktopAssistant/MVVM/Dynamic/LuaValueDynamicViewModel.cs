@@ -3,7 +3,9 @@ using System.Runtime.CompilerServices;
 using AsyncLua;
 using AsyncLua.Values;
 using CommunityToolkit.Mvvm.Input;
+using RCParsing.Utils;
 using Serilog;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LLMDesktopAssistant.MVVM.Dynamic
 {
@@ -117,25 +119,20 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 		}
 
 		/// <inheritdoc/>
-		protected override ValueKind Classify(object? raw)
+		protected override object? RawToClr(Or<int, string> key, object? raw)
 		{
 			return raw switch
 			{
-				null or LuaNil => ValueKind.Null,
-				LuaTable => ValueKind.Container,
-				LuaFunction => ValueKind.Function,
-				_ => ValueKind.Scalar,
+				null or LuaNil => null,
+				LuaTable table => new LuaValueDynamicViewModel(table, Context),
+				LuaFunction funtion => _commandCache.GetValue(funtion, CreateCommand),
+				LuaValue value => value.ToClrObject<object>(),
+				_ => raw,
 			};
 		}
 
 		/// <inheritdoc/>
-		protected override object? ScalarToClr(object? raw)
-		{
-			return ((LuaValue)raw!).ToClrObject(typeof(object));
-		}
-
-		/// <inheritdoc/>
-		protected override object? ClrToRaw(object? value)
+		protected override object? ClrToRaw(string key, object? value)
 		{
 			return LuaValueConverter.ToLuaValue(value);
 		}
@@ -148,18 +145,6 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			if (right is null)
 				return left is LuaNil;
 			return Equals(left, right);
-		}
-
-		/// <inheritdoc/>
-		protected override StructuredDynamicViewModel CreateChildViewModel(object? raw)
-		{
-			return new LuaValueDynamicViewModel((LuaTable)raw!, Context);
-		}
-
-		/// <inheritdoc/>
-		protected override object? CreateCommandFor(object? raw)
-		{
-			return raw is LuaFunction function ? _commandCache.GetValue(function, CreateCommand) : null;
 		}
 
 		/// <inheritdoc/>

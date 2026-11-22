@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using RCParsing.Utils;
 
 namespace LLMDesktopAssistant.MVVM.Dynamic
 {
@@ -22,75 +23,75 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 		private DynamicArrayView? _items;
 		private bool _disposed;
 
-		/// <summary>Describes how a raw source value is exposed to bindings.</summary>
-		protected enum ValueKind
-		{
-			/// <summary>An explicit null value.</summary>
-			Null,
-
-			/// <summary>A scalar value projected to a raw CLR value.</summary>
-			Scalar,
-
-			/// <summary>A nested dictionary/array exposed as a nested view model.</summary>
-			Container,
-
-			/// <summary>A callable value exposed as a command.</summary>
-			Function,
-		}
-
 		/// <summary>
 		/// Gets the set of source keys that must not be exposed as dynamic members (service keys
 		/// such as change callbacks or helper functions injected by the view model).
 		/// </summary>
 		protected virtual IReadOnlySet<string> HiddenKeys => NoHiddenKeys;
 
-		/// <summary>Enumerates the string data keys exposed as members.</summary>
+		/// <summary>
+		/// Enumerates the string data keys exposed as members.
+		/// </summary>
 		protected abstract IEnumerable<string> EnumerateDataKeys();
 
-		/// <summary>Returns the total number of data entries in the underlying structure.</summary>
+		/// <summary>
+		/// Returns the total number of data entries in the underlying structure.
+		/// </summary>
 		protected abstract int CountEntries();
 
-		/// <summary>Attempts to read the raw source value for a member key.</summary>
+		/// <summary>
+		/// Attempts to read the raw source value for a member key.
+		/// </summary>
 		protected abstract bool TryGetRawValue(string key, out object? raw);
 
-		/// <summary>Writes a raw source value for a member key. A <see langword="null"/> raw value removes/nulls it.</summary>
-		protected abstract void SetRawValue(string key, object? raw);
-
-		/// <summary>Classifies a raw source value.</summary>
-		protected abstract ValueKind Classify(object? raw);
-
-		/// <summary>Projects a scalar raw value into a CLR value suitable for binding.</summary>
-		protected abstract object? ScalarToClr(object? raw);
-
-		/// <summary>Projects a CLR value into a raw source value suitable for writing.</summary>
-		protected abstract object? ClrToRaw(object? value);
-
-		/// <summary>Determines whether two raw values are considered equal (used to skip no-op writes).</summary>
-		protected abstract bool RawEquals(object? left, object? right);
-
-		/// <summary>Creates a nested view model for a container raw value.</summary>
-		protected abstract StructuredDynamicViewModel CreateChildViewModel(object? raw);
-
-		/// <summary>Creates a command for a function raw value, or <see langword="null"/> when functions are unsupported.</summary>
-		protected virtual object? CreateCommandFor(object? raw) => null;
-
-		/// <summary>Attempts to read the raw value of the array part at the given 0-based index.</summary>
+		/// <summary>
+		/// Attempts to read the raw value of the array part at the given 0-based index.
+		/// </summary>
 		protected abstract bool TryGetArrayRawItem(int index, out object? raw);
 
-		/// <summary>Gets the length of the contiguous array part.</summary>
+		/// <summary>
+		/// Writes a raw source value for a member key. A <see langword="null"/> raw value removes/nulls it.
+		/// </summary>
+		protected abstract void SetRawValue(string key, object? raw);
+
+		/// <summary>
+		/// Projects a raw value into a CLR value suitable for binding (commands, images, scalars and nested view models).
+		/// May return a nested <see cref="StructuredDynamicViewModel"/>.
+		/// </summary>
+		protected abstract object? RawToClr(Or<int, string> key, object? raw);
+
+		/// <summary>
+		/// Projects a CLR value into a raw source value suitable for writing.
+		/// </summary>
+		protected abstract object? ClrToRaw(string key, object? value);
+
+		/// <summary>
+		/// Determines whether two raw values are considered equal (used to skip no-op writes).
+		/// </summary>
+		protected abstract bool RawEquals(object? left, object? right);
+
+		/// <summary>
+		/// Gets the length of the contiguous array part.
+		/// </summary>
 		protected abstract int GetArrayLength();
 
-		/// <summary>Called after a member is written, letting subclasses react to the change.</summary>
+		/// <summary>
+		/// Called after a member is written, letting subclasses react to the change.
+		/// </summary>
 		protected virtual void OnMemberWritten(string key, object? oldRaw, object? newRaw)
 		{
 		}
 
-		/// <summary>Called when a member is materialized, letting subclasses subscribe to its changes.</summary>
+		/// <summary>
+		/// Called when a member is materialized, letting subclasses subscribe to its changes.
+		/// </summary>
 		protected virtual void OnMemberMaterialized(string key, object? raw, object? materialized)
 		{
 		}
 
-		/// <summary>Called when a cached member is invalidated, letting subclasses unsubscribe.</summary>
+		/// <summary>
+		/// Called when a cached member is invalidated, letting subclasses unsubscribe.
+		/// </summary>
 		protected virtual void OnMemberInvalidated(string key, object? previous)
 		{
 		}
@@ -105,13 +106,19 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			return true;
 		}
 
-		/// <summary>Gets the total number of data entries in the underlying structure.</summary>
+		/// <summary>
+		/// Gets the total number of data entries in the underlying structure.
+		/// </summary>
 		public int Count => CountEntries();
 
-		/// <summary>Gets the string data keys exposed as members.</summary>
+		/// <summary>
+		/// Gets the string data keys exposed as members.
+		/// </summary>
 		public IReadOnlyList<string> Keys => EnumerateDataKeys().ToArray();
 
-		/// <summary>Gets a live view over the array part, suitable as <c>ItemsControl.ItemsSource</c>.</summary>
+		/// <summary>
+		/// Gets a live view over the array part, suitable as <c>ItemsControl.ItemsSource</c>.
+		/// </summary>
 		public DynamicArrayView Items => _items ??= new DynamicArrayView(GetArrayLength, GetArrayItem);
 
 		#region IList (read-only adapter over the array part)
@@ -183,7 +190,7 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 				return;
 
 			TryGetRawValue(key, out var oldRaw);
-			var raw = ClrToRaw(value);
+			var raw = ClrToRaw(key, value);
 			if (RawEquals(oldRaw, raw))
 				return;
 
@@ -192,7 +199,9 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			OnMemberWritten(key, oldRaw, raw);
 		}
 
-		/// <summary>Raises every change notification required for a member update.</summary>
+		/// <summary>
+		/// Raises every change notification required for a member update.
+		/// </summary>
 		/// <remarks>
 		/// The cached member is dropped first. A value the script wrote straight into its own table is already there,
 		/// while the cache still holds the old materialised copy - a notification that kept serving it would leave the
@@ -274,7 +283,7 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			if (!TryGetRawValue(key, out var raw))
 				return null;
 
-			var materialized = Materialize(key, raw);
+			var materialized = RawToClr(key, raw);
 			if (materialized is not null)
 			{
 				lock (_lock)
@@ -296,23 +305,12 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			if (!TryGetArrayRawItem(index, out var raw))
 				return null;
 
-			var materialized = Materialize(index.ToString(CultureInfo.InvariantCulture), raw);
+			var materialized = RawToClr(index, raw);
 			if (materialized is not null)
 				lock (_lock)
 					_arrayCache[index] = materialized;
 
 			return materialized;
-		}
-
-		private object? Materialize(string key, object? raw)
-		{
-			return Classify(raw) switch
-			{
-				ValueKind.Null => null,
-				ValueKind.Container => CreateChildViewModel(raw),
-				ValueKind.Function => CreateCommandFor(raw),
-				_ => ScalarToClr(raw),
-			};
 		}
 
 		/// <inheritdoc/>

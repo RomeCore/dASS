@@ -5,6 +5,7 @@ using System.Globalization;
 using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Converters;
 using LLMDesktopAssistant.StructuredValues.Reactive;
+using RCParsing.Utils;
 
 namespace LLMDesktopAssistant.MVVM.Dynamic
 {
@@ -97,26 +98,44 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			}
 		}
 
-		/// <inheritdoc/>
-		protected override ValueKind Classify(object? raw)
+		private static bool IsScalar(object? raw)
 		{
 			return raw switch
 			{
-				null or INodeNullValue => ValueKind.Null,
-				INodeDictionaryValue or INodeArrayValue => ValueKind.Container,
-				INodeValue => ValueKind.Scalar,
-				_ => ValueKind.Null,
+				null or INodeNullValue or INodeDictionaryValue or INodeArrayValue => false,
+				INodeValue => true,
+				_ => false
+			};
+		}
+
+		private static ReactiveNodeValue ClrToReactive(object? value)
+		{
+			return value switch
+			{
+				null => new ReactiveNodeNullValue(),
+				ReactiveNodeValue reactive => reactive,
+				INodeValue node => node.ToReactiveNodeValue()!,
+				bool boolean => new ReactiveNodeBooleanValue { Value = boolean },
+				string text => new ReactiveNodeStringValue { Value = text },
+				sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal
+					=> new ReactiveNodeNumberValue { Value = Convert.ToDouble(value, CultureInfo.InvariantCulture) },
+				_ => new ReactiveNodeStringValue { Value = value.ToString() },
+			};
+		}
+
+		protected override object? RawToClr(Or<int, string> key, object? raw)
+		{
+			return raw switch
+			{
+				null or INodeNullValue => null,
+				INodeDictionaryValue or INodeArrayValue => new NodeValueDynamicViewModel((INodeValue)raw!),
+				INodeValue value => value.TakeValueSnapshot(),
+				_ => null
 			};
 		}
 
 		/// <inheritdoc/>
-		protected override object? ScalarToClr(object? raw)
-		{
-			return ((INodeValue)raw!).TakeValueSnapshot();
-		}
-
-		/// <inheritdoc/>
-		protected override object? ClrToRaw(object? value)
+		protected override object? ClrToRaw(string key, object? value)
 		{
 			return ClrToReactive(value);
 		}
@@ -131,12 +150,6 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 			if (left is INodeValue a && right is INodeValue b)
 				return SnapshotEquals(a.TakeValueSnapshot(), b.TakeValueSnapshot());
 			return Equals(left, right);
-		}
-
-		/// <inheritdoc/>
-		protected override StructuredDynamicViewModel CreateChildViewModel(object? raw)
-		{
-			return new NodeValueDynamicViewModel((INodeValue)raw!);
 		}
 
 		/// <inheritdoc/>
@@ -161,7 +174,7 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 		/// <inheritdoc/>
 		protected override void OnMemberMaterialized(string key, object? raw, object? materialized)
 		{
-			if (raw is ReactiveNodeValue reactive && Classify(reactive) == ValueKind.Scalar)
+			if (raw is ReactiveNodeValue reactive && IsScalar(reactive))
 			{
 				_scalarKeys[reactive] = key;
 				_scalarNodes[key] = reactive;
@@ -229,21 +242,6 @@ namespace LLMDesktopAssistant.MVVM.Dynamic
 				return;
 
 			NotifyMemberChanged(key);
-		}
-
-		private static ReactiveNodeValue ClrToReactive(object? value)
-		{
-			return value switch
-			{
-				null => new ReactiveNodeNullValue(),
-				ReactiveNodeValue reactive => reactive,
-				INodeValue node => node.ToReactiveNodeValue()!,
-				bool boolean => new ReactiveNodeBooleanValue { Value = boolean },
-				string text => new ReactiveNodeStringValue { Value = text },
-				sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal
-					=> new ReactiveNodeNumberValue { Value = Convert.ToDouble(value, CultureInfo.InvariantCulture) },
-				_ => new ReactiveNodeStringValue { Value = value.ToString() },
-			};
 		}
 
 		private static bool SnapshotEquals(object? left, object? right)

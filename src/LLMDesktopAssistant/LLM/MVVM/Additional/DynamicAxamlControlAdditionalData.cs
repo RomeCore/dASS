@@ -166,7 +166,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional
 			if (node.ToLuaValue(functions: true) is not LuaTable table)
 				return null;
 
-			var context = luaService.GetState().CreateContext().WithoutCancellation();
+			var context = luaService.GetState().CreateContext();
 			return new LuaValueDynamicViewModel(table, context);
 		}
 
