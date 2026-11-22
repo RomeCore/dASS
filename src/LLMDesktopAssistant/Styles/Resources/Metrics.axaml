@@ -31,7 +31,10 @@
 	<x:Double x:Key="ControlHeightL">40</x:Double>
 
 	<sys:TimeSpan x:Key="DurationFast">0:0:0.18</sys:TimeSpan>
+	<sys:TimeSpan x:Key="DurationFastPlus">0:0:0.24</sys:TimeSpan>
 	<sys:TimeSpan x:Key="DurationNormal">0:0:0.3</sys:TimeSpan>
+	<sys:TimeSpan x:Key="DurationNormalPlus">0:0:0.38</sys:TimeSpan>
 	<sys:TimeSpan x:Key="DurationSlow">0:0:0.48</sys:TimeSpan>
+	<sys:TimeSpan x:Key="DurationSlowPlus">0:0:0.60</sys:TimeSpan>
 
 </ResourceDictionary>

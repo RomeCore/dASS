@@ -64,17 +64,18 @@
 								</Transitions>
 							</Border.Transitions>
 						</Border>
-						<ContentPresenter Name="PART_Content"
-											Background="#00000000"
-											Content="{TemplateBinding Content}"
-											ContentTemplate="{TemplateBinding ContentTemplate}"
-											Margin="{TemplateBinding Padding}"
-											HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-											VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-											FontSize="{TemplateBinding FontSize}"
-											FontWeight="{TemplateBinding FontWeight}"
-											Foreground="{TemplateBinding Foreground}"
-											RecognizesAccessKey="True" />
+						<ContentPresenter Name="PART_ContentPresenter"
+															Background="#00000000"
+															CornerRadius="{TemplateBinding CornerRadius}"
+															Content="{TemplateBinding Content}"
+															ContentTemplate="{TemplateBinding ContentTemplate}"
+															Margin="{TemplateBinding Padding}"
+															HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+															VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+															FontSize="{TemplateBinding FontSize}"
+															FontWeight="{TemplateBinding FontWeight}"
+															Foreground="{TemplateBinding Foreground}"
+															RecognizesAccessKey="True" />
 					</Panel>
 				</Border>
 			</ControlTemplate>

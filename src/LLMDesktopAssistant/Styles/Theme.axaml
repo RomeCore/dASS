@@ -5,10 +5,9 @@
 				mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 				x:Class="LLMDesktopAssistant.Styles.Theme">
 	
-	<!-- Controls -->
-	
 	<!-- Custom -->
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/ButtonsIcons.axaml"/>
+	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Cards.axaml"/>
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Chat.axaml"/>
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/Chips.axaml"/>
 	<StyleInclude Source="avares://LLMDesktopAssistant/Styles/Custom/ParameterElements.axaml"/>

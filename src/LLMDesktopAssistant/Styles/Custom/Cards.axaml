@@ -1,0 +1,26 @@
+<Styles xmlns="https://github.com/avaloniaui"
+				xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	
+	<Style Selector="Border.card">
+		
+		<Setter Property="Background" Value="{DynamicResource CardBackground}" />
+		<Setter Property="BorderThickness" Value="0"/>
+		<Setter Property="CornerRadius" Value="{DynamicResource RadiusM}"/>
+		<Setter Property="Padding" Value="8"/>
+		<Setter Property="Transitions">
+			<Transitions>
+				<BrushTransition Property="Background"
+												 Duration="{StaticResource DurationNormal}"
+												 Easing="{StaticResource EasingOut}" />
+			</Transitions>
+		</Setter>
+		<Style Selector="^:pointerover">
+			<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+		</Style>
+		<Style Selector="^:focus-within">
+			<Setter Property="Background" Value="{DynamicResource ControlBackground}" />
+		</Style>
+
+	</Style>
+
+</Styles>
