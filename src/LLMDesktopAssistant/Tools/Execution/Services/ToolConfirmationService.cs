@@ -81,12 +81,11 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 		{
 			if (!approval.Approved)
 			{
-				Memorize(ctx, approval);
 				ctx.Call.Status = ToolStatus.Cancelled;
-				ctx.Call.ResultContent = string.IsNullOrWhiteSpace(approval.Notes)
-					? "User has cancelled the tool execution without a reason. " +
-					"Maybe it can be dangerous or unwanted to proceed."
-					: $"User has cancelled the tool execution with a reason: {approval.Notes}.";
+				ctx.Call.ResultContent = "User has cancelled the tool execution. " +
+					"Maybe it can be dangerous or unwanted to proceed.";
+				Memorize(ctx, approval);
+				AppendNotes(ctx, approval.Notes);
 				return false;
 			}
 

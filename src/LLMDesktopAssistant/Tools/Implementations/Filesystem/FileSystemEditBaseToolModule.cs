@@ -1,7 +1,10 @@
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Tools.MVVM.Diff;
 using LLMDesktopAssistant.Utils.Files;
+using Material.Icons;
+using ModelContextProtocol.Protocol;
 
 namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 {
@@ -141,6 +144,18 @@ namespace LLMDesktopAssistant.Tools.Implementations.Filesystem
 			{
 				shared.AppliedDiff = EmptyDiff();
 				shared.RejectedDiff = view.BuildEnabledHunkGroups();
+			}
+
+			if (shared.Approved == false)
+			{
+				ctx.Call.StatusIcon = MaterialIconKind.FileDiscard;
+				ctx.Call.SetResult(shared.RejectedDiff.Value.HasGroups ?
+					$"""
+						User has rejected the changes, none has applied.
+						[REJECTED CHANGES BY THE USER, THESE ARE NOT APPLIED]:
+						{shared.RejectedDiff.Value}
+						""" :
+					"User has rejected the changes, none has applied.");
 			}
 
 			return consent;
