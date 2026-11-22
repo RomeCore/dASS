@@ -1,17 +1,17 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
-			 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
-			 xmlns:agents="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatSubAgentsSettingsView"
-			 x:DataType="local:ChatSubAgentsSettingsViewModel"
-			 x:Name="VMRoot">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings"
+						 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+						 xmlns:agents="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.ChatSubAgentsSettingsView"
+						 x:DataType="local:ChatSubAgentsSettingsViewModel"
+						 x:Name="VMRoot">
 
 	<UserControl.Styles>
 		<Style Selector="ToggleButton.MaskToggle">
@@ -54,17 +54,17 @@
 		<Grid ColumnDefinitions="*,Auto">
 
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.sub_agents.behaviour_policy}"
-					   FontSize="{DynamicResource FontSizeL}"
-					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
+								 Text="{loc:Loc settings.sub_agents.behaviour_policy}"
+								 FontSize="{DynamicResource FontSizeL}"
+								 FontWeight="Bold"
+								 VerticalAlignment="Center"/>
 
 			<ComboBox Grid.Column="1"
-					  ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
-					  SelectedItem="{Binding SelectedPolicyInheritance}"
-					  VerticalAlignment="Center"
-					  Margin="0,0,8,0"
-					  MinWidth="120">
+								ItemsSource="{x:Static set:InheritanceLevelItem.AllProfile}"
+								SelectedItem="{Binding SelectedPolicyInheritance}"
+								VerticalAlignment="Center"
+								Margin="0,0,8,0"
+								MinWidth="120">
 
 				<ComboBox.ItemTemplate>
 					<DataTemplate x:DataType="set:InheritanceLevelItem">
@@ -86,15 +86,12 @@
 
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="agents:ToolBehaviourCategoryViewModel">
-					<Border BorderBrush="{DynamicResource PrimaryBorder}"
-							BorderThickness="1"
-							CornerRadius="4"
-							Padding="8">
+					<Border Classes="card">
 						<StackPanel Orientation="Vertical" Spacing="6">
 
 							<TextBlock Text="{loc:Loc {Binding Title}}"
-									   TextTrimming="CharacterEllipsis"
-									   VerticalAlignment="Center"/>
+												 TextTrimming="CharacterEllipsis"
+												 VerticalAlignment="Center"/>
 
 							<ItemsControl ItemsSource="{Binding Toggles}">
 								<ItemsControl.ItemsPanel>
@@ -106,23 +103,23 @@
 								<ItemsControl.ItemTemplate>
 									<DataTemplate x:DataType="agents:ToolBehaviourMaskItem">
 										<ToggleButton Classes="MaskToggle"
-													  IsThreeState="True"
-													  IsChecked="{Binding IsChecked, Mode=TwoWay}"
-													  IsEnabled="{Binding !IsNone}"
-													  ToolTip.ShowOnDisabled="True">
+																	IsThreeState="True"
+																	IsChecked="{Binding IsChecked, Mode=TwoWay}"
+																	IsEnabled="{Binding !IsNone}"
+																	ToolTip.ShowOnDisabled="True">
 											<ToolTip.Tip>
 												<StackPanel Orientation="Vertical" Spacing="4">
 													<TextBlock Text="{loc:Loc {Binding DisplayName}}"
-															   FontSize="{DynamicResource FontSizeM}"
-															   FontWeight="SemiBold"/>
+																		 FontSize="{DynamicResource FontSizeM}"
+																		 FontWeight="SemiBold"/>
 													<TextBlock Text="{loc:Loc {Binding Description}}"/>
 													<TextBlock Text="{loc:Loc {Binding StateName}}"
-															   Foreground="{Binding StateColor}"
-															   FontSize="11"/>
+																		 Foreground="{Binding StateColor}"
+																		 FontSize="11"/>
 												</StackPanel>
 											</ToolTip.Tip>
 											<ico:VisualIcon Kind="{Binding Icon}"
-															Foreground="{Binding Color}"/>
+																			Foreground="{Binding Color}"/>
 										</ToggleButton>
 									</DataTemplate>
 								</ItemsControl.ItemTemplate>
@@ -140,30 +137,30 @@
 		<!-- Available sub-agents header -->
 		<Grid ColumnDefinitions="*,Auto,Auto">
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.sub_agents.available}"
-					   FontSize="{DynamicResource FontSizeL}"
-					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
+								 Text="{loc:Loc settings.sub_agents.available}"
+								 FontSize="{DynamicResource FontSizeL}"
+								 FontWeight="Bold"
+								 VerticalAlignment="Center"/>
 
 			<Button Grid.Column="1"
-					Command="{Binding CreateSubAgentCommand}"
-					Classes="icon"
-					Margin="0,0,4,0"
-					ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
+							Command="{Binding CreateSubAgentCommand}"
+							Classes="icon"
+							Margin="0,0,4,0"
+							ToolTip.Tip="{loc:Loc settings.sub_agents.create}">
 				<ico:VisualIcon Kind="FilePlusOutline"/>
 			</Button>
 
 			<Button Grid.Column="2"
-					Command="{Binding List.RefreshCommand}"
-					Classes="icon"
-					ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
+							Command="{Binding List.RefreshCommand}"
+							Classes="icon"
+							ToolTip.Tip="{loc:Loc settings.sub_agents.refresh}">
 				<ico:VisualIcon Kind="Refresh"/>
 			</Button>
 		</Grid>
 
 		<TextBlock Text="{loc:Loc settings.sub_agents.available.hint}"
-				   Opacity="0.6"
-				   TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<!-- Search + list -->
 		<cards:AddonListView DataContext="{Binding List}"/>

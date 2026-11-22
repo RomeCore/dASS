@@ -1,20 +1,20 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
-			 xmlns:sett="using:LLMDesktopAssistant.LLM.MVVM.Settings"
-			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
-			 xmlns:appset="using:LLMDesktopAssistant.Settings"
-			 xmlns:llmsg="using:LLMDesktopAssistant.LLM.MVVM.Messages"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-						  xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
-			 xmlns:flui="using:FluentAvalonia.UI"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentToolSettingsView"
-			 x:DataType="local:AgentToolSettingsViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
+						 xmlns:sett="using:LLMDesktopAssistant.LLM.MVVM.Settings"
+						 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+						 xmlns:appset="using:LLMDesktopAssistant.Settings"
+						 xmlns:llmsg="using:LLMDesktopAssistant.LLM.MVVM.Messages"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 xmlns:cards="using:LLMDesktopAssistant.Addons.MVVM"
+						 xmlns:flui="using:FluentAvalonia.UI"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentToolSettingsView"
+						 x:DataType="local:AgentToolSettingsViewModel">
 
 	<UserControl.Styles>
 		<Style Selector="ToggleButton.MaskToggle">
@@ -95,15 +95,12 @@
 
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:ToolBehaviourCategoryViewModel">
-					<Border BorderBrush="{DynamicResource PrimaryBorder}"
-									BorderThickness="1"
-									CornerRadius="4"
-									Padding="8">
+					<Border Classes="card">
 						<StackPanel Orientation="Vertical" Spacing="6">
 							
 							<TextBlock Text="{loc:Loc {Binding Title}}"
-											   TextTrimming="CharacterEllipsis"
-											   VerticalAlignment="Center"/>
+												 TextTrimming="CharacterEllipsis"
+												 VerticalAlignment="Center"/>
 
 							<ItemsControl ItemsSource="{Binding Toggles}">
 								<ItemsControl.ItemsPanel>

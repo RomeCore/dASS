@@ -43,13 +43,14 @@
 		<!-- USER CARDS -->
 		<!-- ============================================================ -->
 		<ItemsControl ItemsSource="{Binding Users}">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Spacing="8"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="users:UserInformation">
-					<Border BorderBrush="{DynamicResource PrimaryBorder}"
-							BorderThickness="1"
-							CornerRadius="4"
-							Padding="8"
-							Margin="0,0,0,8">
+					<Border Classes="card">
 						<Grid RowDefinitions="Auto,Auto"
 							  ColumnDefinitions="Auto,*,Auto,Auto,Auto"
 							  ColumnSpacing="6">

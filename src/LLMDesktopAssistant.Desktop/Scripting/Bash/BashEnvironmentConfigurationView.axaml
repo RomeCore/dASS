@@ -1,14 +1,14 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             xmlns:local="using:LLMDesktopAssistant.Desktop.Scripting.Bash"
-             xmlns:loc="using:LLMDesktopAssistant.Localization"
-             xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-             x:Class="LLMDesktopAssistant.Desktop.Scripting.Bash.BashEnvironmentConfigurationView"
-             x:DataType="local:BashEnvironmentConfigurationViewModel"
-             x:Name="VMRoot">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.Desktop.Scripting.Bash"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.Desktop.Scripting.Bash.BashEnvironmentConfigurationView"
+						 x:DataType="local:BashEnvironmentConfigurationViewModel"
+						 x:Name="VMRoot">
 
 	<StackPanel Orientation="Vertical" Spacing="8">
 
@@ -16,20 +16,16 @@
 		<!-- BASH ENVIRONMENT -->
 		<!-- ============================================================ -->
 		<TextBlock Text="{loc:Loc env.bash.environments}"
-						FontSize="{DynamicResource FontSizeL}"
-						FontWeight="Bold"/>
+							 FontSize="{DynamicResource FontSizeL}"
+							 FontWeight="Bold"/>
 
 		<TextBlock Text="{loc:Loc env.bash.hint}"
-						Opacity="0.6"
-						TextWrapping="Wrap"
-						Margin="0,4,0,8"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"
+							 Margin="0,4,0,8"/>
 
 		<!-- Bash executable -->
-		<Border BorderBrush="{DynamicResource PrimaryBorder}"
-						BorderThickness="1"
-						CornerRadius="4"
-						Padding="8"
-						Margin="0,0,0,8">
+		<Border Classes="card">
 			<StackPanel Spacing="6">
 				<TextBlock Text="{loc:Loc env.bash.executable_script}"
 									 FontWeight="Medium"

@@ -1,17 +1,17 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 						 xmlns:local="using:LLMDesktopAssistant.Desktop.Scripting.Python"
 						 xmlns:loc="using:LLMDesktopAssistant.Localization"
 						 xmlns:util="using:LLMDesktopAssistant.Utils"
 						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-             x:Class="LLMDesktopAssistant.Desktop.Scripting.Python.PythonEnvironmentConfigurationView"
+						 x:Class="LLMDesktopAssistant.Desktop.Scripting.Python.PythonEnvironmentConfigurationView"
 						 x:DataType="local:PythonEnvironmentConfigurationViewModel"
 						 x:Name="VMRoot">
-  
-  <StackPanel Orientation="Vertical" Spacing="8">
+	
+	<StackPanel Orientation="Vertical" Spacing="8">
 		
 		<!-- ============================================================ -->
 		<!-- PYTHON ENVIRONMENTS -->
@@ -21,15 +21,12 @@
 							 FontWeight="Bold"/>
 
 		<TextBlock Text="{loc:Loc env.python.hint}"
-						Opacity="0.6"
-						TextWrapping="Wrap"
-						Margin="0,4,0,8"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"
+							 Margin="0,4,0,8"/>
 
 		<!-- Native tools venv path -->
-		<Border BorderBrush="{DynamicResource PrimaryBorder}"
-						BorderThickness="1"
-						CornerRadius="4"
-						Padding="8"
+		<Border Classes="card"
 						Margin="0,0,0,8">
 			<StackPanel Spacing="6">
 				<TextBlock Text="{loc:Loc env.python.venv_script}"
@@ -62,10 +59,7 @@
 		</Border>
 
 		<!-- Scriptable addons venv path -->
-		<Border BorderBrush="{DynamicResource PrimaryBorder}"
-						BorderThickness="1"
-						CornerRadius="4"
-						Padding="8"
+		<Border Classes="card"
 						Margin="0,0,0,8">
 			<StackPanel Spacing="6">
 				<TextBlock Text="{loc:Loc env.python.addon_venv_script}"
@@ -97,6 +91,6 @@
 			</StackPanel>
 		</Border>
 
-  </StackPanel>
+	</StackPanel>
 
 </UserControl>

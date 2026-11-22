@@ -1,15 +1,15 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
-			 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentMemorySettingsView"
-			 x:DataType="local:AgentMemorySettingsViewModel"
-			 x:Name="VMRoot">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
+						 xmlns:set="using:LLMDesktopAssistant.LLM.Settings"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentMemorySettingsView"
+						 x:DataType="local:AgentMemorySettingsViewModel"
+						 x:Name="VMRoot">
 
 	<StackPanel Margin="8" Spacing="8">
 
@@ -48,8 +48,8 @@
 		</Grid>
 
 		<TextBlock Text="{loc:Loc settings.agent.memory.blocks.hint}"
-							Opacity="0.6"
-							TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<!-- Add / attach existing block -->
 		<Grid ColumnDefinitions="Auto,*,Auto"
@@ -73,9 +73,9 @@
 						<StackPanel Orientation="Horizontal" Spacing="6">
 							<TextBlock Text="{Binding Name}"/>
 							<TextBlock Text="{Binding Id}"
-													 Opacity="0.5"
-													 FontSize="11"
-													 VerticalAlignment="Center"/>
+												 Opacity="0.5"
+												 FontSize="11"
+												 VerticalAlignment="Center"/>
 						</StackPanel>
 					</DataTemplate>
 				</ComboBox.ItemTemplate>
@@ -90,15 +90,15 @@
 
 		<!-- Attached blocks as cards -->
 		<ItemsControl ItemsSource="{Binding BlockItems}"
-							IsEnabled="{Binding MemorySettings.EnableMemory}">
-
+									IsEnabled="{Binding MemorySettings.EnableMemory}">
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<StackPanel Orientation="Vertical" Spacing="8"/>
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:MemoryBlockAttachmentItemViewModel">
-					<Border BorderBrush="{DynamicResource PrimaryBorder}"
-									BorderThickness="1"
-									CornerRadius="4"
-									Padding="8"
-									Margin="0,0,0,8">
+					<Border Classes="card">
 						<Grid RowDefinitions="Auto,Auto,Auto"
 									ColumnDefinitions="Auto,*,Auto,Auto,Auto"
 									ColumnSpacing="6">

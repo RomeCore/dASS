@@ -1,22 +1,22 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
-			 xmlns:set="using:LLMDesktopAssistant.Settings"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-			 xmlns:flui="using:FluentAvalonia.UI"
-			 x:Class="LLMDesktopAssistant.LLM.Settings.ChatMCPSettingsView"
-			 x:DataType="local:ChatMCPSettingsViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.Settings"
+						 xmlns:set="using:LLMDesktopAssistant.Settings"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 xmlns:flui="using:FluentAvalonia.UI"
+						 x:Class="LLMDesktopAssistant.LLM.Settings.ChatMCPSettingsView"
+						 x:DataType="local:ChatMCPSettingsViewModel">
 
 	<StackPanel Margin="8" Spacing="8">
 
 		<!-- Enable MCP checkbox -->
 		<CheckBox IsChecked="{Binding McpSettings.EnableMcp}"
-				  Content="{loc:Loc settings.mcp.enable}"/>
+							Content="{loc:Loc settings.mcp.enable}"/>
 
 		<Separator Classes="section"/>
 
@@ -25,16 +25,16 @@
 		<!-- ============================================================ -->
 		<Grid ColumnDefinitions="*,Auto">
 			<TextBlock Grid.Column="0"
-					   Text="{loc:Loc settings.mcp.servers}"
-					   FontSize="{DynamicResource FontSizeL}"
-					   FontWeight="Bold"
-					   VerticalAlignment="Center"/>
+								 Text="{loc:Loc settings.mcp.servers}"
+								 FontSize="{DynamicResource FontSizeL}"
+								 FontWeight="Bold"
+								 VerticalAlignment="Center"/>
 
 			<ComboBox Grid.Column="1"
-					  ItemsSource="{x:Static local:InheritanceLevelItem.AllProfile}"
-					  SelectedItem="{Binding SelectedUsedMcpServersInheritance}"
-					  VerticalAlignment="Center"
-					  MinWidth="120">
+								ItemsSource="{x:Static local:InheritanceLevelItem.AllProfile}"
+								SelectedItem="{Binding SelectedUsedMcpServersInheritance}"
+								VerticalAlignment="Center"
+								MinWidth="120">
 
 				<ComboBox.ItemTemplate>
 					<DataTemplate x:DataType="local:InheritanceLevelItem">
@@ -46,12 +46,12 @@
 		</Grid>
 
 		<TextBlock Text="{loc:Loc settings.mcp.servers.hint}"
-				   Opacity="0.6"
-				   TextWrapping="Wrap"
-				   Margin="0,0,0,8"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"
+							 Margin="0,0,0,8"/>
 
 		<ItemsControl ItemsSource="{Binding McpServers}"
-					  IsEnabled="{Binding McpSettings.EnableMcp}">
+						IsEnabled="{Binding McpSettings.EnableMcp}">
 			<ItemsControl.ItemsPanel>
 				<ItemsPanelTemplate>
 					<StackPanel Orientation="Vertical" Spacing="8"/>
@@ -59,48 +59,45 @@
 			</ItemsControl.ItemsPanel>
 			<ItemsControl.ItemTemplate>
 				<DataTemplate x:DataType="local:MCPServerSelectionViewModel">
-					<Border BorderBrush="{DynamicResource PrimaryBorder}"
-							BorderThickness="1"
-							CornerRadius="4"
-							Padding="8">
+					<Border Classes="card">
 						<Grid RowDefinitions="Auto,Auto,Auto" VerticalAlignment="Center">
 
 							<!-- Row 0: Icon + Name + Enabled toggle -->
 							<Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
 
 								<ico:VisualIcon Grid.Column="0"
-												  Kind="Lan"
-												  Foreground="{DynamicResource PrimaryBase}"
-												  Width="20" Height="20"
-												  VerticalAlignment="Center"
-												  Margin="0,0,8,0"/>
+																Kind="Lan"
+																Foreground="{DynamicResource PrimaryBase}"
+																Width="20" Height="20"
+																VerticalAlignment="Center"
+																Margin="0,0,8,0"/>
 
 								<TextBlock Grid.Column="1"
-										   Text="{Binding Name}"
-										   FontWeight="Bold"
-										   VerticalAlignment="Center"/>
+													 Text="{Binding Name}"
+													 FontWeight="Bold"
+													 VerticalAlignment="Center"/>
 
 								<CheckBox Grid.Column="2"
-										  IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-										  VerticalAlignment="Center"
-										  ToolTip.Tip="{loc:Loc settings.mcp.servers.toggle.hint}"/>
+													IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+													VerticalAlignment="Center"
+													ToolTip.Tip="{loc:Loc settings.mcp.servers.toggle.hint}"/>
 							</Grid>
 
 							<!-- Row 1: Endpoint -->
 							<TextBlock Grid.Row="1"
-									   Text="{Binding Endpoint}"
-									   Opacity="0.7"
-									   FontSize="12"
-									   TextWrapping="Wrap"
-									   Margin="28,4,0,0"
-									   IsVisible="{Binding Endpoint, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
+												 Text="{Binding Endpoint}"
+												 Opacity="0.7"
+												 FontSize="12"
+												 TextWrapping="Wrap"
+												 Margin="28,4,0,0"
+												 IsVisible="{Binding Endpoint, Converter={StaticResource StringNonEmptyToBooleanConverter}}"/>
 
 							<!-- Row 2: Connection type -->
 							<TextBlock Grid.Row="2"
-									   Text="{Binding ConnectionType}"
-									   Opacity="0.5"
-									   FontSize="11"
-									   Margin="28,2,0,0"/>
+												 Text="{Binding ConnectionType}"
+												 Opacity="0.5"
+												 FontSize="11"
+												 Margin="28,2,0,0"/>
 
 						</Grid>
 					</Border>
