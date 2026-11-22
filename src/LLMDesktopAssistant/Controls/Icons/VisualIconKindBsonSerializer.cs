@@ -13,8 +13,11 @@ namespace LLMDesktopAssistant.Controls.Icons
 		public static void Register(BsonMapper mapper)
 		{
 			mapper.RegisterType<VisualIconKind>(
-				icon => icon.IsNone ? BsonValue.Null : new BsonValue(icon.ToString()),
-				bson => bson.IsNull ? VisualIconKind.None : VisualIconKind.Parse(bson.AsString));
+				icon => new BsonValue(icon.IsNone ? string.Empty : icon.ToString()),
+				bson => !bson.IsString ? VisualIconKind.None
+					: !string.IsNullOrWhiteSpace(bson.AsString)
+						? VisualIconKind.Parse(bson.AsString)
+						: VisualIconKind.None);
 		}
 	}
 }

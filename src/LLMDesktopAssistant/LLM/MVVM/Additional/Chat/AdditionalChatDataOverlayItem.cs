@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LiteDB;
 using LLMDesktopAssistant.Controls.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
@@ -32,12 +33,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the item has a title worth drawing.
 		/// </summary>
+		[BsonIgnore]
 		public bool HasTitle => !string.IsNullOrWhiteSpace(Title);
 
 		/// <summary>
 		/// Gets or sets the icon drawn before the title in the window header and in the tray row.
 		/// </summary>
-		public VisualIconKind? Icon
+		public VisualIconKind Icon
 		{
 			get;
 			set
@@ -50,7 +52,8 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the window has an icon of its own.
 		/// </summary>
-		public bool HasIcon => Icon?.IsNone != true;
+		[BsonIgnore]
+		public bool HasIcon => !Icon.IsNone;
 
 		/// <summary>
 		/// Gets or sets a value indicating whether the user may destroy the window, together with its payload.
@@ -126,6 +129,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the window has a size of its own instead of hugging its content.
 		/// </summary>
+		[BsonIgnore]
 		public bool HasExplicitSize => Width is not null || Height is not null;
 
 		/// <summary>
@@ -144,11 +148,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the window itself is on screen.
 		/// </summary>
+		[BsonIgnore]
 		public bool IsWindowShown => IsEffectivelyVisible && State != AdditionalChatDataOverlayState.Hidden;
 
 		/// <summary>
 		/// Gets a value indicating whether the item is listed in the chat's tray.
 		/// </summary>
+		[BsonIgnore]
 		public bool IsInTray => IsEffectivelyVisible && State == AdditionalChatDataOverlayState.Hidden;
 
 		/// <summary>
@@ -158,16 +164,19 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// Only the state is consulted: the body is a child of the window, so the payload's own visibility has
 		/// already removed the whole thing from the tree.
 		/// </remarks>
+		[BsonIgnore]
 		public bool IsContentShown => State == AdditionalChatDataOverlayState.Normal;
 
 		/// <summary>
 		/// Gets the width fraction the window is laid out with. A collapsed window is as wide as its header.
 		/// </summary>
+		[BsonIgnore]
 		public double? EffectiveWidth => IsContentShown ? Width : null;
 
 		/// <summary>
 		/// Gets the height fraction the window is laid out with. A collapsed window is as tall as its header.
 		/// </summary>
+		[BsonIgnore]
 		public double? EffectiveHeight => IsContentShown ? Height : null;
 
 		/// <summary>
@@ -185,7 +194,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 			if (string.IsNullOrWhiteSpace(Title))
 				Title = overlay.Title;
 
-			if (Icon is null || Icon.Value.IsNone)
+			if (Icon.IsNone)
 				Icon = overlay.Icon;
 
 			State = overlay.State;

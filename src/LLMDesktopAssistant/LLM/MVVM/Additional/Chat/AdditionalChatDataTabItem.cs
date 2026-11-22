@@ -1,3 +1,4 @@
+using LiteDB;
 using LLMDesktopAssistant.Controls.Icons;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
@@ -28,6 +29,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the tab has a title worth drawing.
 		/// </summary>
+		[BsonIgnore]
 		public bool HasTitle => !string.IsNullOrWhiteSpace(Title);
 
 		/// <summary>
@@ -46,6 +48,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets a value indicating whether the tab has an icon of its own.
 		/// </summary>
+		[BsonIgnore]
 		public bool HasIcon => !Icon.IsNone;
 
 		/// <summary>

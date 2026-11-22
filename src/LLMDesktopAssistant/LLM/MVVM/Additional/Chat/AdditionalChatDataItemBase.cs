@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using LiteDB;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
 
 namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
@@ -32,11 +33,13 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 		/// <summary>
 		/// Gets the order of the payload: the envelope has no order of its own.
 		/// </summary>
+		[BsonIgnore]
 		public override int Order => Content.Order;
 
 		/// <summary>
 		/// Gets a value indicating whether the envelope and its payload are both visible.
 		/// </summary>
+		[BsonIgnore]
 		public bool IsEffectivelyVisible => IsVisible && Content.IsVisible;
 
 		/// <summary>
