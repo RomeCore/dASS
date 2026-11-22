@@ -32,14 +32,13 @@
 				<DataTemplate x:DataType="local:UserToolbarItemModel">
 					<Panel>
 						<ico:VisualIcon Kind="AccountCircle"
-														Width="16" Height="16"
 														VerticalAlignment="Center"
 														IsVisible="{Binding !HasAvatar}"/>
 						<Border CornerRadius="{DynamicResource RadiusS}"
 										ClipToBounds="True"
 										IsVisible="{Binding HasAvatar}">
 							<Image Source="{Binding Avatar}"
-										 Width="18" Height="18"
+										 Width="24" Height="24"
 										 Stretch="UniformToFill"/>
 						</Border>
 					</Panel>
@@ -53,14 +52,14 @@
 							<DataTemplate x:DataType="local:UserToolbarItemModel">
 								<StackPanel Orientation="Horizontal" Spacing="6">
 									<ico:VisualIcon Kind="AccountCircle"
-																	Width="14" Height="14"
+																	Width="16" Height="16"
 																	VerticalAlignment="Center"
 																	IsVisible="{Binding !HasAvatar}"/>
 									<Border CornerRadius="{DynamicResource RadiusS}"
 													ClipToBounds="True"
 													IsVisible="{Binding HasAvatar}">
 										<Image Source="{Binding Avatar}"
-													 Width="16" Height="16"
+													 Width="18" Height="18"
 													 Stretch="UniformToFill"/>
 									</Border>
 									<TextBlock Text="{Binding Name}"
@@ -87,7 +86,6 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate x:DataType="local:UserMessageVisibilityItemModel">
 					<ico:VisualIcon Kind="{Binding Icon}"
-													Width="16" Height="16"
 													VerticalAlignment="Center"/>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
@@ -99,7 +97,7 @@
 							<DataTemplate x:DataType="local:UserMessageVisibilityItemModel">
 								<StackPanel Orientation="Horizontal" Spacing="6">
 									<ico:VisualIcon Kind="{Binding Icon}"
-																	Width="14" Height="14"
+																	Width="16" Height="16"
 																	VerticalAlignment="Center"/>
 									<TextBlock Text="{loc:Loc {Binding Title}}"
 														 VerticalAlignment="Center"/>
@@ -123,7 +121,6 @@
 			<ComboBox.ItemTemplate>
 				<DataTemplate x:DataType="local:UserInputLevelItemModel">
 					<ico:VisualIcon Kind="{Binding Icon}"
-													Width="16" Height="16"
 													VerticalAlignment="Center"/>
 				</DataTemplate>
 			</ComboBox.ItemTemplate>
@@ -135,7 +132,7 @@
 							<DataTemplate x:DataType="local:UserInputLevelItemModel">
 								<StackPanel Orientation="Horizontal" Spacing="6">
 									<ico:VisualIcon Kind="{Binding Icon}"
-																	Width="14" Height="14"
+																	Width="16" Height="16"
 																	VerticalAlignment="Center"/>
 									<TextBlock Text="{loc:Loc {Binding Title}}"
 														 VerticalAlignment="Center"/>
@@ -163,6 +160,7 @@
 
 		<!-- Send with generation -->
 		<Button Classes="icon accent"
+						Margin="2,0,0,0"
 						Command="{Binding UserInput.SendGenerateMessageCommand}"
 						ToolTip.Tip="{loc:Loc chat.input.send_generate_button.hint}"
 						ToolTip.VerticalOffset="-2"
@@ -172,6 +170,7 @@
 
 		<!-- Stop: a hard stop, it never injects the queue -->
 		<Button Classes="icon danger"
+						Margin="2,0,0,0"
 						Command="{Binding UserInput.CancelGenerationCommand}"
 						IsVisible="{Binding UserInput.IsGenerating}"
 						ToolTip.Tip="{loc:Loc chat.input.stop_button.hint}"
