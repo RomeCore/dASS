@@ -1,71 +1,71 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
-			 xmlns:loc="using:LLMDesktopAssistant.Localization"
-			 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
-			 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
-			 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
-			 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentInfoSettingsView"
-			 x:DataType="local:AgentInfoSettingsViewModel">
+						 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+						 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+						 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+						 xmlns:local="using:LLMDesktopAssistant.LLM.MVVM.Settings.Agents"
+						 xmlns:loc="using:LLMDesktopAssistant.Localization"
+						 xmlns:ico="using:LLMDesktopAssistant.Controls.Icons"
+						 xmlns:ctrl="using:LLMDesktopAssistant.Controls"
+						 mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
+						 x:Class="LLMDesktopAssistant.LLM.MVVM.Settings.Agents.AgentInfoSettingsView"
+						 x:DataType="local:AgentInfoSettingsViewModel">
 
 	<StackPanel Margin="8" Spacing="8">
 
 		<!-- ===================== Name ===================== -->
 		<TextBlock Text="{loc:Loc common.name}"
-					  FontWeight="Bold"
-					  FontSize="{DynamicResource FontSizeL}"
-					  Margin="0,5,0,0"/>
+							 FontWeight="Bold"
+							 FontSize="{DynamicResource FontSizeL}"
+							 Margin="0,5,0,0"/>
 
 		<TextBlock Text="{loc:Loc agent.info.name.hint}"
-					  Opacity="0.6"
-					  TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<TextBox Text="{Binding AgentInfo.Name, Mode=TwoWay}"
-					TextWrapping="NoWrap"
-					PlaceholderText="{loc:Loc agent.info.name.placeholder}"/>
+						 TextWrapping="NoWrap"
+						 PlaceholderText="{loc:Loc agent.info.name.placeholder}"/>
 
 
 		<Separator/>
 
 		<!-- ===================== Description ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.description}"
-					  FontWeight="Bold"
-					  FontSize="{DynamicResource FontSizeL}"
-					  Margin="0,5,0,0"/>
+							 FontWeight="Bold"
+							 FontSize="{DynamicResource FontSizeL}"
+							 Margin="0,5,0,0"/>
 
 		<TextBlock Text="{loc:Loc agent.info.description.hint}"
-					  Opacity="0.6"
-					  TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<TextBox Text="{Binding AgentInfo.Description, Mode=TwoWay}"
-					TextWrapping="Wrap"
-					MinHeight="60"
-					AcceptsReturn="True"
-					PlaceholderText="{loc:Loc agent.info.description.placeholder}"/>
+						 TextWrapping="Wrap"
+						 MinHeight="60"
+						 AcceptsReturn="True"
+						 PlaceholderText="{loc:Loc agent.info.description.placeholder}"/>
 
 		<Separator/>
 
 		<!-- ===================== Identify as user ===================== -->
 		<CheckBox IsChecked="{Binding AgentInfo.IdentifyAsUser, Mode=TwoWay}"
-					Content="{loc:Loc agent.info.identify_as_user}"/>
+							Content="{loc:Loc agent.info.identify_as_user}"/>
 
 		<TextBlock Text="{loc:Loc agent.info.identify_as_user.hint}"
-					  Opacity="0.6"
-					  TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<Separator/>
 
 		<!-- ===================== Custom Model ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.custom_model}"
-					  FontWeight="Bold"
-					  FontSize="{DynamicResource FontSizeL}"
-					  Margin="0,5,0,0"/>
+							 FontWeight="Bold"
+							 FontSize="{DynamicResource FontSizeL}"
+							 Margin="0,5,0,0"/>
 
 		<TextBlock Text="{loc:Loc agent.info.custom_model.hint}"
-					  Opacity="0.6"
-					  TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<ctrl:ModelSelectorControl SelectedModel="{Binding AgentInfo.CustomModel, Mode=TwoWay}"/>
 
@@ -73,36 +73,36 @@
 
 		<!-- ===================== Profile Image ===================== -->
 		<TextBlock Text="{loc:Loc agent.info.profile_image}"
-					  FontWeight="Bold"
-					  FontSize="{DynamicResource FontSizeL}"
-					  Margin="0,5,0,0"/>
+							 FontWeight="Bold"
+							 FontSize="{DynamicResource FontSizeL}"
+							 Margin="0,5,0,0"/>
 
 		<TextBlock Text="{loc:Loc agent.info.profile_image.hint}"
-					  Opacity="0.6"
-					  TextWrapping="Wrap"/>
+							 Opacity="0.6"
+							 TextWrapping="Wrap"/>
 
 		<!-- Image preview -->
 		<Border BorderBrush="{DynamicResource BorderDefault}"
-				BorderThickness="1"
-				CornerRadius="8"
-				Padding="4"
-				Width="136"
-				Height="136"
-				HorizontalAlignment="Left">
+						BorderThickness="1"
+						CornerRadius="8"
+						Padding="4"
+						Width="136"
+						Height="136"
+						HorizontalAlignment="Left">
 			<Image Source="{Binding ProfileImage}"
-					  Width="128"
-					  Height="128"
-					  Stretch="Uniform"
-					  VerticalAlignment="Center"
-					  HorizontalAlignment="Center"/>
+						 Width="128"
+						 Height="128"
+						 Stretch="Uniform"
+						 VerticalAlignment="Center"
+						 HorizontalAlignment="Center"/>
 		</Border>
 
 		<StackPanel Orientation="Horizontal" Spacing="8">
 			<Button Command="{Binding SelectImageCommand}"
-					Content="{loc:Loc agent.info.select_image}"/>
+							Content="{loc:Loc agent.info.select_image}"/>
 
 			<Button Command="{Binding ClearImageCommand}"
-					Content="{loc:Loc agent.info.clear_image}"/>
+							Content="{loc:Loc agent.info.clear_image}"/>
 		</StackPanel>
 
 	</StackPanel>
