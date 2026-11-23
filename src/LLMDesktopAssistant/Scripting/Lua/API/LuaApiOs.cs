@@ -14,9 +14,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override string? Namespace => "os";
 
 		public override string? Manuals => """
-			--- os - operating system API
+			--- os - extended operating system API
 
 			Provides information about the system and basic OS operations.
+			Supplements the built-in Lua os (time-related + getenv) library.
 
 			FUNCTIONS:
 
