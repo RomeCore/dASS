@@ -16,9 +16,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// </remarks>
 	[ChatService]
 	[ChatService(typeof(IChatClosingHandler))]
-	public class LuaChatClosingHandler : IChatClosingHandler
+	public class LuaChatClosingHandler : IChatClosingHandler, ILuaCallbackOwner
 	{
-		private readonly List<LuaCloseHook> _hooks = [];
+		private readonly List<LuaCallbackRegistration> _hooks = [];
 		private readonly Lock _lock = new();
 		private bool _closed;
 
@@ -28,9 +28,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <param name="function">The function to run. It is called with no arguments.</param>
 		/// <param name="context">The calling context the function was registered from.</param>
 		/// <returns>The registration handle.</returns>
-		public LuaCloseHook Register(LuaFunction function, LuaCallingContext context)
+		public LuaCallbackRegistration Register(LuaFunction function, LuaCallingContext context)
 		{
-			var hook = new LuaCloseHook(this, function, context);
+			var hook = new LuaCallbackRegistration(this, function, context);
 
 			lock (_lock)
 			{
@@ -49,7 +49,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <summary>
 		/// Checks whether the hook still runs when the chat closes.
 		/// </summary>
-		internal bool Contains(LuaCloseHook hook)
+		public bool Contains(LuaCallbackRegistration hook)
 		{
 			lock (_lock)
 				return _hooks.Contains(hook);
@@ -59,7 +59,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// Removes the hook from the registry.
 		/// </summary>
 		/// <returns><see langword="true"/> when it was still registered.</returns>
-		internal bool Unregister(LuaCloseHook hook)
+		public bool Unregister(LuaCallbackRegistration hook)
 		{
 			lock (_lock)
 				return _hooks.Remove(hook);
@@ -68,7 +68,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <inheritdoc/>
 		public void OnChatClosing()
 		{
-			LuaCloseHook[] hooks;
+			LuaCallbackRegistration[] hooks;
 
 			lock (_lock)
 			{

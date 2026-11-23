@@ -7,9 +7,9 @@ namespace LLMDesktopAssistant.Scripting.Lua
 	/// One Lua function registered with <c>dass.chat.on_close</c>, exposed to Lua as a
 	/// <c>close_hook</c> handle.
 	/// </summary>
-	public class LuaCloseHook
+	public class LuaCallbackRegistration
 	{
-		private readonly LuaChatClosingHandler _owner;
+		private readonly ILuaCallbackOwner _owner;
 
 		/// <summary>
 		/// Initialises a hook that runs the given function when its chat closes.
@@ -17,7 +17,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		/// <param name="owner">The registry the hook belongs to.</param>
 		/// <param name="function">The function to run.</param>
 		/// <param name="context">The calling context the function was registered from.</param>
-		public LuaCloseHook(LuaChatClosingHandler owner, LuaFunction function, LuaCallingContext context)
+		public LuaCallbackRegistration(ILuaCallbackOwner owner, LuaFunction function, LuaCallingContext context)
 		{
 			_owner = owner;
 			Function = function;
@@ -42,19 +42,19 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		public bool Registered => _owner.Contains(this);
 
 		/// <summary>
-		/// Removes the hook from the registry.
+		/// Removes the registration from the registry.
 		/// </summary>
 		/// <returns><see langword="true"/> when it was still registered.</returns>
 		public bool Cancel() => _owner.Unregister(this);
 
 		/// <summary>
-		/// Wraps the hook into a <c>close_hook</c> userdata.
+		/// Wraps the registration into a <c>callback_registration</c> userdata.
 		/// </summary>
 		[LuaHidden]
-		public static LuaUserData Wrap(LuaCloseHook hook)
-			=> new(hook, "chat_close_hook")
+		public static LuaUserData Wrap(LuaCallbackRegistration hook)
+			=> new(hook, "callback_registration")
 			{
-				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaCloseHook))
+				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaCallbackRegistration))
 			};
 	}
 }

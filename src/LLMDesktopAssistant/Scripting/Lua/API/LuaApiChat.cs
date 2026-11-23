@@ -116,9 +116,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  every surface item wrapping it. A live terminal goes away with its process.
 			  Returns: boolean - true when something of this handle was attached to this chat.
 
-			--- dass.chat.on_close(func) -> chat_close_hook
-			  Registers func to run when this chat closes: switching to another chat, closing the
-			  tab, or shutting the application down.
+			--- dass.chat.on_close(func) -> callback_registration
+			  Registers func to run when this chat closes: closing the chat tab or shutting the application down.
 
 			  Parameters:
 			    - func: function - a plain function, called with no arguments. It cannot await: the
@@ -180,10 +179,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    - time_to_first_token: number - seconds until the first output token arrived
 			    - generation_time: number - seconds spent generating the message
 			
-			CLOSE HOOK HANDLE ('chat_close_hook'):
+			CALLBACK REGISTRATION ('callback_registration'):
 			
 			  Properties (read-only):
-			    - registered: boolean - true while the hook will still run
+			    - registered: boolean - true while the registration will still run
 			
 			  Methods:
 				- h:cancel() -> boolean - unregisters it; true when it was still registered
@@ -265,7 +264,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (args.Length == 0 || args[0] is not LuaFunction function)
 				throw new LuaRuntimeException("dass.chat.on_close(func): a function is expected.");
 
-			return new LuaTuple(LuaCloseHook.Wrap(_closingHandler.Register(function, ctx)));
+			return new LuaTuple(LuaCallbackRegistration.Wrap(_closingHandler.Register(function, ctx)));
 		}
 
 		private LuaTuple GetMessages(LuaCallingContext ctx, LuaValue[] args)
