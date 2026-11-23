@@ -74,10 +74,37 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			set => SetProperty(ref field, value);
 		} = false;
 
+		public bool Pinned
+		{
+			get;
+			set
+			{
+				if (SetProperty(ref field, value))
+				{
+					RaisePropertyChanged(nameof(WillBeDeleted));
+				}
+			}
+		} = false;
+		public bool CanChangePinnedState
+		{
+			get;
+			private set => SetProperty(ref field, value);
+		} = false;
+		public void UpdatePinnedState(bool countAtMax)
+		{
+			CanChangePinnedState = !IsTemporary && (Pinned || !countAtMax);
+		}
+
 		public bool HasUserInputDraft
 		{
 			get;
-			set => SetProperty(ref field, value);
+			set
+			{
+				if (SetProperty(ref field, value))
+				{
+					RaisePropertyChanged(nameof(WillBeDeleted));
+				}
+			}
 		} = false;
 
 		public int AllMessageCount
@@ -86,10 +113,15 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			set
 			{
 				if (SetProperty(ref field, value))
+				{
 					RaisePropertyChanged(nameof(AllMessageCountFormatted));
+					RaisePropertyChanged(nameof(WillBeDeleted));
+				}
 			}
 		} = 0;
 		public string AllMessageCountFormatted => $"#{AllMessageCount}";
+
+		public bool WillBeDeleted => !IsTemporary && !Pinned && AllMessageCount == 0 && !HasUserInputDraft;
 
 		public DateTime LastModifiedAt
 		{
@@ -256,6 +288,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_available.Topic = chat.Topic;
 			_available.SubTopic = chat.SubTopic;
 			_available.Favorite = chat.Favorite;
+			_available.Pinned = chat.Pinned;
 			_available.HasUserInputDraft = chat.UserInputState?.IsEmpty == false;
 			_available.AllMessageCount = chat.AllMessageCount;
 
@@ -432,6 +465,14 @@ namespace LLMDesktopAssistant.LLM.MVVM
 	[ViewModelFor(typeof(ChatManagerView))]
 	public class ChatManagerViewModel : ViewModelBase
 	{
+		/// <summary>
+		/// Maximum number of pinned chats allowed.
+		/// </summary>
+		public const int MaxPinned = 10;
+
+		private bool _prevPinnedAtMax = false;
+		private readonly RangeObservableCollection<AvailableChatViewModel> _pinned = [];
+
 		public IChatManagementService ChatManager { get; }
 
 		private readonly ConditionalWeakTable<AvailableChatViewModel, ChatListBaseEntry> _availableEntries = [];
@@ -515,9 +556,69 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			CreateTemporaryChatCommand = new RelayCommand(CreateTemporaryChat);
 			ToggleChatListCommand = new RelayCommand(() => IsChatListVisible = !IsChatListVisible);
 
+			_pinned.CollectionChanged += PinnedCollectionChanged;
+			AvailableChats.CollectionChanged += AvailableCollectionChanged;
+
 			ChatManager.ClearEmptyChats();
 			LoadChats();
+
+			foreach (var chat in AvailableChats.Where(a => a.Pinned).Take(MaxPinned))
+				OpenChat(chat, false);
+
 			CreateChat();
+		}
+
+		private void PinnedCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			var atMax = _pinned.Count >= MaxPinned;
+			if (atMax != _prevPinnedAtMax)
+			{
+				foreach (var available in AvailableChats)
+					available.UpdatePinnedState(atMax);
+			}
+			_prevPinnedAtMax = atMax;
+		}
+
+		private void AvailableCollectionChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+		{
+			if (e.OldItems is not null)
+				foreach (var item in e.OldItems)
+					if (item is AvailableChatViewModel available)
+					{
+						if (available.Pinned)
+							_pinned.Remove(available);
+					}
+
+			if (e.NewItems is not null)
+				foreach (var item in e.NewItems)
+					if (item is AvailableChatViewModel available)
+					{
+						if (!available.IsTemporary && available.Pinned)
+							_pinned.Add(available);
+						available.UpdatePinnedState(_prevPinnedAtMax);
+					}
+		}
+
+		private void OnAvailableChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			var chat = (AvailableChatViewModel)sender!;
+			if (e.PropertyName is nameof(AvailableChatViewModel.LastModifiedAt))
+			{
+				RebuildChatList();
+			}
+			if (e.PropertyName is nameof(AvailableChatViewModel.Favorite))
+			{
+				ChatManager.UpdateChat(chat.Id, favorite: chat.Favorite);
+			}
+			if (e.PropertyName is nameof(AvailableChatViewModel.Pinned))
+			{
+				if (chat.Pinned)
+					_pinned.Add(chat);
+				else
+					_pinned.Remove(chat);
+				ChatManager.UpdateChat(chat.Id, pinned: chat.Pinned);
+				RebuildChatList();
+			}
 		}
 
 		protected override void Dispose(bool disposing)
@@ -538,6 +639,15 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				}
 				OpenedChats.Clear();
 			}
+		}
+
+		private void LoadChats()
+		{
+			AvailableChats.Clear();
+			foreach (var chat in ChatManager.GetChats().OrderByDescending(c => c.LastModifiedAt))
+				AvailableChats.Add(CreateAvailableChatViewModel(chat));
+
+			RebuildChatList();
 		}
 
 		private AvailableChatViewModel CreateAvailableChatViewModel(ChatInfo info)
@@ -598,6 +708,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				Topic = info.Topic,
 				SubTopic = info.SubTopic,
 				Favorite = info.Favorite,
+				Pinned = info.Pinned,
 				HasUserInputDraft = info.HasUserInputDraft,
 				AllMessageCount = info.AllMessageCount,
 				LastModifiedAt = info.LastModifiedAt,
@@ -634,15 +745,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			}
 		}
 
-		private void LoadChats()
-		{
-			AvailableChats.Clear();
-			foreach (var chat in ChatManager.GetChats().OrderByDescending(c => c.LastModifiedAt))
-				AvailableChats.Add(CreateAvailableChatViewModel(chat));
-
-			RebuildChatList();
-		}
-
 		private IEnumerable<AvailableChatViewModel> FilterChats(IEnumerable<AvailableChatViewModel> chats)
 		{
 			if (FilterFavoritesOnly)
@@ -676,7 +778,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			var newEntries = new List<ChatListBaseEntry>();
 			var chats = FilterChats(AvailableChats
-				.Where(chat => !chat.IsOpened && !chat.IsTemporary))
+				.Where(chat => !chat.IsOpened && !chat.IsTemporary && !chat.Pinned))
+				.OrderByDescending(chat => chat.LastModifiedAt)
+				.ToList();
+			var pinnedNotOpened = _pinned
+				.Except(OpenedChats.Select(o => o.Available))
 				.OrderByDescending(chat => chat.LastModifiedAt)
 				.ToList();
 
@@ -690,6 +796,19 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				foreach (var chat in OpenedChats)
 				{
 					var entry = _openedEntries.GetOrAdd(chat, OpenedFactory);
+					if (entry == prevSelected)
+						prevFound = true;
+					newEntries.Add(entry);
+				}
+			}
+
+			if (pinnedNotOpened.Count > 0)
+			{
+				newEntries.Add(new ChatListCaptionEntry { Caption = Locale.GetKey("chat.list.pinned") });
+
+				foreach (var chat in pinnedNotOpened)
+				{
+					var entry = _availableEntries.GetOrAdd(chat, AvailableFactory);
 					if (entry == prevSelected)
 						prevFound = true;
 					newEntries.Add(entry);
@@ -723,19 +842,6 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			|| (chat.Topic?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
 			|| (chat.SubTopic?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
 
-		private void OnAvailableChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
-		{
-			var chat = (AvailableChatViewModel)sender!;
-			if (e.PropertyName is nameof(AvailableChatViewModel.LastModifiedAt))
-			{
-				RebuildChatList();
-			}
-			if (e.PropertyName is nameof(AvailableChatViewModel.Favorite))
-			{
-				ChatManager.UpdateChat(chat.Id, favorite: chat.Favorite);
-			}
-		}
-
 		private void SelectChat(AvailableChatViewModel chat)
 		{
 			var opened = OpenedChats.FirstOrDefault(o => o.Available == chat);
@@ -746,10 +852,10 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				return;
 			}
 
-			OpenChat(chat);
+			OpenChat(chat, true);
 		}
 
-		private void OpenChat(AvailableChatViewModel chat)
+		private void OpenChat(AvailableChatViewModel chat, bool select)
 		{
 			OpenedChatViewModel newOpenedChat = null!;
 			newOpenedChat = new OpenedChatViewModel(ChatManager, chat)
@@ -763,7 +869,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			newOpenedChat.CurrentChat.ToggleChatListCommand = ToggleChatListCommand;
 			OpenedChats.Add(newOpenedChat);
 			RebuildChatList();
-			SelectedChat = _openedEntries.GetOrAdd(newOpenedChat, OpenedFactory);
+			if (select)
+				SelectedChat = _openedEntries.GetOrAdd(newOpenedChat, OpenedFactory);
 		}
 
 		private void CreateChat()
@@ -771,7 +878,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			var newChat = ChatManager.CreateChat(LocalizationManager.LocalizeStatic("chat.new"));
 			var newAvailableChat = CreateAvailableChatViewModel(newChat);
 			AvailableChats.Insert(0, newAvailableChat);
-			OpenChat(newAvailableChat);
+			OpenChat(newAvailableChat, true);
 			IsChatListVisible = false;
 		}
 
@@ -791,7 +898,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				Parts = new AdditionalMessagePartsViewModel(chat.AdditionalData)
 			};
 			AvailableChats.Insert(0, newAvailableChat);
-			OpenChat(newAvailableChat);
+			OpenChat(newAvailableChat, true);
 			IsChatListVisible = false;
 		}
 	}

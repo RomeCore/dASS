@@ -154,6 +154,7 @@
 					<ListBox Classes="chats"
 									 ItemsSource="{Binding ChatListEntries}"
 									 SelectedItem="{Binding SelectedChat}"
+									 ScrollViewer.BringIntoViewOnFocusChange="False"
 									 Padding="6,0">
 						
 						<ListBox.ItemContainerTheme>
@@ -276,6 +277,18 @@
 																Spacing="4"
 																Orientation="Horizontal">
 											
+											<ico:VisualIcon Kind="Flash"
+																			IsVisible="{Binding Available.IsTemporary}"
+																			Width="10" Height="10"
+																			ToolTip.Tip="{loc:Loc chat.list.temporary}"
+																			Background="Transparent" />
+										
+											<ico:VisualIcon Kind="Close"
+																			IsVisible="{Binding Available.WillBeDeleted}"
+																			Width="10" Height="10"
+																			ToolTip.Tip="{loc:Loc chat.list.will_be_deleted}"
+																			Background="Transparent" />
+										
 											<ico:VisualIcon Kind="MessageProcessing"
 																			IsVisible="{Binding Available.HasUserInputDraft}"
 																			Width="10" Height="10"
@@ -336,6 +349,13 @@
 											<ico:VisualIcon Kind="Star" />
 										</ToggleButton>
 
+										<ToggleButton Classes="icon mini"
+																	IsChecked="{Binding Available.Pinned}"
+																	IsEnabled="{Binding Available.CanChangePinnedState}"
+																	ToolTip.Tip="{loc:Loc chat.list.pin}">
+											<ico:VisualIcon Kind="Pin" />
+										</ToggleButton>
+
 									</StackPanel>
 
 								</Grid>
@@ -369,11 +389,6 @@
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>
 			</ItemsControl>
-
-            <!--
-                The list is closed: the page header brings it back. The chat owns the button, because it owns the
-                header the button sits in.
-            -->
 
 		</Panel>
 

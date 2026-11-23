@@ -42,6 +42,11 @@ namespace LLMDesktopAssistant.Data.ChatModels
 		public bool Favorite { get; set; } = false;
 
 		/// <summary>
+		/// Gets or sets a value indicating whether this chat is pinned.
+		/// </summary>
+		public bool Pinned { get; set; } = false;
+
+		/// <summary>
 		/// Get or sets the settings profile ID that is currently used by this chat.
 		/// Used for accessing the <see cref=""/>
 		/// </summary>

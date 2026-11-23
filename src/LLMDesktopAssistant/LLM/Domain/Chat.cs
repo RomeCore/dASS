@@ -1,6 +1,5 @@
 using LLMDesktopAssistant.Agents.Tasks;
 using LLMDesktopAssistant.LLM.Services;
-using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.Domain
@@ -60,6 +59,16 @@ namespace LLMDesktopAssistant.LLM.Domain
 		/// Gets or sets the value indicating whether the chat session is marked as a favorite.
 		/// </summary>
 		public bool Favorite
+		{
+			get;
+			set => SetProperty(ref field, value);
+		} = false;
+
+		/// <summary>
+		/// Gets or sets the value indicating whether the chat session is pinned.
+		/// Pinned chats are loaded automatically when the application starts.
+		/// </summary>
+		public bool Pinned
 		{
 			get;
 			set => SetProperty(ref field, value);

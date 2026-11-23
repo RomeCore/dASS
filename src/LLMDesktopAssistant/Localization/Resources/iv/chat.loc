@@ -50,6 +50,9 @@ edit.title: Title
 edit.topic: Topic
 list.title: Chats
 list.favorite: Favorite chat
+list.pin: Pin chat - on the next startup it will be loaded automatically (max pinned chats: 10)
+list.temporary: Temporary
+list.will_be_deleted: Will be deleted - it's not pinned, has no messages, and has no user input draft
 list.has_user_input_draft: Has input draft
 list.message_count: Overall message count
 list.collapse: Collapse the chat list
@@ -57,6 +60,7 @@ list.expand: Expand the chat list
 list.open: Open
 list.search: Search by name/topic
 list.filter_favorites: Only show favorites
+list.pinned: Pinned
 list.today: Today
 list.yesterday: Yesterday
 list.last_7_days: Last 7 days

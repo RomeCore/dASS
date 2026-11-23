@@ -52,6 +52,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 					Topic = target.Topic,
 					SubTopic = target.SubTopic,
 					Favorite = target.Favorite,
+					Pinned = target.Pinned,
 					RootNodeId = -1,
 					LeafNodeId = -1,
 					SettingsProfile = chatSettings.Settings.Id,
@@ -68,6 +69,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 				target.Topic = model.Topic;
 				target.SubTopic = model.SubTopic;
 				target.Favorite = model.Favorite;
+				target.Pinned = model.Pinned;
 				target.AllMessageCount = database.MessageNodes.Count(m => m.ChatId == target.Id);
 				chatSettings.LoadFromProfile(model.SettingsProfile);
 			}
@@ -117,6 +119,7 @@ namespace LLMDesktopAssistant.LLM.Services.Storage
 			Model.Topic = Target.Topic;
 			Model.SubTopic = Target.SubTopic;
 			Model.Favorite = Target.Favorite;
+			Model.Pinned = Target.Pinned;
 			Model.SettingsProfile = _chatSettings.Settings.Id;
 
 			_database.Chats.Update(Model);

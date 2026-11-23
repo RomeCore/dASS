@@ -57,7 +57,8 @@ namespace LLMDesktopAssistant.LLM.Services
 			string? title = null,
 			string? topic = null,
 			string? subTopic = null,
-			bool? favorite = null);
+			bool? favorite = null,
+			bool? pinned = null);
 
 		/// <summary>
 		/// Deletes a chat with the specified ID. If no chat exists with the given ID, this method does nothing.

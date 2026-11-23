@@ -34,6 +34,11 @@ namespace LLMDesktopAssistant.LLM.Domain
 		public required bool Favorite { get; init; }
 
 		/// <summary>
+		/// A value indicating whether this chat is pinned. Pinned chats are loaded automatically when the application starts.
+		/// </summary>
+		public required bool Pinned { get; init; }
+
+		/// <summary>
 		/// Whether this chat session has an unsaved draft of user input.
 		/// </summary>
 		public required bool HasUserInputDraft { get; init; }

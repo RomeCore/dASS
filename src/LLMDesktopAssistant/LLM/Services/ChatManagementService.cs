@@ -26,6 +26,7 @@ namespace LLMDesktopAssistant.LLM.Services
 				Topic = model.Topic,
 				SubTopic = model.SubTopic,
 				Favorite = model.Favorite,
+				Pinned = model.Pinned,
 				HasUserInputDraft = model.UserInputState?.IsEmpty == false,
 				AllMessageCount = database.MessageNodes.Count(m => m.ChatId == model.Id),
 				CreatedAt = model.CreatedAt,
@@ -142,7 +143,7 @@ namespace LLMDesktopAssistant.LLM.Services
 
 		public void ClearEmptyChats()
 		{
-			var potential = database.Chats.Find(c => c.LeafNodeId == -1 && c.RootNodeId == -1).ToList();
+			var potential = database.Chats.Find(c => c.LeafNodeId == -1 && c.RootNodeId == -1 && !c.Pinned).ToList();
 			foreach (var chat in potential)
 				if (chat.UserInputState is null || chat.UserInputState.IsEmpty)
 					database.Chats.Delete(chat.Id);
@@ -165,7 +166,12 @@ namespace LLMDesktopAssistant.LLM.Services
 		}
 
 		/// <inheritdoc />
-		public void UpdateChat(int chatId, string? title, string? topic, string? subTopic, bool? favorite)
+		public void UpdateChat(int chatId,
+			string? title = null,
+			string? topic = null,
+			string? subTopic = null,
+			bool? favorite = null,
+			bool? pinned = null)
 		{
 			var model = database.Chats.FindById(chatId);
 			if (model is null)
@@ -175,6 +181,7 @@ namespace LLMDesktopAssistant.LLM.Services
 			model.Topic = topic ?? model.Topic;
 			model.SubTopic = subTopic ?? model.SubTopic;
 			model.Favorite = favorite ?? model.Favorite;
+			model.Pinned = pinned ?? model.Pinned;
 			database.Chats.Update(model);
 		}
 

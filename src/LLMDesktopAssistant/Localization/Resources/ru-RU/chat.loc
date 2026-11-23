@@ -50,6 +50,9 @@ edit.title: Название
 edit.topic: Тема
 list.title: Чаты
 list.favorite: Занести в избранное
+list.pin: Закрепить чат - при следующем запуске приложения чат загрузится автоматически (максимум закрепленных чатов: 10)
+list.temporary: Временный
+list.will_be_deleted: Будет удален, так как он не закреплен, не содержит сообщений и не содержит черновик ввода
 list.has_user_input_draft: Содержит черновик ввода
 list.message_count: Общее количество сообщений
 list.collapse: Свернуть список чатов
@@ -57,6 +60,7 @@ list.expand: Развернуть список чатов
 list.open: Открытые
 list.search: Поиск по названиям/темам
 list.filter_favorites: Только избранные
+list.pinned: Закрепленные
 list.today: Сегодня
 list.yesterday: Вчера
 list.last_7_days: За последние 7 дней
