@@ -30,6 +30,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		/// </summary>
 		public required AdditionalMessagePartsViewModel Parts { get; init; }
 
+		public WeakReference<OpenedChatViewModel>? Opened
+		{
+			get;
+			set => SetProperty(ref field, value);
+		}
+
 		public string? Title
 		{
 			get;
@@ -180,7 +186,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		public AvailableChatViewModel Available => _available;
 
-		public ChatViewModel CurrentChat { get; init; }
+		public ChatViewModel ChatViewModel { get; init; }
+		public Chat Chat => ChatViewModel.Chat;
 
 		public bool IsSelected
 		{
@@ -200,10 +207,11 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			_manager = manager;
 			_available = available;
 			_scope = available.TemporaryScope ?? _manager.OpenChatScope(_available.Id);
+			available.PropertyChanged += AvailablePropertyChanged;
 
 			var chatServices = _scope.ServiceProvider;
 			var chat = chatServices.GetRequiredService<Chat>();
-			CurrentChat = new ChatViewModel(chat);
+			ChatViewModel = new ChatViewModel(chat);
 			_statusService = chatServices.GetService<IExecutionInfoStatusService>();
 			_statusService?.PropertyChanged += OnExecutionStatusServicePropertyChanged;
 
@@ -215,7 +223,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			RenameCommand = new AsyncRelayCommand(async () =>
 			{
-				var chat = CurrentChat.Chat;
+				var chat = ChatViewModel.Chat;
 				if (chat is null)
 					return;
 
@@ -238,15 +246,15 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				try
 				{
-					if (CurrentChat.Chat.Messages.Count == 0)
+					if (ChatViewModel.Chat.Messages.Count == 0)
 					{
-						var toastService = CurrentChat.Chat.Services.GetService<IToastService>();
+						var toastService = ChatViewModel.Chat.Services.GetService<IToastService>();
 						toastService?.ShowWarning(Locale.Get("chat.manager.no_messages_to_rename.title"),
 							Locale.Get("chat.manager.no_messages_to_rename.description"));
 						return;
 					}
 
-					var namingService = CurrentChat.Chat.Services.GetService<IChatNamingService>();
+					var namingService = ChatViewModel.Chat.Services.GetService<IChatNamingService>();
 					if (namingService != null)
 						await namingService.NameChatAsync();
 				}
@@ -263,8 +271,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 			if (disposing)
 			{
+				_available.PropertyChanged -= AvailablePropertyChanged;
 				_subscribedUserInput?.DeepChanged -= OnUserInputStateChanged;
-				CurrentChat.Chat.PropertyChanged -= OnChatPropertyChanged;
+				ChatViewModel.Chat.PropertyChanged -= OnChatPropertyChanged;
 				_statusService?.PropertyChanged -= OnExecutionStatusServicePropertyChanged;
 
 				_available.Parts.SetSource(_available.IsTemporary ? [] : [.. _manager.GetChatParts(_available.Id)]);
@@ -276,27 +285,39 @@ namespace LLMDesktopAssistant.LLM.MVVM
 						chatClose.OnChatClosing();
 					}
 					catch { }
-				CurrentChat.Dispose();
+				ChatViewModel.Dispose();
 				_scope.Dispose();
+			}
+		}
+
+		private void AvailablePropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			switch (e.PropertyName)
+			{
+				case nameof(Available.Title): Chat.Title = _available.Title ?? string.Empty; break;
+				case nameof(Available.Topic): Chat.Topic = _available.Topic ?? string.Empty; break;
+				case nameof(Available.SubTopic): Chat.SubTopic = _available.SubTopic ?? string.Empty; break;
+				case nameof(Available.Favorite): Chat.Favorite = _available.Favorite; break;
+				case nameof(Available.Pinned): Chat.Pinned = _available.Pinned; break;
 			}
 		}
 
 		private void OnChatPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			var chat = (Chat)sender!;
-			_available.Title = chat.Title;
-			_available.Topic = chat.Topic;
-			_available.SubTopic = chat.SubTopic;
-			_available.Favorite = chat.Favorite;
-			_available.Pinned = chat.Pinned;
-			_available.HasUserInputDraft = chat.UserInputState?.IsEmpty == false;
-			_available.AllMessageCount = chat.AllMessageCount;
-
-			if (e.PropertyName is nameof(chat.UserInputState))
+			switch (e.PropertyName)
 			{
-				_subscribedUserInput?.DeepChanged -= OnUserInputStateChanged;
-				_subscribedUserInput = chat.UserInputState;
-				_subscribedUserInput!.DeepChanged += OnUserInputStateChanged;
+				case nameof(Chat.Title): _available.Title = Chat.Title; break;
+				case nameof(Chat.Topic): _available.Topic = Chat.Topic; break;
+				case nameof(Chat.SubTopic): _available.SubTopic = Chat.SubTopic; break;
+				case nameof(Chat.Favorite): _available.Favorite = Chat.Favorite; break;
+				case nameof(Chat.Pinned): _available.Pinned = Chat.Pinned; break;
+				case nameof(Chat.UserInputState):
+					_available.HasUserInputDraft = Chat.UserInputState?.IsEmpty == false;
+					_subscribedUserInput?.DeepChanged -= OnUserInputStateChanged;
+					_subscribedUserInput = Chat.UserInputState;
+					_subscribedUserInput!.DeepChanged += OnUserInputStateChanged;
+					break;
+				case nameof(Chat.AllMessageCount): _available.AllMessageCount = Chat.AllMessageCount; break;
 			}
 		}
 
@@ -606,7 +627,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			{
 				RebuildChatList();
 			}
-			if (e.PropertyName is nameof(AvailableChatViewModel.Favorite))
+			if (e.PropertyName is nameof(AvailableChatViewModel.Favorite) && !chat.IsOpened)
 			{
 				ChatManager.UpdateChat(chat.Id, favorite: chat.Favorite);
 			}
@@ -616,7 +637,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					_pinned.Add(chat);
 				else
 					_pinned.Remove(chat);
-				ChatManager.UpdateChat(chat.Id, pinned: chat.Pinned);
+				if (!chat.IsOpened)
+					ChatManager.UpdateChat(chat.Id, pinned: chat.Pinned);
 				RebuildChatList();
 			}
 		}
@@ -666,11 +688,22 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				if (await DialogManager.ShowDialogAsync(dialog) is not ChatEditResult result)
 					return;
 
-				ChatManager.UpdateChat(newAvailableChatViewModel.Id, result.Title, result.Topic, result.SubTopic);
+				if (newAvailableChatViewModel.Opened?.TryGetTarget(out var openedChatViewModel) ?? false)
+				{
+					var chat = openedChatViewModel.Chat;
 
-				newAvailableChatViewModel.Title = result.Title;
-				newAvailableChatViewModel.Topic = result.Topic;
-				newAvailableChatViewModel.SubTopic = result.SubTopic;
+					chat.Title = result.Title;
+					chat.Topic = result.Topic;
+					chat.SubTopic = result.SubTopic;
+				}
+				else
+				{
+					ChatManager.UpdateChat(newAvailableChatViewModel.Id, result.Title, result.Topic, result.SubTopic);
+
+					newAvailableChatViewModel.Title = result.Title;
+					newAvailableChatViewModel.Topic = result.Topic;
+					newAvailableChatViewModel.SubTopic = result.SubTopic;
+				}
 			});
 
 			var deleteCommand = new AsyncRelayCommand(async () =>
@@ -722,6 +755,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void CloseOpened(OpenedChatViewModel chat)
 		{
+			chat.Available.Opened = null;
 			int closedIndex = OpenedChats.IndexOf(chat);
 			bool selectedWasClosed = SelectedChat is ChatListOpenedEntry selectedOpenedChat && selectedOpenedChat.Chat == chat;
 			if (closedIndex >= 0)
@@ -865,8 +899,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 					CloseOpened(newOpenedChat);
 				})
 			};
+			chat.Opened = new WeakReference<OpenedChatViewModel>(newOpenedChat);
 
-			newOpenedChat.CurrentChat.ToggleChatListCommand = ToggleChatListCommand;
+			newOpenedChat.ChatViewModel.ToggleChatListCommand = ToggleChatListCommand;
 			OpenedChats.Add(newOpenedChat);
 			RebuildChatList();
 			if (select)
