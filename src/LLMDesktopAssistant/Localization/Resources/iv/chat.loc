@@ -49,6 +49,7 @@ edit.subtopic: Sub-topic
 edit.title: Title
 edit.topic: Topic
 list.title: Chats
+list.open_in_background: Open chat without selecting it in the list
 list.favorite: Favorite chat
 list.pin: Pin chat - on the next startup it will be loaded automatically (max pinned chats: 10)
 list.temporary: Temporary

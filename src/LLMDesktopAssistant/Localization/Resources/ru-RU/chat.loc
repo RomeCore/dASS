@@ -49,6 +49,7 @@ edit.subtopic: Подтема
 edit.title: Название
 edit.topic: Тема
 list.title: Чаты
+list.open_in_background: Открыть чат, не выделяя его в списке
 list.favorite: Занести в избранное
 list.pin: Закрепить чат - при следующем запуске приложения чат загрузится автоматически (максимум закрепленных чатов: 10)
 list.temporary: Временный

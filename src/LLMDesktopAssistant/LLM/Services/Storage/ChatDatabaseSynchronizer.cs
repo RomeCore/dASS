@@ -2,8 +2,6 @@ using System.ComponentModel;
 using LLMDesktopAssistant.Data;
 using LLMDesktopAssistant.Data.ChatModels;
 using LLMDesktopAssistant.LLM.Domain;
-using LLMDesktopAssistant.LLM.Settings;
-using LLMDesktopAssistant.Settings;
 using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.LLM.Services.Storage

@@ -18,12 +18,21 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public required int Id { get; init; }
 		public bool IsTemporary => TemporaryScope != null;
 		public IServiceScope? TemporaryScope { get; init; }
-		public required ICommand DeleteCommand { get; init; }
+
+		/// <summary>
+		/// Gets the command that opens the chat in a new tab, while not activating it.
+		/// </summary>
+		public required ICommand OpenInBackgroundCommand { get; init; }
 
 		/// <summary>
 		/// Gets the command that opens the edit dialog for a chat that is not open in any place.
 		/// </summary>
 		public required ICommand RenameCommand { get; init; }
+
+		/// <summary>
+		/// Gets the command that deletes a chat from a database/disk.
+		/// </summary>
+		public required ICommand DeleteCommand { get; init; }
 
 		/// <summary>
 		/// Gets the chips rendered under the title and the topic of this chat in the list.
@@ -405,6 +414,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		public override ImmutableList<ChatListEntryCommand> Commands => _commands ??= [
 			new ChatListEntryCommand
 			{
+				Icon = MaterialIconKind.Plus,
+				Command = Chat?.OpenInBackgroundCommand,
+				ToolTip = Locale.GetKey("chat.list.open_in_background")
+			},
+			new ChatListEntryCommand
+			{
 				Icon = MaterialIconKind.Pencil,
 				Command = Chat?.RenameCommand,
 				ToolTip = Locale.GetKey("common.rename")
@@ -735,8 +750,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 			newAvailableChatViewModel = new AvailableChatViewModel
 			{
 				Id = info.Id,
-				DeleteCommand = deleteCommand,
+				OpenInBackgroundCommand = new RelayCommand(() => OpenChat(newAvailableChatViewModel, false)),
 				RenameCommand = renameCommand,
+				DeleteCommand = deleteCommand,
 				Title = info.Title,
 				Topic = info.Topic,
 				SubTopic = info.SubTopic,
@@ -891,6 +907,9 @@ namespace LLMDesktopAssistant.LLM.MVVM
 
 		private void OpenChat(AvailableChatViewModel chat, bool select)
 		{
+			if (chat.IsOpened)
+				return;
+
 			OpenedChatViewModel newOpenedChat = null!;
 			newOpenedChat = new OpenedChatViewModel(ChatManager, chat)
 			{
@@ -921,10 +940,12 @@ namespace LLMDesktopAssistant.LLM.MVVM
 		{
 			var chatScope = ChatManager.OpenMemoryChat(LocalizationManager.LocalizeStatic("chat.new_temporary"));
 			var chat = chatScope.ServiceProvider.GetRequiredService<Chat>();
-			var newAvailableChat = new AvailableChatViewModel
+			AvailableChatViewModel newAvailableChatViewModel = null!;
+			newAvailableChatViewModel = new AvailableChatViewModel
 			{
 				Id = chat.Id,
 				TemporaryScope = chatScope,
+				OpenInBackgroundCommand = new RelayCommand(() => OpenChat(newAvailableChatViewModel, false)),
 				DeleteCommand = new RelayCommand(() => { }, () => false),
 				RenameCommand = new RelayCommand(() => { }, () => false),
 				Title = chat.Title,
@@ -932,8 +953,8 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				LastModifiedAt = DateTime.Now,
 				Parts = new AdditionalMessagePartsViewModel(chat.AdditionalData)
 			};
-			AvailableChats.Insert(0, newAvailableChat);
-			OpenChat(newAvailableChat, true);
+			AvailableChats.Insert(0, newAvailableChatViewModel);
+			OpenChat(newAvailableChatViewModel, true);
 			IsChatListVisible = false;
 		}
 	}
