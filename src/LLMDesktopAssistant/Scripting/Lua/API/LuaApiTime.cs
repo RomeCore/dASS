@@ -104,6 +104,10 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			      print("tick")
 			    end)
 			    t:cancel()  -- stop the interval
+
+			NOTE: both timers are bound to the calling execution - they die when the tool, command, hook or
+			turn that created them ends. For a timer that outlives the call and lives as long as the chat,
+			use dass.schedule (every / cron / at).
 			""";
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
