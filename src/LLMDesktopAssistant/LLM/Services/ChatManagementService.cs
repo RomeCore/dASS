@@ -31,22 +31,17 @@ namespace LLMDesktopAssistant.LLM.Services
 				AllMessageCount = database.MessageNodes.Count(m => m.ChatId == model.Id),
 				CreatedAt = model.CreatedAt,
 				LastModifiedAt = model.LastModifiedAt,
-				Parts = GetChatParts(model.Id)
+				Parts = [.. database.AdditionalChatData
+					.Find(d => d.ParentId == model.Id && d.ParentKind == ChatDataParentKind.Chat && d.IsPart)
+					.OrderBy(d => d.Order).ThenBy(d => d.Id)
+					.Select(d => d.Data)
+					.OfType<AdditionalMessagePart>()]
 			};
 		}
 
 		public IEnumerable<ChatInfo> GetChats()
 		{
 			return database.Chats.FindAll().Select(CreateChatInfo).ToList();
-		}
-
-		public IReadOnlyList<AdditionalMessagePart> GetChatParts(int chatId)
-		{
-			return [.. database.AdditionalChatData
-				.Find(d => d.ParentId == chatId && d.ParentKind == ChatDataParentKind.Chat && d.IsPart)
-				.OrderBy(d => d.Order).ThenBy(d => d.Id)
-				.Select(d => d.Data)
-				.OfType<AdditionalMessagePart>()];
 		}
 
 		private IServiceScope OpenChatScope(ChatDatabase database, int chatId, bool isTemporary)

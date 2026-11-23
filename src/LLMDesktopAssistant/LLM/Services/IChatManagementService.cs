@@ -16,13 +16,6 @@ namespace LLMDesktopAssistant.LLM.Services
 		IEnumerable<ChatInfo> GetChats();
 
 		/// <summary>
-		/// Loads the parts one chat carries itself - the chips its entry in the chat list draws.
-		/// </summary>
-		/// <param name="chatId">The ID of the chat to load the parts of.</param>
-		/// <returns>The parts in their stored order; empty when the chat carries none.</returns>
-		IReadOnlyList<AdditionalMessagePart> GetChatParts(int chatId);
-
-		/// <summary>
 		/// Opens a new service scope for the given chat information.
 		/// This services scope will contain the <see cref="Chat"/> instance and any other related dependencies.
 		/// </summary>

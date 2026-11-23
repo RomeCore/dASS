@@ -276,7 +276,7 @@ namespace LLMDesktopAssistant.LLM.MVVM
 				ChatViewModel.Chat.PropertyChanged -= OnChatPropertyChanged;
 				_statusService?.PropertyChanged -= OnExecutionStatusServicePropertyChanged;
 
-				_available.Parts.SetSource(_available.IsTemporary ? [] : [.. _manager.GetChatParts(_available.Id)]);
+				_available.Parts.SetSource([.. _available.Parts.Parts.OfType<AdditionalMessagePart>()]);
 				_available.IsOpened = false;
 
 				foreach (var chatClose in _scope.ServiceProvider.GetServices<IChatClosingHandler>() ?? [])
