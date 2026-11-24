@@ -37,6 +37,7 @@ namespace LLMDesktopAssistant.Startup
 
 			Log.Logger = platform
 				.ConfigureLogger(configuration)
+				.WriteTo.Sink(LogBuffer.Sink)
 				.WriteTo.File(
 					Path.Combine(Directories.LogFiles, "log.txt"),
 					rollingInterval: RollingInterval.Day)
