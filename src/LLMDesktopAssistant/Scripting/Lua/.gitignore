@@ -1,0 +1,2 @@
+# The root .gitignore drops every [Ll]ogs/ directory as build output; this one is source.
+!Logs/
