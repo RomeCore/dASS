@@ -1,6 +1,9 @@
 using AsyncLua;
 using AsyncLua.Values;
+using Avalonia.Threading;
+using LLMDesktopAssistant.Controls;
 using LLMDesktopAssistant.MVVM.Dynamic;
+using LLMDesktopAssistant.Utils;
 
 namespace LLMDesktopAssistant.Scripting.Lua.API
 {
@@ -23,12 +26,12 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			FUNCTIONS:
 
-			--- dass.ui.create_control(xaml, view_model) -> uicontrol
+			--- dass.ui.create_control(axaml, view_model) -> uicontrol
 			  Parses nothing yet: it packs the AXAML source and the view model into a uicontrol handle.
 			  The control is rendered later, inside the tool call UI, on the UI thread.
 
 			  Parameters:
-			    - xaml: string - AXAML markup (reflection bindings, i.e. `{Binding key}`).
+			    - axaml: string - AXAML markup (reflection bindings, i.e. `{Binding key}`).
 			      Do not use compiled bindings or x:DataType.
 			    - view_model: table or nil - the dynamic view model:
 			        * table - a Lua table exposed as a dynamic view model. String keys become
@@ -42,38 +45,44 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 			  Returns: uicontrol handle - pass it to dass.tool.result.append_data().
 
+			--- async dass.ui.validate_axaml(axaml) -> string or nil
+			  Parses AXAML source code on the UI thread and returns an error if parsing was failed.
+			  This function is async because it waits for UI thread dispatch.
+
+			  Returns: string - error, nil - success
+
 			METHODS (on the returned uicontrol):
 
-			--- ui:set_xaml(xaml)
+			--- ui:set_axaml(axaml)
 			  Replaces the AXAML markup of this handle and re-renders every control that was appended
-			  from it (the whole visual tree is rebuilt). Equivalent to `ui.xaml = xaml`.
+			  from it (the whole visual tree is rebuilt). Equivalent to `ui.axaml = axaml`.
 			  The dynamic view model stays the same, so the new markup is bound to the same data.
 			  Parameters:
-				- xaml: string - the new AXAML markup (reflection bindings, as in create_control).
+			    - axaml: string - the new AXAML markup (reflection bindings, as in create_control).
 
 			NOTES:
 			  - The handle is reusable: the same uicontrol may be appended multiple times.
-			  - The AXAML source is mutable (ui:set_xaml); the view model is fixed at creation.
+			  - The AXAML source is mutable (ui:set_axaml); the view model is fixed at creation.
 			  - Images survive a chat reload together with the view model: an image member is shown
-				again after the widget is restored.
+			    again after the widget is restored.
 			  - `set` and `notify` are injected only when `dass.ui.create_control` is called: don't be
 			    dumb and call vm:set("mykey", 10) before control creation.
 			  - `set` and `notify` are not injected into a table that is an array. To change a list,
-				replace the whole member: vm:set("gallery", newArray).
+			    replace the whole member: vm:set("gallery", newArray).
 			  - Commands survive a chat reload: a Lua function is stored as bytecode together with the
-				view model data and revived when the widget is restored. What does NOT survive: upvalues
-				and the environment. A captured local comes back as nil, while globals (dass.*, your own
-				scripts' namespaces) resolve normally against the chat's current state. So write commands
-				as `function(self, ...)` and keep their state in the table itself - `self` is the restored
-				view model and the only state a revived function still has:
-
-					counter = 0,
-					bump = function(self)
-					  self:set('counter', self.counter + 1)   -- survives
-					end
-
-				Don't rely on a captured `local` or on a function value that is not Lua code (an API
-				callback), those are session-only and come back missing.
+			    view model data and revived when the widget is restored. What does NOT survive: upvalues
+			    and the environment. A captured local comes back as nil, while globals (dass.*, your own
+			    scripts' namespaces) resolve normally against the chat's current state. So write commands
+			    as `function(self, ...)` and keep their state in the table itself - `self` is the restored
+			    view model and the only state a revived function still has:
+			    
+			        counter = 0,
+			        bump = function(self)
+			          self:set('counter', self.counter + 1)   -- survives
+			        end
+			    
+			    Don't rely on a captured `local` or on a function value that is not Lua code (an API
+			    callback), those are session-only and come back missing.
 
 			EXAMPLES:
 
@@ -86,33 +95,41 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			    end
 			  }
 			  local ui = dass.ui.create_control([[
-				<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
-				  <TextBlock Text="{Binding title}" FontWeight="Bold"/>
-				  <TextBlock Text="{Binding temperature}"/>
-				  <Button Content="Refresh" Command="{Binding refresh}"/>
-				</StackPanel>
+			    <StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+			      <TextBlock Text="{Binding title}" FontWeight="Bold"/>
+			      <TextBlock Text="{Binding temperature}"/>
+			      <Button Content="Refresh" Command="{Binding refresh}"/>
+			    </StackPanel>
 			  ]], vm)
 
 			  dass.tool.result.append_data(ui)
 
 			  -- Later: swap the markup in place (same view model).
-			  ui:set_xaml([[
-				<StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
-				  <TextBlock Text="{Binding title}" FontStyle="Italic"/>
-				</StackPanel>
-			  ]])
+			  ui.axaml = [[
+			    <StackPanel xmlns="https://github.com/avaloniaui" Spacing="4">
+			      <TextBlock Text="{Binding title}" FontStyle="Italic"/>
+			    </StackPanel>
+			  ]]
+
+			  -- Validate on markup creation
+			  local err = await dass.ui.validate_axaml(axaml)
+			  if err then
+			      print("Validation failure: " .. err)
+			      return
+			  end
 			""";
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["create_control"] = new LuaCallbackFunction(CreateControl);
+			ns["validate_axaml"] = new LuaCallbackFunction(ValidateAxaml);
 			return null;
 		}
 
 		private static LuaTuple CreateControl(LuaCallingContext ctx, LuaValue[] args)
 		{
 			if (args.Length < 1 || args[0] is not LuaString xaml || string.IsNullOrWhiteSpace(xaml.Value))
-				throw new LuaRuntimeException("dass.ui.create_control(xaml, view_model): first argument must be a non-empty string (AXAML).");
+				throw new LuaRuntimeException("dass.ui.create_control(axaml, view_model): first argument must be a non-empty string (AXAML).");
 
 			DynamicViewModel viewModel;
 			var viewModelArg = args.Length > 1 ? args[1] : LuaNil.Instance;
@@ -128,7 +145,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 					viewModel = new LuaValueDynamicViewModel(table, ctx.WithoutCancellation());
 					break;
 				default:
-					throw new LuaRuntimeException("dass.ui.create_control(xaml, view_model): second argument must be a Lua table or nil.");
+					throw new LuaRuntimeException("dass.ui.create_control(axaml, view_model): second argument must be a Lua table or nil.");
 			}
 
 			var control = new LuaUiControl(xaml.Value, viewModel);
@@ -137,6 +154,26 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				Metatable = UserDataMetatableGenerator.GetOrCreate(typeof(LuaUiControl)),
 			};
 			return new LuaTuple(userData);
+		}
+
+		private static async Task<LuaTuple> ValidateAxaml(LuaCallingContext ctx, LuaValue[] args)
+		{
+			if (args.Length < 1 || args[0] is not LuaString axaml || string.IsNullOrWhiteSpace(axaml.Value))
+				throw new LuaRuntimeException("dass.ui.validate_axaml(axaml): first argument must be a non-empty string (AXAML).");
+
+			string? result = null;
+			await UIDispatcher.InvokeAsync(() =>
+			{
+				try
+				{
+					_ = DynamicAxamlControl.CompileAxaml(axaml.Value);
+				}
+				catch (Exception ex)
+				{
+					result = ex.Message;
+				}
+			});
+			return new LuaTuple(string.IsNullOrEmpty(result) ? LuaNil.Instance : new LuaString(result));
 		}
 	}
 }

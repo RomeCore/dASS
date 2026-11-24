@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Avalonia.Threading;
 
 namespace LLMDesktopAssistant.Utils
@@ -28,5 +29,7 @@ namespace LLMDesktopAssistant.Utils
 		/// Cancels the queued work unless it already ran.
 		/// </summary>
 		public void Abort() => _operation?.Abort();
+
+		public TaskAwaiter GetAwaiter() => _operation?.GetTask().GetAwaiter() ?? Task.CompletedTask.GetAwaiter();
 	}
 }

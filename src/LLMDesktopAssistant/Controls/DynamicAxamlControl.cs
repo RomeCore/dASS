@@ -38,6 +38,19 @@ namespace LLMDesktopAssistant.Controls
 				control.RenderAxaml(args.GetNewValue<string?>()));
 		}
 
+		public static object CompileAxaml(string axaml)
+		{
+			var document = new RuntimeXamlLoaderDocument(
+				new Uri("avares://LLMDesktopAssistant/Controls/DynamicAxamlControl.axaml"),
+				axaml);
+			var configuration = new RuntimeXamlLoaderConfiguration
+			{
+				LocalAssembly = typeof(DynamicAxamlControl).Assembly,
+				UseCompiledBindingsByDefault = false,
+			};
+			return AvaloniaRuntimeXamlLoader.Load(document, configuration);
+		}
+
 		private void RenderAxaml(string? xaml)
 		{
 			if (string.IsNullOrWhiteSpace(xaml))
@@ -48,16 +61,7 @@ namespace LLMDesktopAssistant.Controls
 
 			try
 			{
-				var document = new RuntimeXamlLoaderDocument(
-					new Uri("avares://LLMDesktopAssistant/Controls/DynamicAxamlControl.axaml"),
-					xaml);
-				var configuration = new RuntimeXamlLoaderConfiguration
-				{
-					LocalAssembly = typeof(DynamicAxamlControl).Assembly,
-					UseCompiledBindingsByDefault = false,
-				};
-
-				var control = AvaloniaRuntimeXamlLoader.Load(document, configuration);
+				var control = CompileAxaml(xaml);
 				if (control is Visual visual && visual.IsAttachedToVisualTree())
 					throw new InvalidOperationException("Cannot render a control that is already attached to the visual tree " +
 						"(Window, or any other control that creates TopLevel).");
