@@ -28,8 +28,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		FUNCTIONS:
 
 		--- json.decode(str)
-		--- json.parse(str) (alias)
-		--- json.deserialize(str) (alias)
 		  Parses a strict JSON string into a Lua value.
 		  Parameters:
 		    - str: string - JSON string to parse
@@ -37,8 +35,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  Throws on invalid JSON.
 
 		--- json.decode_tolerant(str)
-		--- json.parse_tolerant(str) (alias)
-		--- json.deserialize_tolerant(str) (alias)
 		  Parses a lenient JSON string using a tolerant parser that handles:
 		    - Single-quoted strings ('...')
 		    - Missing quotes around keys/values
@@ -54,8 +50,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		  Returns nil on parse failure instead of throwing.
 
 		--- json.encode(value, [indented])
-		--- json.stringify(value, [indented]) (alias)
-		--- json.serialize(value, [indented]) (alias)
 		  Serializes a Lua value into a JSON string.
 		  Parameters:
 		    - value: any - Lua value to serialize (table, string, number, boolean, nil)
@@ -64,7 +58,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 
 		NOTES:
 		  - Use json.decode_tolerant() for parsing LLM output that often
-		    contains malformed JSON (missing quotes, trailing commas, etc.)
+		    contains uncompleted or malformed JSON (missing quotes, trailing commas, etc.)
 		  - Lua tables with sequential integer keys (1..n) are encoded as JSON arrays.
 		  - Lua tables with string/non-sequential keys are encoded as JSON objects.
 		  - Mixed tables (array part + object part) are encoded as objects,
@@ -108,14 +102,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
 		{
 			ns["decode"] = new LuaCallbackFunction(Decode);
-			ns["parse"] = ns["decode"];
-			ns["deserialize"] = ns["decode"];
 			ns["decode_tolerant"] = new LuaCallbackFunction(DecodeTolerant);
-			ns["parse_tolerant"] = ns["decode_tolerant"];
-			ns["deserialize_tolerant"] = ns["decode_tolerant"];
 			ns["encode"] = new LuaCallbackFunction(Encode);
-			ns["stringify"] = ns["encode"];
-			ns["serialize"] = ns["encode"];
 			return null;
 		}
 
