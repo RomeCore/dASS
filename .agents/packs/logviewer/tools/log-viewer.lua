@@ -13,7 +13,7 @@ argument_schema: >-
       },
       "text": {
         "type": "string",
-        "description": "Case-sensitive substring of the message or the template."
+        "description": "Case-insensitive substring of the message or the template."
       },
       "lines": {
         "type": "integer",

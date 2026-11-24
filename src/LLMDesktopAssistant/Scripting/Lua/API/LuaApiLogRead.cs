@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  filter (optional table):
 			    - min_level: string - lowest level that passes: verbose|debug|info|warning|error|fatal
 			    - levels: table - exact set of levels, e.g. { "error", "fatal" }
-			    - text: string - case-sensitive substring of the rendered message or the template
+			    - text: string - case-insensitive substring of the rendered message or the template
 			    - since: integer - return only events with seq > since
 			    - last: integer - keep the last N matching events (applied after the other fields)
 

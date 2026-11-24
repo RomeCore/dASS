@@ -66,11 +66,13 @@ namespace LLMDesktopAssistant.Tests.Scripting
 		}
 
 		[Fact]
-		public void Text_IsCaseSensitive()
+		public void Text_IgnoresCase()
 		{
 			var filter = LuaLogFilter.Parse(Table(("text", new LuaString("Token"))), "test");
 
-			Assert.False(filter.Matches(Entry(LogEventLevel.Information, "token")));
+			Assert.True(filter.Matches(Entry(LogEventLevel.Information, "token")));
+			Assert.True(filter.Matches(Entry(LogEventLevel.Information, "TOKEN")));
+			Assert.False(filter.Matches(Entry(LogEventLevel.Information, "to keen")));
 		}
 
 		[Fact]

@@ -88,9 +88,13 @@ local function passes(entry, level, text)
 	local minimum = levelIndex(level) or 1
 	local actual = levelIndex(entry.level) or 1
 	if actual < minimum then return false end
-	if text ~= "" and not entry.message:find(text, 1, true)
-		and not entry.template:find(text, 1, true) then
-		return false
+	if text ~= "" then
+		-- dass.log matches case-insensitively; the viewer has to agree with what query returns.
+		local needle = text:lower()
+		if not entry.message:lower():find(needle, 1, true)
+			and not entry.template:lower():find(needle, 1, true) then
+			return false
+		end
 	end
 	return true
 end

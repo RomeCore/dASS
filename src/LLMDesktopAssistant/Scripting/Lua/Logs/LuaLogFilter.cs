@@ -20,7 +20,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Logs
 		/// </summary>
 		/// <param name="minLevel">The lowest level that passes.</param>
 		/// <param name="levels">The accepted levels, or <see langword="null"/> when any level passes.</param>
-		/// <param name="text">The substring the rendered message or the template must contain, or <see langword="null"/>.</param>
+		/// <param name="text">The case-insensitive substring the rendered message or the template must contain, or <see langword="null"/>.</param>
 		/// <param name="since">The last sequence the caller has already seen.</param>
 		/// <param name="last">How many newest matching entries to return, or <see cref="int.MaxValue"/> for all of them.</param>
 		public LuaLogFilter(LogEventLevel minLevel, ImmutableHashSet<LogEventLevel>? levels, string? text,
@@ -44,7 +44,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Logs
 		public ImmutableHashSet<LogEventLevel>? Levels { get; }
 
 		/// <summary>
-		/// The substring the rendered message or the template must contain, or <see langword="null"/>.
+		/// The case-insensitive substring the rendered message or the template must contain,
+		/// or <see langword="null"/>.
 		/// </summary>
 		public string? Text { get; }
 
@@ -150,8 +151,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.Logs
 				return false;
 
 			if (Text is not null
-				&& !entry.Rendered.Contains(Text, StringComparison.Ordinal)
-				&& !entry.Template.Contains(Text, StringComparison.Ordinal))
+				&& !entry.Rendered.Contains(Text, StringComparison.OrdinalIgnoreCase)
+				&& !entry.Template.Contains(Text, StringComparison.OrdinalIgnoreCase))
 				return false;
 
 			return true;
