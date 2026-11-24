@@ -4,6 +4,7 @@ using LLMDesktopAssistant.LLM.Services;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Consents;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 
 namespace LLMDesktopAssistant.Tools.Execution.Services
 {
@@ -40,8 +41,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 					return await AskToolAsync(ctx, ct);
 
 				ctx.Call.Status = ToolStatus.Rejected;
-				ctx.Call.ResultContent = ctx.PolicyReason?.Message ??
-					"The tool execution was denied by the policy.";
+				ctx.Call.AppendResultLine(ctx.PolicyReason?.Message ??
+					"The tool execution was denied by the policy.");
 				return false;
 			}
 
@@ -66,8 +67,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (provider is null)
 			{
 				ctx.Call.Status = ToolStatus.Error;
-				ctx.Call.ResultContent =
-					$"Tool '{ctx.Call.ToolName}' declared a self-handled decision but provides no approval provider.";
+				ctx.Call.AppendResultLine(
+					$"Tool '{ctx.Call.ToolName}' declared a self-handled decision but provides no approval provider.");
 				return false;
 			}
 
@@ -82,8 +83,8 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 			if (!approval.Approved)
 			{
 				ctx.Call.Status = ToolStatus.Cancelled;
-				ctx.Call.ResultContent = "User has cancelled the tool execution. " +
-					"Maybe it can be dangerous or unwanted to proceed.";
+				ctx.Call.AppendResultLine("User has cancelled the tool execution. " +
+					"Maybe it can be dangerous or unwanted to proceed.");
 				Memorize(ctx, approval);
 				AppendNotes(ctx, approval.Notes);
 				return false;

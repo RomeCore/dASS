@@ -1,6 +1,7 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using Serilog;
 
 namespace LLMDesktopAssistant.Tools.Execution.Services
@@ -39,7 +40,7 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 				catch (ArgumentException ex)
 				{
 					ctx.Call.Status = ToolStatus.Error;
-					ctx.Call.ResultContent = ex.Message;
+					ctx.Call.AppendResultLine("An error occurred: " + ex.Message);
 					return false;
 				}
 				catch (Exception ex)

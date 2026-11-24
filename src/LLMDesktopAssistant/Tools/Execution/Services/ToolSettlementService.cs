@@ -1,6 +1,7 @@
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.Services;
 using LLMDesktopAssistant.Tools.Execution.Domain;
+using LLMDesktopAssistant.Tools.Execution.Support;
 using LLMDesktopAssistant.Utils;
 using Serilog;
 
@@ -33,12 +34,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 
 			if (string.IsNullOrEmpty(call.ResultContent))
 			{
-				call.ResultContent = call.Status switch
+				call.AppendResultLine(call.Status switch
 				{
 					ToolStatus.Cancelled => "Tool execution was cancelled.",
 					ToolStatus.Success => "Tool successfully returned no result.",
 					_ => "Tool failed with no result."
-				};
+				});
 			}
 
 			try
@@ -77,17 +78,12 @@ namespace LLMDesktopAssistant.Tools.Execution.Services
 					: "Tool execution failed with error: " +
 					(DebugHelper.IsDebug ? exception.ToString() : exception.Message);
 
-			Append(ctx.Call, text);
+			ctx.Call.AppendResultLine(text);
 		}
 
 		private static bool IsCancellation(Exception exception) =>
 			exception is OperationCanceledException
 			|| exception is AggregateException aggregate
 			&& aggregate.InnerExceptions.Any(e => e is OperationCanceledException);
-
-		private static void Append(IToolCall call, string text) =>
-			call.ResultContent = string.IsNullOrEmpty(call.ResultContent)
-				? text
-				: call.ResultContent + "\n" + text;
 	}
 }
