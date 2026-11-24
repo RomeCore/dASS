@@ -75,7 +75,7 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 
 		/// <summary>
 		/// Takes over what a script's update must not reset: the title and the icon when the update brought none,
-		/// whether the user may close it, and whether it is the open one.
+		/// and whether it is the open one.
 		/// </summary>
 		/// <param name="previous">The envelope this item replaces under one replacement key.</param>
 		public override void InheritFrom(AdditionalChatDataItemBase previous)
@@ -91,7 +91,6 @@ namespace LLMDesktopAssistant.LLM.MVVM.Additional.Chat
 			if (Icon.IsNone)
 				Icon = tab.Icon;
 
-			CanClose = tab.CanClose;
 			IsSelected = tab.IsSelected;
 		}
 	}
