@@ -103,7 +103,7 @@ namespace LLMDesktopAssistant.Prompting.Context.Notifications
 		/// </summary>
 		public IEnumerable<PromptNotificationItem> GetLastNotifications(int count)
 		{
-			return GetNotifications(Math.Max(0, Count - count));
+			return GetNotifications(Math.Max(0, Notifications.Count - count));
 		}
 	}
 }
