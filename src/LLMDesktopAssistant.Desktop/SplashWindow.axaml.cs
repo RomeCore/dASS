@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Platform;
 using LLMDesktopAssistant.Localization;
 using LLMDesktopAssistant.Settings.Application;
@@ -50,6 +51,13 @@ namespace LLMDesktopAssistant.Desktop
 			// The handle lives exactly as long as the window that draws it.
 			StartupSplashManager.Attach(null);
 			base.OnClosed(e);
+		}
+
+		protected override void OnPointerPressed(PointerPressedEventArgs e)
+		{
+			base.OnPointerPressed(e);
+
+			BeginMoveDrag(e);
 		}
 
 		/// <summary>
