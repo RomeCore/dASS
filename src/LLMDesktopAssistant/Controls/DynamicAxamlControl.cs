@@ -69,10 +69,10 @@ namespace LLMDesktopAssistant.Controls
 			}
 			catch (Exception ex)
 			{
-				Log.Error(ex, "Failed to render dynamic AXAML");
+				Log.Error(ex, "Failed to render dynamic AXAML: {Error}", ex.Message);
 				Content = new TextBlock
 				{
-					Text = "Failed to render dynamic UI: " + ex.Message,
+					Text = "Failed to render dynamic AXAML: " + ex.Message,
 					TextWrapping = Avalonia.Media.TextWrapping.Wrap,
 				};
 			}
