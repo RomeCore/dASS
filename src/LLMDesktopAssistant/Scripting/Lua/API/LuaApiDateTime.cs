@@ -78,15 +78,17 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  Returns: table
 
 			--- datetime.timestamp(dt)
-			  Returns the Unix epoch seconds from a datetime table.
+			  Returns the Unix epoch seconds from a datetime table, with the
+			  milliseconds as the fraction.
 			  Parameters:
-			    - dt: table - datetime table
+				- dt: table - datetime table
 			  Returns: number
 
 			--- datetime.from_timestamp(ts)
-			  Creates a datetime table from Unix epoch seconds.
+			  Creates a datetime table from Unix epoch seconds. A fractional part is
+			  kept to the millisecond.
 			  Parameters:
-			    - ts: number - Unix epoch seconds
+				- ts: number - Unix epoch seconds
 			  Returns: table
 
 			EXAMPLES:
@@ -108,8 +110,8 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			  -- Add
 			  local tomorrow = datetime.add(now, {days = 1})
 
-			  -- Timestamp
-			  print(datetime.timestamp(now))
+			  -- Timestamp, with the milliseconds as the fraction
+			  print(datetime.timestamp(now)) -- 1764012345.678
 			""";
 
 		public override Action? Populate(LuaTable globals, LuaTable ns, LuaService luaService)
@@ -251,7 +253,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (TableToDateTime(args[0] as LuaTable) is not DateTimeOffset dt)
 				throw new LuaRuntimeException("datetime.timestamp(): first argument must be a datetime table.");
 
-			return new LuaTuple(new LuaNumber(dt.ToUnixTimeSeconds()));
+			return new LuaTuple(new LuaNumber(ToUnixSeconds(dt)));
 		}
 
 		private static LuaTuple FromTimestamp(LuaCallingContext ctx, LuaValue[] args)
@@ -262,8 +264,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			if (!args[0].TryToNumber(out var ts))
 				throw new LuaRuntimeException("datetime.from_timestamp(): first argument must be a number.");
 
-			var dt = DateTimeOffset.FromUnixTimeSeconds((long)ts);
-			return new LuaTuple(DateTimeToTable(dt));
+			return new LuaTuple(DateTimeToTable(FromUnixSeconds(ts)));
 		}
 
 		// --- Helpers ---
@@ -293,7 +294,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			t["ms"] = new LuaNumber(dt.Millisecond);
 			t["is_dst"] = LuaBoolean.FromBoolean(dt.DateTime.IsDaylightSavingTime());
 			t["utc_offset"] = new LuaNumber((int)dt.Offset.TotalMinutes);
-			t["timestamp"] = new LuaNumber(dt.ToUnixTimeSeconds());
+			t["timestamp"] = new LuaNumber(ToUnixSeconds(dt));
 			return t;
 		}
 
@@ -305,7 +306,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 			// A bare `{ timestamp = ... }` carries no wall clock, so it can only be read as UTC.
 			var hasClockFields = t.Get("year") is LuaNumber || t.Get("month") is LuaNumber || t.Get("day") is LuaNumber;
 			if (!hasClockFields && t.Get("timestamp") is LuaNumber stamp)
-				return DateTimeOffset.FromUnixTimeSeconds((long)stamp.Value);
+				return FromUnixSeconds(stamp.Value);
 
 			var year = GetIntField(t, "year", 1);
 			var month = GetIntField(t, "month", 1);
@@ -328,6 +329,18 @@ namespace LLMDesktopAssistant.Scripting.Lua.API
 				return null;
 			}
 		}
+
+		/// <summary>
+		/// Reads Unix epoch seconds with a millisecond fraction as an instant.
+		/// </summary>
+		private static DateTimeOffset FromUnixSeconds(double seconds)
+			=> DateTimeOffset.FromUnixTimeMilliseconds((long)Math.Round(seconds * 1000.0, MidpointRounding.AwayFromZero));
+
+		/// <summary>
+		/// Writes an instant as Unix epoch seconds with a millisecond fraction.
+		/// </summary>
+		private static double ToUnixSeconds(DateTimeOffset dt)
+			=> dt.ToUnixTimeMilliseconds() / 1000.0;
 
 		private static int GetIntField(LuaTable t, string key, int defaultValue)
 		{
