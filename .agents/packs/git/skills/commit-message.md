@@ -88,6 +88,8 @@ Without the `auto` argument, stop at step 5 - the message is the whole product. 
 
 ## Pitfalls
 
+- DO NOT CHECK THE PROJECT STATE - it builds or not - is not your care, you are asked only for commit message.
+  EXCEPTION: typos in documentation/comments. Fix them before commit.
 - Naming from the user's summary instead of the diff - the summary is stale by the time it reaches you.
 - A body bullet that changes behaviour belongs in its own commit, not buried under another intent.
 - A scope invented for a one-off - check recent history first.
