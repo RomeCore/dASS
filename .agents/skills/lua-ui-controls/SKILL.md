@@ -8,7 +8,7 @@ description: Author or debug a dASS Lua tool that renders its own Avalonia UI - 
 A Lua tool renders its own interface inside the chat by packing an AXAML string plus a view model and appending it to the tool result. Two calls carry the feature:
 
 ```lua
-local ui = dass.ui.create_control(xaml, vm)   -- pack AXAML + view model into a handle
+local ui = dass.ui.create_control(axaml, vm)   -- pack AXAML + view model into a handle
 dass.tool.result.append_data(ui)              -- render it under this tool call
 ```
 
@@ -16,11 +16,22 @@ dass.tool.result.append_data(ui)              -- render it under this tool call
 
 ## Steps
 
+### 0. Validate the AXAML
+
+Ensure that your AXAML is valid using `dass.ui.validate_axaml(axaml) -> string or nil` (remember to await, because parsing is called on UI thread):
+```lua
+local err = await dass.ui.validate_axaml(axaml)
+if err then
+    print("Validation failure: " .. err)
+    return
+end
+```
+
 ### 1. Pack the handle
 
-`dass.ui.create_control(xaml, view_model) -> uicontrol`
+`dass.ui.create_control(axaml, view_model) -> uicontrol`
 
-- `xaml` - a non-empty string, loaded at runtime, so it uses reflection bindings: `{Binding key}` and `{Binding [key]}`. Keep compiled bindings and `x:DataType` out of the string. The **root element must declare the Avalonia namespace** - `xmlns="https://github.com/avaloniaui"` - or the loader resolves no element types and the control renders as an error box (see *What bites*).
+- `axaml` - a non-empty string, loaded at runtime, so it uses reflection bindings: `{Binding key}` and `{Binding [key]}`. Keep compiled bindings and `x:DataType` out of the string. The **root element must declare the Avalonia namespace** - `xmlns="https://github.com/avaloniaui"` - or the loader resolves no element types and the control renders as an error box (see *What bites*).
 - `view_model` - a Lua table, or `nil`. A table becomes the dynamic view model (step 3); `nil` gives an empty one for purely static markup.
 
 The result is a handle: a plain value, no methods, reusable. The same handle may be appended any number of times, but every append shares one payload: `ui:set_xaml` re-renders all the copies, while removing one host's copy disposes the object the others still show. Keep a handle to one host unless the sharing is exactly what you want.
@@ -220,12 +231,11 @@ The same marker is what `store.chat` and `store.file` keep, so a function parked
 
 ### What bites
 
-- **A dotted function *statement*** - `function vm.bump(self) ... end` - crashes the AsyncLua parser with a bare `NullReferenceException` (`AsyncLuaParser.DeclareStatements`) before a line runs; the message names the host, not the construct. Use `vm.bump = function(self) ... end` or `function vm:bump() ... end`. Traced and reported as `docs/agent-reports/AR-0005-*`.
 - **A markup fragment with no Avalonia namespace** renders an error box reading `Failed to render dynamic UI: Unable to resolve type <X> from namespace ` - note the **empty** namespace: the root element resolved no types. Put `xmlns="https://github.com/avaloniaui"` on the root element. This is the most common reason a control that "should" render fails.
 - **A bind that misses the table** renders empty - nothing validates the string, so nothing warns.
+-- **Control creation fails at render time, not the call time** - use `async dass.ui.validate_axaml(axaml)` for validation or see logs via `dass.log.query{ text = "AXAML" }` (see `dass.log` API manuals for more details)
 - **Markup written for compiled bindings** (`x:DataType`, `{CompiledBinding}`) fails at render time, not at `create_control` time.
 - **`append_data` from a script that is not a running tool** is a silent no-op.
-- **`append_data(a, b)` with two handles** raises `options must be a table` - the multi-handle form is gone, one handle per call.
 - **A member written with plain `vm.key = ...`** stays frozen until `vm:notify(key)` runs.
 - **`set` / `notify` on an array table** - no helpers were injected into it; notify the member that
   holds the list.
@@ -234,4 +244,4 @@ The same marker is what `store.chat` and `store.file` keep, so a function parked
 - **`await` with no safety timeout** waits forever if the user never acts.
 - **`print` output is discarded when the script errors**, so a failing UI script cannot be traced with `print` - write the trace to a file with `fs.write` and read it back.
 - **A plain `[[ ... ]]` cannot hold `]]`** - it ends the string there and the rest fails to parse. Add a level instead of concatenating pieces: `[==[ ... ]==]` parses and runs, levels included.
-- **A list member that is actually a dictionary** renders an empty `ItemsControl` with no error - confirm the member is an array (it has elements under `#`).
+- **A list member that is actually a dictionary** renders an empty `ItemsControl` with no error - confirm the member is an array (use `table.is_array(t) -> boolean`).
