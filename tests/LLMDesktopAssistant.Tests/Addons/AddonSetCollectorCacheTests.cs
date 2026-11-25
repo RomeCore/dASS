@@ -1,5 +1,6 @@
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Reflection;
 using LLMDesktopAssistant.Addons;
 using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Agents;
@@ -86,7 +87,7 @@ namespace LLMDesktopAssistant.Tests.Addons
 			{
 			}
 
-			public TestConfig ChatConfig { get; set; } = new();
+			public TestConfig? ChatConfig { get; set; } = new();
 
 			public TestConfig AgentConfig { get; set; } = new();
 
@@ -130,6 +131,14 @@ namespace LLMDesktopAssistant.Tests.Addons
 			var events = new List<NotifyCollectionChangedEventArgs>();
 			set.Addons.CollectionChanged += (_, e) => events.Add(e);
 			return events;
+		}
+
+		private static int SubscriberCount(INotifyPropertyChanged source)
+		{
+			var handler = typeof(NotifyPropertyChanged)
+				.GetField(nameof(INotifyPropertyChanged.PropertyChanged), BindingFlags.Instance | BindingFlags.NonPublic)!
+				.GetValue(source);
+			return handler is Delegate @delegate ? @delegate.GetInvocationList().Length : 0;
 		}
 
 		[Fact]
@@ -323,6 +332,31 @@ namespace LLMDesktopAssistant.Tests.Addons
 
 			Assert.Equal(2, set.Count);
 			Assert.Equal(applyCalls, fixture.Collector.ApplyCalls);
+		}
+
+		[Fact]
+		public void ChatSet_WithoutConfiguration_ContainsTheAvailableAddons()
+		{
+			var fixture = new Fixture(new TestAddon("a"), new TestAddon("b"));
+			fixture.Collector.ChatConfig = null;
+
+			var set = fixture.Collector.GetAddonsForChat();
+
+			Assert.Equal(2, set.Count);
+		}
+
+		[Fact]
+		public void ChatConfigurationSwitch_StopsListeningToTheAbandonedOne()
+		{
+			var fixture = new Fixture(new TestAddon("a"));
+			var abandoned = fixture.Collector.ChatConfig!;
+			fixture.Collector.GetAddonsForChat();
+			Assert.Equal(1, SubscriberCount(abandoned));
+
+			fixture.Collector.ChatConfig = new TestConfig();
+			fixture.Collector.GetAddonsForChat();
+
+			Assert.Equal(0, SubscriberCount(abandoned));
 		}
 
 		[Fact]

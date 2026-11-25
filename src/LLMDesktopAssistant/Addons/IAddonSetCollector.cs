@@ -63,9 +63,9 @@ namespace LLMDesktopAssistant.Addons
 		/// </summary>
 		/// <remarks>
 		/// "The same agent" means the same <see cref="ChatAgentDescriptor"/> instance: the sets are keyed by the
-		/// descriptor reference and held weakly, so a new descriptor of the same agent starts a new set, and the set of a
-		/// descriptor that is no longer referenced is dropped. As in <see cref="GetAddonsForChat"/>, a changed effective
-		/// configuration re-resolves the set in place and the returned instance stays the same.
+		/// descriptor reference, so a new descriptor of the same agent starts a new set, and the sets of the descriptors
+		/// the chat no longer uses are released together with the collector. As in <see cref="GetAddonsForChat"/>, a
+		/// changed effective configuration re-resolves the set in place and the returned instance stays the same.
 		/// </remarks>
 		/// <param name="agent">The agent the set is requested for.</param>
 		/// <returns>The available agent-level addons as <see cref="AddonSet{TAddon}"/>.</returns>

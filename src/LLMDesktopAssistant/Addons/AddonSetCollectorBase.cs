@@ -1,6 +1,6 @@
+using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using LLMDesktopAssistant.Addons.Sources;
 using LLMDesktopAssistant.Agents;
 using LLMDesktopAssistant.Utils;
@@ -11,11 +11,14 @@ namespace LLMDesktopAssistant.Addons
 	/// Builds the effective addon sets for the chat and its agents and keeps them up to date incrementally.
 	/// </summary>
 	/// <remarks>
-	/// The collector owns three layers: the available set (deduplicated sources, no configuration), the chat set, and
-	/// one set per agent. The available set and the chat set live in fields; agent sets live in a
-	/// <see cref="ConditionalWeakTable{TKey,TValue}"/> keyed by the agent descriptor, so an agent that leaves the chat
-	/// takes its set with it. The collector owns every subscription and dispatches changes to the passive entries;
-	/// an entry holds the resolved configuration and its clones, and never subscribes to anything itself.
+	/// The collector owns two layers: the available set (deduplicated sources, no configuration) and one
+	/// <see cref="Entry"/> per resolved set - the chat one and one per agent. The available set lives in fields; the
+	/// entries live in a dictionary keyed by the agent descriptor reference, so the collector keeps them alive and can
+	/// dispose them when the chat scope ends.
+	/// Subscriptions follow the same split: the collector subscribes to the source collections, because a source change
+	/// is addressed to every set at once, while an entry subscribes to its own target and moves the subscriptions when
+	/// the target changes. A configuration that no set addresses therefore stops notifying anyone instead of
+	/// dispatching into an empty match.
 	/// </remarks>
 	/// <typeparam name="TAddon">The type of the addon.</typeparam>
 	/// <typeparam name="TChange">The type of the per-addon change object.</typeparam>
@@ -30,10 +33,6 @@ namespace LLMDesktopAssistant.Addons
 			AddonSetConfigurationBase<TChange>? Config,
 			IAddonCategorySettings? Category);
 
-		private sealed record ConfigHooks(
-			PropertyChangedEventHandler Defaults,
-			NotifyCollectionChangedEventHandler Changes);
-
 		private readonly IServiceProvider _services;
 		private readonly IFileAddonAccessor<TAddon> _accessor;
 		private IAdditionalAddonSource<TAddon>[] _sources = [];
@@ -47,10 +46,8 @@ namespace LLMDesktopAssistant.Addons
 		private readonly Lock _stateLock = new();
 		private bool _initialized;
 		private Entry? _chatEntry;
-		private readonly ConditionalWeakTable<ChatAgentDescriptor, Entry> _agentEntries = [];
-		private readonly Dictionary<AddonSetConfigurationBase<TChange>, ConfigHooks> _configs = [];
-		private readonly Dictionary<IAddonCategorySettings, PropertyChangedEventHandler> _categories = [];
-		private readonly Dictionary<TChange, ChangeTracker> _trackers = new(ReferenceEqualityComparer.Instance);
+		private readonly ConcurrentDictionary<ChatAgentDescriptor, Entry> _agentEntries =
+			new(ReferenceEqualityComparer.Instance);
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddonSetCollectorBase{TAddon,TChange}"/> class.
@@ -109,6 +106,19 @@ namespace LLMDesktopAssistant.Addons
 		}
 
 		/// <summary>
+		/// Prepares the sources for a fetch: initializes them on first use and lets the accessor reload the addons
+		/// invalidated since the last read, which is how a settings profile switch reaches the sets.
+		/// </summary>
+		private void RefreshSources()
+		{
+			EnsureInitialized();
+
+			// The accessor reloads invalid addons on every Addons read, so the switch is picked up by the next fetch
+			// instead of waiting for the next assistant message.
+			_ = _accessor.Addons;
+		}
+
+		/// <summary>
 		/// Gets the service provider of the collector scope.
 		/// </summary>
 		protected IServiceProvider Services => _services;
@@ -116,19 +126,14 @@ namespace LLMDesktopAssistant.Addons
 		/// <inheritdoc/>
 		public AddonSet<TAddon> GetAvailableAddons()
 		{
-			EnsureInitialized();
+			RefreshSources();
 			return _available;
 		}
 
 		/// <inheritdoc/>
 		public AddonSet<TAddon> GetAddonsForChat()
 		{
-			EnsureInitialized();
-
-			var target = ResolveChatTarget();
-			if (target.Config is not null)
-				EnsureConfigSubscribed(target.Config);
-			EnsureCategorySubscribed(target.Category);
+			RefreshSources();
 
 			Entry entry;
 			lock (_stateLock)
@@ -137,7 +142,7 @@ namespace LLMDesktopAssistant.Addons
 				entry = _chatEntry;
 			}
 
-			entry.EnsureTarget(target);
+			entry.EnsureTarget(ResolveChatTarget());
 			entry.Reconcile();
 			return entry.Set;
 		}
@@ -146,18 +151,10 @@ namespace LLMDesktopAssistant.Addons
 		public AddonSet<TAddon> GetAddonsForAgent(ChatAgentDescriptor agent)
 		{
 			ArgumentNullException.ThrowIfNull(agent);
-			EnsureInitialized();
+			RefreshSources();
 
-			var target = ResolveAgentTarget(agent);
-			if (target.Config is not null)
-				EnsureConfigSubscribed(target.Config);
-			EnsureCategorySubscribed(target.Category);
-
-			Entry entry;
-			lock (_stateLock)
-				entry = _agentEntries.GetValue(agent, descriptor => new Entry(this, descriptor));
-
-			entry.EnsureTarget(target);
+			var entry = _agentEntries.GetOrAdd(agent, descriptor => new Entry(this, descriptor));
+			entry.EnsureTarget(ResolveAgentTarget(agent));
 			entry.Reconcile();
 			return entry.Set;
 		}
@@ -238,21 +235,9 @@ namespace LLMDesktopAssistant.Addons
 					subscription.CollectionChanged -= OnSourcesChanged;
 			}
 
-			foreach (var (config, hooks) in _configs)
-			{
-				config.PropertyChanged -= hooks.Defaults;
-				config.Changes.CollectionChanged -= hooks.Changes;
-			}
+			foreach (var entry in EnumerateEntries())
+				entry.Dispose();
 
-			foreach (var (category, handler) in _categories)
-				category.PropertyChanged -= handler;
-
-			foreach (var tracker in _trackers.Values)
-				tracker.Dispose();
-
-			_configs.Clear();
-			_categories.Clear();
-			_trackers.Clear();
 			_agentEntries.Clear();
 			_chatEntry = null;
 		}
@@ -310,7 +295,7 @@ namespace LLMDesktopAssistant.Addons
 					winners.Add(winner);
 
 			foreach (var winner in winners)
-			affected.Add(winner.Key);
+				affected.Add(winner.Key);
 
 			_available.Reset(winners);
 			DispatchAvailableChanged([.. affected]);
@@ -385,141 +370,25 @@ namespace LLMDesktopAssistant.Addons
 				yield return pair.Value;
 		}
 
-		private void EnsureConfigSubscribed(AddonSetConfigurationBase<TChange> config)
-		{
-			lock (_stateLock)
-			{
-				if (_configs.ContainsKey(config))
-					return;
-
-				PropertyChangedEventHandler defaults = (_, e) =>
-				{
-					if (e.PropertyName != nameof(AddonSetConfigurationBase<TChange>.Changes))
-						DispatchDefaultsChanged(config, e.PropertyName);
-				};
-				NotifyCollectionChangedEventHandler changes = (_, e) => DispatchChangesChanged(config, e);
-
-				_configs[config] = new ConfigHooks(defaults, changes);
-				config.PropertyChanged += defaults;
-				config.Changes.CollectionChanged += changes;
-
-				foreach (var pair in config.Changes)
-					SubscribeChange(config, pair.Key, pair.Value);
-			}
-		}
-
-		private void EnsureCategorySubscribed(IAddonCategorySettings? category)
-		{
-			if (category is null)
-				return;
-
-			lock (_stateLock)
-			{
-				if (_categories.ContainsKey(category))
-					return;
-
-				PropertyChangedEventHandler handler = (_, e) =>
-				{
-					if (e.PropertyName == nameof(IAddonCategorySettings.AddonsCategoryEnabled))
-						DispatchCategoryChanged(category);
-				};
-
-				_categories[category] = handler;
-				category.PropertyChanged += handler;
-			}
-		}
-
-		private void SubscribeChange(AddonSetConfigurationBase<TChange> config, string key, TChange change)
-		{
-			lock (_stateLock)
-			{
-				if (_trackers.ContainsKey(change))
-					return;
-				_trackers[change] = new ChangeTracker(change, () => DispatchChange(config, key));
-			}
-		}
-
-		private void UnsubscribeChange(TChange change)
-		{
-			lock (_stateLock)
-			{
-				if (_trackers.Remove(change, out var tracker))
-					tracker.Dispose();
-			}
-		}
-
-		private void DispatchChangesChanged(AddonSetConfigurationBase<TChange> config, NotifyCollectionChangedEventArgs e)
-		{
-			if (e.Action is NotifyCollectionChangedAction.Reset)
-			{
-				foreach (var tracker in _trackers.Values)
-					tracker.Dispose();
-				_trackers.Clear();
-
-				foreach (var pair in config.Changes)
-					SubscribeChange(config, pair.Key, pair.Value);
-
-				foreach (var entry in EnumerateEntries())
-					if (ReferenceEquals(entry.Config, config))
-						entry.Rebuild();
-				return;
-			}
-
-			var keys = new List<string>();
-			if (e.OldItems is not null)
-			{
-				foreach (var item in e.OldItems)
-				{
-					if (item is not KeyValuePair<string, TChange> old)
-						continue;
-					UnsubscribeChange(old.Value);
-					keys.Add(old.Key);
-				}
-			}
-
-			if (e.NewItems is not null)
-			{
-				foreach (var item in e.NewItems)
-				{
-					if (item is not KeyValuePair<string, TChange> @new)
-						continue;
-					SubscribeChange(config, @new.Key, @new.Value);
-					keys.Add(@new.Key);
-				}
-			}
-
-			foreach (var key in keys.Distinct(StringComparer.Ordinal))
-				DispatchChange(config, key);
-		}
-
-		private void DispatchChange(AddonSetConfigurationBase<TChange> config, string key)
-		{
-			foreach (var entry in EnumerateEntries())
-				if (ReferenceEquals(entry.Config, config))
-					entry.PatchKey(key);
-		}
-
-		private void DispatchDefaultsChanged(AddonSetConfigurationBase<TChange> config, string? propertyName)
-		{
-			foreach (var entry in EnumerateEntries())
-				if (ReferenceEquals(entry.Config, config))
-					entry.OnDefaultsChanged(propertyName);
-		}
-
-		private void DispatchCategoryChanged(IAddonCategorySettings category)
-		{
-			foreach (var entry in EnumerateEntries())
-				if (ReferenceEquals(entry.Category, category))
-					entry.Reconcile();
-		}
-
 		/// <summary>
 		/// The state of one resolved set: the resolved configuration, the gate category, the clones of all addons
 		/// enabled by the configuration, and the visible set after the availability predicates.
 		/// </summary>
+		/// <remarks>
+		/// The entry owns the subscriptions of its own target and moves them whenever the target changes, so the
+		/// collector never has to look up which entries a notification belongs to. Only the source collections stay
+		/// with the collector: an entry is derived from the available set, not from a single source.
+		/// </remarks>
 		private sealed class Entry(AddonSetCollectorBase<TAddon, TChange> owner, ChatAgentDescriptor? agent)
+			: IDisposable
 		{
+			private readonly Lock _lock = new();
+			private readonly Dictionary<TChange, ChangeTracker> _trackers = new(ReferenceEqualityComparer.Instance);
 			private Dictionary<string, TAddon> _clones = [];
+			private PropertyChangedEventHandler? _configHandler;
+			private NotifyCollectionChangedEventHandler? _changesHandler;
+			private PropertyChangedEventHandler? _categoryHandler;
+			private bool _targetSet;
 
 			public AddonSetConfigurationBase<TChange>? Config { get; private set; }
 
@@ -527,84 +396,226 @@ namespace LLMDesktopAssistant.Addons
 
 			public AddonSet<TAddon> Set { get; } = new();
 
+			/// <summary>
+			/// Adopts the resolved target, carrying the subscriptions over to it. Idempotent for an unchanged target.
+			/// </summary>
 			public void EnsureTarget(AddonTarget target)
 			{
-				if (ReferenceEquals(Config, target.Config) && ReferenceEquals(Category, target.Category))
-					return;
+				lock (_lock)
+				{
+					if (_targetSet && ReferenceEquals(Config, target.Config) &&
+						ReferenceEquals(Category, target.Category))
+						return;
 
-				Config = target.Config;
-				Category = target.Category;
-				Rebuild();
+					Unsubscribe();
+					_targetSet = true;
+
+					Config = target.Config;
+					Category = target.Category;
+
+					Subscribe();
+					Rebuild();
+				}
+			}
+
+			public void Dispose()
+			{
+				lock (_lock)
+				{
+					Unsubscribe();
+					_targetSet = false;
+				}
 			}
 
 			public void Rebuild()
 			{
-				var candidates = BuildCandidates();
-				_clones = candidates.ToDictionary(addon => addon.Key, StringComparer.Ordinal);
-				Set.Reset(candidates.Where(IncludesByPredicates).ToList());
+				lock (_lock)
+				{
+					var candidates = BuildCandidates();
+					_clones = candidates.ToDictionary(addon => addon.Key, StringComparer.Ordinal);
+					Set.Reset(candidates.Where(IncludesByPredicates).ToList());
+				}
 			}
 
 			public void PatchKey(string key)
 			{
-				var addon = owner._available.GetByKey(key);
-				if (addon is null || !addon.IsValid)
+				lock (_lock)
 				{
-					_clones.Remove(key);
-					Set.Remove(key);
-					return;
-				}
+					var addon = owner._available.GetByKey(key);
+					if (addon is null || !addon.IsValid)
+					{
+						_clones.Remove(key);
+						Set.Remove(key);
+						return;
+					}
 
-				if (Config is null)
-				{
-					_clones[key] = addon;
-					if (IncludesByPredicates(addon))
-						Set.Upsert(addon);
+					if (Config is null)
+					{
+						_clones[key] = addon;
+						if (IncludesByPredicates(addon))
+							Set.Upsert(addon);
+						else
+							Set.Remove(key);
+						return;
+					}
+
+					var change = GetChange(key);
+					if (!IsEnabled(addon, change))
+					{
+						_clones.Remove(key);
+						Set.Remove(key);
+						return;
+					}
+
+					var clone = CreateClone(addon, change);
+					_clones[key] = clone;
+					if (IncludesByPredicates(clone))
+						Set.Upsert(clone);
 					else
 						Set.Remove(key);
-					return;
 				}
-
-				var change = GetChange(key);
-				if (!IsEnabled(addon, change))
-				{
-					_clones.Remove(key);
-					Set.Remove(key);
-					return;
-				}
-
-				var clone = CreateClone(addon, change);
-				_clones[key] = clone;
-				if (IncludesByPredicates(clone))
-					Set.Upsert(clone);
-				else
-					Set.Remove(key);
 			}
 
 			public void Reconcile()
 			{
-				if (Category?.AddonsCategoryEnabled is false)
+				lock (_lock)
 				{
-					Set.Clear();
-					return;
-				}
+					if (Category?.AddonsCategoryEnabled is false)
+					{
+						Set.Clear();
+						return;
+					}
 
-				foreach (var clone in _clones.Values)
-				{
-					if (IncludesByPredicates(clone))
-						Set.Upsert(clone);
-					else
-						Set.Remove(clone.Key);
+					foreach (var clone in _clones.Values)
+					{
+						if (IncludesByPredicates(clone))
+							Set.Upsert(clone);
+						else
+							Set.Remove(clone.Key);
+					}
 				}
 			}
 
-			public void OnDefaultsChanged(string? propertyName)
+			private void Subscribe()
 			{
-				if (Config is null)
-					return;
+				if (Config is { } config)
+				{
+					_configHandler = (_, e) =>
+					{
+						if (e.PropertyName != nameof(AddonSetConfigurationBase<TChange>.Changes))
+							OnDefaultsChanged(e.PropertyName);
+					};
+					_changesHandler = (_, e) => OnChangesChanged(e);
 
-				foreach (var addon in owner._available)
-					if (owner.IsAffectedByDefault(addon, GetChange(addon.Key), propertyName))
-						PatchKey(addon.Key);
+					config.PropertyChanged += _configHandler;
+					config.Changes.CollectionChanged += _changesHandler;
+
+					foreach (var pair in config.Changes)
+						SubscribeChange(pair.Key, pair.Value);
+				}
+
+				if (Category is { } category)
+				{
+					_categoryHandler = (_, e) =>
+					{
+						if (e.PropertyName == nameof(IAddonCategorySettings.AddonsCategoryEnabled))
+							Reconcile();
+					};
+
+					category.PropertyChanged += _categoryHandler;
+				}
+			}
+
+			private void Unsubscribe()
+			{
+				if (Config is { } config)
+				{
+					config.PropertyChanged -= _configHandler;
+					config.Changes.CollectionChanged -= _changesHandler;
+				}
+
+				if (Category is { } category)
+					category.PropertyChanged -= _categoryHandler;
+
+				foreach (var tracker in _trackers.Values)
+					tracker.Dispose();
+				_trackers.Clear();
+
+				_configHandler = null;
+				_changesHandler = null;
+				_categoryHandler = null;
+			}
+
+			private void SubscribeChange(string key, TChange change)
+			{
+				if (_trackers.ContainsKey(change))
+					return;
+				_trackers[change] = new ChangeTracker(change, () => PatchKey(key));
+			}
+
+			private void UnsubscribeChange(TChange change)
+			{
+				if (_trackers.Remove(change, out var tracker))
+					tracker.Dispose();
+			}
+
+			private void OnChangesChanged(NotifyCollectionChangedEventArgs e)
+			{
+				lock (_lock)
+				{
+					if (e.Action is NotifyCollectionChangedAction.Reset)
+					{
+						foreach (var tracker in _trackers.Values)
+							tracker.Dispose();
+						_trackers.Clear();
+
+						if (Config is { } config)
+							foreach (var pair in config.Changes)
+								SubscribeChange(pair.Key, pair.Value);
+
+						Rebuild();
+						return;
+					}
+
+					var keys = new List<string>();
+					if (e.OldItems is not null)
+					{
+						foreach (var item in e.OldItems)
+						{
+							if (item is not KeyValuePair<string, TChange> old)
+								continue;
+							UnsubscribeChange(old.Value);
+							keys.Add(old.Key);
+						}
+					}
+
+					if (e.NewItems is not null)
+					{
+						foreach (var item in e.NewItems)
+						{
+							if (item is not KeyValuePair<string, TChange> @new)
+								continue;
+							SubscribeChange(@new.Key, @new.Value);
+							keys.Add(@new.Key);
+						}
+					}
+
+					foreach (var key in keys.Distinct(StringComparer.Ordinal))
+						PatchKey(key);
+				}
+			}
+
+			private void OnDefaultsChanged(string? propertyName)
+			{
+				lock (_lock)
+				{
+					if (Config is null)
+						return;
+
+					foreach (var addon in owner._available)
+						if (owner.IsAffectedByDefault(addon, GetChange(addon.Key), propertyName))
+							PatchKey(addon.Key);
+				}
 			}
 
 			private List<TAddon> BuildCandidates()
