@@ -10,10 +10,11 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	{
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
-			INodeValue? previous, string hookType, string? hookTarget, INodeValue? parameters = null,
-			CancellationToken cancellationToken = default)
+			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var luaService = services.GetRequiredService<LuaService>();
+
+			var parameters = ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change);
 
 			var luaPayload = hook.InputMode is ScriptInputMode.Json
 				? new LuaString(payload.ToJsonNode()?.ToJsonString() ?? "null")

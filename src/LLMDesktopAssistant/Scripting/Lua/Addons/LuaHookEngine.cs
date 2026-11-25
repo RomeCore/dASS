@@ -1,6 +1,5 @@
 using LLMDesktopAssistant.Hooks;
 using LLMDesktopAssistant.Services;
-using LLMDesktopAssistant.SlashCommands.Scripting;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {

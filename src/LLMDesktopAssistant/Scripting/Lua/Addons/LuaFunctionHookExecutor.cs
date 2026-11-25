@@ -19,8 +19,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	{
 		/// <inheritdoc/>
 		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
-			INodeValue? previous, string hookType, string? hookTarget, INodeValue? parameters = null,
-			CancellationToken cancellationToken = default)
+			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			try
 			{

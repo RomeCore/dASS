@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using DocumentFormat.OpenXml.Spreadsheet;
 using LLMDesktopAssistant.Hooks;
 using LLMDesktopAssistant.Scripting;
 using LLMDesktopAssistant.Services;
@@ -22,11 +23,13 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 	public class ExternalProcessHookExecutor(HookInfo hook,
 		ExternalProcessEngineRegistry registry) : IHookExecutor
 	{
-		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload, INodeValue? previous,
-			string hookType, string? hookTarget, INodeValue? parameters = null, CancellationToken cancellationToken = default)
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
+			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var engine = registry.Resolve(hook.Path ?? throw new InvalidOperationException(
 				$"The path of the hook '{hook.Name}' is not set.")).Engine;
+
+			var parameters = ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change);
 
 			var variables = ImmutableDictionary<string, INodeValue?>.Empty
 				.Add("payload", payload)
@@ -35,7 +38,10 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				.Add("hook_target", string.IsNullOrEmpty(hookTarget) ? ConstNodeNullValue.Instance :
 					new ConstNodeStringValue { Value = hookTarget });
 			if (parameters is not null)
+			{
+
 				variables = variables.Add("params", parameters);
+			}
 
 			var result = await engine.RunAsync(new ExternalProcessScriptParameters
 			{

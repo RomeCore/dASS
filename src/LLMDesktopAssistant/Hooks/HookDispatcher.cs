@@ -81,8 +81,7 @@ namespace LLMDesktopAssistant.Hooks
 
 				try
 				{
-					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget,
-						ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change), token);
+					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget, token);
 				}
 				catch (OperationCanceledException) when (timeoutSource?.IsCancellationRequested == true)
 				{
@@ -107,8 +106,7 @@ namespace LLMDesktopAssistant.Hooks
 
 			try
 			{
-				return await hook.Executor.ExecuteAsync(services, payload, previous,
-					hookType, hookTarget, ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change), linkedSource.Token);
+				return await hook.Executor.ExecuteAsync(services, payload, previous, hookType, hookTarget, linkedSource.Token);
 			}
 			catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested &&
 				!cancellationToken.IsCancellationRequested)
