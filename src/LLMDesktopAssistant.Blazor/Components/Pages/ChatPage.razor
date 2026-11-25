@@ -169,12 +169,6 @@
 	private bool _showQueueDialog;
 	private BranchedMessage? _editingMessage;
 
-	/// <summary>
-	/// When <see langword="true"/>, the next render will scroll to bottom.
-	/// Used after sending a message (without generation) to ensure the new message is visible.
-	/// </summary>
-	private bool _pendingScroll = false;
-
 	private MessageVisibility _selectedVisibility = MessageVisibility.Always;
 	private Dictionary<MessageVisibility, string> _visibilityOptions = new()
 	{
@@ -203,12 +197,6 @@
 		{
 			// Set up the observer once on first render - it will watch for DOM changes
 			await JS.InvokeVoidAsync("ChatScroll.init", "messages-container");
-			await ScrollToBottom(true);
-		}
-		else if (_pendingScroll)
-		{
-			_pendingScroll = false;
-			await ScrollToBottom(true);
 		}
 	}
 
@@ -248,7 +236,6 @@
 	{
 		// Disable the JS observer and do one final smooth scroll
 		_ = JS.InvokeVoidAsync("ChatScroll.disable");
-		_ = ScrollToBottom(true);
 	}
 
 	private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -335,9 +322,6 @@
 		{
 			await chatOperation.SendUserInputAsync(CreateUserInput(text), generate);
 		}
-
-		// Mark for scroll on next render so the sent message is visible
-		_pendingScroll = true;
 	}
 
 	private async Task EnqueueAsync(string text, bool generate)
@@ -430,15 +414,6 @@
 		FollowUpInjectionLevel.Agent => "chat.follow_up.level.agent",
 		_ => "chat.follow_up.level.agent_sequence",
 	});
-
-	private async Task ScrollToBottom(bool smooth = true)
-	{
-		try
-		{
-			await JS.InvokeVoidAsync("ChatScroll.scrollToBottom", smooth);
-		}
-		catch { }
-	}
 
 	private void ToggleProfileOverlay() => _showProfileOverlay = !_showProfileOverlay;
 	private void CloseProfileOverlay() => _showProfileOverlay = false;
