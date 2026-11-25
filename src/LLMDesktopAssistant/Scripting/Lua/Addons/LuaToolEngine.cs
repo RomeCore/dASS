@@ -35,7 +35,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 					// The descriptor is the per-chat clone (it carries the change); the captured addon is the
 					// parse-time original, whose Change is always null.
 					var effectiveTool = ctx.Descriptor as ToolInfo ?? tool;
-					var parameters = ScriptAddonParameters.Resolve(effectiveTool.ParameterSchema, effectiveTool.Change);
+					var parameters = effectiveTool.ResolveParams();
 
 					var scriptResult = await luaService.ExecuteAsync(tool.Body, print => result.Write(print), g =>
 					{

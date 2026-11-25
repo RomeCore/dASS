@@ -36,7 +36,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 			var luaCommandArgs = ctx.Command.InputMode is ScriptInputMode.Json
 				? new LuaString(commandArgs.ToJsonNode()?.ToJsonString() ?? "null")
 				: commandArgs.ToLuaValue();
-			var parameters = ScriptAddonParameters.Resolve(ctx.Command.ParameterSchema, ctx.Command.Change);
+			var parameters = ctx.Command.ResolveParams();
 
 			LuaTuple scriptResult;
 			try

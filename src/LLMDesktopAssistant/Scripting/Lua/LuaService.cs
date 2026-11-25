@@ -75,7 +75,7 @@ namespace LLMDesktopAssistant.Scripting.Lua
 		{
 			var globals = _lua.Globals;
 			var ns = script.Namespace != null ? ResolveNamespace(script.Namespace) : null;
-			var parameters = ScriptAddonParameters.Resolve(script.ParameterSchema, script.Change);
+			var parameters = script.ResolveParams();
 
 			// The load is the script's only input surface: `params` exists while the body runs and never leaks
 			// into the shared state or into the next script.

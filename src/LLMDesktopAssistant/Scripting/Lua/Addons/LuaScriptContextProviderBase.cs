@@ -33,7 +33,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 		{
 			var luaService = context.Services.GetRequiredService<LuaService>();
 			var output = new StringBuilder();
-			var parameters = ScriptAddonParameters.Resolve(context.PromptContext.ParameterSchema, context.PromptContext.Change);
+			var parameters = context.PromptContext.ResolveParams();
 
 			Action<string> printOutput = text => output.AppendLine(text);
 			Action<LuaTable> modifyGlobals = globals =>

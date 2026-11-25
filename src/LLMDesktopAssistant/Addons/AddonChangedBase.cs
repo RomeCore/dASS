@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using LiteDB;
 using LLMDesktopAssistant.Agents;
+using LLMDesktopAssistant.StructuredValues;
 using LLMDesktopAssistant.StructuredValues.Parameterization;
 using YamlDotNet.Serialization;
 
@@ -106,5 +107,21 @@ namespace LLMDesktopAssistant.Addons
 			get;
 			set => SetProperty(ref field, value);
 		} = [];
+
+		/// <summary>
+		/// Resolves the parameters for this addon instance using the parameter schema and the current change configuration.
+		/// </summary>
+		/// <returns>The resolved parameters as an <see cref="INodeValue"/> object, or <see langword="null"/> if the addon has no parameters.</returns>
+		public INodeValue? ResolveParams()
+		{
+			if (ParameterSchema is null)
+				return null;
+
+			var value = ParameterSchema.Root.CreateOrFixValue(Change?.Parameters, []);
+			if (Change is not null)
+				Change.Parameters = value;
+
+			return value;
+		}
 	}
 }

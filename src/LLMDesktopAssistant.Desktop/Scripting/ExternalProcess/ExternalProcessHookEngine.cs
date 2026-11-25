@@ -17,19 +17,18 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 		public IReadOnlyList<IScriptEngineDescriptor> Descriptors => registry.Descriptors;
 
 		/// <inheritdoc/>
-		public IHookExecutor CreateExecutor(HookInfo hook) => new ExternalProcessHookExecutor(hook, registry);
+		public IHookExecutor CreateExecutor(HookInfo hook) => new ExternalProcessHookExecutor(registry);
 	}
 
-	public class ExternalProcessHookExecutor(HookInfo hook,
-		ExternalProcessEngineRegistry registry) : IHookExecutor
+	public class ExternalProcessHookExecutor(ExternalProcessEngineRegistry registry) : IHookExecutor
 	{
-		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, HookInfo hook, INodeValue? payload,
 			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var engine = registry.Resolve(hook.Path ?? throw new InvalidOperationException(
 				$"The path of the hook '{hook.Name}' is not set.")).Engine;
 
-			var parameters = ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change);
+			var parameters = hook.ResolveParams();
 
 			var variables = ImmutableDictionary<string, INodeValue?>.Empty
 				.Add("payload", payload)

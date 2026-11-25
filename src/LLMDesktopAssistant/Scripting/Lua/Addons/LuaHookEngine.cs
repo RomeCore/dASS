@@ -11,6 +11,6 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 
 		/// <inheritdoc/>
 		public IHookExecutor CreateExecutor(HookInfo hook)
-			=> new LuaScriptHookExecutor(hook);
+			=> new LuaScriptHookExecutor();
 	}
 }

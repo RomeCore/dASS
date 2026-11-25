@@ -57,8 +57,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var engine = registry.Resolve(Addon.Path ?? throw new InvalidOperationException(
 				$"The path of the context '{Addon.Name}' is not set.")).Engine;
 
-			var promptContext = context.PromptContext;
-			var parameters = ScriptAddonParameters.Resolve(promptContext.ParameterSchema, promptContext.Change);
+			var parameters = context.PromptContext.ResolveParams();
 
 			var variables = ImmutableDictionary<string, INodeValue?>.Empty.Add("previous", previous is null
 				? null

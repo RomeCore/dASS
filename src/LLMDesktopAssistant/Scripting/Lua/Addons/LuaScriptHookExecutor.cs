@@ -6,15 +6,15 @@ using Serilog;
 
 namespace LLMDesktopAssistant.Scripting.Lua.Addons
 {
-	public class LuaScriptHookExecutor(HookInfo hook) : IHookExecutor
+	public class LuaScriptHookExecutor : IHookExecutor
 	{
 		/// <inheritdoc/>
-		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, HookInfo hook, INodeValue? payload,
 			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			var luaService = services.GetRequiredService<LuaService>();
 
-			var parameters = ScriptAddonParameters.Resolve(hook.ParameterSchema, hook.Change);
+			var parameters = hook.ResolveParams();
 
 			var luaPayload = hook.InputMode is ScriptInputMode.Json
 				? new LuaString(payload.ToJsonNode()?.ToJsonString() ?? "null")

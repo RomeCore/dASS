@@ -50,7 +50,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var engine = registry.Resolve(command.Path ?? throw new InvalidOperationException(
 				$"The path of the command '{command.Name}' is not set.")).Engine;
 
-			var parameters = ScriptAddonParameters.Resolve(ctx.Command.ParameterSchema, ctx.Command.Change);
+			var parameters = ctx.Command.ResolveParams();
 
 			var variables = ImmutableDictionary<string, INodeValue?>.Empty
 				.Add("command_args", CommandArgsNode.Create(ctx.Arguments, ctx.RawArguments));

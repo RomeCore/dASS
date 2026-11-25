@@ -18,7 +18,7 @@ namespace LLMDesktopAssistant.Scripting.Lua.Addons
 	public class LuaFunctionHookExecutor(LuaFunction function, LuaCallingContext context) : IHookExecutor
 	{
 		/// <inheritdoc/>
-		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, INodeValue? payload,
+		public async Task<HookExecutionResult> ExecuteAsync(IServiceProvider services, HookInfo hook, INodeValue? payload,
 			INodeValue? previous, string hookType, string? hookTarget, CancellationToken cancellationToken = default)
 		{
 			try

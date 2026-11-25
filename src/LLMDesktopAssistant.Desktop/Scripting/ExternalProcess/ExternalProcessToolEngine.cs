@@ -41,10 +41,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			var engine = registry.Resolve(tool.Path ?? throw new InvalidOperationException(
 				$"The path of the tool '{tool.Name}' is not set.")).Engine;
 
-			// The descriptor is the per-chat clone (it carries the change); the captured addon is the
-			// parse-time original, whose Change is always null.
-			var effectiveTool = ctx.Descriptor as ToolInfo ?? tool;
-			var parameters = ScriptAddonParameters.Resolve(effectiveTool.ParameterSchema, effectiveTool.Change);
+			var parameters = (ctx.Descriptor as ToolInfo ?? tool).ResolveParams();
 
 			var variables = ImmutableDictionary<string, INodeValue?>.Empty
 				.Add("tool_args", args.ToConstNodeValue());

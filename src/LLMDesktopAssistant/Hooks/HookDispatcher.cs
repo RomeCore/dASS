@@ -81,7 +81,7 @@ namespace LLMDesktopAssistant.Hooks
 
 				try
 				{
-					await hook.Executor.ExecuteAsync(services, payload, null, hookType, hookTarget, token);
+					await hook.Executor.ExecuteAsync(services, hook, payload, null, hookType, hookTarget, token);
 				}
 				catch (OperationCanceledException) when (timeoutSource?.IsCancellationRequested == true)
 				{
@@ -106,7 +106,7 @@ namespace LLMDesktopAssistant.Hooks
 
 			try
 			{
-				return await hook.Executor.ExecuteAsync(services, payload, previous, hookType, hookTarget, linkedSource.Token);
+				return await hook.Executor.ExecuteAsync(services, hook, payload, previous, hookType, hookTarget, linkedSource.Token);
 			}
 			catch (OperationCanceledException) when (timeoutSource.IsCancellationRequested &&
 				!cancellationToken.IsCancellationRequested)
