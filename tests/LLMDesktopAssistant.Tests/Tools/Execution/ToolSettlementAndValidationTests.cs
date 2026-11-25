@@ -60,7 +60,8 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			await new ToolSettlementService(new NoResultHooks()).FinalizeAsync(session.Context, new OperationCanceledException());
 
 			Assert.Equal(ToolStatus.Cancelled, session.Call.Status);
-			Assert.Equal("the half I already produced\nTool execution was interrupted.", session.Call.ResultContent);
+			Assert.Equal("the half I already produced\nTool execution was interrupted.".ReplaceLineEndings(),
+				session.Call.ResultContent);
 		}
 
 		[Fact]

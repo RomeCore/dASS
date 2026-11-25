@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using LLMDesktopAssistant.LLM.Domain;
 using LLMDesktopAssistant.LLM.MVVM.Additional;
+using LLMDesktopAssistant.LLM.Services.Prompting;
 using LLMDesktopAssistant.Tests.Tools;
 using LLMDesktopAssistant.Tools;
 using LLMDesktopAssistant.Tools.Consents;
@@ -44,7 +45,8 @@ namespace LLMDesktopAssistant.Tests.Tools.Execution
 			Assert.False(approved);
 			Assert.Equal(1, sink.Calls);
 			Assert.Equal(ToolStatus.Cancelled, session.Call.Status);
-			Assert.Contains("too risky", session.Call.ResultContent ?? string.Empty);
+			Assert.Contains("too risky", string.Join("", session.Call.AdditionalData.OfType<AdditionalMessageContentPart>()
+				.Select(p => p.Content)));
 		}
 
 		[Fact]
