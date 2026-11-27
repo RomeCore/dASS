@@ -42,7 +42,7 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 			builder.AppendLine("import sys, os");
 			builder.AppendLine("sys.stdout.reconfigure(encoding=\"utf-8\")");
 			builder.AppendLine("sys.stderr.reconfigure(encoding=\"utf-8\")");
-			builder.AppendLine($"os.chdir({PythonLiteral(workingDirectory)})");
+			builder.AppendLine($"os.chdir({new ConstNodeStringValue { Value = workingDirectory }.ToPythonString()})");
 
 			foreach (var (name, value) in parameters.Variables)
 				builder.AppendLine($"{name} = {Serialize(value, inputMode)}");
@@ -68,9 +68,6 @@ namespace LLMDesktopAssistant.Desktop.Scripting.ExternalProcess
 				? new ScriptEngineAvailability(true, resolution.Version, null, resolution.ExecutablePath)
 				: new ScriptEngineAvailability(false, null, resolution.Problem);
 		}
-
-		private static string PythonLiteral(string value)
-			=> new ConstNodeStringValue { Value = value }.ToPythonString();
 
 		/// <summary>
 		/// Serialises one variable: a native literal, or a JSON string the script parses itself.
